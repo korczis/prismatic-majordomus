@@ -50,8 +50,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
-| `AGENTS.md` | `providers/agents` | markdown | 3030 | `709887d052970e01` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 2319 | `50c5ac733f4db138` |
+| `AGENTS.md` | `providers/agents` | markdown | 3030 | `1fa3e508c5656aaf` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 2319 | `150952ac095ad48d` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
@@ -59,9 +59,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/benchmarks.md` | `benchmarks` | markdown | 3903 | `ee783ff8a63f3eb5` |
 | `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 4836 | `b43398f3eee03885` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 5109 | `19e5706d98571a2e` |
-| `docs/generated/cli.json` | `cli` | json | 115255 | `3a057e24bdcbb6ec` |
-| `docs/generated/cli.md` | `cli` | markdown | 48741 | `fd65dffe1b130f78` |
-| `docs/generated/cli.yaml` | `cli` | yaml | 89643 | `bfdf3200beed7421` |
+| `docs/generated/cli.json` | `cli` | json | 115257 | `c170005ff7fcb585` |
+| `docs/generated/cli.md` | `cli` | markdown | 48743 | `22297427d7998cd8` |
+| `docs/generated/cli.yaml` | `cli` | yaml | 89645 | `fa032bb7761a3da8` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `3491dec853808fd0` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 2074 | `418698b86cc6843f` |
 | `docs/generated/modules/graph.md` | `modules/graph` | markdown | 1797 | `d8734049ab541598` |
@@ -93,4 +93,4 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/skill.txt` | `allow/skill` | text | 309 | `c2f31d65ad1b6a6b` |
 | `share/allow/taxonomy.txt` | `allow/taxonomy` | text | 298 | `7fb8f5496a1677db` |
 | `share/allow/use-case.txt` | `allow/use-case` | text | 1141 | `223bf1e79ba2afad` |
-| `site/data/registry/registry.json` | `site-registry` | json | 682066 | `ab355261350a1fbc` |
+| `site/data/registry/registry.json` | `site-registry` | json | 686765 | `f324f97f7556e66f` |

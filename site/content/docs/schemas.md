@@ -793,7 +793,7 @@ open session, exactly as a foreign task record is.
 
 ---
 
-## `.ai/local/state/sessions/<file>.md`
+## `.ai/repo/sessions/<file>.md`
 
 The immutable record of a closed session. Filename:
 `<utc-compact>--<session-id>--<branch-key>--<short-head>--<16 hex>.md`, e.g.

@@ -49,6 +49,11 @@ gates:
     runs: scripts/rust-check --ci
     summary: fmt, clippy with warnings denied, the suites and doc examples, rustdoc, the benchmarks building, the registry checks, the benchmark runner through every transport
 
+  - id: rust-command
+    job: structure
+    runs: scripts/ci/rust-command-check
+    summary: every composed command module asserts what it declares, and the debt the baseline records may shrink but not grow
+
   - id: rust-coverage
     job: coverage
     runs: just coverage
@@ -93,8 +98,8 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-coverage, rust-bench, shell-suite, macos, cockpit-probe]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, .ai/repo/rust-command-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, rust-coverage, rust-bench, shell-suite, macos, cockpit-probe]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite

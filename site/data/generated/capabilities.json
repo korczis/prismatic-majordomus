@@ -1581,6 +1581,19 @@
       "test_case": "63_session_records"
     },
     {
+      "id": "session-lifecycle",
+      "claim": "A provider hook opens and closes the execution episode below the model, and the context resolved at the open is frozen beside it",
+      "source": "docs/DOCTRINE.md",
+      "implementation": "lib/session_context.sh",
+      "test": "test/cases/54_session_lifecycle_hooks.sh",
+      "status": "guaranteed",
+      "note": "The provider's own SessionStart and SessionEnd events draw the boundary; both are idempotent because the events are, neither writes to stdout because a start hook's output reaches the model's context, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation.",
+      "responsibility": "policy",
+      "source_route": "/docs/doctrine/",
+      "command": null,
+      "test_case": "54_session_lifecycle_hooks"
+    },
+    {
       "id": "adr-catalogue",
       "claim": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
       "source": "docs/SCHEMAS.md",

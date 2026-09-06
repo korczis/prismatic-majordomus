@@ -43,7 +43,10 @@
 
 MJ_CAPTURE_SCHEMA="majordomus.prompt/v1"
 # the closed set of fields a record carries, in order; a reader may rely on it, and a field
-# outside it is a defect the prompt_capture doctrine reports
+# outside it is a defect the prompt_capture doctrine reports. Declared rather than used: it
+# is the contract this file's writer implements and the documentation quotes, and a reader
+# who wants to know what a record may hold reads it here.
+# shellcheck disable=SC2034
 MJ_CAPTURE_FIELDS="schema ts provider event id session source cwd repository branch head text"
 
 # ---------------------------------------------------------------- provider adapters
@@ -75,6 +78,37 @@ MJ_CAPTURE_FIELDS="schema ts provider event id session source cwd repository bra
 # that is the intended way to find the next one.
 MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_id,id session_id,sessionId prompt,prompt_text,text prompt_source,source .claude/hooks/majordomus-capture user <task-notification>,<system-reminder>,<subagent-notification>,<cross-session-message>,<hook-message>,<user-prompt-submit-hook>,<command-message>,<command-name>,<command-args>,<local-command-stdout>,<local-command-stderr>,<bash-input>,<bash-stdout>,<bash-stderr>,<ide_selection>,<ide_opened_file>,<ide_diagnostics>'
 
+# ---------------------------------------------------------------- lifecycle adapters
+# The same argument, applied to the other thing a worker cannot be asked to do: mark where
+# its own episode began and ended. A model that is told to open a session opens one when it
+# remembers to, which is never the episode that mattered — the one that ended in a crash, a
+# compaction or somebody closing the window. The provider knows, it fires an event, and the
+# boundary is drawn there or it is fiction.
+#
+# One line per provider whose lifecycle Majordomus can follow:
+#   1 provider  2 config file  3 start event  4 end event  5 start shim  6 end shim
+#   7 session keys  8 start source keys  9 end reason keys  10 the end reasons that mean the
+#   episode ended deliberately rather than being cut short
+# Fields 7 to 9 are comma-separated candidates for the same reason the prompt adapter's
+# are: a payload field is the provider's private shape, and a capture built on one assumed
+# name loses everything the day it moves.
+#
+# Field 10 is what separates `closed` from `interrupted` in the record. Both are
+# self-reported and the record says so; the difference is the one thing about an ended
+# episode that changes what somebody does next, so it is read from the event rather than
+# assumed. A reason outside the list — a crash, a name this table has not seen — closes the
+# episode as interrupted, because the mistake of calling a cut-short episode complete is
+# worse than the reverse.
+MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit'
+
+mj_lifecycle_adapter()   { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
+mj_lifecycle_field()     { mj_lifecycle_adapter "$1" 2>/dev/null | awk -v n="$2" '{ print $n }'; }
+mj_lifecycle_first()     { mj_lifecycle_field "$1" "$2" | cut -d, -f1; }
+# the shim of one event: 5 for the start, 6 for the end
+mj_lifecycle_shim_rel()  { mj_lifecycle_field "$1" "$([ "$2" = start ] && printf 5 || printf 6)"; }
+mj_lifecycle_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_lifecycle_shim_rel "$1" "$2")"; }
+mj_lifecycle_event()     { mj_lifecycle_field "$1" "$([ "$2" = start ] && printf 3 || printf 4)"; }
+
 mj_capture_adapter()   { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
 mj_capture_providers() { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk '{ print $1 }'; }
 mj_capture_field()     { mj_capture_adapter "$1" 2>/dev/null | awk -v n="$2" '{ print $n }'; }
@@ -95,19 +129,24 @@ mj_cmd_capture() {
   local sub="${1:-}"; [ $# -gt 0 ] && shift
   case "$sub" in
     prompt)  mj_capture_prompt "$@" ;;
+    session) mj_capture_session "$@" ;;
     install) mj_capture_install "$@" ;;
     status)  mj_capture_status "$@" ;;
     --help|-h|"") cat <<H
 usage: majordomus capture prompt --provider <name>   < the provider's hook payload
+       majordomus capture session --provider <name> --event start|end  < the payload
        majordomus capture install [--provider <name>]
        majordomus capture status [--json]
   providers with an adapter: $(mj_capture_providers | tr '\n' ' ' | sed 's/ $//')
   one file per prompt: .ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json, ignored and never loaded
+  'capture session' opens and closes the execution episode from the provider's own
+  lifecycle events, and writes nothing to stdout: on a start event the provider adds a
+  hook's output to the model's context, and the local half of the layer is never loaded
   'capture prompt' reads one JSON object on stdin and never exits 2, because in a
   provider hook that exit code can reject the person's prompt
 H
       [ "$sub" = "" ] && return "$MJ_EX_USAGE"; return 0 ;;
-    *) mj_die "$MJ_EX_USAGE" "capture: unknown subcommand '$sub' (prompt|install|status)" ;;
+    *) mj_die "$MJ_EX_USAGE" "capture: unknown subcommand '$sub' (prompt|session|install|status)" ;;
   esac
 }
 
@@ -253,6 +292,112 @@ mj_capture_raw() {
 }
 
 
+# ---------------------------------------------------------------- capture session
+# The episode boundary, drawn where the provider draws it. Reads the provider's lifecycle
+# payload on stdin and opens or closes the session; both are idempotent, because the events
+# are: a start fires again on a resume and on a compaction, and an end fires whether or not
+# anything was opened.
+#
+# Three properties this shares with `capture prompt`, for the same reasons. It never exits
+# 2, because it runs inside a provider hook. Every failure short of "nothing can be written
+# at all" is logged rather than raised, because the person's session is not this command's
+# to interrupt. And what it could not do is visible afterwards, in the log the doctrine
+# reads, instead of vanishing.
+#
+# One property it does not share: it writes nothing to stdout, ever. On a start event this
+# provider adds a hook's output to the model's context, and nothing under the local half of
+# the layer may be loaded into a context implicitly. Diagnostics go to stderr.
+mj_capture_session() {
+  local provider="" event="" scan payload psession source reason
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --provider) provider="${2:-}"; shift 2 ;;
+      --provider=*) provider="${1#--provider=}"; shift ;;
+      --event) event="${2:-}"; shift 2 ;;
+      --event=*) event="${1#--event=}"; shift ;;
+      *) mj_err "capture session: unknown option $1"; return "$MJ_EX_MISSING" ;;
+    esac
+  done
+  [ -n "$provider" ] || { mj_err "capture session: --provider is required"; return "$MJ_EX_MISSING"; }
+  case "$event" in start|end) ;;
+    *) mj_err "capture session: --event must be start or end"; return "$MJ_EX_MISSING" ;;
+  esac
+  mj_lifecycle_adapter "$provider" >/dev/null 2>&1 || {
+    mj_err "capture session: no lifecycle adapter for provider '$provider'"
+    return "$MJ_EX_MISSING"; }
+  mj_require_repo 2>/dev/null || { mj_err "capture session: not in a repository"; return "$MJ_EX_MISSING"; }
+  # sourced here rather than at the top of this file: the prompt path is the one a person
+  # waits behind, and it needs none of the session machinery.
+  # shellcheck source=session.sh
+  . "$MJ_LIB_DIR/session.sh"
+
+  # The payload is optional: an event that carries nothing still marks the boundary, and
+  # refusing to open an episode because a provider sent an empty object would lose the
+  # episode over a detail none of the record depends on.
+  psession=""; source=""; reason=""
+  if [ ! -t 0 ]; then
+    payload="$(mktemp "${TMPDIR:-/tmp}/mj.ses.XXXXXX")"; scan="$payload.f"
+    cat > "$payload"
+    if awk -f "$MJ_LIB_DIR/json_scan.awk" < "$payload" > "$scan" 2>/dev/null; then
+      psession="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
+      source="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
+      reason="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
+    elif [ -s "$payload" ]; then
+      mj_session_context_log "$provider $event payload not understood; the episode boundary was drawn without it"
+    fi
+    rm -f "$payload" "$scan"
+  fi
+
+  # A verifier proves this command runs by driving a synthetic payload through the shim the
+  # provider would run. It must not cost somebody their open episode to do it, so the
+  # mutation is the one thing the dry run leaves out — the payload is still read, the
+  # adapter still resolves, and what would have happened is reported.
+  if [ "${MJ_SESSION_DRY_RUN:-0}" = 1 ]; then
+    mj_err "capture session: would $event the episode for $provider${psession:+ (provider session $psession)}${reason:+, reason $reason}"
+    return 0
+  fi
+
+  case "$event" in
+    start) mj_capture_session_start "$provider" "$psession" "$source" ;;
+    end)   mj_capture_session_end   "$provider" "$psession" "$reason" ;;
+  esac
+  return 0
+}
+
+# The strings the provider sends are its own; nothing here lets one name a path or reach a
+# shell, so they are reduced to the same safe form the prompt archive uses for an identity.
+mj_capture_plain() {
+  local v="$1"
+  [ -z "$v" ] && return 0
+  [ "$v" = null ] && return 0
+  v="${v#\"}"; v="${v%\"}"
+  printf '%s' "$v" | tr -c 'A-Za-z0-9._:@/-' '-' | tr -s '-' | cut -c1-64 | sed -e 's/^-//' -e 's/-$//'
+}
+
+mj_capture_session_start() {
+  local provider="$1" psession="$2" source="$3" out
+  set -- --if-open keep --provider "$provider"
+  [ -n "$psession" ] && set -- "$@" --provider-session "$psession"
+  out="$( (mj_session_start "$@") 2>&1 )" || {
+    mj_session_context_log "$provider start event: the episode did not open: $(printf '%s' "$out" | tail -n 1)"
+    mj_err "capture session: the episode did not open; see the log beside the working contexts"
+    return 0; }
+  mj_err "capture session: $(printf '%s' "$out" | head -n 1)${source:+ (source $source)}"
+  return 0
+}
+
+mj_capture_session_end() {
+  local provider="$1" psession="$2" reason="$3" outcome=interrupted out
+  case ",$(mj_lifecycle_field "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
+  out="$( (mj_session_close --if-none ignore --outcome "$outcome" < /dev/null) 2>&1 )" || {
+    mj_session_context_log "$provider end event: the episode did not close: $(printf '%s' "$out" | tail -n 1)"
+    mj_err "capture session: the episode did not close; see the log beside the working contexts"
+    return 0; }
+  if [ -n "$out" ]; then mj_err "capture session: episode closed ($outcome${reason:+, reason $reason}) into $out"
+  else mj_err "capture session: no open episode here${psession:+ for provider session $psession}; nothing to close"; fi
+  return 0
+}
+
 # ---------------------------------------------------------------- capture state
 # One word for what is true about a provider here, and a reason. The words are distinct on
 # purpose: a provider with no observable event, one this repository does not wire, one that
@@ -268,8 +413,15 @@ mj_capture_raw() {
 #                 no record
 #   verified      the shim is in place and a synthetic payload through it produced a record
 #
+# The same five words describe the other aspect a provider can be wired for — the episode
+# boundary — because the states are the same states: no event, not wired, wired to something
+# else, in place, proven by running it. A second vocabulary for the same five facts would
+# only have to be learnt twice.
+#
 # Prints: <state><tab><reason>
+# mj_capture_state <provider> [prompt|session]
 mj_capture_state() {
+  [ "${2:-prompt}" = session ] && { mj_lifecycle_state "$1"; return 0; }
   local p="$1" cfg shim rel event
   mj_capture_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: no documented event delivers a prompt to a command before the model runs\n'; return 0; }
   cfg="$MJ_ROOT/$(mj_capture_field "$p" 2)"; shim="$(mj_capture_shim "$p")"
@@ -295,6 +447,43 @@ mj_capture_selftest() {
     | MJ_CAPTURE_DIR="$tmp" "$(mj_capture_shim "$p")" >/dev/null 2>&1 || rc=1
   [ "$rc" = 0 ] && { grep -qF 'majordomus self test' "$tmp"/*.json 2>/dev/null || rc=1; }
   rm -rf "$tmp"
+  return "$rc"
+}
+
+# The lifecycle aspect: whether this provider's own start and end events reach Majordomus.
+# Both events matter and they fail differently — a start that is not wired loses the episode,
+# an end that is not wired leaves one open for ever — so both are checked and the reason
+# names whichever is missing.
+mj_lifecycle_state() {
+  local p="$1" cfg one rel
+  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: this provider has no documented event marking the start and end of a session\n'; return 0; }
+  cfg="$MJ_ROOT/$(mj_lifecycle_field "$p" 2)"
+  [ -f "$cfg" ] || { printf 'unconfigured\t%s does not exist (run: majordomus capture install)\n' "$(mj_lifecycle_field "$p" 2)"; return 0; }
+  for one in start end; do
+    grep -qF "$(mj_lifecycle_event "$p" "$one")" "$cfg" || {
+      printf 'unconfigured\t%s declares no %s hook (run: majordomus capture install)\n' "$(mj_lifecycle_field "$p" 2)" "$(mj_lifecycle_event "$p" "$one")"; return 0; }
+  done
+  for one in start end; do
+    rel="$(mj_lifecycle_shim_rel "$p" "$one")"
+    grep -qF "$rel" "$cfg" || { printf 'named\t%s declares %s but does not name %s\n' "$(mj_lifecycle_field "$p" 2)" "$(mj_lifecycle_event "$p" "$one")" "$rel"; return 0; }
+    [ -f "$MJ_ROOT/$rel" ] || { printf 'named\t%s names %s, which does not exist\n' "$(mj_lifecycle_field "$p" 2)" "$rel"; return 0; }
+    [ -x "$MJ_ROOT/$rel" ] || { printf 'named\t%s is not executable, so the provider cannot run it\n' "$rel"; return 0; }
+  done
+  if mj_lifecycle_selftest "$p"; then printf 'verified\t%s and %s are wired, and a synthetic payload through the end shim reached the command\n' "$(mj_lifecycle_shim_rel "$p" start)" "$(mj_lifecycle_shim_rel "$p" end)"
+  else printf 'wired\t%s is in place but a synthetic payload through it did not reach the command\n' "$(mj_lifecycle_shim_rel "$p" end)"; fi
+}
+
+# Drive the end shim the way the provider would, and read what it says it would have done.
+# The mutation is the one thing left out: closing somebody's open episode is not a price a
+# diagnostic may charge, and everything else on the path — the shim resolving the
+# repository, finding the executable, the adapter matching, the payload parsing — is
+# exercised exactly as it is in a real event.
+mj_lifecycle_selftest() {
+  local p="$1" out rc=0
+  out="$(printf '{"%s":"selftest-%s","%s":"other"}' \
+    "$(mj_lifecycle_first "$p" 7)" "$$" "$(mj_lifecycle_first "$p" 9)" \
+    | MJ_SESSION_DRY_RUN=1 "$(mj_lifecycle_shim "$p" end)" 2>&1)" || rc=1
+  [ "$rc" = 0 ] && { printf '%s' "$out" | grep -qF "selftest-$$" || rc=1; }
   return "$rc"
 }
 
@@ -324,70 +513,122 @@ mj_capture_install() {
 }
 
 mj_capture_install_one() {
-  local p="$1" cfg shim rel event
-  cfg="$MJ_ROOT/$(mj_capture_field "$p" 2)"; shim="$(mj_capture_shim "$p")"
-  rel="$(mj_capture_shim_rel "$p")"; event="$(mj_capture_field "$p" 3)"
-  mkdir -p "$(dirname "$shim")" "$(dirname "$cfg")"
+  local p="$1" cfg rel event missing="" one
+  cfg="$MJ_ROOT/$(mj_capture_field "$p" 2)"
+  mkdir -p "$(dirname "$cfg")"
 
-  if [ -f "$shim" ]; then
-    mj_info capture "$rel" "already present; left as it is"
-  else
-    { printf '#!/bin/sh\n'
-      printf '# The %s hook: it runs before the model is given the prompt, and appends that\n' "$event"
-      printf '# prompt to .ai/local/prompts/. Written by `majordomus capture install`.\n#\n'
-      printf '# The repository is derived from this file: the provider substitutes its project\n'
-      printf '# directory into the command string textually, so nothing in the environment names\n'
-      printf '# the repository here, and the working directory is not contracted.\n#\n'
-      printf '# It must never reject a prompt, so every path out of it is exit 0 or the exit of a\n'
-      printf '# command that is itself contracted never to return 2.\n'
-      printf 'root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 0\n'
-      printf 'for mj in "$root/bin/majordomus" "$root/.majordomus/bin/majordomus"; do\n'
-      printf '  [ -x "$mj" ] && break\n'
-      printf '  mj=\n'
-      printf 'done\n'
-      printf '[ -n "$mj" ] || mj=$(command -v majordomus) || exit 0\n'
-      printf 'exec "$mj" --repo "$root" capture prompt --provider %s\n' "$p"
-    } > "$shim"
-    chmod +x "$shim"
-    mj_info capture "$rel" "written and made executable"
+  mj_capture_install_shim "$p" "$(mj_capture_shim_rel "$p")" "$(mj_capture_field "$p" 3)" "capture prompt --provider $p"
+  if mj_lifecycle_adapter "$p" >/dev/null 2>&1; then
+    for one in start end; do
+      mj_capture_install_shim "$p" "$(mj_lifecycle_shim_rel "$p" "$one")" "$(mj_lifecycle_event "$p" "$one")" \
+        "capture session --provider $p --event $one"
+    done
   fi
 
   if [ ! -f "$cfg" ]; then
-    # The event takes no matcher and fires on every prompt, but the shape is the one every
-    # event uses: a group, then the handlers inside it.
-    { printf '{\n  "hooks": {\n    "%s": [\n      {\n        "matcher": "",\n        "hooks": [\n' "$event"
-      printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s"\n          }\n' "$rel"
-      printf '        ]\n      }\n    ]\n  }\n}\n'
-    } > "$cfg"
-    mj_info capture "$(mj_capture_field "$p" 2)" "written with the $event hook"
+    mj_capture_config "$p" > "$cfg"
+    mj_info capture "$(mj_capture_field "$p" 2)" "written with the $(mj_capture_events "$p" | sed 's/=.*//' | paste -sd, - | sed 's/,/, /g') hook(s)"
     return 0
   fi
-  if grep -qF "$rel" "$cfg"; then
-    mj_info capture "$(mj_capture_field "$p" 2)" "already names the hook; left as it is"
+  # A configuration this tool did not write is not this tool's to rewrite, and one it wrote
+  # before this tool knew about the lifecycle events is the same file: what is missing is
+  # named, one event at a time, rather than the whole object being replaced.
+  for one in $(mj_capture_events "$p"); do
+    event="${one%%=*}"; rel="${one#*=}"
+    grep -qF "$rel" "$cfg" || missing="$missing $event=$rel"
+  done
+  if [ -z "$missing" ]; then
+    mj_info capture "$(mj_capture_field "$p" 2)" "already names the hooks; left as it is"
     return 0
   fi
-  mj_err "capture install: $(mj_capture_field "$p" 2) exists and does not name the hook; it is not this tool's to rewrite. Add to its \"hooks\" object:"
-  mj_err "  \"$event\": [ { \"matcher\": \"\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
+  mj_err "capture install: $(mj_capture_field "$p" 2) exists and does not name $(printf '%s' "$missing" | wc -w | tr -d ' ') of the hooks; it is not this tool's to rewrite. Add to its \"hooks\" object:"
+  for one in $missing; do
+    event="${one%%=*}"; rel="${one#*=}"
+    mj_err "  \"$event\": [ { \"matcher\": \"\", \"hooks\": [ { \"type\": \"command\", \"command\": \"\${CLAUDE_PROJECT_DIR}/$rel\" } ] } ]"
+  done
   return "$MJ_EX_REFUSED"
+}
+
+# Every event this provider has a shim for, as <event>=<shim path>, in the order they are
+# written into a configuration. One list, read by the writer and by the reconciliation, so
+# the two cannot disagree about what "installed" means.
+mj_capture_events() {
+  local p="$1" one
+  printf '%s=%s\n' "$(mj_capture_field "$p" 3)" "$(mj_capture_shim_rel "$p")"
+  mj_lifecycle_adapter "$p" >/dev/null 2>&1 || return 0
+  for one in start end; do
+    printf '%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")"
+  done
+}
+
+# One shim: the provider runs it, it finds the repository from its own location, and it
+# never rejects what the person is doing. The command it ends in is the only thing that
+# differs between the events.
+mj_capture_install_shim() {
+  local p="$1" rel="$2" event="$3" args="$4" shim
+  shim="$MJ_ROOT/$rel"
+  if [ -f "$shim" ]; then mj_info capture "$rel" "already present; left as it is"; return 0; fi
+  mkdir -p "$(dirname "$shim")"
+  { printf '#!/bin/sh\n'
+    printf '# The %s hook: it runs where the provider fires that event, and hands the payload\n' "$event"
+    printf '# to `majordomus %s`. Written by `majordomus capture install`.\n#\n' "$args"
+    printf '# The repository is derived from this file: the provider substitutes its project\n'
+    printf '# directory into the command string textually, so nothing in the environment names\n'
+    printf '# the repository here, and the working directory is not contracted.\n#\n'
+    printf '# It must never reject what the person is doing, so every path out of it is exit 0\n'
+    printf '# or the exit of a command that is itself contracted never to return 2.\n'
+    printf 'root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 0\n'
+    printf 'for mj in "$root/bin/majordomus" "$root/.majordomus/bin/majordomus"; do\n'
+    printf '  [ -x "$mj" ] && break\n'
+    printf '  mj=\n'
+    printf 'done\n'
+    printf '[ -n "$mj" ] || mj=$(command -v majordomus) || exit 0\n'
+    printf 'exec "$mj" --repo "$root" %s\n' "$args"
+  } > "$shim"
+  chmod +x "$shim"
+  mj_info capture "$rel" "written and made executable"
+}
+
+# The configuration this tool writes when there is none: every event it has a shim for, in
+# one hooks object. The event takes no matcher and fires every time, but the shape is the
+# one every event uses — a group, then the handlers inside it.
+mj_capture_config() {
+  local p="$1" one event rel first=1
+  printf '{\n  "hooks": {\n'
+  for one in $(mj_capture_events "$p"); do
+    event="${one%%=*}"; rel="${one#*=}"
+    [ "$first" = 1 ] || printf ',\n'; first=0
+    printf '    "%s": [\n      {\n        "matcher": "",\n        "hooks": [\n' "$event"
+    printf '          {\n            "type": "command",\n            "command": "${CLAUDE_PROJECT_DIR}/%s"\n          }\n' "$rel"
+    printf '        ]\n      }\n    ]'
+  done
+  printf '\n  }\n}\n'
 }
 
 # ---------------------------------------------------------------- capture status
 mj_capture_status() {
   [ $# = 0 ] || mj_die "$MJ_EX_USAGE" "capture status: unknown option $1"
   mj_require_installed
-  local p line state reason first=1
+  local p a line state reason first=1
   if [ "$MJ_JSON" = 1 ]; then
     printf '{"schema":"%s","providers":[' "$MJ_CAPTURE_SCHEMA"
     for p in $(mj_capture_providers); do
-      line="$(mj_capture_state "$p")"; state="${line%%	*}"; reason="${line#*	}"
-      [ "$first" = 1 ] || printf ','; first=0
-      printf '{"provider":"%s","state":"%s","reason":"%s"}' "$p" "$state" "$(mj_json_esc "$reason")"
+      for a in prompt session; do
+        line="$(mj_capture_state "$p" "$a")"; state="${line%%	*}"; reason="${line#*	}"
+        [ "$first" = 1 ] || printf ','; first=0
+        printf '{"provider":"%s","aspect":"%s","state":"%s","reason":"%s"}' "$p" "$a" "$state" "$(mj_json_esc "$reason")"
+      done
     done
     printf ']}\n'; return 0
   fi
+  # The prompt aspect keeps the provider's own name in the first column and the lifecycle
+  # aspect is suffixed, because they are two wirings of one provider and a reader looking
+  # for "is claude-code capturing" must not have to know that there are now two answers.
   for p in $(mj_capture_providers); do
-    line="$(mj_capture_state "$p")"; state="${line%%	*}"; reason="${line#*	}"
-    printf '%-14s %-12s %s\n' "$p" "$state" "$reason"
+    for a in prompt session; do
+      line="$(mj_capture_state "$p" "$a")"; state="${line%%	*}"; reason="${line#*	}"
+      printf '%-22s %-12s %s\n' "$([ "$a" = prompt ] && printf '%s' "$p" || printf '%s:session' "$p")" "$state" "$reason"
+    done
   done
 }
 
@@ -424,7 +665,8 @@ mj_validate_prompt_capture() {
 # clears by being deleted, deliberately, once a person has read it: it is a diagnostic, and
 # unlike a record, nothing is lost by removing it.
 mj_capture_failures() {
-  local dir="$1" rel="$2" log="$dir/.capture.log" n
+  local dir="$1" rel="$2" n
+  local log="$dir/.capture.log"
   [ -s "$log" ] || return 0
   n="$(grep -c . "$log" 2>/dev/null || true)"
   mj_doctrine_fail capture "$rel/.capture.log" \

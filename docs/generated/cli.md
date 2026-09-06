@@ -644,7 +644,7 @@ majordomus web report tests [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--suite` | `<SUITE>` | required | The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh) |
+| `--suite` | `<SUITE>` | required | The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`) |
 | `--crate-output` | `<CRATE_OUTPUT>` | — | The output of `cargo test`, for its totals |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |

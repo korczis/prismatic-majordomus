@@ -40,8 +40,10 @@ local/   this checkout's own state; ignored by Git, never shared, never normativ
 
 `local/` holds operational state: the active task, the ledger, checkpoints, handovers,
 sessions, local decisions and open questions under `local/state/`, rebuildable caches
-under `local/cache/`, bounded working contexts under `local/session-contexts/`, and raw
-local user prompts under `local/prompts/` when an integration can observe them. Nothing
+under `local/cache/`, the bounded working context of each episode under
+`local/session-contexts/` — written when a session opens, holding the context the builder
+resolved at that moment and the worker's own notes — and raw local user prompts under
+`local/prompts/` when an integration can observe them. Nothing
 under `local/` may be loaded into a model's context implicitly, published by a generator,
 or read as policy. `local/` never contains rules.
 
