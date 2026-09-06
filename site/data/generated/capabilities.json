@@ -1592,6 +1592,32 @@
       "source_route": "/docs/schemas/",
       "command": "adr",
       "test_case": "99_adr"
+    },
+    {
+      "id": "web-surface-declared-once",
+      "claim": "Every web surface is declared once at its producer and resolved into one topology, from which the router, the landing page and the machine-readable index are each projected",
+      "source": ".ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
+      "implementation": "apps/majordomus-cli/src/web/model.rs",
+      "test": "test/cases/89_web_surface.sh",
+      "status": "guaranteed",
+      "note": "A surface is a mount, a producer, a kind, a category, a visibility and the provenance of each; the routes the executable answers come from the capability declarations that already exist, a generated directory declares itself beside its output, and the application's site is read from the site generator's configuration. There is no central list. The case asks the page and the index independently and requires the same set of public mounts, so a link written into the page by hand fails it.",
+      "responsibility": "none",
+      "source_route": null,
+      "command": null,
+      "test_case": "89_web_surface"
+    },
+    {
+      "id": "web-namespaces-reserved",
+      "claim": "/docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount",
+      "source": ".ai/repo/rules/project/web-surface-declared-once.v1.md",
+      "implementation": "apps/majordomus-cli/src/web/discover.rs",
+      "test": "test/cases/89_web_surface.sh",
+      "status": "guaranteed",
+      "note": "The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there.",
+      "responsibility": "none",
+      "source_route": null,
+      "command": null,
+      "test_case": "89_web_surface"
     }
   ]
 }

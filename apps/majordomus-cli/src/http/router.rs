@@ -434,6 +434,29 @@ impl Router {
                 ),
             );
         };
+        // a surface owns its mount and everything under it, which is what a directory and a
+        // prefix want and what a single route does not: `/swagger/anything` is not the
+        // Swagger UI, and answering it as though it were would invent a route nothing
+        // declared. The surfaces that answer one path say so here, once.
+        let exact = req.path == surface.mount.as_str() || req.path == surface.mount.prefix();
+        // the home page is not among them: its mount is the root, which owns every path
+        // nothing else claims, and it answers those with a 404 that names what is served
+        let single_path = matches!(
+            bound,
+            Bound::Route(Native::OpenApi | Native::Swagger | Native::Mcp)
+        );
+        if single_path && !exact {
+            return error_response(
+                404,
+                "not_found",
+                &format!(
+                    "{} is the whole of the '{}' surface; nothing is served under it. What this process serves is listed at / and at {}web/surfaces",
+                    surface.mount,
+                    surface.id,
+                    crate::capability::model::HttpExposure::PREFIX
+                ),
+            );
+        }
         match bound {
             Bound::Directory(files) => {
                 if req.method != "GET" {
@@ -450,7 +473,7 @@ impl Router {
             }
             Bound::Route(Native::Home) => self.home(req, resolution),
             Bound::Route(Native::OpenApi) => self.openapi(),
-            Bound::Route(Native::Swagger) => swagger_response(&req.path),
+            Bound::Route(Native::Swagger) => swagger_response(),
             Bound::Route(Native::Mcp) => match &self.mcp {
                 Some(endpoint) => endpoint.handle(req),
                 None => error_response(
@@ -479,9 +502,9 @@ impl Router {
 
     /// `/`: the home page for a browser, the same topology as JSON for everything else.
     ///
-    /// The root surface owns every path nothing else claims, so a request for a path that
-    /// is not the root is the 404 this server can answer most usefully — it knows what it
-    /// does serve.
+    /// The root surface owns every path nothing else claims, which is how a request for a
+    /// path no surface declares reaches the most useful 404 this server can give: one from
+    /// a process that knows what it does serve.
     fn home(&self, req: &Request, resolution: &Resolution) -> Response {
         if req.path != "/" {
             return error_response(
@@ -749,8 +772,7 @@ fn repository_name(root: &str) -> &str {
 
 /// The Swagger UI shell. `/swagger` and `/swagger/` both answer it: the page loads its
 /// distribution and the document by absolute path, so neither form can resolve wrongly.
-fn swagger_response(path: &str) -> Response {
-    let _ = path;
+fn swagger_response() -> Response {
     Response::new(200, "text/html; charset=utf-8", swagger::page().to_string())
 }
 

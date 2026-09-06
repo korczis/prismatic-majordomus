@@ -233,13 +233,12 @@ pub fn web_topology(ctx: &Context, version: &str) -> String {
         "schema": WEB_SCHEMA,
         "generator": { "id": "majordomus-cli", "version": version },
         "generated_root": crate::web::discover::GENERATED_ROOT,
-        "reserved": {
-            "home": "/",
-            "documentation": crate::web::discover::DOCS_MOUNT,
-            "swagger": crate::http::swagger::SWAGGER_PATH,
-            "openapi": crate::http::swagger::SPEC_PATH,
-            "capabilities": crate::capability::model::HttpExposure::PREFIX,
-        },
+        // the reservations as data, from the one place that declares them: the validator
+        // refuses a topology that breaks one of these, and the site renders this map
+        "reserved": crate::web::discover::reserved()
+            .into_iter()
+            .map(|r| (r.role.to_string(), Value::String(r.path.to_string())))
+            .collect::<serde_json::Map<String, Value>>(),
         "surfaces": surfaces,
     });
     let mut text = serde_json::to_string_pretty(&document).unwrap_or_default();

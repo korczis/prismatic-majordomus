@@ -265,6 +265,68 @@ pub const SITE_CONFIG: &str = "site/config.toml";
 /// Where the site generator writes the build made for deployment, repository-relative.
 pub const SITE_PUBLIC: &str = "site/public";
 
+/// A mount whose meaning is fixed: the role it serves, the path it is at, and the id of the
+/// surface that must hold it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Reserved {
+    /// What the mount is for, in one word; the key the generated topology publishes it under.
+    pub role: &'static str,
+    /// The path, exactly as the constant that declares it carries it.
+    pub path: &'static str,
+    /// The surface that must own it.
+    pub owner: &'static str,
+}
+
+/// The mounts this repository reserves.
+///
+/// A path is a name, and this repository has already paid once for a name meaning two
+/// things: the Swagger UI held `/docs` because the word was free, and the day documentation
+/// arrived the obvious path was occupied. These pairs are that decision written down where
+/// something reads it — the validator refuses a topology that breaks one, the generated
+/// topology publishes them, and the documentation renders what is published rather than
+/// restating it.
+///
+/// Each path is the same constant its surface is declared with, so a mount that moves moves
+/// here and the reservation follows it.
+///
+/// ```
+/// use majordomus_cli::web::discover::reserved;
+/// let docs = reserved().into_iter().find(|r| r.role == "documentation").unwrap();
+/// assert_eq!(docs.path, "/docs");
+/// assert_eq!(docs.owner, "docs");
+/// let swagger = reserved().into_iter().find(|r| r.role == "swagger").unwrap();
+/// assert_eq!(swagger.path, "/swagger");
+/// ```
+pub fn reserved() -> Vec<Reserved> {
+    vec![
+        Reserved {
+            role: "home",
+            path: "/",
+            owner: HOME,
+        },
+        Reserved {
+            role: "documentation",
+            path: DOCS_MOUNT,
+            owner: DOCS,
+        },
+        Reserved {
+            role: "swagger",
+            path: swagger::SWAGGER_PATH,
+            owner: "swagger",
+        },
+        Reserved {
+            role: "openapi",
+            path: swagger::SPEC_PATH,
+            owner: "openapi",
+        },
+        Reserved {
+            role: "capabilities",
+            path: HttpExposure::PREFIX,
+            owner: "api",
+        },
+    ]
+}
+
 /// The routes the executable answers itself, narrowed to what this process offers.
 pub fn native(runtime: Runtime) -> Vec<Surface> {
     native_all()

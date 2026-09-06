@@ -45,8 +45,17 @@ Two names are reserved and may never be repurposed:
 - **`/swagger` is Swagger UI.** It is a viewer for the API, and a viewer for the API is not
   the documentation.
 
-`majordomus web validate` refuses a topology that breaks either, and the router refuses to
-be built from one.
+The reservations are data — `web::discover::reserved()`, each path the same constant its
+surface is declared with — and everything that cares reads them. `majordomus web validate`
+refuses a topology in which a reserved mount is held by anything but its owner, or in which
+an owner has wandered off its mount (`surface.reserved-namespace`); the router refuses to be
+built from such a topology, before it answers a request; and `docs/generated/web.json`
+publishes the map, which is what the website's reserved-names table renders. A collision
+would catch the two names taking each other's mount only while both surfaces exist —
+this catches it when one of them is gone, which is the state the repository was in.
+
+Reservations are about what a *process serves*. A publication's `/` belongs to the site as
+it is deployed, and always has.
 
 ## What a surface is
 

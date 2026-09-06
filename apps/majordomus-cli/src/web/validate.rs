@@ -69,6 +69,7 @@ pub fn validate(topology: &Topology, root: &Path, artifacts: Artifacts) -> Vec<F
     let mut findings = Vec::new();
     findings.extend(identities(topology));
     findings.extend(mounts(topology));
+    findings.extend(namespaces(topology));
     findings.extend(roots(topology, root, artifacts));
     findings.sort_by(|a, b| {
         a.severity
@@ -106,6 +107,81 @@ fn identities(topology: &Topology) -> Vec<Finding> {
                 .into(),
         })
         .collect()
+}
+
+/// The reserved mounts: a fixed meaning held by the surface that is supposed to hold it.
+///
+/// A collision already refuses two surfaces claiming one path, and while both the
+/// documentation and the viewer exist that is enough to keep them apart. It is not enough
+/// when one of them is gone: remove the documentation surface and nothing stops the viewer
+/// taking `/docs`, which is exactly the state this repository was in before. So the
+/// reservation is checked against the producer that must own it, not only against whoever
+/// else wants it.
+///
+/// The reservations are about what a *process serves*, which is the world these names have
+/// a meaning in; a publication's `/` belongs to the site as it is deployed and always has.
+/// So only served surfaces are checked, for the same reason mount ownership is checked per
+/// world: a rule applied across both would report a conflict that cannot happen.
+///
+/// Absence is not a violation. A process that serves no Cockpit, a build made without a
+/// site, a topology narrowed to one selector — each is a legitimate subset, and a
+/// reservation says who owns a mount *if* it is claimed and *if* its owner is present, never
+/// that every reserved mount must exist.
+///
+/// ```
+/// use majordomus_cli::web::{discover, validate, Mount, Topology};
+/// let mut surfaces = discover::native_all();
+/// // the viewer helps itself to the documentation's name, with the documentation absent
+/// let swagger = surfaces.iter_mut().find(|s| s.id == "swagger").unwrap();
+/// swagger.mount = Mount::parse(discover::DOCS_MOUNT).unwrap();
+/// let findings = validate::validate(
+///     &Topology::new(surfaces), std::path::Path::new("."), validate::Artifacts::Ignore);
+/// assert!(findings.iter().any(|f| f.rule == "surface.reserved-namespace"), "{findings:?}");
+/// ```
+fn namespaces(topology: &Topology) -> Vec<Finding> {
+    let mut findings = Vec::new();
+    for reservation in super::discover::reserved() {
+        let Ok(mount) = super::model::Mount::parse(reservation.path) else {
+            continue;
+        };
+        for surface in topology
+            .surfaces
+            .iter()
+            .filter(|s| s.availability.is_served())
+        {
+            if surface.mount == mount && surface.id != reservation.owner {
+                findings.push(Finding {
+                    severity: Severity::Error,
+                    rule: "surface.reserved-namespace".into(),
+                    surface: surface.id.clone(),
+                    message: format!(
+                        "'{}' is mounted at {mount}, which is reserved for the {} and belongs to '{}'",
+                        surface.id, reservation.role, reservation.owner
+                    ),
+                    remedy: format!(
+                        "mount '{}' somewhere else; {mount} means one thing and '{}' is what means it",
+                        surface.id, reservation.owner
+                    ),
+                });
+            }
+            if surface.id == reservation.owner && surface.mount != mount {
+                findings.push(Finding {
+                    severity: Severity::Error,
+                    rule: "surface.reserved-namespace".into(),
+                    surface: surface.id.clone(),
+                    message: format!(
+                        "'{}' is the {} and is mounted at {} rather than at its reserved {mount}",
+                        surface.id, reservation.role, surface.mount
+                    ),
+                    remedy: format!(
+                        "a reserved mount moves in the constant that declares it, so that everything reading it moves too; leave '{}' at {mount}",
+                        surface.id
+                    ),
+                });
+            }
+        }
+    }
+    findings
 }
 
 /// Mount ownership: one owner per path, in each of the two worlds a surface can live in.
@@ -322,6 +398,15 @@ mod tests {
     use crate::web::model::{Availability, Category, Mount, Surface, Visibility};
     use std::collections::BTreeMap;
 
+    /// The deployment's root: a static surface at `/` that a publication holds and no
+    /// process serves, which is what the site as it is deployed actually is.
+    fn deployment(id: &str) -> Surface {
+        Surface {
+            availability: Availability::PublishedOnly,
+            ..surface(id, "/", Some("site/public"))
+        }
+    }
+
     fn surface(id: &str, mount: &str, artifact: Option<&str>) -> Surface {
         Surface {
             id: id.into(),
@@ -351,7 +436,7 @@ mod tests {
     #[test]
     fn a_clean_topology_has_nothing_to_say() {
         let t = Topology::new(vec![
-            surface("app", "/", Some("site/public")),
+            deployment("app"),
             surface("tests", "/tests", Some("target/web/tests")),
             surface("api", "/api/v1", None),
         ]);
@@ -362,7 +447,7 @@ mod tests {
     #[test]
     fn the_root_application_may_hold_every_other_surface() {
         let t = Topology::new(vec![
-            surface("app", "/", Some("site/public")),
+            deployment("app"),
             surface("tests", "/tests", Some("target/web/tests")),
         ]);
         assert!(validate(&t, Path::new("/nonexistent"), Artifacts::Ignore).is_empty());
@@ -381,6 +466,70 @@ mod tests {
             .expect("nesting is a finding");
         assert!(nested.message.contains("/tests/ui"), "{}", nested.message);
         assert!(nested.remedy.contains("tests"), "{}", nested.remedy);
+    }
+
+    #[test]
+    fn a_reserved_mount_held_by_the_wrong_producer_is_refused_with_both_names() {
+        let mut surfaces = crate::web::discover::native_all();
+        let swagger = surfaces.iter_mut().find(|s| s.id == "swagger").unwrap();
+        swagger.mount = Mount::parse(crate::web::discover::DOCS_MOUNT).unwrap();
+        let findings = validate(
+            &Topology::new(surfaces),
+            Path::new("/nonexistent"),
+            Artifacts::Ignore,
+        );
+        let finding = findings
+            .iter()
+            .find(|f| f.rule == "surface.reserved-namespace")
+            .expect("the viewer taking the documentation's name is a finding");
+        assert!(finding.message.contains("/docs"), "{}", finding.message);
+        assert!(finding.message.contains("docs"), "{}", finding.message);
+        assert!(blocking(&findings));
+    }
+
+    #[test]
+    fn a_reserved_owner_that_wandered_off_its_mount_is_refused() {
+        let mut surfaces = crate::web::discover::native_all();
+        let swagger = surfaces.iter_mut().find(|s| s.id == "swagger").unwrap();
+        swagger.mount = Mount::parse("/api-viewer").unwrap();
+        let findings = validate(
+            &Topology::new(surfaces),
+            Path::new("/nonexistent"),
+            Artifacts::Ignore,
+        );
+        assert!(findings
+            .iter()
+            .any(|f| f.rule == "surface.reserved-namespace"));
+    }
+
+    #[test]
+    fn a_reserved_mount_nobody_claims_is_not_a_finding() {
+        // a process that serves no Cockpit, a build with no site, a topology narrowed by a
+        // selector: each is a legitimate subset, and absence is not a violation
+        let surfaces: Vec<Surface> = crate::web::discover::native_all()
+            .into_iter()
+            .filter(|s| s.id == "openapi")
+            .collect();
+        let findings = validate(
+            &Topology::new(surfaces),
+            Path::new("/nonexistent"),
+            Artifacts::Ignore,
+        );
+        assert!(findings.is_empty(), "{findings:?}");
+    }
+
+    #[test]
+    fn the_declared_topology_of_this_repository_holds_every_reserved_name() {
+        let mut surfaces = crate::web::discover::native_all();
+        surfaces.extend(crate::web::discover::application(Path::new("/nonexistent")));
+        // the fixture has no site, so the two site surfaces are absent; what is present
+        // must still sit where it is reserved to sit
+        let findings = validate(
+            &Topology::new(surfaces),
+            Path::new("/nonexistent"),
+            Artifacts::Ignore,
+        );
+        assert!(findings.is_empty(), "{findings:?}");
     }
 
     #[test]
@@ -417,11 +566,11 @@ mod tests {
     #[test]
     fn adding_an_unrelated_surface_does_not_disturb_the_others() {
         let before = Topology::new(vec![
-            surface("app", "/", Some("site/public")),
+            deployment("app"),
             surface("tests", "/tests", Some("target/web/tests")),
         ]);
         let after = Topology::new(vec![
-            surface("app", "/", Some("site/public")),
+            deployment("app"),
             surface("tests", "/tests", Some("target/web/tests")),
             surface(
                 "example-report",

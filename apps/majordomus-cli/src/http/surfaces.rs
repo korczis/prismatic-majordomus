@@ -212,7 +212,13 @@ mod tests {
     #[test]
     fn a_native_surface_with_no_handler_refuses_the_router() {
         let mut surfaces = discover::native_all();
-        surfaces[0].id = "invented".into();
+        // a surface at no reserved mount, so what refuses the router is the missing
+        // handler and not a reservation
+        let cockpit = surfaces
+            .iter_mut()
+            .find(|s| s.id == "cockpit")
+            .expect("the cockpit is declared");
+        cockpit.id = "invented".into();
         let topology = Topology::new(surfaces);
         let err = Served::resolve(&topology, Path::new("/nonexistent"), Runtime::full())
             .expect_err("a surface nothing answers is refused")
@@ -224,7 +230,11 @@ mod tests {
     #[test]
     fn a_collision_refuses_the_router_and_names_both_surfaces() {
         let mut surfaces = discover::native_all();
-        let mut clone = surfaces[1].clone();
+        let mut clone = surfaces
+            .iter()
+            .find(|s| s.id == "cockpit")
+            .expect("the cockpit is declared")
+            .clone();
         clone.id = "second".into();
         surfaces.push(clone);
         let topology = Topology::new(surfaces);

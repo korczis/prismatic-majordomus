@@ -299,6 +299,44 @@ fn outside_a_repository_serve_refuses_with_exit_12() {
 }
 
 #[test]
+fn a_surface_answers_its_own_mount_and_nothing_invents_a_route_under_it() {
+    let f = Fixture::new();
+    // the documentation surface is discovered from the site's own configuration; without
+    // one this repository has no site and no /docs to serve
+    f.write("site/config.toml", "base_url = \"/\"\n");
+    let s = Served::start(&f.root(), &[]);
+
+    // one path is one path: a single-route surface owns its mount and nothing below it
+    for (path, status) in [
+        ("/swagger", 200),
+        ("/swagger/", 200),
+        ("/swagger/anything", 404),
+        ("/openapi.json", 200),
+        ("/openapi.json/more", 404),
+        ("/", 200),
+        ("/nothing-declares-this", 404),
+    ] {
+        let (got, _, body) = s.request("GET", path, None);
+        assert_eq!(got, status, "GET {path}: {body}");
+    }
+
+    // a prefix surface owns its subtree, and the documentation mount does not swallow the
+    // routes beside it
+    let (status, _, _) = s.request("GET", "/api/v1/health", None);
+    assert_eq!(status, 200);
+    let (status, _, body) = s.request("GET", "/docs/", None);
+    assert_eq!(
+        status, 503,
+        "the documentation is not built in a fresh fixture: {body}"
+    );
+    assert!(body.contains("scripts/site-build --serve"), "{body}");
+    assert!(
+        !body.contains("swagger"),
+        "/docs is documentation, never the viewer: {body}"
+    );
+}
+
+#[test]
 fn head_is_answered_and_a_bad_kind_filter_is_an_invalid_input() {
     let f = Fixture::new();
     let s = Served::start(&f.root(), &[]);
