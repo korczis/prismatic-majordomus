@@ -188,7 +188,8 @@
         <ul class="ml-3 hidden lg:block"><li><a href="#op-objects-get" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/object</a></li><li><a href="#op-objects-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/objects</a></li><li><a href="#op-objects-search" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/search</a></li></ul></li><li><a href="#tag-peers" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">peers</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-peers-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/peers</a></li><li><a href="#op-peers-announce" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">POST /api/v1/peers/announce</a></li></ul></li><li><a href="#tag-perf" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">perf</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-perf-counters" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/perf</a></li></ul></li><li><a href="#tag-repository" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">repository</a>
-        <ul class="ml-3 hidden lg:block"><li><a href="#op-repository-info" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/repository</a></li><li><a href="#op-repository-scope" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/scope</a></li><li><a href="#op-repository-scope_classify" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/scope/classify</a></li></ul></li><li><a href="#tag-why" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">why</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-repository-info" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/repository</a></li><li><a href="#op-repository-scope" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/scope</a></li><li><a href="#op-repository-scope_classify" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/scope/classify</a></li></ul></li><li><a href="#tag-web" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">web</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-web-surfaces" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/web/surfaces</a></li></ul></li><li><a href="#tag-why" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">why</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-why-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why</a></li><li><a href="#op-why-areas" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/areas</a></li><li><a href="#op-why-audiences" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/audiences</a></li><li><a href="#op-why-diagnose" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/diagnose</a></li><li><a href="#op-why-moment" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/moment</a></li><li><a href="#op-why-validate" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/why/validate</a></li></ul></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
     </ul>
   </nav>
@@ -200,7 +201,7 @@
         <span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-xs text-body">OpenAPI 3.1.0</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-xs text-body">MIT</span></div>
       <article class="format mt-4 max-w-none break-words dark:format-invert [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:overflow-x-auto [&_pre]:max-w-full"><p>The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.</p>
 <p><strong>One registry, every interface a projection.</strong> Every operation here is a capability of the registry and nothing is declared for HTTP alone. <code>operationId</code> is the capability's canonical id; the same capability answers as the MCP tool <code>x-majordomus-mcp</code> names and as the command <code>x-majordomus-cli</code> names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.</p>
-<p><strong>Loopback, unauthenticated, read-only.</strong> The first <code>majordomus mcp</code> in a repository binds this server beside its stdio session and logs the URL; <code>majordomus serve</code> binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. <code>GET /</code> lists the routes; <code>/docs</code> is Swagger UI over this document; <code>/mcp</code> is MCP over HTTP for a second client.</p>
+<p><strong>Loopback, unauthenticated, read-only.</strong> The first <code>majordomus mcp</code> in a repository binds this server beside its stdio session and logs the URL; <code>majordomus serve</code> binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. <code>GET /</code> is the home page and lists every surface; <code>/swagger</code> is Swagger UI over this document; <code>/docs/</code> is this repository's own documentation; <code>/mcp</code> is MCP over HTTP for a second client.</p>
 <p><strong>Binding.</strong> <code>GET</code> binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); <code>POST</code> binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, <code>{ "error": { "code", "message" } }</code>: 400 <code>invalid_input</code>, 404 <code>not_found</code>, 422 <code>refused</code> (a command's alone), 500 <code>internal</code>; 405 <code>method_not_allowed</code> names a path that exists under another method.</p>
 <p><strong>Examples are benchmark cases.</strong> Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. <code>x-majordomus-benchmark</code> and <code>x-majordomus-cache</code> carry the policies; <code>x-majordomus-stability</code> and <code>x-majordomus-provenance</code> say how far a capability is proved and where it was declared.</p>
 <p><strong>Generated, committed, checked.</strong> This document is rendered from the registry at every request and committed as <code>docs/generated/openapi.json</code>; <code>majordomus generate --check</code> derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.</p>
@@ -221,7 +222,7 @@
     </section><section id="infrastructure" class="mt-12 scroll-mt-24">
       <h2 class="text-xl font-semibold tracking-tight text-heading">Server routes</h2>
       <p class="mt-2 text-sm text-body">Not capabilities: the HTTP projection's own routes, the same on every server.</p>
-      <ul class="mt-3 space-y-2"><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/</code><span class="min-w-0 basis-full text-body">The index: name, version, repository root, and where the document, the reference, the capabilities, the peers and MCP are.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/openapi.json</code><span class="min-w-0 basis-full text-body">This document, rendered from the registry at every request; what Swagger UI loads.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/docs</code><span class="min-w-0 basis-full text-body">Swagger UI over /openapi.json, served by the running server; the page embeds no specification of its own.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/cockpit</code><span class="min-w-0 basis-full text-body"></span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/mcp</code><span class="min-w-0 basis-full text-body">MCP over HTTP (Streamable HTTP) for a second client; the shared server only.</span></li></ul>
+      <ul class="mt-3 space-y-2"><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/</code><span class="min-w-0 basis-full text-body">The index: name, version, repository root, and where the document, the reference, the capabilities, the peers and MCP are.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/openapi.json</code><span class="min-w-0 basis-full text-body">This document, rendered from the registry at every request; what Swagger UI loads.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/swagger</code><span class="min-w-0 basis-full text-body"></span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/mcp</code><span class="min-w-0 basis-full text-body">MCP over HTTP (Streamable HTTP) for a second client; the shared server only.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/cockpit</code><span class="min-w-0 basis-full text-body"></span></li></ul>
     </section><section id="tag-artifacts" class="mt-12 scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">artifacts</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator&#39;s own manifest; nothing here keeps a list.</p><article id="op-artifacts-list" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -1554,6 +1555,51 @@ the repository does not have is an invalid input, not an empty answer.</td>
               </tr></tbody>
           </table>
         </div>
+      </article></section><section id="tag-web" class="mt-12 scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">web</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication.</p><article id="op-web-surfaces" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+          <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/web/surfaces</code>
+          <a href="#op-web-surfaces" class="font-mono text-xs text-body-subtle hover:underline">web.surfaces</a>
+        </div>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Every web surface, resolved</h3>
+        <p class="mt-1 text-sm text-body">The web topology in route-precedence order, with each surface&#39;s mount, category, visibility, kind, producer, artifact, runtime feature and the provenance of every value a reader could be surprised by; and which ids are served, published and offered to a person. Answered from the resolution this process serves from, so it cannot disagree with what the router routes or what the home page lists.</p>
+        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=2, ttl_seconds=5)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_web_surfaces</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;web&quot;, &quot;uri&quot;: &quot;majordomus://web&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading">curl -s &quot;http://127.0.0.1:8741/api/v1/web/surfaces&quot;</pre></div>
+
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[28rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-SurfaceReport" class="text-fg-brand hover:underline">SurfaceReport</a></td>
+                <td class="px-3 py-2 text-body">Every web surface, resolved: the result.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+              </tr></tbody>
+          </table>
+        </div>
       </article></section><section id="tag-why" class="mt-12 scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">why</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">The operational failure modes this tool is a response to: the moments a reader recognises, the audiences that recognise them, the areas they fall under, and what a reader&#39;s own symptoms imply. Every entry is a file under the layer&#39;s why section; nothing here holds a list, and a moment added there is answered by all of these without a registration anywhere.</p><article id="op-why-list" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -2615,6 +2661,17 @@ declarative object.</td>
                 <td class="px-3 py-2 font-mono text-body">yes</td>
                 <td class="px-3 py-2 text-body">Where it is projected; absence is explicit.</td>
               </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">availability</td>
+                <td class="px-3 py-2 font-mono text-body">CapabilityAvailability <span class="text-body-subtle">→</span> <a href="#schema-CapabilityAvailability" class="text-fg-brand hover:underline">CapabilityAvailability</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where it means anything: classified from the kind and the transports above, so
+that a projection reads a field instead of deciding for itself.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">visibility</td>
+                <td class="px-3 py-2 font-mono text-body">CapabilityVisibility <span class="text-body-subtle">→</span> <a href="#schema-CapabilityVisibility" class="text-fg-brand hover:underline">CapabilityVisibility</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Who it is for: classified from the same transports.</td>
+              </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">stability</td>
                 <td class="px-3 py-2 font-mono text-body">Stability <span class="text-body-subtle">→</span> <a href="#schema-Stability" class="text-fg-brand hover:underline">Stability</a></td>
                 <td class="px-3 py-2 font-mono text-body">yes</td>
@@ -2636,7 +2693,28 @@ declarative object.</td>
                 <td class="px-3 py-2 text-body">Whether the executor keeps its results.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a></p></article><article id="schema-CapabilityId" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a></p></article><article id="schema-CapabilityAvailability" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">CapabilityAvailability</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;always&quot; | &quot;runtime&quot; | &quot;build_time&quot; | &quot;authenticated&quot;</span>
+        </div><p class="mt-2 text-sm text-body">Where a capability means anything: the environment a caller must be in for it to
+answer at all.</p>
+<p>The published site and the running server are genuinely different places. Without this
+on the model, every template grows its own idea of what works where — and the usual
+shape that takes is a condition on the page's own address, which is a rule hidden
+where nobody will find it and nothing can test it. This is the only thing a projection
+may ask.</p>
+<p>It is classified rather than declared: the facts that decide it — what kind of thing
+this is and which transports it is projected through — are already on the descriptor,
+and asking each declaration to restate them would be the same knowledge written twice.
+[<code>Availability::classify</code>] is the one place the rule lives.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">always</code><span class="min-w-0 text-body">True in every environment, a published page with no server included: the layer&#39;s
+own content, which a build renders and a process serves from the same index.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">runtime</code><span class="min-w-0 text-body">A process must be running to answer: everything with a handler, whether it is
+reached over HTTP, over MCP or from the command line.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">build_time</code><span class="min-w-0 text-body">A value captured when the site was generated, rendered afterwards as the capture
+it is. Nothing classifies to this yet; the static projection of the graph is what
+will declare it, and it is on the model so that a captured value can be labelled
+as captured instead of being shown as current.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">authenticated</code><span class="min-w-0 text-body">A process must be running and the caller must be one it has authenticated. Nothing
+in this repository authenticates a caller yet; a surface that does will say so
+here rather than in the template that renders its link.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Capability" class="font-mono text-fg-brand hover:underline">Capability</a></p></article><article id="schema-CapabilityId" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">CapabilityId</h3>
           <span class="font-mono text-xs text-body-subtle">string</span>
@@ -2761,7 +2839,14 @@ of the same object view repeated.</p><div class="mt-3 overflow-x-auto rounded-ba
                 <td class="px-3 py-2 text-body">Whether the executor keeps its results.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-CapabilityList" class="font-mono text-fg-brand hover:underline">CapabilityList</a></p></article><article id="schema-CatalogueView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-CapabilityList" class="font-mono text-fg-brand hover:underline">CapabilityList</a></p></article><article id="schema-CapabilityVisibility" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">CapabilityVisibility</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;public&quot; | &quot;developer&quot; | &quot;internal&quot;</span>
+        </div><p class="mt-2 text-sm text-body">Who a capability is for, and whether anything offers it.</p>
+<p>Internal is a statement, not an omission: a capability nothing projects is invisible
+either way, and the difference between deliberate and forgotten is exactly what this
+records.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">public</code><span class="min-w-0 text-body">Offered to anyone who can reach the process: an HTTP route or an MCP entry.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">developer</code><span class="min-w-0 text-body">Offered to whoever runs the executable, and to nobody over a network.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">internal</code><span class="min-w-0 text-body">Projected nowhere. It exists, it is listed as existing, and no surface offers it.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Capability" class="font-mono text-fg-brand hover:underline">Capability</a></p></article><article id="schema-CatalogueView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">CatalogueView</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -3786,7 +3871,7 @@ resolve an end adds an external node rather than a dangling edge.</p><div class=
                 <td class="px-3 py-2 text-body">The one error.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="#op-deploy-list" class="font-mono text-fg-brand hover:underline">deploy.list</a> <a href="#op-deploy-check" class="font-mono text-fg-brand hover:underline">deploy.check</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-distribution-model" class="font-mono text-fg-brand hover:underline">distribution.model</a> <a href="#op-distribution-artifact" class="font-mono text-fg-brand hover:underline">distribution.artifact</a> <a href="#op-distribution-build" class="font-mono text-fg-brand hover:underline">distribution.build</a> <a href="#op-distribution-releases" class="font-mono text-fg-brand hover:underline">distribution.releases</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-health-live" class="font-mono text-fg-brand hover:underline">health.live</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-health-ready" class="font-mono text-fg-brand hover:underline">health.ready</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a> <a href="#op-why-list" class="font-mono text-fg-brand hover:underline">why.list</a> <a href="#op-why-areas" class="font-mono text-fg-brand hover:underline">why.areas</a> <a href="#op-why-audiences" class="font-mono text-fg-brand hover:underline">why.audiences</a> <a href="#op-why-diagnose" class="font-mono text-fg-brand hover:underline">why.diagnose</a> <a href="#op-why-moment" class="font-mono text-fg-brand hover:underline">why.moment</a> <a href="#op-why-validate" class="font-mono text-fg-brand hover:underline">why.validate</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="#op-deploy-list" class="font-mono text-fg-brand hover:underline">deploy.list</a> <a href="#op-deploy-check" class="font-mono text-fg-brand hover:underline">deploy.check</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-distribution-model" class="font-mono text-fg-brand hover:underline">distribution.model</a> <a href="#op-distribution-artifact" class="font-mono text-fg-brand hover:underline">distribution.artifact</a> <a href="#op-distribution-build" class="font-mono text-fg-brand hover:underline">distribution.build</a> <a href="#op-distribution-releases" class="font-mono text-fg-brand hover:underline">distribution.releases</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-health-live" class="font-mono text-fg-brand hover:underline">health.live</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-health-ready" class="font-mono text-fg-brand hover:underline">health.ready</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a> <a href="#op-web-surfaces" class="font-mono text-fg-brand hover:underline">web.surfaces</a> <a href="#op-why-list" class="font-mono text-fg-brand hover:underline">why.list</a> <a href="#op-why-areas" class="font-mono text-fg-brand hover:underline">why.areas</a> <a href="#op-why-audiences" class="font-mono text-fg-brand hover:underline">why.audiences</a> <a href="#op-why-diagnose" class="font-mono text-fg-brand hover:underline">why.diagnose</a> <a href="#op-why-moment" class="font-mono text-fg-brand hover:underline">why.moment</a> <a href="#op-why-validate" class="font-mono text-fg-brand hover:underline">why.validate</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ErrorDetail</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -3797,7 +3882,9 @@ resolve an end adds an external node rather than a dangling edge.</p><div class=
                 <td class="px-3 py-2 font-mono font-semibold text-heading">code</td>
                 <td class="px-3 py-2 font-mono text-body">string</td>
                 <td class="px-3 py-2 font-mono text-body">yes</td>
-                <td class="px-3 py-2 text-body"><code>invalid_input</code>, <code>not_found</code>, <code>refused</code>, <code>internal</code>, <code>method_not_allowed</code>.</td>
+                <td class="px-3 py-2 text-body">What kind of failure it is: <code>invalid_input</code>, <code>not_found</code>, <code>method_not_allowed</code>,
+<code>refused</code>, <code>forbidden</code>, <code>too_large</code>, <code>unavailable</code> (a surface whose producer has not
+run) or <code>internal</code>.</td>
               </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">message</td>
                 <td class="px-3 py-2 font-mono text-body">string</td>
@@ -3939,7 +4026,18 @@ a reader is offered is one of these; nothing anywhere lists the values by hand.<
                 <td class="px-3 py-2 text-body">By command.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-CatalogueView" class="font-mono text-fg-brand hover:underline">CatalogueView</a></p></article><article id="schema-Finding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-CatalogueView" class="font-mono text-fg-brand hover:underline">CatalogueView</a></p></article><article id="schema-Fact" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Fact</h3>
+          <span class="font-mono text-xs text-body-subtle">boolean | integer (int64) | string | array of string</span>
+        </div><p class="mt-2 text-sm text-body">One fact a node carries from its object's front matter, in the shapes a node can hold.</p><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Node" class="font-mono text-fg-brand hover:underline">Node</a></p></article><article id="schema-Feature" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Feature</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;mcp&quot; | &quot;cockpit&quot;</span>
+        </div><p class="mt-2 text-sm text-body">A capability of the running process a surface needs in order to exist.</p>
+<p>The registry describes the effective process, not the maximum one: a build or an
+invocation that answers no MCP has no MCP surface, and the home page cannot link to
+one. Stating the dependency as data is what keeps that automatic.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">mcp</code><span class="min-w-0 text-body">This process answers MCP over HTTP.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">cockpit</code><span class="min-w-0 text-body">This process serves the Cockpit.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Surface" class="font-mono text-fg-brand hover:underline">Surface</a></p></article><article id="schema-Finding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Finding</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -4729,7 +4827,11 @@ reader that wants to know which is which.</td>
                 <td class="px-3 py-2 text-body">How many concrete situations it carries.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-CatalogueView" class="font-mono text-fg-brand hover:underline">CatalogueView</a> <a href="#schema-MomentDetail" class="font-mono text-fg-brand hover:underline">MomentDetail</a></p></article><article id="schema-Node" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-CatalogueView" class="font-mono text-fg-brand hover:underline">CatalogueView</a> <a href="#schema-MomentDetail" class="font-mono text-fg-brand hover:underline">MomentDetail</a></p></article><article id="schema-Mount" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Mount</h3>
+          <span class="font-mono text-xs text-body-subtle">string</span>
+        </div><p class="mt-2 text-sm text-body">An absolute mount path, without a trailing slash.</p><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Surface" class="font-mono text-fg-brand hover:underline">Surface</a></p></article><article id="schema-Node" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Node</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -4779,6 +4881,15 @@ it anywhere.</p><div class="mt-3 overflow-x-auto rounded-base border border-defa
                 <td class="px-3 py-2 font-mono text-body">no</td>
                 <td class="px-3 py-2 text-body">True when the node stands for something the graph names but does not hold: a
 reference that resolves to nothing in this repository.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">facts</td>
+                <td class="px-3 py-2 font-mono text-body">map of Fact <span class="text-body-subtle">→</span> <a href="#schema-Fact" class="text-fg-brand hover:underline">Fact</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">What the object's own kind declares about it, as its schema validated it: the
+fields of its front matter that are facts about the thing rather than the document
+itself. A rule carries its class and its statement, a skill its inputs and
+outputs, a decision its date — the vocabulary that makes each kind worth having,
+rather than the four fields every kind happens to share.</td>
               </tr></tbody>
           </table>
         </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Graph" class="font-mono text-fg-brand hover:underline">Graph</a></p></article><article id="schema-ObjectList" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
@@ -5188,7 +5299,38 @@ process runs as a non-root user and could not bind one.</p><p class="mt-3 text-x
           <h3 class="font-mono text-base font-semibold text-heading">Positive</h3>
           <span class="font-mono text-xs text-body-subtle">integer (uint32)</span>
         </div><p class="mt-2 text-sm text-body">A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused
-wherever zero would mean "a deployment that cannot run".</p><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Budgets" class="font-mono text-fg-brand hover:underline">Budgets</a> <a href="#schema-Concurrency" class="font-mono text-fg-brand hover:underline">Concurrency</a> <a href="#schema-HealthRoutes" class="font-mono text-fg-brand hover:underline">HealthRoutes</a> <a href="#schema-Machines" class="font-mono text-fg-brand hover:underline">Machines</a> <a href="#schema-Resources" class="font-mono text-fg-brand hover:underline">Resources</a></p></article><article id="schema-Provider" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+wherever zero would mean "a deployment that cannot run".</p><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Budgets" class="font-mono text-fg-brand hover:underline">Budgets</a> <a href="#schema-Concurrency" class="font-mono text-fg-brand hover:underline">Concurrency</a> <a href="#schema-HealthRoutes" class="font-mono text-fg-brand hover:underline">HealthRoutes</a> <a href="#schema-Machines" class="font-mono text-fg-brand hover:underline">Machines</a> <a href="#schema-Resources" class="font-mono text-fg-brand hover:underline">Resources</a></p></article><article id="schema-Provenance" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Provenance</h3>
+          <span class="font-mono text-xs text-body-subtle">one of 5 variants</span>
+        </div><p class="mt-2 text-sm text-body">Where a resolved value came from.</p>
+<p>Kept for every field a consumer can be surprised by, so that <code>web explain</code> can answer
+"why is this mounted here?" without anybody reading the discovery code.</p><p class="mt-3 text-sm text-body"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Read from the capability registry: the routes the executable already declares once.</p>
+        <div class="mt-1 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">source</td><td class="px-3 py-2 font-mono text-body">&quot;registry&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body"></td></tr></tbody>
+          </table>
+        </div><p class="mt-3 text-sm text-body"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Read from a producer&#39;s own declaration beside its output (`surface.json`).</p>
+        <div class="mt-1 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">path</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body">The declaration file, repository-relative.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">source</td><td class="px-3 py-2 font-mono text-body">&quot;producer-declaration&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body"></td></tr></tbody>
+          </table>
+        </div><p class="mt-3 text-sm text-body"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Inferred from a file or directory being where the convention says it is.</p>
+        <div class="mt-1 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">path</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body">What was found, repository-relative.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">source</td><td class="px-3 py-2 font-mono text-body">&quot;filesystem&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body"></td></tr></tbody>
+          </table>
+        </div><p class="mt-3 text-sm text-body"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Inferred from the site generator&#39;s own configuration.</p>
+        <div class="mt-1 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">path</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body">The configuration file, repository-relative.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">source</td><td class="px-3 py-2 font-mono text-body">&quot;site-config&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body"></td></tr></tbody>
+          </table>
+        </div><p class="mt-3 text-sm text-body"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The model&#39;s documented default for a value nobody stated.</p>
+        <div class="mt-1 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">source</td><td class="px-3 py-2 font-mono text-body">&quot;default&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body"></td></tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Surface" class="font-mono text-fg-brand hover:underline">Surface</a></p></article><article id="schema-Provider" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Provider</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -5836,7 +5978,187 @@ projection; the registry refuses to build otherwise.</p><ul class="mt-3 space-y-
                 <td class="px-3 py-2 text-body">Executables the executor caches.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-CapabilityList" class="font-mono text-fg-brand hover:underline">CapabilityList</a> <a href="#schema-RepositoryReport" class="font-mono text-fg-brand hover:underline">RepositoryReport</a></p></article><article id="schema-Tally" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-CapabilityList" class="font-mono text-fg-brand hover:underline">CapabilityList</a> <a href="#schema-RepositoryReport" class="font-mono text-fg-brand hover:underline">RepositoryReport</a></p></article><article id="schema-Surface" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Surface</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">One resolved surface: everything a consumer needs, with the provenance of what it could
+be surprised by.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Identity, unique across the topology; the selector <code>--only</code> and <code>--exclude</code> use it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">One line: what a reader sees in a listing.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">category</td>
+                <td class="px-3 py-2 font-mono text-body">SurfaceCategory <span class="text-body-subtle">→</span> <a href="#schema-SurfaceCategory" class="text-fg-brand hover:underline">SurfaceCategory</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What it is for, which is how a listing groups it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">visibility</td>
+                <td class="px-3 py-2 font-mono text-body">SurfaceVisibility <span class="text-body-subtle">→</span> <a href="#schema-SurfaceVisibility" class="text-fg-brand hover:underline">SurfaceVisibility</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether a person is shown it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">kind</td>
+                <td class="px-3 py-2 font-mono text-body">SurfaceKind <span class="text-body-subtle">→</span> <a href="#schema-SurfaceKind" class="text-fg-brand hover:underline">SurfaceKind</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">How it answers.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">mount</td>
+                <td class="px-3 py-2 font-mono text-body">Mount <span class="text-body-subtle">→</span> <a href="#schema-Mount" class="text-fg-brand hover:underline">Mount</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where it answers.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">producer</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What produced it: a command, a module, or the generator that writes the directory.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">feature</td>
+                <td class="px-3 py-2 font-mono text-body">Feature | null <span class="text-body-subtle">→</span> <a href="#schema-Feature" class="text-fg-brand hover:underline">Feature</a></td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The runtime capability it needs; absent when the process always has it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">artifact</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The generated directory, repository-relative, for a static surface.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">index</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The file served for the mount itself, when the surface has one.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">availability</td>
+                <td class="px-3 py-2 font-mono text-body">SurfaceAvailability <span class="text-body-subtle">→</span> <a href="#schema-SurfaceAvailability" class="text-fg-brand hover:underline">SurfaceAvailability</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where the surface's files go and who answers for it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">built_from</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The revision the artifact was built from, when its producer recorded one: what
+makes a stale build a finding rather than a surprise.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">provenance</td>
+                <td class="px-3 py-2 font-mono text-body">map of Provenance <span class="text-body-subtle">→</span> <a href="#schema-Provenance" class="text-fg-brand hover:underline">Provenance</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where each interesting value came from, by field name.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-SurfaceReport" class="font-mono text-fg-brand hover:underline">SurfaceReport</a></p></article><article id="schema-SurfaceAvailability" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">SurfaceAvailability</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;both&quot; | &quot;served-only&quot; | &quot;published-only&quot;</span>
+        </div><p class="mt-2 text-sm text-body">Whether a surface is part of the static publication, served only while a process runs,
+or both.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">both</code><span class="min-w-0 text-body">Served by the running executable and published as files.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">served-only</code><span class="min-w-0 text-body">Answered by the running executable and never published: a route the process
+computes, or a build made for this server&#39;s own mount rather than for deployment.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">published-only</code><span class="min-w-0 text-body">Published as files; the running executable serves it from the same directory.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Surface" class="font-mono text-fg-brand hover:underline">Surface</a></p></article><article id="schema-SurfaceCategory" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">SurfaceCategory</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;interface&quot; | &quot;documentation&quot; | &quot;api&quot; | &quot;protocol&quot; | &quot;report&quot;</span>
+        </div><p class="mt-2 text-sm text-body">What a surface is for, which is how a reader is shown it.</p>
+<p>A category is the one piece of intent that a mount cannot carry: <code>/openapi.json</code> and
+<code>/swagger</code> sit beside each other and are a document and a viewer for it. Grouping is
+derived from this field and never from a list of paths kept somewhere else.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">interface</code><span class="min-w-0 text-body">Something a person opens and looks at: the home page, the Cockpit.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">documentation</code><span class="min-w-0 text-body">Prose and reference written for a person: the site, the Swagger UI.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">api</code><span class="min-w-0 text-body">A machine-readable surface of the capability registry.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">protocol</code><span class="min-w-0 text-body">A wire protocol another program speaks.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">report</code><span class="min-w-0 text-body">Generated evidence of a run: a test report, a benchmark report.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Surface" class="font-mono text-fg-brand hover:underline">Surface</a></p></article><article id="schema-SurfaceFinding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">SurfaceFinding</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">One thing wrong with a topology, said so a person can fix it without reading this file.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">severity</td>
+                <td class="px-3 py-2 font-mono text-body">SurfaceFindingSeverity <span class="text-body-subtle">→</span> <a href="#schema-SurfaceFindingSeverity" class="text-fg-brand hover:underline">SurfaceFindingSeverity</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">How much it matters.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">rule</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The rule that produced it, stable enough to grep for.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">surface</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The surface it is about.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">message</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What is wrong.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">remedy</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What to do about it.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-SurfaceReport" class="font-mono text-fg-brand hover:underline">SurfaceReport</a></p></article><article id="schema-SurfaceFindingSeverity" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">SurfaceFindingSeverity</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;error&quot; | &quot;warning&quot;</span>
+        </div><p class="mt-2 text-sm text-body">How much a finding matters.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">error</code><span class="min-w-0 text-body">The topology may not be served or published in this state.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">warning</code><span class="min-w-0 text-body">Worth reading; serving is still coherent.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-SurfaceFinding" class="font-mono text-fg-brand hover:underline">SurfaceFinding</a></p></article><article id="schema-SurfaceKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">SurfaceKind</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;static-directory&quot; | &quot;native-route&quot; | &quot;redirect&quot;</span>
+        </div><p class="mt-2 text-sm text-body">How a surface answers a request.</p>
+<p>Only what this repository serves: a directory of generated files, a path the executable
+answers itself, and a redirect. A new <em>kind</em> is a new behaviour, never a new name for
+the same behaviour with different data.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">static-directory</code><span class="min-w-0 text-body">A generated directory, mounted under its prefix and served from disk.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">native-route</code><span class="min-w-0 text-body">A path the executable answers itself, from its own registry or handlers.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">redirect</code><span class="min-w-0 text-body">A path that answers with a redirect to another one.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Surface" class="font-mono text-fg-brand hover:underline">Surface</a></p></article><article id="schema-SurfaceReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">SurfaceReport</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">The web surfaces of this repository, as the process that answers resolved them.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">surfaces</td>
+                <td class="px-3 py-2 font-mono text-body">array of Surface <span class="text-body-subtle">→</span> <a href="#schema-Surface" class="text-fg-brand hover:underline">Surface</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Every resolved surface, in route-precedence order: the order a router consults
+them in, so the first whose mount owns a path is the one that answers it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">served</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The ids a process answers for, in the same order. A surface published and not
+served is absent here.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">published</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The ids a publication holds, in the same order.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">public</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The ids offered to a person, which is what the home page lists.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+                <td class="px-3 py-2 font-mono text-body">array of SurfaceFinding <span class="text-body-subtle">→</span> <a href="#schema-SurfaceFinding" class="text-fg-brand hover:underline">SurfaceFinding</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What validation says about the topology as it stands. Empty is the healthy answer;
+a finding here is the same one <code>majordomus web validate</code> reports, with its remedy.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-web-surfaces" class="font-mono text-fg-brand hover:underline">web.surfaces</a></p></article><article id="schema-SurfaceVisibility" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">SurfaceVisibility</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;public&quot; | &quot;internal&quot;</span>
+        </div><p class="mt-2 text-sm text-body">Who a surface is offered to.</p>
+<p>Two values and no more: a surface is either offered for a person to discover, or it is
+part of the topology without being advertised. Both are always in the machine-readable
+answer — hiding a served route from introspection would only hide it from the people
+maintaining it.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">public</code><span class="min-w-0 text-body">Listed for a person: it appears on the home page.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">internal</code><span class="min-w-0 text-body">Served and introspectable, not advertised: a machine speaks to it, or another
+surface links to it.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Surface" class="font-mono text-fg-brand hover:underline">Surface</a></p></article><article id="schema-Tally" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Tally</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -6001,7 +6323,7 @@ reason for resources and is never written by hand.</p><ul class="mt-3 space-y-1 
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/255ef14b2e3f21f8ac67db4f55a0b56907f93bf2" class="font-mono hover:underline">255ef14</a> · inputs <span class="font-mono">87223942c6aa</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4c1884e1b39c0111e01072481de588d82978e499" class="font-mono hover:underline">4c1884e</a> · inputs <span class="font-mono">bde3e43271a3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

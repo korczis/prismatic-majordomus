@@ -240,6 +240,12 @@
     <table class="w-full min-w-[28rem] text-left text-sm">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">availability</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Where it means anything: classified from the kind and the transports above, so
+that a projection reads a field instead of deciding for itself.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">benchmark</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -305,6 +311,11 @@ declarative object.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The short name every projection shows.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">visibility</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Who it is for: classified from the same transports.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -413,6 +424,31 @@ declarative object.</td>
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;CapabilityAvailability&quot;: {
+      &quot;description&quot;: &quot;Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page&#39;s own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n[`Availability::classify`] is the one place the rule lives.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;always&quot;,
+          &quot;description&quot;: &quot;True in every environment, a published page with no server included: the layer&#39;s\nown content, which a build renders and a process serves from the same index.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;runtime&quot;,
+          &quot;description&quot;: &quot;A process must be running to answer: everything with a handler, whether it is\nreached over HTTP, over MCP or from the command line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;build_time&quot;,
+          &quot;description&quot;: &quot;A value captured when the site was generated, rendered afterwards as the capture\nit is. Nothing classifies to this yet; the static projection of the graph is what\nwill declare it, and it is on the model so that a captured value can be labelled\nas captured instead of being shown as current.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;authenticated&quot;,
+          &quot;description&quot;: &quot;A process must be running and the caller must be one it has authenticated. Nothing\nin this repository authenticates a caller yet; a surface that does will say so\nhere rather than in the template that renders its link.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;CapabilityId&quot;: {
       &quot;description&quot;: &quot;A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `&lt;kind&gt;.&lt;identity&gt;` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind&#39;s identity rule produced it.&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -504,6 +540,26 @@ declarative object.</td>
             &quot;media_type&quot;
           ],
           &quot;type&quot;: &quot;object&quot;
+        }
+      ]
+    },
+    &quot;CapabilityVisibility&quot;: {
+      &quot;description&quot;: &quot;Who a capability is for, and whether anything offers it.\n\nInternal is a statement, not an omission: a capability nothing projects is invisible\neither way, and the difference between deliberate and forgotten is exactly what this\nrecords.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;public&quot;,
+          &quot;description&quot;: &quot;Offered to anyone who can reach the process: an HTTP route or an MCP entry.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;developer&quot;,
+          &quot;description&quot;: &quot;Offered to whoever runs the executable, and to nobody over a network.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;internal&quot;,
+          &quot;description&quot;: &quot;Projected nowhere. It exists, it is listed as existing, and no surface offers it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     },
@@ -694,6 +750,10 @@ declarative object.</td>
   },
   &quot;description&quot;: &quot;The canonical descriptor. Everything a projection may say about a capability is here.&quot;,
   &quot;properties&quot;: {
+    &quot;availability&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/CapabilityAvailability&quot;,
+      &quot;description&quot;: &quot;Where it means anything: classified from the kind and the transports above, so\nthat a projection reads a field instead of deciding for itself.&quot;
+    },
     &quot;benchmark&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/BenchmarkPolicy&quot;,
       &quot;description&quot;: &quot;Whether it is a benchmark target; the cases come from the input type.&quot;
@@ -748,6 +808,10 @@ declarative object.</td>
     &quot;title&quot;: {
       &quot;description&quot;: &quot;The short name every projection shows.&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;visibility&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/CapabilityVisibility&quot;,
+      &quot;description&quot;: &quot;Who it is for: classified from the same transports.&quot;
     }
   },
   &quot;required&quot;: [
@@ -760,6 +824,8 @@ declarative object.</td>
     &quot;output&quot;,
     &quot;provenance&quot;,
     &quot;exposure&quot;,
+    &quot;availability&quot;,
+    &quot;visibility&quot;,
     &quot;stability&quot;,
     &quot;benchmark&quot;,
     &quot;cache&quot;
@@ -796,7 +862,7 @@ declarative object.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::capabilities</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DescribeInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Capability</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d65a86a730c38a23ae0aca5371d3d956e7a9ca9b41f7e16decd2d3ab85883ae2</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">d3f78b70458995760a01ac959d9fb2dcb256c8548d26c25f01f1aeaa2f2b3c8f</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.2.0</dd></div>
       </dl>
     </div>
@@ -828,7 +894,7 @@ declarative object.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/255ef14b2e3f21f8ac67db4f55a0b56907f93bf2" class="font-mono hover:underline">255ef14</a> · inputs <span class="font-mono">87223942c6aa</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4c1884e1b39c0111e01072481de588d82978e499" class="font-mono hover:underline">4c1884e</a> · inputs <span class="font-mono">bde3e43271a3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
