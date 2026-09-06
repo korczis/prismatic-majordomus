@@ -720,8 +720,14 @@ fn a_listing_is_read_a_page_at_a_time_and_entered_by_its_parts() {
         .nth(1)
         .and_then(|rest| rest.split('"').next())
         .expect("a module chip");
-    assert!(chip.contains("q=repository"), "the chip dropped the filter: {chip}");
-    assert!(!chip.contains("page="), "the chip kept a page number: {chip}");
+    assert!(
+        chip.contains("q=repository"),
+        "the chip dropped the filter: {chip}"
+    );
+    assert!(
+        !chip.contains("page="),
+        "the chip kept a page number: {chip}"
+    );
 
     // a page number past the end is a page that exists, not an error and not a panic
     let (status, body) = html(&s, "/cockpit/objects?page=99999");

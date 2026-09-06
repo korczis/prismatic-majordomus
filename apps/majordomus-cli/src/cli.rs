@@ -532,7 +532,7 @@ pub struct ServeArgs {
     #[arg(long, default_value_t = DEFAULT_PORT)]
     pub port: u16,
 
-    /// Bind the address this deployment object declares (.ai/repo/deployments/<ID>.yaml)
+    /// Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`)
     /// instead of the local default. What a hosted process is started with; the address is
     /// the object's, not this command line's
     #[arg(long, value_name = "ID", conflicts_with_all = ["host", "port"])]
