@@ -181,6 +181,10 @@ pub struct RepositoryIdentity {
     pub layer_schema: String,
     /// Section name to repository-relative path, as the manifest declares them.
     pub sections: BTreeMap<String, String>,
+    /// The checkout-local half of the layer, repository-relative. Never tracked, and
+    /// where anything this checkout alone knows — the server's lease, this snapshot's
+    /// cache — is kept.
+    pub local_path: String,
     /// Whether this checkout is a linked work tree rather than the main one.
     pub linked_worktree: bool,
 }

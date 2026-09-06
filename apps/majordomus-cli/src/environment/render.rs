@@ -685,6 +685,7 @@ pub(crate) mod tests_support {
                 root: "/somewhere/prismatic-majordomus".into(),
                 layer_schema: "ai-repository/v1".into(),
                 sections: Default::default(),
+                local_path: ".ai/local".into(),
                 linked_worktree: false,
             },
             vcs: VcsState::Git(GitWorkingTree {

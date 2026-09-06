@@ -460,6 +460,7 @@ fn repository_identity(repository: &Repository) -> RepositoryIdentity {
             .iter()
             .map(|(name, path)| (name.clone(), format!(".ai/{path}")))
             .collect(),
+        local_path: repository.local_path(),
         // A linked work tree has a `.git` file rather than a `.git` directory. One stat.
         linked_worktree: root.join(".git").is_file(),
     }
