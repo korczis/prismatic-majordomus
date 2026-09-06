@@ -31,6 +31,10 @@
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
     },
     {
+      "name": "graph",
+      "description": "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
+    },
+    {
       "name": "objects",
       "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
     },
@@ -45,6 +49,10 @@
     {
       "name": "repository",
       "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
+    },
+    {
+      "name": "system",
+      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own."
     }
   ],
   "paths": {
@@ -246,6 +254,281 @@
           "tool": "majordomus_capability"
         },
         "x-majordomus-cli": "capabilities describe"
+      }
+    },
+    "/api/v1/graph": {
+      "get": {
+        "operationId": "graph.get",
+        "summary": "Derive one graph",
+        "description": "One graph by id: its nodes and edges with the vocabularies that say what each kind means, the file every node was derived from, and whether the result is acyclic. Deterministic for a given tree and executable.",
+        "tags": [
+          "graph"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The graph's id, as `graph.list` gives it (`registry`, `layer`, `rules`, `adrs`,\n`use-cases`).",
+            "examples": {
+              "adrs": {
+                "value": "adrs"
+              },
+              "layer": {
+                "value": "layer"
+              },
+              "registry": {
+                "value": "registry"
+              },
+              "rules": {
+                "value": "rules"
+              },
+              "use-cases": {
+                "value": "use-cases"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Derive one graph: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Graph"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "graph.get",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::graph"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_graph"
+        }
+      }
+    },
+    "/api/v1/graphs": {
+      "get": {
+        "operationId": "graph.list",
+        "summary": "List graphs",
+        "description": "Every graph this executable derives: its id, what it shows, and what it is derived from.",
+        "tags": [
+          "graph"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List graphs: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "graph.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::graph"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_graphs",
+          "resource": {
+            "uri": "majordomus://graphs",
+            "name": "graphs"
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "system.health",
+        "summary": "Health of this process",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "tags": [
+          "system"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Health of this process: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "system.health",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::system"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 4,
+          "ttl_seconds": 5
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_health",
+          "resource": {
+            "uri": "majordomus://health",
+            "name": "health"
+          }
+        }
       }
     },
     "/api/v1/object": {
@@ -1751,6 +2034,12 @@
             "minimum": 0,
             "description": "HTTP routers built."
           },
+          "graph_builds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Graphs derived from the registry and the index."
+          },
           "executions": {
             "type": "integer",
             "format": "uint64",
@@ -1797,6 +2086,7 @@
           "mcp_projection_builds",
           "openapi_builds",
           "http_projection_builds",
+          "graph_builds",
           "executions",
           "handler_invocations",
           "cache_hits",
@@ -1864,6 +2154,29 @@
           "message"
         ],
         "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+      },
+      "Edge": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The node the edge leaves."
+          },
+          "target": {
+            "type": "string",
+            "description": "The node the edge enters."
+          },
+          "kind": {
+            "type": "string",
+            "description": "One of the graph's declared edge kinds."
+          }
+        },
+        "required": [
+          "source",
+          "target",
+          "kind"
+        ],
+        "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge."
       },
       "ErrorBody": {
         "type": "object",
@@ -2036,6 +2349,257 @@
         ],
         "description": "What git says about the repository, or why it could not be asked."
       },
+      "Graph": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity, `[a-z][a-z0-9-]*`; the last segment of its route."
+          },
+          "title": {
+            "type": "string",
+            "description": "The short name."
+          },
+          "description": {
+            "type": "string",
+            "description": "One paragraph: what a reader learns from it."
+          },
+          "source": {
+            "type": "string",
+            "description": "What it was derived from, in the repository's own words."
+          },
+          "node_kinds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Node kind to what that kind means."
+          },
+          "edge_kinds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Edge kind to what that edge asserts."
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Node"
+            },
+            "description": "Sorted by id."
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Edge"
+            },
+            "description": "Sorted."
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/GraphMetadata",
+            "description": "Counts and invariants."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "source",
+          "node_kinds",
+          "edge_kinds",
+          "nodes",
+          "edges",
+          "metadata"
+        ],
+        "description": "A derived graph: what it is, where it came from, what its vocabularies mean, and the\nnodes and edges themselves."
+      },
+      "GraphInfo": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity."
+          },
+          "title": {
+            "type": "string",
+            "description": "The short name."
+          },
+          "description": {
+            "type": "string",
+            "description": "One paragraph."
+          },
+          "source": {
+            "type": "string",
+            "description": "What it is derived from."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "source"
+        ],
+        "description": "One graph the executable can derive: what it is, without deriving it."
+      },
+      "GraphList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many."
+          },
+          "graphs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GraphInfo"
+            },
+            "description": "Each, described but not derived."
+          }
+        },
+        "required": [
+          "count",
+          "graphs"
+        ],
+        "description": "Every graph this executable derives."
+      },
+      "GraphMetadata": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many nodes."
+          },
+          "edges": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many edges."
+          },
+          "acyclic": {
+            "type": "boolean",
+            "description": "Whether the edges form a directed acyclic graph. Derived, never declared: a graph\nwhose contract is a DAG and whose answer here is `false` is a defect in the data."
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "True when the derivation stopped at [`MAX_NODES`] and the graph is a prefix of\nwhat the repository holds."
+          }
+        },
+        "required": [
+          "nodes",
+          "edges",
+          "acyclic",
+          "truncated"
+        ],
+        "description": "What a reader needs to know about the graph as a whole before drawing it."
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/HealthStatus",
+            "description": "The worst check's status."
+          },
+          "tallies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many checks stand where, by status word."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HealthCheck"
+            },
+            "description": "Every dimension, in a stable order."
+          }
+        },
+        "required": [
+          "status",
+          "tallies",
+          "checks"
+        ],
+        "description": "The health of what this process serves."
+      },
+      "HealthCheck": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A stable id, `[a-z][a-z0-9-]*`."
+          },
+          "title": {
+            "type": "string",
+            "description": "The short name."
+          },
+          "status": {
+            "$ref": "#/components/schemas/HealthStatus",
+            "description": "Where it stands."
+          },
+          "detail": {
+            "type": "string",
+            "description": "One line: what the engine decided and on what."
+          },
+          "decided_by": {
+            "type": "string",
+            "description": "The engine that decided it, named so the reader knows what to fix."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What reproduces the verdict: a command, or a path."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "detail",
+          "decided_by"
+        ],
+        "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
+      },
+      "HealthStatus": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "ok",
+            "description": "The engine that decides this dimension is satisfied."
+          },
+          {
+            "type": "string",
+            "const": "warn",
+            "description": "Nothing is broken and something is worth looking at."
+          },
+          {
+            "type": "string",
+            "const": "fail",
+            "description": "The engine that decides this dimension is not satisfied."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "This process cannot decide it, and says so rather than reporting `ok`."
+          }
+        ],
+        "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+      },
       "HttpExposure": {
         "type": "object",
         "properties": {
@@ -2114,6 +2678,61 @@
       "ModuleId": {
         "type": "string",
         "description": "A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject's module is its kind."
+      },
+      "Node": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique within the graph."
+          },
+          "kind": {
+            "type": "string",
+            "description": "One of the graph's declared node kinds."
+          },
+          "label": {
+            "type": "string",
+            "description": "The short label a renderer draws."
+          },
+          "summary": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "One line about the thing, when the source holds one."
+          },
+          "route": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the Cockpit shows this thing, when it shows it."
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The repository-relative file the node was derived from, when one file owns it."
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A status word the graph's own vocabulary defines (`accepted`, `active`, `query`)."
+          },
+          "external": {
+            "type": "boolean",
+            "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label"
+        ],
+        "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
       },
       "ObjectList": {
         "type": "object",
@@ -3163,6 +3782,7 @@
       "/",
       "/openapi.json",
       "/docs",
+      "/cockpit",
       "/mcp"
     ],
     "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",

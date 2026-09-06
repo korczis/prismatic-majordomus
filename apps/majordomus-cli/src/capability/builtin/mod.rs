@@ -6,11 +6,13 @@
 //! benchmark target and generated document follows from the descriptor.
 
 pub mod capabilities;
+pub mod graph;
 pub mod objects;
 pub mod peers;
 pub mod perf;
 pub mod repository;
 mod scope;
+pub mod system;
 mod views;
 
 use crate::compose_modules;
@@ -20,6 +22,7 @@ use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
+pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use objects::{
     resolve, AnswerView, GetInput, ListInput, ObjectList, Resolved, ResourceView, SearchHit,
     SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
@@ -27,12 +30,21 @@ pub use objects::{
 pub use peers::{AnnounceInput, PeerList};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
+pub use system::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use views::{Empty, ObjectSummary, ObjectView};
 
 /// The application: its modules, in one place. A new module is one line here; a new
 /// capability in an existing module is no line here.
 pub fn modules() -> Vec<ModuleDescriptor> {
-    compose_modules![repository, objects, capabilities, peers, perf]
+    compose_modules![
+        repository,
+        objects,
+        capabilities,
+        graph,
+        peers,
+        perf,
+        system
+    ]
 }
 
 /// Every executable of every module, flattened, for a registry built without module

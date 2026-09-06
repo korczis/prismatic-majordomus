@@ -12,6 +12,14 @@
       "capabilities": 2
     },
     {
+      "id": "graph",
+      "title": "Graphs",
+      "description": "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 2
+    },
+    {
       "id": "objects",
       "title": "Objects",
       "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched.",
@@ -42,6 +50,14 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 3
+    },
+    {
+      "id": "system",
+      "title": "System",
+      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 1
     }
   ],
   "capabilities": [
@@ -1192,6 +1208,339 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
     },
     {
+      "id": "graph.get",
+      "module": "graph",
+      "kind": "query",
+      "title": "Derive one graph",
+      "description": "One graph by id: its nodes and edges with the vocabularies that say what each kind means, the file every node was derived from, and whether the result is acyclic. Deterministic for a given tree and executable.",
+      "input": {
+        "name": "GraphInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The graph's id, as `graph.list` gives it (`registry`, `layer`, `rules`, `adrs`,\n`use-cases`)."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "description": "Which graph to derive.",
+          "title": "GraphInput"
+        }
+      },
+      "output": {
+        "name": "Graph",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The identity, `[a-z][a-z0-9-]*`; the last segment of its route."
+            },
+            "title": {
+              "type": "string",
+              "description": "The short name."
+            },
+            "description": {
+              "type": "string",
+              "description": "One paragraph: what a reader learns from it."
+            },
+            "source": {
+              "type": "string",
+              "description": "What it was derived from, in the repository's own words."
+            },
+            "node_kinds": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Node kind to what that kind means."
+            },
+            "edge_kinds": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "Edge kind to what that edge asserts."
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Node"
+              },
+              "description": "Sorted by id."
+            },
+            "edges": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Edge"
+              },
+              "description": "Sorted."
+            },
+            "metadata": {
+              "$ref": "#/$defs/GraphMetadata",
+              "description": "Counts and invariants."
+            }
+          },
+          "required": [
+            "id",
+            "title",
+            "description",
+            "source",
+            "node_kinds",
+            "edge_kinds",
+            "nodes",
+            "edges",
+            "metadata"
+          ],
+          "description": "A derived graph: what it is, where it came from, what its vocabularies mean, and the\nnodes and edges themselves.",
+          "title": "Graph",
+          "$defs": {
+            "Node": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique within the graph."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "One of the graph's declared node kinds."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "The short label a renderer draws."
+                },
+                "summary": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "One line about the thing, when the source holds one."
+                },
+                "route": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where the Cockpit shows this thing, when it shows it."
+                },
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The repository-relative file the node was derived from, when one file owns it."
+                },
+                "status": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "A status word the graph's own vocabulary defines (`accepted`, `active`, `query`)."
+                },
+                "external": {
+                  "type": "boolean",
+                  "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "label"
+              ],
+              "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
+            },
+            "Edge": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "The node the edge leaves."
+                },
+                "target": {
+                  "type": "string",
+                  "description": "The node the edge enters."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "One of the graph's declared edge kinds."
+                }
+              },
+              "required": [
+                "source",
+                "target",
+                "kind"
+              ],
+              "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge."
+            },
+            "GraphMetadata": {
+              "type": "object",
+              "properties": {
+                "nodes": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many nodes."
+                },
+                "edges": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many edges."
+                },
+                "acyclic": {
+                  "type": "boolean",
+                  "description": "Whether the edges form a directed acyclic graph. Derived, never declared: a graph\nwhose contract is a DAG and whose answer here is `false` is a defect in the data."
+                },
+                "truncated": {
+                  "type": "boolean",
+                  "description": "True when the derivation stopped at [`MAX_NODES`] and the graph is a prefix of\nwhat the repository holds."
+                }
+              },
+              "required": [
+                "nodes",
+                "edges",
+                "acyclic",
+                "truncated"
+              ],
+              "description": "What a reader needs to know about the graph as a whole before drawing it."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::graph"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_graph"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/graph"
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "graph"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 16
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+    },
+    {
+      "id": "graph.list",
+      "module": "graph",
+      "kind": "query",
+      "title": "List graphs",
+      "description": "Every graph this executable derives: its id, what it shows, and what it is derived from.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "GraphList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many."
+            },
+            "graphs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GraphInfo"
+              },
+              "description": "Each, described but not derived."
+            }
+          },
+          "required": [
+            "count",
+            "graphs"
+          ],
+          "description": "Every graph this executable derives.",
+          "title": "GraphList",
+          "$defs": {
+            "GraphInfo": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The identity."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The short name."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "One paragraph."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "What it is derived from."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "description",
+                "source"
+              ],
+              "description": "One graph the executable can derive: what it is, without deriving it."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::graph"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_graphs",
+          "resource": {
+            "uri": "majordomus://graphs",
+            "name": "graphs"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/graphs"
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "graph",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+    },
+    {
       "id": "objects.get",
       "module": "objects",
       "kind": "query",
@@ -2270,6 +2619,12 @@
               "minimum": 0,
               "description": "HTTP routers built."
             },
+            "graph_builds": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "Graphs derived from the registry and the index."
+            },
             "executions": {
               "type": "integer",
               "format": "uint64",
@@ -2316,6 +2671,7 @@
             "mcp_projection_builds",
             "openapi_builds",
             "http_projection_builds",
+            "graph_builds",
             "executions",
             "handler_invocations",
             "cache_hits",
@@ -3436,6 +3792,163 @@
         "policy": "disabled"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
+    },
+    {
+      "id": "system.health",
+      "module": "system",
+      "kind": "query",
+      "title": "Health of this process",
+      "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "Health",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "$ref": "#/$defs/HealthStatus",
+              "description": "The worst check's status."
+            },
+            "tallies": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0
+              },
+              "description": "How many checks stand where, by status word."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/HealthCheck"
+              },
+              "description": "Every dimension, in a stable order."
+            }
+          },
+          "required": [
+            "status",
+            "tallies",
+            "checks"
+          ],
+          "description": "The health of what this process serves.",
+          "title": "Health",
+          "$defs": {
+            "HealthStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "ok",
+                  "description": "The engine that decides this dimension is satisfied."
+                },
+                {
+                  "type": "string",
+                  "const": "warn",
+                  "description": "Nothing is broken and something is worth looking at."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "The engine that decides this dimension is not satisfied."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "This process cannot decide it, and says so rather than reporting `ok`."
+                }
+              ],
+              "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+            },
+            "HealthCheck": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "A stable id, `[a-z][a-z0-9-]*`."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The short name."
+                },
+                "status": {
+                  "$ref": "#/$defs/HealthStatus",
+                  "description": "Where it stands."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "One line: what the engine decided and on what."
+                },
+                "decided_by": {
+                  "type": "string",
+                  "description": "The engine that decided it, named so the reader knows what to fix."
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What reproduces the verdict: a command, or a path."
+                },
+                "findings": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "status",
+                "detail",
+                "decided_by"
+              ],
+              "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::system"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_health",
+          "resource": {
+            "uri": "majordomus://health",
+            "name": "health"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/health"
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "system",
+        "health",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 4,
+        "ttl_seconds": 5
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs"
     }
   ],
   "declarative_kinds": [

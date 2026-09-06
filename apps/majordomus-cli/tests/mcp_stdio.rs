@@ -136,7 +136,20 @@ fn handshake_discovery_and_a_real_round_trip() {
         alpha["_meta"]["majordomus"]["provenance"]["section"],
         "rules"
     );
-    assert_eq!(resources[0]["uri"], "majordomus://repository");
+    // the query-backed resources are listed before the layer's objects; which of them
+    // comes first is the registry's order, and a new one must not change this guarantee
+    let position = |predicate: &dyn Fn(&str) -> bool| {
+        resources
+            .iter()
+            .position(|r| predicate(r["uri"].as_str().unwrap_or_default()))
+    };
+    let repository = position(&|uri| uri == "majordomus://repository").expect("repository listed");
+    let first_object =
+        position(&|uri| uri.starts_with("majordomus://rule/")).expect("an object listed");
+    assert!(
+        repository < first_object,
+        "a query-backed resource is listed before the layer's objects"
+    );
 
     let contents = &r[&4]["result"]["contents"][0];
     assert_eq!(contents["uri"], "majordomus://rule/project.alpha@1");
@@ -161,8 +174,14 @@ fn handshake_discovery_and_a_real_round_trip() {
     expected.sort();
     let expected: Vec<&str> = expected.iter().map(|(_, t)| t.as_str()).collect();
     assert_eq!(tools, expected);
-    let list_tool = &r[&5]["result"]["tools"][3];
-    assert_eq!(list_tool["_meta"]["majordomus"]["id"], "objects.list");
+    // found by its canonical id, never by its position: the list is the registry's and a
+    // capability added to any module moves every index in it
+    let list_tool = r[&5]["result"]["tools"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["_meta"]["majordomus"]["id"] == "objects.list")
+        .expect("objects.list is announced as a tool");
     assert!(list_tool["inputSchema"]["properties"]["kind"].is_object());
     assert!(list_tool["outputSchema"]["properties"]["objects"].is_object());
     // every query is announced read-only; the one command (a peer announcing itself,

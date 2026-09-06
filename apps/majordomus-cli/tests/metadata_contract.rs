@@ -340,7 +340,10 @@ fn a_kind_the_executable_does_not_read_is_reported_not_guessed() {
     let (_, v, _) = inspect(&f.root(), &[]);
     let codes = diagnostic_codes(&v);
     assert!(
-        codes.contains(&("unknown_kind".into(), Some(".ai/repo/widgets/one.md".into()))),
+        codes.contains(&(
+            "unknown_kind".into(),
+            Some(".ai/repo/widgets/one.md".into())
+        )),
         "{codes:?}"
     );
 }

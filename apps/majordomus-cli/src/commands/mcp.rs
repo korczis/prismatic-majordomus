@@ -175,6 +175,7 @@ impl Session {
             args.http_port,
             true,
             lease,
+            Some(app.share.dir()),
         )?;
         let peer = ctx.peers.attach(PeerTransport::Stdio);
         let mut server = Server::new(Surface::new(ctx).for_peer(peer.clone()), crate::VERSION)

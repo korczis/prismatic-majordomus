@@ -1,7 +1,7 @@
 //! Routing and binding, transport-neutral: a request in, a response out. Every route
 //! under `/api/v1/` is a capability with an HTTP exposure; the infrastructure routes
-//! (`/`, `/openapi.json`, `/docs`, and `/mcp` when the router serves a shared server) are
-//! the projection's own and are documented as such. Nothing else exists.
+//! (`/`, `/openapi.json`, `/docs`, `/cockpit`, and `/mcp` when the router serves a shared
+//! server) are the projection's own and are documented as such. Nothing else exists.
 
 use std::sync::Arc;
 
@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::capability::{CapabilityError, CaseContext, Context, HttpMethod};
+use crate::cockpit::Cockpit;
 
 use super::mcp::McpEndpoint;
 use super::{openapi, swagger};
@@ -210,6 +211,9 @@ pub struct Router {
     openapi: Arc<std::sync::OnceLock<Result<String, String>>>,
     /// MCP over HTTP at `/mcp`, when this router serves a shared server.
     mcp: Option<Arc<McpEndpoint>>,
+    /// The Cockpit under `/cockpit`, when the process located a distribution to serve its
+    /// assets from. Absent only for a router built without one.
+    cockpit: Option<Arc<Cockpit>>,
 }
 
 impl Router {
@@ -221,7 +225,19 @@ impl Router {
             version,
             openapi: Arc::new(std::sync::OnceLock::new()),
             mcp: None,
+            cockpit: None,
         }
+    }
+
+    /// The same router, serving the Cockpit's pages under `/cockpit` with its assets read
+    /// from `share_dir`.
+    pub fn with_cockpit(mut self, share_dir: Option<&std::path::Path>) -> Self {
+        self.cockpit = Some(Arc::new(Cockpit::new(
+            Arc::clone(&self.ctx),
+            self.version,
+            share_dir,
+        )));
+        self
     }
 
     /// The same router, serving MCP over HTTP at `/mcp` through `endpoint`.
@@ -244,8 +260,24 @@ impl Router {
         }
     }
 
-    /// Answer one request: an infrastructure route, `/mcp`, or a capability.
+    /// Answer one request: an infrastructure route, `/mcp`, the Cockpit, or a capability.
+    ///
+    /// A request that carries an `Origin` header came from a page in a browser. A browser
+    /// cannot read a cross-origin response without the headers this server never sends,
+    /// so a read is already contained; a request that changes something is not, and one
+    /// from another origin is refused before it reaches a handler. A client that is not a
+    /// browser sends no `Origin` and is unaffected.
     pub fn handle(&self, req: &Request) -> Response {
+        if req.method != "GET" && req.method != "HEAD" {
+            if let Some(refusal) = self.foreign_origin(req) {
+                return refusal;
+            }
+        }
+        if let Some(cockpit) = &self.cockpit {
+            if Cockpit::owns(&req.path) {
+                return cockpit.handle(req);
+            }
+        }
         match (req.method.as_str(), req.path.as_str()) {
             ("GET", "/") => {
                 let mut index = json!({
@@ -261,6 +293,19 @@ impl Router {
                 });
                 if self.mcp.is_some() {
                     index["mcp"] = json!(super::mcp::PATH);
+                }
+                if self.cockpit.is_some() {
+                    index["cockpit"] = json!(crate::cockpit::PREFIX);
+                    // a browser asking for the index gets the Cockpit; a client that does
+                    // not say it wants HTML gets the JSON this route has always answered
+                    if prefers_html(req) {
+                        return Response {
+                            status: 303,
+                            content_type: "text/plain; charset=utf-8",
+                            body: String::from("the Cockpit is at /cockpit\n"),
+                            headers: vec![("Location".into(), crate::cockpit::PREFIX.into())],
+                        };
+                    }
                 }
                 json_response(200, &index)
             }
@@ -280,6 +325,34 @@ impl Router {
             },
             _ => self.capability(req),
         }
+    }
+
+    /// The refusal for a state-changing request from another origin, when there is one.
+    /// The allowed origins are this server's own: whatever host the request was addressed
+    /// to. Nothing else is configured, because nothing else should be able to change this
+    /// process from a browser.
+    fn foreign_origin(&self, req: &Request) -> Option<Response> {
+        let origin = req.header("origin")?;
+        // `null` is what a sandboxed frame or a `file://` page sends; neither is this server
+        let host = req.header("host").unwrap_or_default();
+        let allowed = [format!("http://{host}"), format!("https://{host}")];
+        if allowed.iter().any(|a| a == origin) {
+            return None;
+        }
+        tracing::warn!(
+            origin = origin,
+            method = %req.method,
+            path = %req.path,
+            "a state-changing request from another origin was refused"
+        );
+        Some(error_response(
+            403,
+            "forbidden",
+            &format!(
+                "a {} from origin '{origin}' is refused: this server accepts a state-changing request from a browser only from its own origin",
+                req.method
+            ),
+        ))
     }
 
     fn capability(&self, req: &Request) -> Response {
@@ -375,6 +448,29 @@ impl Router {
             Err(CapabilityError::Internal(m)) => error_response(500, "internal", &m),
         }
     }
+}
+
+/// Does this request come from something that would rather have a page than a document?
+/// Only an explicit `text/html` in `Accept` counts: a client that sends none, or `*/*`,
+/// gets the JSON index, which is what every existing caller does.
+///
+/// ```
+/// use majordomus_cli::http::{router::prefers_html, Request};
+/// let plain = Request::parse_target("GET", "/", vec![]);
+/// assert!(!prefers_html(&plain));
+/// let browser = plain.clone().with_headers(vec![
+///     ("Accept".into(), "text/html,application/xhtml+xml,*/*;q=0.8".into()),
+/// ]);
+/// assert!(prefers_html(&browser));
+/// ```
+pub fn prefers_html(req: &Request) -> bool {
+    req.header("accept").is_some_and(|accept| {
+        accept.split(',').any(|part| {
+            part.split(';')
+                .next()
+                .is_some_and(|t| t.trim() == "text/html")
+        })
+    })
 }
 
 fn json_response(status: u16, v: &Value) -> Response {
