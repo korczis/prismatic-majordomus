@@ -1,0 +1,33 @@
+id: I1007
+milestone: capability-graph
+title: The site renders the same graph, generated once
+slug: static-graph-snapshot
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Produce the static projection of the graph through the existing generation and site pipeline, so that the published site renders the same model the server does without a backend and without a second generator."
+why: "A separate generation script for the site is the second universe this repository has already refused once. The generation target set exists and owns this."
+current_state: "The site is generated from the registry and several derived datasets by scripts that each know their own output."
+desired_state: "The static projection is a target of the canonical generation, and the site consumes it like its other derived data."
+scope:
+  - apps/majordomus-cli/src/site.rs
+  - site
+non_scope:
+  - A standalone cockpit generation script
+  - The static build requiring any runtime API to render
+depends_on:
+  - I1005
+acceptance_criteria:
+  - The static projection is produced by the canonical generation target set, with any shell involved being a thin adapter
+  - The published pages render the capabilities, the kinds, the relations and the coverage without any request to a backend
+  - Build-time and runtime data are distinguishable on the page, and a captured measurement is labelled as captured rather than shown as current
+  - The drift check covers the static projection
+validation:
+  - majordomus generate --check
+  - bash test/run.sh
+evidence_required:
+  - static_projection
+  - no_backend_required
+risk: "Rendering yesterday's health as though it were current is the failure mode this issue exists to prevent, and it is a labelling problem, not a data problem."
+created_at: 2026-09-06
+updated_at: 2026-09-06

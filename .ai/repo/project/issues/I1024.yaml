@@ -1,0 +1,31 @@
+id: I1024
+milestone: capability-graph
+title: The interface has a weight, and it is measured
+slug: interface-budgets
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Measure the generated data, the served HTML, the initial scripts and styles and the graph's initialisation, and hold them to budgets through the benchmark infrastructure the repository already has."
+why: "A derived interface grows with the repository by construction. Without a measured budget it becomes slow gradually, which is the way that never gets noticed."
+current_state: "The benchmark infrastructure records distributions per command against a committed baseline. Nothing measures a page or an asset."
+desired_state: "The interface's weight and initialisation are baselines like the commands', with thresholds that catch a real regression and ignore a byte."
+scope:
+  - .ai/repo/benchmarks
+non_scope:
+  - A new benchmark system beside the one that exists
+  - A threshold so tight that ordinary content growth fails the build
+depends_on:
+  - I1014
+acceptance_criteria:
+  - The generated data size, the served HTML size, the initial script and style weight and the graph initialisation are all measured
+  - The baselines live where the benchmark infrastructure already keeps them, with the environment recorded
+  - Thresholds catch a material regression and tolerate ordinary growth, and the policy states which is which
+  - Heavy libraries are absent from pages that do not use them, proved by measurement rather than by intent
+validation:
+  - majordomus bench --check
+evidence_required:
+  - interface_measured
+  - budgets_declared
+risk: "Asset budgets provoke arguments about kilobytes. The threshold is set where it detects a category change, not a content edit."
+created_at: 2026-09-06
+updated_at: 2026-09-06
