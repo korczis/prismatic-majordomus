@@ -211,6 +211,13 @@ pub struct Router {
     openapi: Arc<std::sync::OnceLock<Result<String, String>>>,
     /// MCP over HTTP at `/mcp`, when this router serves a shared server.
     mcp: Option<Arc<McpEndpoint>>,
+    /// The static surfaces of the resolved web topology, when the process resolved one.
+    ///
+    /// One arm, for every `StaticDirectory` the discovery found: the test report, the
+    /// benchmark report and whatever a producer declares next. The routes below are not
+    /// dispatched through it — they differ in behaviour rather than in data, and a variant
+    /// per arm would be this match with more ceremony (ADR 0013).
+    surfaces: Option<Arc<crate::web::serve::StaticSurfaces>>,
     /// The Cockpit under `/cockpit`, when the process located a distribution to serve its
     /// assets from. Absent only for a router built without one.
     cockpit: Option<Arc<Cockpit>>,
@@ -226,7 +233,15 @@ impl Router {
             openapi: Arc::new(std::sync::OnceLock::new()),
             mcp: None,
             cockpit: None,
+            surfaces: None,
         }
+    }
+
+    /// The same router, answering every static surface of a resolved topology from its own
+    /// directory. Discovery decides what that is; this only holds the result.
+    pub fn with_surfaces(mut self, surfaces: Arc<crate::web::serve::StaticSurfaces>) -> Self {
+        self.surfaces = Some(surfaces);
+        self
     }
 
     /// The same router, serving the Cockpit's pages under `/cockpit` with its assets read
@@ -276,6 +291,14 @@ impl Router {
         if let Some(cockpit) = &self.cockpit {
             if Cockpit::owns(&req.path) {
                 return cockpit.handle(req);
+            }
+        }
+        // The one arm the static surfaces need: a mount a surface owns is answered from its
+        // own directory, and a surface discovered tomorrow is answered without an arm of
+        // its own. The validator refuses a surface that would shadow a route below.
+        if let Some(surfaces) = &self.surfaces {
+            if let Some(response) = surfaces.handle(&req.method, &req.path) {
+                return response;
             }
         }
         match (req.method.as_str(), req.path.as_str()) {

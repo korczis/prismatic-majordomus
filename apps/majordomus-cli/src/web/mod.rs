@@ -23,6 +23,7 @@ pub mod discover;
 pub mod manifest;
 pub mod model;
 pub mod report;
+pub mod serve;
 pub mod validate;
 
 pub use model::{Availability, Mount, Provenance, Surface, SurfaceKind, Topology};

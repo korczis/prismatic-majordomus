@@ -111,6 +111,27 @@ expect_exit 10 "$MJ" usecase run see-the-version
 expect_grep 'expected exit 0, got 2'
 git checkout -q -- "$UC/see-the-version.md"
 
+# --- and the same failure through --json, which is the form every generator reads.
+# The count of failures is a fact about the run, not about how it is printed. This lived
+# only in the text branch once, so `--json` reported "failed":0 and exited 0 however the
+# scenarios went — and scripts/generate-site-data relies on exactly that exit code to
+# refuse to publish a demonstration that does not hold. A green exit there did not stop
+# the site; it silently lowered the use case's maturity instead, which is the difference
+# between knowing something is broken and not knowing anything about it.
+sed -i.bak "s/stdout_contains: \['unknown option'\]/stdout_contains: ['everything is fine']/" "$UC/see-the-version.md"; rm -f "$UC/see-the-version.md.bak"
+expect_exit 10 "$MJ" usecase run --json see-the-version
+"$MJ" usecase run --json see-the-version > run.json 2>/dev/null || true
+jq -e '.failed == 1 and .ran == 1' run.json >/dev/null \
+  || { echo "    the JSON run does not report its own failure"; cat run.json; exit 1; }
+jq -e '[.results[] | select(.result != "pass")] | length == 1' run.json >/dev/null \
+  || { echo "    the failing scenario is not in the JSON results"; cat run.json; exit 1; }
+git checkout -q -- "$UC/see-the-version.md"
+# a passing run still exits 0 and says so, so the fix did not make --json fail always
+expect_exit 0 "$MJ" usecase run --json see-the-version
+"$MJ" usecase run --json see-the-version > run.json 2>/dev/null
+jq -e '.failed == 0 and .ran == 1 and (.results[0].result == "pass")' run.json >/dev/null \
+  || { echo "    a passing scenario is not reported as passing in JSON"; cat run.json; exit 1; }
+
 # --- every broken reference is refused with the entity and the relation named
 probe() { # description, sed expression, expected pattern
   sed -i.bak "$2" "$UC/see-the-version.md"; rm -f "$UC/see-the-version.md.bak"

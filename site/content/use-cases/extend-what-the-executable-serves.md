@@ -6,7 +6,7 @@ weight = 10
 id = "extend-what-the-executable-serves"
 source = ".ai/repo/use-cases/extend-what-the-executable-serves.md"
 category = "extension"
-maturity = "executable"
+maturity = "guaranteed"
 +++
 
 ## Situation
