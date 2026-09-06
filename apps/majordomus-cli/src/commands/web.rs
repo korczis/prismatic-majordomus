@@ -15,7 +15,7 @@ use crate::repository::Repository;
 use crate::web::compose::{self, PUBLISH_ROOT};
 use crate::web::discover::{self, Runtime};
 use crate::web::manifest::Manifest;
-use crate::web::model::Topology;
+use crate::web::model::{Availability, Topology};
 use crate::web::validate::{self, Artifacts, Severity};
 
 /// The exit code when the topology does not validate.
@@ -169,8 +169,8 @@ fn list(out: &mut impl Write, topology: &Topology, format: OutputFormat) -> Resu
         OutputFormat::Text => {
             writeln!(
                 out,
-                "{:<16} {:<9} {:<16} {}",
-                "ID", "KIND", "MOUNT", "SOURCE"
+                "{:<16} {:<9} {:<16} {:<14} {:<14} SOURCE",
+                "ID", "KIND", "MOUNT", "CATEGORY", "WHERE"
             )
             .map_err(Error::Transport)?;
             for surface in &topology.surfaces {
@@ -179,12 +179,22 @@ fn list(out: &mut impl Write, topology: &Topology, format: OutputFormat) -> Resu
                     .as_ref()
                     .map(|a| a.to_string_lossy().to_string())
                     .unwrap_or_else(|| surface.producer.clone());
+                // two surfaces may share a mount when they live in different worlds — the
+                // site as it is deployed owns `/` of a publication, the home page owns `/`
+                // of a process — so a listing that hid the world would look like a conflict
+                let world = match surface.availability {
+                    Availability::Both => "served+published",
+                    Availability::ServedOnly => "served",
+                    Availability::PublishedOnly => "published",
+                };
                 writeln!(
                     out,
-                    "{:<16} {:<9} {:<16} {}",
+                    "{:<16} {:<9} {:<16} {:<14} {:<14} {}",
                     surface.id,
                     surface.kind.to_string(),
                     surface.mount.to_string(),
+                    surface.category.to_string(),
+                    world,
                     source
                 )
                 .map_err(Error::Transport)?;
@@ -229,6 +239,17 @@ fn explain(
                 writeln!(out, "  kind       {}", surface.kind).map_err(Error::Transport)?;
                 writeln!(out, "  mount      {}", surface.mount).map_err(Error::Transport)?;
                 writeln!(out, "  producer   {}", surface.producer).map_err(Error::Transport)?;
+                writeln!(out, "  category   {}", surface.category).map_err(Error::Transport)?;
+                writeln!(out, "  visibility {}", surface.visibility).map_err(Error::Transport)?;
+                writeln!(out, "  where      {:?}", surface.availability)
+                    .map_err(Error::Transport)?;
+                if let Some(feature) = surface.feature {
+                    writeln!(out, "  needs      the process to serve {feature}")
+                        .map_err(Error::Transport)?;
+                }
+                if let Some(built) = &surface.built_from {
+                    writeln!(out, "  built from {built}").map_err(Error::Transport)?;
+                }
                 if let Some(artifact) = &surface.artifact {
                     writeln!(out, "  artifact   {}", artifact.display())
                         .map_err(Error::Transport)?;

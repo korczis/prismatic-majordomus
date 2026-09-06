@@ -438,7 +438,10 @@ impl Router {
                     return error_response(
                         405,
                         "method_not_allowed",
-                        &format!("{} is a generated directory; it is read with GET", surface.mount),
+                        &format!(
+                            "{} is a generated directory; it is read with GET",
+                            surface.mount
+                        ),
                     );
                 }
                 files.respond(&req.path)
@@ -448,13 +451,27 @@ impl Router {
             Bound::Route(Native::Swagger) => swagger_response(&req.path),
             Bound::Route(Native::Mcp) => match &self.mcp {
                 Some(endpoint) => endpoint.handle(req),
-                None => error_response(500, "internal", "the MCP surface is served with no endpoint behind it"),
+                None => error_response(
+                    500,
+                    "internal",
+                    "the MCP surface is served with no endpoint behind it",
+                ),
             },
             Bound::Route(Native::Cockpit) => match &self.cockpit {
                 Some(cockpit) => cockpit.handle(req),
-                None => error_response(500, "internal", "the Cockpit surface is served with no Cockpit behind it"),
+                None => error_response(
+                    500,
+                    "internal",
+                    "the Cockpit surface is served with no Cockpit behind it",
+                ),
             },
-            Bound::Route(Native::Api) => self.capability(req, &resolution.ctx),
+            Bound::Route(Native::Api) => {
+                let prefix = crate::capability::model::HttpExposure::PREFIX;
+                if req.path == prefix || req.path == prefix.trim_end_matches('/') {
+                    return self.routes(&resolution.ctx);
+                }
+                self.capability(req, &resolution.ctx)
+            }
         }
     }
 
@@ -525,7 +542,17 @@ impl Router {
                 "version": self.version,
                 "description": crate::about::SUMMARY,
                 "reference": crate::about::REFERENCE_URL,
-                "root": self.ctx.index.repository.root,
+                // the repository's name and not its path: this answer is served to whoever
+                // can reach the socket, and where the checkout sits on the host is of no
+                // use to them and of some use to somebody else. The HTML page has always
+                // withheld it; the two projections of one surface now agree.
+                "repository": repository_name(&self.ctx.index.repository.root),
+                // which repository, without saying where it is: a second process that
+                // already knows the root computes the same value and knows this server is
+                // its own (crate::repository::identity)
+                "repository_id": crate::repository::identity(
+                    std::path::Path::new(&self.ctx.index.repository.root),
+                ),
                 "surfaces": surfaces,
             }),
         )
@@ -557,6 +584,39 @@ impl Router {
                 req.method
             ),
         ))
+    }
+
+    /// The capability mount itself: every route under it, from the registry that declares
+    /// them.
+    ///
+    /// It exists so that the surface the home page offers is a page a person can open
+    /// rather than a prefix that answers 404, and it is the registry's own list rather
+    /// than a second one — the schemas, the parameters and the examples stay in the
+    /// OpenAPI document, which is generated from the same descriptors.
+    fn routes(&self, ctx: &Arc<Context>) -> Response {
+        let mut routes: Vec<Value> = ctx
+            .registry
+            .iter()
+            .filter_map(|c| {
+                let http = c.exposure.http.as_ref()?;
+                Some(json!({
+                    "method": http.method.as_str(),
+                    "path": http.path,
+                    "capability": c.id.as_str(),
+                    "title": c.title,
+                }))
+            })
+            .collect();
+        routes.sort_by(|a, b| a["path"].to_string().cmp(&b["path"].to_string()));
+        json_response(
+            200,
+            &json!({
+                "description": "Every capability with an HTTP exposure, as the registry declares it.",
+                "openapi": swagger::SPEC_PATH,
+                "swagger": swagger::SWAGGER_PATH,
+                "routes": routes,
+            }),
+        )
     }
 
     fn capability(&self, req: &Request, ctx: &Arc<Context>) -> Response {
@@ -680,7 +740,9 @@ pub fn prefers_html(req: &Request) -> bool {
 /// The repository's name: the last component of its root, which is what a person calls it.
 /// The root itself is a filesystem path and is not put on a page anyone can reach.
 fn repository_name(root: &str) -> &str {
-    root.rsplit('/').find(|s| !s.is_empty()).unwrap_or("repository")
+    root.rsplit('/')
+        .find(|s| !s.is_empty())
+        .unwrap_or("repository")
 }
 
 /// The Swagger UI shell. `/swagger` and `/swagger/` both answer it: the page loads its

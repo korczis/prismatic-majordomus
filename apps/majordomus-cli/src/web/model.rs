@@ -11,6 +11,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::path::PathBuf;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// How a surface answers a request.
@@ -18,7 +19,9 @@ use serde::{Deserialize, Serialize};
 /// Only what this repository serves: a directory of generated files, a path the executable
 /// answers itself, and a redirect. A new *kind* is a new behaviour, never a new name for
 /// the same behaviour with different data.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum SurfaceKind {
     /// A generated directory, mounted under its prefix and served from disk.
@@ -44,8 +47,13 @@ impl fmt::Display for SurfaceKind {
 /// A category is the one piece of intent that a mount cannot carry: `/openapi.json` and
 /// `/swagger` sit beside each other and are a document and a viewer for it. Grouping is
 /// derived from this field and never from a list of paths kept somewhere else.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
+// the schema component is named for what it categorises: `Category` alone already names
+// the scope's classes, and two components of one name is a document that cannot be built
+#[schemars(rename = "SurfaceCategory")]
 pub enum Category {
     /// Something a person opens and looks at: the home page, the Cockpit.
     Interface,
@@ -104,7 +112,9 @@ impl fmt::Display for Category {
 /// part of the topology without being advertised. Both are always in the machine-readable
 /// answer — hiding a served route from introspection would only hide it from the people
 /// maintaining it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum Visibility {
     /// Listed for a person: it appears on the home page.
@@ -128,7 +138,9 @@ impl fmt::Display for Visibility {
 /// The registry describes the effective process, not the maximum one: a build or an
 /// invocation that answers no MCP has no MCP surface, and the home page cannot link to
 /// one. Stating the dependency as data is what keeps that automatic.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum Feature {
     /// This process answers MCP over HTTP.
@@ -150,7 +162,7 @@ impl fmt::Display for Feature {
 ///
 /// Kept for every field a consumer can be surprised by, so that `web explain` can answer
 /// "why is this mounted here?" without anybody reading the discovery code.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "source", rename_all = "kebab-case")]
 pub enum Provenance {
     /// Read from the capability registry: the routes the executable already declares once.
@@ -200,8 +212,14 @@ impl fmt::Display for Provenance {
 /// assert!(Mount::parse("/a/../b").is_err());
 /// assert!(Mount::parse("//a").is_err());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(try_from = "String", into = "String")]
+#[schemars(
+    with = "String",
+    description = "An absolute mount path, without a trailing slash."
+)]
 pub struct Mount(String);
 
 impl Mount {
@@ -348,7 +366,7 @@ impl fmt::Display for Mount {
 
 /// Whether a surface is part of the static publication, served only while a process runs,
 /// or both.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum Availability {
     /// Served by the running executable and published as files.
@@ -374,7 +392,7 @@ impl Availability {
 
 /// One resolved surface: everything a consumer needs, with the provenance of what it could
 /// be surprised by.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Surface {
     /// Identity, unique across the topology; the selector `--only` and `--exclude` use it.
     pub id: String,
@@ -441,7 +459,7 @@ impl Surface {
 ///
 /// The order is by mount, most specific first, then by id: the order a router must consult
 /// them in, computed rather than left to whoever inserted a route last.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Topology {
     /// The resolved surfaces, in route-precedence order.
     pub surfaces: Vec<Surface>,
@@ -467,6 +485,10 @@ impl Topology {
     /// let t = Topology::new(vec![s("app", "/"), s("tests", "/tests")]);
     /// assert_eq!(t.surfaces[0].id, "tests");   // the specific one is consulted first
     /// assert_eq!(t.surfaces[1].id, "app");
+    /// // the root is last whatever it is compared with: `owner()` rests on this, and the
+    /// // root's own slash must never be counted as depth
+    /// let deep = Topology::new(vec![s("api", "/api/v1"), s("root", "/"), s("docs", "/docs")]);
+    /// assert_eq!(deep.ids(), vec!["api", "docs", "root"]);
     /// ```
     pub fn new(mut surfaces: Vec<Surface>) -> Self {
         surfaces.sort_by(|a, b| {

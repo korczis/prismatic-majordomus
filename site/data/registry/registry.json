@@ -5,28 +5,28 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "b884a0ffa7eac184937ad642237c59b050e5a1a1ba31c84374660b4f188b8142",
+    "fingerprint": "f436d2522d71df35e9afaba20691346afe9e56bf7ce031f3e3096fe393eea256",
     "summary": {
-      "total": 684,
-      "builtin": 14,
+      "total": 685,
+      "builtin": 15,
       "declarative": 670,
       "by_kind": {
         "command": 1,
-        "query": 13,
+        "query": 14,
         "resource": 670
       },
       "by_stability": {
-        "behaviorally_verified": 14,
+        "behaviorally_verified": 15,
         "implemented": 670
       },
-      "mcp_tools": 14,
-      "mcp_resources": 674,
-      "http_routes": 14,
+      "mcp_tools": 15,
+      "mcp_resources": 675,
+      "http_routes": 15,
       "cli_commands": 4,
-      "modules": 23,
-      "benchmark_required": 14,
+      "modules": 24,
+      "benchmark_required": 15,
       "benchmark_waived": 0,
-      "cached": 4
+      "cached": 5
     },
     "builtin": [
       {
@@ -3916,6 +3916,432 @@
           "policy": "disabled"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
+      },
+      {
+        "id": "web.surfaces",
+        "module": "web",
+        "kind": "query",
+        "title": "Every web surface, resolved",
+        "description": "The web topology in route-precedence order, with each surface's mount, category, visibility, kind, producer, artifact, runtime feature and the provenance of every value a reader could be surprised by; and which ids are served, published and offered to a person. Answered from the resolution this process serves from, so it cannot disagree with what the router routes or what the home page lists.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "SurfaceReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "surfaces": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Surface"
+                },
+                "description": "Every resolved surface, in route-precedence order: the order a router consults\nthem in, so the first whose mount owns a path is the one that answers it."
+              },
+              "served": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The ids a process answers for, in the same order. A surface published and not\nserved is absent here."
+              },
+              "published": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The ids a publication holds, in the same order."
+              },
+              "public": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The ids offered to a person, which is what the home page lists."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/SurfaceFinding"
+                },
+                "description": "What validation says about the topology as it stands. Empty is the healthy answer;\na finding here is the same one `majordomus web validate` reports, with its remedy."
+              }
+            },
+            "required": [
+              "surfaces",
+              "served",
+              "published",
+              "public",
+              "findings"
+            ],
+            "description": "The web surfaces of this repository, as the process that answers resolved them.",
+            "title": "SurfaceReport",
+            "$defs": {
+              "Surface": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Identity, unique across the topology; the selector `--only` and `--exclude` use it."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line: what a reader sees in a listing."
+                  },
+                  "category": {
+                    "$ref": "#/$defs/SurfaceCategory",
+                    "description": "What it is for, which is how a listing groups it."
+                  },
+                  "visibility": {
+                    "$ref": "#/$defs/Visibility",
+                    "description": "Whether a person is shown it."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/SurfaceKind",
+                    "description": "How it answers."
+                  },
+                  "mount": {
+                    "$ref": "#/$defs/Mount",
+                    "description": "Where it answers."
+                  },
+                  "producer": {
+                    "type": "string",
+                    "description": "What produced it: a command, a module, or the generator that writes the directory."
+                  },
+                  "feature": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Feature"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The runtime capability it needs; absent when the process always has it."
+                  },
+                  "artifact": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The generated directory, repository-relative, for a static surface."
+                  },
+                  "index": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The file served for the mount itself, when the surface has one."
+                  },
+                  "availability": {
+                    "$ref": "#/$defs/Availability",
+                    "description": "Where the surface's files go and who answers for it."
+                  },
+                  "built_from": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The revision the artifact was built from, when its producer recorded one: what\nmakes a stale build a finding rather than a surprise."
+                  },
+                  "provenance": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/$defs/Provenance"
+                    },
+                    "description": "Where each interesting value came from, by field name."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "category",
+                  "visibility",
+                  "kind",
+                  "mount",
+                  "producer",
+                  "availability",
+                  "provenance"
+                ],
+                "description": "One resolved surface: everything a consumer needs, with the provenance of what it could\nbe surprised by."
+              },
+              "SurfaceCategory": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "interface",
+                    "description": "Something a person opens and looks at: the home page, the Cockpit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "documentation",
+                    "description": "Prose and reference written for a person: the site, the Swagger UI."
+                  },
+                  {
+                    "type": "string",
+                    "const": "api",
+                    "description": "A machine-readable surface of the capability registry."
+                  },
+                  {
+                    "type": "string",
+                    "const": "protocol",
+                    "description": "A wire protocol another program speaks."
+                  },
+                  {
+                    "type": "string",
+                    "const": "report",
+                    "description": "Generated evidence of a run: a test report, a benchmark report."
+                  }
+                ],
+                "description": "What a surface is for, which is how a reader is shown it.\n\nA category is the one piece of intent that a mount cannot carry: `/openapi.json` and\n`/swagger` sit beside each other and are a document and a viewer for it. Grouping is\nderived from this field and never from a list of paths kept somewhere else."
+              },
+              "Visibility": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "public",
+                    "description": "Listed for a person: it appears on the home page."
+                  },
+                  {
+                    "type": "string",
+                    "const": "internal",
+                    "description": "Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it."
+                  }
+                ],
+                "description": "Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it."
+              },
+              "SurfaceKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "static-directory",
+                    "description": "A generated directory, mounted under its prefix and served from disk."
+                  },
+                  {
+                    "type": "string",
+                    "const": "native-route",
+                    "description": "A path the executable answers itself, from its own registry or handlers."
+                  },
+                  {
+                    "type": "string",
+                    "const": "redirect",
+                    "description": "A path that answers with a redirect to another one."
+                  }
+                ],
+                "description": "How a surface answers a request.\n\nOnly what this repository serves: a directory of generated files, a path the executable\nanswers itself, and a redirect. A new *kind* is a new behaviour, never a new name for\nthe same behaviour with different data."
+              },
+              "Mount": {
+                "type": "string",
+                "description": "An absolute mount path, without a trailing slash."
+              },
+              "Feature": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "mcp",
+                    "description": "This process answers MCP over HTTP."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cockpit",
+                    "description": "This process serves the Cockpit."
+                  }
+                ],
+                "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
+              },
+              "Availability": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "both",
+                    "description": "Served by the running executable and published as files."
+                  },
+                  {
+                    "type": "string",
+                    "const": "served-only",
+                    "description": "Answered by the running executable and never published: a route the process\ncomputes, or a build made for this server's own mount rather than for deployment."
+                  },
+                  {
+                    "type": "string",
+                    "const": "published-only",
+                    "description": "Published as files; the running executable serves it from the same directory."
+                  }
+                ],
+                "description": "Whether a surface is part of the static publication, served only while a process runs,\nor both."
+              },
+              "Provenance": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "const": "registry"
+                      }
+                    },
+                    "required": [
+                      "source"
+                    ],
+                    "description": "Read from the capability registry: the routes the executable already declares once."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "description": "The declaration file, repository-relative."
+                      },
+                      "source": {
+                        "type": "string",
+                        "const": "producer-declaration"
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "path"
+                    ],
+                    "description": "Read from a producer's own declaration beside its output (`surface.json`)."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "description": "What was found, repository-relative."
+                      },
+                      "source": {
+                        "type": "string",
+                        "const": "filesystem"
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "path"
+                    ],
+                    "description": "Inferred from a file or directory being where the convention says it is."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "description": "The configuration file, repository-relative."
+                      },
+                      "source": {
+                        "type": "string",
+                        "const": "site-config"
+                      }
+                    },
+                    "required": [
+                      "source",
+                      "path"
+                    ],
+                    "description": "Inferred from the site generator's own configuration."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string",
+                        "const": "default"
+                      }
+                    },
+                    "required": [
+                      "source"
+                    ],
+                    "description": "The model's documented default for a value nobody stated."
+                  }
+                ],
+                "description": "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code."
+              },
+              "SurfaceFinding": {
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "$ref": "#/$defs/SurfaceFindingSeverity",
+                    "description": "How much it matters."
+                  },
+                  "rule": {
+                    "type": "string",
+                    "description": "The rule that produced it, stable enough to grep for."
+                  },
+                  "surface": {
+                    "type": "string",
+                    "description": "The surface it is about."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What to do about it."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "rule",
+                  "surface",
+                  "message",
+                  "remedy"
+                ],
+                "description": "One thing wrong with a topology, said so a person can fix it without reading this file."
+              },
+              "SurfaceFindingSeverity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The topology may not be served or published in this state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Worth reading; serving is still coherent."
+                  }
+                ],
+                "description": "How much a finding matters."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::web"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_web_surfaces",
+            "resource": {
+              "uri": "majordomus://web",
+              "name": "web"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/web/surfaces"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "web",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 2,
+          "ttl_seconds": 5
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs"
       }
     ],
     "modules": [
@@ -4137,11 +4563,23 @@
         "source": "declarative",
         "capabilities": 36,
         "capability_ids": []
+      },
+      {
+        "id": "web",
+        "title": "Web surfaces",
+        "description": "What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "web.surfaces"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs"
       }
     ]
   },
   "index": {
-    "fingerprint": "3f1078b8c6e0a72a0f233af3905343d74bcd3bc8aea5e058ff334c07d5b39de1",
+    "fingerprint": "fcb96e2ecde562a651fc5ac7208dc24936737bb1cacc6b5a67e09825fcc63270",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -11428,7 +11866,7 @@
         "route": "/docs/cli/serve/",
         "executable": true,
         "usage": "majordomus serve [OPTIONS]",
-        "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
         "args": [
           {
             "name": "repo",
@@ -11524,7 +11962,7 @@
           {
             "id": "serve-ephemeral-port",
             "title": "Serve the same capabilities over HTTP on a free port",
-            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.",
             "argv": [
               "serve",
               "--port",
@@ -12215,6 +12653,10 @@
               {
                 "name": "site",
                 "help": "site/data/registry/registry.json, the registry dataset the site renders"
+              },
+              {
+                "name": "web",
+                "help": "`docs/generated/web.json`: the resolved web topology the site's route reference renders"
               }
             ],
             "defaults": [
@@ -13279,7 +13721,7 @@
                 ],
                 "command": "majordomus web list",
                 "setup": [],
-                "expectation": "exits 0; prints MOUNT, /api/v1, /docs"
+                "expectation": "exits 0; prints MOUNT, /api/v1, /swagger"
               }
             ],
             "subcommands": []
@@ -13856,7 +14298,7 @@
                     "name": "suite",
                     "long": "suite",
                     "positional": false,
-                    "help": "The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)",
+                    "help": "The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)",
                     "value_name": "SUITE",
                     "takes_value": true,
                     "required": true,
@@ -14459,6 +14901,16 @@
         "read_only": true,
         "input": "ClassifyInput",
         "output": "Classification"
+      },
+      {
+        "name": "majordomus_web_surfaces",
+        "id": "web.surfaces",
+        "title": "Every web surface, resolved",
+        "description": "The web topology in route-precedence order, with each surface's mount, category, visibility, kind, producer, artifact, runtime feature and the provenance of every value a reader could be surprised by; and which ids are served, published and offered to a person. Answered from the resolution this process serves from, so it cannot disagree with what the router routes or what the home page lists.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "SurfaceReport"
       }
     ],
     "resources": [
@@ -14488,6 +14940,13 @@
         "name": "scope",
         "id": "repository.scope",
         "title": "The repository scope",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://web",
+        "name": "web",
+        "id": "web.surfaces",
+        "title": "Every web surface, resolved",
         "kind": "query"
       }
     ],
@@ -14578,14 +15037,20 @@
         "path": "/api/v1/scope/classify",
         "id": "repository.scope_classify",
         "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/web/surfaces",
+        "id": "web.surfaces",
+        "kind": "query"
       }
     ],
     "infrastructure": [
       "/",
       "/openapi.json",
-      "/docs",
-      "/cockpit",
-      "/mcp"
+      "/swagger",
+      "/mcp",
+      "/cockpit"
     ],
     "openapi_path": "docs/generated/openapi.json"
   },
@@ -15346,6 +15811,35 @@
         "route": "GET /api/v1/scope/classify"
       },
       {
+        "key": "web.surfaces|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "web.surfaces",
+        "module": "web",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "web.surfaces|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "web.surfaces",
+        "module": "web",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_web_surfaces"
+      },
+      {
+        "key": "web.surfaces|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "web.surfaces",
+        "module": "web",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/web/surfaces"
+      },
+      {
         "key": "system.mcp.process_cold",
         "kind": "system",
         "transport": "mcp",
@@ -15395,6 +15889,13 @@
         "cached": false
       },
       {
+        "key": "system.http.home",
+        "kind": "system",
+        "transport": "http",
+        "module": "system",
+        "cached": false
+      },
+      {
         "key": "system.http.openapi",
         "kind": "system",
         "transport": "http",
@@ -15402,7 +15903,7 @@
         "cached": false
       },
       {
-        "key": "system.http.docs",
+        "key": "system.http.swagger",
         "kind": "system",
         "transport": "http",
         "module": "system",
@@ -15728,6 +16229,27 @@
           "cases": 5
         },
         {
+          "subject": "web.surfaces",
+          "module": "web",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "web.surfaces",
+          "module": "web",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "web.surfaces",
+          "module": "web",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "system.mcp.process_cold",
           "module": "system",
           "transport": "mcp",
@@ -15777,6 +16299,13 @@
           "cases": 1
         },
         {
+          "subject": "system.http.home",
+          "module": "system",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "system.http.openapi",
           "module": "system",
           "transport": "http",
@@ -15784,7 +16313,7 @@
           "cases": 1
         },
         {
-          "subject": "system.http.docs",
+          "subject": "system.http.swagger",
           "module": "system",
           "transport": "http",
           "state": "covered",
@@ -15814,32 +16343,32 @@
       ],
       "tallies": {
         "direct": {
-          "required": 14,
-          "covered": 14,
+          "required": 15,
+          "covered": 15,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 14,
-          "covered": 14,
+          "required": 15,
+          "covered": 15,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 14,
-          "covered": 14,
+          "required": 15,
+          "covered": 15,
           "missing": 0,
           "waived": 0
         },
         "system": {
-          "required": 12,
-          "covered": 12,
+          "required": 13,
+          "covered": 13,
           "missing": 0,
           "waived": 0
         },
         "total": {
-          "required": 54,
-          "covered": 54,
+          "required": 58,
+          "covered": 58,
           "missing": 0,
           "waived": 0
         }
@@ -15879,7 +16408,12 @@
       {
         "key": "system.http.index",
         "transport": "http",
-        "description": "GET /"
+        "description": "GET / (the topology as JSON)"
+      },
+      {
+        "key": "system.http.home",
+        "transport": "http",
+        "description": "GET / with Accept: text/html (the home page, rendered from the topology)"
       },
       {
         "key": "system.http.openapi",
@@ -15887,9 +16421,9 @@
         "description": "GET /openapi.json"
       },
       {
-        "key": "system.http.docs",
+        "key": "system.http.swagger",
         "transport": "http",
-        "description": "GET /docs (the Swagger UI shell)"
+        "description": "GET /swagger (the Swagger UI shell)"
       },
       {
         "key": "system.http.cockpit_overview",
@@ -16448,7 +16982,7 @@
             "p99_us": 371.792
           },
           {
-            "key": "system.http.docs",
+            "key": "system.http.swagger",
             "cache_mode": "n/a",
             "samples": 200,
             "p50_us": 285.958,

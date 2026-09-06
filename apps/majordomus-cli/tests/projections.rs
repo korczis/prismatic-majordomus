@@ -590,7 +590,7 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
     let paths: BTreeSet<String> = doc["paths"].as_object().unwrap().keys().cloned().collect();
     let ds_paths: BTreeSet<String> = ds.http.routes.iter().map(|r| r.path.clone()).collect();
     assert_eq!(paths, ds_paths);
-    assert!(ds.http.infrastructure.contains(&"/openapi.json"));
+    assert!(ds.http.infrastructure.iter().any(|r| r == "/openapi.json"));
 
     // the registry: every builtin descriptor in full, with the file it was composed in;
     // every module's ids are descriptors of the dataset

@@ -501,7 +501,10 @@ mod tests {
             .expect("a site is deployed");
         assert!(app.mount.is_root());
         assert_eq!(app.artifact.as_deref(), Some(Path::new(SITE_PUBLIC)));
-        assert!(!app.availability.is_served(), "the deployment is not served");
+        assert!(
+            !app.availability.is_served(),
+            "the deployment is not served"
+        );
         let docs = surfaces
             .iter()
             .find(|s| s.id == DOCS)

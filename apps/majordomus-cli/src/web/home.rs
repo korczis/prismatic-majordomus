@@ -1,6 +1,6 @@
 //! The page `/` answers with: this process, and everything it serves.
 //!
-//! Every entry on it is a [`Surface`] of the resolved topology the router is serving from.
+//! Every entry on it is a [`crate::web::Surface`] of the resolved topology the router is serving from.
 //! There is no list of links in this file and no template with paths written into it: the
 //! sections are the categories a surface declares, the entries are the public surfaces of
 //! each, and a surface that appears in the topology tomorrow appears here with no edit.
@@ -53,15 +53,7 @@ pub fn page(topology: &Topology, identity: &Identity<'_>, ready: Readiness<'_>) 
     body.push_str(&html::summary(&[
         ("Version", identity.version.to_string()),
         ("Capabilities", identity.capabilities.to_string()),
-        (
-            "Surfaces",
-            topology
-                .surfaces
-                .iter()
-                .filter(|s| s.visibility == Visibility::Public)
-                .count()
-                .to_string(),
-        ),
+        ("Surfaces served", topology.surfaces.len().to_string()),
         (
             "Revision",
             identity
@@ -107,7 +99,10 @@ pub fn page(topology: &Topology, identity: &Identity<'_>, ready: Readiness<'_>) 
                 ]
             })
             .collect();
-        body.push_str(&html::table(&["Surface", "Path", "What it is", "State"], &rows));
+        body.push_str(&html::table(
+            &["Surface", "Path", "What it is", "State"],
+            &rows,
+        ));
     }
 
     body.push_str(&format!(
@@ -128,8 +123,13 @@ where each value came from.</footer>",
     html::page(
         "Majordomus",
         &format!(
-            "{} — {} surface(s) served by this process",
+            "{} — {} of {} served surface(s) are offered here; the rest are spoken to by a program",
             html::escape(identity.repository),
+            topology
+                .surfaces
+                .iter()
+                .filter(|s| s.visibility == Visibility::Public)
+                .count(),
             topology.surfaces.len()
         ),
         &body,
@@ -209,7 +209,8 @@ mod tests {
         let full = topology();
         let html = page(&full, &identity(), &|_| Availability::Ready);
         assert!(html.contains(">cockpit<"));
-        let without = Topology::new(discover::native(Runtime::default())).served(Runtime::default());
+        let without =
+            Topology::new(discover::native(Runtime::default())).served(Runtime::default());
         let html = page(&without, &identity(), &|_| Availability::Ready);
         assert!(!html.contains(">cockpit<"), "{html}");
     }
@@ -236,8 +237,14 @@ mod tests {
     #[test]
     fn a_directory_mount_is_linked_with_its_trailing_slash() {
         assert_eq!(link_target("/docs", SurfaceKind::StaticDirectory), "/docs/");
-        assert_eq!(link_target("/swagger", SurfaceKind::NativeRoute), "/swagger");
-        assert_eq!(link_target(Mount::root().as_str(), SurfaceKind::NativeRoute), "/");
+        assert_eq!(
+            link_target("/swagger", SurfaceKind::NativeRoute),
+            "/swagger"
+        );
+        assert_eq!(
+            link_target(Mount::root().as_str(), SurfaceKind::NativeRoute),
+            "/"
+        );
     }
 
     #[test]

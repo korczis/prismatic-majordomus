@@ -252,7 +252,7 @@ pub struct HttpView {
     /// The capability routes, in registry order.
     pub routes: Vec<RouteView>,
     /// The projection's own routes, not capabilities.
-    pub infrastructure: &'static [&'static str],
+    pub infrastructure: Vec<String>,
     /// Where the OpenAPI document is committed, repository-relative.
     pub openapi_path: String,
 }
@@ -514,7 +514,7 @@ pub fn dataset(
                 })
             })
             .collect(),
-        infrastructure: openapi::INFRASTRUCTURE_ROUTES,
+        infrastructure: openapi::infrastructure_routes(),
         openapi_path: format!("{}/openapi.json", crate::generate::OUT_DIR),
     };
 

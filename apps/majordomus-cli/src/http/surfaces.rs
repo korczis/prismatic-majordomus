@@ -62,8 +62,9 @@ impl Native {
 pub enum Bound {
     /// A route this executable answers.
     Route(Native),
-    /// A directory a producer generated.
-    Directory(Files),
+    /// A directory a producer generated. Boxed: a static surface carries its resolved root
+    /// and its cache, and a table of them should not pay that for the routes beside them.
+    Directory(Box<Files>),
 }
 
 /// The surfaces one router serves, with what answers each.
@@ -100,7 +101,9 @@ impl Served {
         let mut bound = BTreeMap::new();
         for surface in &topology.surfaces {
             let handler = match surface.kind {
-                SurfaceKind::StaticDirectory => Bound::Directory(Files::new(surface, root)),
+                SurfaceKind::StaticDirectory => {
+                    Bound::Directory(Box::new(Files::new(surface, root)))
+                }
                 SurfaceKind::NativeRoute => {
                     let Some(native) = Native::of(&surface.id) else {
                         return Err(Error::InvalidSurface {
@@ -152,15 +155,35 @@ impl Served {
         }
     }
 
-    /// The one line a server logs when it starts: where the entry points are and how many
-    /// surfaces there are, both read off the resolution rather than written out.
-    pub fn summary(&self) -> String {
+    /// The one line a server logs when it starts: how many surfaces it serves and where
+    /// each one is, `base` prefixed so the log is clickable.
+    ///
+    /// Every served surface, not only the public ones: this is an operator's diagnostic,
+    /// and the operator attaching a second client needs the MCP mount that the home page
+    /// has no reason to advertise to a browser.
+    ///
+    /// Both halves are read off the resolution. A surface added tomorrow is in this line,
+    /// and a route that moves moves here, because nothing below names one.
+    ///
+    /// ```
+    /// use majordomus_cli::http::Served;
+    /// use majordomus_cli::web::{discover::{self, Runtime}, Topology};
+    /// let topology = Topology::new(discover::native_all());
+    /// let served = Served::resolve(&topology, std::path::Path::new("/nonexistent"), Runtime::full()).unwrap();
+    /// let line = served.summary("http://127.0.0.1:8741");
+    /// assert!(line.contains("http://127.0.0.1:8741/swagger"));
+    /// assert!(line.contains("6 surface(s)"));
+    /// ```
+    pub fn summary(&self, base: &str) -> String {
         let mut parts: Vec<String> = self
             .topology
             .surfaces
             .iter()
-            .filter(|s| s.visibility == crate::web::Visibility::Public)
-            .map(|s| format!("{} {}", s.id, s.mount))
+            .map(|s| {
+                let mount = s.mount.as_str();
+                let path = if s.mount.is_root() { "/" } else { mount };
+                format!("{} {base}{path}", s.id)
+            })
             .collect();
         parts.sort();
         format!(
@@ -245,7 +268,10 @@ mod tests {
         let served = Served::resolve(&topology, tmp.path(), Runtime::full())
             .expect("the topology is servable");
         assert_eq!(served.owner("/docs/").unwrap().0.id, discover::DOCS);
-        assert_eq!(served.owner("/docs/cli/index.html").unwrap().0.id, discover::DOCS);
+        assert_eq!(
+            served.owner("/docs/cli/index.html").unwrap().0.id,
+            discover::DOCS
+        );
         for (path, id) in [
             ("/swagger", "swagger"),
             ("/openapi.json", "openapi"),
@@ -266,6 +292,8 @@ mod tests {
             .expect("the topology is servable");
         assert!(served.owner("/mcp").is_none_or(|(s, _)| s.id != "mcp"));
         assert!(!served.topology().ids().contains(&"cockpit"));
-        assert!(served.summary().contains("swagger /swagger"));
+        assert!(served
+            .summary("http://x")
+            .contains("swagger http://x/swagger"));
     }
 }

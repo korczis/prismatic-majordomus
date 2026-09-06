@@ -77,9 +77,7 @@ impl Manifest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web::model::{
-        Availability, Category, Mount, Surface, SurfaceKind, Visibility,
-    };
+    use crate::web::model::{Availability, Category, Mount, Surface, SurfaceKind, Visibility};
     use std::collections::BTreeMap;
 
     #[test]

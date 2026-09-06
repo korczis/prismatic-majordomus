@@ -167,9 +167,7 @@ pub fn walk(root: &Path) -> Vec<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web::model::{
-        Availability, Category, Mount, Surface, SurfaceKind, Visibility,
-    };
+    use crate::web::model::{Availability, Category, Mount, Surface, SurfaceKind, Visibility};
     use std::collections::BTreeMap;
 
     fn static_surface(id: &str, mount: &str, artifact: &str) -> Surface {

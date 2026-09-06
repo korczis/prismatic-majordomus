@@ -198,7 +198,10 @@ pub fn probe(url: &str, root: &Path) -> bool {
     match bridge::request(url, "GET", "/", &[], None, PROBE_TIMEOUT) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
-            v["name"] == "majordomus" && v["root"].as_str() == root.to_str()
+            // the identity and not the path: the index names the repository it serves
+            // without telling every caller where the checkout sits
+            v["name"] == "majordomus"
+                && v["repository_id"].as_str() == Some(crate::repository::identity(root).as_str())
         }
         _ => false,
     }

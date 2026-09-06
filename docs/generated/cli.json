@@ -235,7 +235,7 @@
         "route": "/docs/cli/serve/",
         "executable": true,
         "usage": "majordomus serve [OPTIONS]",
-        "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
         "args": [
           {
             "name": "repo",
@@ -331,7 +331,7 @@
           {
             "id": "serve-ephemeral-port",
             "title": "Serve the same capabilities over HTTP on a free port",
-            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.",
             "argv": [
               "serve",
               "--port",
@@ -1022,6 +1022,10 @@
               {
                 "name": "site",
                 "help": "site/data/registry/registry.json, the registry dataset the site renders"
+              },
+              {
+                "name": "web",
+                "help": "`docs/generated/web.json`: the resolved web topology the site's route reference renders"
               }
             ],
             "defaults": [
@@ -2086,7 +2090,7 @@
                 ],
                 "command": "majordomus web list",
                 "setup": [],
-                "expectation": "exits 0; prints MOUNT, /api/v1, /docs"
+                "expectation": "exits 0; prints MOUNT, /api/v1, /swagger"
               }
             ],
             "subcommands": []
@@ -2663,7 +2667,7 @@
                     "name": "suite",
                     "long": "suite",
                     "positional": false,
-                    "help": "The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)",
+                    "help": "The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)",
                     "value_name": "SUITE",
                     "takes_value": true,
                     "required": true,

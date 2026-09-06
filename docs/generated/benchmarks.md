@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 14 | 14 | 0 | 0 |
-| http | 14 | 14 | 0 | 0 |
-| mcp | 14 | 14 | 0 | 0 |
-| system | 12 | 12 | 0 | 0 |
-| total | 54 | 54 | 0 | 0 |
+| direct | 15 | 15 | 0 | 0 |
+| http | 15 | 15 | 0 | 0 |
+| mcp | 15 | 15 | 0 | 0 |
+| system | 13 | 13 | 0 | 0 |
+| total | 58 | 58 | 0 | 0 |
 
 ## Capabilities
 
@@ -33,6 +33,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `web.surfaces` | web | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 
 ## System targets
 
@@ -44,9 +45,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `system.mcp.tools_list` | mcp | tools/list |
 | `system.mcp.resources_list` | mcp | resources/list |
 | `system.mcp.resources_read` | mcp | resources/read of the first declarative resource |
-| `system.http.index` | http | GET / |
+| `system.http.index` | http | GET / (the topology as JSON) |
+| `system.http.home` | http | GET / with Accept: text/html (the home page, rendered from the topology) |
 | `system.http.openapi` | http | GET /openapi.json |
-| `system.http.docs` | http | GET /docs (the Swagger UI shell) |
+| `system.http.swagger` | http | GET /swagger (the Swagger UI shell) |
 | `system.http.cockpit_overview` | http | GET /cockpit (the Cockpit's landing page, server-rendered) |
 | `system.http.cockpit_capabilities` | http | GET /cockpit/capabilities (every capability as a table: the widest page) |
 | `system.http.cockpit_graph` | http | GET /cockpit/graphs/registry (a page whose content is a derived graph) |

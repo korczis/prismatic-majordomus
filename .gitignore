@@ -52,6 +52,13 @@ share/cockpit/vendor/three.module.min.js
 share/cockpit/vendor/three.core.min.js
 share/cockpit/vendor/p5.min.js
 
+# Generated web surfaces: one directory per producer under target/web/, and the tree a
+# publication is composed into. Reproducible, never read as source, and never committed —
+# a stale artifact here is a `majordomus web validate --artifacts` finding, not a diff.
+# See ADR 0013 and the producers that write them (scripts/site-build --serve,
+# majordomus web report ...).
+/target/
+
 # transient staging for scripts/generate-site-data (removed on exit)
 .mj-stage.*/
 

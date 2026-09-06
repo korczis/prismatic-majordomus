@@ -48,6 +48,12 @@ pub enum Target {
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
+    /// `docs/generated/web.json`: the resolved web topology, `majordomus/web-topology/v1`.
+    ///
+    /// The site generator has no Rust toolchain and reads committed files; this is how the
+    /// topology reaches the published documentation without the site shelling out to this
+    /// executable, and how `generate --check` notices when it has gone stale.
+    Web,
 }
 
 impl Target {
@@ -60,11 +66,15 @@ impl Target {
         Target::Allow,
         Target::Providers,
         Target::Site,
+        Target::Web,
     ];
 }
 
 /// The schema of `registry.json`.
 pub const REGISTRY_SCHEMA: &str = "majordomus/capability-registry/v1";
+
+/// The schema of `web.json`.
+pub const WEB_SCHEMA: &str = "majordomus/web-topology/v1";
 
 /// The schema extension that names the allow-list a schema derives.
 pub const ALLOW_EXTENSION: &str = "x-majordomus-allow";
@@ -126,7 +136,8 @@ pub fn artifacts(
                 path: format!("{OUT_DIR}/registry.json"),
                 content: registry_manifest(registry, version),
             }),
-            Target::Benchmarks | Target::Allow | Target::Providers | Target::Site => {}
+            Target::Benchmarks | Target::Allow | Target::Providers | Target::Site | Target::Web => {
+            }
         }
     }
     Ok(out)
@@ -183,7 +194,57 @@ pub fn context_artifacts(
             content: benchmark_matrix(ctx, version),
         });
     }
+    if targets.contains(&Target::Web) {
+        out.push(Artifact {
+            path: format!("{OUT_DIR}/web.json"),
+            content: web_topology(ctx, version),
+        });
+    }
     Ok(out)
+}
+
+/// The resolved web topology as data: every surface with its mount, category, visibility,
+/// kind, producer, artifact, runtime feature and provenance, in route-precedence order.
+///
+/// It is the same value the `web.surfaces` capability answers and the same one the router
+/// serves from — this file exists because the site generator runs without a Rust toolchain
+/// and reads committed artifacts, not because the topology has a second source.
+///
+/// A surface whose existence depends on a producer having run is in it either way: the
+/// topology says what this repository exposes, and whether a directory is presently on disk
+/// is a fact of a checkout, not of the repository. That is what keeps the file stable
+/// enough for `generate --check` to compare.
+pub fn web_topology(ctx: &Context, version: &str) -> String {
+    let surfaces: Vec<Value> = ctx
+        .web
+        .surfaces
+        .iter()
+        .map(|s| {
+            let mut v = serde_json::to_value(s).unwrap_or(Value::Null);
+            // a built revision is a fact of one checkout's artifacts, never of the
+            // repository: it would make this file differ per machine
+            if let Some(map) = v.as_object_mut() {
+                map.remove("built_from");
+            }
+            v
+        })
+        .collect();
+    let document = serde_json::json!({
+        "schema": WEB_SCHEMA,
+        "generator": { "id": "majordomus-cli", "version": version },
+        "generated_root": crate::web::discover::GENERATED_ROOT,
+        "reserved": {
+            "home": "/",
+            "documentation": crate::web::discover::DOCS_MOUNT,
+            "swagger": crate::http::swagger::SWAGGER_PATH,
+            "openapi": crate::http::swagger::SPEC_PATH,
+            "capabilities": crate::capability::model::HttpExposure::PREFIX,
+        },
+        "surfaces": surfaces,
+    });
+    let mut text = serde_json::to_string_pretty(&document).unwrap_or_default();
+    text.push('\n');
+    text
 }
 
 /// The builtin registry as data: modules, descriptors with their schemas, and the
@@ -512,14 +573,14 @@ fn reference(registry: &CapabilityRegistry, version: &str) -> String {
     s.push_str(".\n\n## Infrastructure routes\n\n");
     s.push_str("The HTTP projection's own routes, not capabilities: ");
     s.push_str(
-        &openapi::INFRASTRUCTURE_ROUTES
+        &openapi::infrastructure_routes()
             .iter()
             .map(|r| format!("`{r}`"))
             .collect::<Vec<_>>()
             .join(", "),
     );
     s.push_str(
-        ". `/docs` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/mcp` is MCP over HTTP on the shared server.\n",
+        ". `/swagger` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/docs/` is this repository's own documentation, and `/mcp` is MCP over HTTP on the shared server.\n",
     );
     let _ = CapabilityKind::Query; // the kind vocabulary is documented in docs/CAPABILITIES.md
     s

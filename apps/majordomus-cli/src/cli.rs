@@ -75,7 +75,7 @@ pub struct WebArgs {
 pub enum ReportCommand {
     /// The test run: the behavioural cases' report, and the crate's own totals
     Tests {
-        /// The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)
+        /// The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)
         #[arg(long)]
         suite: PathBuf,
         /// The output of `cargo test`, for its totals
@@ -431,6 +431,8 @@ pub enum GenerateTarget {
     Providers,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
+    /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
+    Web,
 }
 
 #[derive(Debug, Args)]

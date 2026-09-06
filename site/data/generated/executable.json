@@ -69,6 +69,23 @@
       "tool": "majordomus_graphs"
     },
     {
+      "api_anchor": "/docs/api/#op-health-report",
+      "claims": [],
+      "cli": null,
+      "id": "health.report",
+      "kind": "query",
+      "module": "health",
+      "module_route": "/registry/modules/health/",
+      "resource": "majordomus://health",
+      "route": "/registry/capabilities/health-report/",
+      "slug": "health-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "tests": [],
+      "title": "Health of this process",
+      "tool": "majordomus_health"
+    },
+    {
       "api_anchor": "/docs/api/#op-objects-get",
       "claims": [
         {
@@ -252,21 +269,21 @@
       "tool": "majordomus_scope_classify"
     },
     {
-      "api_anchor": "/docs/api/#op-system-health",
+      "api_anchor": "/docs/api/#op-web-surfaces",
       "claims": [],
       "cli": null,
-      "id": "system.health",
+      "id": "web.surfaces",
       "kind": "query",
-      "module": "system",
-      "module_route": "/registry/modules/system/",
-      "resource": "majordomus://health",
-      "route": "/registry/capabilities/system-health/",
-      "slug": "system-health",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/system.rs",
+      "module": "web",
+      "module_route": "/registry/modules/web/",
+      "resource": "majordomus://web",
+      "route": "/registry/capabilities/web-surfaces/",
+      "slug": "web-surfaces",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/web.rs",
       "tests": [],
-      "title": "Health of this process",
-      "tool": "majordomus_health"
+      "title": "Every web surface, resolved",
+      "tool": "majordomus_web_surfaces"
     }
   ],
   "claims": {
@@ -414,9 +431,9 @@
     ]
   },
   "counts": {
-    "capabilities": 14,
+    "capabilities": 15,
     "claims": 20,
-    "modules": 7
+    "modules": 8
   },
   "generator": "majordomus-cli 0.1.0",
   "modules": [
@@ -461,6 +478,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
       "title": "Graphs"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "health.report",
+          "route": "/registry/capabilities/health-report/",
+          "slug": "health-report"
+        }
+      ],
+      "claims": [],
+      "id": "health",
+      "route": "/registry/modules/health/",
+      "slug": "health",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "title": "Health"
     },
     {
       "capabilities": [
@@ -562,18 +595,18 @@
     {
       "capabilities": [
         {
-          "id": "system.health",
-          "route": "/registry/capabilities/system-health/",
-          "slug": "system-health"
+          "id": "web.surfaces",
+          "route": "/registry/capabilities/web-surfaces/",
+          "slug": "web-surfaces"
         }
       ],
       "claims": [],
-      "id": "system",
-      "route": "/registry/modules/system/",
-      "slug": "system",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/system.rs",
-      "title": "System"
+      "id": "web",
+      "route": "/registry/modules/web/",
+      "slug": "web",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/web.rs",
+      "title": "Web surfaces"
     }
   ],
   "registry_schema": "majordomus/capability-registry/v1",

@@ -9,14 +9,19 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::discover::GENERATED_ROOT;
 use super::model::{Availability, SurfaceKind, Topology};
 
 /// How much a finding matters.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
+// `Severity` alone is the index's diagnostic severity; a topology's finding has its own
+#[schemars(rename = "SurfaceFindingSeverity")]
 pub enum Severity {
     /// The topology may not be served or published in this state.
     Error,
@@ -25,7 +30,8 @@ pub enum Severity {
 }
 
 /// One thing wrong with a topology, said so a person can fix it without reading this file.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "SurfaceFinding")]
 pub struct Finding {
     /// How much it matters.
     pub severity: Severity,
@@ -102,62 +108,111 @@ fn identities(topology: &Topology) -> Vec<Finding> {
         .collect()
 }
 
-/// Mount ownership: one owner per path, and nesting only under the root application.
+/// Mount ownership: one owner per path, in each of the two worlds a surface can live in.
 ///
 /// A surface owns its mount and everything under it. Two surfaces claiming one mount is a
-/// collision. A surface mounted inside another's subtree is a shadowing conflict — the
-/// outer surface would answer for paths the inner one was built for, or the other way
-/// round, and which one wins would depend on the router. The single exception is the root
-/// application, which exists precisely to answer what nothing else claims.
+/// collision, and a surface mounted inside another's subtree is a shadowing conflict —
+/// whichever answered would depend on the router rather than on the declaration. The single
+/// exception is a root surface, which exists precisely to answer what nothing else claims.
+///
+/// The check is per world, because a topology has two. What a running process serves and
+/// what a publication contains are different sets of surfaces, and a path claimed in one is
+/// not claimed in the other: the site as it is deployed owns `/` of a publication, and the
+/// home page owns `/` of a process, and they never meet. Checking them together would
+/// report a conflict that cannot happen; checking them apart is what makes the two mounts
+/// declarable at all.
 fn mounts(topology: &Topology) -> Vec<Finding> {
     let mut findings = Vec::new();
-    for (i, outer) in topology.surfaces.iter().enumerate() {
-        for inner in topology.surfaces.iter().skip(i + 1) {
-            if outer.mount == inner.mount {
+    for world in World::ALL {
+        let surfaces: Vec<&super::model::Surface> = topology
+            .surfaces
+            .iter()
+            .filter(|s| world.holds(s))
+            .collect();
+        for (i, outer) in surfaces.iter().enumerate() {
+            for inner in surfaces.iter().skip(i + 1) {
+                if outer.mount == inner.mount {
+                    findings.push(Finding {
+                        severity: Severity::Error,
+                        rule: "surface.mount-collision".into(),
+                        surface: format!("{} and {}", outer.id, inner.id),
+                        message: format!(
+                            "both claim {} when {} ({} from {}, {} from {})",
+                            outer.mount,
+                            world.describe(),
+                            outer.id,
+                            provenance_of(outer, "mount"),
+                            inner.id,
+                            provenance_of(inner, "mount")
+                        ),
+                        remedy: "one path has one owner: change one producer's declared mount"
+                            .into(),
+                    });
+                    continue;
+                }
+                let (over, under) = if outer.mount.contains(&inner.mount) {
+                    (outer, inner)
+                } else if inner.mount.contains(&outer.mount) {
+                    (inner, outer)
+                } else {
+                    continue;
+                };
+                if over.mount.is_root() {
+                    continue; // a root surface answers what nothing else claims: that is its job
+                }
                 findings.push(Finding {
                     severity: Severity::Error,
-                    rule: "surface.mount-collision".into(),
-                    surface: format!("{} and {}", outer.id, inner.id),
+                    rule: "surface.nested-mount".into(),
+                    surface: format!("{} inside {}", under.id, over.id),
                     message: format!(
-                        "both claim {} ({} from {}, {} from {})",
-                        outer.mount,
-                        outer.id,
-                        provenance_of(outer, "mount"),
-                        inner.id,
-                        provenance_of(inner, "mount")
+                        "{} is mounted at {} inside {}, which owns {} and everything under it when {}",
+                        under.id,
+                        under.mount,
+                        over.id,
+                        over.mount,
+                        world.describe()
                     ),
-                    remedy: "one path has one owner: change one producer's declared mount".into(),
+                    remedy: format!(
+                        "move {} outside {}, or let {} produce it as part of its own output",
+                        under.id,
+                        over.mount.prefix(),
+                        over.id
+                    ),
                 });
-                continue;
             }
-            let (over, under) = if outer.mount.contains(&inner.mount) {
-                (outer, inner)
-            } else if inner.mount.contains(&outer.mount) {
-                (inner, outer)
-            } else {
-                continue;
-            };
-            if over.mount.is_root() {
-                continue; // the application answers what nothing else claims: that is its job
-            }
-            findings.push(Finding {
-                severity: Severity::Error,
-                rule: "surface.nested-mount".into(),
-                surface: format!("{} inside {}", under.id, over.id),
-                message: format!(
-                    "{} is mounted at {} inside {}, which owns {} and everything under it",
-                    under.id, under.mount, over.id, over.mount
-                ),
-                remedy: format!(
-                    "move {} outside {}, or let {} produce it as part of its own output",
-                    under.id,
-                    over.mount.prefix(),
-                    over.id
-                ),
-            });
         }
     }
+    findings.sort_by(|a, b| a.rule.cmp(&b.rule).then_with(|| a.surface.cmp(&b.surface)));
+    findings.dedup_by(|a, b| a.rule == b.rule && a.surface == b.surface);
     findings
+}
+
+/// The two worlds a mount can be claimed in. A surface lives in one, the other, or both,
+/// and a path is only contested by surfaces that share a world.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum World {
+    /// Answered by a running process.
+    Served,
+    /// Present in a publication's files.
+    Published,
+}
+
+impl World {
+    const ALL: [World; 2] = [World::Served, World::Published];
+
+    fn holds(self, surface: &super::model::Surface) -> bool {
+        match self {
+            World::Served => surface.availability.is_served(),
+            World::Published => surface.availability.is_published(),
+        }
+    }
+
+    fn describe(self) -> &'static str {
+        match self {
+            World::Served => "a process serves them",
+            World::Published => "a publication holds them",
+        }
+    }
 }
 
 /// What a static surface's directory must be: inside the generated root or the site's own
