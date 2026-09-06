@@ -790,8 +790,9 @@ skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0
 
 ## `majordomus capture`
 
-Record the person's raw prompts from a provider hook, install that hook, and report what
-each provider actually does in this repository.
+Record the person's raw prompts from a provider hook — as a JSON record and a Markdown
+rendering of it — install that hook, and report what each provider actually does in this
+repository.
 
 **Why a hook and not an instruction.** A worker cannot be asked to record its own prompts.
 It never sees the bytes the person typed, only what the provider assembled from them, and a
@@ -820,14 +821,106 @@ making. Read the log and delete it; it is a diagnostic, and unlike a record, not
 by removing it. The prompt text itself is the raw span from the payload, copied through
 still escaped, so no decode and re-encode step can lose a character.
 
-**One prompt is one file**, `.ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json`, where the slug
-is the opening of the prompt itself:
+**One prompt is two files under one stem**, `.ai/local/prompts/YYYYMMDDHHMMSS-<slug>.json`
+and `.md`, where the slug is the opening of the prompt itself:
 
 ```
 .ai/local/prompts/
   20260905113342-why-arent-prompts-saved-automatically.json
+  20260905113342-why-arent-prompts-saved-automatically.md
   20260905114501-make-it-a-file-per-prompt.json
+  20260905114501-make-it-a-file-per-prompt.md
 ```
+
+**Both formats, always, and they are not alternatives.** The `.json` is the record: the
+provider's own spans, still escaped, pretty printed one member per line — what everything
+else is derived from and what capture must not lose. A record is read by people too, and a
+single forty-kilobyte line is not something any editor or diff shows usefully; the
+indentation lies outside the string spans, so the prompt's bytes are untouched by it. The `.md` is that record rendered for a person, in one shape
+every rendering has: the fields as YAML front matter, the same fields again as a table, and
+the prompt last under `## PROMPT`, decoded and fenced.
+
+````markdown
+---
+schema: 'majordomus.prompt/v1'
+ts: '2026-09-05T12:48:55Z'
+provider: 'claude-code'
+event: 'UserPromptSubmit'
+id: 'bb6f8c96'
+session: '5b13785c-728f'
+source: 'user'
+cwd: '/Users/you/dev/your-repo'
+repository: '/Users/you/dev/your-repo'
+branch: 'feature/prompt-capture-markdown'
+head: 'a0ccbc9e25d6ec7f6bb754f3515affb9b1cc4014'
+record: '20260905124855-make-it-a-file-per-prompt.json'
+---
+
+# Prompt — 2026-09-05 12:48:55 UTC
+
+| | |
+|---|---|
+| **Started** | `2026-09-05T12:48:55Z` |
+| **Provider** | `claude-code` · `UserPromptSubmit` |
+| **Session** | `5b13785c-728f` |
+| **Prompt** | `bb6f8c96` |
+| **Source** | `user` |
+| **Repository** | `/Users/you/dev/your-repo` |
+| **Branch** | `feature/prompt-capture-markdown` · `a0ccbc9` |
+| **Directory** | `/Users/you/dev/your-repo` |
+| **Schema** | `majordomus.prompt/v1` · `.ai/repo/schemas/majordomus/prompt/v1.proto` |
+| **Record** | `20260905124855-make-it-a-file-per-prompt.json` |
+
+## PROMPT
+
+```
+make it a file per prompt
+```
+````
+
+The fields appear twice because the two readers are different: front matter is what a tool
+parses, the table is what a person reads, and one function writes both out of one record in
+one pass, so they cannot drift. A row is omitted rather than printed as `null`, because a
+row reading `null` tells a person less than an absent row does.
+
+**The schema identifier is the path to the file that describes it.** `<namespace>.<name>/<version>`
+is `.ai/repo/schemas/<namespace>/<name>/<version>.proto`, so `majordomus.prompt/v1` resolves
+to `.ai/repo/schemas/majordomus/prompt/v1.proto` with no registry in between — a reader
+holding a record holds the way to read it, and there is nothing that can fall out of step
+with the records it claims to describe. That file is protobuf used as a schema language and
+not as a wire format: nothing serialises these messages, and it is the one place the record's
+fields and the document's sections are defined, so the two projections cannot disagree.
+`majordomus update` installs it; `doctor` fails if the identifier names a file that is not
+there.
+
+**Some header fields are absent, and absent means not observed.** The hook runs before the
+model is invoked, so when a record is written the turn has not happened: `finished_at`,
+`duration_ms`, `model`, `effort` and `tokens` are not knowable from it, and a conforming
+writer leaves them out rather than writing null — an absent field says "not observed", a null
+one would claim it was observed to be nothing. The renderer omits the row rather than
+printing a placeholder, so a record the hook wrote shows `Started` and no `Finished`. When
+something that can observe the turn fills them in, the rows appear with no change to the
+shape. The same holds for the `## CONTEXT` and `## OUTPUT` sections, which the schema
+declares and the renderer emits exactly when the record carries the field behind them.
+
+`## OUTPUT` is the model's half of the exchange, which a prompt record may not carry — the
+doctrine fails a record naming a response or a transcript. A conforming writer puts it in a
+separate after-the-turn record whose `meta.parent` names the prompt record, and the rendering
+joins the two.
+
+**The fence is sized to the prompt**, never fixed at three backticks. Prompts quote code,
+and a prompt that opens a fence of its own would end the block early and spill the rest of
+itself into the document; the renderer measures the longest run of backticks inside and
+opens with one longer, which is how the prompt is quoted verbatim without a byte of it
+being touched.
+
+The direction between them is what makes the pair safe to enforce: a rendering can be
+rebuilt from a record and a record can never be rebuilt from a rendering. So `doctor` fails
+on a record with no rendering and names `capture render` as the repair, and fails on a
+rendering with no record without offering one, because there is none — that half is reported
+for a person to delete. `capture render` walks the archive, writes the renderings that are
+missing, touches nothing that already has one, and never writes a record; `--force` rewrites
+them all, which is for a change to the rendering itself and not for anything a hook does.
 
 A record is immutable once written, two hooks cannot interleave inside one file, the name
 sorts chronologically, and the directory listing is already a readable history. The slug is
@@ -873,7 +966,7 @@ discovering that the hook meant to keep their prompts had been discarding them.
 | `unconfigured` | an adapter exists, but this repository does not wire it |
 | `named` | the configuration declares the hook, but not the shim this tool wrote |
 | `wired` | the shim is in place and executable, but a payload through it produced no record |
-| `verified` | a synthetic payload driven through the shim produced a record |
+| `verified` | a synthetic payload driven through the shim produced a record and its rendering |
 
 </div>
 
@@ -890,7 +983,9 @@ $ majordomus capture install
 INFO  capture  .claude/hooks/majordomus-capture  written and made executable
 INFO  capture  .claude/settings.json  written with the UserPromptSubmit hook
 $ majordomus capture status
-claude-code    verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record
+claude-code    verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering
+$ majordomus capture render
+0 rendering(s) written into .ai/local/prompts
 ```
 
 

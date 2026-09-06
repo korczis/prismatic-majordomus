@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "majordomus.prompt/v1",
+  "title": "majordomus.prompt/v1",
+  "description": "One captured prompt, as it is stored: the JSON record on disk. The Markdown document that renders it is a shape rather than a bag of keys, and is described beside this file in `v1.proto`. This file is reachable from the identifier alone — a schema id `<namespace>.<name>/<version>` lives at `share/schemas/<namespace>/<name>/<version>`, with `.schema.json` for the record and `.proto` for the document, so the value of the `schema` member in every record, and of `schema:` in the front matter of every rendering, resolves to this path with no lookup table in between. A reader holding a record holds the way to read it. Optional means the writer could not know it, never that it was dropped: capture runs in the provider's hook before the model is invoked, so when a record is written the turn has not happened, and everything about how it ended is absent rather than null. An absent member says 'not observed'; a null one would claim it was observed to be nothing.",
+  "$defs": {
+    "record": {
+      "title": "PromptRecord",
+      "description": "The JSON file `.ai/local/prompts/<YYYYMMDDHHMMSS>-<slug>.json`: one member per line, in the order below, opening with `{` and closing with `}`. Minus `text`, it is also the YAML front matter of the rendering beside it — one set of members, written twice by one function out of one record, so the two cannot drift. The set is closed: there is no member for a response, a completion or a transcript, which is how the archive is kept to the person's half of the exchange.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "started_at",
+        "provider",
+        "event",
+        "repository",
+        "branch",
+        "head",
+        "text"
+      ],
+      "properties": {
+        "schema": {
+          "type": "string",
+          "const": "majordomus.prompt/v1",
+          "description": "The identifier of this schema, and therefore the path to this file."
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the prompt was captured, RFC 3339 in UTC. This is the turn's start: the hook runs before the model does. Rendered as the document heading and as the Started row."
+        },
+        "provider": {
+          "type": "string",
+          "description": "The provider whose hook wrote this, e.g. \"claude-code\"."
+        },
+        "event": {
+          "type": "string",
+          "description": "The event it fired, e.g. \"UserPromptSubmit\". With `provider` it says what was observed and by what."
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The provider's own prompt identity, which capture is idempotent on: a hook delivered twice within the day writes once. Null when the payload carried none."
+        },
+        "session": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "The provider's session identity. Null when the payload carried none."
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "What the payload declared about its origin, e.g. \"user\". A payload whose origin is not a person is not captured at all, so a record that exists either says \"user\" or says nothing."
+        },
+        "cwd": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Where the prompt was submitted from. Differs from `repository` when it was submitted from a subdirectory."
+        },
+        "repository": {
+          "type": "string",
+          "description": "The repository the hook resolved from its own location."
+        },
+        "branch": {
+          "type": "string",
+          "description": "The branch at the moment of the prompt — what the work started from, which is the fact a prompt is evidence of."
+        },
+        "head": {
+          "type": "string",
+          "description": "The commit at the moment of the prompt."
+        },
+        "text": {
+          "type": "string",
+          "description": "The prompt itself, exactly as the provider sent it: the raw JSON string span, copied through with no decode and re-encode step that could lose a character. The rendering decodes it; the record never does, so the lossy direction is only ever the derived one."
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the turn ended. Not observable from UserPromptSubmit; absent until something that can observe the turn writes it."
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How long the turn took. Rendered as the Duration row, in units a person reads."
+        },
+        "model": {
+          "type": "string",
+          "description": "The model identifier that answered, as the provider reports it."
+        },
+        "effort": {
+          "type": "string",
+          "description": "The reasoning effort it ran at, when the provider exposes one."
+        },
+        "tokens": {
+          "$ref": "#/$defs/tokens"
+        },
+        "context": {
+          "$ref": "#/$defs/context"
+        },
+        "output": {
+          "$ref": "#/$defs/outcome"
+        },
+        "meta": {
+          "$ref": "#/$defs/meta"
+        }
+      },
+      "dependentRequired": {
+        "duration_ms": [
+          "finished_at"
+        ],
+        "effort": [
+          "model"
+        ]
+      }
+    },
+    "tokens": {
+      "title": "TokenUsage",
+      "description": "What the turn spent, as the provider reported it. Every member is optional because providers report different subsets, and a total inferred from parts that were not all reported would be a number this tool made up.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cache_read": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cache_write": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "context": {
+      "title": "PromptContext",
+      "description": "What was loaded before the prompt was read — the answer to 'what did it know'. Rendered as the optional `## CONTEXT` section.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The identifiers of the rules in effect, in resolved order, e.g. \"majordomus.prompt-capture@1\"."
+        },
+        "profile": {
+          "type": "string",
+          "description": "The profile in force."
+        },
+        "task": {
+          "type": "string",
+          "description": "The task the prompt was submitted under, when there was one."
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Everything else that was loaded and is not a rule: context documents, skills, knowledge. Repository-relative paths, so a reader can go and look at what was actually read."
+        }
+      }
+    },
+    "outcome": {
+      "title": "Outcome",
+      "description": "How the turn ended. Rendered as the optional `## OUTPUT` section. This is the model's half of the exchange, and majordomus.prompt-capture forbids a prompt record from carrying it: a conforming writer puts an Outcome in a separate after-the-turn record whose `meta.parent` names the prompt record, and the renderer joins the two. The member is declared here because the document has the section; the rule says where the bytes live.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "The process or session result code."
+        },
+        "summary": {
+          "type": "string",
+          "description": "One paragraph of what happened, written by whatever observed the turn."
+        }
+      }
+    },
+    "meta": {
+      "title": "Meta",
+      "description": "Provenance: where this record came from, when it was not written directly from a person's keystrokes.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "parent": {
+          "type": "string",
+          "pattern": "^[0-9]{14}-[A-Za-z0-9-]+\\.json$",
+          "description": "The file name of the record this one derives from, within the same archive — an after-the-turn record naming the prompt it answers, or a re-capture naming what it supersedes. A name and never a path: a record can only ever point inside its own directory."
+        },
+        "producer": {
+          "type": "string",
+          "description": "What produced this record, when it was not the provider hook, e.g. \"majordomus capture render\"."
+        }
+      }
+    }
+  },
+  "$ref": "#/$defs/record"
+}

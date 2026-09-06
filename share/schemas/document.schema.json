@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/document.schema.json",
+  "title": "Document",
+  "description": "The front matter of a prose document: a README, a guide, a note under docs/ — anything the layer carries that is not an object of a stricter kind. Front matter is optional on this kind, and a document with none is a document, not a broken one; this describes what must hold when there is some. The contract is deliberately small, because a document that needed more fields than these is something else and should declare its own kind. A document that says `kind: context` is a context document and is held to context.schema.json instead.",
+  "x-majordomus-allow": "document",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The document's title. Absent means the first level-one Markdown heading is the title, which is how most documents carry one."
+    },
+    "description": {
+      "type": "string",
+      "description": "One line saying what this document is for. It is what a listing shows, so it says the subject rather than restating the title."
+    },
+    "kind": {
+      "type": "string",
+      "description": "The kind this document declares itself to be, when it is not a plain document. Only a kind the distribution lists as declarable is accepted; anything else is a mismatch rather than a new kind."
+    },
+    "status": {
+      "enum": ["active", "draft", "deprecated", "superseded"],
+      "description": "Whether this document still applies. Absent means active: a document with no status is in force, because the alternative is a layer where nothing is quite binding."
+    },
+    "superseded_by": {
+      "type": "string",
+      "description": "The repository-relative path of the document that replaces this one. Required reading whenever status is superseded, which is why the two are coupled below."
+    },
+    "updated": {
+      "type": "string",
+      "format": "date",
+      "description": "The day the content last changed, YYYY-MM-DD. Not a modification time — a person sets it when what the document says changes, and leaves it alone for a typo."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Free tags for retrieval. They carry no behaviour: nothing dispatches on a tag, so a tag can be added without changing what anything does."
+    }
+  },
+  "dependentRequired": {
+    "superseded_by": ["status"]
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "superseded" } }, "required": ["status"] },
+      "then": {
+        "required": ["superseded_by"],
+        "description": "A document declared superseded names what supersedes it. A dead end that says only 'do not read this' leaves the reader with nowhere to go."
+      }
+    }
+  ]
+}

@@ -26,6 +26,12 @@ mj_load_session() {
   rm -f "${MJ_SES_FLAT:-}" 2>/dev/null || true
   MJ_SES_FLAT="$(mktemp "${TMPDIR:-/tmp}/mj.ses.XXXXXX")"
   mj_yaml_flatten "$f" > "$MJ_SES_FLAT" 2>/dev/null || return 2
+  # the record's shape, from the schema by way of its generated allow-list. A key the
+  # schema does not declare is a record written by something else or by an older version,
+  # and reading it as if it were ours is how a field silently means nothing. It is a
+  # warning and not a refusal: this is local state, and a session record nobody can parse
+  # must not stop the command a person actually ran.
+  mj_allow_warn session "$MJ_SES_FLAT" "$MJ_ALLOW_DIR/session.txt" "$(mj_rel "$f")"
   return 0
 }
 mj_ses() { [ -n "${MJ_SES_FLAT:-}" ] || return 0; mj_yget "$MJ_SES_FLAT" "$1"; }
