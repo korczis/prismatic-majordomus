@@ -13,7 +13,9 @@ lacks() { ! has "$1" "$2"; }
 
 # --- the model resolves, and a model that does not is refused by name
 expect_exit 0 "$PLAN" --check
-sed 's/gates: \[rust-check, rust-coverage, rust-bench, shell-suite, macos\]/gates: [rust-check, no-such-gate]/' "$MODEL" > broken.yaml
+# the rust class's gate list, whatever it currently holds: a literal here goes stale the
+# day a gate is added to that class, and the mutation then silently does nothing
+awk '/^  - id: rust$/{r=1} r && /^    gates: /{print "    gates: [rust-check, no-such-gate]"; r=0; next} {print}' "$MODEL" > broken.yaml
 grep -q no-such-gate broken.yaml || { echo "    the mutation did not take"; exit 1; }
 expect_exit 10 "$PLAN" --model broken.yaml --check
 expect_grep 'names a gate that does not exist: no-such-gate'
@@ -77,7 +79,16 @@ grep -qx 'mode=affected' gh.txt && grep -qx 'rust_check=true' gh.txt && grep -qx
 # --- the verdict: green only when every selected gate's job succeeded; red on a failure, a
 #     cancellation, a selected gate whose job was skipped, a failed plan, or an empty selection
 plan docs/DESIGN.md > plan.json
-needs() { jq -n --arg s "$1" '$s | split(",") | map(split("=") | {key: .[0], value: {result: .[1]}}) | from_entries'; }
+# A needs context: the jobs the caller names, plus every other job the model declares, as
+# skipped. Naming them all here would go stale the day a job is added, and the verdict would
+# then report the new job as absent rather than the case reporting what it is testing.
+JOBS="$(awk '/^    job: /{print $2}' "$MODEL" | sort -u | tr '\n' ' ')"
+needs() {
+  jq -n --arg s "$1" --arg jobs "plan $JOBS" '
+    ($s | split(",") | map(split("=") | {key: .[0], value: {result: .[1]}}) | from_entries) as $named
+    | ($jobs | split(" ") | map(select(length > 0)) | map({key: ., value: {result: "skipped"}}) | from_entries) as $rest
+    | $rest + $named'
+}
 needs "plan=success,structure=success,suite=success,rust=success,coverage=skipped,bench=skipped,site=success,macos=skipped" > n.json
 expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
 grep -q '^## ci: green' summary.md || { cat summary.md; echo "    a green verdict did not say so"; exit 1; }

@@ -7,8 +7,10 @@
 //! how it looks. That is also what makes the stylesheet deterministic: it is a function of
 //! its own source and nothing else, and the drift check over it is exact.
 //!
-//! Every `x-` attribute here names a property or a method of the one Alpine component and
-//! never an expression. That is what the content-security policy requires: the Cockpit
+//! Every `x-` attribute here names a *top-level* property or method of the one Alpine
+//! component and never an expression — not even a dotted path, which the CSP build reads
+//! as an expression and does not evaluate. A palette bound to `palette.open` looks right,
+//! renders right, and leaves a full-page modal backdrop over every click. That is what the content-security policy requires: the Cockpit
 //! ships Alpine's CSP build, which evaluates no strings, so the policy needs neither
 //! `unsafe-eval` nor `unsafe-inline`. A handler that would take an argument gets its own
 //! method in `cockpit.js` instead.
@@ -217,7 +219,7 @@ fn breadcrumbs(trail: &[(String, Option<String>)]) -> El {
 fn palette() -> El {
     el("div")
         .class("mj-palette")
-        .attr("x-show", "palette.open")
+        .attr("x-show", "paletteOpen")
         .attr("x-cloak", "")
         .attr("role", "dialog")
         .attr("aria-modal", "true")
@@ -241,7 +243,7 @@ fn palette() -> El {
                         )
                         .attr("aria-label", "Command palette query")
                         .attr("x-ref", "paletteInput")
-                        .attr("x-model", "palette.query")
+                        .attr("x-model", "paletteQuery")
                         .attr("x-on:input.debounce.120ms", "paletteFilter")
                         .attr("x-on:keydown.arrow-down.prevent", "paletteNext")
                         .attr("x-on:keydown.arrow-up.prevent", "palettePrevious")

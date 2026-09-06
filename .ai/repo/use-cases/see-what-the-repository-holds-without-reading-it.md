@@ -15,27 +15,6 @@ doctrines: [majordomus.projection-integrity, majordomus.ai-layout-integrity]
 claims: [interfaces-are-projections, capability-registry, mcp-shared-server]
 responsibilities: [projection, doctor]
 applications: [repository-opened-in-ai-clients, repository-with-authored-governance]
-scenario:
-  setup: installed-wired
-  given:
-    - 'a repository with the layer installed, its projections generated and the client autostart wired'
-  steps:
-    - id: what-the-server-will-serve
-      run: ['knowledge', 'sources']
-      note: 'the source classes the Cockpit lists as object kinds are the ones the repository declares'
-      expect:
-        exit: 0
-        stdout_contains: ['^policy +shared +policy', '^knowledge sources: [0-9]+ file']
-    - id: sound-before-it-is-served
-      run: ['doctor']
-      note: 'the Cockpit renders what the layer holds; a layer that does not pass here is what its health page would report'
-      expect:
-        exit: 0
-        stdout_contains: ['doctor: 0 failure']
-  then:
-    - 'the shared server the client autostart binds serves the Cockpit at /cockpit beside Swagger UI at /docs'
-    - 'every page is rendered from a capability, so a capability added to the registry has a page with no edit to the Cockpit'
-    - 'the health page reports one check per dimension, each naming the engine that decided it and the command that reproduces it'
 ---
 
 # Situation
@@ -64,6 +43,31 @@ that forgets it.
 
 The server itself is started by the AI client's autostart or by `majordomus serve`, and it
 logs the URL. Everything below is on that one port: no second process, no second command.
+
+# Scenario
+
+```yaml
+setup: installed-wired
+given:
+  - 'a repository with the layer installed, its projections generated and the client autostart wired'
+steps:
+  - id: what-the-server-will-serve
+    run: ['knowledge', 'sources']
+    note: 'the source classes the Cockpit lists as object kinds are the ones the repository declares'
+    expect:
+      exit: 0
+      stdout_contains: ['^policy +shared +policy', '^knowledge sources: [0-9]+ file']
+  - id: sound-before-it-is-served
+    run: ['doctor']
+    note: 'the Cockpit renders what the layer holds; a layer that does not pass here is what its health page would report'
+    expect:
+      exit: 0
+      stdout_contains: ['doctor: 0 failure']
+then:
+  - 'the shared server the client autostart binds serves the Cockpit at /cockpit beside Swagger UI at /docs'
+  - 'every page is rendered from a capability, so a capability added to the registry has a page with no edit to the Cockpit'
+  - 'the health page reports one check per dimension, each naming the engine that decided it and the command that reproduces it'
+```
 
 # Outcome
 

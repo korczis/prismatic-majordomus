@@ -58,7 +58,16 @@ fn every_page_renders_complete_html_with_the_shell_and_the_security_headers() {
         let policy = header("content-security-policy");
         assert!(policy.contains("default-src 'none'"), "{page}: {policy}");
         assert!(!policy.contains("unsafe-eval"), "{page}: {policy}");
-        assert!(!policy.contains("unsafe-inline"), "{page}: {policy}");
+        // styles may be inline (a drawing library sets style attributes); scripts never
+        let script_src = policy
+            .split("script-src ")
+            .nth(1)
+            .and_then(|s| s.split(';').next())
+            .unwrap_or_default();
+        assert!(
+            !script_src.contains("unsafe-inline"),
+            "{page}: {script_src}"
+        );
         assert_eq!(header("x-content-type-options"), "nosniff", "{page}");
         assert_eq!(header("referrer-policy"), "no-referrer", "{page}");
     }

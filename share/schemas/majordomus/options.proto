@@ -1,0 +1,91 @@
+// The option vocabulary every Majordomus document schema uses.
+//
+// A Markdown document of this layer is a YAML front-matter header over a Markdown body,
+// and both halves are described here in one file per kind: `Header` is the front matter,
+// `Body` names the sections the body must carry, and `Document` is the pair. A kind whose
+// files are YAML rather than Markdown is described by JSON Schema instead, because YAML is
+// JSON's data model and proto3 models its open-ended shapes badly; see the README beside
+// this file for which kind is described in which language.
+//
+// These extensions carry what proto3 has no native word for: whether a field must be
+// present, the exact string it must equal, the pattern it must match. They are read by
+// `majordomus generate`, which projects every .proto into the artifacts the validators
+// actually consume (the shell tool's allow-list and section list, and a JSON Schema for
+// the Rust indexer). Nothing parses a .proto at run time; the projection is checked by
+// `scripts/derive-check` in CI, so a stale artifact fails the build rather than a reader.
+//
+// Extension numbers are in the 50000-50999 block, which protobuf reserves for private use.
+
+syntax = "proto3";
+
+package majordomus;
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.FileOptions {
+  // The schema identity, `<vendor>.<name>/v<n>`. It fixes this file's own path:
+  // `majordomus.adr/v1` is `share/schemas/majordomus/adr/adr.v1.proto`, and a file whose
+  // identity and path disagree is refused rather than preferred one way or the other.
+  string schema_id = 50001;
+
+  // The allow-list this file projects for the shell tool, `share/allow/<name>.txt`.
+  // Absent means the kind projects none.
+  string allow_list = 50002;
+
+  // How a file of this kind is read: `markdown` (front matter over a body) or `yaml`.
+  // Only `markdown` is described in proto; the field is explicit so a misplaced file is
+  // an error rather than a silent reinterpretation.
+  string document_format = 50003;
+}
+
+extend google.protobuf.MessageOptions {
+  // No key beyond the fields declared here. The default is open; every Header of this
+  // layer sets it, because an unknown front-matter key is a typo that would otherwise be
+  // carried silently (the `unknown-keys-are-errors` rule).
+  bool closed = 50010;
+
+  // This message names the sections of the Markdown body rather than a data shape: each
+  // field is one section, in document order, and its options carry the heading.
+  bool body = 50011;
+}
+
+extend google.protobuf.FieldOptions {
+  // The key as it is written in the document, when that is not a legal proto field name.
+  // `x-majordomus` is the case this exists for: a hyphen cannot appear in an identifier,
+  // and deriving the key by a casing rule would make the contract unreadable from the
+  // file that declares it.
+  string key = 50019;
+
+  // The key must be present. proto3 has no required, and absence is not a default here:
+  // a rule without a `class` is not a rule with a blank one.
+  bool required = 50020;
+
+  // The value must equal this string exactly (JSON Schema's `const`).
+  string const = 50021;
+
+  // The value must match this anchored regular expression.
+  string pattern = 50022;
+
+  // A string must be at least this long; 1 means "not blank".
+  uint32 min_length = 50023;
+
+  // A repeated field must carry at least this many items.
+  uint32 min_items = 50024;
+
+  // Inclusive bounds for an integer field.
+  int64 minimum = 50025;
+  int64 maximum = 50026;
+
+  // For a field of a message marked `body`: the heading text, its level (the number of
+  // leading hashes), and whether the section must carry content rather than only exist.
+  string heading = 50030;
+  uint32 level = 50031;
+  bool non_empty = 50032;
+}
+
+extend google.protobuf.EnumValueOptions {
+  // The string this enum value is written as in the document. proto enum values are
+  // SCREAMING_SNAKE_CASE by convention and the layer's documents are lower case, so the
+  // written form is declared rather than derived by a casing rule nobody can see.
+  string value = 50040;
+}

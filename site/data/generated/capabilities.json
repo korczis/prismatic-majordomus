@@ -183,7 +183,7 @@
       "implementation": "lib/capture.sh",
       "test": "test/cases/29_prompt_capture.sh",
       "status": "guaranteed",
-      "note": "Covers the four states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, and a record set that cannot carry model output.",
+      "note": "Covers the five states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, a record set that cannot carry model output, the record-and-rendering pair every prompt is kept as, and the schema identifier resolving to the two files that describe both halves.",
       "responsibility": "policy",
       "source_route": "/docs/doctrine/",
       "command": "capture",
@@ -1490,6 +1490,19 @@
       "test_case": "96_site_deploy"
     },
     {
+      "id": "derived-data-current",
+      "claim": "A commit whose derived data is behind its canonical inputs is refused before it exists, and a repository that unwires that gate is a doctor failure",
+      "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "implementation": "scripts/pages",
+      "test": "test/cases/56_derived_current_gate.sh",
+      "status": "guaranteed",
+      "note": "The generator records the input hash in site/data/generated/source.json, so `pages current` answers \"must this be regenerated?\" in a fifth of a second without generating anything, which is what lets it run on every commit rather than only in CI. It is declared in the policy's enforcement list as derived-current, wired by git-hook:pre-commit, and doctor verifies that wiring the way it verifies the others - so the gate refuses the stale commit and the doctrine refuses the repository that removes the gate. Before this, staleness surfaced only after a merge, and the person it stopped was never the person who caused it.",
+      "responsibility": "policy",
+      "source_route": "/docs/github-pages-architecture/",
+      "command": null,
+      "test_case": "56_derived_current_gate"
+    },
+    {
       "id": "executable-reference-derived",
       "claim": "The site's pages about the Rust executable (one per module, one per capability, the command line, the MCP surface, the benchmarks, the executable's own narrative) are derived from the registry manifest and the registry dataset the executable generates, nothing names a capability by hand, and a capability that joins or leaves the registry gains or loses its page, its index entries and its links from the generators alone",
       "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
@@ -1618,6 +1631,19 @@
       "source_route": "/docs/schemas/",
       "command": "adr",
       "test_case": "99_adr"
+    },
+    {
+      "id": "cli-documentation-executable",
+      "claim": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+      "source": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
+      "implementation": "apps/majordomus-cli/src/cli.rs",
+      "test": "apps/majordomus-cli/tests/cli_docs.rs",
+      "status": "guaranteed",
+      "note": "The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.",
+      "responsibility": "none",
+      "source_route": null,
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/cli_docs.rs"
     }
   ]
 }

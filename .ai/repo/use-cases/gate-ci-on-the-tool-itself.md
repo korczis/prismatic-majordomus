@@ -14,39 +14,6 @@ doctrines: [majordomus.enforcement-wiring, majordomus.doctrine-wiring-integrity,
 claims: [wiring-reconciliation, exit-code-contract, reproduce-command, doctrine-class-decides, command-surface, command-coverage, no-network, derived-not-declared]
 responsibilities: [doctor, watch]
 applications: [ci-gated-project]
-scenario:
-  setup: installed-wired
-  given:
-    - 'installed, and the two enforcements the policy declares are actually in place as hooks'
-  steps:
-    - id: doctor
-      run: ['doctor']
-      note: 'every doctrine the registry declares is reached by the command that claims to run it; every finding carries a reproduce command'
-      expect:
-        exit: 0
-        stdout_contains: ['^OK   wiring      doctor-on-commit', '^OK   command     surface', '^OK   command     coverage', 'doctor: 0 failure']
-    - id: watch
-      run: ['watch']
-      note: 'drift since the last update: policy, projections, state, retention'
-      expect:
-        exit: 0
-        stdout_contains: ['0 drift finding']
-    - id: registry
-      run: ['doctrine', 'list']
-      note: 'which rules are enforced, by what, of which class, and whether each is wired'
-      expect:
-        exit: 0
-        stdout_contains: ['^majordomus.enforcement-wiring +blocking', 'doctor']
-    - id: one-rule
-      run: ['doctrine', 'show', 'majordomus.enforcement-wiring']
-      note: 'one rule: its class decides whether a violation stops the command'
-      expect:
-        exit: 0
-        stdout_contains: ['^id +majordomus.enforcement-wiring', '^class +blocking']
-  then:
-    - 'exit 0 is clean, 10 is a failing finding, 12 is a missing precondition; nothing exits 0 with a FAIL line'
-    - 'every FAIL and WARN names the command that reproduces it'
-    - 'nothing here reached the network or evaluated generated text'
 ---
 
 # Situation
@@ -59,6 +26,43 @@ A quality gate that prints warnings and exits zero is decoration. A gate whose f
 - `watch`: what has drifted since the last update
 - `doctrine list` and `doctrine show <id>`: what is enforced, by what, and whether it is wired
 - `check`: the same contract inside a task
+
+# Scenario
+
+```yaml
+setup: installed-wired
+given:
+  - 'installed, and the two enforcements the policy declares are actually in place as hooks'
+steps:
+  - id: doctor
+    run: ['doctor']
+    note: 'every doctrine the registry declares is reached by the command that claims to run it; every finding carries a reproduce command'
+    expect:
+      exit: 0
+      stdout_contains: ['^OK   wiring      doctor-on-commit', '^OK   command     surface', '^OK   command     coverage', 'doctor: 0 failure']
+  - id: watch
+    run: ['watch']
+    note: 'drift since the last update: policy, projections, state, retention'
+    expect:
+      exit: 0
+      stdout_contains: ['0 drift finding']
+  - id: registry
+    run: ['doctrine', 'list']
+    note: 'which rules are enforced, by what, of which class, and whether each is wired'
+    expect:
+      exit: 0
+      stdout_contains: ['^majordomus.enforcement-wiring +blocking', 'doctor']
+  - id: one-rule
+    run: ['doctrine', 'show', 'majordomus.enforcement-wiring']
+    note: 'one rule: its class decides whether a violation stops the command'
+    expect:
+      exit: 0
+      stdout_contains: ['^id +majordomus.enforcement-wiring', '^class +blocking']
+then:
+  - 'exit 0 is clean, 10 is a failing finding, 12 is a missing precondition; nothing exits 0 with a FAIL line'
+  - 'every FAIL and WARN names the command that reproduces it'
+  - 'nothing here reached the network or evaluated generated text'
+```
 
 # Outcome
 
