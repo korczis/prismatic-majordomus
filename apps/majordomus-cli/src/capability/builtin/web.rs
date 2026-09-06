@@ -10,6 +10,15 @@
 //!
 //! Nothing here knows the name of a surface. A report that a producer generates tomorrow
 //! is in this answer the moment it declares itself, and a route that is removed leaves it.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::web::module;
+//! // the module declares its capability once; every projection of it is derived
+//! let m = module();
+//! let c = m.capabilities.iter().find(|c| c.capability.id.as_str() == "web.surfaces").unwrap();
+//! assert_eq!(c.capability.exposure.http.as_ref().unwrap().path, "/api/v1/web/surfaces");
+//! assert_eq!(c.capability.exposure.mcp.as_ref().unwrap().tool.as_deref(), Some("majordomus_web_surfaces"));
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -46,8 +55,18 @@ pub struct SurfaceReport {
 }
 
 fn surfaces(ctx: &Context, _: Empty) -> Result<SurfaceReport, CapabilityError> {
-    let topology = &ctx.web;
-    let root = std::path::Path::new(&ctx.index.repository.root);
+    Ok(report(
+        &ctx.web,
+        std::path::Path::new(&ctx.index.repository.root),
+    ))
+}
+
+/// The report of one resolved topology.
+///
+/// Separate from the handler because it is the whole of the answer: given a topology and
+/// the root its artifacts are relative to, everything below is a reading of that value and
+/// nothing is asked of the process.
+fn report(topology: &crate::web::Topology, root: &std::path::Path) -> SurfaceReport {
     let ids = |take: &dyn Fn(&Surface) -> bool| -> Vec<String> {
         topology
             .surfaces
@@ -56,13 +75,13 @@ fn surfaces(ctx: &Context, _: Empty) -> Result<SurfaceReport, CapabilityError> {
             .map(|s| s.id.clone())
             .collect()
     };
-    Ok(SurfaceReport {
+    SurfaceReport {
         served: ids(&|s| s.availability.is_served()),
         published: ids(&|s| s.publishes()),
         public: ids(&|s| s.visibility == Visibility::Public),
         findings: validate::validate(topology, root, Artifacts::Ignore),
         surfaces: topology.surfaces.clone(),
-    })
+    }
 }
 
 /// The module.
@@ -93,5 +112,49 @@ pub fn module() -> ModuleDescriptor {
                 handler: surfaces,
             },
         ],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::web::discover::{self, Runtime};
+    use crate::web::Topology;
+
+    #[test]
+    fn the_report_is_three_readings_of_one_topology_and_invents_nothing() {
+        let mut surfaces = discover::native_all();
+        surfaces.extend(discover::application(std::path::Path::new("/nonexistent")));
+        let topology = Topology::new(surfaces);
+        let report = report(&topology, std::path::Path::new("/nonexistent"));
+
+        assert_eq!(report.surfaces.len(), topology.surfaces.len());
+        // every id in every list is a surface of the topology: no list is maintained
+        for id in report
+            .served
+            .iter()
+            .chain(&report.published)
+            .chain(&report.public)
+        {
+            assert!(
+                topology.get(id).is_some(),
+                "{id} is in a list and not in the topology"
+            );
+        }
+        assert!(report.served.contains(&"swagger".to_string()));
+        assert!(report.public.contains(&"swagger".to_string()));
+        // MCP is served and not advertised; the home page reads `public`, not `served`
+        assert!(report.served.contains(&"mcp".to_string()));
+        assert!(!report.public.contains(&"mcp".to_string()));
+        assert!(report.findings.is_empty(), "{:?}", report.findings);
+    }
+
+    #[test]
+    fn a_narrowed_topology_answers_for_the_process_that_narrowed_it() {
+        let bare = Topology::new(discover::native(Runtime::default()));
+        let report = report(&bare, std::path::Path::new("/nonexistent"));
+        assert!(!report.served.contains(&"cockpit".to_string()));
+        assert!(!report.served.contains(&"mcp".to_string()));
+        assert!(report.published.is_empty(), "a process publishes nothing");
     }
 }

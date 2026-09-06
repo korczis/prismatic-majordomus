@@ -371,7 +371,12 @@ impl Router {
                         ctx: Arc::new(self.ctx.with_web(served.shared())),
                         served,
                     })
-                    .map_err(|e| e.to_string())
+                    // the reason alone: `served()` puts it back into the same error, and a
+                    // message that names its own kind twice reads as a bug in the tool
+                    .map_err(|e| match e {
+                        crate::error::Error::InvalidSurface { reason, .. } => reason,
+                        other => other.to_string(),
+                    })
             })
             .as_ref()
     }
