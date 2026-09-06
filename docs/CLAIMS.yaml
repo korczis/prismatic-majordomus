@@ -1107,3 +1107,21 @@ claims:
     status: guaranteed
     responsibility: layer
     note: Acceptance is the person's act — a tool that can write `accepted` turns its own inference into repository truth and a later reader cannot tell which, so propose has no flag for it and an extracted record claiming it is a finding. An extracted record must name its evidence in provenance.derived_from, whose references are typed and whose file and test references must resolve; it may still be superseded, because that is something a later record did to it. The identity is allocated under a lock over the section directory, and the case proves it with real concurrent processes, because this repository shipped two 0005s and two 0007s before anything checked.
+
+  - id: web-surface-declared-once
+    claim: Every web surface is declared once at its producer and resolved into one topology, from which the router, the landing page and the machine-readable index are each projected
+    source: .ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md
+    implementation: apps/majordomus-cli/src/web/model.rs
+    test: test/cases/89_web_surface.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: A surface is a mount, a producer, a kind, a category, a visibility and the provenance of each; the routes the executable answers come from the capability declarations that already exist, a generated directory declares itself beside its output, and the application's site is read from the site generator's configuration. There is no central list. The case asks the page and the index independently and requires the same set of public mounts, so a link written into the page by hand fails it.
+
+  - id: web-namespaces-reserved
+    claim: /docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount
+    source: .ai/repo/rules/project/web-surface-declared-once.v1.md
+    implementation: apps/majordomus-cli/src/web/discover.rs
+    test: test/cases/89_web_surface.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there.
