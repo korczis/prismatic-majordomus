@@ -59,6 +59,8 @@ docs/CLAIMS.yaml
 docs/RESPONSIBILITIES.yaml
 docs/generated/openapi.json
 docs/generated/registry.json
+site/data/registry/why.json
+site/data/registry/why-graph.json
 docs/generated/cli.json
 apps/majordomus-cli/README.md
 site/config.toml
@@ -716,7 +718,6 @@ GEN_T0="$(mj_phase_begin "gen:why_catalogue")"
 # in shape, and valid, so a stale or refused catalogue stops the site build rather than
 # rendering an empty section.
 WHY_DATA="$ROOT/site/data/registry/why.json"
-[ -f "$WHY_DATA" ] || { echo "generate-site-data: $WHY_DATA is missing (run: majordomus generate site)" >&2; exit 12; }
 [ "$(jq -r '.schema' "$WHY_DATA")" = "majordomus-site-why/v1" ] || { echo "generate-site-data: site/data/registry/why.json is not a majordomus-site-why/v1 dataset (regenerate: majordomus generate site)" >&2; exit 10; }
 [ "$(jq -r '.valid' "$WHY_DATA")" = "true" ] || { echo "generate-site-data: the Why catalogue does not validate; the site may not render it (reproduce: majordomus why validate)" >&2; exit 10; }
 [ "$(jq '.moments | length' "$WHY_DATA")" -ge 3 ] || { echo "generate-site-data: .ai/repo/why/moments/ produced almost no moments" >&2; exit 10; }
@@ -1045,8 +1046,13 @@ CONTENT="$STAGE/content/docs"
 rm -rf "$CONTENT"; mkdir -p "$CONTENT"
 # every document listed in the docs/README.md index becomes a page; adding a row is the only step
 # (AGENTS.md is listed in the index but lives at the repository root; it is rendered as "contract" below)
-for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
-  src="$ROOT/docs/$d.md"; slug="$(doc_slug "$d")"
+# One document, projected. A function because three of these documents are written by this
+# same run, later than this point: projecting them from the tree would take the previous
+# run's copy, so the page would be one run behind its source for as long as the source kept
+# changing. They are re-projected from what this run staged, below.
+project_doc() { # name (without .md), source file
+  local d="$1" src="$2" slug title summary
+  slug="$(doc_slug "$d")"
   title="$(grep -m1 '^# ' "$src" | sed 's/^# //; s/ — .*//')"
   summary="$(jq -r --arg p "$d.md" '.docs[] | select(.path==$p) | .summary' "$OUT/docs.json")"
   { printf -- '+++
@@ -1062,6 +1068,9 @@ source = "docs/%s.md"
     sed '1{/^# /d;}' "$src" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk -v spec="$CLI_SPEC_SLUG" "$DOCLINK"
     printf '{%% endraw %%}\n'
   } > "$CONTENT/$slug.md"
+}
+for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
+  project_doc "$d" "$ROOT/docs/$d.md"
 done
 # the repository's own generated contract, as a page
 { printf -- '+++
@@ -1601,6 +1610,16 @@ Medians unless the column says otherwise.
 } > "$PGS"
 
 mj_phase_end "gen:docs_PAGES_STATUS.md_derived" "$GEN_T0"
+
+# The three documents this run writes into docs/ are projected again, now from what this run
+# staged rather than from the copy on disk, which is the previous run's. Without this the
+# page for each of them trails its own source by one run, and `--check` reports a page stale
+# immediately after the generation that was supposed to make it current.
+for n in $GENERATED_DOCS; do
+  d="${n%.md}"
+  [ -f "$STAGE/$d.md" ] || continue
+  project_doc "$d" "$STAGE/$d.md"
+done
 # ---------------------------------------------------------------- staged output complete
 GEN_T0="$(mj_phase_begin "gen:staged_output_complete")"
 # Everything above wrote into $STAGE only. Nothing under the repository has changed yet, so a
