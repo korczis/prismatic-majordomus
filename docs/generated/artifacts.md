@@ -83,8 +83,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
-| `AGENTS.md` | `providers/agents` | markdown | 3030 | `6bfd3493dcd0c4f9` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 2319 | `c44a300ba3ceafc8` |
+| `AGENTS.md` | `providers/agents` | markdown | 3030 | `a9f36ec6bd6b324a` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 2319 | `f7fb19765734777c` |
 | `docs/INSTALL.md` | `install-guide` | markdown | 9477 | `884d10a29b661232` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
@@ -156,7 +156,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `6853ce3f5bc27958` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `955c0ee83c492d2f` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 2842 | `2ac359554068d8fd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1119187 | `43e80091a040111a` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1120785 | `60d106fe492010be` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 178498 | `2c7bfd06da2e83a8` |
 | `site/data/registry/why.json` | `site-why` | json | 349487 | `edcfe8157476745f` |
 | `site/static/install.sh` | `installer` | text | 28286 | `30e8f6d7c9317caa` |
