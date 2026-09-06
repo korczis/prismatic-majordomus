@@ -266,7 +266,18 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     // canonical state per request, which this executable does not do; `generate --check`
     // is the complete answer and this check names it.
     let root = std::path::Path::new(&index.repository.root);
-    let manifest = generate::registry_manifest(&ctx.registry, crate::VERSION);
+    let manifest = generate::Document::new(
+        "registry",
+        generate::REGISTRY_SCHEMA,
+        "the canonical capability registry",
+        generate::registry_manifest(&ctx.registry),
+    )
+    .artifacts(crate::VERSION);
+    let manifest = manifest
+        .iter()
+        .find(|a| a.format == generate::ArtifactFormat::Json)
+        .map(|a| a.content.clone())
+        .unwrap_or_default();
     let path = format!("{}/registry.json", generate::OUT_DIR);
     let committed = std::fs::read_to_string(root.join(&path));
     let (status, detail, findings) = match &committed {

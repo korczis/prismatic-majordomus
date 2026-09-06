@@ -138,7 +138,7 @@
       "status": "guaranteed",
       "route": "/guarantees/prompt-capture/",
       "external": false,
-      "note": "Covers the five states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, a record set that cannot carry model output, the record-and-rendering pair every prompt is kept as, and the schema identifier resolving to the two files that describe both halves."
+      "note": "Covers the four states a provider can be in, idempotence on the provider's prompt identity, an archive that is ignored and untracked, and a record set that cannot carry model output."
     },
     {
       "id": "claim:prompt-assets",
@@ -807,6 +807,15 @@
       "note": "share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas."
     },
     {
+      "id": "claim:generated-artifacts-typed",
+      "kind": "claim",
+      "label": "Every generated artifact declares the document it projects, the encoding it is written in, the schema its content satisfies and its source, and a structured document is written in every encoding it is committed in from one value",
+      "status": "guaranteed",
+      "route": "/guarantees/generated-artifacts-typed/",
+      "external": false,
+      "note": "JSON, YAML and Markdown of a document are renderings of one value, so they cannot disagree; each carries a provenance header in the form its encoding allows; the index of the whole set, docs/generated/artifacts.json, is itself generated and is read back by artifacts.list."
+    },
+    {
       "id": "claim:generated-projections-checked",
       "kind": "claim",
       "label": "The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one",
@@ -1041,15 +1050,6 @@
       "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site/SKILL.md."
     },
     {
-      "id": "claim:derived-data-current",
-      "kind": "claim",
-      "label": "A commit whose derived data is behind its canonical inputs is refused before it exists, and a repository that unwires that gate is a doctor failure",
-      "status": "guaranteed",
-      "route": "/guarantees/derived-data-current/",
-      "external": false,
-      "note": "The generator records the input hash in site/data/generated/source.json, so `pages current` answers \"must this be regenerated?\" in a fifth of a second without generating anything, which is what lets it run on every commit rather than only in CI. It is declared in the policy's enforcement list as derived-current, wired by git-hook:pre-commit, and doctor verifies that wiring the way it verifies the others - so the gate refuses the stale commit and the doctrine refuses the repository that removes the gate. Before this, staleness surfaced only after a merge, and the person it stopped was never the person who caused it."
-    },
-    {
       "id": "claim:executable-reference-derived",
       "kind": "claim",
       "label": "The site's pages about the Rust executable (one per module, one per capability, the command line, the MCP surface, the benchmarks, the executable's own narrative) are derived from the registry manifest and the registry dataset the executable generates, nothing names a capability by hand, and a capability that joins or leaves the registry gains or loses its page, its index entries and its links from the generators alone",
@@ -1095,24 +1095,6 @@
       "note": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds."
     },
     {
-      "id": "claim:session-records",
-      "kind": "claim",
-      "label": "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered",
-      "status": "guaranteed",
-      "route": "/guarantees/session-records/",
-      "external": false,
-      "note": "The record lives under the manifest's sessions section. Every field is derived - times from the clock, heads and commits from git, the reference lists from the ledger's events for the episode - and the body is the only authored part. The repository is named by its remote and the working copy by a hash, so the resolver can tell one checkout's records from another's without disclosing a path. One source class discovers them; the index, MCP, the object routes, the graph and the site follow."
-    },
-    {
-      "id": "claim:session-lifecycle",
-      "kind": "claim",
-      "label": "A provider hook opens and closes the execution episode below the model, and the context resolved at the open is frozen beside it",
-      "status": "guaranteed",
-      "route": "/guarantees/session-lifecycle/",
-      "external": false,
-      "note": "The provider's own SessionStart and SessionEnd events draw the boundary; both are idempotent because the events are, neither writes to stdout because a start hook's output reaches the model's context, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation."
-    },
-    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1138,15 +1120,6 @@
       "route": "/guarantees/adr-propose/",
       "external": false,
       "note": "Acceptance is the person's act — a tool that can write `accepted` turns its own inference into repository truth and a later reader cannot tell which, so propose has no flag for it and an extracted record claiming it is a finding. An extracted record must name its evidence in provenance.derived_from, whose references are typed and whose file and test references must resolve; it may still be superseded, because that is something a later record did to it. The identity is allocated under a lock over the section directory, and the case proves it with real concurrent processes, because this repository shipped two 0005s and two 0007s before anything checked."
-    },
-    {
-      "id": "claim:cli-documentation-executable",
-      "kind": "claim",
-      "label": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
-      "status": "guaranteed",
-      "route": "/guarantees/cli-documentation-executable/",
-      "external": false,
-      "note": "The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown."
     },
     {
       "id": "impl:.github/workflows/pages.yml",
@@ -1201,13 +1174,6 @@
       "id": "impl:apps/majordomus-cli/src/capability/registry.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/capability/registry.rs",
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "impl:apps/majordomus-cli/src/cli.rs",
-      "kind": "implementation",
-      "label": "apps/majordomus-cli/src/cli.rs",
       "route": null,
       "external": false
     },
@@ -1457,20 +1423,6 @@
       "external": false
     },
     {
-      "id": "impl:lib/session.sh",
-      "kind": "implementation",
-      "label": "lib/session.sh",
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "impl:lib/session_context.sh",
-      "kind": "implementation",
-      "label": "lib/session_context.sh",
-      "route": null,
-      "external": false
-    },
-    {
       "id": "impl:lib/skills.sh",
       "kind": "implementation",
       "label": "lib/skills.sh",
@@ -1544,13 +1496,6 @@
       "id": "impl:scripts/lib/executable-site.jq",
       "kind": "implementation",
       "label": "scripts/lib/executable-site.jq",
-      "route": null,
-      "external": false
-    },
-    {
-      "id": "impl:scripts/pages",
-      "kind": "implementation",
-      "label": "scripts/pages",
       "route": null,
       "external": false
     },
@@ -1756,13 +1701,6 @@
       "label": "share/skeleton/profiles/routine.yaml",
       "route": "/profiles/routine/",
       "external": false
-    },
-    {
-      "id": "test:apps/majordomus-cli/tests/cli_docs.rs",
-      "kind": "test",
-      "label": "apps/majordomus-cli/tests/cli_docs.rs",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cli_docs.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/projections.rs",
@@ -2003,25 +1941,11 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/51_derived_artifacts_committed.sh"
     },
     {
-      "id": "test:test/cases/54_session_lifecycle_hooks.sh",
+      "id": "test:test/cases/52_generated_artifact_typing.sh",
       "kind": "test",
-      "label": "test/cases/54_session_lifecycle_hooks.sh",
+      "label": "test/cases/52_generated_artifact_typing.sh",
       "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/54_session_lifecycle_hooks.sh"
-    },
-    {
-      "id": "test:test/cases/56_derived_current_gate.sh",
-      "kind": "test",
-      "label": "test/cases/56_derived_current_gate.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/56_derived_current_gate.sh"
-    },
-    {
-      "id": "test:test/cases/63_session_records.sh",
-      "kind": "test",
-      "label": "test/cases/63_session_records.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/63_session_records.sh"
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/52_generated_artifact_typing.sh"
     },
     {
       "id": "test:test/cases/65_tool_root_independence.sh",
@@ -2606,6 +2530,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:generated-artifacts-typed",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:generated-projections-checked",
       "target": "source:docs/CAPABILITIES.md",
       "kind": "specified_by"
@@ -2736,11 +2665,6 @@
       "kind": "specified_by"
     },
     {
-      "source": "claim:derived-data-current",
-      "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
-      "kind": "specified_by"
-    },
-    {
       "source": "claim:executable-reference-derived",
       "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
       "kind": "specified_by"
@@ -2766,16 +2690,6 @@
       "kind": "specified_by"
     },
     {
-      "source": "claim:session-records",
-      "target": "source:docs/SCHEMAS.md",
-      "kind": "specified_by"
-    },
-    {
-      "source": "claim:session-lifecycle",
-      "target": "source:docs/DOCTRINE.md",
-      "kind": "specified_by"
-    },
-    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -2788,11 +2702,6 @@
     {
       "source": "claim:adr-propose",
       "target": "source:docs/SCHEMAS.md",
-      "kind": "specified_by"
-    },
-    {
-      "source": "claim:cli-documentation-executable",
-      "target": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
       "kind": "specified_by"
     },
     {
@@ -3196,6 +3105,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:generated-artifacts-typed",
+      "target": "impl:apps/majordomus-cli/src/generate.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:generated-projections-checked",
       "target": "impl:apps/majordomus-cli/src/generate.rs",
       "kind": "implemented_by"
@@ -3326,11 +3240,6 @@
       "kind": "implemented_by"
     },
     {
-      "source": "claim:derived-data-current",
-      "target": "impl:scripts/pages",
-      "kind": "implemented_by"
-    },
-    {
       "source": "claim:executable-reference-derived",
       "target": "impl:scripts/lib/executable-site.jq",
       "kind": "implemented_by"
@@ -3356,16 +3265,6 @@
       "kind": "implemented_by"
     },
     {
-      "source": "claim:session-records",
-      "target": "impl:lib/session.sh",
-      "kind": "implemented_by"
-    },
-    {
-      "source": "claim:session-lifecycle",
-      "target": "impl:lib/session_context.sh",
-      "kind": "implemented_by"
-    },
-    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -3378,11 +3277,6 @@
     {
       "source": "claim:adr-propose",
       "target": "impl:lib/adr.sh",
-      "kind": "implemented_by"
-    },
-    {
-      "source": "claim:cli-documentation-executable",
-      "target": "impl:apps/majordomus-cli/src/cli.rs",
       "kind": "implemented_by"
     },
     {
@@ -3786,6 +3680,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:generated-artifacts-typed",
+      "target": "test:test/cases/52_generated_artifact_typing.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:generated-projections-checked",
       "target": "test:test/cases/76_capabilities_projections.sh",
       "kind": "proved_by"
@@ -3916,11 +3815,6 @@
       "kind": "proved_by"
     },
     {
-      "source": "claim:derived-data-current",
-      "target": "test:test/cases/56_derived_current_gate.sh",
-      "kind": "proved_by"
-    },
-    {
       "source": "claim:executable-reference-derived",
       "target": "test:test/cases/95_executable_reference.sh",
       "kind": "proved_by"
@@ -3946,16 +3840,6 @@
       "kind": "proved_by"
     },
     {
-      "source": "claim:session-records",
-      "target": "test:test/cases/63_session_records.sh",
-      "kind": "proved_by"
-    },
-    {
-      "source": "claim:session-lifecycle",
-      "target": "test:test/cases/54_session_lifecycle_hooks.sh",
-      "kind": "proved_by"
-    },
-    {
       "source": "claim:adr-catalogue",
       "target": "test:test/cases/99_adr.sh",
       "kind": "proved_by"
@@ -3968,11 +3852,6 @@
     {
       "source": "claim:adr-propose",
       "target": "test:test/cases/99_adr.sh",
-      "kind": "proved_by"
-    },
-    {
-      "source": "claim:cli-documentation-executable",
-      "target": "test:apps/majordomus-cli/tests/cli_docs.rs",
       "kind": "proved_by"
     }
   ]

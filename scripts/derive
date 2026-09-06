@@ -4,17 +4,19 @@
 # this, `scripts/derive-check` proves the result, and CI refuses a tree the check refuses.
 #
 #   stage A  majordomus generate       the registry's projections that depend on code alone:
-#                                      docs/generated/{openapi.json,capabilities.md,cli.md,
-#                                      registry.json,modules/*.md}, share/allow/*.txt, and the
-#                                      provider bootstraps (policy + templates)
+#                                      docs/generated/{openapi,registry,cli}.{json,yaml},
+#                                      docs/generated/{capabilities,cli}.md, modules/*.md,
+#                                      share/allow/*.txt, and the provider bootstraps
+#                                      (policy + templates)
 #   stage B  scripts/generate-site-data the site's data and content, docs/SITE_CLAIMS.md and
 #                                      docs/PLAN_STATUS.md, from the canonical files and from
 #                                      stage A's registry.json and openapi.json
 #   stage C  majordomus generate       the projections that read the index — the site's
-#                                      registry dataset (site/data/registry/registry.json) and
-#                                      docs/generated/benchmarks.md — over the tree stage B
-#                                      left, since the documents it wrote are objects of the
-#                                      index
+#                                      registry dataset (site/data/registry/registry.json),
+#                                      docs/generated/benchmarks.{md,json,yaml} and the
+#                                      manifest docs/generated/artifacts.{json,yaml,md} —
+#                                      over the tree stage B left, since the documents it
+#                                      wrote are objects of the index
 #
 # No stage reads its own output; stage C's outputs are read by nothing but the site build.
 # Running the whole thing twice changes nothing: the second pass is what derive-check

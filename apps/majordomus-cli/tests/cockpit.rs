@@ -18,6 +18,7 @@ const PAGES: &[&str] = &[
     "/cockpit/graphs",
     "/cockpit/graphs/topology",
     "/cockpit/health",
+    "/cockpit/artifacts",
     "/cockpit/api",
     "/cockpit/search",
     "/cockpit/activity",
@@ -218,6 +219,87 @@ fn a_graph_page_lists_every_node_and_edge_before_any_library_loads() {
     let (status, missing) = s.get("/api/v1/graph?id=nope");
     assert_eq!(status, 404);
     assert_eq!(missing["error"]["code"], "not_found");
+}
+
+/// The artifacts page is the reading half of the generator, and it holds no list of its
+/// own: it shows what the committed manifest declares. In a fixture that has never run
+/// `majordomus generate` it says so instead of failing, and after a generation every
+/// document it names is there in every encoding it is committed in.
+#[test]
+fn the_artifacts_page_and_route_report_the_generated_tree_and_say_when_there_is_none() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+
+    // nothing generated yet: a fact, not a failure
+    let (status, page) = html(&s, "/cockpit/artifacts");
+    assert_eq!(status, 200);
+    assert!(
+        page.contains("no generated tree yet"),
+        "the page does not say the manifest is absent"
+    );
+    let (status, report) = s.get("/api/v1/artifacts");
+    assert_eq!(status, 200);
+    assert_eq!(report["present"], false);
+    assert_eq!(report["tallies"]["artifacts"], 0);
+    assert_eq!(report["manifest"], "docs/generated/artifacts.json");
+    drop(s);
+
+    // generate, and every encoding of every document is named, current, and typed
+    let (code, _, err) = common::run_in(&f.root(), &["generate"], "");
+    assert_eq!(code, 0, "{err}");
+    let s = Served::start(&f.root(), &[]);
+    let (status, report) = s.get("/api/v1/artifacts");
+    assert_eq!(status, 200);
+    assert_eq!(report["present"], true);
+    assert_eq!(report["schema"], "majordomus/generated-artifacts/v1");
+    assert_eq!(report["tallies"]["stale"], 0, "{report}");
+    assert_eq!(report["tallies"]["missing"], 0, "{report}");
+    assert!(report["tallies"]["current"].as_u64().unwrap() > 5);
+    let documents = report["documents"].as_array().unwrap();
+    let registry = documents
+        .iter()
+        .find(|d| d["id"] == "registry")
+        .expect("the registry document");
+    let formats: Vec<&str> = registry["formats"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|f| f.as_str().unwrap())
+        .collect();
+    assert!(
+        formats.contains(&"json") && formats.contains(&"yaml"),
+        "the registry is committed in both encodings: {formats:?}"
+    );
+
+    // the page shows the same answer, and one filter narrows it
+    let (status, page) = html(&s, "/cockpit/artifacts");
+    assert_eq!(status, 200);
+    assert!(page.contains("docs/generated/registry.yaml"), "{page}");
+    assert!(page.contains("majordomus/capability-registry/v1"));
+    let (status, only_yaml) = s.get("/api/v1/artifacts?format=yaml");
+    assert_eq!(status, 200);
+    assert!(only_yaml["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .all(|a| a["format"] == "yaml"));
+
+    // an edited artifact is stale, by hash, without regenerating anything
+    let path = f.path("docs/generated/registry.yaml");
+    std::fs::write(
+        &path,
+        format!("{}\n", std::fs::read_to_string(&path).unwrap()),
+    )
+    .unwrap();
+    drop(s);
+    let s = Served::start(&f.root(), &[]);
+    let (_, report) = s.get("/api/v1/artifacts?document=registry");
+    assert_eq!(report["tallies"]["stale"], 1, "{report}");
+    assert!(report["artifacts"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|a| a["path"] == "docs/generated/registry.yaml" && a["state"] == "stale"));
 }
 
 #[test]

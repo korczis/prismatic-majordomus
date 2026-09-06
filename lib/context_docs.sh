@@ -116,7 +116,7 @@ mj_ctxd_scan() {
   local reason
   reason="$(awk -v n="$n" -v file="$rel" -v dir="$dir" -v depth="$depth" -v provs=" $providers " -v flat="$MJ_CTXD_FLAT" '
     function fail(m) { print m; exit 1 }
-    FNR == NR { pat[++np] = $0; next }
+    FNR == NR { if ($0 !~ /^#/ && $0 != "") pat[++np] = $0; next }   # the allow-list banner is comments
     {
       eq = index($0, "="); if (eq == 0) next
       k = substr($0, 1, eq - 1); v = substr($0, eq + 1)

@@ -422,18 +422,21 @@
   }
   .mj-badge--ok,
   .mj-badge--declared,
-  .mj-badge--query {
+  .mj-badge--query,
+  .mj-badge--current {
     @apply text-green-700 dark:text-green-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
   }
   .mj-badge--warn,
   .mj-badge--command,
-  .mj-badge--stale {
+  .mj-badge--stale,
+  .mj-badge--not-generated {
     @apply text-amber-700 dark:text-amber-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
   }
   .mj-badge--fail,
-  .mj-badge--error {
+  .mj-badge--error,
+  .mj-badge--missing {
     @apply text-red-700 dark:text-red-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
   }
@@ -445,6 +448,7 @@
   .mj-badge--resource,
   .mj-badge--generated,
   .mj-badge--cached,
+  .mj-badge--present,
   .mj-badge--runtime {
     color: var(--color-accent-600);
     border-color: color-mix(in oklch, currentColor 40%, transparent);
@@ -453,6 +457,7 @@
   :where(.dark) .mj-badge--resource,
   :where(.dark) .mj-badge--generated,
   :where(.dark) .mj-badge--cached,
+  :where(.dark) .mj-badge--present,
   :where(.dark) .mj-badge--runtime {
     color: var(--color-accent-200);
   }

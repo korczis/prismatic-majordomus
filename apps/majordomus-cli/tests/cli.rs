@@ -294,7 +294,9 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
     // a repository that carries the distribution itself, as this one does
     let dist = common::dist_share();
     // the schema root is a tree — <vendor>/<name>/<name>.v<n>.{proto,schema.json} — so it
-    // is copied as one, not as a directory listing
+    // is copied as one, not as a directory listing. share/schemas/generated/ comes with it:
+    // those are the contracts of the *generated documents* rather than a kind's, and kind
+    // discovery tells the two apart by the vendor level rather than by what was copied.
     copy_tree(&dist.join("schemas"), "share/schemas", &f);
     f.write(
         "share/kinds.yaml",

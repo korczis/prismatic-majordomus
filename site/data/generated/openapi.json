@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 14,
-    "schemas": 65,
-    "tags": 7
+    "operations": 15,
+    "schemas": 71,
+    "tags": 8
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -215,6 +215,275 @@
       "used_by": [],
       "used_by_schemas": [
         "ResourceView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The encoding one generated artifact is written in.",
+      "is_enum": true,
+      "name": "ArtifactFormat",
+      "properties": [],
+      "type": "\"json\" | \"yaml\" | \"markdown\" | \"text\"",
+      "used_by": [
+        "artifacts.list"
+      ],
+      "used_by_schemas": [
+        "ArtifactView",
+        "DocumentView"
+      ],
+      "values": [
+        {
+          "description": "A JSON document: pretty-printed, one trailing newline, provenance as members.",
+          "value": "json"
+        },
+        {
+          "description": "The same document in the layer's YAML, provenance as a comment banner.",
+          "value": "yaml"
+        },
+        {
+          "description": "Markdown for a reader, provenance as an HTML comment.",
+          "value": "markdown"
+        },
+        {
+          "description": "Line-oriented text another program reads: the shell tool's allow-lists,\nprovenance as `#` comments.",
+          "value": "text"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `artifacts.list`.",
+      "is_enum": false,
+      "name": "ArtifactReport",
+      "properties": [
+        {
+          "description": "The manifest this was read from, repository-relative.",
+          "name": "manifest",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the manifest is committed in this repository at all. A repository that has\nnever run `majordomus generate` has no generated tree, which is a fact about it and\nnot a failure of this call: every list below is then empty and every tally zero.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The schema the manifest carries, empty when there is none to read.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The documents, in the manifest's order.",
+          "name": "documents",
+          "refs": [
+            "DocumentView"
+          ],
+          "required": true,
+          "type": "array of DocumentView"
+        },
+        {
+          "description": "The files, in the manifest's order, after any filter.",
+          "name": "artifacts",
+          "refs": [
+            "ArtifactView"
+          ],
+          "required": true,
+          "type": "array of ArtifactView"
+        },
+        {
+          "description": "The counts.",
+          "name": "tallies",
+          "refs": [
+            "ArtifactTallies"
+          ],
+          "required": true,
+          "type": "ArtifactTallies"
+        },
+        {
+          "description": "The command that rewrites every one of them.",
+          "name": "regenerate",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that decides staleness byte for byte, which is stronger than the hash.",
+          "name": "verify",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "artifacts.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one generated file stands against the tree it is committed in.",
+      "is_enum": true,
+      "name": "ArtifactState",
+      "properties": [],
+      "type": "\"current\" | \"stale\" | \"missing\" | \"present\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactView"
+      ],
+      "values": [
+        {
+          "description": "The file is there and its bytes hash to what the manifest recorded.",
+          "value": "current"
+        },
+        {
+          "description": "The file is there and its bytes differ: it was edited, or the generator moved on.",
+          "value": "stale"
+        },
+        {
+          "description": "The manifest names it and the tree does not have it.",
+          "value": "missing"
+        },
+        {
+          "description": "The file is there and the manifest records no hash for it: the manifest's own\nencodings, which cannot hash themselves. `generate --check` compares them.",
+          "value": "present"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How many of each, so a caller needs no arithmetic of its own.",
+      "is_enum": false,
+      "name": "ArtifactTallies",
+      "properties": [
+        {
+          "description": "Documents in the manifest.",
+          "name": "documents",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Files in the manifest, after any filter.",
+          "name": "artifacts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Hashes that match.",
+          "name": "current",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Hashes that do not.",
+          "name": "stale",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Files the manifest names and the tree lacks.",
+          "name": "missing",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Files the manifest records no hash for.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One generated file, as the manifest declares it and as the tree has it.",
+      "is_enum": false,
+      "name": "ArtifactView",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document it projects.",
+          "name": "document",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The encoding.",
+          "name": "format",
+          "refs": [
+            "ArtifactFormat"
+          ],
+          "required": true,
+          "type": "ArtifactFormat"
+        },
+        {
+          "description": "The JSON Schema its content satisfies, when it declares one.",
+          "name": "schema",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line: what it was derived from.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The size the manifest recorded.",
+          "name": "bytes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The hash the manifest recorded.",
+          "name": "sha256",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where the file stands against it.",
+          "name": "state",
+          "refs": [
+            "ArtifactState"
+          ],
+          "required": true,
+          "type": "ArtifactState"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactReport"
       ],
       "values": [],
       "variants": []
@@ -1103,6 +1372,50 @@
       "variants": []
     },
     {
+      "description": "One document, and the encodings it is committed in.",
+      "is_enum": false,
+      "name": "DocumentView",
+      "properties": [
+        {
+          "description": "The document id, shared by every encoding of it.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The schema id its structured encodings carry.",
+          "name": "schema",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line: what it was derived from.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The encodings, in the manifest's order.",
+          "name": "formats",
+          "refs": [
+            "ArtifactFormat"
+          ],
+          "required": true,
+          "type": "array of ArtifactFormat"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge.",
       "is_enum": false,
       "name": "Edge",
@@ -1154,6 +1467,7 @@
       ],
       "type": "object",
       "used_by": [
+        "artifacts.list",
         "capabilities.list",
         "capabilities.describe",
         "graph.get",
@@ -3171,6 +3485,87 @@
   ],
   "source": "docs/generated/openapi.json",
   "tags": [
+    {
+      "description": "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list.",
+      "name": "artifacts",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=8, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/artifacts?format=yaml\"",
+          "description": "The manifest `majordomus generate` commits as docs/generated/artifacts.json, reconciled with the working tree: every document with the encodings it is written in, and every file with its format, schema, source, size, hash and whether the file on disk still matches. Optionally narrowed to one document or one encoding. Reads only; `majordomus generate` writes and `majordomus generate --check` is the byte-for-byte verdict.",
+          "id": "artifacts.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "artifacts",
+            "uri": "majordomus://artifacts"
+          },
+          "mcp_tool": "majordomus_artifacts",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).",
+              "examples": [],
+              "name": "document",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only the artifacts written in this encoding.",
+              "examples": [
+                {
+                  "case": "one-encoding",
+                  "value": "\"yaml\""
+                }
+              ],
+              "name": "format",
+              "required": false,
+              "type": "ArtifactFormat | null"
+            }
+          ],
+          "path": "/api/v1/artifacts",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::artifacts",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "List the generated artifacts: the result.",
+              "schema": "ArtifactReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ArtifactReport",
+          "stability": "behaviorally_verified",
+          "summary": "List the generated artifacts"
+        }
+      ]
+    },
     {
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.",
       "name": "capabilities",
