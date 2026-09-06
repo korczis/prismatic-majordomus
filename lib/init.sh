@@ -75,11 +75,16 @@ H
   # and the context documents, so that the first use case is one file
   mj_init_tree "$skel/ai/repo/use-cases" "$MJ_AI_REPO_DIR/use-cases" '*'
   mj_init_tree "$skel/ai/repo/applications" "$MJ_AI_REPO_DIR/applications" '*'
+  # the why catalogue: the section and its contract exist from the start, so that the first
+  # moment is one file and nothing has to be registered for it
+  mj_init_tree "$skel/ai/repo/why" "$MJ_AI_REPO_DIR/why" '*'
   mkdir -p "$MJ_PROJECT_DIR"
-  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then
-    mkdir -p "$MJ_SESSIONS_DIR"
-    mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$MJ_SESSIONS_DIR/README.md"
-  fi
+  # MJ_SESSIONS_DIR is read from the manifest, which does not exist yet on a first init, so
+  # seeding by that variable seeded nothing and `init --extend` then had a file to add on a
+  # tree init had just written. The section's path is the manifest's default, like every
+  # other section here.
+  mkdir -p "${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.

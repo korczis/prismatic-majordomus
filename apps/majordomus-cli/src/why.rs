@@ -365,11 +365,43 @@ impl Catalogue {
         c.areas
             .sort_by(|a, b| a.weight.cmp(&b.weight).then(a.id.cmp(&b.id)));
 
+        c.adopt_diagnostics(index);
         c.index_moments();
         c.resolve(index, registry);
         c.derive_responsibilities(index);
         c.fingerprint = c.compute_fingerprint();
         c
+    }
+
+    /// Every diagnostic the index raised about a file of this section. An object the index
+    /// refused — two files claiming one identity, malformed front matter, a schema
+    /// violation — never reaches the catalogue at all, so without this the catalogue would
+    /// report itself valid while the thing it is a catalogue of had been excluded.
+    fn adopt_diagnostics(&mut self, index: &Index) {
+        let Some(section) = index.repository.sections.get("why") else {
+            return;
+        };
+        for d in index
+            .diagnostics
+            .iter()
+            .filter(|d| d.severity == Severity::Error)
+        {
+            let Some(path) = d.path.as_deref() else {
+                continue;
+            };
+            if !path.starts_with(section.as_str()) {
+                continue;
+            }
+            self.findings.push(Finding {
+                severity: Severity::Error,
+                code: d.code.clone(),
+                path: path.to_string(),
+                id: None,
+                field: None,
+                message: d.message.clone(),
+                did_you_mean: None,
+            });
+        }
     }
 
     fn check_file_name(&mut self, o: &Object) {

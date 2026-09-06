@@ -163,6 +163,11 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                 path: format!("{SITE_DATA_DIR}/registry.json"),
                 content: crate::site::render(&dataset),
             });
+            // The Why catalogue as the site reads it, and the graph of it. Both are
+            // derived from the catalogue alone — never from the index's fingerprint —
+            // so the two `generate` passes of the derivation graph agree byte for byte
+            // even though the pass between them adds documents to the index.
+            out.extend(crate::site::why_artifacts(&app.context)?);
         }
     }
     Ok(out)

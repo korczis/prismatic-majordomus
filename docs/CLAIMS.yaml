@@ -1081,6 +1081,33 @@ claims:
     responsibility: none      # the site pipeline, not a supervised responsibility
     note: site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds.
 
+  - id: why-catalogue-discovered
+    claim: An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: test/cases/98_why_catalogue.sh
+    status: guaranteed
+    responsibility: layer
+    note: Removing the file removes it from all of them, which is what a hidden registry would fail.
+
+  - id: why-references-resolve
+    claim: Every reference a moment makes resolves against the thing it names, and one that does not is an error carrying the nearest candidate
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: apps/majordomus-cli/tests/why.rs
+    status: guaranteed
+    responsibility: layer
+    note: Audiences, areas and related moments against the catalogue; commands, capabilities, claims, rules and use cases against their own registries.
+
+  - id: why-diagnosis-explainable
+    claim: A diagnosis of a reader's own symptoms is deterministic counting over the catalogue's metadata, and every recommendation names the moments that produced it
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: apps/majordomus-cli/tests/why.rs
+    status: guaranteed
+    responsibility: layer
+    note: No weighting and no percentage; the questionnaire on the website and `majordomus why diagnose` run the same arithmetic over the same data.
+
   - id: session-records
     claim: A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered
     source: docs/SCHEMAS.md

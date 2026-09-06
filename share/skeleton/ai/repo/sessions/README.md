@@ -10,7 +10,6 @@ providers: ["*"]
 audience: [human, agent]
 composition: extend
 order: 100
-tracks: [lib/session.sh, share/schemas/session-record.schema.json]
 ---
 
 # Session records

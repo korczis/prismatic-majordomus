@@ -168,6 +168,11 @@ pub struct MomentDetail {
     pub similar: Vec<String>,
     /// Derived: the explicitly related moments, summarised so a page needs one call.
     pub related_detail: Vec<MomentSummary>,
+    /// Derived: what a reader should see next, in one list and in a stated order — what
+    /// this moment names, then what names it, then what is nearest by shared metadata,
+    /// each appearing once. The three lists above are the same relations kept apart for a
+    /// reader that wants to know which is which.
+    pub neighbours: Vec<String>,
 }
 
 /// Every audience.
@@ -433,15 +438,31 @@ fn why_moment(ctx: &Context, input: MomentInput) -> Result<MomentDetail, Capabil
             .then(a.1.weight.cmp(&b.1.weight))
             .then(a.1.id.cmp(&b.1.id))
     });
+    let similar: Vec<String> = scored
+        .into_iter()
+        .take(6)
+        .map(|(_, o)| o.id.clone())
+        .collect();
+    let backlinks = c.backlinks(&m.id).to_vec();
+    // what a reader should see next, in one list and in a stated order: what this moment
+    // names, then what names it, then what is nearest by shared metadata, each once
+    let mut neighbours: Vec<String> = Vec::new();
+    for id in m
+        .related
+        .iter()
+        .chain(backlinks.iter())
+        .chain(similar.iter())
+    {
+        if id != &m.id && !neighbours.contains(id) {
+            neighbours.push(id.clone());
+        }
+    }
     Ok(MomentDetail {
         moment: m.clone(),
         responsibilities: c.responsibilities(&m.id).to_vec(),
-        backlinks: c.backlinks(&m.id).to_vec(),
-        similar: scored
-            .into_iter()
-            .take(6)
-            .map(|(_, o)| o.id.clone())
-            .collect(),
+        backlinks,
+        similar,
+        neighbours,
         related_detail: m
             .related
             .iter()

@@ -114,10 +114,12 @@ fn call(app: &App, path: &[&str], input: Value) -> Result<Value> {
 }
 
 fn map(e: CapabilityError) -> Error {
-    Error::Protocol {
-        reason: match e {
-            CapabilityError::InvalidInput(reason) | CapabilityError::NotFound(reason) => reason,
-            other => other.to_string(),
+    match e {
+        // a moment that does not exist is a missing artifact, not an internal failure
+        CapabilityError::NotFound(reason) => Error::NotFound { reason },
+        CapabilityError::InvalidInput(reason) => Error::Protocol { reason },
+        other => Error::Protocol {
+            reason: other.to_string(),
         },
     }
 }

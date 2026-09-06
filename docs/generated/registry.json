@@ -5279,6 +5279,13 @@
                 "$ref": "#/$defs/MomentSummary"
               },
               "description": "Derived: the explicitly related moments, summarised so a page needs one call."
+            },
+            "neighbours": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Derived: what a reader should see next, in one list and in a stated order — what\nthis moment names, then what names it, then what is nearest by shared metadata,\neach appearing once. The three lists above are the same relations kept apart for a\nreader that wants to know which is which."
             }
           },
           "required": [
@@ -5296,7 +5303,8 @@
             "responsibilities",
             "backlinks",
             "similar",
-            "related_detail"
+            "related_detail",
+            "neighbours"
           ],
           "description": "One moment in full, with everything derived that a page shows and no file states.",
           "title": "MomentDetail",
