@@ -39,7 +39,6 @@ examples:
     after: 'A rule declares whether the tool enforces it or nobody does, so an honestly advisory rule is labelled as one.'
 commands: [doctor, doctrine, rules]
 capabilities: [health.report]
-responsibilities: [doctor, policy]
 claims: [wiring-reconciliation, dispatcher-wiring, doctrine-registry, doctrine-class-decides, exit-code-contract]
 doctrines: [majordomus.enforcement-wiring, majordomus.doctrine-wiring-integrity, project.rule-is-a-doctrine, majordomus.command-surface]
 use_cases: [prove-a-rule-is-enforced, gate-ci-on-the-tool-itself, read-the-rules-the-tool-applies]

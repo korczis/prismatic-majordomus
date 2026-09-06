@@ -39,7 +39,6 @@ examples:
     after: 'Evidence is refused unless it names a command or an artifact, and the recorded result carries the exit code and the commit.'
 commands: [bench, plan, session]
 capabilities: [perf.counters, health.report]
-responsibilities: [watch, plan]
 claims: [evidence-gates-done, rust-hot-path-benchmarks, benchmark-coverage-derived, session-records, reproduce-command]
 doctrines: [project.performance-evidence, project.benchmarkable-commands, majordomus.session-records, majordomus.verify-outcomes]
 use_cases: [prove-performance-with-benchmarks, complete-an-issue-only-with-its-evidence, open-and-close-a-session]

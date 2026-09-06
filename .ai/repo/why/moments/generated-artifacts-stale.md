@@ -39,7 +39,6 @@ examples:
     after: 'The artifact is regenerated in CI and the tree is refused if it differs; approval applies to something current by construction.'
 commands: [doctor, watch]
 capabilities: [capabilities.list, repository.info]
-responsibilities: [projection, doctor, watch]
 claims: [generated-projections-checked, derivation-one-graph, projection-fingerprint, site-registry-dataset]
 doctrines: [project.derived-files-regenerated, project.derived-once, majordomus.projection-integrity, project.interfaces-are-projections]
 use_cases: [gate-ci-on-the-tool-itself, find-out-what-drifted, extend-what-the-executable-serves]

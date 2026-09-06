@@ -39,7 +39,6 @@ examples:
     after: 'Its handover names the objective and the next action, and the outcome vocabulary has a value for "this worked and stopped here".'
 commands: [finish, history, plan]
 capabilities: [health.report, objects.list]
-responsibilities: [finish, plan, watch]
 claims: [typed-outcome, finish-contract, history-ledger-read, evidence-gates-done]
 doctrines: [majordomus.verification-integrity, majordomus.isolated-parallelism, majordomus.verify-outcomes, majordomus.project-integrity]
 use_cases: [accept-or-refuse-finished-work, read-back-what-happened, deliver-issues-in-waves]

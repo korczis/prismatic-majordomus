@@ -39,7 +39,6 @@ examples:
     after: 'The ledger carries both events with their tasks and heads, and the decision record says why the guard exists.'
 commands: [start, check, decision]
 capabilities: [repository.scope, repository.scope_classify]
-responsibilities: [scope, state]
 claims: [scoped-task, overlap-report, scope-enforcement, decision-record]
 doctrines: [majordomus.scope-integrity, majordomus.one-worker-one-scope, majordomus.externalise-decisions]
 use_cases: [run-several-workers-at-once, record-a-decision-before-it-is-forgotten]

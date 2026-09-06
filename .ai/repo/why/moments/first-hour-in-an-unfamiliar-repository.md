@@ -39,7 +39,6 @@ examples:
     after: 'It is told to read the layer''s protocol and resolve the context for the path, and the resolution is deterministic.'
 commands: [context, init, rules]
 capabilities: [objects.get, objects.list, repository.info]
-responsibilities: [layer, policy]
 claims: [ai-layer-manifest, context-documents, bootstrap-chain, context-coverage, legacy-migration]
 doctrines: [majordomus.context-integrity, majordomus.ai-layout-integrity, project.context-locality, majordomus.minimum-sufficient-context]
 use_cases: [adopt-an-existing-repository, document-every-directory-of-the-layer, read-only-the-context-that-fits]

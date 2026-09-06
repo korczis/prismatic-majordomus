@@ -39,7 +39,6 @@ examples:
     after: 'A command with no executed example does not pass the crate''s own gate, so the documentation cannot get ahead of the binary.'
 commands: [doctor, usecase, bench]
 capabilities: [capabilities.list]
-responsibilities: [doctor, projection]
 claims: [executable-reference-derived, command-surface, command-coverage, use-case-evidence, reproduce-command]
 doctrines: [project.native-cli-documented, project.use-case-evidence, majordomus.command-surface, majordomus.command-coverage]
 use_cases: [add-a-use-case-and-prove-it, know-which-tool-is-running, read-the-rules-the-tool-applies]

@@ -39,7 +39,6 @@ examples:
     after: 'The decision is superseded deliberately, with the replacement naming it, or it stands and the change is refused.'
 commands: [adr, context, doctor]
 capabilities: [graph.get, objects.get]
-responsibilities: [layer, policy]
 claims: [adr-traceability, adr-catalogue, context-impact, pointer-integrity]
 doctrines: [majordomus.adr-integrity, majordomus.context-integrity, majordomus.externalise-decisions]
 use_cases: [trace-a-change-to-the-context-it-affects, keep-decisions-out-of-the-transcript]

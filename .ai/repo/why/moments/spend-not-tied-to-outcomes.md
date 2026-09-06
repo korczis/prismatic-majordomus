@@ -39,7 +39,6 @@ examples:
     after: 'Work is attached to tasks, and tasks to scopes and repositories; the allocation has a basis.'
 commands: [history, finish, session]
 capabilities: [perf.counters, health.report]
-responsibilities: [watch, finish, state]
 claims: [typed-outcome, history-ledger-read, session-records, cost-per-outcome, telemetry]
 doctrines: [majordomus.verify-outcomes, majordomus.ledger-integrity, majordomus.session-records, project.performance-evidence]
 use_cases: [read-back-what-happened, accept-or-refuse-finished-work, open-and-close-a-session]

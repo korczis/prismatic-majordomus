@@ -39,7 +39,6 @@ examples:
     after: 'A guaranteed claim names its implementation file and its behavioural case, and CI refuses a claim that names neither.'
 commands: [doctor, usecase, doctrine]
 capabilities: [health.report, objects.list]
-responsibilities: [doctor, finish]
 claims: [use-case-evidence, use-case-coverage, reproduce-command, doctrine-registry]
 doctrines: [project.no-claim-without-test, project.use-case-evidence, majordomus.use-case-coverage, majordomus.verify-outcomes]
 use_cases: [add-a-use-case-and-prove-it, prove-a-rule-is-enforced, gate-ci-on-the-tool-itself]

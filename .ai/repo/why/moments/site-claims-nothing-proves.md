@@ -39,7 +39,6 @@ examples:
     after: 'Rejected is a status that is published with its reasoning, not an absence.'
 commands: [doctor, usecase]
 capabilities: [health.report, objects.list]
-responsibilities: [doctor, projection]
 claims: [use-case-evidence, use-case-coverage, site-registry-dataset, generated-projections-checked, reproduce-command]
 doctrines: [project.no-claim-without-test, project.use-case-evidence, majordomus.use-case-coverage, project.derived-files-regenerated]
 use_cases: [add-a-use-case-and-prove-it, gate-ci-on-the-tool-itself, prove-a-rule-is-enforced]

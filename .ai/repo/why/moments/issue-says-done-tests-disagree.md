@@ -39,7 +39,6 @@ examples:
     after: 'Status is derived from events and the dependency graph, so it changes when the dependency does.'
 commands: [plan, finish, doctor]
 capabilities: [graph.get]
-responsibilities: [plan, finish]
 claims: [evidence-gates-done, project-status-derived, dag-validation, finish-contract, typed-outcome]
 doctrines: [majordomus.project-integrity, majordomus.verification-integrity, majordomus.dag-integrity, majordomus.verify-outcomes]
 use_cases: [complete-an-issue-only-with-its-evidence, plan-the-work-as-data, accept-or-refuse-finished-work]

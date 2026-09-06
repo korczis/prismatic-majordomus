@@ -39,7 +39,6 @@ examples:
     after: 'The reason is on record with the evidence it was read off, so checking is reading.'
 commands: [decision, knowledge, search]
 capabilities: [objects.search]
-responsibilities: [state, layer]
 claims: [decision-record, decision-attribution, record-search, no-transcripts]
 doctrines: [majordomus.externalise-decisions, majordomus.decision-records, majordomus.decision-threshold, project.never-store-transcripts]
 use_cases: [record-a-decision-before-it-is-forgotten, keep-decisions-out-of-the-transcript, find-an-object-without-reading-everything]

@@ -39,7 +39,6 @@ examples:
     after: 'There is one description, and its provenance is stated on the page it appears on.'
 commands: [doctor, context, adr]
 capabilities: [objects.list, objects.search]
-responsibilities: [projection, layer]
 claims: [projection-generation, context-documents, generated-projections-checked, derivation-one-graph]
 doctrines: [project.context-locality, project.derived-files-regenerated, project.no-counts-in-prose, majordomus.context-integrity]
 use_cases: [document-every-directory-of-the-layer, trace-a-change-to-the-context-it-affects]

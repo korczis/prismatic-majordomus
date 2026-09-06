@@ -39,7 +39,6 @@ examples:
     after: 'CI regenerates and refuses a tree in which any derived artifact differs from its source.'
 commands: [update, doctor, watch]
 capabilities: [repository.info]
-responsibilities: [policy, projection, doctor]
 claims: [projection-fingerprint, projection-generation, generated-projections-checked, no-silent-overwrite]
 doctrines: [majordomus.projection-integrity, project.derived-files-regenerated, majordomus.policy-integrity, majordomus.policy-completeness]
 use_cases: [trust-the-policy-before-reading-it, find-out-what-drifted, gate-ci-on-the-tool-itself]

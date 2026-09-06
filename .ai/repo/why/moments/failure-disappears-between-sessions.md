@@ -39,7 +39,6 @@ examples:
     after: 'The handover names the objective, the current state and the next action, and says how far git has moved since.'
 commands: [checkpoint, handover, history]
 capabilities: [objects.search]
-responsibilities: [state, handover, watch]
 claims: [checkpoint-record, checkpoint-interval, handover-record, history-ledger-read, record-resolution]
 doctrines: [majordomus.checkpoint-freshness, majordomus.handover-integrity, majordomus.handovers-carry-state, majordomus.ledger-integrity]
 use_cases: [checkpoint-long-work, hand-work-between-sessions, read-back-what-happened]

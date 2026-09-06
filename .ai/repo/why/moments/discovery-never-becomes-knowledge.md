@@ -39,7 +39,6 @@ examples:
     after: 'The record carries class `lesson` and what the earlier attempt cost, so the second attempt does not start.'
 commands: [knowledge, decision, search]
 capabilities: [objects.search, objects.list]
-responsibilities: [state, layer]
 claims: [record-search, decision-record, context-assembly, minimum-context]
 doctrines: [majordomus.externalise-decisions, project.never-store-transcripts, majordomus.minimum-sufficient-context]
 use_cases: [classify-what-belongs-in-the-context, record-a-decision-before-it-is-forgotten, find-an-object-without-reading-everything]

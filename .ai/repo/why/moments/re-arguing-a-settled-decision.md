@@ -40,7 +40,6 @@ examples:
     after: '`decision add` refuses a decision with no `--why`, so the reason exists by the time it is needed.'
 commands: [decision, question, context]
 capabilities: [objects.search]
-responsibilities: [state, finish]
 claims: [decision-record, decision-attribution, open-question-gate, blocker-survives-handover, blocker-store]
 doctrines: [majordomus.decision-records, majordomus.externalise-decisions, majordomus.blocker-resolution, majordomus.decision-threshold]
 use_cases: [keep-decisions-out-of-the-transcript, record-a-decision-before-it-is-forgotten, block-acceptance-on-an-open-question]

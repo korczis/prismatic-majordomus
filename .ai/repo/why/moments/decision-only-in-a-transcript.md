@@ -39,7 +39,6 @@ examples:
     after: 'The record carries the decision, the reason, the rejected alternative, the task and the commit, and it is append-only.'
 commands: [decision, adr, search]
 capabilities: [objects.search, objects.get]
-responsibilities: [state, layer]
 claims: [decision-record, decision-attribution, adr-catalogue, adr-traceability, adr-propose, no-transcripts]
 doctrines: [majordomus.decision-records, majordomus.adr-integrity, majordomus.externalise-decisions, project.never-store-transcripts, majordomus.decision-threshold]
 use_cases: [keep-decisions-out-of-the-transcript, record-a-decision-before-it-is-forgotten, read-back-what-happened]

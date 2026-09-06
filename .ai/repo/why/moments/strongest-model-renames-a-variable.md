@@ -40,7 +40,6 @@ examples:
     after: 'Capability class, effort, verbosity and context are four named fields in a profile a task is started under, and the profile in force is stated to the worker.'
 commands: [start, check]
 capabilities: [objects.list]
-responsibilities: [profiles]
 claims: [profile-axes, capability-class, effort-escalation, minimum-context]
 doctrines: [majordomus.justified-escalation, majordomus.depth-is-not-verbosity, majordomus.minimum-sufficient-context, majordomus.profile-requirements]
 use_cases: [read-only-the-context-that-fits, trust-the-policy-before-reading-it]

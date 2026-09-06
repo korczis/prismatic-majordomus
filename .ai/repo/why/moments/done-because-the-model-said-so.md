@@ -40,7 +40,6 @@ examples:
     after: 'The ledger carries the finish event with the verification command, its exit code and its duration, attached to the task and the commit.'
 commands: [finish, check]
 capabilities: [health.report]
-responsibilities: [finish]
 claims: [finish-contract, typed-outcome, reproduce-command]
 doctrines: [majordomus.verification-integrity, majordomus.verify-outcomes, majordomus.define-done-first, majordomus.note-integrity]
 use_cases: [accept-or-refuse-finished-work, complete-an-issue-only-with-its-evidence]

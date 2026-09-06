@@ -39,7 +39,6 @@ examples:
     after: 'The projections carry the policy hash they were generated from, and the policy is a tracked file with a history.'
 commands: [history, session, decision]
 capabilities: [objects.get, objects.search]
-responsibilities: [state, watch, policy]
 claims: [task-commit-attribution, git-identity, history-ledger-read, session-records, decision-attribution, projection-fingerprint]
 doctrines: [project.never-author-identity, majordomus.ledger-integrity, majordomus.session-records, majordomus.projection-integrity]
 use_cases: [read-back-what-happened, open-and-close-a-session, keep-decisions-out-of-the-transcript]

@@ -39,7 +39,6 @@ examples:
     after: 'Each carries a handover record with objective, current state and next action, and the ledger says which were finished and with what outcome.'
 commands: [handover, check, watch]
 capabilities: [repository.info, health.report]
-responsibilities: [state, watch, handover]
 claims: [worktree-ownership, git-identity, divergence-label, handover-record, drift-watch]
 doctrines: [majordomus.handover-integrity, majordomus.state-consistency, majordomus.isolated-parallelism, majordomus.one-worker-one-scope]
 use_cases: [resume-in-the-right-worktree, hand-work-between-sessions, find-out-what-drifted]

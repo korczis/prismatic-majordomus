@@ -40,7 +40,6 @@ examples:
     after: 'Adding a provider is adding its template and its projection to the policy; the body is not copied.'
 commands: [update, doctor, watch]
 capabilities: [repository.info]
-responsibilities: [policy, projection, doctor]
 claims: [projection-generation, projection-fingerprint, no-silent-overwrite, context-budget, wiring-reconciliation]
 doctrines: [majordomus.projection-integrity, majordomus.bootstrap-integrity, majordomus.policy-integrity, majordomus.context-budget]
 use_cases: [trust-the-policy-before-reading-it, keep-the-bootstrap-thin-and-within-budget, find-out-what-drifted]

@@ -39,7 +39,6 @@ examples:
     after: 'Escalation is a recorded event after a stated number of blocked attempts, not a mood.'
 commands: [start, check, decision]
 capabilities: [objects.list]
-responsibilities: [profiles, state]
 claims: [profile-axes, capability-class, effort-escalation, decision-record]
 doctrines: [majordomus.justified-escalation, majordomus.profile-requirements, majordomus.decision-threshold, majordomus.depth-is-not-verbosity]
 use_cases: [trust-the-policy-before-reading-it, record-a-decision-before-it-is-forgotten]

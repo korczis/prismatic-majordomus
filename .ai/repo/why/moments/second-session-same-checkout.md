@@ -39,7 +39,6 @@ examples:
     after: 'Scope is declared per task and `check` refuses files outside it, so the mixture is caught before the commit.'
 commands: [start, check, handover]
 capabilities: [repository.scope, peers.list, peers.announce]
-responsibilities: [scope, state]
 claims: [scoped-task, worktree-ownership, overlap-report, consistency-check, mcp-peers]
 doctrines: [majordomus.one-worker-one-scope, majordomus.scope-integrity, majordomus.state-consistency]
 use_cases: [run-several-workers-at-once, resume-in-the-right-worktree, serve-the-layer-to-ai-clients]

@@ -40,7 +40,6 @@ examples:
     after: 'Each record names the checkout it belongs to, and a stale one is reported rather than trusted.'
 commands: [checkpoint, watch, check]
 capabilities: [health.report, repository.info]
-responsibilities: [state, watch]
 claims: [git-identity, worktree-ownership, checkpoint-record, checkpoint-interval, consistency-check, drift-watch]
 doctrines: [majordomus.checkpoint-freshness, majordomus.state-consistency, majordomus.task-continuity, majordomus.one-worker-one-scope]
 use_cases: [checkpoint-long-work, find-out-what-drifted, resume-in-the-right-worktree]

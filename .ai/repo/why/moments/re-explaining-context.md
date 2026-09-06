@@ -40,7 +40,6 @@ examples:
     after: 'The convention is a context document for the directory it governs, resolved for any path in one command, and nobody re-transmits it.'
 commands: [handover, check, context]
 capabilities: [objects.get, objects.search]
-responsibilities: [state, handover]
 claims: [handover-record, no-transcripts, git-identity, divergence-label]
 doctrines: [majordomus.handover-integrity, majordomus.sessions-are-workers, majordomus.handovers-carry-state, majordomus.minimum-sufficient-context]
 use_cases: [hand-work-between-sessions, read-only-the-context-that-fits, resume-in-the-right-worktree]

@@ -40,7 +40,6 @@ examples:
     after: 'The root file bootstraps and links; the local rule stays local and is composed only for the paths it governs, under a line budget with a failing check.'
 commands: [context, rules, doctor]
 capabilities: [objects.get, objects.list]
-responsibilities: [layer, policy]
 claims: [context-documents, context-impact, ai-layer-manifest, context-selection-budget, rule-resolution, vendored-rule-package]
 doctrines: [majordomus.context-integrity, majordomus.context-budget, majordomus.rule-package-integrity, majordomus.minimum-sufficient-context]
 use_cases: [document-every-directory-of-the-layer, trace-a-change-to-the-context-it-affects, read-the-rules-the-tool-applies]

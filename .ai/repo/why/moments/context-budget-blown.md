@@ -39,7 +39,6 @@ examples:
     after: '`context` assembles what this task needs within a budget, and names every section it dropped.'
 commands: [update, context, doctor]
 capabilities: [repository.info]
-responsibilities: [policy, projection]
 claims: [context-budget, no-counts-in-context, context-selection-budget, projection-generation]
 doctrines: [majordomus.context-budget, majordomus.minimum-sufficient-context, project.context-locality, majordomus.bootstrap-integrity]
 use_cases: [keep-the-bootstrap-thin-and-within-budget, read-only-the-context-that-fits]

@@ -40,7 +40,6 @@ examples:
     after: 'The ledger carries the task, the head, the outcome and the verification exit code, and refuses to hold a conversation.'
 commands: [history, search, watch]
 capabilities: [objects.search, perf.counters]
-responsibilities: [watch, state]
 claims: [history-ledger-read, ledger-integrity, event-vocabulary, record-search, record-retention, retention-caps, semantic-retrieval]
 doctrines: [majordomus.ledger-integrity, project.never-store-transcripts, majordomus.retention-caps, majordomus.sessions-are-workers]
 use_cases: [read-back-what-happened, open-and-close-a-session, find-an-object-without-reading-everything]

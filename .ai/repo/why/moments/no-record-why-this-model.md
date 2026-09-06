@@ -39,7 +39,6 @@ examples:
     after: 'The profile in force is projected into the instructions and recorded with the task, so the policy has an observable trace.'
 commands: [start, history, session]
 capabilities: [repository.info, peers.list]
-responsibilities: [profiles, state, watch]
 claims: [profile-axes, capability-class, session-records, history-ledger-read, tool-location-independent]
 doctrines: [majordomus.session-records, majordomus.justified-escalation, majordomus.ledger-integrity, project.never-author-identity]
 use_cases: [open-and-close-a-session, know-which-tool-is-running, read-back-what-happened]

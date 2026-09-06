@@ -39,7 +39,6 @@ examples:
     after: '`plan` reads the model and reports the derived state; the report is the same one the team reads.'
 commands: [plan, history, doctor]
 capabilities: [graph.get, graph.list]
-responsibilities: [plan, watch]
 claims: [project-status-derived, execution-waves, evidence-gates-done, roadmap-derived, history-ledger-read]
 doctrines: [majordomus.project-integrity, majordomus.roadmap-integrity, majordomus.dag-integrity, project.no-counts-in-prose]
 use_cases: [plan-the-work-as-data, deliver-issues-in-waves, read-back-what-happened]

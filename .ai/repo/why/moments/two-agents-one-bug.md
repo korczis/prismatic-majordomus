@@ -40,7 +40,6 @@ examples:
     after: 'The overnight worker left a handover record naming the branch, the head and the changed files, and the morning session resolves it before starting.'
 commands: [start, check, finish]
 capabilities: [repository.scope, repository.scope_classify]
-responsibilities: [scope, state]
 claims: [scoped-task, overlap-report, scope-enforcement]
 doctrines: [majordomus.scope-integrity, majordomus.one-worker-one-scope, majordomus.isolated-parallelism]
 use_cases: [run-several-workers-at-once, resume-in-the-right-worktree]

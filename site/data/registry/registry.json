@@ -5,28 +5,28 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "e77836598fc6a1305d54a02289923a8d3dcf8f2300fb8e26b37513a5eaa7d361",
+    "fingerprint": "80efd1de72cc7f31aaa9329ae3b9654e42fbe610af8c420ffe89dae8f40bceb5",
     "summary": {
-      "total": 690,
-      "builtin": 14,
-      "declarative": 676,
+      "total": 779,
+      "builtin": 20,
+      "declarative": 759,
       "by_kind": {
         "command": 1,
-        "query": 13,
-        "resource": 676
+        "query": 19,
+        "resource": 759
       },
       "by_stability": {
-        "behaviorally_verified": 14,
-        "implemented": 676
+        "behaviorally_verified": 20,
+        "implemented": 759
       },
-      "mcp_tools": 14,
-      "mcp_resources": 680,
-      "http_routes": 14,
-      "cli_commands": 4,
-      "modules": 24,
-      "benchmark_required": 14,
+      "mcp_tools": 20,
+      "mcp_resources": 766,
+      "http_routes": 20,
+      "cli_commands": 10,
+      "modules": 29,
+      "benchmark_required": 20,
       "benchmark_waived": 0,
-      "cached": 4
+      "cached": 10
     },
     "builtin": [
       {
@@ -3916,6 +3916,1752 @@
           "policy": "disabled"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
+      },
+      {
+        "id": "why.areas",
+        "module": "why",
+        "kind": "query",
+        "title": "Operational areas",
+        "description": "Every operational area the catalogue declares, each with the public moments that fall under it. Membership is derived from the moments and is never listed in an area's own file.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "AreaList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many."
+              },
+              "areas": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/AreaView"
+                },
+                "description": "Each, with its derived membership, in presentation order."
+              }
+            },
+            "required": [
+              "count",
+              "areas"
+            ],
+            "description": "Every area.",
+            "title": "AreaList",
+            "$defs": {
+              "AreaView": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, the slug and the file name."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The area."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line: what falls under it."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`stable`, `draft` or `deprecated`."
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Presentation order.",
+                    "default": 0
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Free tags.",
+                    "default": []
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "Derived: `/why/areas/<id>/`.",
+                    "default": ""
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Derived: the file it came from.",
+                    "default": ""
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "The Markdown body."
+                  },
+                  "moments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Derived: the public moments that fall under it, in presentation order."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Derived: how many."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "summary",
+                  "status",
+                  "moments",
+                  "count"
+                ],
+                "description": "One area, with the membership nobody authored."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::why"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_why_areas",
+            "resource": {
+              "uri": "majordomus://why/areas",
+              "name": "why-areas"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/why/areas"
+          },
+          "cli": {
+            "path": [
+              "why",
+              "areas"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "why",
+          "catalogue"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 4
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+      },
+      {
+        "id": "why.audiences",
+        "module": "why",
+        "kind": "query",
+        "title": "Audiences",
+        "description": "Every audience the catalogue declares, each with the public moments that name it. Membership is derived from the moments and is never listed in an audience's own file.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "AudienceList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many."
+              },
+              "audiences": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/AudienceView"
+                },
+                "description": "Each, with its derived membership, in presentation order."
+              }
+            },
+            "required": [
+              "count",
+              "audiences"
+            ],
+            "description": "Every audience.",
+            "title": "AudienceList",
+            "$defs": {
+              "AudienceView": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, the slug and the file name."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Who they are."
+                  },
+                  "short_title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Two or three words for a filter chip."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line: the working situation."
+                  },
+                  "workflow": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "One line: how work flows for them."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`stable`, `draft` or `deprecated`."
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Presentation order.",
+                    "default": 0
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Free tags.",
+                    "default": []
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "Derived: `/why/audiences/<id>/`.",
+                    "default": ""
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Derived: the file it came from.",
+                    "default": ""
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "The Markdown body."
+                  },
+                  "moments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Derived: the public moments that name it, in presentation order."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Derived: how many."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "summary",
+                  "status",
+                  "moments",
+                  "count"
+                ],
+                "description": "One audience, with the membership nobody authored."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::why"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_why_audiences",
+            "resource": {
+              "uri": "majordomus://why/audiences",
+              "name": "why-audiences"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/why/audiences"
+          },
+          "cli": {
+            "path": [
+              "why",
+              "audiences"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "why",
+          "catalogue"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 4
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+      },
+      {
+        "id": "why.diagnose",
+        "module": "why",
+        "kind": "query",
+        "title": "Diagnose a selection",
+        "description": "What a reader's own symptoms imply: the moments the selection resolves to, the operational areas and audiences they weigh towards, and the capabilities, commands, claims, rules and use cases that answer them — each carrying the moments that produced it. Counting, not inference: there is no weighting and no percentage.",
+        "input": {
+          "name": "DiagnoseInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "signals": {
+                "type": "string",
+                "description": "Signal ids or moment ids, separated by commas. Empty selects nothing and is\nanswered with an empty diagnosis rather than an error.",
+                "default": ""
+              }
+            },
+            "description": "What a reader recognised, as a comma-separated list of names.\n\nA name is a signal id or a moment id: a person ticking symptoms and a script naming\nmoments reach the same answer, because a signal resolves to the moment that owns it.\nThe parameter is one string rather than a list because a diagnosis changes nothing and\nis therefore a `GET`, and this repository binds a `GET` input to the query string.",
+            "title": "DiagnoseInput"
+          }
+        },
+        "output": {
+          "name": "Diagnosis",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "moments": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The moments the selection resolved to, in presentation order."
+              },
+              "unresolved": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Selected names that resolved to nothing."
+              },
+              "areas": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Recommendation"
+                },
+                "description": "Operational areas by how many selected moments fall under them, heaviest first."
+              },
+              "audiences": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Recommendation"
+                },
+                "description": "Audiences by how many selected moments they recognise, heaviest first."
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Recommendation"
+                },
+                "description": "Capabilities of the executable that answer the selected moments."
+              },
+              "commands": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Recommendation"
+                },
+                "description": "Commands that answer them."
+              },
+              "claims": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Recommendation"
+                },
+                "description": "Claims that say what is guaranteed."
+              },
+              "doctrines": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Recommendation"
+                },
+                "description": "Rules of the effective set that govern them."
+              },
+              "use_cases": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Recommendation"
+                },
+                "description": "Use cases that show the way out."
+              },
+              "also_worth_reading": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Moments the selection did not include that share an area with one that it did."
+              }
+            },
+            "required": [
+              "moments",
+              "unresolved",
+              "areas",
+              "audiences",
+              "capabilities",
+              "commands",
+              "claims",
+              "doctrines",
+              "use_cases",
+              "also_worth_reading"
+            ],
+            "description": "What a reader's selection implies, computed by counting rather than by inference.\n\nThe arithmetic is the whole model and is stated so a reader can check it: a selection\nresolves to a set of moments; an area or an audience scores the number of selected\nmoments that name it; a recommendation scores the number that name it and carries\ntheir ids. There is no weighting and no percentage, because there is no model behind\none.",
+            "title": "Diagnosis",
+            "$defs": {
+              "Recommendation": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The thing recommended: a capability id, a command, a claim, a rule, a use case."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many of the selected moments name it."
+                  },
+                  "matched_because": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The selected moments that named it, in presentation order."
+                  }
+                },
+                "required": [
+                  "id",
+                  "count",
+                  "matched_because"
+                ],
+                "description": "One recommendation, with the moments that produced it. A recommendation with no\n`matched_because` is a recommendation nobody can check."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::why"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_why_diagnose"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/why/diagnose"
+          },
+          "cli": {
+            "path": [
+              "why",
+              "diagnose"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "why",
+          "diagnostics"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 32
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+      },
+      {
+        "id": "why.list",
+        "module": "why",
+        "kind": "query",
+        "title": "The catalogue",
+        "description": "Every operational moment this repository holds, narrowed by any of the facets the catalogue itself reports, with the audiences, the areas, the derived filters and the counts. The default is the public catalogue; pass status=any for the drafts too.",
+        "input": {
+          "name": "Query",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "audience": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments this audience recognises.",
+                "default": null
+              },
+              "area": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments in this operational area.",
+                "default": null
+              },
+              "tag": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments carrying this tag.",
+                "default": null
+              },
+              "severity": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments of this severity.",
+                "default": null
+              },
+              "frequency": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments of this frequency.",
+                "default": null
+              },
+              "lifecycle": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments at this stage of work.",
+                "default": null
+              },
+              "capability": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments naming this capability of the executable.",
+                "default": null
+              },
+              "command": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments naming this command.",
+                "default": null
+              },
+              "featured": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Only moments the homepage features.",
+                "default": null
+              },
+              "status": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only moments of this status. Absent means the public ones (`stable`); pass `any`\nfor everything the catalogue holds.",
+                "default": null
+              },
+              "q": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Case-insensitive text, matched against the identity, the titles, the hook, the\nsummary, the tags, the aliases, the signals, the examples and the body.",
+                "default": null
+              }
+            },
+            "description": "What a listing is narrowed by. Every field is optional and they compose as a\nconjunction; the values a caller may pass are the facets the catalogue reports, never a\nlist written anywhere.",
+            "title": "Query"
+          }
+        },
+        "output": {
+          "name": "CatalogueView",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "[`SCHEMA`]."
+              },
+              "fingerprint": {
+                "type": "string",
+                "description": "The hash of the catalogue's own sources: stable for a tree, and independent of the\nrest of the index, so two runs over one tree agree."
+              },
+              "counts": {
+                "$ref": "#/$defs/Counts",
+                "description": "The counts."
+              },
+              "moments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MomentSummary"
+                },
+                "description": "The matching moments, in presentation order."
+              },
+              "audiences": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/AudienceView"
+                },
+                "description": "Every audience, with its derived membership."
+              },
+              "areas": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/AreaView"
+                },
+                "description": "Every area, with its derived membership."
+              },
+              "facets": {
+                "$ref": "#/$defs/Facets",
+                "description": "The filters, derived from the records."
+              }
+            },
+            "required": [
+              "schema",
+              "fingerprint",
+              "counts",
+              "moments",
+              "audiences",
+              "areas",
+              "facets"
+            ],
+            "description": "The whole catalogue as a client reads it.",
+            "title": "CatalogueView",
+            "$defs": {
+              "Counts": {
+                "type": "object",
+                "properties": {
+                  "moments": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Public moments."
+                  },
+                  "moments_all": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Moments of every status, drafts included."
+                  },
+                  "audiences": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Public audiences."
+                  },
+                  "areas": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Public areas."
+                  },
+                  "signals": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Signals across the public moments: the size of the questionnaire."
+                  },
+                  "examples": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Concrete situations across the public moments."
+                  }
+                },
+                "required": [
+                  "moments",
+                  "moments_all",
+                  "audiences",
+                  "areas",
+                  "signals",
+                  "examples"
+                ],
+                "description": "How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down."
+              },
+              "MomentSummary": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity and the slug."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The moment as a heading."
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "The name a narrow column shows: the short title, or the title."
+                  },
+                  "hook": {
+                    "type": "string",
+                    "description": "The first-person line an index shows."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line: what is actually wrong."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`stable`, `draft` or `deprecated`."
+                  },
+                  "severity": {
+                    "type": "string",
+                    "description": "`low`, `medium` or `high`."
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "description": "`rare`, `occasional`, `common` or `constant`."
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Presentation order."
+                  },
+                  "featured": {
+                    "type": "boolean",
+                    "description": "Whether the homepage shows it."
+                  },
+                  "audiences": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The audiences that recognise it."
+                  },
+                  "areas": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The operational areas it falls under."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Free tags."
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "Derived: `/why/<id>/`."
+                  },
+                  "signals": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many observable symptoms it declares."
+                  },
+                  "examples": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many concrete situations it carries."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "label",
+                  "hook",
+                  "summary",
+                  "status",
+                  "severity",
+                  "frequency",
+                  "weight",
+                  "featured",
+                  "audiences",
+                  "areas",
+                  "tags",
+                  "route",
+                  "signals",
+                  "examples"
+                ],
+                "description": "One moment as a listing shows it: everything a card needs and nothing a page needs."
+              },
+              "AudienceView": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, the slug and the file name."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Who they are."
+                  },
+                  "short_title": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Two or three words for a filter chip."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line: the working situation."
+                  },
+                  "workflow": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "One line: how work flows for them."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`stable`, `draft` or `deprecated`."
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Presentation order.",
+                    "default": 0
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Free tags.",
+                    "default": []
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "Derived: `/why/audiences/<id>/`.",
+                    "default": ""
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Derived: the file it came from.",
+                    "default": ""
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "The Markdown body."
+                  },
+                  "moments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Derived: the public moments that name it, in presentation order."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Derived: how many."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "summary",
+                  "status",
+                  "moments",
+                  "count"
+                ],
+                "description": "One audience, with the membership nobody authored."
+              },
+              "AreaView": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, the slug and the file name."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The area."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line: what falls under it."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`stable`, `draft` or `deprecated`."
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Presentation order.",
+                    "default": 0
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Free tags.",
+                    "default": []
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "Derived: `/why/areas/<id>/`.",
+                    "default": ""
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Derived: the file it came from.",
+                    "default": ""
+                  },
+                  "body": {
+                    "type": "string",
+                    "description": "The Markdown body."
+                  },
+                  "moments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Derived: the public moments that fall under it, in presentation order."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Derived: how many."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "summary",
+                  "status",
+                  "moments",
+                  "count"
+                ],
+                "description": "One area, with the membership nobody authored."
+              },
+              "Facets": {
+                "type": "object",
+                "properties": {
+                  "audiences": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FacetValue"
+                    },
+                    "description": "By audience."
+                  },
+                  "areas": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FacetValue"
+                    },
+                    "description": "By operational area."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FacetValue"
+                    },
+                    "description": "By tag."
+                  },
+                  "severities": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FacetValue"
+                    },
+                    "description": "By severity."
+                  },
+                  "frequencies": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FacetValue"
+                    },
+                    "description": "By frequency."
+                  },
+                  "lifecycle": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FacetValue"
+                    },
+                    "description": "By stage of work."
+                  },
+                  "capabilities": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FacetValue"
+                    },
+                    "description": "By capability of the executable."
+                  },
+                  "commands": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FacetValue"
+                    },
+                    "description": "By command."
+                  }
+                },
+                "required": [
+                  "audiences",
+                  "areas",
+                  "tags",
+                  "severities",
+                  "frequencies",
+                  "lifecycle",
+                  "capabilities",
+                  "commands"
+                ],
+                "description": "The filters the catalogue offers, derived from the records rather than declared."
+              },
+              "FacetValue": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "string",
+                    "description": "The value as a moment declares it."
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "The name to show; the value itself when the taxonomy holds no title for it."
+                  },
+                  "count": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many public moments carry it."
+                  }
+                },
+                "required": [
+                  "value",
+                  "label",
+                  "count"
+                ],
+                "description": "One selectable value of one facet, with how many public moments carry it. Every filter\na reader is offered is one of these; nothing anywhere lists the values by hand."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::why"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_why",
+            "resource": {
+              "uri": "majordomus://why",
+              "name": "why"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/why"
+          },
+          "cli": {
+            "path": [
+              "why",
+              "list"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "why",
+          "catalogue"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 32
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+      },
+      {
+        "id": "why.moment",
+        "module": "why",
+        "kind": "query",
+        "title": "One moment",
+        "description": "One operational moment in full: what it looks like, why it happens, what it costs, what this tool does about it, and every relation derived from its metadata — the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.",
+        "input": {
+          "name": "MomentInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The moment's id, as `why.list` gives it. This is also its slug and its route."
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "description": "Which moment to read.",
+            "title": "MomentInput"
+          }
+        },
+        "output": {
+          "name": "MomentDetail",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The identity, the slug and the file name."
+              },
+              "title": {
+                "type": "string",
+                "description": "The moment as a heading."
+              },
+              "short_title": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Two or three words for a narrow column, when the record carries one."
+              },
+              "hook": {
+                "type": "string",
+                "description": "The first-person line an index shows."
+              },
+              "summary": {
+                "type": "string",
+                "description": "One line: what is actually wrong."
+              },
+              "status": {
+                "type": "string",
+                "description": "`stable`, `draft` or `deprecated`."
+              },
+              "severity": {
+                "type": "string",
+                "description": "`low`, `medium` or `high`."
+              },
+              "frequency": {
+                "type": "string",
+                "description": "`rare`, `occasional`, `common` or `constant`."
+              },
+              "weight": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "Presentation order, lowest first.",
+                "default": 0
+              },
+              "featured": {
+                "type": "boolean",
+                "description": "Whether the homepage shows it.",
+                "default": false
+              },
+              "audiences": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The audiences that recognise it."
+              },
+              "areas": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The operational areas it falls under."
+              },
+              "lifecycle": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The stages of work at which it shows up.",
+                "default": []
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Free tags.",
+                "default": []
+              },
+              "signals": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Signal"
+                },
+                "description": "The observable symptoms."
+              },
+              "examples": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Example"
+                },
+                "description": "The concrete situations."
+              },
+              "commands": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Commands of the tool that answer it.",
+                "default": []
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Capability ids of the executable that answer it.",
+                "default": []
+              },
+              "claims": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Claims that say what is guaranteed here.",
+                "default": []
+              },
+              "doctrines": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Rules of the effective set that govern it.",
+                "default": []
+              },
+              "use_cases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Use cases that show the way out.",
+                "default": []
+              },
+              "related": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Moments explicitly related to this one. The reverse is derived.",
+                "default": []
+              },
+              "aliases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Other words a reader might search for.",
+                "default": []
+              },
+              "route": {
+                "type": "string",
+                "description": "Derived: `/why/<id>/`. Never authored; the schema refuses a `route` key.",
+                "default": ""
+              },
+              "source": {
+                "type": "string",
+                "description": "Derived: the repository-relative file the record came from.",
+                "default": ""
+              },
+              "body": {
+                "type": "string",
+                "description": "The Markdown body, without its front matter."
+              },
+              "responsibilities": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Derived: the responsibilities the claims it names belong to."
+              },
+              "backlinks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Derived: the moments that name this one in their `related`."
+              },
+              "similar": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Derived: moments sharing an area or an audience with this one and not already\nnamed by it, nearest first — most shared metadata, then presentation order."
+              },
+              "related_detail": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/MomentSummary"
+                },
+                "description": "Derived: the explicitly related moments, summarised so a page needs one call."
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "hook",
+              "summary",
+              "status",
+              "severity",
+              "frequency",
+              "audiences",
+              "areas",
+              "signals",
+              "examples",
+              "responsibilities",
+              "backlinks",
+              "similar",
+              "related_detail"
+            ],
+            "description": "One moment in full, with everything derived that a page shows and no file states.",
+            "title": "MomentDetail",
+            "$defs": {
+              "Signal": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique within the moment; the identity a diagnosis selects by."
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "The symptom, phrased so a reader can say whether it happened to them."
+                  }
+                },
+                "required": [
+                  "id",
+                  "text"
+                ],
+                "description": "One observable symptom of a moment: a question a reader can answer about their own\nweek. The questionnaire on the site and the input of `why diagnose` are these and\nnothing else."
+              },
+              "Example": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique within the moment."
+                  },
+                  "audience": {
+                    "type": "string",
+                    "description": "The audience this situation belongs to; must name an audience of the catalogue."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the situation."
+                  },
+                  "before": {
+                    "type": "string",
+                    "description": "What happens without the tool."
+                  },
+                  "after": {
+                    "type": "string",
+                    "description": "What happens with it."
+                  }
+                },
+                "required": [
+                  "id",
+                  "audience",
+                  "title",
+                  "before",
+                  "after"
+                ],
+                "description": "One concrete situation, in one audience, with what happens today and what happens\ninstead."
+              },
+              "MomentSummary": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity and the slug."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The moment as a heading."
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "The name a narrow column shows: the short title, or the title."
+                  },
+                  "hook": {
+                    "type": "string",
+                    "description": "The first-person line an index shows."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line: what is actually wrong."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "`stable`, `draft` or `deprecated`."
+                  },
+                  "severity": {
+                    "type": "string",
+                    "description": "`low`, `medium` or `high`."
+                  },
+                  "frequency": {
+                    "type": "string",
+                    "description": "`rare`, `occasional`, `common` or `constant`."
+                  },
+                  "weight": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Presentation order."
+                  },
+                  "featured": {
+                    "type": "boolean",
+                    "description": "Whether the homepage shows it."
+                  },
+                  "audiences": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The audiences that recognise it."
+                  },
+                  "areas": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The operational areas it falls under."
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Free tags."
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "Derived: `/why/<id>/`."
+                  },
+                  "signals": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many observable symptoms it declares."
+                  },
+                  "examples": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many concrete situations it carries."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "label",
+                  "hook",
+                  "summary",
+                  "status",
+                  "severity",
+                  "frequency",
+                  "weight",
+                  "featured",
+                  "audiences",
+                  "areas",
+                  "tags",
+                  "route",
+                  "signals",
+                  "examples"
+                ],
+                "description": "One moment as a listing shows it: everything a card needs and nothing a page needs."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::why"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_why_moment"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/why/moment"
+          },
+          "cli": {
+            "path": [
+              "why",
+              "show"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "why"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 64
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+      },
+      {
+        "id": "why.validate",
+        "module": "why",
+        "kind": "query",
+        "title": "Validate the catalogue",
+        "description": "Every finding over the catalogue: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; and a public record that does not meet the floor its status promises. Errors make the catalogue invalid; warnings do not.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ValidationReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "valid": {
+                "type": "boolean",
+                "description": "True when nothing is an error. Warnings do not make it false."
+              },
+              "errors": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many findings are errors: a reference that resolves to nothing, a duplicate\nidentity, a file name that disagrees with its id."
+              },
+              "warnings": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many findings are warnings: a public record that does not meet its floor."
+              },
+              "counts": {
+                "$ref": "#/$defs/Counts",
+                "description": "The counts the catalogue reached."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Finding"
+                },
+                "description": "The findings, errors first, then by file."
+              }
+            },
+            "required": [
+              "valid",
+              "errors",
+              "warnings",
+              "counts",
+              "findings"
+            ],
+            "description": "What the catalogue's own validation found.",
+            "title": "ValidationReport",
+            "$defs": {
+              "Counts": {
+                "type": "object",
+                "properties": {
+                  "moments": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Public moments."
+                  },
+                  "moments_all": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Moments of every status, drafts included."
+                  },
+                  "audiences": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Public audiences."
+                  },
+                  "areas": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Public areas."
+                  },
+                  "signals": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Signals across the public moments: the size of the questionnaire."
+                  },
+                  "examples": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Concrete situations across the public moments."
+                  }
+                },
+                "required": [
+                  "moments",
+                  "moments_all",
+                  "audiences",
+                  "areas",
+                  "signals",
+                  "examples"
+                ],
+                "description": "How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down."
+              },
+              "Finding": {
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "$ref": "#/$defs/Severity",
+                    "description": "`error` or `warning`."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "A short category: `unknown_reference`, `duplicate_identity`, `missing_content`, ..."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "The repository-relative file the finding is in."
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The record's identity, when one record owns the finding."
+                  },
+                  "field": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The front-matter key the finding is about, when one key owns it."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one sentence."
+                  },
+                  "did_you_mean": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The nearest existing name, when the value looks like a typo of one."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "code",
+                  "path",
+                  "message"
+                ],
+                "description": "One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching."
+              },
+              "Severity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Worth knowing; changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Something to look at; the object is still served."
+                  },
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The file is excluded and the index is degraded."
+                  }
+                ],
+                "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::why"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_why_validate"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/why/validate"
+          },
+          "cli": {
+            "path": [
+              "why",
+              "validate"
+            ]
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "why",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 2
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
       }
     ],
     "modules": [
@@ -3925,6 +5671,22 @@
         "description": "Declarative objects of kind 'application' from the repository's AI layer.",
         "source": "declarative",
         "capabilities": 5,
+        "capability_ids": []
+      },
+      {
+        "id": "area",
+        "title": "area",
+        "description": "Declarative objects of kind 'area' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 9,
+        "capability_ids": []
+      },
+      {
+        "id": "audience",
+        "title": "audience",
+        "description": "Declarative objects of kind 'audience' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 8,
         "capability_ids": []
       },
       {
@@ -3946,6 +5708,14 @@
         "description": "Declarative objects of kind 'claim' from the repository's AI layer.",
         "source": "declarative",
         "capabilities": 123,
+        "capability_ids": []
+      },
+      {
+        "id": "command",
+        "title": "command",
+        "description": "Declarative objects of kind 'command' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 28,
         "capability_ids": []
       },
       {
@@ -4011,6 +5781,14 @@
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
         "capabilities": 11,
+        "capability_ids": []
+      },
+      {
+        "id": "moment",
+        "title": "moment",
+        "description": "Declarative objects of kind 'moment' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 38,
         "capability_ids": []
       },
       {
@@ -4145,11 +5923,28 @@
         "source": "declarative",
         "capabilities": 36,
         "capability_ids": []
+      },
+      {
+        "id": "why",
+        "title": "Why",
+        "description": "The operational failure modes this tool is a response to: the moments a reader recognises, the audiences that recognise them, the areas they fall under, and what a reader's own symptoms imply. Every entry is a file under the layer's why section; nothing here holds a list, and a moment added there is answered by all of these without a registration anywhere.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 6,
+        "capability_ids": [
+          "why.areas",
+          "why.audiences",
+          "why.diagnose",
+          "why.list",
+          "why.moment",
+          "why.validate"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
       }
     ]
   },
   "index": {
-    "fingerprint": "5008d2bb6b8e71f5290e4d17e1308b5da56f6ef2ca7d4c22fd3d7c3c29c9c74c",
+    "fingerprint": "80bb25207cec88f07fdf896e063629e4b4a07e5050e61a9d66b09cfec5d8ee71",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -4165,16 +5960,21 @@
       "sessions": ".ai/repo/sessions",
       "skills": ".ai/repo/skills",
       "use-cases": ".ai/repo/use-cases",
+      "why": ".ai/repo/why",
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
       "application": 5,
+      "area": 9,
+      "audience": 8,
       "claim": 123,
+      "command": 28,
       "context": 9,
       "document": 172,
       "implementation": 37,
       "issue": 90,
       "milestone": 11,
+      "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
@@ -4242,6 +6042,278 @@
         "section": "applications",
         "source_class": "application",
         "bytes": 1429
+      },
+      {
+        "uri": "majordomus://area/context",
+        "kind": "area",
+        "identity": "context",
+        "title": "Context and continuity",
+        "description": "What a worker knows when it starts, and what survives when it stops.",
+        "path": ".ai/repo/why/areas/context.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 745,
+        "tags": [
+          "context",
+          "continuity",
+          "memory"
+        ]
+      },
+      {
+        "uri": "majordomus://area/coordination",
+        "kind": "area",
+        "identity": "coordination",
+        "title": "Coordination and ownership",
+        "description": "Who holds what, who is doing what right now, and what happens where two workers meet.",
+        "path": ".ai/repo/why/areas/coordination.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 689,
+        "tags": [
+          "coordination",
+          "ownership",
+          "parallelism"
+        ]
+      },
+      {
+        "uri": "majordomus://area/cost",
+        "kind": "area",
+        "identity": "cost",
+        "title": "Model, effort and cost",
+        "description": "What was spent, on which task, at which capability, and whether the choice was ever recorded.",
+        "path": ".ai/repo/why/areas/cost.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 578,
+        "tags": [
+          "cost",
+          "effort",
+          "model-selection"
+        ]
+      },
+      {
+        "uri": "majordomus://area/decisions",
+        "kind": "area",
+        "identity": "decisions",
+        "title": "Decisions",
+        "description": "What was settled, why, and whether the next worker can find out before reopening it.",
+        "path": ".ai/repo/why/areas/decisions.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 544,
+        "tags": [
+          "decisions",
+          "adr",
+          "rationale"
+        ]
+      },
+      {
+        "uri": "majordomus://area/documentation",
+        "kind": "area",
+        "identity": "documentation",
+        "title": "Documentation and drift",
+        "description": "Whether what is written still describes what exists, and how many copies of it there are.",
+        "path": ".ai/repo/why/areas/documentation.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 557,
+        "tags": [
+          "documentation",
+          "drift",
+          "generation"
+        ]
+      },
+      {
+        "uri": "majordomus://area/governance",
+        "kind": "area",
+        "identity": "governance",
+        "title": "Rules and governance",
+        "description": "Which rules apply here, whether anything loads them, and whether they still agree with each other.",
+        "path": ".ai/repo/why/areas/governance.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 586,
+        "tags": [
+          "rules",
+          "policy",
+          "providers"
+        ]
+      },
+      {
+        "uri": "majordomus://area/observability",
+        "kind": "area",
+        "identity": "observability",
+        "title": "Observability",
+        "description": "What actually happened while nobody was watching, in a form that is not a transcript.",
+        "path": ".ai/repo/why/areas/observability.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 523,
+        "tags": [
+          "observability",
+          "telemetry",
+          "audit"
+        ]
+      },
+      {
+        "uri": "majordomus://area/verification",
+        "kind": "area",
+        "identity": "verification",
+        "title": "Verification and evidence",
+        "description": "Whether \"done\" is a claim or a fact, and what would prove the difference.",
+        "path": ".ai/repo/why/areas/verification.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 583,
+        "tags": [
+          "verification",
+          "evidence",
+          "tests"
+        ]
+      },
+      {
+        "uri": "majordomus://area/work-tracking",
+        "kind": "area",
+        "identity": "work-tracking",
+        "title": "Work and its state",
+        "description": "What is in flight, what is finished, and whether the repository agrees with the tracker.",
+        "path": ".ai/repo/why/areas/work-tracking.md",
+        "section": "why",
+        "source_class": "area",
+        "bytes": 513,
+        "tags": [
+          "tasks",
+          "issues",
+          "milestones",
+          "plan"
+        ]
+      },
+      {
+        "uri": "majordomus://audience/agency",
+        "kind": "audience",
+        "identity": "agency",
+        "title": "Agency or consultancy",
+        "description": "Many clients, many repositories, and context that must transfer between people in hours rather than weeks.",
+        "path": ".ai/repo/why/audiences/agency.md",
+        "section": "why",
+        "source_class": "audience",
+        "bytes": 1387,
+        "tags": [
+          "agency",
+          "consulting",
+          "onboarding"
+        ]
+      },
+      {
+        "uri": "majordomus://audience/ai-native-team",
+        "kind": "audience",
+        "identity": "ai-native-team",
+        "title": "AI-native development team",
+        "description": "Several people and more assistants than people, working the same repository at the same time.",
+        "path": ".ai/repo/why/audiences/ai-native-team.md",
+        "section": "why",
+        "source_class": "audience",
+        "bytes": 1376,
+        "tags": [
+          "agents",
+          "teams",
+          "parallelism"
+        ]
+      },
+      {
+        "uri": "majordomus://audience/engineering-lead",
+        "kind": "audience",
+        "identity": "engineering-lead",
+        "title": "Engineering lead",
+        "description": "Accountable for what shipped, without having watched any of it being written.",
+        "path": ".ai/repo/why/audiences/engineering-lead.md",
+        "section": "why",
+        "source_class": "audience",
+        "bytes": 1234,
+        "tags": [
+          "management",
+          "delivery",
+          "ownership"
+        ]
+      },
+      {
+        "uri": "majordomus://audience/enterprise",
+        "kind": "audience",
+        "identity": "enterprise",
+        "title": "Enterprise engineering",
+        "description": "Answerable to auditors, not only to users: what was done, by what, under which policy, with what evidence.",
+        "path": ".ai/repo/why/audiences/enterprise.md",
+        "section": "why",
+        "source_class": "audience",
+        "bytes": 1283,
+        "tags": [
+          "enterprise",
+          "compliance",
+          "audit"
+        ]
+      },
+      {
+        "uri": "majordomus://audience/open-source-maintainer",
+        "kind": "audience",
+        "identity": "open-source-maintainer",
+        "title": "Open-source maintainer",
+        "description": "Reviews contributions from people and machines they have never met, against conventions only they know.",
+        "path": ".ai/repo/why/audiences/open-source-maintainer.md",
+        "section": "why",
+        "source_class": "audience",
+        "bytes": 1357,
+        "tags": [
+          "open-source",
+          "review",
+          "contribution"
+        ]
+      },
+      {
+        "uri": "majordomus://audience/platform-team",
+        "kind": "audience",
+        "identity": "platform-team",
+        "title": "Platform and developer productivity team",
+        "description": "Owns the rules, the tooling and the execution environment that everybody else works inside.",
+        "path": ".ai/repo/why/audiences/platform-team.md",
+        "section": "why",
+        "source_class": "audience",
+        "bytes": 1321,
+        "tags": [
+          "platform",
+          "tooling",
+          "standards"
+        ]
+      },
+      {
+        "uri": "majordomus://audience/research-team",
+        "kind": "audience",
+        "identity": "research-team",
+        "title": "Research and experimental engineering",
+        "description": "Many more experiments than results, and the expensive part is remembering which ones were already tried.",
+        "path": ".ai/repo/why/audiences/research-team.md",
+        "section": "why",
+        "source_class": "audience",
+        "bytes": 1279,
+        "tags": [
+          "research",
+          "experiments",
+          "provenance"
+        ]
+      },
+      {
+        "uri": "majordomus://audience/solo-builder",
+        "kind": "audience",
+        "identity": "solo-builder",
+        "title": "Solo builder",
+        "description": "One person, several assistants, and no one else to ask what was decided yesterday.",
+        "path": ".ai/repo/why/audiences/solo-builder.md",
+        "section": "why",
+        "source_class": "audience",
+        "bytes": 1338,
+        "tags": [
+          "solo",
+          "founder"
+        ]
       },
       {
         "uri": "majordomus://claim/adr-catalogue",
@@ -5454,6 +7526,286 @@
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 76102
+      },
+      {
+        "uri": "majordomus://command/adr",
+        "kind": "command",
+        "identity": "adr",
+        "title": "adr",
+        "description": "The repository's architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/bench",
+        "kind": "command",
+        "identity": "bench",
+        "title": "bench",
+        "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/capture",
+        "kind": "command",
+        "identity": "capture",
+        "title": "capture",
+        "description": "Record the person's raw prompts from a provider hook, install that hook, and report what each provider actually does here.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/check",
+        "kind": "command",
+        "identity": "check",
+        "title": "check",
+        "description": "Is the current task still consistent with its policy, its scope and this checkout?",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/checkpoint",
+        "kind": "command",
+        "identity": "checkpoint",
+        "title": "checkpoint",
+        "description": "Record compact progress inside the active task, so the next worker does not start over.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/context",
+        "kind": "command",
+        "identity": "context",
+        "title": "context",
+        "description": "What the next worker needs to know now, in authority order and within a budget.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/decision",
+        "kind": "command",
+        "identity": "decision",
+        "title": "decision",
+        "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/doctor",
+        "kind": "command",
+        "identity": "doctor",
+        "title": "doctor",
+        "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/doctrine",
+        "kind": "command",
+        "identity": "doctrine",
+        "title": "doctrine",
+        "description": "What rules are enforced, by what, and whether each one is actually wired.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/finish",
+        "kind": "command",
+        "identity": "finish",
+        "title": "finish",
+        "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/handover",
+        "kind": "command",
+        "identity": "handover",
+        "title": "handover",
+        "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/help",
+        "kind": "command",
+        "identity": "help",
+        "title": "help",
+        "description": "Print the usage text, which is the list of every public command.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/history",
+        "kind": "command",
+        "identity": "history",
+        "title": "history",
+        "description": "Read the append-only ledger back, filtered by task, event or time.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/init",
+        "kind": "command",
+        "identity": "init",
+        "title": "init",
+        "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/knowledge",
+        "kind": "command",
+        "identity": "knowledge",
+        "title": "knowledge",
+        "description": "The compiled index over what this repository states.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/migrate",
+        "kind": "command",
+        "identity": "migrate",
+        "title": "migrate",
+        "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/plan",
+        "kind": "command",
+        "identity": "plan",
+        "title": "plan",
+        "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/prompt",
+        "kind": "command",
+        "identity": "prompt",
+        "title": "prompt",
+        "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/question",
+        "kind": "command",
+        "identity": "question",
+        "title": "question",
+        "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/rules",
+        "kind": "command",
+        "identity": "rules",
+        "title": "rules",
+        "description": "The effective rule set, vendored baseline plus project rules.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/search",
+        "kind": "command",
+        "identity": "search",
+        "title": "search",
+        "description": "Find a durable record without reading all of them, in authority order.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/session",
+        "kind": "command",
+        "identity": "session",
+        "title": "session",
+        "description": "Open, inspect and close one execution episode.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/skills",
+        "kind": "command",
+        "identity": "skills",
+        "title": "skills",
+        "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/start",
+        "kind": "command",
+        "identity": "start",
+        "title": "start",
+        "description": "Begin one scoped task under a profile, and refuse while another is active.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/update",
+        "kind": "command",
+        "identity": "update",
+        "title": "update",
+        "description": "Regenerate every provider instruction file from the one policy, deterministically.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/usecase",
+        "kind": "command",
+        "identity": "usecase",
+        "title": "usecase",
+        "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/version",
+        "kind": "command",
+        "identity": "version",
+        "title": "version",
+        "description": "Print the version, without needing a repository or an installation.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
+      },
+      {
+        "uri": "majordomus://command/watch",
+        "kind": "command",
+        "identity": "watch",
+        "title": "watch",
+        "description": "What has drifted since the last update — policy, projections, state, retention.",
+        "path": "share/commands.yaml",
+        "source_class": "command",
+        "bytes": 24260
       },
       {
         "uri": "majordomus://context/ai.repo.applications",
@@ -8525,6 +10877,651 @@
         "bytes": 1441
       },
       {
+        "uri": "majordomus://moment/abandoned-worktree",
+        "kind": "moment",
+        "identity": "abandoned-worktree",
+        "title": "A worktree nobody can decide to delete",
+        "description": "Isolation is cheap to create and expensive to reason about: nothing records what a worktree was for or whether its work landed.",
+        "path": ".ai/repo/why/moments/abandoned-worktree.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4694,
+        "tags": [
+          "worktrees",
+          "parallelism",
+          "cleanup",
+          "staleness"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/api-changed-contract-did-not",
+        "kind": "moment",
+        "identity": "api-changed-contract-did-not",
+        "title": "The interface changed and its contract document did not",
+        "description": "A contract maintained by hand beside the code it describes goes stale on the first change that forgets it.",
+        "path": ".ai/repo/why/moments/api-changed-contract-did-not.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4955,
+        "tags": [
+          "api",
+          "openapi",
+          "contract",
+          "drift",
+          "generation"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/code-without-an-issue",
+        "kind": "moment",
+        "identity": "code-without-an-issue",
+        "title": "A change that no plan ever asked for",
+        "description": "Work arrives with no bounded contract behind it, so its scope, its acceptance criteria and its ownership are all decided after the fact.",
+        "path": ".ai/repo/why/moments/code-without-an-issue.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4744,
+        "tags": [
+          "plan",
+          "scope",
+          "ownership",
+          "tracking"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/context-budget-blown",
+        "kind": "moment",
+        "identity": "context-budget-blown",
+        "title": "The instruction file that grew into a rulebook",
+        "description": "Everything important gets appended to the always-loaded file, so every session pays for every rule and reads none of them carefully.",
+        "path": ".ai/repo/why/moments/context-budget-blown.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5034,
+        "tags": [
+          "context",
+          "budget",
+          "rules",
+          "bootstrap"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/contribution-that-could-not-have-known",
+        "kind": "moment",
+        "identity": "contribution-that-could-not-have-known",
+        "title": "A fluent contribution that could not have known the rules",
+        "description": "Assistants let anybody produce plausible contributions at volume; the conventions that make one correct are still only in the maintainers.",
+        "path": ".ai/repo/why/moments/contribution-that-could-not-have-known.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4922,
+        "tags": [
+          "contribution",
+          "review",
+          "conventions",
+          "governance"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/decision-only-in-a-transcript",
+        "kind": "moment",
+        "identity": "decision-only-in-a-transcript",
+        "title": "The decision exists, in a conversation nobody can find",
+        "description": "A decision that was reached in a session is stored where only that session can read it, so it is neither reviewable nor discoverable.",
+        "path": ".ai/repo/why/moments/decision-only-in-a-transcript.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5055,
+        "tags": [
+          "decisions",
+          "provenance",
+          "adr",
+          "transcripts"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/discovery-never-becomes-knowledge",
+        "kind": "moment",
+        "identity": "discovery-never-becomes-knowledge",
+        "title": "A hard-won discovery that never became knowledge",
+        "description": "A worker learns something expensive about the codebase, uses it once, and it dies with the session because nothing turned it into a durable record.",
+        "path": ".ai/repo/why/moments/discovery-never-becomes-knowledge.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5243,
+        "tags": [
+          "knowledge",
+          "context",
+          "memory",
+          "waste"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/documented-command-no-longer-works",
+        "kind": "moment",
+        "identity": "documented-command-no-longer-works",
+        "title": "The documented command that no longer works",
+        "description": "Examples are written once, in prose, and nothing ever executes them again.",
+        "path": ".ai/repo/why/moments/documented-command-no-longer-works.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4623,
+        "tags": [
+          "documentation",
+          "examples",
+          "drift",
+          "onboarding"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/done-because-the-model-said-so",
+        "kind": "moment",
+        "identity": "done-because-the-model-said-so",
+        "title": "Accepting \"done\" because the model said so",
+        "description": "A fluent completion claim is accepted as evidence because nothing wrote down, beforehand, what would have to be true.",
+        "path": ".ai/repo/why/moments/done-because-the-model-said-so.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5540,
+        "tags": [
+          "verification",
+          "evidence",
+          "completion"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/enforcement-nothing-invokes",
+        "kind": "moment",
+        "identity": "enforcement-nothing-invokes",
+        "title": "A rule enforced by a hook that never runs",
+        "description": "Every artefact of enforcement exists — the rule, the script, the test — and no path connects them, so the control is fiction.",
+        "path": ".ai/repo/why/moments/enforcement-nothing-invokes.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4899,
+        "tags": [
+          "enforcement",
+          "hooks",
+          "policy",
+          "wiring"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/failure-disappears-between-sessions",
+        "kind": "moment",
+        "identity": "failure-disappears-between-sessions",
+        "title": "A failure that was seen once and never again",
+        "description": "A failure observed inside a session is described in that session and nowhere else, so the next one starts from the report rather than the evidence.",
+        "path": ".ai/repo/why/moments/failure-disappears-between-sessions.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4884,
+        "tags": [
+          "debugging",
+          "evidence",
+          "observability",
+          "continuity"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/feature-without-a-test",
+        "kind": "moment",
+        "identity": "feature-without-a-test",
+        "title": "A capability the documentation promises and nothing proves",
+        "description": "A sentence describing what the software does is written once and never connected to anything that would fail if it stopped being true.",
+        "path": ".ai/repo/why/moments/feature-without-a-test.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4707,
+        "tags": [
+          "claims",
+          "tests",
+          "evidence",
+          "documentation"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/first-hour-in-an-unfamiliar-repository",
+        "kind": "moment",
+        "identity": "first-hour-in-an-unfamiliar-repository",
+        "title": "The first hour in a repository nobody can explain quickly",
+        "description": "What is conventional in a codebase is knowledge held by its regulars, so every arrival — human or machine — pays for it again.",
+        "path": ".ai/repo/why/moments/first-hour-in-an-unfamiliar-repository.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4913,
+        "tags": [
+          "onboarding",
+          "context",
+          "conventions",
+          "adoption"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/generated-artifacts-stale",
+        "kind": "moment",
+        "identity": "generated-artifacts-stale",
+        "title": "Green tests over stale generated files",
+        "description": "Tests exercise the code and say nothing about the committed outputs derived from it, so the build is green and the artifacts are wrong.",
+        "path": ".ai/repo/why/moments/generated-artifacts-stale.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4777,
+        "tags": [
+          "generation",
+          "drift",
+          "ci",
+          "artifacts"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/implementation-contradicts-the-decision",
+        "kind": "moment",
+        "identity": "implementation-contradicts-the-decision",
+        "title": "Code that quietly contradicts a written decision",
+        "description": "The decision was recorded and the implementation went the other way, because nothing relates a decision to the paths it governs.",
+        "path": ".ai/repo/why/moments/implementation-contradicts-the-decision.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4719,
+        "tags": [
+          "decisions",
+          "drift",
+          "review",
+          "traceability"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/issue-says-done-tests-disagree",
+        "kind": "moment",
+        "identity": "issue-says-done-tests-disagree",
+        "title": "The issue says done and the repository disagrees",
+        "description": "Completion is recorded as a state change in a tracker rather than as evidence in the repository, so the two drift immediately.",
+        "path": ".ai/repo/why/moments/issue-says-done-tests-disagree.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4631,
+        "tags": [
+          "evidence",
+          "completion",
+          "tracking",
+          "tests"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/milestone-status-unreconstructable",
+        "kind": "moment",
+        "identity": "milestone-status-unreconstructable",
+        "title": "Nobody can reconstruct where the milestone actually is",
+        "description": "Progress is an aggregate that exists only in people, because the parts it aggregates were never recorded in a form anything can add up.",
+        "path": ".ai/repo/why/moments/milestone-status-unreconstructable.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4634,
+        "tags": [
+          "milestones",
+          "status",
+          "derivation",
+          "reporting"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/no-record-why-this-model",
+        "kind": "moment",
+        "identity": "no-record-why-this-model",
+        "title": "Nobody can say why that worker was chosen",
+        "description": "Provider and model selection is made implicitly, per session, and recorded nowhere, so it cannot be reviewed or repeated.",
+        "path": ".ai/repo/why/moments/no-record-why-this-model.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4590,
+        "tags": [
+          "model-selection",
+          "provenance",
+          "routing",
+          "cost"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/one-agent-undoes-another",
+        "kind": "moment",
+        "identity": "one-agent-undoes-another",
+        "title": "One worker undoing another worker's change",
+        "description": "A worker sees an unexplained change in its path, judges it wrong, and removes it — correctly, on the evidence it had.",
+        "path": ".ai/repo/why/moments/one-agent-undoes-another.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4750,
+        "tags": [
+          "agents",
+          "ownership",
+          "rework",
+          "parallelism"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/policy-changed-projection-stale",
+        "kind": "moment",
+        "identity": "policy-changed-projection-stale",
+        "title": "The policy changed and its four copies did not",
+        "description": "A decision is updated at its source and the generated copies keep serving the previous version, with nothing reporting the difference.",
+        "path": ".ai/repo/why/moments/policy-changed-projection-stale.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4670,
+        "tags": [
+          "policy",
+          "projection",
+          "drift",
+          "generation"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/re-arguing-a-settled-decision",
+        "kind": "moment",
+        "identity": "re-arguing-a-settled-decision",
+        "title": "Re-arguing a decision that was settled last week",
+        "description": "A decision whose reason lived in a conversation cannot be reviewed, only re-argued — by a worker with less information than the first one had.",
+        "path": ".ai/repo/why/moments/re-arguing-a-settled-decision.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 6440,
+        "tags": [
+          "decisions",
+          "rationale",
+          "rework"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/re-explaining-context",
+        "kind": "moment",
+        "identity": "re-explaining-context",
+        "title": "Re-explaining the same context to a brand-new session",
+        "description": "Repository knowledge that only ever existed in a conversation has to be re-transmitted by hand to every worker that follows.",
+        "path": ".ai/repo/why/moments/re-explaining-context.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 6084,
+        "tags": [
+          "context",
+          "sessions",
+          "continuity",
+          "handover"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/result-cannot-be-reproduced",
+        "kind": "moment",
+        "identity": "result-cannot-be-reproduced",
+        "title": "A result nobody can reproduce, including its author",
+        "description": "The result is recorded and the conditions that produced it are not, so it is an anecdote rather than a measurement.",
+        "path": ".ai/repo/why/moments/result-cannot-be-reproduced.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4816,
+        "tags": [
+          "reproducibility",
+          "evidence",
+          "benchmarks",
+          "provenance"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/rule-in-a-readme-nobody-loaded",
+        "kind": "moment",
+        "identity": "rule-in-a-readme-nobody-loaded",
+        "title": "The rule for that directory, in a README no session ever loaded",
+        "description": "A local rule is either in the always-loaded file, where every session pays for it, or beside the code, where nothing relates it to the path being edited.",
+        "path": ".ai/repo/why/moments/rule-in-a-readme-nobody-loaded.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 6671,
+        "tags": [
+          "rules",
+          "context",
+          "locality",
+          "providers"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/same-dead-end-explored-twice",
+        "kind": "moment",
+        "identity": "same-dead-end-explored-twice",
+        "title": "The same dead end, explored twice",
+        "description": "Negative results are the majority of experimental output and the part nobody records, so the search space is re-explored.",
+        "path": ".ai/repo/why/moments/same-dead-end-explored-twice.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4578,
+        "tags": [
+          "experiments",
+          "negative-results",
+          "knowledge",
+          "waste"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/second-session-same-checkout",
+        "kind": "moment",
+        "identity": "second-session-same-checkout",
+        "title": "Two sessions in one checkout, standing on each other",
+        "description": "Two workers in one working tree see each other only as unexplained file changes, and each treats the other as noise.",
+        "path": ".ai/repo/why/moments/second-session-same-checkout.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4728,
+        "tags": [
+          "parallelism",
+          "ownership",
+          "worktrees",
+          "state"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/site-claims-nothing-proves",
+        "kind": "moment",
+        "identity": "site-claims-nothing-proves",
+        "title": "A public page promising something nothing tests",
+        "description": "Public material is written by a different act from the code, so it drifts ahead of the behaviour and nothing brings it back.",
+        "path": ".ai/repo/why/moments/site-claims-nothing-proves.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4818,
+        "tags": [
+          "claims",
+          "marketing",
+          "evidence",
+          "trust"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/spend-not-tied-to-outcomes",
+        "kind": "moment",
+        "identity": "spend-not-tied-to-outcomes",
+        "title": "Spend that cannot be tied to anything accepted",
+        "description": "Consumption is measured per account and outcomes are recorded per person, so the two can never be joined.",
+        "path": ".ai/repo/why/moments/spend-not-tied-to-outcomes.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4564,
+        "tags": [
+          "cost",
+          "outcomes",
+          "telemetry",
+          "reporting"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/strongest-model-renames-a-variable",
+        "kind": "moment",
+        "identity": "strongest-model-renames-a-variable",
+        "title": "The strongest model, at maximum effort, renaming a variable",
+        "description": "Capability, reasoning depth, context size and verbosity collapse into one habit — everything on — because nothing ever named them separately.",
+        "path": ".ai/repo/why/moments/strongest-model-renames-a-variable.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5571,
+        "tags": [
+          "cost",
+          "effort",
+          "model-selection",
+          "profiles"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/task-in-progress-for-three-weeks",
+        "kind": "moment",
+        "identity": "task-in-progress-for-three-weeks",
+        "title": "A task \"in progress\" that nobody has touched for three weeks",
+        "description": "A status that was authored rather than computed is true at the moment of writing and decays silently from then on.",
+        "path": ".ai/repo/why/moments/task-in-progress-for-three-weeks.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5610,
+        "tags": [
+          "tasks",
+          "staleness",
+          "drift",
+          "ownership"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/three-copies-of-one-explanation",
+        "kind": "moment",
+        "identity": "three-copies-of-one-explanation",
+        "title": "Three copies of one explanation, and no way to tell which is current",
+        "description": "Every hand-maintained copy of a fact drifts on its own schedule, and a reader cannot tell which copy is the current one.",
+        "path": ".ai/repo/why/moments/three-copies-of-one-explanation.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4695,
+        "tags": [
+          "documentation",
+          "duplication",
+          "drift",
+          "generation"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/three-roadmaps-none-of-them-true",
+        "kind": "moment",
+        "identity": "three-roadmaps-none-of-them-true",
+        "title": "Three roadmaps, and none of them true",
+        "description": "A plan kept in prose is a snapshot, and every copy of it drifts on its own schedule; stored status is an assertion that stays true after the world moves.",
+        "path": ".ai/repo/why/moments/three-roadmaps-none-of-them-true.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5983,
+        "tags": [
+          "plan",
+          "roadmap",
+          "status",
+          "drift"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/two-agents-one-bug",
+        "kind": "moment",
+        "identity": "two-agents-one-bug",
+        "title": "Two agents fixing the same bug in two branches",
+        "description": "Two workers spend a day each on one defect because ownership was implicit and neither could see the other.",
+        "path": ".ai/repo/why/moments/two-agents-one-bug.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5483,
+        "tags": [
+          "agents",
+          "parallelism",
+          "duplicate-work",
+          "ownership"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/two-rulebooks-one-repository",
+        "kind": "moment",
+        "identity": "two-rulebooks-one-repository",
+        "title": "Two different rulebooks for one repository",
+        "description": "Each provider reads its own hand-edited file, nothing relates them, and which contract applies depends on which tool is open.",
+        "path": ".ai/repo/why/moments/two-rulebooks-one-repository.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5878,
+        "tags": [
+          "rules",
+          "providers",
+          "projection",
+          "drift"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/weak-model-on-architecture",
+        "kind": "moment",
+        "identity": "weak-model-on-architecture",
+        "title": "A cheap worker deciding something expensive",
+        "description": "Capability is dialled down for cost and nothing distinguishes the tasks where that is prudent from the ones where it is expensive.",
+        "path": ".ai/repo/why/moments/weak-model-on-architecture.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4830,
+        "tags": [
+          "cost",
+          "model-selection",
+          "effort",
+          "profiles"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/what-the-workers-did-last-night",
+        "kind": "moment",
+        "identity": "what-the-workers-did-last-night",
+        "title": "Asking what the workers did last night, and getting a transcript",
+        "description": "A conversation log records what was said, not what happened, so the operational question has to be answered by a person reading prose.",
+        "path": ".ai/repo/why/moments/what-the-workers-did-last-night.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 6054,
+        "tags": [
+          "observability",
+          "ledger",
+          "events",
+          "audit"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/who-did-this-and-under-what-policy",
+        "kind": "moment",
+        "identity": "who-did-this-and-under-what-policy",
+        "title": "A change whose provenance cannot be reconstructed",
+        "description": "Attribution stops at the commit, so what authorised a change, what verified it and what governed it are unrecoverable.",
+        "path": ".ai/repo/why/moments/who-did-this-and-under-what-policy.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 5046,
+        "tags": [
+          "provenance",
+          "audit",
+          "attribution",
+          "policy"
+        ]
+      },
+      {
+        "uri": "majordomus://moment/worker-output-never-integrated",
+        "kind": "moment",
+        "identity": "worker-output-never-integrated",
+        "title": "Finished work that never reached the trunk",
+        "description": "Workers produce far more than integration absorbs, and nothing distinguishes work that is done from work that is done and landed.",
+        "path": ".ai/repo/why/moments/worker-output-never-integrated.md",
+        "section": "why",
+        "source_class": "moment",
+        "bytes": 4704,
+        "tags": [
+          "integration",
+          "throughput",
+          "waste",
+          "parallelism"
+        ]
+      },
+      {
         "uri": "majordomus://policy/.ai/repo/policy.yaml",
         "kind": "policy",
         "identity": ".ai/repo/policy.yaml",
@@ -11109,6 +14106,26 @@
       "objects": 5
     },
     {
+      "name": "area",
+      "format": "markdown",
+      "front_matter": "required",
+      "schema": "area",
+      "identity": [
+        "id"
+      ],
+      "objects": 9
+    },
+    {
+      "name": "audience",
+      "format": "markdown",
+      "front_matter": "required",
+      "schema": "audience",
+      "identity": [
+        "id"
+      ],
+      "objects": 8
+    },
+    {
       "name": "claim",
       "format": "yaml",
       "front_matter": "none",
@@ -11117,6 +14134,15 @@
         "id"
       ],
       "objects": 123
+    },
+    {
+      "name": "command",
+      "format": "yaml",
+      "front_matter": "none",
+      "identity": [
+        "id"
+      ],
+      "objects": 28
     },
     {
       "name": "context",
@@ -11171,6 +14197,16 @@
         "id"
       ],
       "objects": 11
+    },
+    {
+      "name": "moment",
+      "format": "markdown",
+      "front_matter": "required",
+      "schema": "moment",
+      "identity": [
+        "id"
+      ],
+      "objects": 38
     },
     {
       "name": "policy",
@@ -14394,6 +17430,1814 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "why"
+        ],
+        "route": "/docs/cli/why/",
+        "executable": true,
+        "usage": "majordomus why [OPTIONS] [COMMAND]",
+        "about": "The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          },
+          {
+            "name": "audience",
+            "long": "audience",
+            "positional": false,
+            "help": "Only moments this audience recognises",
+            "value_name": "AUDIENCE",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "area",
+            "long": "area",
+            "positional": false,
+            "help": "Only moments in this operational area",
+            "value_name": "AREA",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "tag",
+            "long": "tag",
+            "positional": false,
+            "help": "Only moments carrying this tag",
+            "value_name": "TAG",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "severity",
+            "long": "severity",
+            "positional": false,
+            "help": "Only moments of this severity",
+            "value_name": "SEVERITY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "frequency",
+            "long": "frequency",
+            "positional": false,
+            "help": "Only moments of this frequency",
+            "value_name": "FREQUENCY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "lifecycle",
+            "long": "lifecycle",
+            "positional": false,
+            "help": "Only moments at this stage of work",
+            "value_name": "LIFECYCLE",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "capability",
+            "long": "capability",
+            "positional": false,
+            "help": "Only moments naming this capability of the executable",
+            "value_name": "CAPABILITY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "names_command",
+            "long": "names-command",
+            "positional": false,
+            "help": "Only moments naming this command",
+            "value_name": "NAMES_COMMAND",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "featured",
+            "long": "featured",
+            "positional": false,
+            "help": "Only the moments the homepage features",
+            "value_name": "FEATURED",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "all",
+            "long": "all",
+            "positional": false,
+            "help": "Include drafts and deprecated moments, not only the public ones",
+            "value_name": "ALL",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "query",
+            "long": "query",
+            "short": "q",
+            "positional": false,
+            "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+            "value_name": "QUERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          }
+        ],
+        "examples": [
+          {
+            "id": "why-catalogue",
+            "title": "The operational moments this repository holds",
+            "description": "`why` with nothing after it lists, because listing is what a person wants when they ask what this section is. The count on the last line is computed from the catalogue; no number anywhere is written down.",
+            "argv": [
+              "why"
+            ],
+            "command": "majordomus why",
+            "setup": [],
+            "expectation": "exits 0; prints SLUG, moment(s)"
+          }
+        ],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "why",
+              "list"
+            ],
+            "route": "/docs/cli/why/list/",
+            "executable": true,
+            "usage": "majordomus why list [OPTIONS]",
+            "about": "Every operational moment, narrowed by any facet the catalogue reports",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "audience",
+                "long": "audience",
+                "positional": false,
+                "help": "Only moments this audience recognises",
+                "value_name": "AUDIENCE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "area",
+                "long": "area",
+                "positional": false,
+                "help": "Only moments in this operational area",
+                "value_name": "AREA",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "tag",
+                "long": "tag",
+                "positional": false,
+                "help": "Only moments carrying this tag",
+                "value_name": "TAG",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "severity",
+                "long": "severity",
+                "positional": false,
+                "help": "Only moments of this severity",
+                "value_name": "SEVERITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "frequency",
+                "long": "frequency",
+                "positional": false,
+                "help": "Only moments of this frequency",
+                "value_name": "FREQUENCY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "lifecycle",
+                "long": "lifecycle",
+                "positional": false,
+                "help": "Only moments at this stage of work",
+                "value_name": "LIFECYCLE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "capability",
+                "long": "capability",
+                "positional": false,
+                "help": "Only moments naming this capability of the executable",
+                "value_name": "CAPABILITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "names_command",
+                "long": "names-command",
+                "positional": false,
+                "help": "Only moments naming this command",
+                "value_name": "NAMES_COMMAND",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "featured",
+                "long": "featured",
+                "positional": false,
+                "help": "Only the moments the homepage features",
+                "value_name": "FEATURED",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "all",
+                "long": "all",
+                "positional": false,
+                "help": "Include drafts and deprecated moments, not only the public ones",
+                "value_name": "ALL",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "query",
+                "long": "query",
+                "short": "q",
+                "positional": false,
+                "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+                "value_name": "QUERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "why-list",
+                "title": "Every public moment, in presentation order",
+                "description": "Drafts are excluded unless `--all` is given. The facets a listing may be narrowed by are the ones the catalogue itself reports, so an audience or an area added as a file is a filter without anything being registered.",
+                "argv": [
+                  "why",
+                  "list"
+                ],
+                "command": "majordomus why list",
+                "setup": [],
+                "expectation": "exits 0; prints SLUG"
+              },
+              {
+                "id": "why-list-audience",
+                "title": "Only what one audience recognises",
+                "description": "Membership is declared by each moment and never listed in the audience's own file, so this answer is derived. An audience the catalogue does not have is an invalid input naming the ones it does, not an empty answer.",
+                "argv": [
+                  "why",
+                  "list",
+                  "--audience",
+                  "fixture-team"
+                ],
+                "command": "majordomus why list --audience fixture-team",
+                "setup": [],
+                "expectation": "exits 0; prints SLUG"
+              },
+              {
+                "id": "why-list-json",
+                "title": "The same, as the shape the API and MCP answer with",
+                "description": "One domain model behind every projection: this document is what `GET /api/v1/why` returns and what the `majordomus_why` tool answers, including the derived facets and the catalogue's fingerprint.",
+                "argv": [
+                  "why",
+                  "list",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus why list --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /counts/moments, /facets/audiences, /fingerprint"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "why",
+              "show"
+            ],
+            "route": "/docs/cli/why/show/",
+            "executable": true,
+            "usage": "majordomus why show [OPTIONS] <ID>",
+            "about": "One moment in full, with every relation derived from its metadata",
+            "args": [
+              {
+                "name": "id",
+                "positional": true,
+                "help": "The moment's id, which is also its slug and its route",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "audience",
+                "long": "audience",
+                "positional": false,
+                "help": "Only moments this audience recognises",
+                "value_name": "AUDIENCE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "area",
+                "long": "area",
+                "positional": false,
+                "help": "Only moments in this operational area",
+                "value_name": "AREA",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "tag",
+                "long": "tag",
+                "positional": false,
+                "help": "Only moments carrying this tag",
+                "value_name": "TAG",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "severity",
+                "long": "severity",
+                "positional": false,
+                "help": "Only moments of this severity",
+                "value_name": "SEVERITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "frequency",
+                "long": "frequency",
+                "positional": false,
+                "help": "Only moments of this frequency",
+                "value_name": "FREQUENCY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "lifecycle",
+                "long": "lifecycle",
+                "positional": false,
+                "help": "Only moments at this stage of work",
+                "value_name": "LIFECYCLE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "capability",
+                "long": "capability",
+                "positional": false,
+                "help": "Only moments naming this capability of the executable",
+                "value_name": "CAPABILITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "names_command",
+                "long": "names-command",
+                "positional": false,
+                "help": "Only moments naming this command",
+                "value_name": "NAMES_COMMAND",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "featured",
+                "long": "featured",
+                "positional": false,
+                "help": "Only the moments the homepage features",
+                "value_name": "FEATURED",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "all",
+                "long": "all",
+                "positional": false,
+                "help": "Include drafts and deprecated moments, not only the public ones",
+                "value_name": "ALL",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "query",
+                "long": "query",
+                "short": "q",
+                "positional": false,
+                "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+                "value_name": "QUERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "why-show",
+                "title": "One moment, with every relation derived from its metadata",
+                "description": "The record as its file declares it, then what nobody authored: the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.",
+                "argv": [
+                  "why",
+                  "show",
+                  "fixture-moment"
+                ],
+                "command": "majordomus why show fixture-moment",
+                "setup": [],
+                "expectation": "exits 0; prints fixture-moment, derived"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "why",
+              "audiences"
+            ],
+            "route": "/docs/cli/why/audiences/",
+            "executable": true,
+            "usage": "majordomus why audiences [OPTIONS]",
+            "about": "Every audience, with the moments that name it",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "audience",
+                "long": "audience",
+                "positional": false,
+                "help": "Only moments this audience recognises",
+                "value_name": "AUDIENCE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "area",
+                "long": "area",
+                "positional": false,
+                "help": "Only moments in this operational area",
+                "value_name": "AREA",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "tag",
+                "long": "tag",
+                "positional": false,
+                "help": "Only moments carrying this tag",
+                "value_name": "TAG",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "severity",
+                "long": "severity",
+                "positional": false,
+                "help": "Only moments of this severity",
+                "value_name": "SEVERITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "frequency",
+                "long": "frequency",
+                "positional": false,
+                "help": "Only moments of this frequency",
+                "value_name": "FREQUENCY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "lifecycle",
+                "long": "lifecycle",
+                "positional": false,
+                "help": "Only moments at this stage of work",
+                "value_name": "LIFECYCLE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "capability",
+                "long": "capability",
+                "positional": false,
+                "help": "Only moments naming this capability of the executable",
+                "value_name": "CAPABILITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "names_command",
+                "long": "names-command",
+                "positional": false,
+                "help": "Only moments naming this command",
+                "value_name": "NAMES_COMMAND",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "featured",
+                "long": "featured",
+                "positional": false,
+                "help": "Only the moments the homepage features",
+                "value_name": "FEATURED",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "all",
+                "long": "all",
+                "positional": false,
+                "help": "Include drafts and deprecated moments, not only the public ones",
+                "value_name": "ALL",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "query",
+                "long": "query",
+                "short": "q",
+                "positional": false,
+                "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+                "value_name": "QUERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "why-audiences",
+                "title": "Who recognises what, with the counts derived",
+                "description": "Each audience with how many public moments name it. The number is computed from the moments; an audience's own file never lists one.",
+                "argv": [
+                  "why",
+                  "audiences"
+                ],
+                "command": "majordomus why audiences",
+                "setup": [],
+                "expectation": "exits 0; prints SLUG, TITLE"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "why",
+              "areas"
+            ],
+            "route": "/docs/cli/why/areas/",
+            "executable": true,
+            "usage": "majordomus why areas [OPTIONS]",
+            "about": "Every operational area, with the moments that fall under it",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "audience",
+                "long": "audience",
+                "positional": false,
+                "help": "Only moments this audience recognises",
+                "value_name": "AUDIENCE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "area",
+                "long": "area",
+                "positional": false,
+                "help": "Only moments in this operational area",
+                "value_name": "AREA",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "tag",
+                "long": "tag",
+                "positional": false,
+                "help": "Only moments carrying this tag",
+                "value_name": "TAG",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "severity",
+                "long": "severity",
+                "positional": false,
+                "help": "Only moments of this severity",
+                "value_name": "SEVERITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "frequency",
+                "long": "frequency",
+                "positional": false,
+                "help": "Only moments of this frequency",
+                "value_name": "FREQUENCY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "lifecycle",
+                "long": "lifecycle",
+                "positional": false,
+                "help": "Only moments at this stage of work",
+                "value_name": "LIFECYCLE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "capability",
+                "long": "capability",
+                "positional": false,
+                "help": "Only moments naming this capability of the executable",
+                "value_name": "CAPABILITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "names_command",
+                "long": "names-command",
+                "positional": false,
+                "help": "Only moments naming this command",
+                "value_name": "NAMES_COMMAND",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "featured",
+                "long": "featured",
+                "positional": false,
+                "help": "Only the moments the homepage features",
+                "value_name": "FEATURED",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "all",
+                "long": "all",
+                "positional": false,
+                "help": "Include drafts and deprecated moments, not only the public ones",
+                "value_name": "ALL",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "query",
+                "long": "query",
+                "short": "q",
+                "positional": false,
+                "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+                "value_name": "QUERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "why-areas",
+                "title": "The operational areas, with the counts derived",
+                "description": "The same relation read the other way: each area with the public moments that fall under it.",
+                "argv": [
+                  "why",
+                  "areas"
+                ],
+                "command": "majordomus why areas",
+                "setup": [],
+                "expectation": "exits 0; prints SLUG, TITLE"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "why",
+              "diagnose"
+            ],
+            "route": "/docs/cli/why/diagnose/",
+            "executable": true,
+            "usage": "majordomus why diagnose [OPTIONS]",
+            "about": "What the symptoms you recognise imply: the areas they weigh towards and the mechanisms that answer them",
+            "args": [
+              {
+                "name": "signals",
+                "long": "signal",
+                "positional": false,
+                "help": "A signal id or a moment id; repeat for each one you recognise. Without any, the questionnaire is printed",
+                "value_name": "SIGNALS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "audience",
+                "long": "audience",
+                "positional": false,
+                "help": "Only moments this audience recognises",
+                "value_name": "AUDIENCE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "area",
+                "long": "area",
+                "positional": false,
+                "help": "Only moments in this operational area",
+                "value_name": "AREA",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "tag",
+                "long": "tag",
+                "positional": false,
+                "help": "Only moments carrying this tag",
+                "value_name": "TAG",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "severity",
+                "long": "severity",
+                "positional": false,
+                "help": "Only moments of this severity",
+                "value_name": "SEVERITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "frequency",
+                "long": "frequency",
+                "positional": false,
+                "help": "Only moments of this frequency",
+                "value_name": "FREQUENCY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "lifecycle",
+                "long": "lifecycle",
+                "positional": false,
+                "help": "Only moments at this stage of work",
+                "value_name": "LIFECYCLE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "capability",
+                "long": "capability",
+                "positional": false,
+                "help": "Only moments naming this capability of the executable",
+                "value_name": "CAPABILITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "names_command",
+                "long": "names-command",
+                "positional": false,
+                "help": "Only moments naming this command",
+                "value_name": "NAMES_COMMAND",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "featured",
+                "long": "featured",
+                "positional": false,
+                "help": "Only the moments the homepage features",
+                "value_name": "FEATURED",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "all",
+                "long": "all",
+                "positional": false,
+                "help": "Include drafts and deprecated moments, not only the public ones",
+                "value_name": "ALL",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "query",
+                "long": "query",
+                "short": "q",
+                "positional": false,
+                "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+                "value_name": "QUERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "why-diagnose-questions",
+                "title": "The questionnaire, assembled from the catalogue's own signals",
+                "description": "With no selection there is nothing to diagnose, so the questions are printed instead of an empty answer. Every line is a signal a moment declares; nothing here is a list of questions.",
+                "argv": [
+                  "why",
+                  "diagnose"
+                ],
+                "command": "majordomus why diagnose",
+                "setup": [],
+                "expectation": "exits 0; prints Which of these happened to you this week?"
+              },
+              {
+                "id": "why-diagnose",
+                "title": "What the symptoms you recognise imply",
+                "description": "A name is a signal id or a moment id. The answer is counting, not inference: each recommendation carries the moments that produced it, and there is no percentage because there is no model behind one.",
+                "argv": [
+                  "why",
+                  "diagnose",
+                  "--signal",
+                  "fixture-signal"
+                ],
+                "command": "majordomus why diagnose --signal fixture-signal",
+                "setup": [],
+                "expectation": "exits 0; prints moment(s) matched, fixture-moment"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "why",
+              "validate"
+            ],
+            "route": "/docs/cli/why/validate/",
+            "executable": true,
+            "usage": "majordomus why validate [OPTIONS]",
+            "about": "Every finding over the catalogue; exit 10 when any is an error",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "audience",
+                "long": "audience",
+                "positional": false,
+                "help": "Only moments this audience recognises",
+                "value_name": "AUDIENCE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "area",
+                "long": "area",
+                "positional": false,
+                "help": "Only moments in this operational area",
+                "value_name": "AREA",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "tag",
+                "long": "tag",
+                "positional": false,
+                "help": "Only moments carrying this tag",
+                "value_name": "TAG",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "severity",
+                "long": "severity",
+                "positional": false,
+                "help": "Only moments of this severity",
+                "value_name": "SEVERITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "frequency",
+                "long": "frequency",
+                "positional": false,
+                "help": "Only moments of this frequency",
+                "value_name": "FREQUENCY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "lifecycle",
+                "long": "lifecycle",
+                "positional": false,
+                "help": "Only moments at this stage of work",
+                "value_name": "LIFECYCLE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "capability",
+                "long": "capability",
+                "positional": false,
+                "help": "Only moments naming this capability of the executable",
+                "value_name": "CAPABILITY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "names_command",
+                "long": "names-command",
+                "positional": false,
+                "help": "Only moments naming this command",
+                "value_name": "NAMES_COMMAND",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "featured",
+                "long": "featured",
+                "positional": false,
+                "help": "Only the moments the homepage features",
+                "value_name": "FEATURED",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "all",
+                "long": "all",
+                "positional": false,
+                "help": "Include drafts and deprecated moments, not only the public ones",
+                "value_name": "ALL",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "query",
+                "long": "query",
+                "short": "q",
+                "positional": false,
+                "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+                "value_name": "QUERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "why-validate",
+                "title": "Check the catalogue before anything projects it",
+                "description": "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a public record that does not meet the floor its status promises. Exit 10 on any error.",
+                "argv": [
+                  "why",
+                  "validate"
+                ],
+                "command": "majordomus why validate",
+                "setup": [],
+                "expectation": "exits 0; prints moment(s), valid"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -14544,6 +19388,66 @@
         "read_only": true,
         "input": "ClassifyInput",
         "output": "Classification"
+      },
+      {
+        "name": "majordomus_why_areas",
+        "id": "why.areas",
+        "title": "Operational areas",
+        "description": "Every operational area the catalogue declares, each with the public moments that fall under it. Membership is derived from the moments and is never listed in an area's own file.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "AreaList"
+      },
+      {
+        "name": "majordomus_why_audiences",
+        "id": "why.audiences",
+        "title": "Audiences",
+        "description": "Every audience the catalogue declares, each with the public moments that name it. Membership is derived from the moments and is never listed in an audience's own file.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "AudienceList"
+      },
+      {
+        "name": "majordomus_why_diagnose",
+        "id": "why.diagnose",
+        "title": "Diagnose a selection",
+        "description": "What a reader's own symptoms imply: the moments the selection resolves to, the operational areas and audiences they weigh towards, and the capabilities, commands, claims, rules and use cases that answer them — each carrying the moments that produced it. Counting, not inference: there is no weighting and no percentage.",
+        "kind": "query",
+        "read_only": true,
+        "input": "DiagnoseInput",
+        "output": "Diagnosis"
+      },
+      {
+        "name": "majordomus_why",
+        "id": "why.list",
+        "title": "The catalogue",
+        "description": "Every operational moment this repository holds, narrowed by any of the facets the catalogue itself reports, with the audiences, the areas, the derived filters and the counts. The default is the public catalogue; pass status=any for the drafts too.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Query",
+        "output": "CatalogueView"
+      },
+      {
+        "name": "majordomus_why_moment",
+        "id": "why.moment",
+        "title": "One moment",
+        "description": "One operational moment in full: what it looks like, why it happens, what it costs, what this tool does about it, and every relation derived from its metadata — the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.",
+        "kind": "query",
+        "read_only": true,
+        "input": "MomentInput",
+        "output": "MomentDetail"
+      },
+      {
+        "name": "majordomus_why_validate",
+        "id": "why.validate",
+        "title": "Validate the catalogue",
+        "description": "Every finding over the catalogue: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; and a public record that does not meet the floor its status promises. Errors make the catalogue invalid; warnings do not.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "ValidationReport"
       }
     ],
     "resources": [
@@ -14573,6 +19477,27 @@
         "name": "scope",
         "id": "repository.scope",
         "title": "The repository scope",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://why/areas",
+        "name": "why-areas",
+        "id": "why.areas",
+        "title": "Operational areas",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://why/audiences",
+        "name": "why-audiences",
+        "id": "why.audiences",
+        "title": "Audiences",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://why",
+        "name": "why",
+        "id": "why.list",
+        "title": "The catalogue",
         "kind": "query"
       }
     ],
@@ -14662,6 +19587,42 @@
         "method": "GET",
         "path": "/api/v1/scope/classify",
         "id": "repository.scope_classify",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/why/areas",
+        "id": "why.areas",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/why/audiences",
+        "id": "why.audiences",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/why/diagnose",
+        "id": "why.diagnose",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/why",
+        "id": "why.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/why/moment",
+        "id": "why.moment",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/why/validate",
+        "id": "why.validate",
         "kind": "query"
       }
     ],
@@ -14809,6 +19770,15 @@
         "cached": true
       },
       {
+        "key": "graph.get|direct|why",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "why",
+        "cached": true
+      },
+      {
         "key": "graph.get|mcp|registry",
         "kind": "capability",
         "transport": "mcp",
@@ -14859,6 +19829,16 @@
         "tool": "majordomus_graph"
       },
       {
+        "key": "graph.get|mcp|why",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "why",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
         "key": "graph.get|http|registry",
         "kind": "capability",
         "transport": "http",
@@ -14905,6 +19885,16 @@
         "id": "graph.get",
         "module": "graph",
         "case": "use-cases",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.get|http|why",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "why",
         "cached": true,
         "route": "GET /api/v1/graph"
       },
@@ -15431,6 +20421,238 @@
         "route": "GET /api/v1/scope/classify"
       },
       {
+        "key": "why.areas|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "why.areas",
+        "module": "why",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "why.areas|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "why.areas",
+        "module": "why",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_why_areas"
+      },
+      {
+        "key": "why.areas|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "why.areas",
+        "module": "why",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/why/areas"
+      },
+      {
+        "key": "why.audiences|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "why.audiences",
+        "module": "why",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "why.audiences|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "why.audiences",
+        "module": "why",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_why_audiences"
+      },
+      {
+        "key": "why.audiences|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "why.audiences",
+        "module": "why",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/why/audiences"
+      },
+      {
+        "key": "why.diagnose|direct|three-moments",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "why.diagnose",
+        "module": "why",
+        "case": "three-moments",
+        "cached": true
+      },
+      {
+        "key": "why.diagnose|mcp|three-moments",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "why.diagnose",
+        "module": "why",
+        "case": "three-moments",
+        "cached": true,
+        "tool": "majordomus_why_diagnose"
+      },
+      {
+        "key": "why.diagnose|http|three-moments",
+        "kind": "capability",
+        "transport": "http",
+        "id": "why.diagnose",
+        "module": "why",
+        "case": "three-moments",
+        "cached": true,
+        "route": "GET /api/v1/why/diagnose"
+      },
+      {
+        "key": "why.list|direct|all",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "why.list",
+        "module": "why",
+        "case": "all",
+        "cached": true
+      },
+      {
+        "key": "why.list|direct|by-audience",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "why.list",
+        "module": "why",
+        "case": "by-audience",
+        "cached": true
+      },
+      {
+        "key": "why.list|direct|search",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "why.list",
+        "module": "why",
+        "case": "search",
+        "cached": true
+      },
+      {
+        "key": "why.list|mcp|all",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "why.list",
+        "module": "why",
+        "case": "all",
+        "cached": true,
+        "tool": "majordomus_why"
+      },
+      {
+        "key": "why.list|mcp|by-audience",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "why.list",
+        "module": "why",
+        "case": "by-audience",
+        "cached": true,
+        "tool": "majordomus_why"
+      },
+      {
+        "key": "why.list|mcp|search",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "why.list",
+        "module": "why",
+        "case": "search",
+        "cached": true,
+        "tool": "majordomus_why"
+      },
+      {
+        "key": "why.list|http|all",
+        "kind": "capability",
+        "transport": "http",
+        "id": "why.list",
+        "module": "why",
+        "case": "all",
+        "cached": true,
+        "route": "GET /api/v1/why"
+      },
+      {
+        "key": "why.list|http|by-audience",
+        "kind": "capability",
+        "transport": "http",
+        "id": "why.list",
+        "module": "why",
+        "case": "by-audience",
+        "cached": true,
+        "route": "GET /api/v1/why"
+      },
+      {
+        "key": "why.list|http|search",
+        "kind": "capability",
+        "transport": "http",
+        "id": "why.list",
+        "module": "why",
+        "case": "search",
+        "cached": true,
+        "route": "GET /api/v1/why"
+      },
+      {
+        "key": "why.moment|direct|first-moment",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "why.moment",
+        "module": "why",
+        "case": "first-moment",
+        "cached": true
+      },
+      {
+        "key": "why.moment|mcp|first-moment",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "why.moment",
+        "module": "why",
+        "case": "first-moment",
+        "cached": true,
+        "tool": "majordomus_why_moment"
+      },
+      {
+        "key": "why.moment|http|first-moment",
+        "kind": "capability",
+        "transport": "http",
+        "id": "why.moment",
+        "module": "why",
+        "case": "first-moment",
+        "cached": true,
+        "route": "GET /api/v1/why/moment"
+      },
+      {
+        "key": "why.validate|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "why.validate",
+        "module": "why",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "why.validate|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "why.validate",
+        "module": "why",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_why_validate"
+      },
+      {
+        "key": "why.validate|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "why.validate",
+        "module": "why",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/why/validate"
+      },
+      {
         "key": "system.mcp.process_cold",
         "kind": "system",
         "transport": "mcp",
@@ -15565,21 +20787,21 @@
           "module": "graph",
           "transport": "direct",
           "state": "covered",
-          "cases": 5
+          "cases": 6
         },
         {
           "subject": "graph.get",
           "module": "graph",
           "transport": "mcp",
           "state": "covered",
-          "cases": 5
+          "cases": 6
         },
         {
           "subject": "graph.get",
           "module": "graph",
           "transport": "http",
           "state": "covered",
-          "cases": 5
+          "cases": 6
         },
         {
           "subject": "graph.list",
@@ -15811,6 +21033,132 @@
           "transport": "http",
           "state": "covered",
           "cases": 5
+        },
+        {
+          "subject": "why.areas",
+          "module": "why",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.areas",
+          "module": "why",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.areas",
+          "module": "why",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.audiences",
+          "module": "why",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.audiences",
+          "module": "why",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.audiences",
+          "module": "why",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.diagnose",
+          "module": "why",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.diagnose",
+          "module": "why",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.diagnose",
+          "module": "why",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.list",
+          "module": "why",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 3
+        },
+        {
+          "subject": "why.list",
+          "module": "why",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 3
+        },
+        {
+          "subject": "why.list",
+          "module": "why",
+          "transport": "http",
+          "state": "covered",
+          "cases": 3
+        },
+        {
+          "subject": "why.moment",
+          "module": "why",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.moment",
+          "module": "why",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.moment",
+          "module": "why",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.validate",
+          "module": "why",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.validate",
+          "module": "why",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "why.validate",
+          "module": "why",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
         },
         {
           "subject": "system.mcp.process_cold",
@@ -15899,20 +21247,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 14,
-          "covered": 14,
+          "required": 20,
+          "covered": 20,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 14,
-          "covered": 14,
+          "required": 20,
+          "covered": 20,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 14,
-          "covered": 14,
+          "required": 20,
+          "covered": 20,
           "missing": 0,
           "waived": 0
         },
@@ -15923,8 +21271,8 @@
           "waived": 0
         },
         "total": {
-          "required": 54,
-          "covered": 54,
+          "required": 72,
+          "covered": 72,
           "missing": 0,
           "waived": 0
         }

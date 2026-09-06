@@ -40,7 +40,6 @@ examples:
     after: 'The roadmap page is generated from the plan; there is no second list to update.'
 commands: [plan, doctor]
 capabilities: [graph.get, graph.list]
-responsibilities: [plan]
 claims: [project-schema, project-status-derived, dag-validation, execution-waves, evidence-gates-done, roadmap-derived, github-projection]
 doctrines: [majordomus.project-integrity, majordomus.dag-integrity, majordomus.roadmap-integrity, project.derived-files-regenerated]
 use_cases: [plan-the-work-as-data, deliver-issues-in-waves, complete-an-issue-only-with-its-evidence]

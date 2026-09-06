@@ -39,7 +39,6 @@ examples:
     after: 'The commit carries the task, and the task carries the objective, the scope and the outcome.'
 commands: [start, plan, check]
 capabilities: [repository.scope, repository.scope_classify]
-responsibilities: [scope, plan, state]
 claims: [scoped-task, scope-enforcement, project-schema, task-commit-attribution, task-dependencies]
 doctrines: [majordomus.scope-integrity, majordomus.define-done-first, majordomus.project-integrity, project.scope-is-declared]
 use_cases: [plan-the-work-as-data, complete-an-issue-only-with-its-evidence, accept-or-refuse-finished-work]

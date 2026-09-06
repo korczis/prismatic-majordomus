@@ -39,7 +39,6 @@ examples:
     after: 'One declaration, many projections; the reviewed artefact is regenerated and diffed rather than trusted.'
 commands: [doctor, bench]
 capabilities: [capabilities.list, capabilities.describe]
-responsibilities: [projection, doctor]
 claims: [interfaces-are-projections, openapi-inferred, generated-projections-checked, capability-registry, schema-driven-kinds]
 doctrines: [project.interfaces-are-projections, project.rust-canonical-declaration, project.derived-files-regenerated, majordomus.projection-integrity]
 use_cases: [extend-what-the-executable-serves, serve-the-layer-to-ai-clients, gate-ci-on-the-tool-itself]

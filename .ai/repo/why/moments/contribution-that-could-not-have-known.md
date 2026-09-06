@@ -39,7 +39,6 @@ examples:
     after: 'The effective rule set is readable — vendored baseline plus the project''s own — and says of each rule whether anything enforces it.'
 commands: [context, rules, doctrine]
 capabilities: [objects.list, objects.get]
-responsibilities: [layer, policy]
 claims: [context-documents, rule-resolution, vendored-rule-package, doctrine-class-decides, context-impact]
 doctrines: [majordomus.context-integrity, majordomus.rule-package-integrity, project.context-locality, majordomus.doctrine-wiring-integrity]
 use_cases: [read-the-rules-the-tool-applies, document-every-directory-of-the-layer, adopt-an-existing-repository]
