@@ -114,7 +114,7 @@ pub fn overview(ctx: &Context) -> Page {
         Ok(r) => r,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
-    let health: Health = match ask(ctx, "system.health", json!({})) {
+    let health: Health = match ask(ctx, "health.report", json!({})) {
         Ok(h) => h,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
@@ -1410,7 +1410,7 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
 
 /// The health report, in full: the expensive comparison included.
 pub fn health(ctx: &Context) -> Page {
-    let health: Health = match ask(ctx, "system.health", json!({})) {
+    let health: Health = match ask(ctx, "health.report", json!({})) {
         Ok(h) => h,
         Err(e) => return failed(Area::Health, "Health", e),
     };

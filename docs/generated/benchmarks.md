@@ -9,10 +9,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 13 | 13 | 0 | 0 |
-| http | 13 | 13 | 0 | 0 |
-| mcp | 13 | 13 | 0 | 0 |
-| system | 15 | 15 | 0 | 0 |
+| direct | 14 | 14 | 0 | 0 |
+| http | 14 | 14 | 0 | 0 |
+| mcp | 14 | 14 | 0 | 0 |
+| system | 12 | 12 | 0 | 0 |
 | total | 54 | 54 | 0 | 0 |
 
 ## Capabilities
@@ -23,6 +23,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
+| `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
@@ -32,7 +33,6 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
-| `system.health` | system | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 
 ## System targets
 

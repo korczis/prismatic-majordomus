@@ -61,6 +61,14 @@ pub struct Tally {
     pub waived: usize,
 }
 
+/// The module name this projection gives the transports' own targets, and the bucket it
+/// tallies them under. It is not a capability module and no capability module may be
+/// called it: a capability whose module were `system` would have its per-transport lines
+/// tallied here instead, and would vanish from the direct, MCP and HTTP denominators
+/// without any check saying so. The unit test `reserved_namespace_is_not_a_module` holds
+/// it shut.
+pub const SYSTEM_MODULE: &str = "system";
+
 /// The coverage document.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Coverage {
@@ -122,7 +130,7 @@ impl Coverage {
         for s in SystemTarget::ALL {
             lines.push(CoverageLine {
                 subject: s.key().to_string(),
-                module: "system".into(),
+                module: SYSTEM_MODULE.into(),
                 transport: s.transport(),
                 state: if projection.targets.iter().any(|t| t.key == s.key()) {
                     CoverageState::Covered
@@ -135,7 +143,9 @@ impl Coverage {
         }
         let mut tallies: BTreeMap<String, Tally> = BTreeMap::new();
         for line in &lines {
-            let bucket = if line.module == "system" {
+            // `system` is this projection's own bucket for the transports' targets, which
+            // is why no capability module may be called that: `reserved_namespace_is_not_a_module`
+            let bucket = if line.module == SYSTEM_MODULE {
                 "system".to_string()
             } else {
                 line.transport.name().to_string()
@@ -209,5 +219,25 @@ impl Coverage {
             ));
         }
         s
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /// The one name this projection reserves is not taken by a capability module. Adding a
+    /// module called `system` would compile, validate, and quietly move three coverage
+    /// lines per capability into the transports' bucket; this is where that stops.
+    #[test]
+    fn reserved_namespace_is_not_a_module() {
+        for m in crate::capability::builtin::modules() {
+            assert_ne!(
+                m.id.as_str(),
+                super::SYSTEM_MODULE,
+                "the benchmark projection reserves `{}` for the transports' own targets; \
+                 a capability module of that name has its lines tallied as transport \
+                 targets and disappears from the per-transport denominators",
+                super::SYSTEM_MODULE
+            );
+        }
     }
 }

@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "99223467065864dd946d6153c0757a092ec740999a3c0a84f4bc116fcaf92f71",
+    "fingerprint": "b884a0ffa7eac184937ad642237c59b050e5a1a1ba31c84374660b4f188b8142",
     "summary": {
       "total": 684,
       "builtin": 14,
@@ -1507,6 +1507,162 @@
           "policy": "disabled"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+      },
+      {
+        "id": "health.report",
+        "module": "health",
+        "kind": "query",
+        "title": "Health of this process",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "Health",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/$defs/HealthStatus",
+                "description": "The worst check's status."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many checks stand where, by status word."
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/HealthCheck"
+                },
+                "description": "Every dimension, in a stable order."
+              }
+            },
+            "required": [
+              "status",
+              "tallies",
+              "checks"
+            ],
+            "description": "The health of what this process serves.",
+            "title": "Health",
+            "$defs": {
+              "HealthStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ok",
+                    "description": "The engine that decides this dimension is satisfied."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warn",
+                    "description": "Nothing is broken and something is worth looking at."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fail",
+                    "description": "The engine that decides this dimension is not satisfied."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "This process cannot decide it, and says so rather than reporting `ok`."
+                  }
+                ],
+                "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+              },
+              "HealthCheck": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "A stable id, `[a-z][a-z0-9-]*`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The short name."
+                  },
+                  "status": {
+                    "$ref": "#/$defs/HealthStatus",
+                    "description": "Where it stands."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "One line: what the engine decided and on what."
+                  },
+                  "decided_by": {
+                    "type": "string",
+                    "description": "The engine that decided it, named so the reader knows what to fix."
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What reproduces the verdict: a command, or a path."
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "status",
+                  "detail",
+                  "decided_by"
+                ],
+                "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::health"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_health",
+            "resource": {
+              "uri": "majordomus://health",
+              "name": "health"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/health"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "health",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 4,
+          "ttl_seconds": 5
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
       },
       {
         "id": "objects.get",
@@ -3760,163 +3916,6 @@
           "policy": "disabled"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
-      },
-      {
-        "id": "system.health",
-        "module": "system",
-        "kind": "query",
-        "title": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
-        "input": {
-          "name": "Empty",
-          "schema": {
-            "type": "object",
-            "additionalProperties": false,
-            "description": "No input.",
-            "title": "Empty"
-          }
-        },
-        "output": {
-          "name": "Health",
-          "schema": {
-            "type": "object",
-            "properties": {
-              "status": {
-                "$ref": "#/$defs/HealthStatus",
-                "description": "The worst check's status."
-              },
-              "tallies": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "integer",
-                  "format": "uint",
-                  "minimum": 0
-                },
-                "description": "How many checks stand where, by status word."
-              },
-              "checks": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/$defs/HealthCheck"
-                },
-                "description": "Every dimension, in a stable order."
-              }
-            },
-            "required": [
-              "status",
-              "tallies",
-              "checks"
-            ],
-            "description": "The health of what this process serves.",
-            "title": "Health",
-            "$defs": {
-              "HealthStatus": {
-                "oneOf": [
-                  {
-                    "type": "string",
-                    "const": "ok",
-                    "description": "The engine that decides this dimension is satisfied."
-                  },
-                  {
-                    "type": "string",
-                    "const": "warn",
-                    "description": "Nothing is broken and something is worth looking at."
-                  },
-                  {
-                    "type": "string",
-                    "const": "fail",
-                    "description": "The engine that decides this dimension is not satisfied."
-                  },
-                  {
-                    "type": "string",
-                    "const": "unknown",
-                    "description": "This process cannot decide it, and says so rather than reporting `ok`."
-                  }
-                ],
-                "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
-              },
-              "HealthCheck": {
-                "type": "object",
-                "properties": {
-                  "id": {
-                    "type": "string",
-                    "description": "A stable id, `[a-z][a-z0-9-]*`."
-                  },
-                  "title": {
-                    "type": "string",
-                    "description": "The short name."
-                  },
-                  "status": {
-                    "$ref": "#/$defs/HealthStatus",
-                    "description": "Where it stands."
-                  },
-                  "detail": {
-                    "type": "string",
-                    "description": "One line: what the engine decided and on what."
-                  },
-                  "decided_by": {
-                    "type": "string",
-                    "description": "The engine that decided it, named so the reader knows what to fix."
-                  },
-                  "evidence": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "What reproduces the verdict: a command, or a path."
-                  },
-                  "findings": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines."
-                  }
-                },
-                "required": [
-                  "id",
-                  "title",
-                  "status",
-                  "detail",
-                  "decided_by"
-                ],
-                "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
-              }
-            }
-          }
-        },
-        "provenance": {
-          "source": "builtin",
-          "module": "majordomus_cli::capability::builtin::system"
-        },
-        "exposure": {
-          "mcp": {
-            "tool": "majordomus_health",
-            "resource": {
-              "uri": "majordomus://health",
-              "name": "health"
-            }
-          },
-          "http": {
-            "method": "GET",
-            "path": "/api/v1/health"
-          }
-        },
-        "stability": "behaviorally_verified",
-        "tags": [
-          "system",
-          "health",
-          "introspection"
-        ],
-        "benchmark": {
-          "policy": "required"
-        },
-        "cache": {
-          "policy": "process",
-          "max_entries": 4,
-          "ttl_seconds": 5
-        },
-        "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs"
       }
     ],
     "modules": [
@@ -3977,6 +3976,18 @@
           "graph.list"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+      },
+      {
+        "id": "health",
+        "title": "Health",
+        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "health.report"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
       },
       {
         "id": "implementation",
@@ -4104,18 +4115,6 @@
         "capability_ids": []
       },
       {
-        "id": "system",
-        "title": "System",
-        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
-        "stability": "behaviorally_verified",
-        "source": "builtin",
-        "capabilities": 1,
-        "capability_ids": [
-          "system.health"
-        ],
-        "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs"
-      },
-      {
         "id": "taxonomy",
         "title": "taxonomy",
         "description": "Declarative objects of kind 'taxonomy' from the repository's AI layer.",
@@ -4142,7 +4141,7 @@
     ]
   },
   "index": {
-    "fingerprint": "05ad0df93751b78e6fd33e63046ccd0fd5c398d269ca3fa50fa512c31cf106a9",
+    "fingerprint": "3f1078b8c6e0a72a0f233af3905343d74bcd3bc8aea5e058ff334c07d5b39de1",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -13067,6 +13066,16 @@
         "output": "GraphList"
       },
       {
+        "name": "majordomus_health",
+        "id": "health.report",
+        "title": "Health of this process",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "Health"
+      },
+      {
         "name": "majordomus_get",
         "id": "objects.get",
         "title": "Get one object",
@@ -13155,16 +13164,6 @@
         "read_only": true,
         "input": "ClassifyInput",
         "output": "Classification"
-      },
-      {
-        "name": "majordomus_health",
-        "id": "system.health",
-        "title": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
-        "kind": "query",
-        "read_only": true,
-        "input": "Empty",
-        "output": "Health"
       }
     ],
     "resources": [
@@ -13173,6 +13172,13 @@
         "name": "graphs",
         "id": "graph.list",
         "title": "List graphs",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://health",
+        "name": "health",
+        "id": "health.report",
+        "title": "Health of this process",
         "kind": "query"
       },
       {
@@ -13187,13 +13193,6 @@
         "name": "scope",
         "id": "repository.scope",
         "title": "The repository scope",
-        "kind": "query"
-      },
-      {
-        "uri": "majordomus://health",
-        "name": "health",
-        "id": "system.health",
-        "title": "Health of this process",
         "kind": "query"
       }
     ],
@@ -13223,6 +13222,12 @@
         "method": "GET",
         "path": "/api/v1/graphs",
         "id": "graph.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/health",
+        "id": "health.report",
         "kind": "query"
       },
       {
@@ -13277,12 +13282,6 @@
         "method": "GET",
         "path": "/api/v1/scope/classify",
         "id": "repository.scope_classify",
-        "kind": "query"
-      },
-      {
-        "method": "GET",
-        "path": "/api/v1/health",
-        "id": "system.health",
         "kind": "query"
       }
     ],
@@ -13557,6 +13556,35 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/graphs"
+      },
+      {
+        "key": "health.report|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "health.report",
+        "module": "health",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "health.report|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "health.report",
+        "module": "health",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_health"
+      },
+      {
+        "key": "health.report|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "health.report",
+        "module": "health",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/health"
       },
       {
         "key": "objects.get|direct|first-object",
@@ -14023,35 +14051,6 @@
         "route": "GET /api/v1/scope/classify"
       },
       {
-        "key": "system.health|direct|default",
-        "kind": "capability",
-        "transport": "direct",
-        "id": "system.health",
-        "module": "system",
-        "case": "default",
-        "cached": true
-      },
-      {
-        "key": "system.health|mcp|default",
-        "kind": "capability",
-        "transport": "mcp",
-        "id": "system.health",
-        "module": "system",
-        "case": "default",
-        "cached": true,
-        "tool": "majordomus_health"
-      },
-      {
-        "key": "system.health|http|default",
-        "kind": "capability",
-        "transport": "http",
-        "id": "system.health",
-        "module": "system",
-        "case": "default",
-        "cached": true,
-        "route": "GET /api/v1/health"
-      },
-      {
         "key": "system.mcp.process_cold",
         "kind": "system",
         "transport": "mcp",
@@ -14224,6 +14223,27 @@
           "cases": 1
         },
         {
+          "subject": "health.report",
+          "module": "health",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "health.report",
+          "module": "health",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "health.report",
+          "module": "health",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "objects.get",
           "module": "objects",
           "transport": "direct",
@@ -14411,27 +14431,6 @@
           "transport": "http",
           "state": "covered",
           "cases": 5
-        },
-        {
-          "subject": "system.health",
-          "module": "system",
-          "transport": "direct",
-          "state": "covered",
-          "cases": 1
-        },
-        {
-          "subject": "system.health",
-          "module": "system",
-          "transport": "mcp",
-          "state": "covered",
-          "cases": 1
-        },
-        {
-          "subject": "system.health",
-          "module": "system",
-          "transport": "http",
-          "state": "covered",
-          "cases": 1
         },
         {
           "subject": "system.mcp.process_cold",
@@ -14520,26 +14519,26 @@
       ],
       "tallies": {
         "direct": {
-          "required": 13,
-          "covered": 13,
+          "required": 14,
+          "covered": 14,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 13,
-          "covered": 13,
+          "required": 14,
+          "covered": 14,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 13,
-          "covered": 13,
+          "required": 14,
+          "covered": 14,
           "missing": 0,
           "waived": 0
         },
         "system": {
-          "required": 15,
-          "covered": 15,
+          "required": 12,
+          "covered": 12,
           "missing": 0,
           "waived": 0
         },

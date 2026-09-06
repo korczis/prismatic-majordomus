@@ -18,7 +18,7 @@ related:
   - file:apps/majordomus-cli/src/cockpit/mod.rs
   - file:apps/majordomus-cli/src/graph.rs
   - file:apps/majordomus-cli/src/capability/builtin/graph.rs
-  - file:apps/majordomus-cli/src/capability/builtin/system.rs
+  - file:apps/majordomus-cli/src/capability/builtin/health.rs
   - file:share/cockpit/src/cockpit.css
   - file:docs/COCKPIT.md
   - test:apps/majordomus-cli/tests/cockpit.rs
@@ -85,7 +85,7 @@ healthy" was answered by three separate commands (`capabilities validate`, `benc
   in one function in one file of JavaScript, and a future projection to Mermaid or Graphviz
   rebuilds no semantics.
 
-- **Health delegates and never decides.** `system.health` reports one check per dimension,
+- **Health delegates and never decides.** `health.report` reports one check per dimension,
   each carrying the engine that decided it and the command that reproduces it: the index's
   own diagnostics, the registry builder, the declared scope, git, the benchmark
   projection's coverage, and the committed registry manifest compared with what this
@@ -131,7 +131,7 @@ healthy" was answered by three separate commands (`capabilities validate`, `benc
 - **Fetching the vendor libraries from a CDN.** The Swagger UI shell already does this and
   it is the one part of the HTTP projection that is not available offline. Repeating that
   for the Cockpit would make a local developer tool depend on the network.
-- **Re-rendering every committed projection inside `system.health`.** It answers "what is
+- **Re-rendering every committed projection inside `health.report`.** It answers "what is
   stale" exactly, and it rebuilds canonical state on every request, which the hot-path rule
   forbids and the test suite catches.
 - **Shelling out to `majordomus doctor` for the health page.** The shell tool's doctor

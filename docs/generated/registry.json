@@ -20,6 +20,14 @@
       "capabilities": 2
     },
     {
+      "id": "health",
+      "title": "Health",
+      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 1
+    },
+    {
       "id": "objects",
       "title": "Objects",
       "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched.",
@@ -50,14 +58,6 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 3
-    },
-    {
-      "id": "system",
-      "title": "System",
-      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
-      "stability": "behaviorally_verified",
-      "source": "builtin",
-      "capabilities": 1
     }
   ],
   "capabilities": [
@@ -1539,6 +1539,162 @@
         "policy": "disabled"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+    },
+    {
+      "id": "health.report",
+      "module": "health",
+      "kind": "query",
+      "title": "Health of this process",
+      "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "Health",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "$ref": "#/$defs/HealthStatus",
+              "description": "The worst check's status."
+            },
+            "tallies": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0
+              },
+              "description": "How many checks stand where, by status word."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/HealthCheck"
+              },
+              "description": "Every dimension, in a stable order."
+            }
+          },
+          "required": [
+            "status",
+            "tallies",
+            "checks"
+          ],
+          "description": "The health of what this process serves.",
+          "title": "Health",
+          "$defs": {
+            "HealthStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "ok",
+                  "description": "The engine that decides this dimension is satisfied."
+                },
+                {
+                  "type": "string",
+                  "const": "warn",
+                  "description": "Nothing is broken and something is worth looking at."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "The engine that decides this dimension is not satisfied."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "This process cannot decide it, and says so rather than reporting `ok`."
+                }
+              ],
+              "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+            },
+            "HealthCheck": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "A stable id, `[a-z][a-z0-9-]*`."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The short name."
+                },
+                "status": {
+                  "$ref": "#/$defs/HealthStatus",
+                  "description": "Where it stands."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "One line: what the engine decided and on what."
+                },
+                "decided_by": {
+                  "type": "string",
+                  "description": "The engine that decided it, named so the reader knows what to fix."
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What reproduces the verdict: a command, or a path."
+                },
+                "findings": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "status",
+                "detail",
+                "decided_by"
+              ],
+              "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::health"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_health",
+          "resource": {
+            "uri": "majordomus://health",
+            "name": "health"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/health"
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "health",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 4,
+        "ttl_seconds": 5
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
     },
     {
       "id": "objects.get",
@@ -3792,163 +3948,6 @@
         "policy": "disabled"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
-    },
-    {
-      "id": "system.health",
-      "module": "system",
-      "kind": "query",
-      "title": "Health of this process",
-      "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
-      "input": {
-        "name": "Empty",
-        "schema": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "No input.",
-          "title": "Empty"
-        }
-      },
-      "output": {
-        "name": "Health",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "status": {
-              "$ref": "#/$defs/HealthStatus",
-              "description": "The worst check's status."
-            },
-            "tallies": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "integer",
-                "format": "uint",
-                "minimum": 0
-              },
-              "description": "How many checks stand where, by status word."
-            },
-            "checks": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/HealthCheck"
-              },
-              "description": "Every dimension, in a stable order."
-            }
-          },
-          "required": [
-            "status",
-            "tallies",
-            "checks"
-          ],
-          "description": "The health of what this process serves.",
-          "title": "Health",
-          "$defs": {
-            "HealthStatus": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "ok",
-                  "description": "The engine that decides this dimension is satisfied."
-                },
-                {
-                  "type": "string",
-                  "const": "warn",
-                  "description": "Nothing is broken and something is worth looking at."
-                },
-                {
-                  "type": "string",
-                  "const": "fail",
-                  "description": "The engine that decides this dimension is not satisfied."
-                },
-                {
-                  "type": "string",
-                  "const": "unknown",
-                  "description": "This process cannot decide it, and says so rather than reporting `ok`."
-                }
-              ],
-              "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
-            },
-            "HealthCheck": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "A stable id, `[a-z][a-z0-9-]*`."
-                },
-                "title": {
-                  "type": "string",
-                  "description": "The short name."
-                },
-                "status": {
-                  "$ref": "#/$defs/HealthStatus",
-                  "description": "Where it stands."
-                },
-                "detail": {
-                  "type": "string",
-                  "description": "One line: what the engine decided and on what."
-                },
-                "decided_by": {
-                  "type": "string",
-                  "description": "The engine that decided it, named so the reader knows what to fix."
-                },
-                "evidence": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "What reproduces the verdict: a command, or a path."
-                },
-                "findings": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines."
-                }
-              },
-              "required": [
-                "id",
-                "title",
-                "status",
-                "detail",
-                "decided_by"
-              ],
-              "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
-            }
-          }
-        }
-      },
-      "provenance": {
-        "source": "builtin",
-        "module": "majordomus_cli::capability::builtin::system"
-      },
-      "exposure": {
-        "mcp": {
-          "tool": "majordomus_health",
-          "resource": {
-            "uri": "majordomus://health",
-            "name": "health"
-          }
-        },
-        "http": {
-          "method": "GET",
-          "path": "/api/v1/health"
-        }
-      },
-      "stability": "behaviorally_verified",
-      "tags": [
-        "system",
-        "health",
-        "introspection"
-      ],
-      "benchmark": {
-        "policy": "required"
-      },
-      "cache": {
-        "policy": "process",
-        "max_entries": 4,
-        "ttl_seconds": 5
-      },
-      "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs"
     }
   ],
   "declarative_kinds": [

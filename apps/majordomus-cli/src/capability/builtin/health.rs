@@ -1,5 +1,11 @@
-//! The `system` module: whether what this process serves is healthy, answered by the
+//! The `health` module: whether what this process serves is healthy, answered by the
 //! engines that already decide it rather than by checks written a second time here.
+//!
+//! The module is `health` and not `system` because the benchmark projection reserves
+//! `system` for the transports' own targets (`system.http.index`, `system.mcp.ping`) and
+//! buckets its coverage by that name. A capability module called `system` would have its
+//! lines tallied as transport targets and silently vanish from the per-transport
+//! denominators; `reserved_namespace_is_not_a_module` holds that shut.
 //!
 //! Every check delegates: the index's own diagnostics say whether the layer read cleanly,
 //! the benchmark projection's coverage says whether every executable capability is timed,
@@ -49,7 +55,7 @@ impl HealthStatus {
     /// The word as serialised.
     ///
     /// ```
-    /// use majordomus_cli::capability::builtin::system::HealthStatus;
+    /// use majordomus_cli::capability::builtin::health::HealthStatus;
     /// assert_eq!(HealthStatus::Warn.as_str(), "warn");
     /// ```
     pub fn as_str(self) -> &'static str {
@@ -65,7 +71,7 @@ impl HealthStatus {
     /// than `warn` because an undecided dimension is not a healthy one.
     ///
     /// ```
-    /// use majordomus_cli::capability::builtin::system::HealthStatus::*;
+    /// use majordomus_cli::capability::builtin::health::HealthStatus::*;
     /// assert_eq!(Ok.worse(Warn), Warn);
     /// assert_eq!(Fail.worse(Unknown), Unknown);
     /// ```
@@ -321,13 +327,13 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
-        id: "system",
-        title: "System",
+        id: "health",
+        title: "Health",
         description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
-                id: "system.health",
+                id: "health.report",
                 title: "Health of this process",
                 description: "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
                 input: Empty,
@@ -341,7 +347,7 @@ pub fn module() -> ModuleDescriptor {
                     http: get("/api/v1/health"),
                     cli: None,
                 },
-                tags: ["system", "health", "introspection"],
+                tags: ["health", "introspection"],
                 cache: CachePolicy::Process { max_entries: 4, ttl_seconds: Some(5) },
                 handler: health,
             },

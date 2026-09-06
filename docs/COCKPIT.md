@@ -42,7 +42,7 @@ pages still render, say so, and remain fully usable.
 
 | Route | What it shows | Derived from |
 |---|---|---|
-| `/cockpit` | repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `repository.info`, `system.health` |
+| `/cockpit` | repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `repository.info`, `health.report` |
 | `/cockpit/capabilities` | every capability, filtered by module, kind, source or text | the registry |
 | `/cockpit/capabilities/<id>` | one descriptor in full: schemas, projections, cache and benchmark policy, provenance, examples, and a form that runs it | the descriptor and its `BenchmarkCases` |
 | `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
@@ -50,7 +50,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
-| `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `system.health` |
+| `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
 | `/cockpit/activity` | this process's counters and phases, and a running plot of them | `perf.counters` |
@@ -118,7 +118,7 @@ rebuild no semantics.
 
 ## Health
 
-`system.health` reports one check per dimension. Every check carries **who decided it** and
+`health.report` reports one check per dimension. Every check carries **who decided it** and
 **what reproduces it**, because a health report that decides things itself is a fourth
 opinion:
 
