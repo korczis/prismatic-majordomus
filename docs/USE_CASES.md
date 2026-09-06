@@ -50,23 +50,28 @@ doctrines: [majordomus.enforcement-wiring]   # rules with an x-majordomus block
 claims: [dispatcher-wiring]            # ids in docs/CLAIMS.yaml
 responsibilities: [doctor]             # ids in docs/RESPONSIBILITIES.yaml
 applications: [ci-gated-project]       # each names this use case back
-scenario:
-  setup: installed                     # test/fixtures/commands/setup/installed.sh
-  given:
-    - 'Majordomus installed; no git hook invokes the tool yet'
-  steps:
-    - id: find-the-gap
-      run: ['doctor']
-      note: 'the enforcement the policy declares reaches no hook'
-      expect:
-        exit: 10
-        stdout_contains: ['^FAIL wiring', 'doctor-on-commit']
-  then:
-    - 'a declared enforcement that nothing invokes is a failure, not a green line'
 ---
 
 # Situation
 ...
+
+# Scenario
+
+```yaml
+setup: installed                       # test/fixtures/commands/setup/installed.sh
+given:
+  - 'Majordomus installed; no git hook invokes the tool yet'
+steps:
+  - id: find-the-gap
+    run: ['doctor']
+    note: 'the enforcement the policy declares reaches no hook'
+    expect:
+      exit: 10
+      stdout_contains: ['^FAIL wiring', 'doctor-on-commit']
+then:
+  - 'a declared enforcement that nothing invokes is a failure, not a green line'
+```
+
 # Outcome
 ...
 ```
@@ -77,12 +82,18 @@ related use cases, the category's title or count, and the observed maturity. The
 refuses a key it does not declare, and `majordomus usecase validate` refuses a reference
 that does not resolve, a category the taxonomy lacks, a setup script or stdin body that
 does not exist, a scenario step that runs a command the use case does not list, a body
-without `# Situation` and `# Outcome`, an id that is not the file name, a duplicate id, and
-an active use case that targets `guaranteed` without a scenario.
+without `# Situation`, `# Scenario` and `# Outcome`, an id that is not the file name, a
+duplicate id, and an active use case that targets `guaranteed` without a scenario.
 
 ## Given, when, then
 
-The scenario is the executable form of the narrative. `setup` names a prepared state (a
+The scenario is the executable form of the narrative, and it is a body section rather
+than a header field: front matter says what an object is — its identity and its
+classification — and a twenty-line program is neither. `# Scenario` holds exactly one
+fenced `yaml` block, between `# Situation` and `# Outcome`, so that a reader meets the
+situation, the proof and the result in the order they happen.
+
+`setup` names a prepared state (a
 shell script under the fixtures, shared with the command demonstrations, so what a use
 case starts from is what a command page shows); `given` says it in words. Each step is
 one real invocation of `bin/majordomus`, in a disposable repository, in order, in the same

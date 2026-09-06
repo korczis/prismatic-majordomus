@@ -14,31 +14,6 @@ doctrines: [majordomus.scope-integrity, majordomus.state-consistency]
 claims: [scope-enforcement, scoped-task, overlap-report, git-identity]
 responsibilities: [scope, state]
 applications: [several-agents-one-repository]
-scenario:
-  setup: two-worktrees
-  given:
-    - 'a second worktree of the same repository with an active task scoped to lib'
-  steps:
-    - id: claim-a-scope
-      run: ['start', 'narrow the parser', '--scope', 'lib']
-      note: 'the task starts, and the overlap with the other worktree is reported'
-      expect:
-        exit: 0
-        stdout_contains: ['^started t-', 'overlap']
-    - id: see-the-overlap
-      run: ['check', '--overlap']
-      note: 'scope containment against every other worktree, never blocking'
-      expect:
-        exit: 0
-        stdout_contains: ['overlap']
-    - id: nothing-to-refuse
-      run: ['finish', '--check']
-      note: 'no file outside the claimed scope has been touched'
-      expect:
-        exit: 0
-        stdout_contains: ['0 failing']
-  then:
-    - 'two workers on one repository see each other by scope, and the second is told before it starts'
 ---
 
 # Situation
@@ -50,6 +25,35 @@ Two agents work the same repository at the same time. Each is individually reaso
 - `start`: takes the paths this task may touch, and refuses a second active task in one checkout
 - `check`: --overlap reports other worktrees whose claims intersect yours
 - `finish`: refuses to accept work outside the claimed paths
+
+# Scenario
+
+```yaml
+setup: two-worktrees
+given:
+  - 'a second worktree of the same repository with an active task scoped to lib'
+steps:
+  - id: claim-a-scope
+    run: ['start', 'narrow the parser', '--scope', 'lib']
+    note: 'the task starts, and the overlap with the other worktree is reported'
+    expect:
+      exit: 0
+      stdout_contains: ['^started t-', 'overlap']
+  - id: see-the-overlap
+    run: ['check', '--overlap']
+    note: 'scope containment against every other worktree, never blocking'
+    expect:
+      exit: 0
+      stdout_contains: ['overlap']
+  - id: nothing-to-refuse
+    run: ['finish', '--check']
+    note: 'no file outside the claimed scope has been touched'
+    expect:
+      exit: 0
+      stdout_contains: ['0 failing']
+then:
+  - 'two workers on one repository see each other by scope, and the second is told before it starts'
+```
 
 # Outcome
 

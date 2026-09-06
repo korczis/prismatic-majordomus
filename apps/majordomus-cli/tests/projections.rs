@@ -442,13 +442,15 @@ fn the_plan_is_deterministic_and_follows_a_canonical_mutation_to_the_projection_
     use majordomus_cli::generate::{check, plan, write};
     let f = common::Fixture::new();
     let root = f.root();
-    // Every target but the allow-lists: the fixture's share is the distribution's, beside
-    // this crate, so its allow-lists resolve outside the fixture root and a write here would
-    // race the other test of this binary that runs `generate` over the same directory.
+    // Every target that writes inside the repository. The fixture's share is the
+    // distribution's, beside this crate, so the two targets that write into it — the
+    // allow-lists and the document projections — resolve outside the fixture root, and a
+    // write here would race the other test of this binary running `generate` over the same
+    // directory.
     let targets: Vec<Target> = Target::ALL
         .iter()
         .copied()
-        .filter(|t| *t != Target::Allow)
+        .filter(|t| *t != Target::Allow && *t != Target::Documents)
         .collect();
     let a = plan(&common::load_app(&f), &targets).unwrap();
     let b = plan(&common::load_app(&f), &targets).unwrap();

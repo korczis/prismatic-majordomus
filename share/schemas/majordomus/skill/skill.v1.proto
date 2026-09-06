@@ -1,0 +1,91 @@
+// A skill under .ai/repo/skills/<id>/SKILL.md.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/skill.txt,
+// share/sections/skill.txt and skill.v1.schema.json beside it.
+
+syntax = "proto3";
+
+package majordomus.skill.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.skill/v1";
+option (majordomus.allow_list) = "skill";
+option (majordomus.document_format) = "markdown";
+
+// The whole skill. The body is the procedure; nothing in the front matter repeats it.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+message Header {
+  option (majordomus.closed) = true;
+
+  // The contract this file follows.
+  string schema = 1 [(majordomus.required) = true, (majordomus.const) = "skill/v1"];
+
+  // Identity; must equal the directory name. Lower-case letters, digits and hyphens.
+  string id = 2 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // An exact integer, raised when the procedure changes in a way a reader of an older copy
+  // should notice.
+  uint32 version = 3 [(majordomus.required) = true, (majordomus.minimum) = 1];
+
+  string title = 4 [(majordomus.required) = true];
+
+  // What the skill is for, in one sentence; shown by every listing.
+  string description = 5 [(majordomus.required) = true];
+
+  Status status = 6 [(majordomus.required) = true];
+
+  repeated string tags = 7 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // Ids of other skills this one hands over to or builds on; every one must exist.
+  repeated string related = 8 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // What the worker must have before the procedure starts, one item each.
+  repeated string inputs = 9;
+
+  // What the procedure leaves behind, one item each.
+  repeated string outputs = 10;
+}
+
+// draft is discoverable and not yet recommended; deprecated stays readable and is no
+// longer recommended.
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_DRAFT = 1 [(majordomus.value) = "draft"];
+  STATUS_ACTIVE = 2 [(majordomus.value) = "active"];
+  STATUS_DEPRECATED = 3 [(majordomus.value) = "deprecated"];
+}
+
+// The body is the procedure a worker follows, and what it leaves behind.
+message Body {
+  option (majordomus.body) = true;
+
+  Section purpose = 1 [
+    (majordomus.heading) = "Purpose",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section procedure = 2 [
+    (majordomus.heading) = "Procedure",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section output = 3 [
+    (majordomus.heading) = "Output",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+}
+
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}

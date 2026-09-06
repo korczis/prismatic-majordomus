@@ -1,0 +1,132 @@
+// An architecture decision record under .ai/repo/adrs/.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/adr.txt, into
+// share/sections/adr.txt and into adr.v1.schema.json beside it; none of those three is
+// written by hand, and `scripts/derive-check` fails when any has drifted from this file.
+
+syntax = "proto3";
+
+package majordomus.adr.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.adr/v1";
+option (majordomus.allow_list) = "adr";
+option (majordomus.document_format) = "markdown";
+
+// The whole record: the YAML front matter, then the Markdown body.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+// The front matter. Every field here is read by `majordomus adr`, by the adr-integrity
+// doctrine, or by both; none is decoration.
+message Header {
+  option (majordomus.closed) = true;
+
+  // The format version of this record. A version the tool does not know is refused,
+  // never guessed.
+  string schema = 1 [(majordomus.required) = true, (majordomus.const) = "adr/v1"];
+
+  // The identity, adr-NNNN, allocated once and never reused. It fixes the file name
+  // prefix and survives a retitle.
+  string id = 2 [(majordomus.required) = true, (majordomus.pattern) = "^adr-[0-9]{4}$"];
+
+  string kind = 3 [(majordomus.required) = true, (majordomus.const) = "adr"];
+
+  // One line, the decision itself rather than the topic.
+  string title = 4 [(majordomus.required) = true, (majordomus.min_length) = 1];
+
+  Status status = 5 [(majordomus.required) = true];
+
+  // The day the record reached its current status, YYYY-MM-DD.
+  string date = 6 [(majordomus.required) = true, (majordomus.pattern) = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"];
+
+  repeated string tags = 7 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // The decisions this one stands in for. Each must resolve to a record here, and that
+  // record must name this one in superseded_by.
+  repeated string supersedes = 8 [(majordomus.pattern) = "^adr-[0-9]{4}$"];
+
+  // The decision that replaced this one. Present exactly when the status is superseded.
+  string superseded_by = 9 [(majordomus.pattern) = "^adr-[0-9]{4}$"];
+
+  // What the decision put in force, as typed references: `rule:<id>` a rule of the effective
+  // set, `claim:<id>` a claim of docs/CLAIMS.yaml, `file:<path>` a document or an
+  // implementation, `test:<path>` a behavioural case. Every reference is validated, and the
+  // knowledge graph turns each into an edge, so the reverse index is derived, not authored twice.
+  repeated string related = 11 [(majordomus.pattern) = "^(rule|claim|file|test):.+$"];
+
+  Provenance provenance = 10;
+}
+
+// proposed: written by a machine or a person and not yet accepted. accepted: in force.
+// superseded: replaced by the decision named in superseded_by. rejected: considered and
+// refused, kept because the reasoning is worth reading.
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_PROPOSED = 1 [(majordomus.value) = "proposed"];
+  STATUS_ACCEPTED = 2 [(majordomus.value) = "accepted"];
+  STATUS_SUPERSEDED = 3 [(majordomus.value) = "superseded"];
+  STATUS_REJECTED = 4 [(majordomus.value) = "rejected"];
+}
+
+// Where the record came from. A record with origin `extracted` was proposed by the tool
+// from a durable local record and may not be `accepted` in the same act that created it.
+message Provenance {
+  option (majordomus.closed) = true;
+
+  Origin origin = 1 [(majordomus.required) = true];
+
+  // Typed references to what the record was derived from: `decision:<task-id>`,
+  // `session:<id>`, `commit:<sha>`, `issue:<id>`, `file:<repository-relative path>`,
+  // `test:<repository-relative path>`. The reference type is validated; a file or test
+  // reference must resolve.
+  repeated string derived_from = 2 [(majordomus.pattern) = "^(decision|session|commit|issue|file|test):.+$"];
+}
+
+// authored: a person wrote it. extracted: `majordomus adr propose` derived it from a
+// local record, which derived_from names.
+enum Origin {
+  ORIGIN_UNSPECIFIED = 0;
+  ORIGIN_AUTHORED = 1 [(majordomus.value) = "authored"];
+  ORIGIN_EXTRACTED = 2 [(majordomus.value) = "extracted"];
+}
+
+// The Markdown body: the narrative a reader comes for, months after the decision.
+message Body {
+  option (majordomus.body) = true;
+
+  Section context = 1 [
+    (majordomus.heading) = "Context",
+    (majordomus.level) = 2,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section decision = 2 [
+    (majordomus.heading) = "Decision",
+    (majordomus.level) = 2,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section consequences = 3 [
+    (majordomus.heading) = "Consequences",
+    (majordomus.level) = 2,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  // Optional, and worth writing: the reader who disagrees with the decision is looking
+  // for this section first.
+  Section alternatives_rejected = 4 [
+    (majordomus.heading) = "Alternatives rejected",
+    (majordomus.level) = 2
+  ];
+}
+
+// One section of the body, as the reader flattens it.
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}
