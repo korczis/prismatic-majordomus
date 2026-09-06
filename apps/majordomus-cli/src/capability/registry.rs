@@ -13,8 +13,8 @@ use crate::index::Index;
 use super::benchmark::CaseProvider;
 use super::handler::{CapabilityError, Context, Executable, Handler};
 use super::model::{
-    BenchmarkPolicy, Capability, CapabilityId, CapabilityKind, HttpMethod, McpResource, ModuleId,
-    Provenance, Stability, WaiverReason,
+    Availability, BenchmarkPolicy, Capability, CapabilityId, CapabilityKind, HttpMethod,
+    McpResource, ModuleId, Provenance, Stability, Visibility, WaiverReason,
 };
 use super::module::ModuleDescriptor;
 
@@ -395,6 +395,24 @@ impl Builder {
                     id: id.clone(),
                     provenance: prov.clone(),
                     reason,
+                });
+                continue;
+            }
+            // classification is not a value a descriptor may hold an opinion about: it
+            // follows from the kind and the transports it declares, and a capability
+            // arriving from outside this crate with a different one is refused rather
+            // than believed. A projection reads these fields; if they could drift, every
+            // surface downstream would be reading a claim instead of a fact.
+            let availability = Availability::classify(c.kind, &c.exposure);
+            let visibility = Visibility::classify(&c.exposure);
+            if c.availability != availability || c.visibility != visibility {
+                errors.push(RegistryError::Shape {
+                    id: id.clone(),
+                    provenance: prov.clone(),
+                    reason: format!(
+                        "declares availability {:?} and visibility {:?}; what it exposes makes it {availability:?} and {visibility:?}. Classification follows the kind and the transports, so change those or let the declaration classify itself",
+                        c.availability, c.visibility
+                    ),
                 });
                 continue;
             }

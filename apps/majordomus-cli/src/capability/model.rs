@@ -475,6 +475,104 @@ impl Exposure {
     }
 }
 
+/// Where a capability means anything: the environment a caller must be in for it to
+/// answer at all.
+///
+/// The published site and the running server are genuinely different places. Without this
+/// on the model, every template grows its own idea of what works where — and the usual
+/// shape that takes is a condition on the page's own address, which is a rule hidden
+/// where nobody will find it and nothing can test it. This is the only thing a projection
+/// may ask.
+///
+/// It is classified rather than declared: the facts that decide it — what kind of thing
+/// this is and which transports it is projected through — are already on the descriptor,
+/// and asking each declaration to restate them would be the same knowledge written twice.
+/// [`Availability::classify`] is the one place the rule lives.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Availability {
+    /// True in every environment, a published page with no server included: the layer's
+    /// own content, which a build renders and a process serves from the same index.
+    Always,
+    /// A process must be running to answer: everything with a handler, whether it is
+    /// reached over HTTP, over MCP or from the command line.
+    Runtime,
+    /// A value captured when the site was generated, rendered afterwards as the capture
+    /// it is. Nothing classifies to this yet; the static projection of the graph is what
+    /// will declare it, and it is on the model so that a captured value can be labelled
+    /// as captured instead of being shown as current.
+    BuildTime,
+    /// A process must be running and the caller must be one it has authenticated. Nothing
+    /// in this repository authenticates a caller yet; a surface that does will say so
+    /// here rather than in the template that renders its link.
+    Authenticated,
+}
+
+impl Availability {
+    /// Classify from what the descriptor already declares.
+    ///
+    /// The match is exhaustive on purpose and has no fallback arm: a new kind, or a
+    /// transport that changes what an environment can offer, is a compile error here
+    /// rather than a silent `Always` in a page that then links to nothing.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{Availability, CapabilityKind, Exposure};
+    /// let nowhere = Exposure::default();
+    /// assert_eq!(Availability::classify(CapabilityKind::Resource, &nowhere), Availability::Always);
+    /// assert_eq!(Availability::classify(CapabilityKind::Query, &nowhere), Availability::Runtime);
+    /// ```
+    pub fn classify(kind: CapabilityKind, _exposure: &Exposure) -> Availability {
+        match kind {
+            // the content is the layer's, and the index that holds it is read the same way
+            // by a build and by a process
+            CapabilityKind::Resource => Availability::Always,
+            // a handler answers, and a handler needs a process to run in — the transport
+            // decides who may call it, not whether anything can
+            CapabilityKind::Query | CapabilityKind::Command => Availability::Runtime,
+        }
+    }
+}
+
+/// Who a capability is for, and whether anything offers it.
+///
+/// Internal is a statement, not an omission: a capability nothing projects is invisible
+/// either way, and the difference between deliberate and forgotten is exactly what this
+/// records.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum Visibility {
+    /// Offered to anyone who can reach the process: an HTTP route or an MCP entry.
+    Public,
+    /// Offered to whoever runs the executable, and to nobody over a network.
+    Developer,
+    /// Projected nowhere. It exists, it is listed as existing, and no surface offers it.
+    Internal,
+}
+
+impl Visibility {
+    /// Classify from the transports the descriptor declares.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CliExposure, Exposure, Visibility};
+    /// assert_eq!(Visibility::classify(&Exposure::default()), Visibility::Internal);
+    /// let cli = Exposure { cli: Some(CliExposure { path: vec!["scope".into()] }), ..Default::default() };
+    /// assert_eq!(Visibility::classify(&cli), Visibility::Developer);
+    /// ```
+    pub fn classify(exposure: &Exposure) -> Visibility {
+        if exposure.mcp.is_some() || exposure.http.is_some() {
+            Visibility::Public
+        } else if exposure.cli.is_some() {
+            Visibility::Developer
+        } else {
+            Visibility::Internal
+        }
+    }
+}
+
 /// The canonical descriptor. Everything a projection may say about a capability is here.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Capability {
@@ -497,6 +595,11 @@ pub struct Capability {
     pub provenance: Provenance,
     /// Where it is projected; absence is explicit.
     pub exposure: Exposure,
+    /// Where it means anything: classified from the kind and the transports above, so
+    /// that a projection reads a field instead of deciding for itself.
+    pub availability: Availability,
+    /// Who it is for: classified from the same transports.
+    pub visibility: Visibility,
     /// Where it stands.
     pub stability: Stability,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -558,5 +661,54 @@ mod tests {
                 "{bad}"
             );
         }
+    }
+    #[test]
+    fn the_model_draws_the_four_environments_apart() {
+        // the distinctions exist so a surface can say which environment it means; two of
+        // them have no member yet, and the classifier says so rather than pretending
+        let all = [
+            Availability::Always,
+            Availability::Runtime,
+            Availability::BuildTime,
+            Availability::Authenticated,
+        ];
+        let names: Vec<String> = all
+            .iter()
+            .map(|a| serde_json::to_string(a).unwrap())
+            .collect();
+        assert_eq!(
+            names,
+            [
+                "\"always\"",
+                "\"runtime\"",
+                "\"build_time\"",
+                "\"authenticated\""
+            ]
+        );
+        for a in all {
+            assert_eq!(
+                serde_json::from_str::<Availability>(&serde_json::to_string(&a).unwrap()).unwrap(),
+                a
+            );
+        }
+    }
+
+    #[test]
+    fn what_is_projected_nowhere_is_internal_and_says_so() {
+        let nowhere = Exposure::default();
+        assert!(nowhere.is_empty());
+        assert_eq!(Visibility::classify(&nowhere), Visibility::Internal);
+        let over_http = Exposure {
+            http: Some(HttpExposure {
+                method: HttpMethod::Get,
+                path: "/api/v1/thing".into(),
+            }),
+            ..Default::default()
+        };
+        assert_eq!(Visibility::classify(&over_http), Visibility::Public);
+        assert_eq!(
+            Availability::classify(CapabilityKind::Query, &over_http),
+            Availability::Runtime
+        );
     }
 }

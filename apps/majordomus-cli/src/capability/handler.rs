@@ -240,18 +240,25 @@ macro_rules! capability {
         cache: $cache:expr,
         benchmark: $benchmark:expr,
         handler: $handler:expr $(,)?
-    ) => {
+    ) => {{
+        // classified here, from the kind and the exposure this declaration already
+        // carries, so that no declaration restates what it has just said and no
+        // projection decides it later
+        let kind = $kind;
+        let exposure = $exposure;
         $crate::capability::Executable {
             capability: $crate::capability::Capability {
                 id: $crate::capability::CapabilityId::unchecked($id),
                 module: $crate::capability::ModuleId::unchecked(""),
-                kind: $kind,
+                kind,
                 title: String::from($title),
                 description: String::from($description),
                 input: $crate::capability::CanonicalSchema::of::<$input>(),
                 output: $crate::capability::CanonicalSchema::of::<$output>(),
                 provenance: $crate::capability::Provenance::Builtin { module: String::from(module_path!()) },
-                exposure: $exposure,
+                availability: $crate::capability::Availability::classify(kind, &exposure),
+                visibility: $crate::capability::Visibility::classify(&exposure),
+                exposure,
                 stability: $stability,
                 tags: vec![$(String::from($tag)),*],
                 benchmark: $benchmark,
@@ -260,7 +267,7 @@ macro_rules! capability {
             handler: $crate::capability::handler::handler::<$input, $output, _>($handler),
             cases: <$input as $crate::capability::BenchmarkCases>::benchmark_cases_json,
         }
-    };
+    }};
     // ---- defaults: kind Query, cache Disabled, benchmark Required, in every combination
     ( id: $id:expr, title: $title:expr, description: $d:expr, input: $i:ty, output: $o:ty, stability: $s:expr, exposure: $e:expr, tags: [$($t:expr),* $(,)?], handler: $h:expr $(,)? ) => {
         $crate::capability! { id: $id, kind: $crate::capability::CapabilityKind::Query, title: $title, description: $d, input: $i, output: $o, stability: $s, exposure: $e, tags: [$($t),*], cache: $crate::capability::CachePolicy::Disabled, benchmark: $crate::capability::BenchmarkPolicy::Required, handler: $h }
