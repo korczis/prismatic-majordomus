@@ -1,0 +1,37 @@
+id: I1014
+milestone: capability-graph
+title: The relation view reads the graph and holds no data of its own
+slug: graph-visualisation
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Render the relation graph interactively from the generated data, with filters, focus, neighbour highlighting and deep links, loaded only where it is used and bounded in cost."
+why: "The edges are the reason the model exists, and a static list cannot show them. But a visualisation with nodes written into a script is a second inventory in the least maintainable place available."
+current_state: "The layer's graphs are derived and rendered for the site. There is no interactive relation view over the composed model."
+desired_state: "One view reads the artifact, filters by the model's own fields, and is not loaded by pages that do not use it."
+scope:
+  - share/cockpit/src
+non_scope:
+  - Nodes or edges written into JavaScript
+  - A visualisation library loaded on pages that do not render a graph
+  - A three-dimensional rendering that replaces rather than supplements the accessible information
+depends_on:
+  - I1002
+  - I1007
+acceptance_criteria:
+  - Every node and edge comes from the generated data
+  - Filters operate on the model's fields — kind, category, source, surface, availability, relation type and the evidence flags
+  - Zoom, pan, selection, neighbour highlighting, a detail panel and deep links all work, and a selected node resolves to its detail view
+  - The library is lazily loaded and absent from pages without a graph
+  - A textual equivalent of the same relations is available for anyone who cannot use the graph
+  - Initialisation cost on this repository's data is measured
+validation:
+  - bash test/run.sh
+  - cargo test --workspace --all-features
+evidence_required:
+  - graph_from_data
+  - filters_work
+  - textual_equivalent
+risk: "Rendering every node at once is slow and unreadable at the same time. The default view is filtered, and expansion is progressive."
+created_at: 2026-09-06
+updated_at: 2026-09-06

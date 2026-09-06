@@ -13,8 +13,8 @@
 mod common;
 
 use majordomus_cli::generate::{
-    self, Artifact, ArtifactFormat, Document, GeneratedSchemas, HeaderStyle, Target, HEADER,
-    MANIFEST_ID, MANIFEST_SCHEMA,
+    self, opens_with_banner, Artifact, ArtifactFormat, Document, GeneratedSchemas, HeaderStyle,
+    Target, HEADER, MANIFEST_ID, MANIFEST_SCHEMA,
 };
 use serde_json::{json, Value};
 
@@ -58,14 +58,17 @@ fn every_artifact_declares_its_encoding_its_source_and_carries_a_header() {
         if a.document.starts_with("providers/") {
             continue;
         }
+        // `opens_with_banner`, not `starts_with`: an executable script opens with its `#!`
+        // line and a projected page with its own title, and both carry the banner on the
+        // line after. The rule is stated once, in the generator, and read here.
         match a.format {
             ArtifactFormat::Markdown => assert!(
-                a.content.starts_with(&format!("<!-- {HEADER}")),
+                opens_with_banner(&a.content, &format!("<!-- {HEADER}")),
                 "{} carries no banner",
                 a.path
             ),
             ArtifactFormat::Yaml | ArtifactFormat::Text => assert!(
-                a.content.starts_with(&format!("# {HEADER}")),
+                opens_with_banner(&a.content, &format!("# {HEADER}")),
                 "{} carries no banner",
                 a.path
             ),
@@ -101,8 +104,19 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
     let json: Vec<&Artifact> = artifacts
         .iter()
         .filter(|a| a.format == ArtifactFormat::Json && !a.document.starts_with("providers/"))
-        // the site dataset is the website's own file and is committed as JSON alone
-        .filter(|a| a.document != "site-registry")
+        // Documents whose only reader is a program are committed as JSON alone: the three
+        // the website loads, the matrix the release workflow reads, and the public metadata
+        // of each release. A YAML twin of any of them would be a file nobody opens.
+        .filter(|a| {
+            !matches!(
+                a.document.as_str(),
+                "site-registry"
+                    | "site-why"
+                    | "site-why-graph"
+                    | "site-distribution"
+                    | "distribution-matrix"
+            ) && !a.document.starts_with("release/")
+        })
         // a projected JSON Schema is JSON by its own contract: `.schema.json` is what a
         // validator looks for, and a YAML sibling would be a second encoding of a file
         // whose format is named in its extension and read by nothing that wants YAML

@@ -1,7 +1,7 @@
 +++
 title = "Say what your work is for, once, and have every surface say it"
 description = "Record an operational failure mode as one file and have the command line, the API, MCP and the website answer it without registering it anywhere."
-weight = 11
+weight = 12
 [extra]
 id = "say-what-the-tool-is-for"
 source = ".ai/repo/use-cases/say-what-the-tool-is-for.md"
@@ -15,6 +15,43 @@ A repository states what its work is for in a README paragraph, a landing page a
 and the three disagree within a quarter. Worse, the statement is invisible to everything
 that is not a person reading: a worker cannot ask what problems this repository exists to
 answer, and neither can a script.
+
+## Scenario
+
+```yaml
+setup: why-catalogue
+given:
+  - 'the layer installed, with the why section and its three source classes seeded by init'
+  - 'one moment, one audience and one area written as three files and committed'
+steps:
+  - id: the-section-explains-itself
+    run: ['context', 'resolve', '.ai/repo/why/moments']
+    note: 'the section has a contract from the first install, so the first moment is one file'
+    expect:
+      exit: 0
+      stdout_contains: ['ai.repo.why']
+  - id: discovered-not-registered
+    run: ['knowledge', 'sources']
+    note: 'the three files are knowledge because a source class discovered them, not because anything listed them'
+    expect:
+      exit: 0
+      stdout_contains: ['^moment .*the-same-explanation-twice', '^audience .*small-team', '^area .*continuity']
+  - id: nothing-was-registered
+    run: ['init', '--extend']
+    note: 'the section is seeded, not generated per entry: there is nothing left to add'
+    expect:
+      exit: 0
+      stdout_contains: ['nothing to add']
+  - id: still-healthy
+    run: ['doctor']
+    note: 'the layer is real, and the section is part of it'
+    expect:
+      exit: 0
+      stdout_contains: ['doctor: 0 failure']
+then:
+  - 'the catalogue is a section of the layer from the first install, with its contract'
+  - 'adding a moment is adding one file; the executable half of that is proved by test/cases/98_why_catalogue.sh'
+```
 
 ## What you run
 

@@ -722,6 +722,7 @@ WHY_DATA="$ROOT/site/data/registry/why.json"
 [ "$(jq -r '.valid' "$WHY_DATA")" = "true" ] || { echo "generate-site-data: the Why catalogue does not validate; the site may not render it (reproduce: majordomus why validate)" >&2; exit 10; }
 [ "$(jq '.moments | length' "$WHY_DATA")" -ge 3 ] || { echo "generate-site-data: .ai/repo/why/moments/ produced almost no moments" >&2; exit 10; }
 mj_phase_end "gen:why_catalogue" "$GEN_T0"
+
 # ---------------------------------------------------------------- sessions.json (the layer's own memory)
 GEN_T0="$(mj_phase_begin "gen:sessions.json")"
 # The closed execution episodes, from the tool's own listing and the records themselves.

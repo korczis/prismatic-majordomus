@@ -1,0 +1,37 @@
+id: I0930
+milestone: fly-deployment
+title: The real image runs under the real limits before anything is deployed
+slug: container-integration-test
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Build the actual production image and run it under the resource limits of the cheap profile, verifying the process, its user, its port and its routes without fixed ports and without sleeping."
+why: "Everything before this is a claim about an image. Running it under the limits it will actually face is the first evidence that the deployment can work, and it is far cheaper to learn here than after a deploy."
+current_state: "No image and no container test exist."
+desired_state: "One test builds the production image, runs it constrained, polls readiness with a bounded timeout, and asserts the behaviour the deployment depends on."
+scope:
+  - test/cases
+non_scope:
+  - A fixed host port
+  - A sleep standing in for readiness
+  - A test image that differs from the production one
+depends_on:
+  - I0906
+  - I0909
+  - I0912
+acceptance_criteria:
+  - The image under test is the production image, built by the canonical build
+  - It runs under the declared memory and CPU limits of the cheap profile, and with a read-only filesystem where the application permits it
+  - The process stays alive, its user id is not zero, and it listens on the declared port
+  - Liveness and readiness answer, and the landing, documentation, API document and static assets are served
+  - Readiness is reached by bounded polling on an ephemeral port, with no sleep and no fixed port
+validation:
+  - bash test/run.sh
+evidence_required:
+  - image_built
+  - constrained_run
+  - routes_pass
+  - uid_nonzero
+risk: "A container test needs a container runtime, which not every environment has. It must skip explicitly and visibly where the runtime is absent rather than passing quietly."
+created_at: 2026-09-06
+updated_at: 2026-09-06

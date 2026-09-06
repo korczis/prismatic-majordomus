@@ -1,0 +1,34 @@
+id: I0905
+milestone: fly-deployment
+title: Liveness and readiness are registered capabilities, not router hacks
+slug: health-and-readiness-routes
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Expose cheap liveness and readiness endpoints through the capability registry, so that the provider health check, the container test and the smoke suite all point at routes the registry knows about."
+why: "A health route added directly to the router would be invisible to OpenAPI, to the documentation and to the route-derived smoke suite — three projections silently missing the one endpoint the platform polls most."
+current_state: "system.health exists as a capability and aggregates index diagnostics, benchmark coverage and projection staleness. It is not a liveness probe: it is expensive and it can legitimately report failure while the process is perfectly able to serve traffic."
+desired_state: "Liveness answers whether this process is alive, cheaply and without touching the layer. Readiness answers whether it can serve traffic, checking only local initialisation. Both are registered, both are documented, and both have measured cost."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/health.rs
+non_scope:
+  - Contacting any external provider or network service to decide readiness
+  - Replacing or weakening the existing system.health aggregate
+depends_on:
+  - I0902
+acceptance_criteria:
+  - Liveness returns quickly with no filesystem traversal, no index build and no network access
+  - Readiness checks only the local initialisation required to serve, and never an external provider
+  - Neither requires authentication and both are registered capabilities that appear in OpenAPI and the generated reference
+  - The measured cost of each is recorded and stays inside the blocking-check budget the policy declares
+  - The canonical deployment object references these routes and validation would refuse a reference to a route that is not registered
+validation:
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - healthz_registered
+  - readyz_registered
+  - cheap_measured
+risk: "A readiness check that grows into a dependency probe will fail a deployment because an unrelated service is down. Readiness answers one question: can this process serve a page."
+created_at: 2026-09-06
+updated_at: 2026-09-06

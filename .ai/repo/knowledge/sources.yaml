@@ -153,6 +153,12 @@ sources:
     pathspec: ':(glob).ai/repo/why/areas/*.md'
     required: false
 
+  - id: deployment
+    kind: deployment
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/deployments/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs
@@ -174,6 +180,18 @@ sources:
     kind: document
     discovery: vcs
     pathspec: ':(glob)docs/claims/*.md'
+    required: false
+
+  - id: distribution
+    kind: distribution-model
+    discovery: vcs
+    pathspec: ':(glob)share/distribution.yaml'
+    required: false
+
+  - id: release
+    kind: release-record
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/releases/*.yaml'
     required: false
 
   # The implementation and test classes exist so that the chain a claim already declares —

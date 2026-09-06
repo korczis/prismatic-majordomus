@@ -1,7 +1,7 @@
 +++
 title = "The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged"
 description = "scripts/site-deploy is the only way the site reaches GitHub Pages. The Pages workflow runs it after its gate; a person runs it when the operator wants the site live without waiting for the Actions queue (.ai/repo/skills/deploy-site/SKILL.md, just site-deploy). Either way the same checks run and the same branch is pushed: gh-pages, which GitHub Pages serves."
-weight = 129
+weight = 133
 [extra]
 claim_id = "site-deploy-one-path"
 status = "guaranteed"

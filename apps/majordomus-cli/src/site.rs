@@ -698,6 +698,12 @@ pub fn render(dataset: &SiteRegistry) -> String {
 /// The dataset's own format version.
 pub const WHY_SCHEMA: &str = "majordomus-site-why/v1";
 
+/// Where `why.json` says it came from.
+pub const WHY_SOURCE: &str = "the Why catalogue under .ai/repo/why/";
+
+/// Where `why-graph.json` says it came from.
+pub const WHY_GRAPH_SOURCE: &str = "the `why` graph of the Why catalogue";
+
 /// The Why catalogue and its graph, as the site's templates read them:
 /// `site/data/registry/why.json` and `site/data/registry/why-graph.json`.
 ///
@@ -783,10 +789,6 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         }
     }
 
-    const WHY_SOURCE: &str =
-        "the operational moments, audiences and areas of this repository's layer";
-    const GRAPH_SOURCE: &str = "the moments and what answers them, as the derived `why` graph";
-
     let document = serde_json::json!({
         "schema": WHY_SCHEMA,
         "generated": crate::generate::json_banner(WHY_SOURCE),
@@ -806,17 +808,14 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         crate::graph::derive("why", &ctx.registry, &ctx.index).ok_or_else(|| Error::Protocol {
             reason: "this executable derives no `why` graph".into(),
         })?;
-    // the graph is a value of the domain and carries no provenance of its own; the artifact
-    // does, in the members every generated document of this repository carries
-    let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
-    if let Some(o) = graph_document.as_object_mut() {
-        o.insert(
+
+    // JSON carries its provenance as a member; the graph is serialised from a type, so
+    // the member is added to the rendered value rather than declared on the type
+    let mut graph_value = serde_json::to_value(&graph).unwrap_or_default();
+    if let Some(map) = graph_value.as_object_mut() {
+        map.insert(
             "generated".into(),
-            serde_json::Value::String(crate::generate::json_banner(GRAPH_SOURCE)),
-        );
-        o.insert(
-            "generator".into(),
-            serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
+            serde_json::Value::String(crate::generate::json_banner(WHY_GRAPH_SOURCE)),
         );
     }
 
@@ -834,8 +833,8 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
             "site-why-graph",
             crate::generate::ArtifactFormat::Json,
             None,
-            GRAPH_SOURCE,
-            render_json(&graph_document),
+            WHY_GRAPH_SOURCE,
+            render_json(&graph_value),
         ),
     ])
 }

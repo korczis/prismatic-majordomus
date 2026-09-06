@@ -43,7 +43,7 @@ Front matter is the machine side and the body is the human side. The front matte
 decoration: discovery, validation, relations, filtering, ordering, navigation, search, the
 command line, the HTTP API, the OpenAPI document, MCP and the diagnosis are all read from
 it, and nothing derives structure from the prose. The contracts are
-`share/schemas/majordomus/<kind>/<kind>.v1.schema.json`, one per kind; a key
+`share/schemas/majordomus/moment/moment.v1.schema.json`, `majordomus/audience/audience.v1.schema.json` and `majordomus/area/area.v1.schema.json`; a key
 they do not declare is an error, and a `schema:` version the tool does not know is refused
 rather than guessed.
 

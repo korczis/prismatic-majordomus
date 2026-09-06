@@ -1,7 +1,7 @@
 +++
 title = "Record what one worker did in one sitting"
 description = "Open a session, do the work under whatever tasks it touches, and close it into an envelope that references what it produced and copies nothing."
-weight = 34
+weight = 35
 [extra]
 id = "open-and-close-a-session"
 source = ".ai/repo/use-cases/open-and-close-a-session.md"

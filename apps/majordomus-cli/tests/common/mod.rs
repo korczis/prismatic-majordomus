@@ -39,6 +39,7 @@ sections:
   adrs: repo/adrs
   project: repo/project
   why: repo/why
+  deployments: repo/deployments
 
 context:
   documents: [README.md]
@@ -123,6 +124,12 @@ sources:
     kind: area
     discovery: vcs
     pathspec: ':(glob).ai/repo/why/areas/*.md'
+    required: false
+
+  - id: deployment
+    kind: deployment
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/deployments/*.yaml'
     required: false
 
   - id: claim_page
@@ -287,6 +294,54 @@ weight: 10
 Because the fixture says so.
 ";
 
+/// A deployment the fixture declares, so that the capabilities reading one have an object
+/// to read. Every required field and nothing else: this is the smallest thing the contract
+/// calls a deployment, not a copy of the repository's own.
+pub const DEPLOYMENT: &str = "# The fixture's deployment.
+schema: deployment/v1
+kind: deployment
+id: fixture-deployment
+title: The fixture's deployment
+description: A deployment that exists so the capabilities reading one have an object to read.
+status: declared
+
+application: fixture
+
+build:
+  package: fixture-cli
+  binary: fixture
+  profile: release
+  inputs:
+    - apps/fixture-cli
+
+listen:
+  port: 8080
+  interface: all
+
+health:
+  liveness: /api/v1/live
+  readiness: /api/v1/ready
+  grace_seconds: 2
+  interval_seconds: 15
+  timeout_seconds: 2
+
+resources:
+  cpu_kind: shared
+  cpus: 1
+  memory_mb: 256
+
+machines:
+  count: 1
+  min_running: 0
+  autostart: true
+  autostop: true
+
+region: fra
+
+provider:
+  name: fly
+";
+
 pub const MOMENT: &str = "---
 schema: moment/v1
 id: fixture-moment
@@ -362,6 +417,7 @@ impl Fixture {
         f.write(".ai/repo/why/audiences/fixture-team.md", AUDIENCE);
         f.write(".ai/repo/why/areas/fixture-area.md", AREA);
         f.write(".ai/repo/why/moments/fixture-moment.md", MOMENT);
+        f.write(".ai/repo/deployments/fixture-deployment.yaml", DEPLOYMENT);
         f.write(
             "docs/claims/policy-parse.md",
             "# The policy is parsed

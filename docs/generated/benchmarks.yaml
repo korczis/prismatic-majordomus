@@ -1,23 +1,23 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.1.0
+# Generator: majordomus-cli 0.2.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.1.0
+generator: majordomus-cli 0.2.0
 coverage:
   - scope: direct
-    required: 23
-    covered: 23
+    required: 32
+    covered: 32
     missing: 0
     waived: 0
   - scope: http
-    required: 23
-    covered: 23
+    required: 32
+    covered: 32
     missing: 0
     waived: 0
   - scope: mcp
-    required: 23
-    covered: 23
+    required: 30
+    covered: 30
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 81
-    covered: 81
+    required: 106
+    covered: 106
     missing: 0
     waived: 0
 capabilities:
@@ -69,6 +69,33 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: deploy.check
+    module: deploy
+    kind: query
+    cache: "process, 2 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: deploy.get
+    module: deploy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-deployment
+  - id: deploy.list
+    module: deploy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: directories.list
     module: directories
     kind: query
@@ -81,6 +108,42 @@ capabilities:
       - one-directory
       - effective-everywhere
       - owed
+  - id: distribution.artifact
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-published-target
+  - id: distribution.build
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: distribution.model
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: distribution.releases
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: graph.get
     module: graph
     kind: query
@@ -95,12 +158,31 @@ capabilities:
       - adrs
       - use-cases
       - why
+      - composed
   - id: graph.list
     module: graph
     kind: query
     cache: "—"
     direct: covered
     mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: health.live
+    module: health
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: none
+    http: covered
+    cases:
+      - default
+  - id: health.ready
+    module: health
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: none
     http: covered
     cases:
       - default
