@@ -436,7 +436,6 @@ pub enum GenerateTarget {
     Manifest,
     /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
     Web,
->>>>>>> origin/feature/web-surface-serving
 }
 
 #[derive(Debug, Args)]

@@ -91,7 +91,6 @@ pub enum Target {
     /// topology reaches the published documentation without the site shelling out to this
     /// executable, and how `generate --check` notices when it has gone stale.
     Web,
->>>>>>> origin/feature/web-surface-serving
 }
 
 impl Target {
@@ -106,9 +105,8 @@ impl Target {
         Target::Allow,
         Target::Providers,
         Target::Site,
-        Target::Manifest,
         Target::Web,
->>>>>>> origin/feature/web-surface-serving
+        Target::Manifest,
     ];
 
     /// Every target but the manifest: the artifacts the manifest indexes.
@@ -121,6 +119,7 @@ impl Target {
         Target::Documents,
         Target::Providers,
         Target::Site,
+        Target::Web,
     ];
 
     /// The name the command line and the manifest use.
@@ -134,6 +133,7 @@ impl Target {
             Target::Documents => "documents",
             Target::Providers => "providers",
             Target::Site => "site",
+            Target::Web => "web",
             Target::Manifest => "manifest",
         }
     }
@@ -517,14 +517,8 @@ pub fn artifacts(
             | Target::Documents
             | Target::Providers
             | Target::Site
+            | Target::Web
             | Target::Manifest => {}
-            Target::Registry => out.push(Artifact {
-                path: format!("{OUT_DIR}/registry.json"),
-                content: registry_manifest(registry, version),
-            }),
-            Target::Benchmarks | Target::Allow | Target::Providers | Target::Site | Target::Web => {
-            }
->>>>>>> origin/feature/web-surface-serving
         }
     }
     Ok(out)
@@ -644,10 +638,15 @@ pub fn context_artifacts(
         );
     }
     if targets.contains(&Target::Web) {
-        out.push(Artifact {
-            path: format!("{OUT_DIR}/web.json"),
-            content: web_topology(ctx, version),
-        });
+        out.extend(
+            Document::new(
+                "web",
+                WEB_SCHEMA,
+                "the web topology resolved from the producers that declare it",
+                web_topology(ctx),
+            )
+            .artifacts(version),
+        );
     }
     Ok(out)
 }
@@ -663,7 +662,7 @@ pub fn context_artifacts(
 /// topology says what this repository exposes, and whether a directory is presently on disk
 /// is a fact of a checkout, not of the repository. That is what keeps the file stable
 /// enough for `generate --check` to compare.
-pub fn web_topology(ctx: &Context, version: &str) -> String {
+pub fn web_topology(ctx: &Context) -> Value {
     let surfaces: Vec<Value> = ctx
         .web
         .surfaces
@@ -678,9 +677,7 @@ pub fn web_topology(ctx: &Context, version: &str) -> String {
             v
         })
         .collect();
-    let document = serde_json::json!({
-        "schema": WEB_SCHEMA,
-        "generator": { "id": "majordomus-cli", "version": version },
+    serde_json::json!({
         "generated_root": crate::web::discover::GENERATED_ROOT,
         // the reservations as data, from the one place that declares them: the validator
         // refuses a topology that breaks one of these, and the site renders this map
@@ -689,10 +686,7 @@ pub fn web_topology(ctx: &Context, version: &str) -> String {
             .map(|r| (r.role.to_string(), Value::String(r.path.to_string())))
             .collect::<serde_json::Map<String, Value>>(),
         "surfaces": surfaces,
-    });
-    let mut text = serde_json::to_string_pretty(&document).unwrap_or_default();
-    text.push('\n');
-    text
+    })
 }
 
 /// The builtin registry as data: modules, descriptors with their schemas, and the
