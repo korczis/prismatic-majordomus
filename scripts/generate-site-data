@@ -1190,7 +1190,11 @@ BAD="$(jq -r '[.surfaces[] | select((.id|not) or (.title|not) or (.mount|not) or
 # the reservation from the same value the executable enforces it from
 jq -e '.reserved.documentation == "/docs" and .reserved.swagger == "/swagger"' "$WEB" >/dev/null 2>&1 \
   || { echo "generate-site-data: docs/generated/web.json does not reserve /docs for documentation and /swagger for the Swagger UI" >&2; exit 10; }
-jq '{schema, generated_root, reserved,
+# `schema: 1` is this dataset's own version, the one every file under site/data/generated/
+# carries and site-check holds them to; the executable's document identity is recorded
+# beside it as `source_schema` rather than passed through, because the two version
+# different things — the site's shape here, the executable's contract there.
+jq '{schema: 1, source_schema: .schema, generated_root, reserved,
      surfaces: [.surfaces[] | {id, title, mount, category, visibility, kind, producer, availability,
                                artifact: (.artifact // null), feature: (.feature // null),
                                provenance: (.provenance // {})}],
