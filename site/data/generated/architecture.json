@@ -330,6 +330,16 @@
       "external": false
     },
     {
+      "id": "lib/deployment.sh",
+      "kind": "module",
+      "label": "deployment",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/doctor.sh",
       "kind": "module",
       "label": "doctor",
@@ -523,6 +533,16 @@
       "id": ".ai/repo/sessions}",
       "kind": "artifact",
       "label": "repo/sessions}",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/deployments/README.md",
+      "kind": "artifact",
+      "label": "repo/deployments/README.md",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1143,6 +1163,11 @@
     },
     {
       "source": "lib/doctor.sh",
+      "target": "lib/deployment.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
       "target": "lib/doctrine.sh",
       "kind": "sources"
     },
@@ -1429,6 +1454,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/applications",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/deployments/README.md",
       "kind": "uses"
     },
     {

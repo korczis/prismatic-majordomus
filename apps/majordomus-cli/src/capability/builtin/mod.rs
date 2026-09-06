@@ -9,6 +9,7 @@ pub mod artifacts;
 pub mod capabilities;
 pub mod continuity;
 pub mod directories;
+pub mod deploy;
 pub mod graph;
 pub mod health;
 pub mod objects;
@@ -32,6 +33,7 @@ pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
     DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,
 };
+pub use deploy::{DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
@@ -54,6 +56,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         graph,
         health,
         continuity,
+        deploy,
         peers,
         perf,
         artifacts,

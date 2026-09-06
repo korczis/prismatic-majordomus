@@ -14,6 +14,7 @@ use std::time::Duration;
 
 use crate::app::App;
 use crate::cli::ServeArgs;
+use crate::deploy::{Deployment, Listen, KIND};
 use crate::error::{Error, Result};
 use crate::http::server::stdin_is_a_pipe;
 use crate::lease::{self, Role};
@@ -38,12 +39,24 @@ pub fn run(args: ServeArgs) -> Result<u8> {
         Role::Server(lease) => lease,
     };
     let app = App::load(&args.repo)?;
+    // The address: the local default, or the one a deployment object declares. The port is
+    // never typed twice — the object states it once and the process, the image and the
+    // provider configuration all read that one.
+    let declared = match &args.deployment {
+        Some(id) => Some(deployment(&app, id)?),
+        None => None,
+    };
+    let (host, port) = match &declared {
+        Some((_, listen)) => (listen.interface.host().to_string(), listen.port.get()),
+        None => (args.host.clone(), args.port),
+    };
     let shared = SharedServer::start(
         app.context.clone(),
         crate::VERSION,
-        &args.host,
-        args.port,
+        &host,
+        port,
         false,
+        declared.as_ref().map(|(file, _)| file.as_str()),
         lease,
         Some(app.share.dir()),
     )?;
@@ -64,4 +77,22 @@ pub fn run(args: ServeArgs) -> Result<u8> {
     shared.wait_until_peers_leave();
     shared.stop();
     Ok(0)
+}
+
+/// The listen address one deployment object declares, with the file that declares it. An
+/// id the layer does not have is refused by name rather than falling back to a default: a
+/// hosted process that quietly bound loopback would pass every check here and be
+/// unreachable in production.
+fn deployment(app: &App, id: &str) -> Result<(String, Listen)> {
+    let object = app
+        .context
+        .index
+        .objects
+        .iter()
+        .find(|o| o.kind == KIND && o.identity == id)
+        .ok_or_else(|| Error::DeploymentNotFound { id: id.into() })?;
+    let parsed = Deployment::parse(object).map_err(|refusal| Error::InvalidDeployment {
+        reason: refusal.to_string(),
+    })?;
+    Ok((object.provenance.path.clone(), parsed.listen))
 }

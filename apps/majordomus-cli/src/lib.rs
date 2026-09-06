@@ -18,6 +18,7 @@ pub mod capability;
 pub mod cli;
 pub mod cockpit;
 pub mod commands;
+pub mod deploy;
 pub mod discovery;
 pub mod error;
 pub mod generate;
