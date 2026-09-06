@@ -82,6 +82,14 @@ expect_exit 10 env MAJORDOMUS_DIST_BIN="$MJB" "$ROOT/scripts/release-record" \
 expect_exit 10 "$ROOT/scripts/release-version" --check --tag v99.99.99
 expect_exit 0 "$ROOT/scripts/release-version" --check --tag "v$("$ROOT/scripts/release-version")"
 
+# --- publication regenerates every projection of the record, not only its own metadata ---------
+# A release moves docs/INSTALL.md, which is a canonical input of the site's derived data. A
+# publication that commits the guide without regenerating what is derived from it leaves the
+# Pages build refusing the tree, and the metadata the installer reads is never deployed — the
+# release exists on GitHub and cannot be installed. The derivation graph is what prevents it.
+awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && /scripts\/derive/{found=1} END{exit !found}' "$WF" \
+  || { echo "    the publication job does not run scripts/derive; it would commit a guide the site's data no longer matches"; exit 1; }
+
 # --- the publication phase is the only one that runs gh ------------------------------------------
 awk '/^  plan:/{p=1} /^  publish:/{p=0} p && /gh release/{found=1} END{exit found}' "$WF" \
   || { echo "    a job before publication calls gh release"; exit 1; }
