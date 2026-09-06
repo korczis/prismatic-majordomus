@@ -33,9 +33,27 @@ fn generate_writes_check_agrees_tampering_is_detected_and_check_never_writes() {
     assert_eq!(code, 0);
     assert!(stdout.contains("in sync"));
 
+    // the composed graph is one of the artifacts, with its schema beside it
+    let graph = out.join("docs/generated/graph.json");
+    let graph_schema = out.join("docs/generated/graph.schema.json");
+    let graph_first = std::fs::read_to_string(&graph).expect("the graph is generated");
+    assert!(
+        graph_schema.exists(),
+        "the graph's schema is generated beside it"
+    );
+    assert!(
+        graph_first.contains("majordomus/capability-graph/v1"),
+        "the artifact names its schema"
+    );
+
     // regenerate: byte-identical
     run_in(&f.root(), &["generate", "--out", out_s], "");
     assert_eq!(std::fs::read_to_string(&openapi).unwrap(), first);
+    assert_eq!(
+        std::fs::read_to_string(&graph).unwrap(),
+        graph_first,
+        "the graph is deterministic over identical inputs"
+    );
 
     // tamper with the committed snapshot
     std::fs::write(

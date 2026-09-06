@@ -572,6 +572,8 @@ pub enum GenerateTarget {
     Distribution,
     /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
     Web,
+    /// docs/generated/graph.json and its schema: the composed graph as data
+    Graph,
 }
 
 #[derive(Debug, Args)]
