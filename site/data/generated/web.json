@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "source_schema": "majordomus/web-topology/v1",
+  "generated_root": "target/web",
+  "reserved": {
+    "home": "/",
+    "documentation": "/docs",
+    "swagger": "/swagger",
+    "openapi": "/openapi.json",
+    "capabilities": "/api/v1/"
+  },
+  "surfaces": [
+    {
+      "id": "api",
+      "title": "The capability registry over HTTP",
+      "mount": "/api/v1",
+      "category": "api",
+      "visibility": "public",
+      "kind": "native-route",
+      "producer": "capability registry",
+      "availability": "served-only",
+      "artifact": null,
+      "feature": null,
+      "provenance": {
+        "kind": {
+          "source": "registry"
+        },
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "cockpit",
+      "title": "The registry, rendered for a person",
+      "mount": "/cockpit",
+      "category": "interface",
+      "visibility": "public",
+      "kind": "native-route",
+      "producer": "cockpit",
+      "availability": "served-only",
+      "artifact": null,
+      "feature": "cockpit",
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "docs",
+      "title": "The documentation, as this process serves it",
+      "mount": "/docs",
+      "category": "documentation",
+      "visibility": "public",
+      "kind": "static-directory",
+      "producer": "scripts/site-build --serve",
+      "availability": "served-only",
+      "artifact": "target/web/docs",
+      "feature": null,
+      "provenance": {
+        "artifact": {
+          "source": "filesystem",
+          "path": "target/web/docs"
+        },
+        "kind": {
+          "source": "site-config",
+          "path": "site/config.toml"
+        },
+        "mount": {
+          "source": "default"
+        }
+      }
+    },
+    {
+      "id": "mcp",
+      "title": "MCP over HTTP for attached clients",
+      "mount": "/mcp",
+      "category": "protocol",
+      "visibility": "internal",
+      "kind": "native-route",
+      "producer": "mcp endpoint",
+      "availability": "served-only",
+      "artifact": null,
+      "feature": "mcp",
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "openapi",
+      "title": "The OpenAPI document of the capability registry",
+      "mount": "/openapi.json",
+      "category": "api",
+      "visibility": "public",
+      "kind": "native-route",
+      "producer": "capability registry",
+      "availability": "served-only",
+      "artifact": null,
+      "feature": null,
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "swagger",
+      "title": "Swagger UI over the OpenAPI document",
+      "mount": "/swagger",
+      "category": "documentation",
+      "visibility": "public",
+      "kind": "native-route",
+      "producer": "http::swagger",
+      "availability": "served-only",
+      "artifact": null,
+      "feature": null,
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "app",
+      "title": "The site as it is deployed",
+      "mount": "/",
+      "category": "documentation",
+      "visibility": "public",
+      "kind": "static-directory",
+      "producer": "scripts/site-build",
+      "availability": "published-only",
+      "artifact": "site/public",
+      "feature": null,
+      "provenance": {
+        "artifact": {
+          "source": "site-config",
+          "path": "site/config.toml"
+        },
+        "kind": {
+          "source": "site-config",
+          "path": "site/config.toml"
+        },
+        "mount": {
+          "source": "default"
+        }
+      }
+    },
+    {
+      "id": "home",
+      "title": "This process, and everything it serves",
+      "mount": "/",
+      "category": "interface",
+      "visibility": "public",
+      "kind": "native-route",
+      "producer": "web::home",
+      "availability": "served-only",
+      "artifact": null,
+      "feature": null,
+      "provenance": {
+        "mount": {
+          "source": "default"
+        }
+      }
+    }
+  ],
+  "categories": [
+    "api",
+    "documentation",
+    "interface",
+    "protocol"
+  ],
+  "counts": {
+    "surfaces": 8,
+    "public": 7,
+    "served": 7,
+    "published": 1
+  }
+}

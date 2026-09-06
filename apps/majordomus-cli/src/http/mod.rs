@@ -1,12 +1,17 @@
-//! The HTTP projection: routes derived from the registry's HTTP exposures, an OpenAPI
-//! document derived from the same registry at request time, and a Swagger UI shell that
-//! loads that document. `router` knows the registry and nothing about sockets; `server`
-//! knows sockets and nothing about capabilities.
+//! The HTTP projection: the surfaces this repository exposes, resolved once and served.
+//!
+//! `surfaces` narrows the resolved web topology to what this process can answer and binds a
+//! handler to each; `router` asks it who owns a path and dispatches, knowing the registry
+//! and nothing about sockets; `server` knows sockets and nothing about capabilities. The
+//! OpenAPI document is derived from the same registry at request time, and the Swagger UI
+//! shell loads it.
 
 pub mod mcp;
 pub mod openapi;
 pub mod router;
 pub mod server;
+pub mod surfaces;
 pub mod swagger;
 
-pub use router::{Request, Response, Router};
+pub use router::{Body, Request, Response, Router};
+pub use surfaces::Served;

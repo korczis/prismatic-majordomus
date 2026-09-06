@@ -492,6 +492,10 @@ impl Exposure {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+// Three things in this executable answer to `Availability` — a capability's, a
+// surface's, and whether a surface is answering right now. The schema component namespace
+// is flat, so each says which it is.
+#[schemars(rename = "CapabilityAvailability")]
 pub enum Availability {
     /// True in every environment, a published page with no server included: the layer's
     /// own content, which a build renders and a process serves from the same index.
@@ -544,6 +548,7 @@ impl Availability {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "CapabilityVisibility")]
 pub enum Visibility {
     /// Offered to anyone who can reach the process: an HTTP route or an MCP entry.
     Public,

@@ -1,7 +1,7 @@
 +++
 title = "Executable use cases"
 description = "executable use cases: one file each under `.ai/repo/use-cases/`, the scenario that proves it against the tool, evidence, observed maturity, coverage gated by policy, impact analysis, scaffolding, and what the site derives from it"
-weight = 28
+weight = 29
 [extra]
 source = "docs/USE_CASES.md"
 +++

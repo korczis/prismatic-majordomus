@@ -94,7 +94,7 @@ fn the_repository_scope_governs_discovery_and_names_what_it_drops() {
     with_own_scope(&f);
     // a document outside `in`, a fixture over its limit, a secret, an image and a binary
     // all tracked and all claimed by a source class or the tally
-    f.write("docs/big.md", &format!("# Big\n\n{}", "x".repeat(4096)));
+    f.write("docs/big.md", &format!("# Big\n\n{}", "x".repeat(8192)));
     f.write(
         "test/fixtures/large.json",
         "{\"padding\": \"0123456789\"}\n",

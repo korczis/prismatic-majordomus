@@ -7,6 +7,7 @@ Each of these is rendered on the website as well, from this same Markdown.
 | Document | Audience | Purpose |
 |---|---|---|
 | [`DESIGN.md`](DESIGN.md) | humans and AI workers | the v0.1 specification: problem, thesis, models, boundaries, what is intentionally absent |
+| [`TWO_FOLDER_CONSOLIDATION.md`](TWO_FOLDER_CONSOLIDATION.md) | humans and AI workers | what the repository writes into a tree today, verified against the code and the running binary, and the ordered slices that reduce it to `.ai/**` and `.majordomus/**` with reversible bridges |
 | [`CLI.md`](CLI.md) | implementers, AI workers | every command: behaviour, reads, writes, exit-code contract, target output |
 | [`SCHEMAS.md`](SCHEMAS.md) | implementers, AI workers | every file: schema, a concrete example, which command reads and writes it |
 | [`CONCEPTS.md`](CONCEPTS.md) | everyone | the vocabulary, and the two outcomes people confuse |
@@ -29,6 +30,7 @@ Each of these is rendered on the website as well, from this same Markdown.
 | [`WHY.md`](WHY.md) | everyone | the operational failure modes this tool answers, as objects of the layer: the three kinds, the flow from one Markdown file to every projection, what is authored and what is derived, and what enforces each |
 | [`SCOPE.md`](SCOPE.md) | everyone, AI workers | the repository scope: what a worker reads and what it never reads, declared once in `.ai/repo/scope.yaml`, how a path is judged (name, size, content), what the executable does with it, and `majordomus scope` |
 | [`COCKPIT.md`](COCKPIT.md) | everyone, integrators | the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline |
+| [`WEB.md`](WEB.md) | everyone, integrators | the web surface: every surface discovered from its producer rather than registered, the two reserved namespaces (`/docs` is documentation, `/swagger` is Swagger UI), what a surface declares, how to add one, how the documentation is built for its mount and served safely, and what is enforced where |
 | [`MCP.md`](MCP.md) | everyone, MCP clients | the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve |
 | [`GITHUB_PAGES_ARCHITECTURE.md`](GITHUB_PAGES_ARCHITECTURE.md) | maintainers | how the website is derived from the repository and checked for drift |
 | [`CI.md`](CI.md) | contributors, AI workers | how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live |

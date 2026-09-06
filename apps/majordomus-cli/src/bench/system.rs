@@ -24,12 +24,14 @@ pub enum SystemTarget {
     McpResourcesList,
     /// `resources/read` of the first declarative resource.
     McpResourcesRead,
-    /// `GET /`.
+    /// `GET /`: the topology as JSON, what a client that asks for no page receives.
     HttpIndex,
+    /// `GET /` with `Accept: text/html`: the home page, rendered from the topology.
+    HttpHome,
     /// `GET /openapi.json`.
     HttpOpenApi,
-    /// `GET /docs`.
-    HttpDocs,
+    /// `GET /swagger`.
+    HttpSwagger,
     /// `GET /cockpit`: the Cockpit's landing page, rendered.
     HttpCockpitOverview,
     /// `GET /cockpit/capabilities`: the whole registry as a table, the widest page there is.
@@ -40,7 +42,7 @@ pub enum SystemTarget {
 
 impl SystemTarget {
     /// Every system target, in a stable order.
-    pub const ALL: [SystemTarget; 12] = [
+    pub const ALL: [SystemTarget; 13] = [
         SystemTarget::McpProcessCold,
         SystemTarget::McpInitialize,
         SystemTarget::McpPing,
@@ -48,8 +50,9 @@ impl SystemTarget {
         SystemTarget::McpResourcesList,
         SystemTarget::McpResourcesRead,
         SystemTarget::HttpIndex,
+        SystemTarget::HttpHome,
         SystemTarget::HttpOpenApi,
-        SystemTarget::HttpDocs,
+        SystemTarget::HttpSwagger,
         SystemTarget::HttpCockpitOverview,
         SystemTarget::HttpCockpitCapabilities,
         SystemTarget::HttpCockpitGraph,
@@ -65,8 +68,9 @@ impl SystemTarget {
             SystemTarget::McpResourcesList => "system.mcp.resources_list",
             SystemTarget::McpResourcesRead => "system.mcp.resources_read",
             SystemTarget::HttpIndex => "system.http.index",
+            SystemTarget::HttpHome => "system.http.home",
             SystemTarget::HttpOpenApi => "system.http.openapi",
-            SystemTarget::HttpDocs => "system.http.docs",
+            SystemTarget::HttpSwagger => "system.http.swagger",
             SystemTarget::HttpCockpitOverview => "system.http.cockpit_overview",
             SystemTarget::HttpCockpitCapabilities => "system.http.cockpit_capabilities",
             SystemTarget::HttpCockpitGraph => "system.http.cockpit_graph",
@@ -83,8 +87,9 @@ impl SystemTarget {
             | SystemTarget::McpResourcesList
             | SystemTarget::McpResourcesRead => super::Transport::Mcp,
             SystemTarget::HttpIndex
+            | SystemTarget::HttpHome
             | SystemTarget::HttpOpenApi
-            | SystemTarget::HttpDocs
+            | SystemTarget::HttpSwagger
             | SystemTarget::HttpCockpitOverview
             | SystemTarget::HttpCockpitCapabilities
             | SystemTarget::HttpCockpitGraph => super::Transport::Http,
@@ -102,9 +107,12 @@ impl SystemTarget {
             SystemTarget::McpToolsList => "tools/list",
             SystemTarget::McpResourcesList => "resources/list",
             SystemTarget::McpResourcesRead => "resources/read of the first declarative resource",
-            SystemTarget::HttpIndex => "GET /",
+            SystemTarget::HttpIndex => "GET / (the topology as JSON)",
+            SystemTarget::HttpHome => {
+                "GET / with Accept: text/html (the home page, rendered from the topology)"
+            }
             SystemTarget::HttpOpenApi => "GET /openapi.json",
-            SystemTarget::HttpDocs => "GET /docs (the Swagger UI shell)",
+            SystemTarget::HttpSwagger => "GET /swagger (the Swagger UI shell)",
             SystemTarget::HttpCockpitOverview => {
                 "GET /cockpit (the Cockpit's landing page, server-rendered)"
             }

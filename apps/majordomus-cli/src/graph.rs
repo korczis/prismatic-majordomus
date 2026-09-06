@@ -74,13 +74,6 @@ pub enum Fact {
 /// objective, a rationale, an acceptance criterion — and prose belongs to the object,
 /// which `objects.get` serves whole and which every node links to by its route. Copying
 /// it here would put the layer in the graph twice.
-///
-/// Two hundred is where the measurement puts it. Over this repository the facts are 39%
-/// of the generated artifact; the values themselves have a median length of 20 and a
-/// ninetieth percentile of 158, so a cut at 120 would save about a tenth of the document
-/// and truncate one value in eight — including short statements and outcomes that are the
-/// reason a node is worth reading. The lever worth pulling if a budget ever demands one is
-/// the list case, where the limit applies to each element rather than to the whole.
 const FACT_LIMIT: usize = 200;
 
 /// The fields the node already shows through `label`, `summary`, `status` and `kind`.
@@ -357,10 +350,6 @@ pub struct GraphInfo {
 /// it, and a graph added here is a graph everywhere.
 type Derivation = fn(&CapabilityRegistry, &Index) -> Graph;
 
-/// The id of the composed graph: the one derivation that joins every registry, and the
-/// one a generated artifact carries. Named here because the generator asks for it by id.
-pub const COMPOSED: &str = "composed";
-
 const DERIVATIONS: &[(&str, Derivation)] = &[
     ("registry", registry_graph),
     ("layer", layer_graph),
@@ -368,7 +357,7 @@ const DERIVATIONS: &[(&str, Derivation)] = &[
     ("adrs", adrs_graph),
     ("use-cases", use_cases_graph),
     ("why", why_graph),
-    (COMPOSED, composed_graph),
+    ("composed", composed_graph),
 ];
 
 /// The ids of every graph, in the order they are listed.
@@ -1557,7 +1546,9 @@ fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
             source: Some(m.source.clone()),
             status: Some(m.severity.clone()),
             external: false,
-            facts: BTreeMap::new(),
+            // the moment's own vocabulary is not modelled as facts yet; an empty map is
+            // the honest statement, and `skip_serializing_if` keeps it out of the output
+            facts: Default::default(),
         }) {
             break;
         }
@@ -1592,7 +1583,7 @@ fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
                         source: None,
                         status: None,
                         external: false,
-                        facts: BTreeMap::new(),
+                        facts: Default::default(),
                     }) {
                         break 'outer;
                     }

@@ -1,7 +1,7 @@
 +++
 title = "Capabilities"
 description = "the Rust executable's capability model: one definition, and MCP, HTTP, OpenAPI, Swagger UI, the command line and the generated reference derived from it; what is canonical, how to extend it, how it fails"
-weight = 27
+weight = 28
 [extra]
 source = "docs/CAPABILITIES.md"
 +++
@@ -196,7 +196,7 @@ The benchmark projection derives its targets from the registry against a reposit
 each executable with a required policy, directly and on every transport its exposure
 declares, once per case its input type provides; plus the transports' own operations,
 declared once as system targets (a cold `majordomus mcp` process, `initialize`, `ping`,
-`tools/list`, `resources/list`, `resources/read`; `GET /`, `/openapi.json`, `/docs`).
+`tools/list`, `resources/list`, `resources/read`; `GET /`, `/openapi.json`, `/swagger`).
 Coverage is `covered / required` with the denominator computed, never typed: a required
 capability whose input type produced no case for this repository is missing, and
 `capabilities validate`, `bench coverage --check` and CI fail on it; a waiver is a typed
@@ -267,7 +267,7 @@ written by hand.
 | MCP resources | capabilities with an `mcp.resource` exposure; a query with one is read as JSON | `majordomus mcp` on stdio, and `/mcp` on the shared server |
 | HTTP routes | capabilities with an `http` exposure; `GET` binds every top-level input property as a query parameter coerced by its schema type, `POST` binds the JSON body (a command's binding); errors map to 400 `invalid_input`, 404 `not_found`, 422 `refused`, 500 `internal`, 405 for another method on a known path | the shared server `majordomus mcp` starts, and `majordomus serve` |
 | OpenAPI 3.1 | the same routes; `operationId` is the id; the tags are the modules with their descriptions; every example is one of the capability's benchmark cases, by name, evaluated against the repository's index; the responses are the statuses the router answers for the kind (422 for a command only) and `default` for what the transport adds; a query parameter is never nullable; `x-majordomus-id`, `-kind`, `-stability`, `-provenance`, `-benchmark`, `-cache`, `-mcp`, `-cli` carry the rest; `info`, licence, contact and `externalDocs` from `about.rs` and the crate manifest; schemas hoisted into sorted components; the OAS 3.1 base dialect | `GET /openapi.json`, `docs/generated/openapi.json`, and the site's `/docs/api/` and `/openapi.json` |
-| Swagger UI | a shell page that loads `/openapi.json`; it embeds no specification; its assets come from the pinned `swagger-ui-dist` on unpkg, the one part that is not offline | `GET /docs` |
+| Swagger UI | a shell page that loads `/openapi.json`; it embeds no specification; its assets come from the pinned `swagger-ui-dist` on unpkg, the one part that is not offline | `GET /swagger` (`/docs` is the documentation) |
 | command line | `capabilities list` and `describe` dispatch through the registry's `cli` exposure; `schema` and `validate` are views of the registry, not capabilities | `majordomus capabilities …` |
 | reference | the index of modules and builtin capabilities, one page per executable module with every capability in full; declarative resources described by rule, listed live; the command line as clap declares it | `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md`, `docs/generated/cli.md`, `docs/generated/cli.{json,yaml}` (`majordomus/cli/v1`) |
 | benchmark targets | every required executable per exposed transport per case, plus the system targets; the coverage tallies | `majordomus bench`, `docs/generated/benchmarks.md` and `docs/generated/benchmarks.{json,yaml}` (`majordomus/benchmark-matrix/v1`) — one computation, three encodings |
@@ -284,7 +284,7 @@ written by hand.
 What every projection says about itself comes from `about.rs`: the OpenAPI `info`,
 the MCP `initialize` instructions and the HTTP index (`GET /`) open with the same
 summary and carry the same paragraphs, so no interface describes the surface in words
-of its own. The infrastructure routes `/`, `/openapi.json`, `/docs` and `/mcp` are the HTTP
+of its own. The infrastructure routes `/`, `/openapi.json`, `/swagger` and `/mcp` are the HTTP
 projection's own and are not capabilities; `/mcp` is MCP over HTTP (the Streamable HTTP
 transport's request half, with `Mcp-Session-Id` sessions) and exists on the shared server
 only. One shared server serves a repository: the first `majordomus mcp` or `serve` binds

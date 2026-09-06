@@ -197,12 +197,15 @@ for f in "$ROOT"/test/cases/*.sh; do
   # the top-level directory of each canonical input, minus the runtime a fixture always copies
   for p in $("$ROOT/scripts/generate-site-data" --inputs | grep '/' | cut -d/ -f1 | sort -u); do
     case "$p" in bin|lib|share|scripts|docs) continue ;; esac
-    # a copy, not any mention: every case sources "$ROOT/test/lib.sh", and sourcing a file
-    # is not copying a tree. Matching a bare reference made the rule fire on all of them the
-    # moment test/ became a canonical input.
+    # a copy of the tree, not any mention of it and not a copy of a file inside it: every
+    # case sources "$ROOT/test/lib.sh", and sourcing a file is not copying a tree. Matching
+    # a bare reference made the rule fire on all of them the moment test/ became a canonical
+    # input; matching the tree name with a word boundary then fired on
+    # `cp "$ROOT/test/run.sh"`, which copies two named files into a private harness on
+    # purpose. The tree is copied when the path ends at its name, or at `<name>/.`.
     # a case that copies a tree whole for its templates but takes the list of inputs from
     # --inputs holds no list of its own either
-    if grep -qE "cp[^|]*\\\$ROOT/$p\\b" "$f" && ! grep -qE 'fixture_repo|generate-site-data" --inputs' "$f"; then
+    if grep -qE "cp[^|]*\\\$ROOT/$p(/\\.)?([\"'[:space:]]|\$)" "$f" && ! grep -qE 'fixture_repo|generate-site-data" --inputs' "$f"; then
       echo "    $(basename "$f") copies canonical input tree $p by hand; use fixture_repo or --inputs"; exit 1
     fi
   done
