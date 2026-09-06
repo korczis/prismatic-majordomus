@@ -103,6 +103,10 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
         .filter(|a| a.format == ArtifactFormat::Json && !a.document.starts_with("providers/"))
         // the site dataset is the website's own file and is committed as JSON alone
         .filter(|a| a.document != "site-registry")
+        // a projected JSON Schema is JSON by its own contract: `.schema.json` is what a
+        // validator looks for, and a YAML sibling would be a second encoding of a file
+        // whose format is named in its extension and read by nothing that wants YAML
+        .filter(|a| !a.document.starts_with("schemas/"))
         .collect();
     assert!(json.len() >= 4, "{} JSON documents", json.len());
     for a in json {
