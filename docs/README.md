@@ -7,6 +7,7 @@ Each of these is rendered on the website as well, from this same Markdown.
 | Document | Audience | Purpose |
 |---|---|---|
 | [`DESIGN.md`](DESIGN.md) | humans and AI workers | the v0.1 specification: problem, thesis, models, boundaries, what is intentionally absent |
+| [`TWO_FOLDER_CONSOLIDATION.md`](TWO_FOLDER_CONSOLIDATION.md) | humans and AI workers | what the repository writes into a tree today, verified against the code and the running binary, and the ordered slices that reduce it to `.ai/**` and `.majordomus/**` with reversible bridges |
 | [`CLI.md`](CLI.md) | implementers, AI workers | every command: behaviour, reads, writes, exit-code contract, target output |
 | [`SCHEMAS.md`](SCHEMAS.md) | implementers, AI workers | every file: schema, a concrete example, which command reads and writes it |
 | [`CONCEPTS.md`](CONCEPTS.md) | everyone | the vocabulary, and the two outcomes people confuse |

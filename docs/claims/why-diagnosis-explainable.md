@@ -28,16 +28,36 @@ The website runs the same arithmetic over the same data: the page's script is gi
 build-time projection of the catalogue and joins signal to moment to metadata; there is no
 mapping from a symptom to a recommendation written in JavaScript.
 
-## What it does not cover
+## How to see it
 
-It does not rank by severity or frequency, and it does not decide what a reader should do.
-It reports what their answers imply about which parts of operations they are paying for, and
-what in this repository addresses those parts.
-
-## Evidence
+```bash
+majordomus why diagnose                                   # the questionnaire, from the moments' own signals
+majordomus why diagnose --signal two-agents-one-bug       # a diagnosis, with matched_because on every row
+majordomus why diagnose --signal nonsense --format json | jq '.unresolved'
+cargo test -p majordomus-cli --test why
+bash test/run.sh 98_why_catalogue
+```
 
 `apps/majordomus-cli/tests/why.rs` asserts that a signal and its moment reach the same
 answer, that an unrecognised name is reported as unresolved rather than dropped, that an
 empty selection is an empty diagnosis rather than an error, and that each row carries the
 moment that produced it. `test/cases/98_why_catalogue.sh` runs the same from the command
 line, including the questionnaire built from the catalogue's own signals.
+
+## What it does not cover
+
+It does not rank by severity or frequency, and it does not decide what a reader should do.
+It reports what their answers imply about which parts of operations they are paying for, and
+what in this repository addresses those parts.
+
+## Why it exists
+
+A diagnosis that cannot be argued with is advice, and advice from a tool about someone
+else's operations is worth very little. The obvious implementations — a weighting per
+signal, a score, a model trained on nothing — all produce a number that no reader can check
+and no author can defend, and the first time such a number is wrong it is also unfalsifiable.
+
+Counting is defensible: every row names the answers that produced it, so a reader who
+disagrees disagrees with something specific. It also keeps the website honest, because a
+page that did its own arithmetic would be a second opinion about the same data, and the two
+would drift the first time either changed.

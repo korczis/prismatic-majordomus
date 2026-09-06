@@ -1,7 +1,7 @@
 +++
 title = "Concepts"
 description = "the vocabulary, and the two outcomes people confuse"
-weight = 12
+weight = 13
 [extra]
 source = "docs/CONCEPTS.md"
 +++

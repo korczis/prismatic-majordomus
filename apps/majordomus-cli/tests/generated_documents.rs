@@ -97,6 +97,101 @@ fn every_artifact_declares_its_encoding_its_source_and_carries_a_header() {
     assert_eq!(generate::violations(&artifacts, &schemas()), Vec::new());
 }
 
+/// A fixture that carries its own copy of the distribution's data directory. The plan then
+/// projects the document schemas — the JSON Schema beside each proto, the section lists,
+/// the allow-lists — into that fixture, which is where they belong and the only place they
+/// can be written without reaching into somebody else's tree.
+fn fixture_with_its_own_share(f: &common::Fixture) -> std::path::PathBuf {
+    fn copy_tree(from: &std::path::Path, to: &std::path::Path) {
+        std::fs::create_dir_all(to).unwrap();
+        for entry in std::fs::read_dir(from).unwrap() {
+            let entry = entry.unwrap();
+            let target = to.join(entry.file_name());
+            if entry.file_type().unwrap().is_dir() {
+                copy_tree(&entry.path(), &target);
+            } else {
+                std::fs::copy(entry.path(), &target).unwrap();
+            }
+        }
+    }
+    let dist = common::dist_share();
+    let share = f.root().join("share");
+    std::fs::create_dir_all(&share).unwrap();
+    std::fs::copy(dist.join("kinds.yaml"), share.join("kinds.yaml")).unwrap();
+    copy_tree(&dist.join("schemas"), &share.join("schemas"));
+    // the default scope the tool falls back to when the repository declares none
+    let scope = share.join("skeleton/ai/repo/scope.yaml");
+    std::fs::create_dir_all(scope.parent().unwrap()).unwrap();
+    std::fs::copy(dist.join("skeleton/ai/repo/scope.yaml"), &scope).unwrap();
+    share
+}
+
+#[test]
+fn the_document_schemas_are_projected_into_the_repository_that_holds_them() {
+    let f = common::Fixture::new();
+    let share = fixture_with_its_own_share(&f);
+    let args = majordomus_cli::cli::RepoArgs {
+        repo: Some(f.root()),
+        share: Some(share),
+        ..Default::default()
+    };
+    let app = majordomus_cli::app::App::load(&args).expect("app loads");
+    let artifacts = generate::plan(&app, &[Target::Documents, Target::Allow]).expect("a plan");
+
+    let projected: Vec<&str> = artifacts.iter().map(|a| a.path.as_str()).collect();
+    assert!(
+        projected
+            .iter()
+            .any(|p| p.starts_with("share/schemas/majordomus/") && p.ends_with(".schema.json")),
+        "no JSON Schema was projected beside its proto: {projected:?}"
+    );
+    assert!(
+        projected.iter().any(|p| p.starts_with("share/sections/")),
+        "no section list was projected: {projected:?}"
+    );
+    assert!(
+        projected.iter().any(|p| p.starts_with("share/allow/")),
+        "no allow-list was projected: {projected:?}"
+    );
+    for p in &projected {
+        assert!(
+            !std::path::Path::new(p).is_absolute() && !p.split('/').any(|c| c == ".."),
+            "{p} is not a path inside the repository the plan was made for"
+        );
+    }
+    // and they are what `write` would put there: writing the plan touches nothing else
+    let written = generate::write(&f.root(), &artifacts).expect("the plan writes");
+    for path in &written {
+        assert!(
+            path.starts_with(f.root()),
+            "{} was written outside the fixture",
+            path.display()
+        );
+    }
+}
+
+#[test]
+fn no_artifact_reaches_outside_the_repository_the_plan_was_made_for() {
+    // The fixture's share is the distribution beside this crate, which is outside the
+    // fixture. Every artifact path is joined to the repository root by `generate::write`,
+    // so a path that is absolute, or that climbs, is a write into somebody else's tree —
+    // which is what happened to this repository's own share/ until the plan stopped
+    // projecting the schemas of a share it does not contain.
+    let f = common::Fixture::new();
+    for a in plan(&f) {
+        assert!(
+            !std::path::Path::new(&a.path).is_absolute(),
+            "{} is an absolute path",
+            a.path
+        );
+        assert!(
+            !a.path.split('/').any(|c| c == ".."),
+            "{} climbs out of the root",
+            a.path
+        );
+    }
+}
+
 #[test]
 fn no_artifact_reaches_outside_the_repository_the_plan_was_made_for() {
     // The fixture's share is the distribution beside this crate, which is outside the
