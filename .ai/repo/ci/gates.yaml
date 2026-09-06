@@ -51,8 +51,8 @@ gates:
 
   - id: rust-command
     job: structure
-    runs: scripts/ci/rust-command-check
-    summary: every composed command module asserts what it declares, and the debt the baseline records may shrink but not grow
+    runs: scripts/ci/rust-command-check --strict
+    summary: every composed command module asserts, in the file that declares it, that it is what it claims
 
   - id: rust-coverage
     job: coverage
@@ -98,7 +98,7 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, .ai/repo/rust-command-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
     gates: [rust-check, rust-command, rust-coverage, rust-bench, shell-suite, macos]
 
   # projections of the registry and the policy: generate --check decides whether they are
