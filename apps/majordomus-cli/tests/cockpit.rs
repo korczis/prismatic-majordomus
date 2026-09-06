@@ -17,6 +17,7 @@ const PAGES: &[&str] = &[
     "/cockpit/objects",
     "/cockpit/graphs",
     "/cockpit/graphs/topology",
+    "/cockpit/continuity",
     "/cockpit/health",
     "/cockpit/api",
     "/cockpit/search",
