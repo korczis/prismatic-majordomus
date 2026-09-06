@@ -344,13 +344,13 @@ fn registry_graph(registry: &CapabilityRegistry, _index: &Index) -> Graph {
     let mut b = Builder::new(
         "registry",
         "Capability registry",
-        "Every module, the capabilities it composes, the source file each was declared in, and the MCP, HTTP and command-line projections derived from it. The executable's own architecture, read back from the registry that produces every interface.",
+        "Every module, the capabilities it composes, the source file each was declared in, and the MCP, HTTP, command-line and Cockpit projections derived from it. The executable's own architecture, read back from the registry that produces every interface — this page among them.",
         "the capability registry: builtin descriptors and the declarative objects of the layer",
     )
     .node_kind("module", "a module composed with module! and named in compose_modules!, or one kind of declarative object")
     .node_kind("capability", "one canonical declaration: a query, a command, or a declarative resource")
     .node_kind("source", "the file the declaration was read from")
-    .node_kind("projection", "an external interface the descriptor is projected onto")
+    .node_kind("projection", "an external interface the descriptor is projected onto, the Cockpit included")
     .edge_kind("composes", "the module composes the capability")
     .edge_kind("declared_in", "the capability was declared in that file")
     .edge_kind("projects", "the capability is exposed through that interface");
@@ -384,6 +384,11 @@ fn registry_graph(registry: &CapabilityRegistry, _index: &Index) -> Graph {
             "routes under /api/v1/, and the OpenAPI document over them",
         ),
         ("projection:cli", "CLI", "the words after `majordomus`"),
+        (
+            "projection:cockpit",
+            "Cockpit",
+            "a page for every capability, and a form generated from the input schema for every one the Cockpit can call",
+        ),
     ] {
         b.node(Node {
             id: id.into(),
@@ -441,6 +446,11 @@ fn registry_graph(registry: &CapabilityRegistry, _index: &Index) -> Graph {
         if c.exposure.cli.is_some() {
             b.edge(&node_id, "projection:cli", "projects");
         }
+        // the Cockpit is a projection like the others, and it is on this graph so that the
+        // executable's own picture of itself is complete rather than complete-except-the-
+        // part-a-person-looks-at. Every capability has a page; the ones with an HTTP
+        // exposure also get a form that calls them.
+        b.edge(&node_id, "projection:cockpit", "projects");
     }
     b.finish()
 }
