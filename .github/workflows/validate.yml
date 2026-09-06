@@ -46,6 +46,8 @@ jobs:
       rust_integration: ${{ steps.plan.outputs.rust_integration }}
       rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
+      cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
+      cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
@@ -299,8 +301,8 @@ jobs:
       # committed (two megabytes nothing on the critical path needs), so the runner has to
       # build them out of node_modules before a browser is pointed at those pages. Without
       # this the probe reports a console 404 on every page that lazily loads one.
-      - name: build the Cockpit's vendored assets
-        run: scripts/cockpit-assets
+      - name: vendor the lazy-loaded libraries the probe expects to find
+        run: scripts/ci/timed cockpit-assets cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit
         run: CHROME_BIN=google-chrome scripts/ci/timed cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
       - if: always()

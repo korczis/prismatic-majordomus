@@ -273,3 +273,43 @@ expect_exit 10 "$MJ" context validate
 expect_grep 'invalid-front-matter.*neither true nor false'
 rm -rf "$Z"
 expect_exit 0 "$MJ" context validate
+
+# ------------------------------------------------- children.exempt: a carried subtree
+# A layer may carry a subtree it does not author — an installed package whose integrity is
+# its own manifest's business. The exemption is declared by the contract that governs the
+# subtree, so it travels with the tree instead of living as a name inside the tool.
+V=.ai/repo/zones
+mkdir -p "$V/vendor/pkg/rules"; printf 'x\n' > "$V/vendor/pkg/rules/a.md"; printf 'x\n' > "$V/data.yaml"
+cdoc "$V/README.md" ai.repo.zones subtree 100
+expect_exit 10 "$MJ" context validate
+expect_grep 'zones/vendor — missing-contract'
+cdoc "$V/README.md" ai.repo.zones subtree 100 'children:' '  require_contract: true' '  exempt: [.ai/repo/zones/vendor]'
+expect_exit 0 "$MJ" context validate
+# the exemption reaches the whole subtree, not only the directory named
+mkdir -p "$V/vendor/pkg/rules/deeper"; printf 'x\n' > "$V/vendor/pkg/rules/deeper/b.md"
+expect_exit 0 "$MJ" context validate
+# a directory the repository does write still owes one, vendored sibling or not
+mkdir -p "$V/own"; printf 'x\n' > "$V/own/data.yaml"
+expect_exit 10 "$MJ" context validate
+expect_grep 'zones/own — missing-contract'
+rm -rf "$V/own"
+expect_exit 0 "$MJ" context validate
+# a contract releases the directories it governs and no others: exempting sideways would
+# be a way around the narrowing rule, so it is refused by name
+cdoc "$V/README.md" ai.repo.zones subtree 100 'children:' '  exempt: [.ai/repo/prompts]'
+expect_exit 10 "$MJ" context validate
+expect_grep 'illegal-override.*lies outside the subtree this document governs'
+# nor may a document exempt its own directory; that is what require_contract: false says
+cdoc "$V/README.md" ai.repo.zones subtree 100 'children:' '  exempt: [.ai/repo/zones]'
+expect_exit 10 "$MJ" context validate
+expect_grep "illegal-override.*is this document's own directory"
+# an exemption that names nothing real is a broken reference, like any other path
+cdoc "$V/README.md" ai.repo.zones subtree 100 'children:' '  exempt: [.ai/repo/zones/absent]'
+expect_exit 10 "$MJ" context validate
+expect_grep 'broken-reference.*is not a directory in this repository'
+# and, like require_contract, it states what descendants owe: a subtree document only
+cdoc "$V/README.md" ai.repo.zones directory 100 'children:' '  exempt: [.ai/repo/zones/vendor]'
+expect_exit 10 "$MJ" context validate
+expect_grep 'invalid-front-matter.*children\.exempt.*scope subtree only'
+rm -rf "$V"
+expect_exit 0 "$MJ" context validate
