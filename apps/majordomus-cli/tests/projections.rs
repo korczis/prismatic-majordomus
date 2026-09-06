@@ -305,16 +305,45 @@ fn generated_artifacts_are_byte_identical_twice_and_carry_no_absolute_path() {
             art.path
         );
     }
-    let doc: Value = serde_json::from_str(&a[0].content).unwrap();
+    let by_path = |arts: &[majordomus_cli::generate::Artifact], p: &str| -> String {
+        arts.iter()
+            .find(|x| x.path == p)
+            .unwrap_or_else(|| panic!("artifact {p}"))
+            .content
+            .clone()
+    };
+    let doc: Value = serde_json::from_str(&by_path(&a, "docs/generated/openapi.json")).unwrap();
     assert!(doc["paths"].as_object().unwrap().keys().is_sorted());
     assert!(doc["components"]["schemas"]
         .as_object()
         .unwrap()
         .keys()
         .is_sorted());
-    assert!(a[1]
-        .content
-        .starts_with("<!-- GENERATED FILE — DO NOT EDIT DIRECTLY"));
+    // every Markdown projection carries the banner, and every YAML one carries it as a
+    // comment: the header is a property of the encoding, not of one file
+    for art in &a {
+        let expected = match art.format {
+            majordomus_cli::generate::ArtifactFormat::Markdown => {
+                "<!-- GENERATED FILE — DO NOT EDIT DIRECTLY"
+            }
+            majordomus_cli::generate::ArtifactFormat::Yaml => {
+                "# GENERATED FILE — DO NOT EDIT DIRECTLY"
+            }
+            _ => continue,
+        };
+        assert!(
+            art.content.starts_with(expected),
+            "{} carries no banner",
+            art.path
+        );
+    }
+    // the same document in two encodings, from one value
+    let json_doc: Value =
+        serde_json::from_str(&by_path(&a, "docs/generated/registry.json")).unwrap();
+    assert_eq!(
+        json_doc["schema"],
+        majordomus_cli::generate::REGISTRY_SCHEMA
+    );
 }
 
 #[test]
@@ -430,7 +459,15 @@ fn every_generated_artifact_is_derived_deterministic_and_traces_to_the_registry(
     );
     let (code, out, _) = common::run_in(&f.root(), &["generate", "benchmarks"], "");
     assert_eq!(code, 0);
-    assert_eq!(out.trim(), "docs/generated/benchmarks.md");
+    // one document, every encoding it is committed in
+    assert_eq!(
+        out.lines().collect::<Vec<_>>(),
+        [
+            "docs/generated/benchmarks.md",
+            "docs/generated/benchmarks.json",
+            "docs/generated/benchmarks.yaml"
+        ]
+    );
 }
 
 /// The whole plan, every target: deterministic, free of the checkout path, and a mirror
@@ -783,12 +820,13 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
             }])
             .build()
             .unwrap(),
-        "test",
     );
-    assert!(waived_manifest.contains("\"external_dependency\""));
+    assert!(waived_manifest
+        .to_string()
+        .contains("\"external_dependency\""));
 
     // the registry manifest carries the same descriptor with its source path
-    let manifest: Value = serde_json::from_str(&majordomus_cli::generate::registry_manifest(
+    let manifest: Value = majordomus_cli::generate::registry_manifest(
         &CapabilityRegistry::builder()
             .with_builtin(vec![echo::<EchoV2>(
                 "Echo, renamed.",
@@ -797,9 +835,7 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
             )])
             .build()
             .unwrap(),
-        "test",
-    ))
-    .unwrap();
+    );
     let cap = &manifest["capabilities"][0];
     assert_eq!(cap["id"], "fixture.echo");
     assert_eq!(cap["description"], "Echo, renamed.");

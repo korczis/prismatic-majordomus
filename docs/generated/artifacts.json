@@ -1,0 +1,902 @@
+{
+  "schema": "majordomus/generated-artifacts/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.1.0",
+  "documents": [
+    {
+      "id": "allow/adr",
+      "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/application",
+      "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/context",
+      "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/current",
+      "source": "the JSON Schema `majordomus.current/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/document",
+      "source": "the JSON Schema `majordomus.document/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/issue",
+      "source": "the JSON Schema `majordomus.issue/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/knowledge",
+      "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/manifest",
+      "source": "the JSON Schema `majordomus.manifest/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/milestone",
+      "source": "the JSON Schema `majordomus.milestone/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/policy",
+      "source": "the JSON Schema `majordomus.policy/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/profile",
+      "source": "the JSON Schema `majordomus.profile/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/project",
+      "source": "the JSON Schema `majordomus.project/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/prompt",
+      "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/rule",
+      "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/scope",
+      "source": "the JSON Schema `majordomus.scope/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/session",
+      "source": "the JSON Schema `majordomus.session/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/session-record",
+      "source": "the JSON Schema `majordomus.session-record/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/skill",
+      "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/taxonomy",
+      "source": "the JSON Schema `majordomus.taxonomy/v1` of the kind it validates",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "allow/use-case",
+      "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "artifacts",
+      "schema": "majordomus/generated-artifacts/v1",
+      "source": "the generation plan itself, over every other target",
+      "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ]
+    },
+    {
+      "id": "benchmarks",
+      "schema": "majordomus/benchmark-matrix/v1",
+      "source": "the benchmark projection of the canonical capability registry",
+      "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ]
+    },
+    {
+      "id": "capabilities",
+      "source": "the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "cli",
+      "schema": "majordomus/cli/v1",
+      "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
+      "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ]
+    },
+    {
+      "id": "modules/artifacts",
+      "source": "the `artifacts` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/capabilities",
+      "source": "the `capabilities` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/graph",
+      "source": "the `graph` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/health",
+      "source": "the `health` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/objects",
+      "source": "the `objects` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/peers",
+      "source": "the `peers` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/perf",
+      "source": "the `perf` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "modules/repository",
+      "source": "the `repository` module of the canonical Majordomus capability registry",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "openapi",
+      "source": "the canonical Majordomus capability registry",
+      "formats": [
+        "json",
+        "yaml"
+      ]
+    },
+    {
+      "id": "providers/agents",
+      "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "providers/claude-code",
+      "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "registry",
+      "schema": "majordomus/capability-registry/v1",
+      "source": "the canonical capability registry",
+      "formats": [
+        "json",
+        "yaml"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.adr/v1",
+      "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.application/v1",
+      "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.capture/v1",
+      "source": "the document schema `share/schemas/majordomus/capture/capture.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.context/v1",
+      "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.knowledge/v1",
+      "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.prompt/v1",
+      "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.rule/v1",
+      "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.skill/v1",
+      "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "schemas/majordomus.use-case/v1",
+      "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
+      "formats": [
+        "json"
+      ]
+    },
+    {
+      "id": "sections/adr",
+      "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "sections/application",
+      "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "sections/context",
+      "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "sections/knowledge",
+      "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "sections/prompt",
+      "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "sections/rule",
+      "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "sections/skill",
+      "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "sections/use-case",
+      "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
+      "formats": [
+        "text"
+      ]
+    },
+    {
+      "id": "site-registry",
+      "schema": "majordomus-site-registry/v2",
+      "source": "the capability registry and the index of this repository's layer",
+      "formats": [
+        "json"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "AGENTS.md",
+      "document": "providers/agents",
+      "format": "markdown",
+      "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself",
+      "bytes": 3030,
+      "sha256": "2917fd6d7739956d30224ca3ed189fddce40acff92f306694ba9591e1940efee"
+    },
+    {
+      "path": "CLAUDE.md",
+      "document": "providers/claude-code",
+      "format": "markdown",
+      "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself",
+      "bytes": 2319,
+      "sha256": "9192ded09feb86a0da673cb653448e0484426211c14e54c3ad57fd5911284805"
+    },
+    {
+      "path": "docs/generated/artifacts.json",
+      "document": "artifacts",
+      "format": "json",
+      "schema": "majordomus/generated-artifacts/v1",
+      "source": "the generation plan itself, over every other target",
+      "describes_itself": true
+    },
+    {
+      "path": "docs/generated/artifacts.md",
+      "document": "artifacts",
+      "format": "markdown",
+      "source": "the generation plan itself, over every other target",
+      "describes_itself": true
+    },
+    {
+      "path": "docs/generated/artifacts.yaml",
+      "document": "artifacts",
+      "format": "yaml",
+      "schema": "majordomus/generated-artifacts/v1",
+      "source": "the generation plan itself, over every other target",
+      "describes_itself": true
+    },
+    {
+      "path": "docs/generated/benchmarks.json",
+      "document": "benchmarks",
+      "format": "json",
+      "schema": "majordomus/benchmark-matrix/v1",
+      "source": "the benchmark projection of the canonical capability registry",
+      "bytes": 6463,
+      "sha256": "f160e5e24eca4e8ba139887daac66eccb97da38f0ba093360d7449179c116e9c"
+    },
+    {
+      "path": "docs/generated/benchmarks.md",
+      "document": "benchmarks",
+      "format": "markdown",
+      "source": "the benchmark projection of the canonical capability registry",
+      "bytes": 3903,
+      "sha256": "ee783ff8a63f3eb5a0cdea03347d17c6bce5f08a2e277c9188135d9771157e75"
+    },
+    {
+      "path": "docs/generated/benchmarks.yaml",
+      "document": "benchmarks",
+      "format": "yaml",
+      "schema": "majordomus/benchmark-matrix/v1",
+      "source": "the benchmark projection of the canonical capability registry",
+      "bytes": 4836,
+      "sha256": "b43398f3eee03885977800f0bcc2cd34d59ee1dfaf0692359f8f7221b1f404ba"
+    },
+    {
+      "path": "docs/generated/capabilities.md",
+      "document": "capabilities",
+      "format": "markdown",
+      "source": "the canonical Majordomus capability registry",
+      "bytes": 5122,
+      "sha256": "9d0bc3d03839752bba724b6f2cf60924f6c7aaaf7ef7ae019a591badadbeaae9"
+    },
+    {
+      "path": "docs/generated/cli.json",
+      "document": "cli",
+      "format": "json",
+      "schema": "majordomus/cli/v1",
+      "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
+      "bytes": 115257,
+      "sha256": "c170005ff7fcb58568837a99959063bbe7e0cc6ee812658c94d29d691a8afc59"
+    },
+    {
+      "path": "docs/generated/cli.md",
+      "document": "cli",
+      "format": "markdown",
+      "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
+      "bytes": 48743,
+      "sha256": "22297427d7998cd8249ebb59f7ffed61e486464548bce37ae0e773d76ee95c6d"
+    },
+    {
+      "path": "docs/generated/cli.yaml",
+      "document": "cli",
+      "format": "yaml",
+      "schema": "majordomus/cli/v1",
+      "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it",
+      "bytes": 89645,
+      "sha256": "fa032bb7761a3da8488e59c2f44baa0d88175c56d46c0bef2ebfc555d068e850"
+    },
+    {
+      "path": "docs/generated/modules/artifacts.md",
+      "document": "modules/artifacts",
+      "format": "markdown",
+      "source": "the `artifacts` module of the canonical Majordomus capability registry",
+      "bytes": 1741,
+      "sha256": "3491dec853808fd0a6ebc9524d27cb8ef38853af188a99ec8c115dffd219b28e"
+    },
+    {
+      "path": "docs/generated/modules/capabilities.md",
+      "document": "modules/capabilities",
+      "format": "markdown",
+      "source": "the `capabilities` module of the canonical Majordomus capability registry",
+      "bytes": 2074,
+      "sha256": "418698b86cc6843f8fae068a70a66465075f627ead76e3c461059a3f8d0ad221"
+    },
+    {
+      "path": "docs/generated/modules/graph.md",
+      "document": "modules/graph",
+      "format": "markdown",
+      "source": "the `graph` module of the canonical Majordomus capability registry",
+      "bytes": 1797,
+      "sha256": "d8734049ab541598a6b65629c586a632603ed6960876ce6226189a2ec81d153e"
+    },
+    {
+      "path": "docs/generated/modules/health.md",
+      "document": "modules/health",
+      "format": "markdown",
+      "source": "the `health` module of the canonical Majordomus capability registry",
+      "bytes": 1255,
+      "sha256": "c61a34b2ab0f11b17427f98442719cb32e6de71bd4e727b2a6db32e727ec3484"
+    },
+    {
+      "path": "docs/generated/modules/objects.md",
+      "document": "modules/objects",
+      "format": "markdown",
+      "source": "the `objects` module of the canonical Majordomus capability registry",
+      "bytes": 2793,
+      "sha256": "622890b721db73e7c07d9375cfece414eeaeef30237b9e45ccb8f578a29a1a05"
+    },
+    {
+      "path": "docs/generated/modules/peers.md",
+      "document": "modules/peers",
+      "format": "markdown",
+      "source": "the `peers` module of the canonical Majordomus capability registry",
+      "bytes": 1943,
+      "sha256": "a771ebfa056901a8b545e2577326b21a6858c14780e58eeb161e2d8f821361b6"
+    },
+    {
+      "path": "docs/generated/modules/perf.md",
+      "document": "modules/perf",
+      "format": "markdown",
+      "source": "the `perf` module of the canonical Majordomus capability registry",
+      "bytes": 1040,
+      "sha256": "055153aab82aeba44db7d1ab000752ff59dac0dc64f1eab60689b0b44f4ffce9"
+    },
+    {
+      "path": "docs/generated/modules/repository.md",
+      "document": "modules/repository",
+      "format": "markdown",
+      "source": "the `repository` module of the canonical Majordomus capability registry",
+      "bytes": 2522,
+      "sha256": "9ea2e1c3be8311b0665c5bff738d447e2bd6d0ecac548483839c5e62b6c702c9"
+    },
+    {
+      "path": "docs/generated/openapi.json",
+      "document": "openapi",
+      "format": "json",
+      "source": "the canonical Majordomus capability registry",
+      "bytes": 140292,
+      "sha256": "1ec1dd8f89dafcc85f48d65dd96759bd9dd408eb39174e28b065744db233f279"
+    },
+    {
+      "path": "docs/generated/openapi.yaml",
+      "document": "openapi",
+      "format": "yaml",
+      "source": "the canonical Majordomus capability registry",
+      "bytes": 108354,
+      "sha256": "d56f3155b4123fe7817bf388313f672137a7cc4b63f6285042e06b5c868c28b2"
+    },
+    {
+      "path": "docs/generated/registry.json",
+      "document": "registry",
+      "format": "json",
+      "schema": "majordomus/capability-registry/v1",
+      "source": "the canonical capability registry",
+      "bytes": 155784,
+      "sha256": "4a53be11ad976d34589750afaf4c46d51d1da4c85af408c9a9ba1458bff6442e"
+    },
+    {
+      "path": "docs/generated/registry.yaml",
+      "document": "registry",
+      "format": "yaml",
+      "schema": "majordomus/capability-registry/v1",
+      "source": "the canonical capability registry",
+      "bytes": 118287,
+      "sha256": "70cc568936e205d5fc02a5796b9a49dc511c69f4977d877c104ea59abf885017"
+    },
+    {
+      "path": "share/allow/adr.txt",
+      "document": "allow/adr",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
+      "bytes": 372,
+      "sha256": "8c7ba29a4df6b3117cf1a98480414a8ab33336fa77dd98670bf7fa1e1cbbb6a9"
+    },
+    {
+      "path": "share/allow/application.txt",
+      "document": "allow/application",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
+      "bytes": 383,
+      "sha256": "8e7dc97e2e8bdebcdbdc4c3a8e3905a2d1656eaa5835c8c8149cf93d80e02756"
+    },
+    {
+      "path": "share/allow/context.txt",
+      "document": "allow/context",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
+      "bytes": 416,
+      "sha256": "65bb9cf8167c719067e473b36e9f7fdf838f748c50aef5c18ef02fab83f527ce"
+    },
+    {
+      "path": "share/allow/current.txt",
+      "document": "allow/current",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.current/v1` of the kind it validates",
+      "bytes": 336,
+      "sha256": "552ec836a3c63fbe54a6becdbdeaa859b1b494652c69a60eaa885c2be10f9a99"
+    },
+    {
+      "path": "share/allow/document.txt",
+      "document": "allow/document",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.document/v1` of the kind it validates",
+      "bytes": 273,
+      "sha256": "9dde2bfdaf13642e7cad0fc96f0dc7882321200b3e67b6adf1e0e34ae22a1bf9"
+    },
+    {
+      "path": "share/allow/issue.txt",
+      "document": "allow/issue",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.issue/v1` of the kind it validates",
+      "bytes": 788,
+      "sha256": "70986b93ba5bdd2d50aba537f40bb480d8806baffa86d49086447d374d5833cb"
+    },
+    {
+      "path": "share/allow/knowledge.txt",
+      "document": "allow/knowledge",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
+      "bytes": 428,
+      "sha256": "9b37b3d096ded66a2811e98a80be0fdb6ab7f5918d6a478dd4c6bff62176bbce"
+    },
+    {
+      "path": "share/allow/manifest.txt",
+      "document": "allow/manifest",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.manifest/v1` of the kind it validates",
+      "bytes": 566,
+      "sha256": "83b26a2b1849ceec6b973f4722b19e141cad6ff3af426e2694ef24fdfaccaa99"
+    },
+    {
+      "path": "share/allow/milestone.txt",
+      "document": "allow/milestone",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.milestone/v1` of the kind it validates",
+      "bytes": 759,
+      "sha256": "3202000b6e4817bc7285dc8a2d292542e116ff8ddf2c27336a7da2bbe1301e11"
+    },
+    {
+      "path": "share/allow/policy.txt",
+      "document": "allow/policy",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.policy/v1` of the kind it validates",
+      "bytes": 1218,
+      "sha256": "b7119507f8fb3acd84eee1ed3cccef788a906454a000aaf29852f027c7073461"
+    },
+    {
+      "path": "share/allow/profile.txt",
+      "document": "allow/profile",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.profile/v1` of the kind it validates",
+      "bytes": 677,
+      "sha256": "f5d85deac8595f90d6f6adaa2f7fdbfe4364e5c66aa1bc3611d94668b8a6d593"
+    },
+    {
+      "path": "share/allow/project.txt",
+      "document": "allow/project",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.project/v1` of the kind it validates",
+      "bytes": 244,
+      "sha256": "01f6f86f6b5812416884b75a720b03299491820e112399d7b1246671965742eb"
+    },
+    {
+      "path": "share/allow/prompt.txt",
+      "document": "allow/prompt",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
+      "bytes": 226,
+      "sha256": "fc020f8543426c24a64d5fd9ad99aae5def234cda4704d0a1b866d2fce301859"
+    },
+    {
+      "path": "share/allow/rule.txt",
+      "document": "allow/rule",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
+      "bytes": 516,
+      "sha256": "81db5b7a5978055f78de0e00360dd22dd034af023384c44a605d3535e1009638"
+    },
+    {
+      "path": "share/allow/scope.txt",
+      "document": "allow/scope",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.scope/v1` of the kind it validates",
+      "bytes": 824,
+      "sha256": "bad87aff002dccc5143f2de3e3d58cd86147c1c13afaa8421a1f3caf0f34625f"
+    },
+    {
+      "path": "share/allow/session-record.txt",
+      "document": "allow/session-record",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.session-record/v1` of the kind it validates",
+      "bytes": 650,
+      "sha256": "161a55bd5f97bbee4541e526762989ae3384f2ae536a5b7df39d627c03e123e8"
+    },
+    {
+      "path": "share/allow/session.txt",
+      "document": "allow/session",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.session/v1` of the kind it validates",
+      "bytes": 303,
+      "sha256": "fbb1b27a6903fd3b1e820df3c4a1792b2f5c53256933e37f74e9e5f3d81b8582"
+    },
+    {
+      "path": "share/allow/skill.txt",
+      "document": "allow/skill",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
+      "bytes": 328,
+      "sha256": "9756c26fc3f0cf670cd1b7ea105ddfa47a530f15a6dacffc165bc07cfc2e1d0f"
+    },
+    {
+      "path": "share/allow/taxonomy.txt",
+      "document": "allow/taxonomy",
+      "format": "text",
+      "source": "the JSON Schema `majordomus.taxonomy/v1` of the kind it validates",
+      "bytes": 312,
+      "sha256": "2ef695918b0fc910f1841a88e7d300bb487c0738971326790d983eecaa634b8e"
+    },
+    {
+      "path": "share/allow/use-case.txt",
+      "document": "allow/use-case",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
+      "bytes": 546,
+      "sha256": "acbb2f5258076582184ab0133ebd048925ce42ded22e1967eef66c21d1bc4242"
+    },
+    {
+      "path": "share/schemas/majordomus/adr/adr.v1.schema.json",
+      "document": "schemas/majordomus.adr/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
+      "bytes": 6106,
+      "sha256": "b6d1cc3e2c904192b522a948bdcaeada39272c75e9eca99a4ec0112294f39324"
+    },
+    {
+      "path": "share/schemas/majordomus/application/application.v1.schema.json",
+      "document": "schemas/majordomus.application/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
+      "bytes": 3960,
+      "sha256": "bd2b88a1cb72737c7471e47ea90795c2b6f441d6636289d0f9c53d9a7fbd503c"
+    },
+    {
+      "path": "share/schemas/majordomus/capture/capture.v1.schema.json",
+      "document": "schemas/majordomus.capture/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/capture/capture.v1.proto`",
+      "bytes": 4693,
+      "sha256": "2a6196be2ab4a68e09b78cd0d19c213c37edcebc0923507e1c61dfa3747fdcf5"
+    },
+    {
+      "path": "share/schemas/majordomus/context/context.v1.schema.json",
+      "document": "schemas/majordomus.context/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
+      "bytes": 5747,
+      "sha256": "f6cd368b2464b6472b4bdd0011c8ac437fcb10b1b95c68efd43d6592a462f765"
+    },
+    {
+      "path": "share/schemas/majordomus/knowledge/knowledge.v1.schema.json",
+      "document": "schemas/majordomus.knowledge/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
+      "bytes": 5722,
+      "sha256": "83fd3fcba44aa3baf112aac1d5b9489ce24f64eddf95d074501ec724488a2a82"
+    },
+    {
+      "path": "share/schemas/majordomus/prompt/prompt.v1.schema.json",
+      "document": "schemas/majordomus.prompt/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
+      "bytes": 2410,
+      "sha256": "201312f5c4be241c3664d2647fa5fdf7c3645670e1c174f07612281f3d19ff98"
+    },
+    {
+      "path": "share/schemas/majordomus/rule/rule.v1.schema.json",
+      "document": "schemas/majordomus.rule/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
+      "bytes": 5119,
+      "sha256": "da848b2fc798aacd19a3120577941d98c78d8d8ebdbe58363559be8ebb7b9d94"
+    },
+    {
+      "path": "share/schemas/majordomus/skill/skill.v1.schema.json",
+      "document": "schemas/majordomus.skill/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
+      "bytes": 4089,
+      "sha256": "a27d4e49fa56bed20a4950fa7750aceccd65c56fbeb9482ddfbdc954b7b4892d"
+    },
+    {
+      "path": "share/schemas/majordomus/use-case/use-case.v1.schema.json",
+      "document": "schemas/majordomus.use-case/v1",
+      "format": "json",
+      "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
+      "bytes": 9410,
+      "sha256": "5300cc0f5e6d1a1cf91963d62bafd8ecbcf1633cd677b6df6960672634a5700b"
+    },
+    {
+      "path": "share/sections/adr.txt",
+      "document": "sections/adr",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/adr/adr.v1.proto`",
+      "bytes": 319,
+      "sha256": "52d7b46aacf34646440946c0245ffc14d9882391861b576964f105fc9fba7b43"
+    },
+    {
+      "path": "share/sections/application.txt",
+      "document": "sections/application",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`",
+      "bytes": 234,
+      "sha256": "e42c6ff363987ab8503c3ee6dff9f227ed4452489736466dad5b20634ff77d9a"
+    },
+    {
+      "path": "share/sections/context.txt",
+      "document": "sections/context",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`",
+      "bytes": 297,
+      "sha256": "65bc04664bc4937988e6978a666b84b4f5430500cc5825be8354750e31bcf02d"
+    },
+    {
+      "path": "share/sections/knowledge.txt",
+      "document": "sections/knowledge",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`",
+      "bytes": 201,
+      "sha256": "e0607ebba8032e0d049c909990b59fec96d3bd78c135b99c8e4d3d3fb5ce5f52"
+    },
+    {
+      "path": "share/sections/prompt.txt",
+      "document": "sections/prompt",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`",
+      "bytes": 195,
+      "sha256": "6d1c370a9538888e5e9e4d800174e98804d96097175b873d6f680664e72c18c8"
+    },
+    {
+      "path": "share/sections/rule.txt",
+      "document": "sections/rule",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/rule/rule.v1.proto`",
+      "bytes": 335,
+      "sha256": "9810b6c9375302bcb829fa010ce3a368f9125f0e5bf98bd32ffde950e3168015"
+    },
+    {
+      "path": "share/sections/skill.txt",
+      "document": "sections/skill",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/skill/skill.v1.proto`",
+      "bytes": 281,
+      "sha256": "949be69ddae1374f6821aed12c632fd083c30af3b0ceac5e69587585bcc6bb0a"
+    },
+    {
+      "path": "share/sections/use-case.txt",
+      "document": "sections/use-case",
+      "format": "text",
+      "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`",
+      "bytes": 289,
+      "sha256": "f195f898cb3ac68853ad5b52aeab9c635b0a089ed2521a40c8d1328b0289289f"
+    },
+    {
+      "path": "site/data/registry/registry.json",
+      "document": "site-registry",
+      "format": "json",
+      "schema": "majordomus-site-registry/v2",
+      "source": "the capability registry and the index of this repository's layer",
+      "bytes": 693690,
+      "sha256": "5c1da33cb38fa4ea0c29f83843ffca45d4d100361a756584f41dfb11a5abafb8"
+    }
+  ]
+}

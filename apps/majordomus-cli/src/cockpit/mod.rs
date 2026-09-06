@@ -161,6 +161,7 @@ impl Cockpit {
             "/cockpit/graphs/topology" => pages::topology(&self.ctx),
             "/cockpit/continuity" => pages::continuity(&self.ctx),
             "/cockpit/health" => pages::health(&self.ctx),
+            "/cockpit/artifacts" => pages::artifacts(&self.ctx),
             "/cockpit/api" => pages::api(&self.ctx),
             "/cockpit/search" => pages::search(&self.ctx, query),
             "/cockpit/activity" => pages::activity(&self.ctx),

@@ -1202,6 +1202,49 @@ nor the new output.
 
 ---
 
+## Generated artifact header
+
+The provider bootstraps carry the stamp above, which is `majordomus update`'s. Every other
+generated artifact — everything `majordomus generate` writes — carries a provenance header
+in the form its encoding allows, and the three lines say the same thing in every one:
+
+```markdown
+<!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: <what it was derived from>; regenerate with `majordomus generate`
+     Generator: majordomus-cli <version> -->
+```
+
+```yaml
+# GENERATED FILE — DO NOT EDIT DIRECTLY
+# Source: <what it was derived from>; regenerate with `majordomus generate`
+# Generator: majordomus-cli <version>
+```
+
+A JSON document carries them as members instead, `schema` first when it has a contract:
+
+```json
+{
+  "schema": "majordomus/capability-registry/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: …; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.1.0"
+}
+```
+
+and a document whose own specification fixes its member names — the OpenAPI document is
+the only one — carries `x-majordomus-generated` and `x-majordomus-generator` instead. The
+line-oriented text artifacts (`share/allow/*.txt`) take the `#` form; every reader of one
+skips comment lines.
+
+No header carries a timestamp, an absolute path or a fingerprint that moves with an
+unrelated edit. The index of every artifact, with the document each projects, its encoding,
+its contract, its source, its size and its hash, is `docs/generated/artifacts.json` (schema
+`majordomus/generated-artifacts/v1`), and it is itself generated; the contracts of the
+generated documents are `share/schemas/generated/*.schema.json`, each pinned to its
+document by the `const` of the document's `schema` member. The rule is
+`project.generated-artifacts-are-typed@1`.
+
+---
+
 ## Worktree coordination
 
 There is no sidecar registry. `start` and `check --overlap` read `git worktree list`

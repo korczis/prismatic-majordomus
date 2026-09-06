@@ -1,6 +1,23 @@
 {
   "capabilities": [
     {
+      "api_anchor": "/docs/api/#op-artifacts-list",
+      "claims": [],
+      "cli": null,
+      "id": "artifacts.list",
+      "kind": "query",
+      "module": "artifacts",
+      "module_route": "/registry/modules/artifacts/",
+      "resource": "majordomus://artifacts",
+      "route": "/registry/capabilities/artifacts-list/",
+      "slug": "artifacts-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+      "tests": [],
+      "title": "List the generated artifacts",
+      "tool": "majordomus_artifacts"
+    },
+    {
       "api_anchor": "/docs/api/#op-capabilities-describe",
       "claims": [],
       "cli": "majordomus capabilities describe",
@@ -33,23 +50,6 @@
       "tests": [],
       "title": "List capabilities",
       "tool": "majordomus_capabilities"
-    },
-    {
-      "api_anchor": "/docs/api/#op-continuity-state",
-      "claims": [],
-      "cli": null,
-      "id": "continuity.state",
-      "kind": "query",
-      "module": "continuity",
-      "module_route": "/registry/modules/continuity/",
-      "resource": "majordomus://continuity",
-      "route": "/registry/capabilities/continuity-state/",
-      "slug": "continuity-state",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
-      "tests": [],
-      "title": "What the lifecycle is holding",
-      "tool": "majordomus_continuity"
     },
     {
       "api_anchor": "/docs/api/#op-graph-get",
@@ -342,6 +342,13 @@
         "test": "test/cases/76_capabilities_projections.sh"
       },
       {
+        "id": "generated-artifacts-typed",
+        "implementation": "apps/majordomus-cli/src/generate.rs",
+        "route": "/guarantees/generated-artifacts-typed/",
+        "status": "guaranteed",
+        "test": "test/cases/52_generated_artifact_typing.sh"
+      },
+      {
         "id": "generated-projections-checked",
         "implementation": "apps/majordomus-cli/src/generate.rs",
         "route": "/guarantees/generated-projections-checked/",
@@ -440,11 +447,27 @@
   },
   "counts": {
     "capabilities": 15,
-    "claims": 21,
+    "claims": 22,
     "modules": 8
   },
   "generator": "majordomus-cli 0.1.0",
   "modules": [
+    {
+      "capabilities": [
+        {
+          "id": "artifacts.list",
+          "route": "/registry/capabilities/artifacts-list/",
+          "slug": "artifacts-list"
+        }
+      ],
+      "claims": [],
+      "id": "artifacts",
+      "route": "/registry/modules/artifacts/",
+      "slug": "artifacts",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+      "title": "Generated artifacts"
+    },
     {
       "capabilities": [
         {
@@ -465,22 +488,6 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
-    },
-    {
-      "capabilities": [
-        {
-          "id": "continuity.state",
-          "route": "/registry/capabilities/continuity-state/",
-          "slug": "continuity-state"
-        }
-      ],
-      "claims": [],
-      "id": "continuity",
-      "route": "/registry/modules/continuity/",
-      "slug": "continuity",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
-      "title": "Continuity"
     },
     {
       "capabilities": [
@@ -619,6 +626,7 @@
   ],
   "registry_schema": "majordomus/capability-registry/v1",
   "routes": {
+    "artifacts": "/registry/artifacts/",
     "benchmarks": "/registry/benchmarks/",
     "capabilities": "/registry/capabilities/",
     "cli": "/registry/cli/",

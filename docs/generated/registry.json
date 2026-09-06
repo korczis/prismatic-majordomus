@@ -4,6 +4,14 @@
   "generator": "majordomus-cli 0.1.0",
   "modules": [
     {
+      "id": "artifacts",
+      "title": "Generated artifacts",
+      "description": "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 1
+    },
+    {
       "id": "capabilities",
       "title": "Capabilities",
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.",
@@ -69,6 +77,350 @@
     }
   ],
   "capabilities": [
+    {
+      "id": "artifacts.list",
+      "module": "artifacts",
+      "kind": "query",
+      "title": "List the generated artifacts",
+      "description": "The manifest `majordomus generate` commits as docs/generated/artifacts.json, reconciled with the working tree: every document with the encodings it is written in, and every file with its format, schema, source, size, hash and whether the file on disk still matches. Optionally narrowed to one document or one encoding. Reads only; `majordomus generate` writes and `majordomus generate --check` is the byte-for-byte verdict.",
+      "input": {
+        "name": "ArtifactsInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "document": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only the artifacts of this document (`registry`, `cli`, `openapi`, ...)."
+            },
+            "format": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ArtifactFormat"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only the artifacts written in this encoding."
+            }
+          },
+          "description": "The input of `artifacts.list`: the whole manifest, or one slice of it.",
+          "title": "ArtifactsInput",
+          "$defs": {
+            "ArtifactFormat": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "json",
+                  "description": "A JSON document: pretty-printed, one trailing newline, provenance as members."
+                },
+                {
+                  "type": "string",
+                  "const": "yaml",
+                  "description": "The same document in the layer's YAML, provenance as a comment banner."
+                },
+                {
+                  "type": "string",
+                  "const": "markdown",
+                  "description": "Markdown for a reader, provenance as an HTML comment."
+                },
+                {
+                  "type": "string",
+                  "const": "text",
+                  "description": "Line-oriented text another program reads: the shell tool's allow-lists,\nprovenance as `#` comments."
+                }
+              ],
+              "description": "The encoding one generated artifact is written in."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "ArtifactReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "manifest": {
+              "type": "string",
+              "description": "The manifest this was read from, repository-relative."
+            },
+            "present": {
+              "type": "boolean",
+              "description": "Whether the manifest is committed in this repository at all. A repository that has\nnever run `majordomus generate` has no generated tree, which is a fact about it and\nnot a failure of this call: every list below is then empty and every tally zero."
+            },
+            "schema": {
+              "type": "string",
+              "description": "The schema the manifest carries, empty when there is none to read."
+            },
+            "documents": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DocumentView"
+              },
+              "description": "The documents, in the manifest's order."
+            },
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ArtifactView"
+              },
+              "description": "The files, in the manifest's order, after any filter."
+            },
+            "tallies": {
+              "$ref": "#/$defs/ArtifactTallies",
+              "description": "The counts."
+            },
+            "regenerate": {
+              "type": "string",
+              "description": "The command that rewrites every one of them."
+            },
+            "verify": {
+              "type": "string",
+              "description": "The command that decides staleness byte for byte, which is stronger than the hash."
+            }
+          },
+          "required": [
+            "manifest",
+            "present",
+            "schema",
+            "documents",
+            "artifacts",
+            "tallies",
+            "regenerate",
+            "verify"
+          ],
+          "description": "The answer of `artifacts.list`.",
+          "title": "ArtifactReport",
+          "$defs": {
+            "DocumentView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The document id, shared by every encoding of it."
+                },
+                "schema": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The schema id its structured encodings carry."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "One line: what it was derived from."
+                },
+                "formats": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ArtifactFormat"
+                  },
+                  "description": "The encodings, in the manifest's order."
+                }
+              },
+              "required": [
+                "id",
+                "source",
+                "formats"
+              ],
+              "description": "One document, and the encodings it is committed in."
+            },
+            "ArtifactFormat": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "json",
+                  "description": "A JSON document: pretty-printed, one trailing newline, provenance as members."
+                },
+                {
+                  "type": "string",
+                  "const": "yaml",
+                  "description": "The same document in the layer's YAML, provenance as a comment banner."
+                },
+                {
+                  "type": "string",
+                  "const": "markdown",
+                  "description": "Markdown for a reader, provenance as an HTML comment."
+                },
+                {
+                  "type": "string",
+                  "const": "text",
+                  "description": "Line-oriented text another program reads: the shell tool's allow-lists,\nprovenance as `#` comments."
+                }
+              ],
+              "description": "The encoding one generated artifact is written in."
+            },
+            "ArtifactView": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative path."
+                },
+                "document": {
+                  "type": "string",
+                  "description": "The document it projects."
+                },
+                "format": {
+                  "$ref": "#/$defs/ArtifactFormat",
+                  "description": "The encoding."
+                },
+                "schema": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The JSON Schema its content satisfies, when it declares one."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "One line: what it was derived from."
+                },
+                "bytes": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The size the manifest recorded."
+                },
+                "sha256": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The hash the manifest recorded."
+                },
+                "state": {
+                  "$ref": "#/$defs/ArtifactState",
+                  "description": "Where the file stands against it."
+                }
+              },
+              "required": [
+                "path",
+                "document",
+                "format",
+                "source",
+                "state"
+              ],
+              "description": "One generated file, as the manifest declares it and as the tree has it."
+            },
+            "ArtifactState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "current",
+                  "description": "The file is there and its bytes hash to what the manifest recorded."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "The file is there and its bytes differ: it was edited, or the generator moved on."
+                },
+                {
+                  "type": "string",
+                  "const": "missing",
+                  "description": "The manifest names it and the tree does not have it."
+                },
+                {
+                  "type": "string",
+                  "const": "present",
+                  "description": "The file is there and the manifest records no hash for it: the manifest's own\nencodings, which cannot hash themselves. `generate --check` compares them."
+                }
+              ],
+              "description": "Where one generated file stands against the tree it is committed in."
+            },
+            "ArtifactTallies": {
+              "type": "object",
+              "properties": {
+                "documents": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Documents in the manifest."
+                },
+                "artifacts": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Files in the manifest, after any filter."
+                },
+                "current": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Hashes that match."
+                },
+                "stale": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Hashes that do not."
+                },
+                "missing": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Files the manifest names and the tree lacks."
+                },
+                "present": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Files the manifest records no hash for."
+                }
+              },
+              "required": [
+                "documents",
+                "artifacts",
+                "current",
+                "stale",
+                "missing",
+                "present"
+              ],
+              "description": "How many of each, so a caller needs no arithmetic of its own."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::artifacts"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_artifacts",
+          "resource": {
+            "uri": "majordomus://artifacts",
+            "name": "artifacts"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/artifacts"
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "artifacts",
+        "generation",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 8,
+        "ttl_seconds": 5
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs"
+    },
     {
       "id": "capabilities.describe",
       "module": "capabilities",
