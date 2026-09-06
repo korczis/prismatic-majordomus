@@ -14,7 +14,7 @@ mod common;
 
 use majordomus_cli::generate::{
     self, Artifact, ArtifactFormat, Document, GeneratedSchemas, HeaderStyle, Target, HEADER,
-    MANIFEST_ID, MANIFEST_SCHEMA,
+    MANIFEST_ID, MANIFEST_SCHEMA, OUT_DIR,
 };
 use serde_json::{json, Value};
 
@@ -59,16 +59,31 @@ fn every_artifact_declares_its_encoding_its_source_and_carries_a_header() {
             continue;
         }
         match a.format {
-            ArtifactFormat::Markdown => assert!(
-                a.content.starts_with(&format!("<!-- {HEADER}")),
-                "{} carries no banner",
-                a.path
-            ),
-            ArtifactFormat::Yaml | ArtifactFormat::Text => assert!(
-                a.content.starts_with(&format!("# {HEADER}")),
-                "{} carries no banner",
-                a.path
-            ),
+            // A generated document that is also projected into a page carries its title
+            // first and the banner under it: the site's documentation projection strips a
+            // document's own first-line heading, and a banner above it would leave the
+            // page with two. Every other Markdown artifact leads with the banner.
+            ArtifactFormat::Markdown => {
+                let banner = format!("<!-- {HEADER}");
+                let ok = a.content.starts_with(&banner)
+                    || (a.content.starts_with("# ")
+                        && a.content
+                            .split_once('\n')
+                            .is_some_and(|(_, rest)| rest.starts_with(&banner)));
+                assert!(ok, "{} carries no banner", a.path);
+            }
+            // A generated script's first line belongs to the interpreter — POSIX gives the
+            // shebang line 1 and nothing else may take it — so the banner is the line
+            // after it. Every other text artifact carries it first.
+            ArtifactFormat::Yaml | ArtifactFormat::Text => {
+                let banner = format!("# {HEADER}");
+                let ok = a.content.starts_with(&banner)
+                    || (a.content.starts_with("#!")
+                        && a.content
+                            .split_once('\n')
+                            .is_some_and(|(_, rest)| rest.starts_with(&banner)));
+                assert!(ok, "{} carries no banner", a.path);
+            }
             ArtifactFormat::Json => {
                 let v: Value = serde_json::from_str(&a.content)
                     .unwrap_or_else(|e| panic!("{} is not JSON: {e}", a.path));
@@ -101,8 +116,10 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
     let json: Vec<&Artifact> = artifacts
         .iter()
         .filter(|a| a.format == ArtifactFormat::Json && !a.document.starts_with("providers/"))
-        // the site dataset is the website's own file and is committed as JSON alone
-        .filter(|a| a.document != "site-registry")
+        // the invariant is about the documents this repository commits under docs/generated.
+        // What the website publishes — its own datasets, and the release metadata an
+        // installer downloads — is a file with a consumer, not a document with encodings.
+        .filter(|a| a.path.starts_with(OUT_DIR))
         // a projected JSON Schema is JSON by its own contract: `.schema.json` is what a
         // validator looks for, and a YAML sibling would be a second encoding of a file
         // whose format is named in its extension and read by nothing that wants YAML

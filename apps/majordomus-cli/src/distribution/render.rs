@@ -51,8 +51,6 @@ pub fn matrix(model: &Model) -> Value {
         })
         .collect();
     json!({
-        "schema": "majordomus/distribution-matrix/v1",
-        "generated": crate::generate::json_banner(SOURCE),
         "binary": model.project.binary,
         "repository": model.project.repository,
         "checksums_file": model.archive.checksums_file,
@@ -60,9 +58,16 @@ pub fn matrix(model: &Model) -> Value {
     })
 }
 
-/// The matrix as the workflow reads it.
+/// The contract the matrix satisfies.
+pub const MATRIX_SCHEMA: &str = "majordomus/distribution-matrix/v1";
+
+/// The matrix as the workflow reads it: the same document the generator commits, so that
+/// `majordomus distribution matrix` and `docs/generated/distribution-matrix.json` cannot
+/// say different things.
 pub fn matrix_json(model: &Model) -> String {
-    let mut s = serde_json::to_string_pretty(&matrix(model)).unwrap_or_default();
+    let doc =
+        crate::generate::Document::new("distribution-matrix", MATRIX_SCHEMA, SOURCE, matrix(model));
+    let mut s = serde_json::to_string_pretty(&doc.stamped(crate::VERSION)).unwrap_or_default();
     s.push('\n');
     s
 }

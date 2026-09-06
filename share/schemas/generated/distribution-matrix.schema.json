@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/distribution-matrix.schema.json",
+  "title": "Distribution matrix",
+  "description": "docs/generated/distribution-matrix.{json,yaml}: the release build matrix, generated from share/distribution.yaml. One entry per target a release publishes, with the runner it is built on, the packages that runner needs first, whether it can execute what it built, and the artifact name the naming function derives with `{tag}` left where a release's tag goes. The release workflow reads the JSON encoding and states no platform of its own.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "binary", "repository", "checksums_file", "include"],
+  "properties": {
+    "schema": { "const": "majordomus/distribution-matrix/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "pattern": "^majordomus-cli " },
+    "binary": { "type": "string", "minLength": 1 },
+    "repository": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+    "checksums_file": { "type": "string", "minLength": 1 },
+    "include": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "target", "os", "arch", "status", "runner", "packages", "native", "artifact", "root"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "target": { "type": "string", "minLength": 1 },
+          "os": { "enum": ["macos", "linux", "windows"] },
+          "arch": { "enum": ["x86_64", "aarch64"] },
+          "libc": { "type": ["string", "null"], "enum": ["gnu", "musl", null] },
+          "status": { "enum": ["supported", "experimental"] },
+          "runner": { "type": "string", "minLength": 1 },
+          "packages": { "type": "string" },
+          "native": { "type": "boolean" },
+          "artifact": { "type": "string", "pattern": "\\{tag\\}" },
+          "root": { "type": "string", "pattern": "\\{tag\\}" }
+        }
+      }
+    }
+  }
+}

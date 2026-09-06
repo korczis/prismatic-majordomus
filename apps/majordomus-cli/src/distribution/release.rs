@@ -180,6 +180,10 @@ impl Release {
     pub fn public_json(&self, model: &Model) -> String {
         let mut s = String::from("{\n");
         s.push_str(&format!("  \"schema\": \"{}\",\n", SCHEMA));
+        s.push_str(&format!(
+            "  \"generated\": \"{}\",\n",
+            crate::generate::json_banner(super::render::SOURCE)
+        ));
         s.push_str(&format!("  \"version\": \"{}\",\n", self.version));
         s.push_str(&format!("  \"tag\": \"{}\",\n", self.tag));
         s.push_str(&format!(

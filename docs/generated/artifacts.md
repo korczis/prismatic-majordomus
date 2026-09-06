@@ -36,7 +36,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `benchmarks` | `json`, `markdown`, `yaml` | `majordomus/benchmark-matrix/v1` | the benchmark projection of the canonical capability registry |
 | `capabilities` | `markdown` | — | the canonical Majordomus capability registry |
 | `cli` | `json`, `markdown`, `yaml` | `majordomus/cli/v1` | the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it |
-| `distribution-matrix` | `json` | — | share/distribution.yaml, and the release records under .ai/repo/releases/ |
+| `distribution-matrix` | `json`, `yaml` | `majordomus/distribution-matrix/v1` | share/distribution.yaml, and the release records under .ai/repo/releases/ |
 | `install-guide` | `markdown` | — | share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL) |
 | `installer` | `text` | — | share/distribution.yaml, and the release records under .ai/repo/releases/ |
 | `modules/artifacts` | `markdown` | — | the `artifacts` module of the canonical Majordomus capability registry |
@@ -91,7 +91,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/cli.json` | `cli` | json | 155384 | `93b1729bc1e8501b` |
 | `docs/generated/cli.md` | `cli` | markdown | 66906 | `9637c6a41df7d58e` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 120753 | `c6e6c4cb92709e27` |
-| `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2692 | `cd41109f62ac7208` |
+| `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2731 | `8be1c9165bdb193d` |
+| `docs/generated/distribution-matrix.yaml` | `distribution-matrix` | yaml | 2391 | `2986d5b246499fb4` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `8e5075d72ee97e59` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 2074 | `a9e7e0da9d9fe1eb` |
 | `docs/generated/modules/continuity.md` | `modules/continuity` | markdown | 1519 | `2d64319a1225cfe1` |

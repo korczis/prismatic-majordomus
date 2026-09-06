@@ -629,24 +629,23 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
     }
 
     use crate::distribution::render::SOURCE as DIST_SOURCE;
-    let mut out = vec![
-        Artifact::verbatim(
-            format!("{OUT_DIR}/distribution-matrix.json"),
-            "distribution-matrix",
-            ArtifactFormat::Json,
-            None,
-            DIST_SOURCE,
-            render::matrix_json(&model),
-        ),
-        Artifact::verbatim(
-            format!("{SITE_DATA_DIR}/distribution.json"),
-            "site-distribution",
-            ArtifactFormat::Json,
-            None,
-            DIST_SOURCE,
-            render::site_dataset(&model, &releases),
-        ),
-    ];
+    // the build matrix is a document of this repository: one value, both encodings
+    let mut out = Document::new(
+        "distribution-matrix",
+        render::MATRIX_SCHEMA,
+        DIST_SOURCE,
+        render::matrix(&model),
+    )
+    .artifacts(crate::VERSION);
+    // the website's own dataset, committed as JSON alone like the registry's beside it
+    out.push(Artifact::verbatim(
+        format!("{SITE_DATA_DIR}/distribution.json"),
+        "site-distribution",
+        ArtifactFormat::Json,
+        None,
+        DIST_SOURCE,
+        render::site_dataset(&model, &releases),
+    ));
 
     let installer_template = read_share(&app.share, crate::distribution::INSTALLER_TEMPLATE)?;
     out.push(Artifact::verbatim(
