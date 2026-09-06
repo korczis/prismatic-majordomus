@@ -310,6 +310,33 @@ Every command reports where its time went with `MJ_TIMING=1`, and `bench` holds 
 accepted state in a tracked baseline; how that works, and the rules behind it, is
 [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
+## Worktrees
+
+Several sessions on one repository need several checkouts, and git has no opinion about
+where they go — so every caller has one, and the answers accumulate. Majordomus derives
+the answer instead, from git's own identity and the branch name, and every surface derives
+it the same way:
+
+```text
+~/dev/prismatic-majordomus                  the primary checkout — hosts the trunk, never moves
+~/dev/prismatic-majordomus-wt/              the container: the checkout's sibling, name + "-wt"
+~/dev/prismatic-majordomus-wt/feature/x     the one worktree of branch feature/x, hierarchy kept
+```
+
+```bash
+majordomus worktree create feature/improve-cli    # you choose the branch, not the path
+cd "$(majordomus worktree path feature/improve-cli)"
+majordomus worktree                               # where am I, and is that where I belong
+majordomus worktree migrate --plan                # what is out of place, and what would move
+```
+
+Nothing registers a path: git is the registry, and adding a branch edits nothing. A
+worktree somewhere else is a typed diagnostic on every surface — the command line, MCP,
+`/api/v1/worktrees`, the Cockpit — and `worktree migrate` brings it home with its
+uncommitted work, fingerprinted before and after. The pre-commit hook refuses a feature
+branch committed from anywhere but its canonical worktree. Details:
+[`docs/WORKTREES.md`](docs/WORKTREES.md); the decision: ADR 21.
+
 ## Customisation
 
 - **Rules workers read:** rule objects under `.ai/repo/rules/project/`, one Markdown

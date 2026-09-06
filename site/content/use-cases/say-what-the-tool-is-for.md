@@ -1,7 +1,7 @@
 +++
 title = "Say what your work is for, once, and have every surface say it"
 description = "Record an operational failure mode as one file and have the command line, the API, MCP and the website answer it without registering it anywhere."
-weight = 12
+weight = 13
 [extra]
 id = "say-what-the-tool-is-for"
 source = ".ai/repo/use-cases/say-what-the-tool-is-for.md"

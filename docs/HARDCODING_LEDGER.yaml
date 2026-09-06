@@ -434,3 +434,22 @@ findings:
     priority: 4
     status: open
     reproduce: "sed -n '227,233p' scripts/generate-site-data"
+
+  - id: worktree-container-suffix
+    path: apps/majordomus-cli/src/worktree/path.rs
+    lines: "CONTAINER_SUFFIX"
+    concept: the name of the worktree container beside the primary checkout
+    authority: "apps/majordomus-cli/src/worktree/path.rs, the one constant"
+    duplicated_in:
+      - "the provider templates, docs/WORKTREES.md, the rule and the ADR, which name `<repo>-wt/` in prose"
+    risk: low
+    detail: >-
+      The suffix is a product contract (ADR 0021): every derivation reads the constant, and
+      the documents that name it in prose are held to it by scripts/ci/worktree-check, which
+      reads the constant from the source and fails on a document or template that names
+      another convention or on a second literal in the crate.
+    recommended: KEEP_LITERAL
+    target: none; the check is the reconciliation
+    priority: 3
+    status: fixed
+    resolved_by: "scripts/ci/worktree-check reads the constant and holds every document and template to it"

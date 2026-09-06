@@ -116,6 +116,17 @@ pub enum Error {
     #[error("transport: {0}")]
     Transport(#[source] std::io::Error),
 
+    /// A subsystem refused an operation and carries its own message and exit code. The
+    /// message is the subsystem's, complete, and is printed as it is: rephrasing an
+    /// actionable refusal into a generic one is how a person loses the corrective command.
+    #[error("{reason}")]
+    Refused {
+        /// The exit code the subsystem's own contract assigns.
+        code: u8,
+        /// What failed, why, what was involved, and what to run instead.
+        reason: String,
+    },
+
     /// A protocol frame could not be encoded, or an internal answer could not be produced.
     #[error("protocol: {reason}")]
     Protocol {
@@ -253,6 +264,7 @@ impl Error {
             | Error::Http { .. }
             | Error::Lease { .. }
             | Error::Protocol { .. } => 13,
+            Error::Refused { code, .. } => *code,
         }
     }
 

@@ -1233,3 +1233,21 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there.
+
+  - id: worktree-topology-derived
+    claim: A branch's worktree path is derived from git identity and the branch name alone — the primary checkout's sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured
+    source: docs/WORKTREES.md
+    implementation: apps/majordomus-cli/src/worktree/path.rs
+    test: test/cases/96_worktree_topology.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The identity is the common git directory and the main worktree git lists first, never the current directory, so a linked worktree does not derive a container inside itself. The branch name is validated by git's reference rules and the derived path is proved on every call to stay below the container. Every registered worktree gets a standing and every condition a stable code with a remedy; the four worktree.* capabilities project the same typed topology to MCP, HTTP, OpenAPI, the Swagger UI and the Cockpit, and the pre-commit hook asks the guard.
+
+  - id: worktree-migration-lossless
+    claim: A misplaced worktree is brought to its canonical path with its modified, staged, unstaged and untracked work intact, verified by a fingerprint taken before and after the move, and a step is reported as moved only when the two are equal
+    source: docs/WORKTREES.md
+    implementation: apps/majordomus-cli/src/worktree/migrate.rs
+    test: test/cases/96_worktree_topology.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The plan changes nothing and is recomputed under the repository lock before it is applied. Git moves the directory in one rename; the container's occupant goes out to a staging path and then in; a move across filesystems is refused unless a copy is permitted, and then verified against a manifest of every entry before the original is removed. Nothing is reset, stashed, cleaned, checked out or overwritten: a destination that exists is a named conflict, a locked worktree waits, a detached one is never moved, and a session's scratch checkout is reported and moved only on request.

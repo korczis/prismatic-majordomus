@@ -20,6 +20,7 @@ pub mod repository;
 mod scope;
 mod views;
 pub mod web;
+pub mod worktree;
 
 use crate::compose_modules;
 
@@ -58,6 +59,9 @@ pub mod why;
 
 pub use views::{Empty, ObjectSummary, ObjectView};
 pub use web::{SurfaceReport, SURFACES_URI};
+pub use worktree::{
+    InspectInput as WorktreeInspectInput, StatusInput as WorktreeStatusInput, WORKTREES_URI,
+};
 
 /// The application: its modules, in one place. A new module is one line here; a new
 /// capability in an existing module is no line here.
@@ -76,7 +80,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         artifacts,
         distribution,
         why,
-        web
+        web,
+        worktree
     ]
 }
 

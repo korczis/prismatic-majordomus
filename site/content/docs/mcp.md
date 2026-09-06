@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 34
+weight = 35
 [extra]
 source = "docs/MCP.md"
 +++
@@ -200,6 +200,10 @@ manifest section it falls under, and its size.
 | `majordomus_peers` | `peers.list` | none | the clients attached to this shared server (above) |
 | `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
 | `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
+| `majordomus_worktrees` | `worktree.topology` | none | the `majordomus://worktrees` document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies |
+| `majordomus_worktree_status` | `worktree.status` | `path?` | one worktree — the repository's own, or the one holding `path` — with its standing, canonical path, uncommitted work and whether it is where it belongs; a path in another repository is refused |
+| `majordomus_worktree_inspect` | `worktree.inspect` | `branch` | the canonical path of a branch, whether it exists, what occupies the path, the worktree holding it |
+| `majordomus_worktree_migration_plan` | `worktree.migration_plan` | none | every misplaced worktree with where it belongs, how it would move and what blocks it; the exceptions; changes nothing |
 
 </div>
 
