@@ -2,7 +2,7 @@
 
 ## What it means
 
-Open the repository in one MCP client and `majordomus mcp` is the server: its stdio serves that client, and beside it a loopback socket serves Swagger UI at `/docs`, the OpenAPI document, every capability route and MCP over HTTP at `/mcp`; the URL is in the log the moment it is bound. Open the repository in a second client and its `majordomus mcp` does not start another server: it finds the first through the lease, checks that it answers for this root, and forwards its client's frames to it. Close the clients in any order and the server lingers exactly as long as one is attached; when the last leaves it closes the port and removes the lease. Kill the server and a bridged client takes its place, or attaches to whichever process took the lease first, and its own client never re-initialises. `--standalone` serves one client alone with no port and no lease.
+Open the repository in one MCP client and `majordomus mcp` is the server: its stdio serves that client, and beside it a loopback socket serves a home page listing every surface, this repository's documentation at `/docs/`, Swagger UI at `/swagger`, the OpenAPI document, every capability route and MCP over HTTP at `/mcp`; the URL and every surface are in the log the moment it is bound. Open the repository in a second client and its `majordomus mcp` does not start another server: it finds the first through the lease, checks that it answers for this root, and forwards its client's frames to it. Close the clients in any order and the server lingers exactly as long as one is attached; when the last leaves it closes the port and removes the lease. Kill the server and a bridged client takes its place, or attaches to whichever process took the lease first, and its own client never re-initialises. `--standalone` serves one client alone with no port and no lease.
 
 ## How it works
 
@@ -12,7 +12,7 @@ Open the repository in one MCP client and `majordomus mcp` is the server: its st
 
 ```bash
 just build
-apps/majordomus-cli/target/debug/majordomus mcp < /dev/null      # the log: shared server listening on http://127.0.0.1:8741 (swagger ui .../docs, ...)
+apps/majordomus-cli/target/debug/majordomus mcp < /dev/null      # the log: shared server listening on http://127.0.0.1:8741 — 7 surface(s): api .../api/v1, ...
 # in one terminal, keep a client attached:
 mkfifo /tmp/in; apps/majordomus-cli/target/debug/majordomus mcp < /tmp/in & exec 3>/tmp/in
 cat .ai/local/state/mcp/server.json                              # the lease: url, root, pid

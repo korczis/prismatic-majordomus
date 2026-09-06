@@ -28,7 +28,11 @@ out:
     - .ai/local/
     - '**/target/'
   binary: true
-  max_bytes: 2048
+  # Comfortably above every file the fixture's own layer carries, so that the one file
+  # this case puts over the limit is the only one over it. The limit was 2048 and
+  # `sources.yaml` grew past it as kinds were added, which made the tally count a file
+  # the case had not put there.
+  max_bytes: 4096
   image:
     names: ['*.png']
   secret:
@@ -90,7 +94,7 @@ fn the_repository_scope_governs_discovery_and_names_what_it_drops() {
     with_own_scope(&f);
     // a document outside `in`, a fixture over its limit, a secret, an image and a binary
     // all tracked and all claimed by a source class or the tally
-    f.write("docs/big.md", &format!("# Big\n\n{}", "x".repeat(4096)));
+    f.write("docs/big.md", &format!("# Big\n\n{}", "x".repeat(8192)));
     f.write(
         "test/fixtures/large.json",
         "{\"padding\": \"0123456789\"}\n",
@@ -120,7 +124,7 @@ fn the_repository_scope_governs_discovery_and_names_what_it_drops() {
     assert!(dropped_paths.contains(&"CONTRIBUTING.md"), "{dropped:?}");
     let big = dropped.iter().find(|(p, _)| p == "docs/big.md").unwrap();
     assert!(
-        big.1.contains("over_limit") && big.1.contains("max_bytes 2048"),
+        big.1.contains("over_limit") && big.1.contains("max_bytes 4096"),
         "{}",
         big.1
     );

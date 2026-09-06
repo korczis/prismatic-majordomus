@@ -5,7 +5,7 @@
     "title": "Majordomus",
     "version": "0.2.0",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
-    "description": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` lists the routes; `/docs` is Swagger UI over this document; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+    "description": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
       "name": "MIT",
       "identifier": "MIT"
@@ -73,6 +73,10 @@
     {
       "name": "repository",
       "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
+    },
+    {
+      "name": "web",
+      "description": "What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication."
     },
     {
       "name": "why",
@@ -2521,6 +2525,91 @@
         }
       }
     },
+    "/api/v1/web/surfaces": {
+      "get": {
+        "operationId": "web.surfaces",
+        "summary": "Every web surface, resolved",
+        "description": "The web topology in route-precedence order, with each surface's mount, category, visibility, kind, producer, artifact, runtime feature and the provenance of every value a reader could be surprised by; and which ids are served, published and offered to a person. Answered from the resolution this process serves from, so it cannot disagree with what the router routes or what the home page lists.",
+        "tags": [
+          "web"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Every web surface, resolved: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SurfaceReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "web.surfaces",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::web"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 2,
+          "ttl_seconds": 5
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_web_surfaces",
+          "resource": {
+            "uri": "majordomus://web",
+            "name": "web"
+          }
+        }
+      }
+    },
     "/api/v1/why": {
       "get": {
         "operationId": "why.list",
@@ -3741,6 +3830,26 @@
           "count"
         ],
         "description": "One audience, with the membership nobody authored."
+      },
+      "Availability": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "both",
+            "description": "Served by the running executable and published as files."
+          },
+          {
+            "type": "string",
+            "const": "served-only",
+            "description": "Answered by the running executable and never published: a route the process\ncomputes, or a build made for this server's own mount rather than for deployment."
+          },
+          {
+            "type": "string",
+            "const": "published-only",
+            "description": "Published as files; the running executable serves it from the same directory."
+          }
+        ],
+        "description": "Whether a surface is part of the static publication, served only while a process runs,\nor both."
       },
       "BenchmarkPolicy": {
         "oneOf": [
@@ -5573,7 +5682,7 @@
         "properties": {
           "code": {
             "type": "string",
-            "description": "`invalid_input`, `not_found`, `refused`, `internal`, `method_not_allowed`."
+            "description": "What kind of failure it is: `invalid_input`, `not_found`, `method_not_allowed`,\n`refused`, `forbidden`, `too_large`, `unavailable` (a surface whose producer has not\nrun) or `internal`."
           },
           "message": {
             "type": "string",
@@ -5754,6 +5863,21 @@
           "commands"
         ],
         "description": "The filters the catalogue offers, derived from the records rather than declared."
+      },
+      "Feature": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "mcp",
+            "description": "This process answers MCP over HTTP."
+          },
+          {
+            "type": "string",
+            "const": "cockpit",
+            "description": "This process serves the Cockpit."
+          }
+        ],
+        "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
       },
       "Finding": {
         "type": "object",
@@ -6759,6 +6883,10 @@
         ],
         "description": "One moment as a listing shows it: everything a card needs and nothing a page needs."
       },
+      "Mount": {
+        "type": "string",
+        "description": "An absolute mount path, without a trailing slash."
+      },
       "Node": {
         "type": "object",
         "properties": {
@@ -7327,6 +7455,91 @@
         "format": "uint32",
         "minimum": 0,
         "description": "A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \"a deployment that cannot run\"."
+      },
+      "Provenance": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "registry"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "Read from the capability registry: the routes the executable already declares once."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The declaration file, repository-relative."
+              },
+              "source": {
+                "type": "string",
+                "const": "producer-declaration"
+              }
+            },
+            "required": [
+              "source",
+              "path"
+            ],
+            "description": "Read from a producer's own declaration beside its output (`surface.json`)."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "What was found, repository-relative."
+              },
+              "source": {
+                "type": "string",
+                "const": "filesystem"
+              }
+            },
+            "required": [
+              "source",
+              "path"
+            ],
+            "description": "Inferred from a file or directory being where the convention says it is."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "The configuration file, repository-relative."
+              },
+              "source": {
+                "type": "string",
+                "const": "site-config"
+              }
+            },
+            "required": [
+              "source",
+              "path"
+            ],
+            "description": "Inferred from the site generator's own configuration."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "default"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "The model's documented default for a value nobody stated."
+          }
+        ],
+        "description": "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code."
       },
       "Provider": {
         "type": "object",
@@ -8187,6 +8400,240 @@
         ],
         "description": "The registry counted: by source, kind, stability and projection."
       },
+      "Surface": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identity, unique across the topology; the selector `--only` and `--exclude` use it."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line: what a reader sees in a listing."
+          },
+          "category": {
+            "$ref": "#/components/schemas/SurfaceCategory",
+            "description": "What it is for, which is how a listing groups it."
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility",
+            "description": "Whether a person is shown it."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/SurfaceKind",
+            "description": "How it answers."
+          },
+          "mount": {
+            "$ref": "#/components/schemas/Mount",
+            "description": "Where it answers."
+          },
+          "producer": {
+            "type": "string",
+            "description": "What produced it: a command, a module, or the generator that writes the directory."
+          },
+          "feature": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Feature"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The runtime capability it needs; absent when the process always has it."
+          },
+          "artifact": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The generated directory, repository-relative, for a static surface."
+          },
+          "index": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The file served for the mount itself, when the surface has one."
+          },
+          "availability": {
+            "$ref": "#/components/schemas/Availability",
+            "description": "Where the surface's files go and who answers for it."
+          },
+          "built_from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The revision the artifact was built from, when its producer recorded one: what\nmakes a stale build a finding rather than a surprise."
+          },
+          "provenance": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Provenance"
+            },
+            "description": "Where each interesting value came from, by field name."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "category",
+          "visibility",
+          "kind",
+          "mount",
+          "producer",
+          "availability",
+          "provenance"
+        ],
+        "description": "One resolved surface: everything a consumer needs, with the provenance of what it could\nbe surprised by."
+      },
+      "SurfaceCategory": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "interface",
+            "description": "Something a person opens and looks at: the home page, the Cockpit."
+          },
+          {
+            "type": "string",
+            "const": "documentation",
+            "description": "Prose and reference written for a person: the site, the Swagger UI."
+          },
+          {
+            "type": "string",
+            "const": "api",
+            "description": "A machine-readable surface of the capability registry."
+          },
+          {
+            "type": "string",
+            "const": "protocol",
+            "description": "A wire protocol another program speaks."
+          },
+          {
+            "type": "string",
+            "const": "report",
+            "description": "Generated evidence of a run: a test report, a benchmark report."
+          }
+        ],
+        "description": "What a surface is for, which is how a reader is shown it.\n\nA category is the one piece of intent that a mount cannot carry: `/openapi.json` and\n`/swagger` sit beside each other and are a document and a viewer for it. Grouping is\nderived from this field and never from a list of paths kept somewhere else."
+      },
+      "SurfaceFinding": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "$ref": "#/components/schemas/SurfaceFindingSeverity",
+            "description": "How much it matters."
+          },
+          "rule": {
+            "type": "string",
+            "description": "The rule that produced it, stable enough to grep for."
+          },
+          "surface": {
+            "type": "string",
+            "description": "The surface it is about."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong."
+          },
+          "remedy": {
+            "type": "string",
+            "description": "What to do about it."
+          }
+        },
+        "required": [
+          "severity",
+          "rule",
+          "surface",
+          "message",
+          "remedy"
+        ],
+        "description": "One thing wrong with a topology, said so a person can fix it without reading this file."
+      },
+      "SurfaceFindingSeverity": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "error",
+            "description": "The topology may not be served or published in this state."
+          },
+          {
+            "type": "string",
+            "const": "warning",
+            "description": "Worth reading; serving is still coherent."
+          }
+        ],
+        "description": "How much a finding matters."
+      },
+      "SurfaceKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "static-directory",
+            "description": "A generated directory, mounted under its prefix and served from disk."
+          },
+          {
+            "type": "string",
+            "const": "native-route",
+            "description": "A path the executable answers itself, from its own registry or handlers."
+          },
+          {
+            "type": "string",
+            "const": "redirect",
+            "description": "A path that answers with a redirect to another one."
+          }
+        ],
+        "description": "How a surface answers a request.\n\nOnly what this repository serves: a directory of generated files, a path the executable\nanswers itself, and a redirect. A new *kind* is a new behaviour, never a new name for\nthe same behaviour with different data."
+      },
+      "SurfaceReport": {
+        "type": "object",
+        "properties": {
+          "surfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Surface"
+            },
+            "description": "Every resolved surface, in route-precedence order: the order a router consults\nthem in, so the first whose mount owns a path is the one that answers it."
+          },
+          "served": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The ids a process answers for, in the same order. A surface published and not\nserved is absent here."
+          },
+          "published": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The ids a publication holds, in the same order."
+          },
+          "public": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The ids offered to a person, which is what the home page lists."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SurfaceFinding"
+            },
+            "description": "What validation says about the topology as it stands. Empty is the healthy answer;\na finding here is the same one `majordomus web validate` reports, with its remedy."
+          }
+        },
+        "required": [
+          "surfaces",
+          "served",
+          "published",
+          "public",
+          "findings"
+        ],
+        "description": "The web surfaces of this repository, as the process that answers resolved them."
+      },
       "Tally": {
         "type": "object",
         "properties": {
@@ -8385,6 +8832,21 @@
         ],
         "description": "In or out."
       },
+      "Visibility": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "public",
+            "description": "Listed for a person: it appears on the home page."
+          },
+          {
+            "type": "string",
+            "const": "internal",
+            "description": "Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it."
+          }
+        ],
+        "description": "Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it."
+      },
       "WaiverReason": {
         "oneOf": [
           {
@@ -8412,9 +8874,9 @@
     "infrastructure": [
       "/",
       "/openapi.json",
-      "/docs",
-      "/cockpit",
-      "/mcp"
+      "/swagger",
+      "/mcp",
+      "/cockpit"
     ],
     "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
     "errors": [
