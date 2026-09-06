@@ -802,7 +802,11 @@ mj_capture_session_compact() {
   local provider="$1" psession="$2" out
   # shellcheck source=checkpoint.sh
   . "$MJ_LIB_DIR/checkpoint.sh"
-  mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+  # A policy that does not parse is a failure of the repository, and `doctor` says so. It is
+  # not a reason to fail here: this runs in a provider hook, where the cost of dying is the
+  # episode nobody can reopen. Nothing is recorded and the reason is logged beside the
+  # working contexts, which is where every other failure on this path is reported.
+  mj_load_policy || { mj_session_context_log "$provider compact event: the policy does not parse; nothing recorded"; return 0; }
   if [ "$(mj_pol session.checkpoint_on_compact)" = false ]; then
     mj_err "capture session: compaction ahead; session.checkpoint_on_compact is false, so nothing is recorded"
     return 0
@@ -834,8 +838,12 @@ mj_capture_session_end() {
   case ",$(mj_lifecycle_field "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
   # shellcheck source=handover.sh
   . "$MJ_LIB_DIR/handover.sh"
-  mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
-  if [ "$(mj_pol session.handover_on_end)" != false ] && mj_load_current && [ "$(mj_cur outcome)" = active ]; then
+  # The same reasoning as the compaction event, with one difference: an end that cannot read
+  # the policy still closes the episode. Only the continuation record is skipped, because
+  # leaving a session open for ever is the worse of the two failures.
+  local policy_ok=1
+  mj_load_policy || { policy_ok=0; mj_session_context_log "$provider end event: the policy does not parse; the episode is closed without a continuation record"; }
+  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ] && mj_load_current && [ "$(mj_cur outcome)" = active ]; then
     out="$( (mj_cmd_handover --derive --close) 2>&1 )" \
       && mj_err "capture session: the task was still active; continuation written to $(printf '%s' "$out" | tail -n 1)" \
       || mj_session_context_log "$provider end event: the continuation was not written: $(printf '%s' "$out" | tail -n 1)"
