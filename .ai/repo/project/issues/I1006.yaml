@@ -1,0 +1,32 @@
+id: I1006
+milestone: capability-graph
+title: The runtime reads the graph through the registry, like every other read
+slug: runtime-graph-read
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Expose the graph to the running Cockpit as a declared capability, so that its route, its schema, its documentation and its benchmark coverage all follow from the declaration."
+why: "A route added by hand for the Cockpit would be the one endpoint missing from OpenAPI, from the reference and from the smoke suite. The registry exists precisely so that does not happen."
+current_state: "The Cockpit renders in-process. No capability serves the aggregate graph."
+desired_state: "One declared capability serves the graph, documented and benchmarked like the rest, with the runtime state layered over the definitions rather than mixed into them."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/graph.rs
+non_scope:
+  - A route registered outside the capability registry
+  - Runtime state stored in the same structure as the definitions
+depends_on:
+  - I1005
+acceptance_criteria:
+  - The operation is one capability declaration and appears in the API, the OpenAPI document, the reference and the benchmark coverage without a second registration
+  - The response is typed and carries safe fields only
+  - Runtime state is an overlay over the definitions, distinguishable in the response
+  - A test exercises the operation against a running server rather than a mock
+validation:
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - capability_declared
+  - runtime_overlay
+risk: "Serving the whole graph on every Cockpit load is a cost on the hot path. It is measured, and paged or filtered if the measurement says so."
+created_at: 2026-09-06
+updated_at: 2026-09-06

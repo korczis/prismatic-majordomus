@@ -1,0 +1,32 @@
+id: I1017
+milestone: capability-graph
+title: Live state is an overlay that degrades to nothing
+slug: live-state-overlay
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Let the running Cockpit overlay live state — health, peers, runtime metrics, deployment status — over the same graph, through the transport the process already has, degrading cleanly where there is none."
+why: "Live state is what makes a control plane worth opening. It is also what makes a static page lie, so it has to be an overlay that is visibly absent rather than a field that is silently stale."
+current_state: "The process has a health capability and peers. No surface subscribes to anything."
+desired_state: "Live values arrive over the existing transport, are visibly distinct from the snapshot, and are absent rather than stale where no backend answers."
+scope:
+  - apps/majordomus-cli/src/cockpit/html.rs
+non_scope:
+  - A transport invented for the Cockpit alongside one that already exists
+  - A reconnect loop with no bound
+depends_on:
+  - I1006
+acceptance_criteria:
+  - Live updates use the process's existing event transport rather than a new one
+  - Live values are visually and structurally distinguishable from snapshot values
+  - The static projection renders the useful equivalent — what the endpoint is, and that the value is available when a server runs — rather than an empty card
+  - Reconnection is bounded and backs off, and a failed connection does not produce a request storm
+validation:
+  - scripts/cockpit-probe
+  - cargo test --workspace --all-features
+evidence_required:
+  - overlay_live
+  - degrades_cleanly
+risk: "Live overlays are where credentials leak into browsers. Everything sent to the client is an allowlisted safe field."
+created_at: 2026-09-06
+updated_at: 2026-09-06

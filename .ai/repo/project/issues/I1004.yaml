@@ -1,0 +1,32 @@
+id: I1004
+milestone: capability-graph
+title: Availability and visibility are metadata, not conditions in a template
+slug: availability-and-visibility
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Model where a capability is available — always, only in a static build, only with a running backend, only when authenticated, only at build time — and whether it is public or internal, so that every surface derives its behaviour from that rather than from its own conditionals."
+why: "The published site and the running server are genuinely different environments. Without this metadata every template grows its own idea of what works where, and the site ends up offering a link to something no server is behind."
+current_state: "The Cockpit is served by the running process. The site is generated. Nothing states which capability means anything in which environment."
+desired_state: "Availability and visibility are fields of the model, every projection reads them, and no template decides for itself."
+scope:
+  - apps/majordomus-cli/src/capability/model.rs
+non_scope:
+  - Any decision made from a hostname, a URL or a build-time flag inside a template
+  - An internal capability being silently invisible without saying it is internal
+depends_on:
+  - I1001
+acceptance_criteria:
+  - Availability distinguishes at least what is always true, what requires the running backend, what is a build-time snapshot and what requires authentication
+  - Visibility distinguishes public and developer-facing capabilities from ones deliberately marked internal
+  - Every existing capability, route and surface is classified, and an unclassified one is a validation failure rather than a default
+  - No projection decides availability from anything other than this metadata
+validation:
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - availability_modelled
+  - no_template_conditions
+risk: "A default of always-available makes the model useless and the classification invisible. Absence has to be a failure."
+created_at: 2026-09-06
+updated_at: 2026-09-06
