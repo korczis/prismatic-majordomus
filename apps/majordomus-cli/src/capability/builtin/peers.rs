@@ -118,3 +118,50 @@ pub fn module() -> ModuleDescriptor {
         ],
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The declaration is the only place these names exist, and every projection — the MCP
+    /// tool, the HTTP route, the OpenAPI operation, the benchmark target — is derived from
+    /// it. A refactor that dropped an exposure or renamed a route would still compile, and
+    /// the suites that exercise the behaviour behind it would still pass. This is the
+    /// assertion that would not.
+    #[test]
+    fn the_declaration_yields_the_projections_it_claims() {
+        let m = module();
+        assert_eq!(m.id.as_str(), "peers");
+        let expected: &[(&str, &str, &str)] = &[
+            ("peers.list", "majordomus_peers", "/api/v1/peers"),
+            (
+                "peers.announce",
+                "majordomus_announce",
+                "/api/v1/peers/announce",
+            ),
+        ];
+        let ids: Vec<&str> = m
+            .capabilities
+            .iter()
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        let want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        assert_eq!(
+            ids, want,
+            "the module declares a different set of capabilities"
+        );
+        for (executable, (id, tool, path)) in m.capabilities.iter().zip(expected) {
+            let exposure = &executable.capability.exposure;
+            assert_eq!(
+                exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+                Some(*tool),
+                "{id} lost or renamed its MCP tool"
+            );
+            assert_eq!(
+                exposure.http.as_ref().map(|h| h.path.as_str()),
+                Some(*path),
+                "{id} lost or renamed its HTTP route"
+            );
+        }
+    }
+}

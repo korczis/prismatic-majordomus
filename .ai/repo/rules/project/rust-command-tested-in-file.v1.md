@@ -88,12 +88,18 @@ the absence of any assertion that runs; across the tree, a module declared with 
 that the root composes nowhere; and, once, a coverage floor that is undeclared, unreadable,
 or below ninety. The `rust-command` gate in `.ai/repo/ci/gates.yaml` runs it.
 
-Enforcement is a ratchet rather than a cliff. The modules that do not satisfy the rule today
-are recorded in `.ai/repo/rust-command-baseline.txt`, written by `--write-baseline` and never
-by hand; the gate fails only when a module that is not on that list is found wanting. So the
-debt can shrink and cannot grow, nothing already broken blocks anybody, and a command added
-without an assertion beside it fails the build on the change that adds it. `--strict` ignores
-the baseline and is what version 2 will run once the list is empty.
+The gate runs `--strict`: every composed module must satisfy the rule, and one that does not
+fails the build. There is no baseline and no exemption list, because there is nothing left to
+exempt — every module the application composes now asserts, in the file that declares it,
+that it yields the identity and the projections it claims.
+
+It did not start there. The rule landed with a ratchet: the modules that did not satisfy it
+were recorded in a baseline written only by `--write-baseline`, and the gate failed only for
+a module absent from that list, so the debt could shrink and could not grow. That mechanism
+is still in the check and is the right way to introduce a rule against an existing tree — a
+blocking rule with no migration path is a rule that gets reverted. It is simply no longer
+needed here, and the baseline file was removed rather than left empty, because an empty
+exemption list invites somebody to add a line to it.
 
 The validator does not live in `lib/`. That library belongs to the shipped tool, and
 `scripts/generate-site-data` refuses a `mj_validate_*` function that no shipped doctrine
