@@ -34,14 +34,21 @@ site/content/docs/site-claims.md    merge=derived
 # rewritten whenever the registry moves.
 site/content/registry/**            merge=derived
 
-# The rest of what `majordomus generate` writes. The list above was the site and the
-# status documents; these are the projections and the schema/allow-list outputs, and they
-# conflict for exactly the same reason — a stamp or a fingerprint of the tree they were
-# generated from. `test/cases/57_derived_merge_driver.sh` asks `git check-attr` about every
-# path in docs/generated/artifacts.json, so this list cannot fall behind the generator:
-# adding a generate target without a rule here fails the case.
-AGENTS.md                             merge=derived
-CLAUDE.md                             merge=derived
-share/allow/**                        merge=derived
-share/sections/**                     merge=derived
-share/schemas/**/*.schema.json        merge=derived
+# The schema, allow-list and section projections: `majordomus generate` writes all three out
+# of the kind and capability declarations, and they conflict for the same reason the rest of
+# this file exists — the merged tree's answer appears in neither side.
+# Only the projected schemas: the `.proto` beside each one is a hand-written source, and
+# merging two edits of a source is exactly what git should do with it.
+share/schemas/**/*.schema.json      merge=derived
+share/allow/**                      merge=derived
+share/sections/**                   merge=derived
+
+# The provider projections. They carry a stamp over the policy hash and their own content,
+# so a merge of two branches leaves a stamp that describes neither.
+AGENTS.md                           merge=derived
+CLAUDE.md                           merge=derived
+
+# The installer and the document that describes it: both are written out of the release and
+# platform declarations, and both carry a fingerprint of the tree they were generated from.
+docs/INSTALL.md                     merge=derived
+site/static/install.sh              merge=derived
