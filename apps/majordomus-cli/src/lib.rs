@@ -21,6 +21,7 @@ pub mod commands;
 pub mod deploy;
 pub mod discovery;
 pub mod distribution;
+pub mod environment;
 pub mod error;
 pub mod generate;
 pub mod git;
