@@ -42,6 +42,14 @@ its own staleness. When a session ends, `handover` writes objective, current sta
 action, each required and non-empty. `watch` reports every drift it can see across the
 records this repository holds.
 
+The worktrees themselves have one topology: a branch's checkout is at `<repo>-wt/<branch>`,
+derived from git's identity and never registered, so "where is branch X" is a derivation
+and not a search. `worktree.topology` gives every checkout a standing — canonical,
+misplaced, detached, ephemeral, missing — and every branch a verdict on cleanup
+eligibility: merged into the trunk, and clean or not checked out. A stray checkout is
+brought home with its uncommitted work, fingerprinted before and after; nothing is deleted
+by the tool, and the list of what could go is derived state for a person to act on.
+
 ## Before and after
 
 ```text
