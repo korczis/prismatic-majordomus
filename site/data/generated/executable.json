@@ -35,6 +35,23 @@
       "tool": "majordomus_capabilities"
     },
     {
+      "api_anchor": "/docs/api/#op-continuity-state",
+      "claims": [],
+      "cli": null,
+      "id": "continuity.state",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": "majordomus://continuity",
+      "route": "/registry/capabilities/continuity-state/",
+      "slug": "continuity-state",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "What the lifecycle is holding",
+      "tool": "majordomus_continuity"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -388,7 +405,15 @@
         "test": "test/cases/91_canonical_architecture.sh"
       }
     ],
-    "cli": [],
+    "cli": [
+      {
+        "id": "cli-documentation-executable",
+        "implementation": "apps/majordomus-cli/src/cli.rs",
+        "route": "/guarantees/cli-documentation-executable/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/cli_docs.rs"
+      }
+    ],
     "executable": [
       {
         "id": "mcp-data-driven",
@@ -537,9 +562,9 @@
     ]
   },
   "counts": {
-    "capabilities": 20,
-    "claims": 23,
-    "modules": 8
+    "capabilities": 21,
+    "claims": 24,
+    "modules": 9
   },
   "generator": "majordomus-cli 0.1.0",
   "modules": [
@@ -563,6 +588,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "continuity.state",
+          "route": "/registry/capabilities/continuity-state/",
+          "slug": "continuity-state"
+        }
+      ],
+      "claims": [],
+      "id": "continuity",
+      "route": "/registry/modules/continuity/",
+      "slug": "continuity",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "title": "Continuity"
     },
     {
       "capabilities": [

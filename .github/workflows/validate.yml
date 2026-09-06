@@ -46,9 +46,10 @@ jobs:
       rust_integration: ${{ steps.plan.outputs.rust_integration }}
       rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
+      cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
+      cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
-      cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       macos: ${{ steps.plan.outputs.macos }}
     steps:
       - uses: actions/checkout@v4

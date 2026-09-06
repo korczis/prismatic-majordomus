@@ -110,6 +110,36 @@
       "external": false
     },
     {
+      "id": "lib/derive.sh",
+      "kind": "module",
+      "label": "derive",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/checkpoint.sh",
+      "kind": "module",
+      "label": "checkpoint",
+      "command": "checkpoint",
+      "summary": "record compact progress inside the active task",
+      "read_only": null,
+      "route": "/commands/checkpoint/",
+      "external": false
+    },
+    {
+      "id": "lib/handover.sh",
+      "kind": "module",
+      "label": "handover",
+      "command": "handover",
+      "summary": "write an append-only continuation record (body on stdin)",
+      "read_only": null,
+      "route": "/commands/handover/",
+      "external": false
+    },
+    {
       "id": "lib/check.sh",
       "kind": "module",
       "label": "check",
@@ -217,26 +247,6 @@
       "summary": "the executable use cases: list, show, validate, run, coverage, impact, scaffold",
       "read_only": null,
       "route": "/commands/usecase/",
-      "external": false
-    },
-    {
-      "id": "lib/checkpoint.sh",
-      "kind": "module",
-      "label": "checkpoint",
-      "command": "checkpoint",
-      "summary": "record compact progress inside the active task",
-      "read_only": null,
-      "route": "/commands/checkpoint/",
-      "external": false
-    },
-    {
-      "id": "lib/handover.sh",
-      "kind": "module",
-      "label": "handover",
-      "command": "handover",
-      "summary": "write an append-only continuation record (body on stdin)",
-      "read_only": null,
-      "route": "/commands/handover/",
       "external": false
     },
     {
@@ -757,6 +767,16 @@
       "kind": "reads"
     },
     {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/decisions.md",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/ledger.jsonl",
+      "kind": "reads"
+    },
+    {
       "source": "lib/doctor.sh",
       "target": ".ai/README.md",
       "kind": "reads"
@@ -1003,6 +1023,21 @@
     },
     {
       "source": "lib/capture.sh",
+      "target": "lib/checkpoint.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": "lib/derive.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
       "target": "lib/session.sh",
       "kind": "sources"
     },
@@ -1038,6 +1073,11 @@
     },
     {
       "source": "lib/checkpoint.sh",
+      "target": "lib/derive.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/checkpoint.sh",
       "target": "lib/handover.sh",
       "kind": "sources"
     },
@@ -1064,6 +1104,21 @@
     {
       "source": "lib/context.sh",
       "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": "lib/decision.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": "lib/session.sh",
       "kind": "sources"
     },
     {
@@ -1144,6 +1199,11 @@
     {
       "source": "lib/finish.sh",
       "target": "lib/handover.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/handover.sh",
+      "target": "lib/derive.sh",
       "kind": "sources"
     },
     {
@@ -1299,6 +1359,16 @@
     {
       "source": "lib/decision.sh",
       "target": ".ai/local/state/decisions.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/checkpoints",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": ".ai/local/state/handovers",
       "kind": "uses"
     },
     {
