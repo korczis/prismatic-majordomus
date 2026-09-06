@@ -76,6 +76,16 @@ impl Page {
     }
 }
 
+/// The word a serde enum serialises to (`behaviorally_verified`, `repository`), for a
+/// page that shows a variant. `{:?}` would show the Rust spelling, which is not the
+/// vocabulary anything else in this repository uses.
+fn word<T: serde::Serialize>(value: &T) -> String {
+    serde_json::to_value(value)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_string))
+        .unwrap_or_default()
+}
+
 /// Ask the executor for a capability's output, typed.
 fn ask<T: serde::de::DeserializeOwned>(ctx: &Context, id: &str, input: Value) -> Result<T, String> {
     let value = ctx.execute(id, input).map_err(|e| e.to_string())?;
@@ -173,7 +183,7 @@ pub fn overview(ctx: &Context) -> Page {
                 Node::Element(
                     el("span")
                         .child(mono(&report.repository.scope_path))
-                        .text(format!(" ({:?})", report.repository.scope_origin)),
+                        .text(format!(" ({})", word(&report.repository.scope_origin))),
                 ),
             ),
             (
@@ -252,7 +262,7 @@ pub fn overview(ctx: &Context) -> Page {
                                     crate::model::Severity::Warning => "warn",
                                     crate::model::Severity::Info => "info",
                                 },
-                                format!("{:?}", d.severity).to_lowercase(),
+                                word(&d.severity),
                             )),
                             cell(mono(&d.code)),
                             cell(mono(d.path.clone().unwrap_or_else(|| "-".into()))),
@@ -559,7 +569,7 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                 Node::Element(mono(match &c.benchmark {
                     crate::capability::BenchmarkPolicy::Required => "required".to_string(),
                     crate::capability::BenchmarkPolicy::Waived { reason } => {
-                        format!("waived: {reason:?}")
+                        format!("waived: {}", word(reason))
                     }
                 })),
             ),

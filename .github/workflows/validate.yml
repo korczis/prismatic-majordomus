@@ -244,6 +244,12 @@ jobs:
       # from the canonical sources and diffs it against what is committed, which is the only
       # thing that proves the two agree — and the build and the check then read the committed
       # data rather than each paying for a generation of their own to learn the same fact.
+      # The Cockpit's stylesheet is compiled from one source file; this is the only gate
+      # that can prove the committed one still matches it, because it needs the Node
+      # toolchain the site job already has.
+      - name: the Cockpit stylesheet in sync
+        if: needs.plan.outputs.cockpit_assets == 'true'
+        run: scripts/ci/timed cockpit-assets "cockpit-assets --check" timings.tsv scripts/cockpit-assets --check
       - name: derived site data in sync
         run: scripts/ci/timed site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
       - name: build the site

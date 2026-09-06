@@ -5,22 +5,22 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "8ff8073d4cda3114db2d210783ec68f2de5f6cb4f235d15b786550779d39e72d",
+    "fingerprint": "2cd5284c241a58ee12152b6b57ae663822c2e6f8459b3b0403e64c31808397e8",
     "summary": {
-      "total": 682,
+      "total": 684,
       "builtin": 14,
-      "declarative": 668,
+      "declarative": 670,
       "by_kind": {
         "command": 1,
         "query": 13,
-        "resource": 668
+        "resource": 670
       },
       "by_stability": {
         "behaviorally_verified": 14,
-        "implemented": 668
+        "implemented": 670
       },
       "mcp_tools": 14,
-      "mcp_resources": 672,
+      "mcp_resources": 674,
       "http_routes": 14,
       "cli_commands": 4,
       "modules": 23,
@@ -3962,7 +3962,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 170,
+        "capabilities": 171,
         "capability_ids": []
       },
       {
@@ -4136,13 +4136,13 @@
         "title": "use-case",
         "description": "Declarative objects of kind 'use-case' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 35,
+        "capabilities": 36,
         "capability_ids": []
       }
     ]
   },
   "index": {
-    "fingerprint": "ddb4715f63b73013bc4b7243d41afdc53103662ed012e18fe50dbf97b0bd3b49",
+    "fingerprint": "9d63e2c8c7958a0a8b39d7862b50724ca4b6c282dd52d8982453fd46ff28ed80",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -4163,7 +4163,7 @@
       "application": 5,
       "claim": 122,
       "context": 8,
-      "document": 170,
+      "document": 171,
       "implementation": 37,
       "issue": 90,
       "milestone": 11,
@@ -4175,7 +4175,7 @@
       "skill": 3,
       "taxonomy": 10,
       "test": 89,
-      "use-case": 35
+      "use-case": 36
     },
     "diagnostics": {},
     "objects": [
@@ -4210,7 +4210,7 @@
         "path": ".ai/repo/applications/repository-opened-in-ai-clients.md",
         "section": "applications",
         "source_class": "application",
-        "bytes": 1701
+        "bytes": 1751
       },
       {
         "uri": "majordomus://application/repository-with-authored-governance",
@@ -4221,7 +4221,7 @@
         "path": ".ai/repo/applications/repository-with-authored-governance.md",
         "section": "applications",
         "source_class": "application",
-        "bytes": 1553
+        "bytes": 1603
       },
       {
         "uri": "majordomus://application/several-agents-one-repository",
@@ -5708,7 +5708,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 26848
+        "bytes": 27840
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -5763,6 +5763,15 @@
         "path": "docs/CLI.md",
         "source_class": "document",
         "bytes": 81573
+      },
+      {
+        "uri": "majordomus://document/docs/COCKPIT.md",
+        "kind": "document",
+        "identity": "docs/COCKPIT.md",
+        "title": "The Cockpit — the registry, rendered for a person",
+        "path": "docs/COCKPIT.md",
+        "source_class": "document",
+        "bytes": 16156
       },
       {
         "uri": "majordomus://document/docs/CONCEPTS.md",
@@ -5879,7 +5888,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2210
+        "bytes": 2258
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -5915,7 +5924,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 8895
+        "bytes": 9181
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -7155,7 +7164,7 @@
         "identity": "lib/context_docs.sh",
         "path": "lib/context_docs.sh",
         "source_class": "library",
-        "bytes": 35894
+        "bytes": 36841
       },
       {
         "uri": "majordomus://implementation/lib/decision.sh",
@@ -10959,6 +10968,17 @@
         "bytes": 2180
       },
       {
+        "uri": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
+        "kind": "use-case",
+        "identity": "see-what-the-repository-holds-without-reading-it",
+        "title": "See what the repository holds, and run one of its capabilities, without reading a file",
+        "description": "Open the shared server in a browser and get the whole layer as pages: what exists, where each thing came from, what depends on what, what is failing, and a form that runs any capability.",
+        "path": ".ai/repo/use-cases/see-what-the-repository-holds-without-reading-it.md",
+        "section": "use-cases",
+        "source_class": "use_case",
+        "bytes": 4719
+      },
+      {
         "uri": "majordomus://use-case/serve-the-layer-to-ai-clients",
         "kind": "use-case",
         "identity": "serve-the-layer-to-ai-clients",
@@ -11039,7 +11059,7 @@
       "format": "markdown",
       "front_matter": "optional",
       "identity": [],
-      "objects": 170
+      "objects": 171
     },
     {
       "name": "implementation",
@@ -11160,7 +11180,7 @@
       "identity": [
         "id"
       ],
-      "objects": 35
+      "objects": 36
     }
   ],
   "projections": [
@@ -14093,6 +14113,27 @@
         "transport": "http",
         "module": "system",
         "cached": false
+      },
+      {
+        "key": "system.http.cockpit_overview",
+        "kind": "system",
+        "transport": "http",
+        "module": "system",
+        "cached": false
+      },
+      {
+        "key": "system.http.cockpit_capabilities",
+        "kind": "system",
+        "transport": "http",
+        "module": "system",
+        "cached": false
+      },
+      {
+        "key": "system.http.cockpit_graph",
+        "kind": "system",
+        "transport": "http",
+        "module": "system",
+        "cached": false
       }
     ],
     "coverage": {
@@ -14454,6 +14495,27 @@
           "transport": "http",
           "state": "covered",
           "cases": 1
+        },
+        {
+          "subject": "system.http.cockpit_overview",
+          "module": "system",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "system.http.cockpit_capabilities",
+          "module": "system",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "system.http.cockpit_graph",
+          "module": "system",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
         }
       ],
       "tallies": {
@@ -14476,14 +14538,14 @@
           "waived": 0
         },
         "system": {
-          "required": 12,
-          "covered": 12,
+          "required": 15,
+          "covered": 15,
           "missing": 0,
           "waived": 0
         },
         "total": {
-          "required": 51,
-          "covered": 51,
+          "required": 54,
+          "covered": 54,
           "missing": 0,
           "waived": 0
         }
@@ -14534,6 +14596,21 @@
         "key": "system.http.docs",
         "transport": "http",
         "description": "GET /docs (the Swagger UI shell)"
+      },
+      {
+        "key": "system.http.cockpit_overview",
+        "transport": "http",
+        "description": "GET /cockpit (the Cockpit's landing page, server-rendered)"
+      },
+      {
+        "key": "system.http.cockpit_capabilities",
+        "transport": "http",
+        "description": "GET /cockpit/capabilities (every capability as a table: the widest page)"
+      },
+      {
+        "key": "system.http.cockpit_graph",
+        "transport": "http",
+        "description": "GET /cockpit/graphs/registry (a page whose content is a derived graph)"
       }
     ],
     "policy": {

@@ -59,6 +59,11 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench --profile ci --check --no-write
     summary: the benchmark check against the committed baseline of its platform (macOS, the one platform with a baseline under .ai/repo/benchmarks/rust/)
 
+  - id: cockpit-assets
+    job: site
+    runs: scripts/cockpit-assets --check
+    summary: the committed Cockpit stylesheet matches the source it is compiled from
+
   - id: site-build
     job: site
     runs: scripts/site-build && scripts/site-check
@@ -91,6 +96,15 @@ classes:
   - id: rust-generated
     paths: [docs/generated/**, site/data/registry/**, share/allow/**, AGENTS.md, CLAUDE.md]
     gates: [rust-integration, shell-suite, site-build, site-probe]
+
+  # the Cockpit's own assets: its stylesheet source, its compiled stylesheet, its scripts.
+  # Read from disk by the served executable, so the crate's suites see them; the compiled
+  # stylesheet is a generated artifact, and cockpit-assets --check is what proves it current.
+  # Declared before `share` so a reader sees the narrower rule first; the planner takes the
+  # union of every matching class, so both apply.
+  - id: cockpit
+    paths: [share/cockpit/**, scripts/cockpit-assets]
+    gates: [cockpit-assets, rust-check, site-build]
 
   # the distribution: the skeleton, the schemas, the kinds, the command and event registries;
   # read by both implementations at run time, embedded in the crate at build, and inputs of

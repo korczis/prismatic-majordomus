@@ -20,15 +20,16 @@
    flat everywhere else. No shadows doing decoration's work, no gradients, no animation
    that is not a state change. */
 
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @import "flowbite/src/themes/default";
 @plugin "flowbite/plugin";
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Nothing is scanned for class names: every class this stylesheet emits is written below.
-   An empty source set is deliberate, not an oversight — it is what makes the output
-   deterministic. */
-@source not "*";
+/* `source(none)` turns off automatic source detection. Nothing in the repository is
+   scanned for class names: every class this stylesheet emits is written below, as an
+   @apply composition. That is deliberate and it is what makes the output deterministic —
+   a function of this file and the pinned versions alone, and never of what happens to be
+   in the tree — which is what lets `scripts/cockpit-assets --check` be exact. */
 
 @theme {
   /* Type: one system stack, one monospace stack. Nothing is fetched. */

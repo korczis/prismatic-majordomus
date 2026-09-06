@@ -14,7 +14,7 @@ use std::sync::Arc;
 use majordomus_cli::bench::BenchmarkProjection;
 use majordomus_cli::capability::executor::canonical_json;
 use majordomus_cli::capability::{
-    builtin, CapabilityError, CapabilityKind, CapabilityRegistry, CaseContext, Context,
+    builtin, CapabilityError, CapabilityKind, CapabilityRegistry, CaseContext, Context, Provenance,
     RegistryError,
 };
 use majordomus_cli::http::{openapi, Request, Router};
@@ -474,6 +474,152 @@ fn commands_are_never_cached_and_queries_are_the_only_kind_the_cache_ever_sees()
         }
         if c.kind == CapabilityKind::Resource {
             assert!(!c.cache.is_enabled(), "{}", c.id);
+        }
+    }
+}
+
+/// Graph invariants, over every derivation and every shape of repository the generator
+/// makes. These are the guarantees a renderer relies on: a node it can look up for every
+/// edge end, one node per id, and the same bytes for the same tree — which is what lets a
+/// graph be cached, committed, snapshotted or diffed.
+#[test]
+fn every_derived_graph_holds_its_invariants_on_every_repository() {
+    let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+    let shapes = [
+        Shape {
+            rules: 0,
+            prompts: 0,
+            documents: 0,
+            body_lines: 1,
+        },
+        Shape {
+            rules: 1,
+            prompts: 1,
+            documents: 1,
+            body_lines: 2,
+        },
+        Shape {
+            rules: 25,
+            prompts: 4,
+            documents: 9,
+            body_lines: 4,
+        },
+    ];
+    for shape in shapes {
+        let repo = SyntheticRepository::new(shape).expect("synthetic repository");
+        let ctx = repo.context().expect("context");
+        for id in majordomus_cli::graph::ids() {
+            let g = majordomus_cli::graph::derive(id, &ctx.registry, &ctx.index)
+                .unwrap_or_else(|| panic!("{id} is listed and does not derive"));
+
+            // one node per id
+            let ids: std::collections::BTreeSet<&str> =
+                g.nodes.iter().map(|n| n.id.as_str()).collect();
+            assert_eq!(ids.len(), g.nodes.len(), "{id}: a node id appears twice");
+
+            // every edge end is a node of this graph, and every kind is declared
+            for e in &g.edges {
+                assert!(
+                    ids.contains(e.source.as_str()),
+                    "{id}: edge from {}",
+                    e.source
+                );
+                assert!(
+                    ids.contains(e.target.as_str()),
+                    "{id}: edge to {}",
+                    e.target
+                );
+                assert!(
+                    g.edge_kinds.contains_key(&e.kind),
+                    "{id}: undeclared edge kind {}",
+                    e.kind
+                );
+            }
+            for n in &g.nodes {
+                assert!(
+                    g.node_kinds.contains_key(&n.kind),
+                    "{id}: undeclared node kind {}",
+                    n.kind
+                );
+            }
+
+            // the metadata is the graph, counted and judged, not a second claim
+            assert_eq!(g.metadata.nodes, g.nodes.len(), "{id}");
+            assert_eq!(g.metadata.edges, g.edges.len(), "{id}");
+            assert_eq!(
+                g.metadata.acyclic,
+                majordomus_cli::graph::is_acyclic(&g.nodes, &g.edges),
+                "{id}"
+            );
+            assert!(
+                g.nodes.len() <= majordomus_cli::graph::MAX_NODES,
+                "{id}: past the node limit without saying so"
+            );
+
+            // sorted, so two derivations of one tree are byte-equal and a diff is readable
+            let mut sorted = g.nodes.clone();
+            sorted.sort();
+            assert_eq!(sorted, g.nodes, "{id}: nodes are not sorted");
+
+            // no absolute path and no clock: the same tree and executable, the same bytes
+            let text = serde_json::to_string(&g).expect("a graph serialises");
+            assert!(
+                !text.contains(repo.root().to_str().unwrap()),
+                "{id} carries the checkout path"
+            );
+
+            // derived twice from two registries over one tree: identical
+            let other = repo.context().expect("a second context");
+            let again = majordomus_cli::graph::derive(id, &other.registry, &other.index)
+                .expect("the same graph");
+            assert_eq!(again, g, "{id} is not deterministic");
+        }
+    }
+}
+
+/// The registry graph is the executable describing itself, so it must describe all of
+/// itself: every builtin capability is a node, and every projection it declares is an
+/// edge. A capability added to a module reaches the graph without the derivation knowing
+/// its name.
+#[test]
+fn the_registry_graph_holds_every_builtin_capability_and_its_projections() {
+    let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+    let ctx = shared();
+    let g = majordomus_cli::graph::derive("registry", &ctx.registry, &ctx.index)
+        .expect("the registry graph");
+    let node = |id: &str| g.nodes.iter().any(|n| n.id == id);
+    let edge = |from: &str, to: &str| g.edges.iter().any(|e| e.source == from && e.target == to);
+
+    for c in ctx.registry.iter() {
+        if !matches!(c.provenance, Provenance::Builtin { .. }) {
+            continue;
+        }
+        let capability = format!("capability:{}", c.id);
+        assert!(node(&capability), "{} is not a node", c.id);
+        assert!(
+            edge(&format!("module:{}", c.module), &capability),
+            "{} is not composed by its module",
+            c.id
+        );
+        assert!(
+            edge(
+                &capability,
+                &format!("source:{}", c.provenance.source_path())
+            ),
+            "{} does not name the file it was declared in",
+            c.id
+        );
+        for (declared, projection) in [
+            (c.exposure.mcp.is_some(), "projection:mcp"),
+            (c.exposure.http.is_some(), "projection:http"),
+            (c.exposure.cli.is_some(), "projection:cli"),
+        ] {
+            assert_eq!(
+                edge(&capability, projection),
+                declared,
+                "{} and {projection} disagree",
+                c.id
+            );
         }
     }
 }
