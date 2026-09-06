@@ -64,6 +64,11 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench --profile ci --check --no-write
     summary: the benchmark check against the committed baseline of its platform (macOS, the one platform with a baseline under .ai/repo/benchmarks/rust/)
 
+  - id: web-topology
+    job: structure
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- web validate
+    summary: the repository's web surfaces resolve into one topology with no collision, no nested claim and no directory outside the generated root
+
   - id: cockpit-assets
     job: site
     runs: scripts/cockpit-assets --check
