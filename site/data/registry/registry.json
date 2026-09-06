@@ -5,28 +5,28 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "6a809afb21c5bf380b7aefc1c96195632b255a4c8d86a7f819f2c36eff902514",
+    "fingerprint": "8ff8073d4cda3114db2d210783ec68f2de5f6cb4f235d15b786550779d39e72d",
     "summary": {
-      "total": 679,
-      "builtin": 11,
+      "total": 682,
+      "builtin": 14,
       "declarative": 668,
       "by_kind": {
         "command": 1,
-        "query": 10,
+        "query": 13,
         "resource": 668
       },
       "by_stability": {
-        "behaviorally_verified": 11,
+        "behaviorally_verified": 14,
         "implemented": 668
       },
-      "mcp_tools": 11,
-      "mcp_resources": 670,
-      "http_routes": 11,
+      "mcp_tools": 14,
+      "mcp_resources": 672,
+      "http_routes": 14,
       "cli_commands": 4,
-      "modules": 21,
-      "benchmark_required": 11,
+      "modules": 23,
+      "benchmark_required": 14,
       "benchmark_waived": 0,
-      "cached": 2
+      "cached": 4
     },
     "builtin": [
       {
@@ -1176,6 +1176,339 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
       },
       {
+        "id": "graph.get",
+        "module": "graph",
+        "kind": "query",
+        "title": "Derive one graph",
+        "description": "One graph by id: its nodes and edges with the vocabularies that say what each kind means, the file every node was derived from, and whether the result is acyclic. Deterministic for a given tree and executable.",
+        "input": {
+          "name": "GraphInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The graph's id, as `graph.list` gives it (`registry`, `layer`, `rules`, `adrs`,\n`use-cases`)."
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "description": "Which graph to derive.",
+            "title": "GraphInput"
+          }
+        },
+        "output": {
+          "name": "Graph",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The identity, `[a-z][a-z0-9-]*`; the last segment of its route."
+              },
+              "title": {
+                "type": "string",
+                "description": "The short name."
+              },
+              "description": {
+                "type": "string",
+                "description": "One paragraph: what a reader learns from it."
+              },
+              "source": {
+                "type": "string",
+                "description": "What it was derived from, in the repository's own words."
+              },
+              "node_kinds": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Node kind to what that kind means."
+              },
+              "edge_kinds": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Edge kind to what that edge asserts."
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Node"
+                },
+                "description": "Sorted by id."
+              },
+              "edges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Edge"
+                },
+                "description": "Sorted."
+              },
+              "metadata": {
+                "$ref": "#/$defs/GraphMetadata",
+                "description": "Counts and invariants."
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "description",
+              "source",
+              "node_kinds",
+              "edge_kinds",
+              "nodes",
+              "edges",
+              "metadata"
+            ],
+            "description": "A derived graph: what it is, where it came from, what its vocabularies mean, and the\nnodes and edges themselves.",
+            "title": "Graph",
+            "$defs": {
+              "Node": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique within the graph."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "One of the graph's declared node kinds."
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "The short label a renderer draws."
+                  },
+                  "summary": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "One line about the thing, when the source holds one."
+                  },
+                  "route": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where the Cockpit shows this thing, when it shows it."
+                  },
+                  "source": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The repository-relative file the node was derived from, when one file owns it."
+                  },
+                  "status": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "A status word the graph's own vocabulary defines (`accepted`, `active`, `query`)."
+                  },
+                  "external": {
+                    "type": "boolean",
+                    "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+                  }
+                },
+                "required": [
+                  "id",
+                  "kind",
+                  "label"
+                ],
+                "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
+              },
+              "Edge": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "The node the edge leaves."
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "The node the edge enters."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "One of the graph's declared edge kinds."
+                  }
+                },
+                "required": [
+                  "source",
+                  "target",
+                  "kind"
+                ],
+                "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge."
+              },
+              "GraphMetadata": {
+                "type": "object",
+                "properties": {
+                  "nodes": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many nodes."
+                  },
+                  "edges": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many edges."
+                  },
+                  "acyclic": {
+                    "type": "boolean",
+                    "description": "Whether the edges form a directed acyclic graph. Derived, never declared: a graph\nwhose contract is a DAG and whose answer here is `false` is a defect in the data."
+                  },
+                  "truncated": {
+                    "type": "boolean",
+                    "description": "True when the derivation stopped at [`MAX_NODES`] and the graph is a prefix of\nwhat the repository holds."
+                  }
+                },
+                "required": [
+                  "nodes",
+                  "edges",
+                  "acyclic",
+                  "truncated"
+                ],
+                "description": "What a reader needs to know about the graph as a whole before drawing it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::graph"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_graph"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/graph"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "graph"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+      },
+      {
+        "id": "graph.list",
+        "module": "graph",
+        "kind": "query",
+        "title": "List graphs",
+        "description": "Every graph this executable derives: its id, what it shows, and what it is derived from.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "GraphList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many."
+              },
+              "graphs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/GraphInfo"
+                },
+                "description": "Each, described but not derived."
+              }
+            },
+            "required": [
+              "count",
+              "graphs"
+            ],
+            "description": "Every graph this executable derives.",
+            "title": "GraphList",
+            "$defs": {
+              "GraphInfo": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The short name."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "One paragraph."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "What it is derived from."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "description",
+                  "source"
+                ],
+                "description": "One graph the executable can derive: what it is, without deriving it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::graph"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_graphs",
+            "resource": {
+              "uri": "majordomus://graphs",
+              "name": "graphs"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/graphs"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "graph",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+      },
+      {
         "id": "objects.get",
         "module": "objects",
         "kind": "query",
@@ -2254,6 +2587,12 @@
                 "minimum": 0,
                 "description": "HTTP routers built."
               },
+              "graph_builds": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Graphs derived from the registry and the index."
+              },
               "executions": {
                 "type": "integer",
                 "format": "uint64",
@@ -2300,6 +2639,7 @@
               "mcp_projection_builds",
               "openapi_builds",
               "http_projection_builds",
+              "graph_builds",
               "executions",
               "handler_invocations",
               "cache_hits",
@@ -3420,6 +3760,163 @@
           "policy": "disabled"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
+      },
+      {
+        "id": "system.health",
+        "module": "system",
+        "kind": "query",
+        "title": "Health of this process",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "Health",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/$defs/HealthStatus",
+                "description": "The worst check's status."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many checks stand where, by status word."
+              },
+              "checks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/HealthCheck"
+                },
+                "description": "Every dimension, in a stable order."
+              }
+            },
+            "required": [
+              "status",
+              "tallies",
+              "checks"
+            ],
+            "description": "The health of what this process serves.",
+            "title": "Health",
+            "$defs": {
+              "HealthStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ok",
+                    "description": "The engine that decides this dimension is satisfied."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warn",
+                    "description": "Nothing is broken and something is worth looking at."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fail",
+                    "description": "The engine that decides this dimension is not satisfied."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "This process cannot decide it, and says so rather than reporting `ok`."
+                  }
+                ],
+                "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+              },
+              "HealthCheck": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "A stable id, `[a-z][a-z0-9-]*`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The short name."
+                  },
+                  "status": {
+                    "$ref": "#/$defs/HealthStatus",
+                    "description": "Where it stands."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "One line: what the engine decided and on what."
+                  },
+                  "decided_by": {
+                    "type": "string",
+                    "description": "The engine that decided it, named so the reader knows what to fix."
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What reproduces the verdict: a command, or a path."
+                  },
+                  "findings": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Findings behind the verdict, when the engine produced any: the diagnostic\nmessages, the stale files, the missing coverage lines."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "status",
+                  "detail",
+                  "decided_by"
+                ],
+                "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::system"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_health",
+            "resource": {
+              "uri": "majordomus://health",
+              "name": "health"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/health"
+          }
+        },
+        "stability": "behaviorally_verified",
+        "tags": [
+          "system",
+          "health",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 4,
+          "ttl_seconds": 5
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs"
       }
     ],
     "modules": [
@@ -3467,6 +3964,19 @@
         "source": "declarative",
         "capabilities": 170,
         "capability_ids": []
+      },
+      {
+        "id": "graph",
+        "title": "Graphs",
+        "description": "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 2,
+        "capability_ids": [
+          "graph.get",
+          "graph.list"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
       },
       {
         "id": "implementation",
@@ -3594,6 +4104,18 @@
         "capability_ids": []
       },
       {
+        "id": "system",
+        "title": "System",
+        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "system.health"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs"
+      },
+      {
         "id": "taxonomy",
         "title": "taxonomy",
         "description": "Declarative objects of kind 'taxonomy' from the repository's AI layer.",
@@ -3620,7 +4142,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6a6caf0ca59f5e4f19aa2210c52d2dbe2fcd6c5de5c5e6096e1956c6c38a0a87",
+    "fingerprint": "ddb4715f63b73013bc4b7243d41afdc53103662ed012e18fe50dbf97b0bd3b49",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -12505,6 +13027,26 @@
         "output": "CapabilityList"
       },
       {
+        "name": "majordomus_graph",
+        "id": "graph.get",
+        "title": "Derive one graph",
+        "description": "One graph by id: its nodes and edges with the vocabularies that say what each kind means, the file every node was derived from, and whether the result is acyclic. Deterministic for a given tree and executable.",
+        "kind": "query",
+        "read_only": true,
+        "input": "GraphInput",
+        "output": "Graph"
+      },
+      {
+        "name": "majordomus_graphs",
+        "id": "graph.list",
+        "title": "List graphs",
+        "description": "Every graph this executable derives: its id, what it shows, and what it is derived from.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "GraphList"
+      },
+      {
         "name": "majordomus_get",
         "id": "objects.get",
         "title": "Get one object",
@@ -12593,9 +13135,26 @@
         "read_only": true,
         "input": "ClassifyInput",
         "output": "Classification"
+      },
+      {
+        "name": "majordomus_health",
+        "id": "system.health",
+        "title": "Health of this process",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "Health"
       }
     ],
     "resources": [
+      {
+        "uri": "majordomus://graphs",
+        "name": "graphs",
+        "id": "graph.list",
+        "title": "List graphs",
+        "kind": "query"
+      },
       {
         "uri": "majordomus://repository",
         "name": "repository",
@@ -12608,6 +13167,13 @@
         "name": "scope",
         "id": "repository.scope",
         "title": "The repository scope",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://health",
+        "name": "health",
+        "id": "system.health",
+        "title": "Health of this process",
         "kind": "query"
       }
     ],
@@ -12625,6 +13191,18 @@
         "method": "GET",
         "path": "/api/v1/capabilities",
         "id": "capabilities.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/graph",
+        "id": "graph.get",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/graphs",
+        "id": "graph.list",
         "kind": "query"
       },
       {
@@ -12680,12 +13258,19 @@
         "path": "/api/v1/scope/classify",
         "id": "repository.scope_classify",
         "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/health",
+        "id": "system.health",
+        "kind": "query"
       }
     ],
     "infrastructure": [
       "/",
       "/openapi.json",
       "/docs",
+      "/cockpit",
       "/mcp"
     ],
     "openapi_path": "docs/generated/openapi.json"
@@ -12778,6 +13363,180 @@
         "case": "queries",
         "cached": true,
         "route": "GET /api/v1/capabilities"
+      },
+      {
+        "key": "graph.get|direct|registry",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "registry",
+        "cached": true
+      },
+      {
+        "key": "graph.get|direct|layer",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "layer",
+        "cached": true
+      },
+      {
+        "key": "graph.get|direct|rules",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "rules",
+        "cached": true
+      },
+      {
+        "key": "graph.get|direct|adrs",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "adrs",
+        "cached": true
+      },
+      {
+        "key": "graph.get|direct|use-cases",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "use-cases",
+        "cached": true
+      },
+      {
+        "key": "graph.get|mcp|registry",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "registry",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
+        "key": "graph.get|mcp|layer",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "layer",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
+        "key": "graph.get|mcp|rules",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "rules",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
+        "key": "graph.get|mcp|adrs",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "adrs",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
+        "key": "graph.get|mcp|use-cases",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "use-cases",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
+        "key": "graph.get|http|registry",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "registry",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.get|http|layer",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "layer",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.get|http|rules",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "rules",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.get|http|adrs",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "adrs",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.get|http|use-cases",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "use-cases",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.list|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.list",
+        "module": "graph",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "graph.list|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.list",
+        "module": "graph",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_graphs"
+      },
+      {
+        "key": "graph.list|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.list",
+        "module": "graph",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/graphs"
       },
       {
         "key": "objects.get|direct|first-object",
@@ -13244,6 +14003,35 @@
         "route": "GET /api/v1/scope/classify"
       },
       {
+        "key": "system.health|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "system.health",
+        "module": "system",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "system.health|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "system.health",
+        "module": "system",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_health"
+      },
+      {
+        "key": "system.health|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "system.health",
+        "module": "system",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/health"
+      },
+      {
         "key": "system.mcp.process_cold",
         "kind": "system",
         "transport": "mcp",
@@ -13353,6 +14141,48 @@
           "cases": 2
         },
         {
+          "subject": "graph.get",
+          "module": "graph",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 5
+        },
+        {
+          "subject": "graph.get",
+          "module": "graph",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 5
+        },
+        {
+          "subject": "graph.get",
+          "module": "graph",
+          "transport": "http",
+          "state": "covered",
+          "cases": 5
+        },
+        {
+          "subject": "graph.list",
+          "module": "graph",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "graph.list",
+          "module": "graph",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "graph.list",
+          "module": "graph",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "objects.get",
           "module": "objects",
           "transport": "direct",
@@ -13540,6 +14370,27 @@
           "transport": "http",
           "state": "covered",
           "cases": 5
+        },
+        {
+          "subject": "system.health",
+          "module": "system",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "system.health",
+          "module": "system",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "system.health",
+          "module": "system",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
         },
         {
           "subject": "system.mcp.process_cold",
@@ -13607,32 +14458,32 @@
       ],
       "tallies": {
         "direct": {
-          "required": 11,
-          "covered": 11,
+          "required": 13,
+          "covered": 13,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 11,
-          "covered": 11,
+          "required": 13,
+          "covered": 13,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 11,
-          "covered": 11,
+          "required": 13,
+          "covered": 13,
           "missing": 0,
           "waived": 0
         },
         "system": {
-          "required": 9,
-          "covered": 9,
+          "required": 12,
+          "covered": 12,
           "missing": 0,
           "waived": 0
         },
         "total": {
-          "required": 42,
-          "covered": 42,
+          "required": 51,
+          "covered": 51,
           "missing": 0,
           "waived": 0
         }

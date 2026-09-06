@@ -35,6 +35,40 @@
       "tool": "majordomus_capabilities"
     },
     {
+      "api_anchor": "/docs/api/#op-graph-get",
+      "claims": [],
+      "cli": null,
+      "id": "graph.get",
+      "kind": "query",
+      "module": "graph",
+      "module_route": "/registry/modules/graph/",
+      "resource": null,
+      "route": "/registry/capabilities/graph-get/",
+      "slug": "graph-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "tests": [],
+      "title": "Derive one graph",
+      "tool": "majordomus_graph"
+    },
+    {
+      "api_anchor": "/docs/api/#op-graph-list",
+      "claims": [],
+      "cli": null,
+      "id": "graph.list",
+      "kind": "query",
+      "module": "graph",
+      "module_route": "/registry/modules/graph/",
+      "resource": "majordomus://graphs",
+      "route": "/registry/capabilities/graph-list/",
+      "slug": "graph-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "tests": [],
+      "title": "List graphs",
+      "tool": "majordomus_graphs"
+    },
+    {
       "api_anchor": "/docs/api/#op-objects-get",
       "claims": [
         {
@@ -216,6 +250,23 @@
       "tests": [],
       "title": "Judge a path against the scope",
       "tool": "majordomus_scope_classify"
+    },
+    {
+      "api_anchor": "/docs/api/#op-system-health",
+      "claims": [],
+      "cli": null,
+      "id": "system.health",
+      "kind": "query",
+      "module": "system",
+      "module_route": "/registry/modules/system/",
+      "resource": "majordomus://health",
+      "route": "/registry/capabilities/system-health/",
+      "slug": "system-health",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/system.rs",
+      "tests": [],
+      "title": "Health of this process",
+      "tool": "majordomus_health"
     }
   ],
   "claims": {
@@ -363,9 +414,9 @@
     ]
   },
   "counts": {
-    "capabilities": 11,
+    "capabilities": 14,
     "claims": 20,
-    "modules": 5
+    "modules": 7
   },
   "generator": "majordomus-cli 0.1.0",
   "modules": [
@@ -389,6 +440,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "graph.get",
+          "route": "/registry/capabilities/graph-get/",
+          "slug": "graph-get"
+        },
+        {
+          "id": "graph.list",
+          "route": "/registry/capabilities/graph-list/",
+          "slug": "graph-list"
+        }
+      ],
+      "claims": [],
+      "id": "graph",
+      "route": "/registry/modules/graph/",
+      "slug": "graph",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/graph.rs",
+      "title": "Graphs"
     },
     {
       "capabilities": [
@@ -486,6 +558,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "system.health",
+          "route": "/registry/capabilities/system-health/",
+          "slug": "system-health"
+        }
+      ],
+      "claims": [],
+      "id": "system",
+      "route": "/registry/modules/system/",
+      "slug": "system",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/system.rs",
+      "title": "System"
     }
   ],
   "registry_schema": "majordomus/capability-registry/v1",
