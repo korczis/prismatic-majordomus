@@ -12,8 +12,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | direct | 13 | 13 | 0 | 0 |
 | http | 13 | 13 | 0 | 0 |
 | mcp | 13 | 13 | 0 | 0 |
-| system | 12 | 12 | 0 | 0 |
-| total | 51 | 51 | 0 | 0 |
+| system | 15 | 15 | 0 | 0 |
+| total | 54 | 54 | 0 | 0 |
 
 ## Capabilities
 
@@ -47,5 +47,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `system.http.index` | http | GET / |
 | `system.http.openapi` | http | GET /openapi.json |
 | `system.http.docs` | http | GET /docs (the Swagger UI shell) |
+| `system.http.cockpit_overview` | http | GET /cockpit (the Cockpit's landing page, server-rendered) |
+| `system.http.cockpit_capabilities` | http | GET /cockpit/capabilities (every capability as a table: the widest page) |
+| `system.http.cockpit_graph` | http | GET /cockpit/graphs/registry (a page whose content is a derived graph) |
 
 Cache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.
