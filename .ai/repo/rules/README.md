@@ -11,6 +11,9 @@ audience: [human, agent]
 composition: extend
 order: 100
 tracks: [lib/rules.sh, lib/doctrine.sh, share/standard/majordomus, share/allow/rule.txt]
+children:
+  require_contract: true
+  exempt: [.ai/repo/rules/vendor]
 ---
 
 # Repository rules
@@ -28,6 +31,12 @@ vendor/majordomus/        the pinned Majordomus baseline; do not edit, upgrade e
 
 The vendored package carries `manifest.yaml` naming every rule file with its identity and
 content hash. A hand edit under `vendor/` is detected against that manifest and refused.
+
+Because the package is installed rather than authored here, it owes no context document,
+and this contract says so: `children.exempt` names `vendor/` and everything below it. The
+exemption is declared by the contract that governs the subtree, so it travels with the
+tree instead of living as a special case inside the tool — a directory of the layer that
+this repository does write still owes a contract, vendored or not.
 
 ## Front matter
 

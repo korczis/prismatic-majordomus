@@ -160,6 +160,23 @@ kinds:
       field: schema
       supported: ["session/v1"]
 
+  # The working context of an episode, under the checkout-local half of the layer. It is
+  # declared here so that the kind its front matter names is a kind this distribution knows
+  # and its contract can be found; no source class discovers it, and none should — it names
+  # one machine and it is a snapshot no surface can regenerate (ADR 0015). Declaring a kind
+  # says what a document of this shape is, not that something indexes it.
+  session-context:
+    format: markdown
+    front_matter: required
+    without_front_matter: document
+    schema: majordomus.session-context/v1
+    identity: [session_id]
+    title: title
+    description: title
+    schema_version:
+      field: schema
+      supported: ["session-context/v1"]
+
   adr:
     format: markdown
     front_matter: required

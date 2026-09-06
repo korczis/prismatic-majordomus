@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 21,
-    "schemas": 87,
-    "tags": 9
+    "operations": 22,
+    "schemas": 93,
+    "tags": 10
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1408,6 +1408,111 @@
       "variants": []
     },
     {
+      "description": "A directory contract as the document declares it, before anything is inherited.",
+      "is_enum": false,
+      "name": "ContractView",
+      "properties": [
+        {
+          "description": "The document's identity; it survives a move, the file name does not.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the directory.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line saying what the directory is for.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`active` or `deprecated`; a deprecated document is listed and never applied.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`directory`, `subtree` or `explicit`: how far the document reaches.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`extend`, `replace` or `final`: how it composes with what is above it.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Ties within one depth are broken by this, then by path.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`*`, or the providers the document is written for.",
+          "name": "providers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Who it addresses; both when it says nothing.",
+          "name": "audience",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Pathspecs whose change names this document for review.",
+          "name": "tracks",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether the directories below owe a contract, when this document says.",
+          "name": "children_require_contract",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Subtrees below this one that owe nothing: carried, not authored here.",
+          "name": "children_exempt",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand.",
       "is_enum": false,
       "name": "CounterSnapshot",
@@ -1758,6 +1863,212 @@
       "variants": []
     },
     {
+      "description": "One directory of the layer, what it owes, and what applies to it.",
+      "is_enum": false,
+      "name": "DirectoryNode",
+      "properties": [
+        {
+          "description": "Repository-relative, forward slashes.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Segments below the layer root; the root itself is 0.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The directory above, when it is inside the layer.",
+          "name": "parent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The directories immediately below, sorted.",
+          "name": "children",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it carries the contract it owes.",
+          "name": "state",
+          "refs": [
+            "DirectoryState"
+          ],
+          "required": true,
+          "type": "DirectoryState"
+        },
+        {
+          "description": "Whether a contract is owed here at all.",
+          "name": "requires_contract",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The contract that made the requirement explicit, when one did.",
+          "name": "governed_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The contract that released this subtree, when one did.",
+          "name": "exempted_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many objects of any kind the index holds directly in this directory.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The contract this directory declares, before inheritance.",
+          "name": "contract",
+          "refs": [
+            "ContractView"
+          ],
+          "required": false,
+          "type": "ContractView | null"
+        },
+        {
+          "description": "The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path.",
+          "name": "effective",
+          "refs": [
+            "EffectiveEntry"
+          ],
+          "required": false,
+          "type": "array of EffectiveEntry"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The layer's directories, what each owes, and the contracts that apply.",
+      "is_enum": false,
+      "name": "DirectoryReport",
+      "properties": [
+        {
+          "description": "The layer root the tree is rooted at.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directories in each state.",
+          "name": "tallies",
+          "refs": [
+            "DirectoryTallies"
+          ],
+          "required": true,
+          "type": "DirectoryTallies"
+        },
+        {
+          "description": "Every directory asked for, sorted by path.",
+          "name": "directories",
+          "refs": [
+            "DirectoryNode"
+          ],
+          "required": true,
+          "type": "array of DirectoryNode"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a directory of the layer carries the contract it owes.",
+      "is_enum": true,
+      "name": "DirectoryState",
+      "properties": [],
+      "type": "\"documented\" | \"exempt\" | \"owed\"",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [
+        {
+          "description": "It carries a context document of its own.",
+          "value": "documented"
+        },
+        {
+          "description": "It owes none, because a contract above it says so.",
+          "value": "exempt"
+        },
+        {
+          "description": "It owes one and has none.",
+          "value": "owed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How many directories are in each state.",
+      "is_enum": false,
+      "name": "DirectoryTallies",
+      "properties": [
+        {
+          "description": "Every directory of the layer the index knows.",
+          "name": "directories",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Carrying a contract of their own.",
+          "name": "documented",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Released by a contract above them.",
+          "name": "exempt",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Owing a contract and carrying none.",
+          "name": "owed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.",
       "is_enum": true,
       "name": "Divergence",
@@ -1827,6 +2138,69 @@
       "variants": []
     },
     {
+      "description": "One contract in a directory's effective chain, in the order it is applied.",
+      "is_enum": false,
+      "name": "EffectiveEntry",
+      "properties": [
+        {
+          "description": "The document's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Depth below the layer root; less is less specific and applies first.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The declared order, the second sort key.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`extend`, `replace` or `final`.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it applies to this directory, in words.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True for the directory's own document, false for one it inherits.",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -1846,6 +2220,7 @@
         "capabilities.list",
         "capabilities.describe",
         "continuity.state",
+        "directories.list",
         "graph.get",
         "graph.list",
         "health.report",
@@ -4957,6 +5332,104 @@
           "result_schema": "Continuity",
           "stability": "behaviorally_verified",
           "summary": "What the lifecycle is holding"
+        }
+      ]
+    },
+    {
+      "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
+      "name": "directories",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=8, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/directories?path=.ai%2Frepo%2Frules&effective=true&state=owed\"",
+          "description": "Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.",
+          "id": "directories.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "directories",
+            "uri": "majordomus://directories"
+          },
+          "mcp_tool": "majordomus_directories",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One directory, repository-relative and inside the layer. Its effective chain is\nalways resolved. Absent means every directory of the layer.",
+              "examples": [
+                {
+                  "case": "one-directory",
+                  "value": "\".ai/repo/rules\""
+                }
+              ],
+              "name": "path",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Resolve the effective chain for every directory, not only for a named one.",
+              "examples": [
+                {
+                  "case": "effective-everywhere",
+                  "value": "true"
+                }
+              ],
+              "name": "effective",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Only directories in this state: `documented`, `exempt` or `owed`.",
+              "examples": [
+                {
+                  "case": "owed",
+                  "value": "\"owed\""
+                }
+              ],
+              "name": "state",
+              "required": false,
+              "type": "DirectoryState | null"
+            }
+          ],
+          "path": "/api/v1/directories",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::directories",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The layer's directory contracts: the result.",
+              "schema": "DirectoryReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DirectoryReport",
+          "stability": "behaviorally_verified",
+          "summary": "The layer's directory contracts"
         }
       ]
     },

@@ -69,6 +69,13 @@ that is exactly the causal thread a later reader is trying to pick up.
 | Record | Answers | Mutability | Where |
 |---|---|---|---|
 | **session** | what one execution episode did, between which commits, producing which records | one open per worktree, then immutable | `local/state/session-current.yaml`, then the layer’s `repo/sessions/` |
+| **working context** | what the worker was told when the episode opened, and what it noted while working | appended to, never rewritten | `local/session-contexts/<stamp>--<session-id>.md` |
+
+The two are not the same record and answer opposite questions. The closed session says what
+the episode produced, derived from git and the ledger, and it is shared. The working context
+says what the episode was given, frozen from the builder at the open, and it is local: it
+names this machine, and re-resolving it later would produce a different document, so no
+surface can reproduce it and none publishes it (ADR 0015).
 
 A session opens, may cross several tasks, and closes. `task != session` in both
 directions: a task spanning two sessions is named by both, and a session spanning two
