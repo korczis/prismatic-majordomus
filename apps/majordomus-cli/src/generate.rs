@@ -99,11 +99,12 @@ impl Target {
         Target::Docs,
         Target::Benchmarks,
         Target::Registry,
-        Target::Documents,
         Target::Allow,
+        Target::Documents,
         Target::Providers,
         Target::Site,
         Target::Distribution,
+        Target::Manifest,
     ];
 
     /// Every target but the manifest: the artifacts the manifest indexes.
@@ -863,7 +864,13 @@ pub fn document_artifacts(
     let mut out = Vec::new();
     for file in protos.values() {
         let schema = crate::proto::project::to_json_schema(file)?;
-        let source = format!("the document schema `{}`", file.source);
+        // the path the identity derives, never `file.source`: that is where this run found
+        // the file, which is absolute when the share is outside the repository and would
+        // put a machine's own directory layout into a committed artifact
+        let source = format!(
+            "the document schema `{}`",
+            crate::proto::ProtoFile::expected_path(&file.schema_id)?
+        );
         let path = format!(
             "{schemas}/{}",
             crate::proto::project::schema_path(&file.schema_id)?
@@ -914,7 +921,10 @@ pub fn proto_allow_artifacts(
         out.push(Artifact::text(
             format!("{dir}/{name}.txt"),
             format!("allow/{name}"),
-            format!("the document schema `{}`", file.source),
+            format!(
+                "the document schema `{}`",
+                crate::proto::ProtoFile::expected_path(&file.schema_id)?
+            ),
             version,
             &(allow_lines(&schema).join("\n") + "\n"),
         ));
@@ -1396,7 +1406,7 @@ impl std::fmt::Display for Violation {
 /// it would leave the page with none. Both carry the banner on the line after, which is
 /// still the opening of the file and still impossible to miss. Anything further down is a
 /// banner a reader scrolls past, and is refused.
-fn opens_with_banner(content: &str, banner: &str) -> bool {
+pub fn opens_with_banner(content: &str, banner: &str) -> bool {
     if content.starts_with(banner) {
         return true;
     }
