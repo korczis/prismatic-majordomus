@@ -774,7 +774,14 @@ pub fn document_artifacts(
     let mut out = Vec::new();
     for file in protos.values() {
         let schema = crate::proto::project::to_json_schema(file)?;
-        let source = format!("the document schema `{}`", file.source);
+        // Relative to the repository, never as this machine found it: the banner is
+        // committed, so an absolute path would make the artifact differ by the directory it
+        // was generated in — every other checkout would then regenerate all of them and
+        // `generate --check` would fail for everyone but the last person to run it.
+        let source = format!(
+            "the document schema `{}`",
+            relative_to(Path::new(&file.source), root)
+        );
         let path = format!(
             "{schemas}/{}",
             crate::proto::project::schema_path(&file.schema_id)?
@@ -824,7 +831,10 @@ pub fn proto_allow_artifacts(
         out.push(Artifact::text(
             format!("{dir}/{name}.txt"),
             format!("allow/{name}"),
-            format!("the document schema `{}`", file.source),
+            format!(
+                "the document schema `{}`",
+                relative_to(Path::new(&file.source), root)
+            ),
             version,
             &(allow_lines(&schema).join("\n") + "\n"),
         ));
