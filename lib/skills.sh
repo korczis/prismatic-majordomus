@@ -4,7 +4,7 @@
 # skills — the repository's provider-neutral operational procedures, as data.
 #
 # A skill is one directory under the manifest's skills section holding SKILL.md: YAML front
-# matter (the contract in share/schemas/skill.schema.json) over a Markdown body that is the
+# matter (the contract in share/schemas/majordomus/skill/skill.v1.schema.json) over a Markdown body that is the
 # procedure. Nothing here is a registry: which files are skills is decided by the source
 # class `skill` in .ai/repo/knowledge/sources.yaml, the same declaration the Rust executable
 # indexes and serves, so the two never disagree about what exists. Everything below reads

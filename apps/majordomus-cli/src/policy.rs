@@ -64,7 +64,7 @@ pub struct ProfilesPolicy {
 }
 
 /// The policy, typed to what the projections consume. Every other key is carried through
-/// unread: the policy schema under `share/schemas/policy.schema.json` owns the full shape.
+/// unread: the policy schema under `share/schemas/majordomus/policy/policy.v1.schema.json` owns the full shape.
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
 pub struct Policy {
     /// `version:`.

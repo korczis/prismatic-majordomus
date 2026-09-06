@@ -25,7 +25,7 @@ A skill is loaded only when a task is about what it covers, so a broken one is n
 
 # Required behaviour
 
-Every file the source class `skill` discovers has front matter that satisfies `share/schemas/skill.schema.json` (no unknown key, `schema: skill/v1`, an integer `version`, a `status` from the closed set), an `id` equal to its directory name, and a body with non-empty `# Purpose`, `# Procedure` and `# Output` sections. No two skills claim one id. Every `related` id names a skill in the catalogue, and every tracked example under a skill's `examples/` opens with a level-one heading.
+Every file the source class `skill` discovers has front matter that satisfies `share/schemas/majordomus/skill/skill.v1.schema.json` (no unknown key, `schema: skill/v1`, an integer `version`, a `status` from the closed set), an `id` equal to its directory name, and a body with non-empty `# Purpose`, `# Procedure` and `# Output` sections. No two skills claim one id. Every `related` id names a skill in the catalogue, and every tracked example under a skill's `examples/` opens with a level-one heading.
 
 # Failure behaviour
 
