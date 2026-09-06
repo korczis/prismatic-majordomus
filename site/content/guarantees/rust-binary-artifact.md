@@ -1,7 +1,7 @@
 +++
 title = "The Rust executable the rust gate built is published as an artifact with its provenance, and every Rust case drives the executable MAJORDOMUS_BIN names instead of building one"
 description = "The debug executable the rust job builds does not vanish with the runner: it is the artifact majordomus-cli-<target>, with a majordomus-cli.json beside it naming the commit, the target triple, the toolchain and the Cargo.lock digest, so a later job or a later phase (a release, a scenario runner over the real binary) can download it, set MAJORDOMUS_BIN, and never run cargo build. Every case that drives the executable honours that variable, as the launcher bin/majordomus-mcp already did."
-weight = 121
+weight = 125
 [extra]
 claim_id = "rust-binary-artifact"
 status = "guaranteed"

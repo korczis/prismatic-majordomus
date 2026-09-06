@@ -1,7 +1,7 @@
 +++
 title = "A change runs the gates its paths can affect, decided by one model of what affects what, and a change to the pipeline itself or a path the model does not know runs every gate"
 description = "A pull request does not run every gate because a gate exists; it runs the gates a change under its paths can reach, and the decision is not a guess. .ai/repo/ci/gates.yaml declares the gates and the path classes with the gates each class can affect, and scripts/ci-plan computes the selection from that model and the changed paths. The always gates (the shell lint, the structural checks) are in every plan. A path that no class knows, or a path in the pipeline itself, escalates to the full plan, and the plan names the path that did."
-weight = 118
+weight = 122
 [extra]
 claim_id = "ci-planned-gates"
 status = "guaranteed"

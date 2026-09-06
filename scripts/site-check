@@ -539,4 +539,64 @@ for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do
 done
 [ "$respbad" = 0 ] && ok supervises "every responsibility names its state, its command, its guarantees, and two deep links that land on real headings"
 
+
+# 14. distribution: the installer and the release metadata are served, and every install
+# command the site shows is the one the model composes. This is the check that catches the
+# ordinary failure — the docs say /install.sh and Pages serves it somewhere else.
+DIST="$SITE/data/registry/distribution.json"
+distbad=0
+if [ ! -f "$DIST" ]; then
+  bad install "site/data/registry/distribution.json missing; run majordomus generate"
+  distbad=1
+else
+  # the installer's file name is the last segment of the URL the model composes
+  script="$(jq -r '.installer_url' "$DIST")"; script="${script##*/}"
+  [ -f "$PUB/$script" ] || { bad install "/$script is not served; the installer's canonical URL would 404"; distbad=1; }
+  if [ -f "$PUB/$script" ]; then
+    cmp -s "$PUB/$script" "$SITE/static/$script" \
+      || { bad install "the served installer differs from site/static/$script"; distbad=1; }
+    head -n 1 "$PUB/$script" | grep -q '^#!/bin/sh' \
+      || { bad install "the served installer does not start with a POSIX shell shebang"; distbad=1; }
+    grep -q 'generated from share/distribution.yaml' "$PUB/$script" \
+      || { bad install "the served installer carries no generated region"; distbad=1; }
+    grep -qF "$(jq -r '.latest_url' "$DIST" | sed 's#/releases/latest.json##')" "$PUB/$script" \
+      || { bad install "the served installer does not carry the model's base URL"; distbad=1; }
+  fi
+  # the one-line command, verbatim, on the homepage and on the installation page
+  cmd="$(jq -r '.install_command' "$DIST")"
+  # the rendered command may be split across syntax-highlighting spans, so the comparison is
+  # against the page's text rather than its markup
+  for page in "$PUB/index.html" "$PUB/docs/install/index.html"; do
+    [ -f "$page" ] || { bad install "${page#"$PUB"} is not rendered"; distbad=1; continue; }
+    sed -e 's/<[^>]*>//g' "$page" | grep -qF "$cmd" \
+      || { bad install "${page#"$PUB"} does not show the install command the model composes"; distbad=1; }
+  done
+  # the homepage reaches the installation documentation
+  grep -qF "$PREFIX/docs/install/" "$PUB/index.html" \
+    || { bad install "the homepage does not link the installation documentation"; distbad=1; }
+  # every release the site publishes is served, and the stable pointer is one of them
+  if [ -d "$SITE/static/releases" ]; then
+    for f in "$SITE/static/releases"/*.json; do
+      [ -f "$f" ] || continue
+      n="$(basename "$f")"
+      [ -f "$PUB/releases/$n" ] || { bad install "/releases/$n is not served"; distbad=1; continue; }
+      jq -e '.schema and .tag and .artifacts' "$PUB/releases/$n" >/dev/null 2>&1 \
+        || { bad install "/releases/$n is not a release document"; distbad=1; }
+    done
+    if [ -f "$PUB/releases/latest.json" ]; then
+      tag="$(jq -r '.tag' "$PUB/releases/latest.json")"
+      [ -f "$PUB/releases/$tag.json" ] \
+        || { bad install "/releases/latest.json names $tag and /releases/$tag.json is not served"; distbad=1; }
+      cmp -s "$PUB/releases/latest.json" "$PUB/releases/$tag.json" \
+        || { bad install "/releases/latest.json differs from the release it names"; distbad=1; }
+      # every target the model publishes has an artifact in the stable release
+      for t in $(jq -r '.targets[] | select(.status=="supported" or .status=="experimental") | .rust_target' "$DIST"); do
+        jq -e --arg t "$t" '.artifacts[$t]' "$PUB/releases/latest.json" >/dev/null 2>&1 \
+          || { bad install "/releases/latest.json publishes nothing for $t"; distbad=1; }
+      done
+    fi
+  fi
+fi
+[ "$distbad" = 0 ] && ok install "/install.sh is served as the model's URL names it, the homepage and the installation page show the command it composes, and every published release is complete"
+
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

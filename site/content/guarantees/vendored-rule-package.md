@@ -1,7 +1,7 @@
 +++
 title = "The rule baseline is vendored into the repository with a manifest naming every file and its hash, and a hand edit is detected and refused"
 description = "The rules Majordomus ships are not read from the executable at run time. init copies the package from share/standard/majordomus/ into .ai/repo/rules/vendor/majordomus/, manifest included, and from then on the repository's copy is the one that applies. The manifest names every rule file with its identity and its content hash, so an edit under vendor/, a listed file that is missing, or a stray file beside the manifest is detected by name. A newer executable reports that it ships a different package and never applies it; the baseline changes only when majordomus rules vendor update is asked for."
-weight = 71
+weight = 75
 [extra]
 claim_id = "vendored-rule-package"
 status = "guaranteed"

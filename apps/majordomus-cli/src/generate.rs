@@ -234,10 +234,13 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
             reason,
         },
     )?;
+    // The provenance header goes after the title, not before it: the site's documentation
+    // projection strips a document's own first-line heading and would otherwise render two.
+    let (title, rest) = guide.split_once('\n').unwrap_or((guide.as_str(), ""));
     out.push(Artifact {
         path: crate::distribution::GUIDE.to_string(),
         content: format!(
-            "<!-- {HEADER}\n     Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {} -->\n{guide}",
+            "{title}\n<!-- {HEADER}\n     Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);\n     regenerate with `majordomus generate`\n     Generator: majordomus-cli {} -->\n{rest}",
             crate::VERSION
         ),
     });

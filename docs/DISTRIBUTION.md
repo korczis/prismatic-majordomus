@@ -220,6 +220,31 @@ toolchain here is `stable` rather than a pin. What is guaranteed is that two peo
 building the same tag get functionally identical archives, and that the archive says which
 commit and target it came from.
 
+## Self-update
+
+There is no `majordomus self update`, and when there is one it will not be a second update
+protocol. Everything it needs already exists and is typed:
+
+```rust
+Model::load(share)          // this installation's own model, shipped in share/
+Model::release_url(tag)     // where the metadata for a tag or `latest` lives
+Releases::latest_stable()   // which release an unpinned update resolves to
+Release::artifact(target)   // the artifact, its digest and its size
+crate::TARGET               // the triple this build was made for, compiled in
+```
+
+An installed copy carries `share/distribution.yaml`, so `majordomus distribution show` and
+`majordomus distribution build` answer from an installation exactly as they answer from a
+checkout — which is the property a self-update would be built on. The remaining work is the
+download, the verification and the swap, and the installer already does all three; the
+open design question is whether to reimplement them in Rust or to have the command re-run
+the published installer with `--version`, which would keep one implementation of the risky
+part rather than two.
+
+`test/cases/85_installer.sh` covers that risky part today, and whichever way the command is
+built it will resolve releases through the same records and the same stable pointer as the
+installer does.
+
 ## Package managers
 
 The release model is the primary contract and it is package-manager neutral: an archive per

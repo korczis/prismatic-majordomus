@@ -19,7 +19,7 @@ use crate::metadata::yaml;
 pub const SCHEMA: &str = "release/v1";
 
 /// The kind a record is indexed as.
-pub const KIND: &str = "release";
+pub const KIND: &str = "release-record";
 
 /// Where the records live, relative to the repository root.
 pub const DIR: &str = ".ai/repo/releases";

@@ -36,7 +36,7 @@ pub const FILE: &str = "distribution.yaml";
 pub const SCHEMA: &str = "majordomus-distribution/v1";
 
 /// The kind the model is indexed as.
-pub const KIND: &str = "distribution";
+pub const KIND: &str = "distribution-model";
 
 /// The one naming function, written in the model so that its shape is reviewable.
 pub const NAME_TEMPLATE: &str = "{binary}-{tag}-{target}.{extension}";

@@ -1,7 +1,7 @@
 +++
 title = "From the files a change touched, the tool names the commands, rules, use cases, scenarios and behavioural cases affected, and scaffolds a draft for a capability no use case covers"
 description = "A worker who changed a file does not have to remember which use cases describe it."
-weight = 127
+weight = 131
 [extra]
 claim_id = "use-case-impact"
 status = "guaranteed"

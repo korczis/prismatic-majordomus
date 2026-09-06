@@ -1,7 +1,7 @@
 +++
 title = "Capability class, reasoning effort, output verbosity, context and verification are five independent axes"
 description = "A profile sets five things separately: which capability class of model the task deserves, how much reasoning effort, how verbose the output should be, which context to load, and what verification is required — plus a checkpoint interval and an output contract. None of them implies another. A debugging task can want high effort and concise output; a deep-work task detailed output and a decision record."
-weight = 50
+weight = 54
 [extra]
 claim_id = "profile-axes"
 status = "advisory"

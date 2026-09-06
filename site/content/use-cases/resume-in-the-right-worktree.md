@@ -1,7 +1,7 @@
 +++
 title = "Resume in the right worktree, never against somebody else’s task"
 description = "Find the handover that belongs to this worktree and branch, and see a task record from another checkout reported as foreign rather than enforced here."
-weight = 14
+weight = 15
 [extra]
 id = "resume-in-the-right-worktree"
 source = ".ai/repo/use-cases/resume-in-the-right-worktree.md"

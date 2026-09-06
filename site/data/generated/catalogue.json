@@ -213,7 +213,7 @@
         "extend-what-the-executable-serves",
         "find-out-what-drifted",
         "trust-the-policy-before-reading-it",
-        "serve-the-layer-to-ai-clients"
+        "install-the-tool-in-one-command"
       ]
     },
     {
@@ -454,6 +454,216 @@
         "resume-from-a-prompt-asset",
         "checkpoint-long-work",
         "read-only-the-context-that-fits"
+      ]
+    },
+    {
+      "id": "install-the-tool-in-one-command",
+      "kind": "use-case",
+      "title": "Install the tool in one command, on a machine with no toolchain",
+      "summary": "Paste one line, get a verified binary for this machine, and run majordomus init — no git, no Rust, no Node, no Python, no root, and no way to install an archive whose digest does not match.",
+      "category": "adoption",
+      "status": "active",
+      "target": "guaranteed",
+      "weight": 2,
+      "actors": [
+        "operator",
+        "maintainer"
+      ],
+      "difficulty": "basic",
+      "commands": [
+        "version",
+        "init",
+        "doctor"
+      ],
+      "mcp_tools": [
+        "majordomus_distribution",
+        "majordomus_releases",
+        "majordomus_build",
+        "majordomus_artifact"
+      ],
+      "doctrines": [
+        "majordomus.ai-layout-integrity"
+      ],
+      "claims": [
+        "distribution-canonical-model",
+        "installer-verifies-before-installing",
+        "release-is-complete-or-absent",
+        "install-command-is-derived"
+      ],
+      "responsibilities": [
+        "layer",
+        "doctor"
+      ],
+      "applications": [
+        "repository-with-authored-governance",
+        "repository-opened-in-ai-clients"
+      ],
+      "scenario": {
+        "setup": "bare",
+        "given": [
+          "a repository with no AI layer, and a machine with the tool already installed the way the installer installs it"
+        ],
+        "steps": [
+          {
+            "id": "version",
+            "run": [
+              "version"
+            ],
+            "note": "the installed tool says which release it is; the installer refused to install an archive whose executable said anything else",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^majordomus [0-9]"
+              ]
+            }
+          },
+          {
+            "id": "init",
+            "run": [
+              "init"
+            ],
+            "note": "the command the installer points at next, in the repository you want supervised",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "next: majordomus update",
+                "next: majordomus doctor"
+              ],
+              "files_exist": [
+                ".ai/repo/policy.yaml",
+                ".ai/manifest.yaml"
+              ]
+            }
+          },
+          {
+            "id": "doctor",
+            "run": [
+              "doctor"
+            ],
+            "note": "the layer the installed tool created is a layer the installed tool accepts; the hook lines init printed are not in place yet, which is exactly what doctor is for",
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "^OK   layout      .ai/"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "nothing was installed into the project except .ai/ and the files the policy names",
+          "the hook line init printed names the launcher, so an upgrade does not break it",
+          "uninstalling removes the launchers and the prefix, and no repository state"
+        ]
+      },
+      "path": ".ai/repo/use-cases/install-the-tool-in-one-command.md",
+      "maturity": "guaranteed",
+      "evidence": {
+        "schema": "majordomus/use-case-evidence/v1",
+        "use_case": "install-the-tool-in-one-command",
+        "setup": "bare",
+        "result": "pass",
+        "steps": [
+          {
+            "id": "version",
+            "command": "majordomus version",
+            "argv": [
+              "version"
+            ],
+            "stdin": null,
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "majordomus 0.2.0",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "^majordomus [0-9]",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "init",
+            "command": "majordomus init",
+            "argv": [
+              "init"
+            ],
+            "stdin": null,
+            "exit": 0,
+            "expected_exit": 0,
+            "output": "created\n  .ai/README.md\n  .ai/manifest.yaml\n  .ai/repo/README.md\n  .ai/repo/policy.yaml\n  .ai/repo/scope.yaml\n  .ai/repo/profiles/\n  .ai/repo/prompts/\n  .ai/repo/profiles/README.md\n  .ai/repo/prompts/README.md\n  .ai/repo/rules/README.md\n  .ai/repo/rules/project/README.md\n  .ai/repo/rules/vendor/majordomus/\n  .ai/repo/knowledge/\n  .ai/repo/knowledge/curated/README.md\n  .ai/repo/workflows/\n  .ai/repo/skills/\n  .ai/repo/adrs/\n  .ai/repo/use-cases/\n  .ai/repo/applications/\n  .ai/repo/sessions/README.md\n  .ai/repo/project/README.md\n  .gitignore:.ai/local/\nlocal state: .ai/local/state/ (ignored by git; this checkout's own)\nnext: majordomus update      # generate the provider instruction files named in the policy\nnext: majordomus doctor      # verify nothing is declared that is not wired\nhooks are not installed by init; add these two lines yourself, doctor verifies them:\n  pre-commit: majordomus doctor || exit $?\n  pre-push:   majordomus finish --check || exit $?",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 0,
+                "observed": 0,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "next: majordomus update",
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "next: majordomus doctor",
+                "result": "pass"
+              },
+              {
+                "kind": "file_exists",
+                "path": ".ai/repo/policy.yaml",
+                "result": "pass"
+              },
+              {
+                "kind": "file_exists",
+                "path": ".ai/manifest.yaml",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          },
+          {
+            "id": "doctor",
+            "command": "majordomus doctor",
+            "argv": [
+              "doctor"
+            ],
+            "stdin": null,
+            "exit": 12,
+            "expected_exit": 12,
+            "output": "OK   layout      .ai/manifest.yaml — schema ai-repository/v1\nOK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares\nOK   layout      .ai/local/ — ignored, and nothing under it is tracked\nOK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool\nOK   layout      .ai/local/state/handovers — present\nOK   layout      .ai/local/state/checkpoints — present\nOK   layout      .ai/repo/prompts — present\nOK   records     ledger.jsonl — every line is a well-formed event\nOK   policy      19 key(s) — every policy value the code reads is declared, with no reader-side default\nOK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own\nOK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions\nOK   context     .ai/ — 15 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]\nOK   policy      .ai/repo/policy.yaml — parsed, version 1\nOK   profiles    4 files — parsed; default 'implementation' exists\nINFO adr         .ai/repo/adrs/ — no decisions; nothing to validate\nOK   records     decisions.md — every entry is attributable\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nOK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]\nOK   doctrine    36 doctrines — validator, dispatch, propagation, test and CI resolve for every one\nFAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]\nFAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]\nOK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]\nOK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nFAIL projection  AGENTS.md — missing (run: majordomus update)  [reproduce: majordomus update]\nFAIL projection  CLAUDE.md — missing (run: majordomus update)  [reproduce: majordomus update]\nFAIL projection  GEMINI.md — missing (run: majordomus update)  [reproduce: majordomus update]\nOK   context     builder — 18 lines, budget 300  [reproduce: majordomus context]\nOK   capture     .ai/local/prompts — ignored and untracked\nOK   capture     .ai/local/prompts — no records yet; the archive is empty\nOK   prompt      4 asset(s) — front matter valid, every token known\nOK   records     open-questions.md — every entry parses\nOK   retention   ledger — 0 lines, cap 5000\nOK   retention   handovers — 0 files, cap 200\nOK   retention   checkpoints — 0 files, cap 500\nINFO project     .ai/repo/project — no canonical project model here; nothing to validate\nOK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))\nOK   rules       47 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override\nINFO skill       .ai/repo/skills/ — no skills; nothing to validate\nINFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nINFO env         - — bash <version>, git <version>, jq <version>, shellcheck present\n·    budget      doctor — <timed against the policy budget>\ndoctor: 5 failure(s)",
+            "assertions": [
+              {
+                "kind": "exit",
+                "expected": 12,
+                "observed": 12,
+                "result": "pass"
+              },
+              {
+                "kind": "stdout_contains",
+                "pattern": "^OK   layout      .ai/",
+                "result": "pass"
+              }
+            ],
+            "result": "pass",
+            "reason": null
+          }
+        ]
+      },
+      "related_ids": [
+        "extend-what-the-executable-serves",
+        "serve-the-layer-to-ai-clients",
+        "classify-what-belongs-in-the-context",
+        "migrate-from-the-old-layout",
+        "see-what-the-repository-holds-without-reading-it"
       ]
     },
     {
@@ -1490,7 +1700,7 @@
         "serve-the-layer-to-ai-clients",
         "classify-what-belongs-in-the-context",
         "find-an-object-without-reading-everything",
-        "keep-the-bootstrap-thin-and-within-budget"
+        "install-the-tool-in-one-command"
       ]
     },
     {
@@ -1646,8 +1856,8 @@
         "extend-what-the-executable-serves",
         "see-what-the-repository-holds-without-reading-it",
         "find-an-object-without-reading-everything",
-        "adopt-an-existing-repository",
-        "classify-what-belongs-in-the-context"
+        "install-the-tool-in-one-command",
+        "adopt-an-existing-repository"
       ]
     },
     {
@@ -2058,7 +2268,7 @@
         "serve-the-layer-to-ai-clients",
         "adopt-an-existing-repository",
         "classify-what-belongs-in-the-context",
-        "keep-the-bootstrap-thin-and-within-budget"
+        "install-the-tool-in-one-command"
       ]
     },
     {
@@ -5603,7 +5813,7 @@
         "extend-what-the-executable-serves",
         "migrate-from-the-old-layout",
         "see-what-the-repository-holds-without-reading-it",
-        "find-an-object-without-reading-everything"
+        "install-the-tool-in-one-command"
       ]
     },
     {
@@ -6674,8 +6884,8 @@
         "extend-what-the-executable-serves",
         "add-a-use-case-and-prove-it",
         "classify-what-belongs-in-the-context",
-        "keep-the-bootstrap-thin-and-within-budget",
-        "see-what-the-repository-holds-without-reading-it"
+        "install-the-tool-in-one-command",
+        "keep-the-bootstrap-thin-and-within-budget"
       ]
     },
     {
@@ -7010,7 +7220,7 @@
             "stdin": null,
             "exit": 0,
             "expected_exit": 0,
-            "output": "majordomus 0.1.0",
+            "output": "majordomus 0.2.0",
             "assertions": [
               {
                 "kind": "exit",
@@ -7059,9 +7269,9 @@
       "related_ids": [
         "gate-ci-on-the-tool-itself",
         "trust-the-policy-before-reading-it",
+        "install-the-tool-in-one-command",
         "accept-or-refuse-finished-work",
-        "add-a-use-case-and-prove-it",
-        "adopt-an-existing-repository"
+        "add-a-use-case-and-prove-it"
       ]
     },
     {
@@ -7245,9 +7455,9 @@
       "related_ids": [
         "classify-what-belongs-in-the-context",
         "trace-a-change-to-the-context-it-affects",
+        "install-the-tool-in-one-command",
         "extend-what-the-executable-serves",
-        "see-what-the-repository-holds-without-reading-it",
-        "adopt-an-existing-repository"
+        "see-what-the-repository-holds-without-reading-it"
       ]
     },
     {
@@ -8648,6 +8858,7 @@
         "There is no governance to supervise yet, in which case start with the shipped skeleton instead"
       ],
       "use_cases": [
+        "install-the-tool-in-one-command",
         "adopt-an-existing-repository",
         "prove-a-rule-is-enforced",
         "find-out-what-drifted",
@@ -8819,6 +9030,7 @@
         "You want the server to route work or refuse writes outside an announced scope; announcements are informational and the task record is the enforced form"
       ],
       "use_cases": [
+        "install-the-tool-in-one-command",
         "serve-the-layer-to-ai-clients",
         "extend-what-the-executable-serves",
         "classify-what-belongs-in-the-context",
@@ -8846,17 +9058,19 @@
       "title": "Getting started and adoption",
       "summary": "Bringing Majordomus into a repository, new or old, without losing what people already wrote.",
       "order": 10,
-      "count": 3,
+      "count": 4,
       "use_cases": [
         "adopt-an-existing-repository",
+        "install-the-tool-in-one-command",
         "know-which-tool-is-running",
         "migrate-from-the-old-layout"
       ],
       "maturity": {
-        "guaranteed": 3
+        "guaranteed": 4
       },
       "applications": [
         "ci-gated-project",
+        "repository-opened-in-ai-clients",
         "repository-with-authored-governance"
       ]
     },
@@ -9074,9 +9288,9 @@
       {
         "class": "command",
         "id": "init",
-        "use_cases": 3,
-        "executable": 3,
-        "evidence": 3,
+        "use_cases": 4,
+        "executable": 4,
+        "evidence": 4,
         "status": "covered",
         "policy": "required"
       },
@@ -9092,9 +9306,9 @@
       {
         "class": "command",
         "id": "doctor",
-        "use_cases": 14,
-        "executable": 11,
-        "evidence": 11,
+        "use_cases": 15,
+        "executable": 12,
+        "evidence": 12,
         "status": "covered",
         "policy": "required"
       },
@@ -9245,9 +9459,9 @@
       {
         "class": "command",
         "id": "version",
-        "use_cases": 1,
-        "executable": 1,
-        "evidence": 1,
+        "use_cases": 2,
+        "executable": 2,
+        "evidence": 2,
         "status": "covered",
         "policy": "required"
       },
@@ -9313,6 +9527,42 @@
         "evidence": 1,
         "status": "covered",
         "policy": "required"
+      },
+      {
+        "class": "claim",
+        "id": "distribution-canonical-model",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "claim",
+        "id": "install-command-is-derived",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "claim",
+        "id": "installer-verifies-before-installing",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "claim",
+        "id": "release-is-complete-or-absent",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
       },
       {
         "class": "claim",
@@ -9991,6 +10241,24 @@
       },
       {
         "class": "mcp_tool",
+        "id": "majordomus_artifact",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_build",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
         "id": "majordomus_capabilities",
         "use_cases": 1,
         "executable": 1,
@@ -10001,6 +10269,15 @@
       {
         "class": "mcp_tool",
         "id": "majordomus_capability",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_distribution",
         "use_cases": 1,
         "executable": 1,
         "evidence": 1,
@@ -10072,6 +10349,15 @@
       },
       {
         "class": "mcp_tool",
+        "id": "majordomus_releases",
+        "use_cases": 1,
+        "executable": 1,
+        "evidence": 1,
+        "status": "covered",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
         "id": "majordomus_repository",
         "use_cases": 1,
         "executable": 1,
@@ -10107,58 +10393,59 @@
         "policy": "advisory"
       }
     ],
-    "total": 115,
-    "covered": 111,
+    "total": 123,
+    "covered": 119,
     "partial": 0,
     "gaps_required": 0
   },
   "counts": {
-    "use_cases": 36,
+    "use_cases": 37,
     "drafts": 0,
     "applications": 5,
     "categories": 10,
     "maturity": {
-      "guaranteed": 34,
+      "guaranteed": 35,
       "verified": 2
     }
   },
   "uc_index": {
     "adopt-an-existing-repository": 0,
     "hand-work-between-sessions": 1,
-    "prove-a-rule-is-enforced": 2,
-    "run-several-workers-at-once": 3,
-    "accept-or-refuse-finished-work": 4,
-    "find-out-what-drifted": 5,
-    "see-what-the-repository-holds-without-reading-it": 6,
-    "serve-the-layer-to-ai-clients": 7,
-    "prove-performance-with-benchmarks": 8,
-    "extend-what-the-executable-serves": 9,
-    "checkpoint-long-work": 10,
-    "read-only-the-context-that-fits": 11,
-    "carry-a-blocker-across-a-handover": 12,
-    "resume-in-the-right-worktree": 13,
-    "trust-the-policy-before-reading-it": 14,
-    "keep-the-bootstrap-thin-and-within-budget": 15,
-    "gate-ci-on-the-tool-itself": 16,
-    "block-acceptance-on-an-open-question": 17,
-    "complete-an-issue-only-with-its-evidence": 18,
-    "document-every-directory-of-the-layer": 19,
-    "trace-a-change-to-the-context-it-affects": 20,
-    "read-back-what-happened": 21,
-    "deliver-issues-in-waves": 22,
-    "classify-what-belongs-in-the-context": 23,
-    "find-an-object-without-reading-everything": 24,
-    "add-a-use-case-and-prove-it": 25,
-    "capture-the-prompts-that-started-the-work": 26,
-    "follow-a-skill-the-repository-defines": 27,
-    "keep-decisions-out-of-the-transcript": 28,
-    "know-which-tool-is-running": 29,
-    "migrate-from-the-old-layout": 30,
-    "open-and-close-a-session": 31,
-    "plan-the-work-as-data": 32,
-    "read-the-rules-the-tool-applies": 33,
-    "record-a-decision-before-it-is-forgotten": 34,
-    "resume-from-a-prompt-asset": 35
+    "install-the-tool-in-one-command": 2,
+    "prove-a-rule-is-enforced": 3,
+    "run-several-workers-at-once": 4,
+    "accept-or-refuse-finished-work": 5,
+    "find-out-what-drifted": 6,
+    "see-what-the-repository-holds-without-reading-it": 7,
+    "serve-the-layer-to-ai-clients": 8,
+    "prove-performance-with-benchmarks": 9,
+    "extend-what-the-executable-serves": 10,
+    "checkpoint-long-work": 11,
+    "read-only-the-context-that-fits": 12,
+    "carry-a-blocker-across-a-handover": 13,
+    "resume-in-the-right-worktree": 14,
+    "trust-the-policy-before-reading-it": 15,
+    "keep-the-bootstrap-thin-and-within-budget": 16,
+    "gate-ci-on-the-tool-itself": 17,
+    "block-acceptance-on-an-open-question": 18,
+    "complete-an-issue-only-with-its-evidence": 19,
+    "document-every-directory-of-the-layer": 20,
+    "trace-a-change-to-the-context-it-affects": 21,
+    "read-back-what-happened": 22,
+    "deliver-issues-in-waves": 23,
+    "classify-what-belongs-in-the-context": 24,
+    "find-an-object-without-reading-everything": 25,
+    "add-a-use-case-and-prove-it": 26,
+    "capture-the-prompts-that-started-the-work": 27,
+    "follow-a-skill-the-repository-defines": 28,
+    "keep-decisions-out-of-the-transcript": 29,
+    "know-which-tool-is-running": 30,
+    "migrate-from-the-old-layout": 31,
+    "open-and-close-a-session": 32,
+    "plan-the-work-as-data": 33,
+    "read-the-rules-the-tool-applies": 34,
+    "record-a-decision-before-it-is-forgotten": 35,
+    "resume-from-a-prompt-asset": 36
   },
   "ap_index": {
     "repository-with-authored-governance": 0,

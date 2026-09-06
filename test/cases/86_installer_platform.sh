@@ -117,6 +117,21 @@ for flag in --version --install-dir --prefix --init --dry-run --force --verbose;
 done
 [ -d "$T/home/.local" ] && { echo "    a dry run or --help wrote into HOME"; exit 1; }
 
+# --- it runs, not merely parses, under every POSIX shell on this machine -------------------
+# The refusal path needs no network, so it is the one that can be executed under each shell.
+uname_says Linux riscv64
+for sh in dash bash ksh /bin/sh /bin/ash busybox; do
+  case "$sh" in
+    busybox) command -v busybox >/dev/null 2>&1 || continue; runner="busybox sh" ;;
+    *) command -v "$sh" >/dev/null 2>&1 || continue; runner="$sh" ;;
+  esac
+  out="$(env HOME="$T/home" PATH="$fake:$PATH" \
+          MAJORDOMUS_RELEASE_BASE_URL="http://127.0.0.1:1/nothing" MAJORDOMUS_INSECURE_BASE_URL=1 \
+          $runner "$INSTALLER" --dry-run 2>&1 || true)"
+  printf '%s\n' "$out" | grep -q 'does not provide a prebuilt binary' \
+    || { echo "    under $runner the installer did not refuse cleanly: $out"; exit 1; }
+done
+
 # --- an unknown option is refused, not ignored -------------------------------------------
 out="$(run_installer --nonsense || true)"
 printf '%s\n' "$out" | grep -q 'unknown option' \

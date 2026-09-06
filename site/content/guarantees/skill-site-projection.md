@@ -1,7 +1,7 @@
 +++
 title = "The website's skills section is rendered from the skills catalogue, one page per skill carrying the skill's own body and examples, and a removed or renamed skill leaves no page, entry or link behind"
 description = "The site's skills section lists every skill, and each skill has a page of its own that renders its front matter as metadata, its own Markdown body as the page, its examples, its related skills and the path of the file it was read from. Nothing on those pages is typed into the site. When a skill is added, renamed or removed and the site data regenerated, the index, the page and every link follow, and scripts/generate-site-data --check, which CI runs before the site builds, exits 10 while the committed data is behind the files."
-weight = 133
+weight = 137
 [extra]
 claim_id = "skill-site-projection"
 status = "guaranteed"

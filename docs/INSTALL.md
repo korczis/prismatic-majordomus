@@ -1,8 +1,8 @@
+# Installing Majordomus
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
      Generator: majordomus-cli 0.2.0 -->
-# Installing Majordomus
 
 ## Quick install
 
