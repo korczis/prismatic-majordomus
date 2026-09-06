@@ -317,6 +317,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/artifacts
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - artifacts
@@ -379,6 +381,12 @@ capabilities:
           exposure:
             "$ref": "#/$defs/Exposure"
             description: Where it is projected; absence is explicit.
+          availability:
+            "$ref": "#/$defs/Availability"
+            description: "Where it means anything: classified from the kind and the transports above, so\nthat a projection reads a field instead of deciding for itself."
+          visibility:
+            "$ref": "#/$defs/Visibility"
+            description: "Who it is for: classified from the same transports."
           stability:
             "$ref": "#/$defs/Stability"
             description: Where it stands.
@@ -403,6 +411,8 @@ capabilities:
           - output
           - provenance
           - exposure
+          - availability
+          - visibility
           - stability
           - benchmark
           - cache
@@ -568,6 +578,33 @@ capabilities:
             required:
               - path
             description: "How a capability appears on the command line: the words after `majordomus`."
+          Availability:
+            oneOf:
+              - type: string
+                const: always
+                description: "True in every environment, a published page with no server included: the layer's\nown content, which a build renders and a process serves from the same index."
+              - type: string
+                const: runtime
+                description: "A process must be running to answer: everything with a handler, whether it is\nreached over HTTP, over MCP or from the command line."
+              - type: string
+                const: build_time
+                description: "A value captured when the site was generated, rendered afterwards as the capture\nit is. Nothing classifies to this yet; the static projection of the graph is what\nwill declare it, and it is on the model so that a captured value can be labelled\nas captured instead of being shown as current."
+              - type: string
+                const: authenticated
+                description: "A process must be running and the caller must be one it has authenticated. Nothing\nin this repository authenticates a caller yet; a surface that does will say so\nhere rather than in the template that renders its link."
+            description: "Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page's own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n[`Availability::classify`] is the one place the rule lives."
+          Visibility:
+            oneOf:
+              - type: string
+                const: public
+                description: "Offered to anyone who can reach the process: an HTTP route or an MCP entry."
+              - type: string
+                const: developer
+                description: "Offered to whoever runs the executable, and to nobody over a network."
+              - type: string
+                const: internal
+                description: "Projected nowhere. It exists, it is listed as existing, and no surface offers it."
+            description: "Who a capability is for, and whether anything offers it.\n\nInternal is a statement, not an omission: a capability nothing projects is invisible\neither way, and the difference between deliberate and forgotten is exactly what this\nrecords."
           Stability:
             oneOf:
               - type: string
@@ -666,6 +703,8 @@ capabilities:
         path:
           - capabilities
           - describe
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - introspection
@@ -1105,6 +1144,8 @@ capabilities:
         path:
           - capabilities
           - list
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - introspection
@@ -1334,6 +1375,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/continuity
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - continuity
@@ -1417,6 +1460,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/deployments/check
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - deployment
@@ -1821,6 +1866,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/deployment
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - deployment
@@ -2266,6 +2313,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/deployments
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - deployment
@@ -2553,6 +2602,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/directories
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - directories
@@ -2632,6 +2683,8 @@ capabilities:
         path:
           - distribution
           - artifact
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - distribution
@@ -2695,6 +2748,8 @@ capabilities:
         path:
           - distribution
           - build
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - distribution
@@ -2875,6 +2930,8 @@ capabilities:
         path:
           - distribution
           - show
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - distribution
@@ -2984,6 +3041,8 @@ capabilities:
         path:
           - distribution
           - releases
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - distribution
@@ -3099,11 +3158,30 @@ capabilities:
               external:
                 type: boolean
                 description: "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+              facts:
+                type: object
+                additionalProperties:
+                  "$ref": "#/$defs/Fact"
+                description: "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share."
             required:
               - id
               - kind
               - label
             description: "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
+          Fact:
+            anyOf:
+              - type: boolean
+                description: A yes or a no.
+              - type: integer
+                format: int64
+                description: "A whole number: an order, a version, a weight."
+              - type: string
+                description: One short value.
+              - type: array
+                items:
+                  type: string
+                description: Several short values.
+            description: "One fact a node carries from its object's front matter, in the shapes a node can hold."
           Edge:
             type: object
             properties:
@@ -3155,6 +3233,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/graph
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - graph
@@ -3230,6 +3310,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/graphs
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - graph
@@ -3274,6 +3356,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/live
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - health
@@ -3350,6 +3434,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/ready
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - health
@@ -3460,6 +3546,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/health
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - health
@@ -3708,6 +3796,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/object
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - objects
@@ -3806,6 +3896,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/objects
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - objects
@@ -3927,6 +4019,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/search
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - objects
@@ -4054,6 +4148,8 @@ capabilities:
       http:
         method: POST
         path: /api/v1/peers/announce
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - peers
@@ -4191,6 +4287,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/peers
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - peers
@@ -4331,6 +4429,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/perf
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - performance
@@ -4643,6 +4743,8 @@ capabilities:
       http:
         method: GET
         path: /api/v1/repository
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - repository
@@ -4932,6 +5034,8 @@ capabilities:
       cli:
         path:
           - scope
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - repository
@@ -5063,6 +5167,8 @@ capabilities:
         path:
           - scope
           - classify
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - repository
@@ -5177,6 +5283,8 @@ capabilities:
         path:
           - why
           - areas
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - why
@@ -5302,6 +5410,8 @@ capabilities:
         path:
           - why
           - audiences
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - why
@@ -5432,6 +5542,8 @@ capabilities:
         path:
           - why
           - diagnose
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - why
@@ -5896,6 +6008,8 @@ capabilities:
         path:
           - why
           - list
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - why
@@ -6227,6 +6341,8 @@ capabilities:
         path:
           - why
           - show
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - why
@@ -6385,6 +6501,8 @@ capabilities:
         path:
           - why
           - validate
+    availability: runtime
+    visibility: public
     stability: behaviorally_verified
     tags:
       - why
@@ -6396,6 +6514,7 @@ capabilities:
       max_entries: 2
     source_path: apps/majordomus-cli/src/capability/builtin/why.rs
 declarative_kinds:
+  - adr
   - application
   - area
   - audience

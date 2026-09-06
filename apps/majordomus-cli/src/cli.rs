@@ -570,6 +570,8 @@ pub enum GenerateTarget {
     /// The installer, the installation guide, the release build matrix and the public
     /// release metadata, from share/distribution.yaml and .ai/repo/releases/
     Distribution,
+    /// docs/generated/graph.json and its schema: the composed graph as data
+    Graph,
 }
 
 #[derive(Debug, Args)]

@@ -1032,7 +1032,7 @@ paths:
           description: "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`)."
           examples:
             first-object:
-              value: majordomus://application/ci-gated-project
+              value: majordomus://adr/adr-0001
             repository:
               value: majordomus://repository
       responses:
@@ -1094,7 +1094,7 @@ paths:
           description: "Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer."
           examples:
             first-kind:
-              value: application
+              value: adr
         - name: tag
           in: query
           required: false
@@ -1489,7 +1489,7 @@ paths:
           description: "Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input."
           examples:
             first-object:
-              value: .ai/repo/applications/ci-gated-project.md
+              value: .ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md
             layer-file:
               value: .ai/manifest.yaml
             local-half:
@@ -2474,6 +2474,21 @@ components:
         - moments
         - count
       description: "One audience, with the membership nobody authored."
+    Availability:
+      oneOf:
+        - type: string
+          const: always
+          description: "True in every environment, a published page with no server included: the layer's\nown content, which a build renders and a process serves from the same index."
+        - type: string
+          const: runtime
+          description: "A process must be running to answer: everything with a handler, whether it is\nreached over HTTP, over MCP or from the command line."
+        - type: string
+          const: build_time
+          description: "A value captured when the site was generated, rendered afterwards as the capture\nit is. Nothing classifies to this yet; the static projection of the graph is what\nwill declare it, and it is on the model so that a captured value can be labelled\nas captured instead of being shown as current."
+        - type: string
+          const: authenticated
+          description: "A process must be running and the caller must be one it has authenticated. Nothing\nin this repository authenticates a caller yet; a surface that does will say so\nhere rather than in the template that renders its link."
+      description: "Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page's own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n[`Availability::classify`] is the one place the rule lives."
     BenchmarkPolicy:
       oneOf:
         - type: object
@@ -2675,6 +2690,12 @@ components:
         exposure:
           "$ref": "#/components/schemas/Exposure"
           description: Where it is projected; absence is explicit.
+        availability:
+          "$ref": "#/components/schemas/Availability"
+          description: "Where it means anything: classified from the kind and the transports above, so\nthat a projection reads a field instead of deciding for itself."
+        visibility:
+          "$ref": "#/components/schemas/Visibility"
+          description: "Who it is for: classified from the same transports."
         stability:
           "$ref": "#/components/schemas/Stability"
           description: Where it stands.
@@ -2699,6 +2720,8 @@ components:
         - output
         - provenance
         - exposure
+        - availability
+        - visibility
         - stability
         - benchmark
         - cache
@@ -3916,6 +3939,20 @@ components:
         - capabilities
         - commands
       description: "The filters the catalogue offers, derived from the records rather than declared."
+    Fact:
+      anyOf:
+        - type: boolean
+          description: A yes or a no.
+        - type: integer
+          format: int64
+          description: "A whole number: an order, a version, a weight."
+        - type: string
+          description: One short value.
+        - type: array
+          items:
+            type: string
+          description: Several short values.
+      description: "One fact a node carries from its object's front matter, in the shapes a node can hold."
     Finding:
       type: object
       properties:
@@ -4678,6 +4715,11 @@ components:
         external:
           type: boolean
           description: "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+        facts:
+          type: object
+          additionalProperties:
+            "$ref": "#/components/schemas/Fact"
+          description: "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share."
       required:
         - id
         - kind
@@ -5797,6 +5839,18 @@ components:
           const: out
           description: Never read; the reason says why.
       description: In or out.
+    Visibility:
+      oneOf:
+        - type: string
+          const: public
+          description: "Offered to anyone who can reach the process: an HTTP route or an MCP entry."
+        - type: string
+          const: developer
+          description: "Offered to whoever runs the executable, and to nobody over a network."
+        - type: string
+          const: internal
+          description: "Projected nowhere. It exists, it is listed as existing, and no surface offers it."
+      description: "Who a capability is for, and whether anything offers it.\n\nInternal is a statement, not an omission: a capability nothing projects is invisible\neither way, and the difference between deliberate and forgotten is exactly what this\nrecords."
     WaiverReason:
       oneOf:
         - type: string

@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0018
+id: adr-0020
 kind: adr
 title: The capability graph is composed, not centralised, and projected twice
 status: proposed
@@ -23,7 +23,7 @@ provenance:
   origin: authored
 ---
 
-# 18. The capability graph is composed, not centralised, and projected twice
+# 20. The capability graph is composed, not centralised, and projected twice
 
 ## Context
 

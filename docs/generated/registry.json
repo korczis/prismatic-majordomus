@@ -437,6 +437,8 @@
           "path": "/api/v1/artifacts"
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "artifacts",
@@ -2091,6 +2093,8 @@
           "path": "/api/v1/deployments/check"
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "deployment",
@@ -2686,6 +2690,8 @@
           "path": "/api/v1/deployment"
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "deployment"
@@ -3336,6 +3342,8 @@
           "path": "/api/v1/deployments"
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "deployment"
@@ -3844,6 +3852,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "distribution",
@@ -3930,6 +3940,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "distribution",
@@ -4187,6 +4199,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "distribution",
@@ -4340,6 +4354,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "distribution",
@@ -4491,6 +4507,13 @@
                 "external": {
                   "type": "boolean",
                   "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+                },
+                "facts": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/Fact"
+                  },
+                  "description": "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share."
                 }
               },
               "required": [
@@ -4499,6 +4522,31 @@
                 "label"
               ],
               "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
+            },
+            "Fact": {
+              "anyOf": [
+                {
+                  "type": "boolean",
+                  "description": "A yes or a no."
+                },
+                {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "A whole number: an order, a version, a weight."
+                },
+                {
+                  "type": "string",
+                  "description": "One short value."
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Several short values."
+                }
+              ],
+              "description": "One fact a node carries from its object's front matter, in the shapes a node can hold."
             },
             "Edge": {
               "type": "object",
@@ -4737,6 +4785,8 @@
           "path": "/api/v1/live"
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "health",
@@ -4843,6 +4893,8 @@
           "path": "/api/v1/ready"
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "health",
@@ -7424,6 +7476,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "why",
@@ -7591,6 +7645,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "why",
@@ -7768,6 +7824,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "why",
@@ -8376,6 +8434,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "why",
@@ -8813,6 +8873,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "why"
@@ -9025,6 +9087,8 @@
           ]
         }
       },
+      "availability": "runtime",
+      "visibility": "public",
       "stability": "behaviorally_verified",
       "tags": [
         "why",
@@ -9041,6 +9105,7 @@
     }
   ],
   "declarative_kinds": [
+    "adr",
     "application",
     "area",
     "audience",
