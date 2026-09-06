@@ -4,14 +4,6 @@
   "generator": "majordomus-cli 0.1.0",
   "modules": [
     {
-      "id": "artifacts",
-      "title": "Generated artifacts",
-      "description": "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list.",
-      "stability": "behaviorally_verified",
-      "source": "builtin",
-      "capabilities": 1
-    },
-    {
       "id": "capabilities",
       "title": "Capabilities",
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.",
@@ -20,9 +12,9 @@
       "capabilities": 2
     },
     {
-      "id": "continuity",
-      "title": "Continuity",
-      "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes.",
+      "id": "directories",
+      "title": "Directory contracts",
+      "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 1
@@ -74,361 +66,9 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 3
-    },
-    {
-      "id": "web",
-      "title": "Web surfaces",
-      "description": "What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication.",
-      "stability": "behaviorally_verified",
-      "source": "builtin",
-      "capabilities": 1
     }
   ],
   "capabilities": [
-    {
-      "id": "artifacts.list",
-      "module": "artifacts",
-      "kind": "query",
-      "title": "List the generated artifacts",
-      "description": "The manifest `majordomus generate` commits as docs/generated/artifacts.json, reconciled with the working tree: every document with the encodings it is written in, and every file with its format, schema, source, size, hash and whether the file on disk still matches. Optionally narrowed to one document or one encoding. Reads only; `majordomus generate` writes and `majordomus generate --check` is the byte-for-byte verdict.",
-      "input": {
-        "name": "ArtifactsInput",
-        "schema": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "document": {
-              "type": [
-                "string",
-                "null"
-              ],
-              "description": "Only the artifacts of this document (`registry`, `cli`, `openapi`, ...)."
-            },
-            "format": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/ArtifactFormat"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Only the artifacts written in this encoding."
-            }
-          },
-          "description": "The input of `artifacts.list`: the whole manifest, or one slice of it.",
-          "title": "ArtifactsInput",
-          "$defs": {
-            "ArtifactFormat": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "json",
-                  "description": "A JSON document: pretty-printed, one trailing newline, provenance as members."
-                },
-                {
-                  "type": "string",
-                  "const": "yaml",
-                  "description": "The same document in the layer's YAML, provenance as a comment banner."
-                },
-                {
-                  "type": "string",
-                  "const": "markdown",
-                  "description": "Markdown for a reader, provenance as an HTML comment."
-                },
-                {
-                  "type": "string",
-                  "const": "text",
-                  "description": "Line-oriented text another program reads: the shell tool's allow-lists,\nprovenance as `#` comments."
-                }
-              ],
-              "description": "The encoding one generated artifact is written in."
-            }
-          }
-        }
-      },
-      "output": {
-        "name": "ArtifactReport",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "manifest": {
-              "type": "string",
-              "description": "The manifest this was read from, repository-relative."
-            },
-            "present": {
-              "type": "boolean",
-              "description": "Whether the manifest is committed in this repository at all. A repository that has\nnever run `majordomus generate` has no generated tree, which is a fact about it and\nnot a failure of this call: every list below is then empty and every tally zero."
-            },
-            "schema": {
-              "type": "string",
-              "description": "The schema the manifest carries, empty when there is none to read."
-            },
-            "documents": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/DocumentView"
-              },
-              "description": "The documents, in the manifest's order."
-            },
-            "artifacts": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/ArtifactView"
-              },
-              "description": "The files, in the manifest's order, after any filter."
-            },
-            "tallies": {
-              "$ref": "#/$defs/ArtifactTallies",
-              "description": "The counts."
-            },
-            "regenerate": {
-              "type": "string",
-              "description": "The command that rewrites every one of them."
-            },
-            "verify": {
-              "type": "string",
-              "description": "The command that decides staleness byte for byte, which is stronger than the hash."
-            }
-          },
-          "required": [
-            "manifest",
-            "present",
-            "schema",
-            "documents",
-            "artifacts",
-            "tallies",
-            "regenerate",
-            "verify"
-          ],
-          "description": "The answer of `artifacts.list`.",
-          "title": "ArtifactReport",
-          "$defs": {
-            "DocumentView": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "The document id, shared by every encoding of it."
-                },
-                "schema": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "The schema id its structured encodings carry."
-                },
-                "source": {
-                  "type": "string",
-                  "description": "One line: what it was derived from."
-                },
-                "formats": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/$defs/ArtifactFormat"
-                  },
-                  "description": "The encodings, in the manifest's order."
-                }
-              },
-              "required": [
-                "id",
-                "source",
-                "formats"
-              ],
-              "description": "One document, and the encodings it is committed in."
-            },
-            "ArtifactFormat": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "json",
-                  "description": "A JSON document: pretty-printed, one trailing newline, provenance as members."
-                },
-                {
-                  "type": "string",
-                  "const": "yaml",
-                  "description": "The same document in the layer's YAML, provenance as a comment banner."
-                },
-                {
-                  "type": "string",
-                  "const": "markdown",
-                  "description": "Markdown for a reader, provenance as an HTML comment."
-                },
-                {
-                  "type": "string",
-                  "const": "text",
-                  "description": "Line-oriented text another program reads: the shell tool's allow-lists,\nprovenance as `#` comments."
-                }
-              ],
-              "description": "The encoding one generated artifact is written in."
-            },
-            "ArtifactView": {
-              "type": "object",
-              "properties": {
-                "path": {
-                  "type": "string",
-                  "description": "Repository-relative path."
-                },
-                "document": {
-                  "type": "string",
-                  "description": "The document it projects."
-                },
-                "format": {
-                  "$ref": "#/$defs/ArtifactFormat",
-                  "description": "The encoding."
-                },
-                "schema": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "The JSON Schema its content satisfies, when it declares one."
-                },
-                "source": {
-                  "type": "string",
-                  "description": "One line: what it was derived from."
-                },
-                "bytes": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "format": "uint64",
-                  "minimum": 0,
-                  "description": "The size the manifest recorded."
-                },
-                "sha256": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "The hash the manifest recorded."
-                },
-                "state": {
-                  "$ref": "#/$defs/ArtifactState",
-                  "description": "Where the file stands against it."
-                }
-              },
-              "required": [
-                "path",
-                "document",
-                "format",
-                "source",
-                "state"
-              ],
-              "description": "One generated file, as the manifest declares it and as the tree has it."
-            },
-            "ArtifactState": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "current",
-                  "description": "The file is there and its bytes hash to what the manifest recorded."
-                },
-                {
-                  "type": "string",
-                  "const": "stale",
-                  "description": "The file is there and its bytes differ: it was edited, or the generator moved on."
-                },
-                {
-                  "type": "string",
-                  "const": "missing",
-                  "description": "The manifest names it and the tree does not have it."
-                },
-                {
-                  "type": "string",
-                  "const": "present",
-                  "description": "The file is there and the manifest records no hash for it: the manifest's own\nencodings, which cannot hash themselves. `generate --check` compares them."
-                }
-              ],
-              "description": "Where one generated file stands against the tree it is committed in."
-            },
-            "ArtifactTallies": {
-              "type": "object",
-              "properties": {
-                "documents": {
-                  "type": "integer",
-                  "format": "uint",
-                  "minimum": 0,
-                  "description": "Documents in the manifest."
-                },
-                "artifacts": {
-                  "type": "integer",
-                  "format": "uint",
-                  "minimum": 0,
-                  "description": "Files in the manifest, after any filter."
-                },
-                "current": {
-                  "type": "integer",
-                  "format": "uint",
-                  "minimum": 0,
-                  "description": "Hashes that match."
-                },
-                "stale": {
-                  "type": "integer",
-                  "format": "uint",
-                  "minimum": 0,
-                  "description": "Hashes that do not."
-                },
-                "missing": {
-                  "type": "integer",
-                  "format": "uint",
-                  "minimum": 0,
-                  "description": "Files the manifest names and the tree lacks."
-                },
-                "present": {
-                  "type": "integer",
-                  "format": "uint",
-                  "minimum": 0,
-                  "description": "Files the manifest records no hash for."
-                }
-              },
-              "required": [
-                "documents",
-                "artifacts",
-                "current",
-                "stale",
-                "missing",
-                "present"
-              ],
-              "description": "How many of each, so a caller needs no arithmetic of its own."
-            }
-          }
-        }
-      },
-      "provenance": {
-        "source": "builtin",
-        "module": "majordomus_cli::capability::builtin::artifacts"
-      },
-      "exposure": {
-        "mcp": {
-          "tool": "majordomus_artifacts",
-          "resource": {
-            "uri": "majordomus://artifacts",
-            "name": "artifacts"
-          }
-        },
-        "http": {
-          "method": "GET",
-          "path": "/api/v1/artifacts"
-        }
-      },
-      "stability": "behaviorally_verified",
-      "tags": [
-        "artifacts",
-        "generation",
-        "introspection"
-      ],
-      "benchmark": {
-        "policy": "required"
-      },
-      "cache": {
-        "policy": "process",
-        "max_entries": 8,
-        "ttl_seconds": 5
-      },
-      "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs"
-    },
     {
       "id": "capabilities.describe",
       "module": "capabilities",
@@ -1576,340 +1216,408 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
     },
     {
-      "id": "continuity.state",
-      "module": "continuity",
+      "id": "directories.list",
+      "module": "directories",
       "kind": "query",
-      "title": "What the lifecycle is holding",
-      "description": "The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence.",
+      "title": "The layer's directory contracts",
+      "description": "Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.",
       "input": {
-        "name": "Empty",
+        "name": "DirectoriesInput",
         "schema": {
           "type": "object",
           "additionalProperties": false,
-          "description": "No input.",
-          "title": "Empty"
+          "properties": {
+            "path": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One directory, repository-relative and inside the layer. Its effective chain is\nalways resolved. Absent means every directory of the layer."
+            },
+            "effective": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Resolve the effective chain for every directory, not only for a named one."
+            },
+            "state": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/DirectoryState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only directories in this state: `documented`, `exempt` or `owed`."
+            }
+          },
+          "description": "Which directories to answer for, and how much of the hierarchy to resolve.",
+          "title": "DirectoriesInput",
+          "$defs": {
+            "DirectoryState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "documented",
+                  "description": "It carries a context document of its own."
+                },
+                {
+                  "type": "string",
+                  "const": "exempt",
+                  "description": "It owes none, because a contract above it says so."
+                },
+                {
+                  "type": "string",
+                  "const": "owed",
+                  "description": "It owes one and has none."
+                }
+              ],
+              "description": "Whether a directory of the layer carries the contract it owes."
+            }
+          }
         }
       },
       "output": {
-        "name": "Continuity",
+        "name": "DirectoryReport",
         "schema": {
           "type": "object",
           "properties": {
-            "present": {
-              "type": "boolean",
-              "description": "Whether this checkout's lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \"the directory exists\". Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had."
-            },
-            "worktree": {
+            "root": {
               "type": "string",
-              "description": "The worktree this answer is about. Every selection below is scoped to it."
-            },
-            "branch": {
-              "type": "string",
-              "description": "The branch, or `DETACHED`."
-            },
-            "head": {
-              "type": "string",
-              "description": "The commit this checkout is on."
-            },
-            "working_tree": {
-              "type": "string",
-              "description": "`clean` or `dirty`."
-            },
-            "session": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/OpenSession"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "The open episode, or `None`."
-            },
-            "task": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/ActiveTask"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "The active task, or `None`."
-            },
-            "handover": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/Record"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "The record the next worker would resume from, or `None` when nothing resolves here."
-            },
-            "checkpoint": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/Record"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "The newest progress note for this worktree and branch, or `None`."
-            },
-            "blockers": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it."
+              "description": "The layer root the tree is rooted at."
             },
             "tallies": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "integer",
-                "format": "uint",
-                "minimum": 0
-              },
-              "description": "How many records of each kind this checkout holds, against the policy's caps."
+              "$ref": "#/$defs/DirectoryTallies",
+              "description": "The directories in each state."
             },
-            "findings": {
+            "directories": {
               "type": "array",
               "items": {
-                "type": "string"
+                "$ref": "#/$defs/DirectoryNode"
               },
-              "description": "What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case."
+              "description": "Every directory asked for, sorted by path."
             }
           },
           "required": [
-            "present",
-            "worktree",
-            "branch",
-            "tallies"
+            "root",
+            "tallies",
+            "directories"
           ],
-          "description": "What the lifecycle of this checkout is holding.",
-          "title": "Continuity",
+          "description": "The layer's directories, what each owes, and the contracts that apply.",
+          "title": "DirectoryReport",
           "$defs": {
-            "OpenSession": {
+            "DirectoryTallies": {
               "type": "object",
               "properties": {
-                "session_id": {
-                  "type": "string",
-                  "description": "The episode's id."
+                "directories": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Every directory of the layer the index knows."
                 },
-                "started_at": {
-                  "type": "string",
-                  "description": "When it opened."
+                "documented": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Carrying a contract of their own."
                 },
-                "owner": {
-                  "type": "string",
-                  "description": "Who opened it."
+                "exempt": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Released by a contract above them."
                 },
-                "worker": {
-                  "type": "string",
-                  "description": "The worker identity, when one was supplied. Never inferred."
-                },
-                "provider": {
-                  "type": "string",
-                  "description": "The provider whose event opened it, when one did."
-                },
-                "branch": {
-                  "type": "string",
-                  "description": "The branch it opened on."
-                },
-                "start_head": {
-                  "type": "string",
-                  "description": "The commit it opened at."
-                },
-                "foreign": {
-                  "type": "boolean",
-                  "description": "True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout's episode."
+                "owed": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Owing a contract and carrying none."
                 }
               },
               "required": [
-                "session_id",
-                "started_at",
-                "foreign"
+                "directories",
+                "documented",
+                "exempt",
+                "owed"
               ],
-              "description": "The open episode of this worktree, when there is one."
+              "description": "How many directories are in each state."
             },
-            "ActiveTask": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "The task id."
-                },
-                "task": {
-                  "type": "string",
-                  "description": "What is being worked on."
-                },
-                "profile": {
-                  "type": "string",
-                  "description": "The execution profile it runs under."
-                },
-                "outcome": {
-                  "type": "string",
-                  "description": "Its typed outcome so far: `active`, `handed_over`, or a finished one."
-                },
-                "scope": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "The paths it claims."
-                },
-                "started_at": {
-                  "type": "string",
-                  "description": "When it started."
-                },
-                "head": {
-                  "type": "string",
-                  "description": "The commit it started at."
-                }
-              },
-              "required": [
-                "id",
-                "task",
-                "profile",
-                "outcome"
-              ],
-              "description": "The active task of this checkout, when there is one."
-            },
-            "Record": {
+            "DirectoryNode": {
               "type": "object",
               "properties": {
                 "path": {
                   "type": "string",
-                  "description": "Repository-relative path. The body is at the path; it is not copied here."
+                  "description": "Repository-relative, forward slashes."
                 },
-                "created_at": {
-                  "type": "string",
-                  "description": "When the record says it was written."
+                "depth": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Segments below the layer root; the root itself is 0."
                 },
-                "task_id": {
-                  "type": "string",
-                  "description": "The task it belongs to, or `none`."
+                "parent": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The directory above, when it is inside the layer."
                 },
-                "branch": {
-                  "type": "string",
-                  "description": "The branch it was written on."
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The directories immediately below, sorted."
                 },
-                "head": {
-                  "type": "string",
-                  "description": "The commit it was written at."
+                "state": {
+                  "$ref": "#/$defs/DirectoryState",
+                  "description": "Whether it carries the contract it owes."
                 },
-                "working_tree": {
-                  "type": "string",
-                  "description": "Whether the working tree was clean or dirty then."
+                "requires_contract": {
+                  "type": "boolean",
+                  "description": "Whether a contract is owed here at all."
                 },
-                "matched": {
-                  "$ref": "#/$defs/Match",
-                  "description": "Which tier of the resolution rule matched."
+                "governed_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The contract that made the requirement explicit, when one did."
                 },
-                "divergence": {
-                  "$ref": "#/$defs/Divergence",
-                  "description": "How far its commit is from this one."
+                "exempted_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The contract that released this subtree, when one did."
                 },
-                "next_action": {
-                  "type": "string",
-                  "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections."
+                "objects": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many objects of any kind the index holds directly in this directory."
+                },
+                "contract": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ContractView"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The contract this directory declares, before inheritance."
+                },
+                "effective": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/EffectiveEntry"
+                  },
+                  "description": "The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path."
                 }
               },
               "required": [
                 "path",
-                "created_at",
-                "task_id",
-                "branch",
-                "head",
-                "working_tree",
-                "matched",
-                "divergence"
+                "depth",
+                "state",
+                "requires_contract",
+                "objects"
               ],
-              "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
+              "description": "One directory of the layer, what it owes, and what applies to it."
             },
-            "Match": {
+            "DirectoryState": {
               "oneOf": [
                 {
                   "type": "string",
-                  "const": "same_worktree_same_branch",
-                  "description": "Same repository, same worktree, same branch."
+                  "const": "documented",
+                  "description": "It carries a context document of its own."
                 },
                 {
                   "type": "string",
-                  "const": "same_branch",
-                  "description": "Same repository, same branch, another worktree of it."
+                  "const": "exempt",
+                  "description": "It owes none, because a contract above it says so."
+                },
+                {
+                  "type": "string",
+                  "const": "owed",
+                  "description": "It owes one and has none."
                 }
               ],
-              "description": "Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered."
+              "description": "Whether a directory of the layer carries the contract it owes."
             },
-            "Divergence": {
-              "oneOf": [
-                {
+            "ContractView": {
+              "type": "object",
+              "properties": {
+                "id": {
                   "type": "string",
-                  "const": "exact",
-                  "description": "Written at this commit. Trust it."
+                  "description": "The document's identity; it survives a move, the file name does not."
                 },
-                {
+                "path": {
                   "type": "string",
-                  "const": "advanced",
-                  "description": "Git has moved forward since. Trust it, and expect some of it to be done."
+                  "description": "The document's path, repository-relative."
                 },
-                {
-                  "type": "string",
-                  "const": "diverged",
-                  "description": "The recorded commit is not an ancestor: history was rewritten. Trust git, not this."
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "One line naming the directory."
                 },
-                {
-                  "type": "string",
-                  "const": "different_context",
-                  "description": "Another branch or another worktree. This record is not about your work."
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "One line saying what the directory is for."
                 },
-                {
+                "status": {
                   "type": "string",
-                  "const": "unknown",
-                  "description": "Git could not answer, so this process says so rather than guessing `exact`."
+                  "description": "`active` or `deprecated`; a deprecated document is listed and never applied."
+                },
+                "scope": {
+                  "type": "string",
+                  "description": "`directory`, `subtree` or `explicit`: how far the document reaches."
+                },
+                "composition": {
+                  "type": "string",
+                  "description": "`extend`, `replace` or `final`: how it composes with what is above it."
+                },
+                "order": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "Ties within one depth are broken by this, then by path."
+                },
+                "providers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "`*`, or the providers the document is written for."
+                },
+                "audience": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Who it addresses; both when it says nothing."
+                },
+                "tracks": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Pathspecs whose change names this document for review."
+                },
+                "children_require_contract": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ],
+                  "description": "Whether the directories below owe a contract, when this document says."
+                },
+                "children_exempt": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Subtrees below this one that owe nothing: carried, not authored here."
                 }
+              },
+              "required": [
+                "id",
+                "path",
+                "status",
+                "scope",
+                "composition",
+                "order",
+                "providers",
+                "audience"
               ],
-              "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice."
+              "description": "A directory contract as the document declares it, before anything is inherited."
+            },
+            "EffectiveEntry": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The document's identity."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The document's path."
+                },
+                "depth": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Depth below the layer root; less is less specific and applies first."
+                },
+                "order": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "The declared order, the second sort key."
+                },
+                "composition": {
+                  "type": "string",
+                  "description": "`extend`, `replace` or `final`."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it applies to this directory, in words."
+                },
+                "local": {
+                  "type": "boolean",
+                  "description": "True for the directory's own document, false for one it inherits."
+                }
+              },
+              "required": [
+                "id",
+                "path",
+                "depth",
+                "order",
+                "composition",
+                "reason",
+                "local"
+              ],
+              "description": "One contract in a directory's effective chain, in the order it is applied."
             }
           }
         }
       },
       "provenance": {
         "source": "builtin",
-        "module": "majordomus_cli::capability::builtin::continuity"
+        "module": "majordomus_cli::capability::builtin::directories"
       },
       "exposure": {
         "mcp": {
-          "tool": "majordomus_continuity",
+          "tool": "majordomus_directories",
           "resource": {
-            "uri": "majordomus://continuity",
-            "name": "continuity"
+            "uri": "majordomus://directories",
+            "name": "directories"
           }
         },
         "http": {
           "method": "GET",
-          "path": "/api/v1/continuity"
+          "path": "/api/v1/directories"
         }
       },
       "stability": "behaviorally_verified",
       "tags": [
-        "continuity",
-        "session",
-        "handover"
+        "directories",
+        "context",
+        "introspection"
       ],
       "benchmark": {
         "policy": "required"
       },
       "cache": {
         "policy": "process",
-        "max_entries": 2,
-        "ttl_seconds": 2
+        "max_entries": 8,
+        "ttl_seconds": 5
       },
-      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs"
     },
     {
       "id": "graph.get",
@@ -4652,432 +4360,6 @@
         "policy": "disabled"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
-    },
-    {
-      "id": "web.surfaces",
-      "module": "web",
-      "kind": "query",
-      "title": "Every web surface, resolved",
-      "description": "The web topology in route-precedence order, with each surface's mount, category, visibility, kind, producer, artifact, runtime feature and the provenance of every value a reader could be surprised by; and which ids are served, published and offered to a person. Answered from the resolution this process serves from, so it cannot disagree with what the router routes or what the home page lists.",
-      "input": {
-        "name": "Empty",
-        "schema": {
-          "type": "object",
-          "additionalProperties": false,
-          "description": "No input.",
-          "title": "Empty"
-        }
-      },
-      "output": {
-        "name": "SurfaceReport",
-        "schema": {
-          "type": "object",
-          "properties": {
-            "surfaces": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/Surface"
-              },
-              "description": "Every resolved surface, in route-precedence order: the order a router consults\nthem in, so the first whose mount owns a path is the one that answers it."
-            },
-            "served": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "The ids a process answers for, in the same order. A surface published and not\nserved is absent here."
-            },
-            "published": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "The ids a publication holds, in the same order."
-            },
-            "public": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              },
-              "description": "The ids offered to a person, which is what the home page lists."
-            },
-            "findings": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/SurfaceFinding"
-              },
-              "description": "What validation says about the topology as it stands. Empty is the healthy answer;\na finding here is the same one `majordomus web validate` reports, with its remedy."
-            }
-          },
-          "required": [
-            "surfaces",
-            "served",
-            "published",
-            "public",
-            "findings"
-          ],
-          "description": "The web surfaces of this repository, as the process that answers resolved them.",
-          "title": "SurfaceReport",
-          "$defs": {
-            "Surface": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "description": "Identity, unique across the topology; the selector `--only` and `--exclude` use it."
-                },
-                "title": {
-                  "type": "string",
-                  "description": "One line: what a reader sees in a listing."
-                },
-                "category": {
-                  "$ref": "#/$defs/SurfaceCategory",
-                  "description": "What it is for, which is how a listing groups it."
-                },
-                "visibility": {
-                  "$ref": "#/$defs/Visibility",
-                  "description": "Whether a person is shown it."
-                },
-                "kind": {
-                  "$ref": "#/$defs/SurfaceKind",
-                  "description": "How it answers."
-                },
-                "mount": {
-                  "$ref": "#/$defs/Mount",
-                  "description": "Where it answers."
-                },
-                "producer": {
-                  "type": "string",
-                  "description": "What produced it: a command, a module, or the generator that writes the directory."
-                },
-                "feature": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/Feature"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "The runtime capability it needs; absent when the process always has it."
-                },
-                "artifact": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "The generated directory, repository-relative, for a static surface."
-                },
-                "index": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "The file served for the mount itself, when the surface has one."
-                },
-                "availability": {
-                  "$ref": "#/$defs/Availability",
-                  "description": "Where the surface's files go and who answers for it."
-                },
-                "built_from": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "The revision the artifact was built from, when its producer recorded one: what\nmakes a stale build a finding rather than a surprise."
-                },
-                "provenance": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/$defs/Provenance"
-                  },
-                  "description": "Where each interesting value came from, by field name."
-                }
-              },
-              "required": [
-                "id",
-                "title",
-                "category",
-                "visibility",
-                "kind",
-                "mount",
-                "producer",
-                "availability",
-                "provenance"
-              ],
-              "description": "One resolved surface: everything a consumer needs, with the provenance of what it could\nbe surprised by."
-            },
-            "SurfaceCategory": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "interface",
-                  "description": "Something a person opens and looks at: the home page, the Cockpit."
-                },
-                {
-                  "type": "string",
-                  "const": "documentation",
-                  "description": "Prose and reference written for a person: the site, the Swagger UI."
-                },
-                {
-                  "type": "string",
-                  "const": "api",
-                  "description": "A machine-readable surface of the capability registry."
-                },
-                {
-                  "type": "string",
-                  "const": "protocol",
-                  "description": "A wire protocol another program speaks."
-                },
-                {
-                  "type": "string",
-                  "const": "report",
-                  "description": "Generated evidence of a run: a test report, a benchmark report."
-                }
-              ],
-              "description": "What a surface is for, which is how a reader is shown it.\n\nA category is the one piece of intent that a mount cannot carry: `/openapi.json` and\n`/swagger` sit beside each other and are a document and a viewer for it. Grouping is\nderived from this field and never from a list of paths kept somewhere else."
-            },
-            "Visibility": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "public",
-                  "description": "Listed for a person: it appears on the home page."
-                },
-                {
-                  "type": "string",
-                  "const": "internal",
-                  "description": "Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it."
-                }
-              ],
-              "description": "Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it."
-            },
-            "SurfaceKind": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "static-directory",
-                  "description": "A generated directory, mounted under its prefix and served from disk."
-                },
-                {
-                  "type": "string",
-                  "const": "native-route",
-                  "description": "A path the executable answers itself, from its own registry or handlers."
-                },
-                {
-                  "type": "string",
-                  "const": "redirect",
-                  "description": "A path that answers with a redirect to another one."
-                }
-              ],
-              "description": "How a surface answers a request.\n\nOnly what this repository serves: a directory of generated files, a path the executable\nanswers itself, and a redirect. A new *kind* is a new behaviour, never a new name for\nthe same behaviour with different data."
-            },
-            "Mount": {
-              "type": "string",
-              "description": "An absolute mount path, without a trailing slash."
-            },
-            "Feature": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "mcp",
-                  "description": "This process answers MCP over HTTP."
-                },
-                {
-                  "type": "string",
-                  "const": "cockpit",
-                  "description": "This process serves the Cockpit."
-                }
-              ],
-              "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
-            },
-            "Availability": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "both",
-                  "description": "Served by the running executable and published as files."
-                },
-                {
-                  "type": "string",
-                  "const": "served-only",
-                  "description": "Answered by the running executable and never published: a route the process\ncomputes, or a build made for this server's own mount rather than for deployment."
-                },
-                {
-                  "type": "string",
-                  "const": "published-only",
-                  "description": "Published as files; the running executable serves it from the same directory."
-                }
-              ],
-              "description": "Whether a surface is part of the static publication, served only while a process runs,\nor both."
-            },
-            "Provenance": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "properties": {
-                    "source": {
-                      "type": "string",
-                      "const": "registry"
-                    }
-                  },
-                  "required": [
-                    "source"
-                  ],
-                  "description": "Read from the capability registry: the routes the executable already declares once."
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "string",
-                      "description": "The declaration file, repository-relative."
-                    },
-                    "source": {
-                      "type": "string",
-                      "const": "producer-declaration"
-                    }
-                  },
-                  "required": [
-                    "source",
-                    "path"
-                  ],
-                  "description": "Read from a producer's own declaration beside its output (`surface.json`)."
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "string",
-                      "description": "What was found, repository-relative."
-                    },
-                    "source": {
-                      "type": "string",
-                      "const": "filesystem"
-                    }
-                  },
-                  "required": [
-                    "source",
-                    "path"
-                  ],
-                  "description": "Inferred from a file or directory being where the convention says it is."
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "path": {
-                      "type": "string",
-                      "description": "The configuration file, repository-relative."
-                    },
-                    "source": {
-                      "type": "string",
-                      "const": "site-config"
-                    }
-                  },
-                  "required": [
-                    "source",
-                    "path"
-                  ],
-                  "description": "Inferred from the site generator's own configuration."
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "source": {
-                      "type": "string",
-                      "const": "default"
-                    }
-                  },
-                  "required": [
-                    "source"
-                  ],
-                  "description": "The model's documented default for a value nobody stated."
-                }
-              ],
-              "description": "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code."
-            },
-            "SurfaceFinding": {
-              "type": "object",
-              "properties": {
-                "severity": {
-                  "$ref": "#/$defs/SurfaceFindingSeverity",
-                  "description": "How much it matters."
-                },
-                "rule": {
-                  "type": "string",
-                  "description": "The rule that produced it, stable enough to grep for."
-                },
-                "surface": {
-                  "type": "string",
-                  "description": "The surface it is about."
-                },
-                "message": {
-                  "type": "string",
-                  "description": "What is wrong."
-                },
-                "remedy": {
-                  "type": "string",
-                  "description": "What to do about it."
-                }
-              },
-              "required": [
-                "severity",
-                "rule",
-                "surface",
-                "message",
-                "remedy"
-              ],
-              "description": "One thing wrong with a topology, said so a person can fix it without reading this file."
-            },
-            "SurfaceFindingSeverity": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "error",
-                  "description": "The topology may not be served or published in this state."
-                },
-                {
-                  "type": "string",
-                  "const": "warning",
-                  "description": "Worth reading; serving is still coherent."
-                }
-              ],
-              "description": "How much a finding matters."
-            }
-          }
-        }
-      },
-      "provenance": {
-        "source": "builtin",
-        "module": "majordomus_cli::capability::builtin::web"
-      },
-      "exposure": {
-        "mcp": {
-          "tool": "majordomus_web_surfaces",
-          "resource": {
-            "uri": "majordomus://web",
-            "name": "web"
-          }
-        },
-        "http": {
-          "method": "GET",
-          "path": "/api/v1/web/surfaces"
-        }
-      },
-      "stability": "behaviorally_verified",
-      "tags": [
-        "web",
-        "introspection"
-      ],
-      "benchmark": {
-        "policy": "required"
-      },
-      "cache": {
-        "policy": "process",
-        "max_entries": 2,
-        "ttl_seconds": 5
-      },
-      "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs"
     }
   ],
   "declarative_kinds": [
@@ -5134,12 +4416,7 @@
     {
       "key": "system.http.index",
       "transport": "http",
-      "description": "GET / (the topology as JSON)"
-    },
-    {
-      "key": "system.http.home",
-      "transport": "http",
-      "description": "GET / with Accept: text/html (the home page, rendered from the topology)"
+      "description": "GET /"
     },
     {
       "key": "system.http.openapi",
@@ -5147,9 +4424,9 @@
       "description": "GET /openapi.json"
     },
     {
-      "key": "system.http.swagger",
+      "key": "system.http.docs",
       "transport": "http",
-      "description": "GET /swagger (the Swagger UI shell)"
+      "description": "GET /docs (the Swagger UI shell)"
     },
     {
       "key": "system.http.cockpit_overview",

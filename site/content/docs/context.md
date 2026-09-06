@@ -112,10 +112,11 @@ Two documents at the same depth, `order` and path cannot happen: that is one fil
 ## Coverage
 
 Every directory of the tree carries a context document. The tree is the same one the
-resolver reads — the manifest's directory, minus `local/`, minus the vendored rule
-package, whose integrity is its manifest's business rather than a reader's — and a
-directory inside it with no document is `missing-contract`, naming the directory and, when
-an ancestor made the requirement explicit, the contract that did.
+resolver reads — the manifest's directory, minus the half the manifest itself declares
+untracked (`local.tracked: false`) — and a directory inside it with no document is
+`missing-contract`, naming the directory and, when an ancestor made the requirement
+explicit, the contract that did. Nothing else is skipped by name: a subtree that owes no
+contract says so in the contract above it.
 
 The exemption is declared by the contract that governs a subtree, never by a list at the
 root, so it moves with the tree it describes:
@@ -133,9 +134,28 @@ an inherited `true` to `false` is `illegal-override` — the same class a descen
 for superseding a `final` document. It is a statement about descendants, so it is accepted
 on a `subtree` document only, and its value is `true` or `false` and nothing else.
 
-Exempt a subtree when the directories below it are instances of a kind rather than
-sections of the layer: a skill is `SKILL.md` and its examples, and a contract in every
-instance directory would repeat the format the section states once. Everywhere else, a new
+A subtree the layer carries but does not author is released by name instead, from the
+contract that governs it:
+
+```yaml
+scope: subtree
+children:
+  require_contract: true
+  exempt: [.ai/repo/rules/vendor]
+```
+
+Everything at or below a named directory owes nothing. An entry must lie inside the
+document's own scope and must not be the document's own directory — a contract releases
+the directories it governs and no others, or the narrowing rule could be escaped by
+exempting a subtree from the side, and both attempts are `illegal-override`. This is how
+the vendored rule package is exempt: it is installed, not written here, and its integrity
+is its own manifest's business. A directory this repository does write still owes a
+contract, vendored sibling or not.
+
+Exempt a subtree with `require_contract: false` when the directories below it are
+instances of a kind rather than sections of the layer: a skill is `SKILL.md` and its
+examples, and a contract in every instance directory would repeat the format the section
+states once. Everywhere else, a new
 directory says what it is for before the branch that adds it can be committed —
 `context validate` runs in the pre-commit hook through `doctor`. The decision is
 `.ai/repo/adrs/0011-every-directory-in-the-layer-carries-a-contract.md`.

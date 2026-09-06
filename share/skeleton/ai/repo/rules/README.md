@@ -10,6 +10,9 @@ providers: ["*"]
 audience: [human, agent]
 composition: extend
 order: 100
+children:
+  require_contract: true
+  exempt: [.ai/repo/rules/vendor]
 ---
 
 # Repository rules
@@ -17,6 +20,11 @@ order: 100
 A rule is a Markdown document with YAML front matter. The front matter is the machine
 side: identity, class, dependencies, and how the tool enforces it. The body is the human
 side: rationale, required behaviour, failure behaviour, verification.
+
+
+The vendored package is installed here, not authored here, so it owes no context
+document: this contract exempts it by name (`children.exempt`). Every directory the
+repository writes itself still owes one.
 
 ## Locations
 

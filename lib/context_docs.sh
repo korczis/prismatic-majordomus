@@ -4,8 +4,8 @@
 # context documents — hierarchical, directory-scoped context under the AI layer.
 #
 # A context document is a Markdown file under the layer's tree (the manifest's directory,
-# minus the local half and minus the vendored rule package) whose front matter declares the
-# contract `schema: context/v1`, `kind: context`. The file name is a convention, never the
+# minus the half the manifest declares untracked, minus the subtrees a contract exempts)
+# whose front matter declares the contract `schema: context/v1`, `kind: context`. The file name is a convention, never the
 # identity: `id` is, and it survives a move. The manifest may name file conventions
 # (`context.documents`) that must carry the contract wherever they appear in the tree, so a
 # README.md that quietly stops being context is an error rather than an omission.
@@ -63,16 +63,40 @@ mj_ctxd_index_at() {
 }
 
 # ---------------------------------------------------------------- discovery
-# Every Markdown file under the tree, in C-collation order, minus the local half and the
-# vendored package. The walk is what finds a file; the contract is what makes it a document.
+# Every Markdown file under the tree, in C-collation order, minus the local half the
+# manifest declares untracked. The walk is what finds a file; the contract is what makes it
+# a document, so a file of another kind is passed over rather than listed here by name.
 mj_ctxd_files() {
-  local tree local_rel vendor_rel
-  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
+  local tree local_rel
+  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
   ( cd "$MJ_ROOT" && find "$tree" -name '*.md' -type f -print 2>/dev/null ) \
     | LC_ALL=C sort | while IFS= read -r f; do
-        case "$f" in "$local_rel"/*|"$vendor_rel"/*) continue ;; esac
+        case "$f" in "$local_rel"/*) continue ;; esac
         printf '%s\n' "$f"
       done
+}
+
+# Every subtree a contract exempts (children.exempt), one repository-relative path per
+# line. The layer's own contracts say which subtrees they carry but do not author; nothing
+# here knows the name of any particular one. ADR 0011.
+mj_ctxd_exempt_dirs() {
+  local i=0 p
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
+    for p in $(mj_ctxd_list "$i" children_exempt); do printf '%s\n' "$p"; done
+    i=$((i + 1))
+  done
+}
+
+# Is directory $1 at or below a declared exemption?
+mj_ctxd_exempt() {
+  local d="$1" p
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    case "$d" in "$p"|"$p"/*) return 0 ;; esac
+  done <<EOF
+$(mj_ctxd_exempt_dirs)
+EOF
+  return 1
 }
 
 # ---------------------------------------------------------------- one file
@@ -147,6 +171,9 @@ mj_ctxd_scan() {
         if (first["children.require_contract"] != "true" && first["children.require_contract"] != "false") fail("invalid-front-matter: children.require_contract \047" first["children.require_contract"] "\047 is neither true nor false")
         if (first["scope"] != "subtree") fail("invalid-front-matter: children.require_contract states what descendants owe and is for scope subtree only (scope is " first["scope"] ")")
       }
+      if (first["children.exempt.0"] != "") {
+        if (first["scope"] != "subtree") fail("invalid-front-matter: children.exempt names subtrees below this document and is for scope subtree only (scope is " first["scope"] ")")
+      }
       for (i = 1; i <= nl; i++) {
         if (keys[i] ~ /^providers\.[0-9]+$/ && vals[i] != "*" && index(provs, " " vals[i] " ") == 0)
           fail("unknown-provider: provider \047" vals[i] "\047 is not one the policy projects (have:" provs ")")
@@ -161,6 +188,7 @@ mj_ctxd_scan() {
       if (first["children.require_contract"] != "") print "docs." n ".children_require_contract=" first["children.require_contract"] >> flat
       has_aud = 0
       for (i = 1; i <= nl; i++) if (keys[i] ~ /^(paths|providers|audience|supersedes|tracks)\.[0-9]+$/) { print "docs." n "." keys[i] "=" vals[i] >> flat; if (keys[i] ~ /^audience/) has_aud = 1 }
+      for (i = 1; i <= nl; i++) if (keys[i] ~ /^children\.exempt\.[0-9]+$/) { sub(/^children\./, "children_", keys[i]); print "docs." n "." keys[i] "=" vals[i] >> flat }
       if (!has_aud) { print "docs." n ".audience.0=human" >> flat; print "docs." n ".audience.1=agent" >> flat }
     }' "$MJ_ALLOW_DIR/context.txt" "$tmp")"
   st=$?
@@ -225,6 +253,15 @@ mj_ctxd_cross_check() {
       mj_path_contains "$tree" "$other" || { mj_ctxd_problem broken-reference "$rel" "paths entry '$p' lies outside the tree $tree/" "head -n 20 '$rel'"; continue; }
       [ -d "$MJ_ROOT/$other" ] || mj_ctxd_problem broken-reference "$rel" "paths entry '$p' is not a directory in this repository" "ls -d '$p'"
     done
+    # an exempted subtree exists and lies inside the scope of the document that exempts it:
+    # a contract may release the directories it governs and no others, or the narrowing
+    # rule could be escaped by exempting a subtree from the side
+    for p in $(mj_ctxd_list "$i" children_exempt); do
+      if ! other="$(mj_norm_path "$p")"; then mj_ctxd_problem broken-reference "$rel" "children.exempt entry '$p' is not a repository-relative path" "head -n 20 '$rel'"; continue; fi
+      mj_path_contains "$(mj_ctxd "$i" dir)" "$other" || { mj_ctxd_problem illegal-override "$rel" "children.exempt entry '$p' lies outside the subtree this document governs ($(mj_ctxd "$i" dir)/); a contract releases the directories it governs and no others" "majordomus context explain $other"; continue; }
+      [ "$other" = "$(mj_ctxd "$i" dir)" ] && { mj_ctxd_problem illegal-override "$rel" "children.exempt entry '$p' is this document's own directory; write children.require_contract: false to exempt the whole subtree" "head -n 20 '$rel'"; continue; }
+      [ -d "$MJ_ROOT/$other" ] || mj_ctxd_problem broken-reference "$rel" "children.exempt entry '$p' is not a directory in this repository" "ls -d '$p'"
+    done
     # every tracked pathspec covers at least one file the index knows
     for p in $(mj_ctxd_list "$i" tracks); do
       [ -n "$(mj_git ls-files -- "$p" 2>/dev/null | head -n 1)" ] \
@@ -282,10 +319,10 @@ mj_ctxd_require_at() {
 # inside `doctor`, which runs in the pre-commit hook, and a check on that path is measured
 # before it is added (project.blocking-checks-cheap).
 mj_ctxd_directories() {
-  local tree local_rel vendor_rel
-  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
+  local tree local_rel
+  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
   ( cd "$MJ_ROOT" && find "$tree" -type d -print 2>/dev/null ) | LC_ALL=C sort \
-  | awk -v flat="$MJ_CTXD_FLAT" -v localrel="$local_rel" -v vendorrel="$vendor_rel" '
+  | awk -v flat="$MJ_CTXD_FLAT" -v localrel="$local_rel" '
       BEGIN {
         while ((getline line < flat) > 0) {
           eq = index(line, "="); if (eq == 0) continue
@@ -296,13 +333,15 @@ mj_ctxd_directories() {
           else if (field == "path")  path[n] = v
           else if (field == "depth") depth[n] = v
           else if (field == "children_require_contract") req[n] = v
+          else if (field ~ /^children_exempt\.[0-9]+$/) exempt[v] = 1
         }
         close(flat)
       }
       function under(parent, child) { return child == parent || index(child, parent "/") == 1 }
       {
         d = $0
-        if (under(localrel, d) || under(vendorrel, d)) next
+        if (under(localrel, d)) next               # the manifest declares this half untracked
+        for (e in exempt) if (under(e, d)) next    # a contract above declares this subtree exempt
         doc = (d in at) ? at[d] : "-"
         best = -1; val = ""; gov = "-"
         for (n in req) {
@@ -319,8 +358,8 @@ mj_ctxd_directories() {
 # contract that governs the subtree (children.require_contract: false), never by a list at
 # the root: it moves with the tree it describes. ADR 0011.
 mj_ctxd_coverage() {
-  local tree local_rel vendor_rel d gov val path i
-  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
+  local tree local_rel d gov val path i
+  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"
   # narrowing only: false may become true below, true may not become false
   i=0
   while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
@@ -332,8 +371,8 @@ mj_ctxd_coverage() {
     fi
     i=$((i + 1))
   done
-  # every directory inside the tree, minus the local half and the vendored package, whose
-  # integrity is its manifest's business rather than a reader's
+  # every directory inside the tree, minus the half the manifest declares untracked and the
+  # subtrees a contract above declares exempt (children.exempt)
   local doc req
   while IFS="$MJ_CTXD_TAB" read -r d doc req path; do
     [ -n "$d" ] || continue

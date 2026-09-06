@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 15,
-    "schemas": 76,
+    "schemas": 71,
     "tags": 8
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -37,7 +37,7 @@
   "info": {
     "contact_name": "Majordomus",
     "contact_url": "https://github.com/korczis/prismatic-majordomus",
-    "description_md": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+    "description_md": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` lists the routes; `/docs` is Swagger UI over this document; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": "MIT",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
@@ -53,16 +53,16 @@
       "what": "This document, rendered from the registry at every request; what Swagger UI loads."
     },
     {
-      "path": "/swagger",
+      "path": "/docs",
+      "what": "Swagger UI over /openapi.json, served by the running server; the page embeds no specification of its own."
+    },
+    {
+      "path": "/cockpit",
       "what": ""
     },
     {
       "path": "/mcp",
       "what": "MCP over HTTP (Streamable HTTP) for a second client; the shared server only."
-    },
-    {
-      "path": "/cockpit",
-      "what": ""
     }
   ],
   "openapi": "3.1.0",
@@ -217,32 +217,6 @@
         "ResourceView"
       ],
       "values": [],
-      "variants": []
-    },
-    {
-      "description": "Whether a surface is part of the static publication, served only while a process runs,\nor both.",
-      "is_enum": true,
-      "name": "Availability",
-      "properties": [],
-      "type": "\"both\" | \"served-only\" | \"published-only\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
-      ],
-      "values": [
-        {
-          "description": "Served by the running executable and published as files.",
-          "value": "both"
-        },
-        {
-          "description": "Answered by the running executable and never published: a route the process\ncomputes, or a build made for this server's own mount rather than for deployment.",
-          "value": "served-only"
-        },
-        {
-          "description": "Published as files; the running executable serves it from the same directory.",
-          "value": "published-only"
-        }
-      ],
       "variants": []
     },
     {
@@ -934,6 +908,111 @@
       "variants": []
     },
     {
+      "description": "A directory contract as the document declares it, before anything is inherited.",
+      "is_enum": false,
+      "name": "ContractView",
+      "properties": [
+        {
+          "description": "The document's identity; it survives a move, the file name does not.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the directory.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line saying what the directory is for.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`active` or `deprecated`; a deprecated document is listed and never applied.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`directory`, `subtree` or `explicit`: how far the document reaches.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`extend`, `replace` or `final`: how it composes with what is above it.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Ties within one depth are broken by this, then by path.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`*`, or the providers the document is written for.",
+          "name": "providers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Who it addresses; both when it says nothing.",
+          "name": "audience",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Pathspecs whose change names this document for review.",
+          "name": "tracks",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether the directories below owe a contract, when this document says.",
+          "name": "children_require_contract",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Subtrees below this one that owe nothing: carried, not authored here.",
+          "name": "children_exempt",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand.",
       "is_enum": false,
       "name": "CounterSnapshot",
@@ -1129,6 +1208,212 @@
       "variants": []
     },
     {
+      "description": "One directory of the layer, what it owes, and what applies to it.",
+      "is_enum": false,
+      "name": "DirectoryNode",
+      "properties": [
+        {
+          "description": "Repository-relative, forward slashes.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Segments below the layer root; the root itself is 0.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The directory above, when it is inside the layer.",
+          "name": "parent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The directories immediately below, sorted.",
+          "name": "children",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it carries the contract it owes.",
+          "name": "state",
+          "refs": [
+            "DirectoryState"
+          ],
+          "required": true,
+          "type": "DirectoryState"
+        },
+        {
+          "description": "Whether a contract is owed here at all.",
+          "name": "requires_contract",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The contract that made the requirement explicit, when one did.",
+          "name": "governed_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The contract that released this subtree, when one did.",
+          "name": "exempted_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many objects of any kind the index holds directly in this directory.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The contract this directory declares, before inheritance.",
+          "name": "contract",
+          "refs": [
+            "ContractView"
+          ],
+          "required": false,
+          "type": "ContractView | null"
+        },
+        {
+          "description": "The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path.",
+          "name": "effective",
+          "refs": [
+            "EffectiveEntry"
+          ],
+          "required": false,
+          "type": "array of EffectiveEntry"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The layer's directories, what each owes, and the contracts that apply.",
+      "is_enum": false,
+      "name": "DirectoryReport",
+      "properties": [
+        {
+          "description": "The layer root the tree is rooted at.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directories in each state.",
+          "name": "tallies",
+          "refs": [
+            "DirectoryTallies"
+          ],
+          "required": true,
+          "type": "DirectoryTallies"
+        },
+        {
+          "description": "Every directory asked for, sorted by path.",
+          "name": "directories",
+          "refs": [
+            "DirectoryNode"
+          ],
+          "required": true,
+          "type": "array of DirectoryNode"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a directory of the layer carries the contract it owes.",
+      "is_enum": true,
+      "name": "DirectoryState",
+      "properties": [],
+      "type": "\"documented\" | \"exempt\" | \"owed\"",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [
+        {
+          "description": "It carries a context document of its own.",
+          "value": "documented"
+        },
+        {
+          "description": "It owes none, because a contract above it says so.",
+          "value": "exempt"
+        },
+        {
+          "description": "It owes one and has none.",
+          "value": "owed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How many directories are in each state.",
+      "is_enum": false,
+      "name": "DirectoryTallies",
+      "properties": [
+        {
+          "description": "Every directory of the layer the index knows.",
+          "name": "directories",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Carrying a contract of their own.",
+          "name": "documented",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Released by a contract above them.",
+          "name": "exempt",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Owing a contract and carrying none.",
+          "name": "owed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge.",
       "is_enum": false,
       "name": "Edge",
@@ -1164,6 +1449,69 @@
       "variants": []
     },
     {
+      "description": "One contract in a directory's effective chain, in the order it is applied.",
+      "is_enum": false,
+      "name": "EffectiveEntry",
+      "properties": [
+        {
+          "description": "The document's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Depth below the layer root; less is less specific and applies first.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The declared order, the second sort key.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`extend`, `replace` or `final`.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it applies to this directory, in words.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True for the directory's own document, false for one it inherits.",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -1182,6 +1530,7 @@
       "used_by": [
         "capabilities.list",
         "capabilities.describe",
+        "directories.list",
         "graph.get",
         "graph.list",
         "health.report",
@@ -1193,8 +1542,7 @@
         "repository.info",
         "repository.scope",
         "repository.scope_classify",
-        "objects.search",
-        "web.surfaces"
+        "objects.search"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -1206,7 +1554,7 @@
       "name": "ErrorDetail",
       "properties": [
         {
-          "description": "What kind of failure it is: `invalid_input`, `not_found`, `method_not_allowed`,\n`refused`, `forbidden`, `too_large`, `unavailable` (a surface whose producer has not\nrun) or `internal`.",
+          "description": "`invalid_input`, `not_found`, `refused`, `internal`, `method_not_allowed`.",
           "name": "code",
           "refs": [],
           "required": true,
@@ -1268,28 +1616,6 @@
         "CapabilitySummary"
       ],
       "values": [],
-      "variants": []
-    },
-    {
-      "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic.",
-      "is_enum": true,
-      "name": "Feature",
-      "properties": [],
-      "type": "\"mcp\" | \"cockpit\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
-      ],
-      "values": [
-        {
-          "description": "This process answers MCP over HTTP.",
-          "value": "mcp"
-        },
-        {
-          "description": "This process serves the Cockpit.",
-          "value": "cockpit"
-        }
-      ],
       "variants": []
     },
     {
@@ -1868,19 +2194,6 @@
       "used_by_schemas": [
         "Capability",
         "CapabilitySummary"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "An absolute mount path, without a trailing slash.",
-      "is_enum": false,
-      "name": "Mount",
-      "properties": [],
-      "type": "string",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
       ],
       "values": [],
       "variants": []
@@ -2505,106 +2818,6 @@
       "variants": []
     },
     {
-      "description": "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code.",
-      "is_enum": false,
-      "name": "Provenance",
-      "properties": [],
-      "type": "one of 5 variants",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
-      ],
-      "values": [],
-      "variants": [
-        {
-          "description": "Read from the capability registry: the routes the executable already declares once.",
-          "properties": [
-            {
-              "description": "",
-              "name": "source",
-              "refs": [],
-              "required": true,
-              "type": "\"registry\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "Read from a producer's own declaration beside its output (`surface.json`).",
-          "properties": [
-            {
-              "description": "The declaration file, repository-relative.",
-              "name": "path",
-              "refs": [],
-              "required": true,
-              "type": "string"
-            },
-            {
-              "description": "",
-              "name": "source",
-              "refs": [],
-              "required": true,
-              "type": "\"producer-declaration\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "Inferred from a file or directory being where the convention says it is.",
-          "properties": [
-            {
-              "description": "What was found, repository-relative.",
-              "name": "path",
-              "refs": [],
-              "required": true,
-              "type": "string"
-            },
-            {
-              "description": "",
-              "name": "source",
-              "refs": [],
-              "required": true,
-              "type": "\"filesystem\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "Inferred from the site generator's own configuration.",
-          "properties": [
-            {
-              "description": "The configuration file, repository-relative.",
-              "name": "path",
-              "refs": [],
-              "required": true,
-              "type": "string"
-            },
-            {
-              "description": "",
-              "name": "source",
-              "refs": [],
-              "required": true,
-              "type": "\"site-config\""
-            }
-          ],
-          "type": "object"
-        },
-        {
-          "description": "The model's documented default for a value nobody stated.",
-          "properties": [
-            {
-              "description": "",
-              "name": "source",
-              "refs": [],
-              "required": true,
-              "type": "\"default\""
-            }
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    {
       "description": "Why a path is out. The order is the order the rules decide in.",
       "is_enum": true,
       "name": "Reason",
@@ -3204,311 +3417,6 @@
       "variants": []
     },
     {
-      "description": "One resolved surface: everything a consumer needs, with the provenance of what it could\nbe surprised by.",
-      "is_enum": false,
-      "name": "Surface",
-      "properties": [
-        {
-          "description": "Identity, unique across the topology; the selector `--only` and `--exclude` use it.",
-          "name": "id",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "One line: what a reader sees in a listing.",
-          "name": "title",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What it is for, which is how a listing groups it.",
-          "name": "category",
-          "refs": [
-            "SurfaceCategory"
-          ],
-          "required": true,
-          "type": "SurfaceCategory"
-        },
-        {
-          "description": "Whether a person is shown it.",
-          "name": "visibility",
-          "refs": [
-            "Visibility"
-          ],
-          "required": true,
-          "type": "Visibility"
-        },
-        {
-          "description": "How it answers.",
-          "name": "kind",
-          "refs": [
-            "SurfaceKind"
-          ],
-          "required": true,
-          "type": "SurfaceKind"
-        },
-        {
-          "description": "Where it answers.",
-          "name": "mount",
-          "refs": [
-            "Mount"
-          ],
-          "required": true,
-          "type": "Mount"
-        },
-        {
-          "description": "What produced it: a command, a module, or the generator that writes the directory.",
-          "name": "producer",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The runtime capability it needs; absent when the process always has it.",
-          "name": "feature",
-          "refs": [
-            "Feature"
-          ],
-          "required": false,
-          "type": "Feature | null"
-        },
-        {
-          "description": "The generated directory, repository-relative, for a static surface.",
-          "name": "artifact",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "The file served for the mount itself, when the surface has one.",
-          "name": "index",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Where the surface's files go and who answers for it.",
-          "name": "availability",
-          "refs": [
-            "Availability"
-          ],
-          "required": true,
-          "type": "Availability"
-        },
-        {
-          "description": "The revision the artifact was built from, when its producer recorded one: what\nmakes a stale build a finding rather than a surprise.",
-          "name": "built_from",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
-        },
-        {
-          "description": "Where each interesting value came from, by field name.",
-          "name": "provenance",
-          "refs": [
-            "Provenance"
-          ],
-          "required": true,
-          "type": "map of Provenance"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "SurfaceReport"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "What a surface is for, which is how a reader is shown it.\n\nA category is the one piece of intent that a mount cannot carry: `/openapi.json` and\n`/swagger` sit beside each other and are a document and a viewer for it. Grouping is\nderived from this field and never from a list of paths kept somewhere else.",
-      "is_enum": true,
-      "name": "SurfaceCategory",
-      "properties": [],
-      "type": "\"interface\" | \"documentation\" | \"api\" | \"protocol\" | \"report\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
-      ],
-      "values": [
-        {
-          "description": "Something a person opens and looks at: the home page, the Cockpit.",
-          "value": "interface"
-        },
-        {
-          "description": "Prose and reference written for a person: the site, the Swagger UI.",
-          "value": "documentation"
-        },
-        {
-          "description": "A machine-readable surface of the capability registry.",
-          "value": "api"
-        },
-        {
-          "description": "A wire protocol another program speaks.",
-          "value": "protocol"
-        },
-        {
-          "description": "Generated evidence of a run: a test report, a benchmark report.",
-          "value": "report"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "One thing wrong with a topology, said so a person can fix it without reading this file.",
-      "is_enum": false,
-      "name": "SurfaceFinding",
-      "properties": [
-        {
-          "description": "How much it matters.",
-          "name": "severity",
-          "refs": [
-            "SurfaceFindingSeverity"
-          ],
-          "required": true,
-          "type": "SurfaceFindingSeverity"
-        },
-        {
-          "description": "The rule that produced it, stable enough to grep for.",
-          "name": "rule",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The surface it is about.",
-          "name": "surface",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What is wrong.",
-          "name": "message",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What to do about it.",
-          "name": "remedy",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "SurfaceReport"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "How much a finding matters.",
-      "is_enum": true,
-      "name": "SurfaceFindingSeverity",
-      "properties": [],
-      "type": "\"error\" | \"warning\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "SurfaceFinding"
-      ],
-      "values": [
-        {
-          "description": "The topology may not be served or published in this state.",
-          "value": "error"
-        },
-        {
-          "description": "Worth reading; serving is still coherent.",
-          "value": "warning"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "How a surface answers a request.\n\nOnly what this repository serves: a directory of generated files, a path the executable\nanswers itself, and a redirect. A new *kind* is a new behaviour, never a new name for\nthe same behaviour with different data.",
-      "is_enum": true,
-      "name": "SurfaceKind",
-      "properties": [],
-      "type": "\"static-directory\" | \"native-route\" | \"redirect\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
-      ],
-      "values": [
-        {
-          "description": "A generated directory, mounted under its prefix and served from disk.",
-          "value": "static-directory"
-        },
-        {
-          "description": "A path the executable answers itself, from its own registry or handlers.",
-          "value": "native-route"
-        },
-        {
-          "description": "A path that answers with a redirect to another one.",
-          "value": "redirect"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "The web surfaces of this repository, as the process that answers resolved them.",
-      "is_enum": false,
-      "name": "SurfaceReport",
-      "properties": [
-        {
-          "description": "Every resolved surface, in route-precedence order: the order a router consults\nthem in, so the first whose mount owns a path is the one that answers it.",
-          "name": "surfaces",
-          "refs": [
-            "Surface"
-          ],
-          "required": true,
-          "type": "array of Surface"
-        },
-        {
-          "description": "The ids a process answers for, in the same order. A surface published and not\nserved is absent here.",
-          "name": "served",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "The ids a publication holds, in the same order.",
-          "name": "published",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "The ids offered to a person, which is what the home page lists.",
-          "name": "public",
-          "refs": [],
-          "required": true,
-          "type": "array of string"
-        },
-        {
-          "description": "What validation says about the topology as it stands. Empty is the healthy answer;\na finding here is the same one `majordomus web validate` reports, with its remedy.",
-          "name": "findings",
-          "refs": [
-            "SurfaceFinding"
-          ],
-          "required": true,
-          "type": "array of SurfaceFinding"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "web.surfaces"
-      ],
-      "used_by_schemas": [],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "Every tracked file against the scope, counted.",
       "is_enum": false,
       "name": "Tally",
@@ -3599,28 +3507,6 @@
         {
           "description": "Never read; the reason says why.",
           "value": "out"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it.",
-      "is_enum": true,
-      "name": "Visibility",
-      "properties": [],
-      "type": "\"public\" | \"internal\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
-      ],
-      "values": [
-        {
-          "description": "Listed for a person: it appears on the home page.",
-          "value": "public"
-        },
-        {
-          "description": "Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it.",
-          "value": "internal"
         }
       ],
       "variants": []
@@ -3800,6 +3686,104 @@
           "result_schema": "Capability",
           "stability": "behaviorally_verified",
           "summary": "Describe one capability"
+        }
+      ]
+    },
+    {
+      "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
+      "name": "directories",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=8, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/directories?path=.ai%2Frepo%2Frules&effective=true&state=owed\"",
+          "description": "Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.",
+          "id": "directories.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "directories",
+            "uri": "majordomus://directories"
+          },
+          "mcp_tool": "majordomus_directories",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One directory, repository-relative and inside the layer. Its effective chain is\nalways resolved. Absent means every directory of the layer.",
+              "examples": [
+                {
+                  "case": "one-directory",
+                  "value": "\".ai/repo/rules\""
+                }
+              ],
+              "name": "path",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Resolve the effective chain for every directory, not only for a named one.",
+              "examples": [
+                {
+                  "case": "effective-everywhere",
+                  "value": "true"
+                }
+              ],
+              "name": "effective",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Only directories in this state: `documented`, `exempt` or `owed`.",
+              "examples": [
+                {
+                  "case": "owed",
+                  "value": "\"owed\""
+                }
+              ],
+              "name": "state",
+              "required": false,
+              "type": "DirectoryState | null"
+            }
+          ],
+          "path": "/api/v1/directories",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::directories",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The layer's directory contracts: the result.",
+              "schema": "DirectoryReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DirectoryReport",
+          "stability": "behaviorally_verified",
+          "summary": "The layer's directory contracts"
         }
       ]
     },
@@ -4613,67 +4597,6 @@
           "result_schema": "Classification",
           "stability": "behaviorally_verified",
           "summary": "Judge a path against the scope"
-        }
-      ]
-    },
-    {
-      "description": "What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication.",
-      "name": "web",
-      "operations": [
-        {
-          "benchmark": "required",
-          "benchmark_reason": "",
-          "body_examples": [],
-          "body_schema": "",
-          "cache": "process",
-          "cache_detail": "max_entries=2, ttl_seconds=5",
-          "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/web/surfaces\"",
-          "description": "The web topology in route-precedence order, with each surface's mount, category, visibility, kind, producer, artifact, runtime feature and the provenance of every value a reader could be surprised by; and which ids are served, published and offered to a person. Answered from the resolution this process serves from, so it cannot disagree with what the router routes or what the home page lists.",
-          "id": "web.surfaces",
-          "kind": "query",
-          "mcp_resource": {
-            "name": "web",
-            "uri": "majordomus://web"
-          },
-          "mcp_tool": "majordomus_web_surfaces",
-          "method": "GET",
-          "parameters": [],
-          "path": "/api/v1/web/surfaces",
-          "provenance": {
-            "module": "majordomus_cli::capability::builtin::web",
-            "source": "builtin"
-          },
-          "responses": [
-            {
-              "description": "Every web surface, resolved: the result.",
-              "schema": "SurfaceReport",
-              "status": "200"
-            },
-            {
-              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-              "schema": "ErrorBody",
-              "status": "400"
-            },
-            {
-              "description": "`not_found`: The input names something the repository does not hold.",
-              "schema": "ErrorBody",
-              "status": "404"
-            },
-            {
-              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-              "schema": "ErrorBody",
-              "status": "500"
-            },
-            {
-              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-              "schema": "ErrorBody",
-              "status": "default"
-            }
-          ],
-          "result_schema": "SurfaceReport",
-          "stability": "behaviorally_verified",
-          "summary": "Every web surface, resolved"
         }
       ]
     }

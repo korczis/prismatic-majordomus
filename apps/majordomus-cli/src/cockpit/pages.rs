@@ -13,6 +13,7 @@ use crate::capability::builtin::{
     ArtifactReport, Continuity, GraphList, Health, HealthStatus, ObjectList, Record,
     RepositoryReport,
 };
+    DirectoryReport, DirectoryState, GraphList, Health, HealthStatus, ObjectList, RepositoryReport,
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
 use crate::graph::Graph;
@@ -1623,6 +1624,219 @@ pub fn continuity(ctx: &Context) -> Page {
 // --------------------------------------------------------------------- health
 
 /// The health report, in full: the expensive comparison included.
+/// The layer's directory contracts: the hierarchy, what each directory owes, and — for one
+/// directory — the local contract beside the chain that actually applies to it.
+///
+/// The tree is not walked here. `directories.list` derives it from the index, so a
+/// directory with tracked content appears in this page, in `/api/v1/directories` and in
+/// the MCP resource at the same moment, and the Cockpit names no directory of its own.
+pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
+    let focus = query
+        .iter()
+        .find(|(k, _)| k == "path")
+        .map(|(_, v)| v.clone())
+        .filter(|v| !v.is_empty());
+
+    let report: DirectoryReport = match ask(ctx, "directories.list", json!({})) {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Directories, "Directories", e),
+    };
+
+    let summary = card(
+        "Coverage",
+        el("div")
+            .child(
+                el("div")
+                    .class("mj-stats")
+                    .child(statistic(
+                        report.tallies.directories.to_string(),
+                        "directories",
+                        "the layer, from the index",
+                    ))
+                    .child(statistic(
+                        report.tallies.documented.to_string(),
+                        "documented",
+                        "carry a contract",
+                    ))
+                    .child(statistic(
+                        report.tallies.exempt.to_string(),
+                        "exempt",
+                        "released from above",
+                    ))
+                    .child(statistic(
+                        report.tallies.owed.to_string(),
+                        "owed",
+                        "owe one and have none",
+                    )),
+            )
+            .child(if report.tallies.owed == 0 {
+                el("p").class("mj-note").text(
+                    "Every directory here says what it is for, or a contract above it says why it need not. These are the directories the index holds content for; the gate that walks the working tree and refuses a commit is `majordomus context validate`.",
+                )
+            } else {
+                alert(
+                    "fail",
+                    format!(
+                        "{} directory(ies) owe a contract and carry none; `majordomus context validate` names them.",
+                        report.tallies.owed
+                    ),
+                )
+            }),
+    );
+
+    let rows: Vec<El> = report
+        .directories
+        .iter()
+        .map(|d| {
+            let indent = "\u{00a0}".repeat(d.depth * 3);
+            let name = d
+                .path
+                .rsplit_once('/')
+                .map(|(_, n)| n.to_string())
+                .unwrap_or_else(|| d.path.clone());
+            let state = match d.state {
+                DirectoryState::Documented => badge("ok", "documented"),
+                DirectoryState::Exempt => badge("info", "exempt"),
+                DirectoryState::Owed => badge("fail", "owed"),
+            };
+            let decided = match (&d.exempted_by, &d.governed_by) {
+                (Some(by), _) | (None, Some(by)) => mono(by.clone()),
+                (None, None) => el("span").class("mj-note").text("nothing declares it"),
+            };
+            row(vec![
+                cell(
+                    el("span")
+                        .child(el("span").class("mj-note").text(indent))
+                        .child(link(
+                            format!("/cockpit/directories?path={}", percent_encode(&d.path)),
+                            name,
+                        )),
+                ),
+                cell(state),
+                cell(match &d.contract {
+                    Some(c) => el("span").child(mono(c.id.clone())).child(
+                        el("span")
+                            .class("mj-note")
+                            .text(c.description.clone().unwrap_or_default()),
+                    ),
+                    None => el("span").class("mj-note").text("no contract of its own"),
+                }),
+                cell(decided),
+                text_cell(d.objects.to_string()),
+            ])
+        })
+        .collect();
+
+    let tree = card(
+        "The hierarchy",
+        if rows.is_empty() {
+            nothing("The index holds no directory of the layer.")
+        } else {
+            table(
+                &["Directory", "State", "Contract", "Decided by", "Objects"],
+                rows,
+            )
+        },
+    );
+
+    let detail = focus.as_ref().map(|path| {
+        let one: Result<DirectoryReport, String> =
+            ask(ctx, "directories.list", json!({ "path": path }));
+        match one {
+            Err(e) => alert("fail", e),
+            Ok(r) => match r.directories.into_iter().next() {
+                None => alert("fail", format!("no directory '{path}' in the layer")),
+                Some(d) => {
+                    let local = match &d.contract {
+                        Some(c) => facts(vec![
+                            ("Identity", Node::Element(mono(c.id.clone()))),
+                            ("Document", Node::Element(mono(c.path.clone()))),
+                            ("Scope", Node::Element(tag(c.scope.clone()))),
+                            ("Composition", Node::Element(tag(c.composition.clone()))),
+                            (
+                                "Order",
+                                Node::Element(el("span").text(c.order.to_string())),
+                            ),
+                            ("Status", Node::Element(tag(c.status.clone()))),
+                            (
+                                "Providers",
+                                Node::Element(el("span").text(c.providers.join(", "))),
+                            ),
+                            (
+                                "Audience",
+                                Node::Element(el("span").text(c.audience.join(", "))),
+                            ),
+                        ]),
+                        None => el("p")
+                            .class("mj-note")
+                            .text("This directory declares no contract of its own."),
+                    };
+                    let chain: Vec<El> = d
+                        .effective
+                        .iter()
+                        .map(|e| {
+                            row(vec![
+                                text_cell(e.depth.to_string()),
+                                cell(mono(e.id.clone())),
+                                cell(if e.local {
+                                    badge("ok", "local")
+                                } else {
+                                    badge("info", "inherited")
+                                }),
+                                cell(tag(e.composition.clone())),
+                                text_cell(e.order.to_string()),
+                                text_cell(e.reason.clone()),
+                            ])
+                        })
+                        .collect();
+                    el("div")
+                        .class("mj-grid")
+                        .child(card_with(
+                            format!("Local contract — {}", d.path),
+                            match d.state {
+                                DirectoryState::Documented => badge("ok", "documented"),
+                                DirectoryState::Exempt => badge("info", "exempt"),
+                                DirectoryState::Owed => badge("fail", "owed"),
+                            },
+                            local,
+                        ))
+                        .child(card(
+                            "Effective contract",
+                            el("div")
+                                .child(el("p").class("mj-prose").text(
+                                    "What applies here once inheritance is resolved: every document whose scope reaches this directory, least specific first — depth, then declared order, then path. This is the chain `majordomus context resolve` composes.",
+                                ))
+                                .child(if chain.is_empty() {
+                                    nothing("No document reaches this directory.")
+                                } else {
+                                    table(
+                                        &["Depth", "Document", "Origin", "Composition", "Order", "Why"],
+                                        chain,
+                                    )
+                                }),
+                        ))
+                }
+            },
+        }
+    });
+
+    let mut main = el("div").class("mj-grid").child(summary);
+    if let Some(d) = detail {
+        main = main.child(d);
+    }
+    main = main.child(tree);
+
+    Page::new(Area::Directories, "Directories", main)
+        .subtitle(
+            "Every directory of the layer, the contract it declares, and the chain it inherits. Derived from the index through `directories.list`; the Cockpit lists no directory itself.",
+        )
+        .trail(vec![
+            ("Cockpit", Some("/cockpit")),
+            ("Directories", None),
+        ])
+}
+
+/// The health report: the verdicts the engines already reach, read through one capability.
 pub fn health(ctx: &Context) -> Page {
     let health: Health = match ask(ctx, "health.report", json!({})) {
         Ok(h) => h,

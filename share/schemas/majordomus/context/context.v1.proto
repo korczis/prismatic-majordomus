@@ -31,33 +31,36 @@ message Header {
   string schema = 1 [(majordomus.required) = true, (majordomus.const) = "context/v1"];
 
   // The identity. The file name is a convention; this is what survives a move.
-  string id = 2 [(majordomus.required) = true];
+  string id = 2 [
+    (majordomus.required) = true,
+    (majordomus.pattern) = "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$"
+  ];
 
   string kind = 3 [(majordomus.required) = true, (majordomus.const) = "context"];
 
   string title = 4 [(majordomus.required) = true];
 
   // One line saying what the directory is for, as a listing shows it.
-  string description = 5;
+  string description = 5 [(majordomus.required) = true];
 
-  Status status = 6;
+  Status status = 6 [(majordomus.required) = true];
 
   // Where the document applies: its own directory, its directory and everything below, or
   // the directories `paths` lists.
-  Scope scope = 7;
+  Scope scope = 7 [(majordomus.required) = true];
 
   // How it composes with its ancestors: extend appends, replace supersedes the ancestors
   // it names, final marks a document no descendant may supersede.
-  Composition composition = 8;
+  Composition composition = 8 [(majordomus.required) = true];
 
   // Ties documents at one depth. Lower comes first.
-  int64 order = 9;
+  int64 order = 9 [(majordomus.required) = true];
 
   // For `scope: explicit`: the directories it applies to.
   repeated string paths = 10;
 
   // The providers it is rendered for; ["*"] is every one.
-  repeated string providers = 11;
+  repeated string providers = 11 [(majordomus.required) = true, (majordomus.min_items) = 1];
 
   // Who it is written for: human, agent.
   repeated string audience = 12;
@@ -80,6 +83,14 @@ message Children {
   option (majordomus.closed) = true;
 
   bool require_contract = 1;
+
+  // Directories inside this document's scope that owe no contract, and nor does anything
+  // below them: a subtree the layer carries but does not author, such as an installed
+  // package whose integrity is its own manifest's business. Repository-relative. The
+  // exemption is declared by the contract that governs the subtree, so it travels with the
+  // tree it describes instead of living in a list inside the tool; naming a directory
+  // outside this document's own scope, or its own directory, is refused.
+  repeated string exempt = 2;
 }
 
 enum Status {
