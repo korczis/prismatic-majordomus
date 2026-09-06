@@ -1,14 +1,14 @@
 +++
 title = "Re-arguing a decision that was settled last week"
-description = "Why a decision that lives only in a transcript is reopened by the next session, and how a recorded reason and an explicit open question replace the argument."
-weight = 6
+description = "A decision whose reason lived in a conversation cannot be reviewed, only re-argued — by a worker with less information than the first one had."
+weight = 60
 [extra]
-hook = "watched a session undo last week's decision, for the reason it was made"
-responsibilities = ["state", "finish"]
-commands = ["decision", "question"]
-claims = ["decision-record", "decision-attribution", "open-question-gate", "blocker-survives-handover", "blocker-store"]
+id = "re-arguing-a-settled-decision"
+status = "stable"
+source = ".ai/repo/why/moments/re-arguing-a-settled-decision.md"
 +++
 {% raw %}
+
 ## The moment
 
 Last Tuesday the team agreed to normalise the callback URI before comparing it, and ruled
@@ -26,6 +26,20 @@ information than the first one had. The question that should have stopped the me
 the legacy mobile callback still need the old form?") was a sentence in a handover note that
 nobody was obliged to read.
 
+## Why a better model does not fix it
+
+The second session's reasoning was sound. Given a strict comparison, a mismatch and no
+recorded reason for the strictness, relaxing the comparison is the correct inference. The
+missing input was not intelligence; it was the sentence "we rejected this, and here is what
+it would let through".
+
+## What it costs
+
+The rework, plus the security regression that the rework reintroduces, plus the argument
+when somebody notices. Worst of all, the second decision is usually made with less context
+than the first, so the repository trends towards whichever answer is easiest to reach from
+the code alone.
+
 ## What Majordomus does
 
 `majordomus decision add` records what was decided and requires `--why`; a decision without
@@ -41,23 +55,29 @@ note. `majordomus question add` opens it as a line the tool can read; `finish --
 completed` refuses while any unresolved question names the task, and an entry the gate
 cannot parse is a failure, not a pass. The question keeps blocking after the work is handed
 over to a new task, and `majordomus context` prints every open question above the authored
-records, because an open question changes what may be accepted.
+records.
+
+## Before and after
+
+```text
+before   the reason existed in a conversation that ended
+
+after    majordomus decision add "Normalise the callback URI before comparing state" \
+           --why "the mismatch is a trailing slash, not a forged state parameter" \
+           --rejected "relaxing the comparison, which would accept forged states"
+         # the next session is assembled with it, and `search` finds it
+```
+
+## How to verify it
+
+Try to record a decision without `--why`: it is refused. Record one with a rejected
+alternative, then read it back with `decision list` and `search`; the task id and head were
+computed from git, not typed.
 
 ## What it does not do
 
 It does not decide anything and it does not judge a reason; a poor reason on record is still
 on record, which is what makes it reviewable. It does not stop a worker from making a change
 that contradicts a decision — it puts the decision, its reason and its rejected alternative
-in front of the worker before the work starts, and lets them be read back with
-`decision list` and `search`.
-
-## Try it
-
-```bash
-majordomus decision add "Normalise the callback URI before comparing state" \
-  --why "the mismatch is a trailing slash, not a forged state parameter" \
-  --rejected "relaxing the comparison, which would accept forged states"
-majordomus question add "Does the legacy mobile callback still require the old URI form?"
-majordomus finish --outcome completed --verify-command "make test"   # FAIL blockers …
-```
+in front of the worker before the work starts.
 {% endraw %}

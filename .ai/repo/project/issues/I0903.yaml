@@ -1,0 +1,36 @@
+id: I0903
+milestone: fly-deployment
+title: Deployment reads are declared once and projected everywhere
+slug: deployment-capabilities
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Declare the read-only deployment operations as canonical capabilities so that the CLI, the HTTP API, MCP, OpenAPI and the generated documentation all derive from one declaration."
+why: "The repository's rule is that an operation is declared once and projected; adding deployment to a transport registry, an OpenAPI file or a documentation table by hand is the defect ADR 0004 names."
+current_state: "The capability registry holds modules for capabilities, graph, health, objects, peers, perf, repository, scope and views. No deployment module exists."
+desired_state: "A deploy capability module declares the deployment reads, and every projection picks them up from generate with no second registration anywhere."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/deploy.rs
+  - apps/majordomus-cli/src/capability/builtin/mod.rs
+non_scope:
+  - Mutating operations over HTTP or MCP; deployment mutation belongs to the trusted CLI and CI
+  - Hand-edited OpenAPI, route tables or documentation lists
+depends_on:
+  - I0902
+acceptance_criteria:
+  - Each operation is one capability! declaration with its input, output, stability, exposure and tags
+  - The operations appear in the CLI, the HTTP API, the MCP surface, openapi.json and the generated reference without any file listing them a second time
+  - No capability performs a mutating deployment action
+  - generate --check is green after regeneration and fails when a projection is edited by hand
+  - The benchmark coverage projection accounts for the new capabilities, as the coverage rule requires
+validation:
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - capability_declared
+  - projections_derived
+  - generate_check
+  - benchmark_coverage
+risk: "A deployment status read wants to call flyctl, which turns a cheap capability into a network call on a hot path. Live provider state belongs behind an explicit operation with its own cost, not behind an ordinary read."
+created_at: 2026-09-06
+updated_at: 2026-09-06

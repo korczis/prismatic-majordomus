@@ -1,0 +1,33 @@
+id: I1029
+milestone: capability-graph
+title: The gate refuses what would silently break the interface
+slug: ci-surface-gate
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Put the drift check, the enforcement rules, the parity test, the browser checks and the public-data scan into the existing verification workflow, so that a change leaving any derived surface stale or unsafe cannot merge."
+why: "Every mechanism in this milestone depends on failing loudly at merge time. Without the gate they are conventions, and conventions are the thing this repository builds machinery to avoid needing."
+current_state: "The verification workflow runs the repository's existing checks."
+desired_state: "The new checks belong to the same gate, run on every pull request, and the gate stays fast enough to be usable."
+scope:
+  - .github/workflows/validate.yml
+non_scope:
+  - A separate workflow for the interface checks
+  - A gate slow enough that people work around it
+depends_on:
+  - I1021
+  - I1022
+  - I1023
+acceptance_criteria:
+  - A stale derived surface, a missing required document, a missing required verification, a broken static link to a runtime-only surface and unsafe published metadata each fail the gate
+  - The browser checks and the parity test run on every pull request
+  - Caching keeps the added time proportionate, and the total is measured
+  - No check added here lives outside the existing verification hierarchy
+validation:
+  - bash test/run.sh
+evidence_required:
+  - gate_extended
+  - gate_time_measured
+risk: "Browser checks in CI are where a suite becomes unreliable. They run against a built artifact with bounded waits, or they do not run at all."
+created_at: 2026-09-06
+updated_at: 2026-09-06

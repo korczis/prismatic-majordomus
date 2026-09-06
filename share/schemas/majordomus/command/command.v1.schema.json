@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/command/command.v1.schema.json",
+  "x-majordomus-schema": "majordomus.command/v1",
+  "title": "Command",
+  "description": "One entry of the command registry, share/commands.yaml: a command of the public surface with what it does to the repository, what it reads and writes, the exit codes it can produce, and the page and demonstration that represent it. This file is authority for reference semantics; bin/majordomus is authority for what executes, and `majordomus doctor` proves the two agree.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "summary",
+    "category",
+    "stage",
+    "visibility",
+    "class",
+    "requires_repository",
+    "requires_installed",
+    "requires_task",
+    "json",
+    "syntax",
+    "reads",
+    "writes",
+    "exit_codes",
+    "note"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "The name the command is invoked by, and its identity."
+    },
+    "title": { "type": "string" },
+    "summary": {
+      "type": "string",
+      "description": "One line: what the command does, as the help text says it."
+    },
+    "category": {
+      "enum": ["context", "continuity", "memory", "plan", "rules", "system", "task"],
+      "description": "The part of the tool it belongs to."
+    },
+    "stage": {
+      "enum": ["begin", "conclude", "inspect", "setup", "verify", "work"],
+      "description": "Where in a sitting it is reached for."
+    },
+    "visibility": {
+      "enum": ["public", "internal"],
+      "description": "public is listed in `majordomus --help` and is owed a page, a demonstration and test coverage; internal is dispatched but absent from the help text, with the reason in `note`. There is no third state."
+    },
+    "class": {
+      "enum": ["read-only", "state-mutating", "generated-output-mutating"],
+      "description": "What it does to the repository: nothing, durable records under .ai/local/state/, or generated artifacts outside it."
+    },
+    "requires_repository": { "type": "boolean" },
+    "requires_installed": { "type": "boolean" },
+    "requires_task": {
+      "enum": ["none", "optional", "required"],
+      "description": "required refuses without an active task, optional behaves differently with and without one and says which, none never reads the task record."
+    },
+    "json": {
+      "type": "boolean",
+      "description": "Whether it takes --json and answers with a document a program reads."
+    },
+    "syntax": { "type": "string" },
+    "reads": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Repository-relative paths it reads."
+    },
+    "writes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Repository-relative paths it writes. Empty for a read-only command."
+    },
+    "exit_codes": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0 },
+      "minItems": 1,
+      "description": "Every code it can exit with, 0 included."
+    },
+    "demo": {
+      "type": "string",
+      "description": "The demonstration that represents it, by id."
+    },
+    "note": { "type": "string" }
+  }
+}

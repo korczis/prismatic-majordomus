@@ -1,0 +1,35 @@
+id: I0904
+milestone: fly-deployment
+title: The listen address is one fact with two projections
+slug: cloud-bind-address
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the deployment bind an externally reachable interface on the port the canonical object declares, without changing the loopback default that local use depends on, and without the port existing as a literal in more than one place."
+why: "A server bound to 127.0.0.1 inside a Machine is unreachable, and the usual repair is to hardcode 0.0.0.0:8080 in three files. The port is a fact of the deployment object; the container, the provider configuration and the process must all read the same one."
+current_state: "bind() defaults to loopback and warns when the bound address is not loopback, because a non-loopback bind exposes this repository's layer to every host that can reach the interface. The default port is a constant in cli.rs."
+desired_state: "Local invocation is unchanged. A hosted process binds the declared address deliberately, the warning stays for the accidental case, and the port appears once as canonical data."
+scope:
+  - apps/majordomus-cli/src/http/server.rs
+  - apps/majordomus-cli/src/commands/serve.rs
+  - apps/majordomus-cli/src/cli.rs
+non_scope:
+  - Graceful shutdown, which is I0906
+  - Any change to what the server serves
+depends_on:
+  - I0902
+acceptance_criteria:
+  - The deployment port is stated once in the canonical object and consumed by the process, the container projection and the provider configuration
+  - The local default remains loopback and the existing warning still fires for an unintended non-loopback bind
+  - A hosted bind is expressed as intent rather than by suppressing the warning
+  - A test proves the hosted configuration binds a reachable address and the local default does not
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - single_port_source
+  - hosted_bind
+  - local_default_unchanged
+risk: "Weakening the loopback default for everyone would expose local repositories on shared networks. The hosted path must be an explicit mode, not a lowered default."
+created_at: 2026-09-06
+updated_at: 2026-09-06

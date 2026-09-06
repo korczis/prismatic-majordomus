@@ -1,0 +1,33 @@
+id: I1009
+milestone: capability-graph
+title: Every menu in this repository comes from one derivation
+slug: generated-navigation
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Derive the desktop navigation, the mobile navigation, the Cockpit sections, the documentation navigation and the landing links from one projection of the graph, with deterministic grouping and ordering."
+why: "Five menus mean five edits for one new page, and the fifth is the one everybody forgets. Grouping by facts the model already holds gives an order that is stable without anyone maintaining it."
+current_state: "Navigation and landing content are assembled per surface. The landing page and the Cockpit each know their own entries."
+desired_state: "One navigation projection feeds every surface, grouping derives from kind, category, scope and availability, and ordering is deterministic."
+scope:
+  - apps/majordomus-cli/src/cockpit/nav.rs
+non_scope:
+  - Any hand-written menu entry in a template, a script or a data file
+  - Layout coordinates, columns or component trees expressed as data
+depends_on:
+  - I1004
+  - I1005
+acceptance_criteria:
+  - Every navigation surface reads the same projection, and none holds its own list
+  - Grouping derives from metadata the model already carries, and ordering is deterministic and stable across builds
+  - Adding a capability or a document changes every menu that should show it with no template edit
+  - An entry unavailable in the current environment is not rendered as an active destination
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - one_navigation_source
+  - deterministic_order
+risk: "Derived menus can order badly for a reader while being perfectly deterministic. Semantic grouping with alphabetic ordering inside it is the default; an authoritative order is metadata, never a template edit."
+created_at: 2026-09-06
+updated_at: 2026-09-06
