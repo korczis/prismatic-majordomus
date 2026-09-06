@@ -1,5 +1,7 @@
 {
   "schema": "majordomus/cli/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.1.0",
   "version": "0.1.0",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
@@ -997,19 +999,19 @@
               },
               {
                 "name": "openapi",
-                "help": "`docs/generated/openapi.json`"
+                "help": "`docs/generated/openapi.{json,yaml}`"
               },
               {
                 "name": "docs",
-                "help": "`docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`"
+                "help": "`docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`"
               },
               {
                 "name": "benchmarks",
-                "help": "`docs/generated/benchmarks.md`: every benchmark target and the coverage"
+                "help": "`docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage"
               },
               {
                 "name": "registry",
-                "help": "`docs/generated/registry.json`: the builtin registry as data"
+                "help": "`docs/generated/registry.{json,yaml}`: the builtin registry as data"
               },
               {
                 "name": "allow",
@@ -1022,6 +1024,10 @@
               {
                 "name": "site",
                 "help": "site/data/registry/registry.json, the registry dataset the site renders"
+              },
+              {
+                "name": "manifest",
+                "help": "docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact"
               }
             ],
             "defaults": [

@@ -1,7 +1,7 @@
 +++
 title = "The one status a branch rule requires is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red"
 description = "There is one status to require, ci, and it cannot be green by accident. It is computed from two facts: the plan (which gates this change had to run) and what the jobs reported. A gate the plan selected must have run in a job that succeeded; a job that failed or was cancelled is red whether or not its gate was planned; a plan that selected nothing is a broken plan and red; a failed planning job is red. A gate the plan left out is allowed to be skipped, and the table says why."
-weight = 119
+weight = 120
 [extra]
 claim_id = "ci-verdict"
 status = "guaranteed"

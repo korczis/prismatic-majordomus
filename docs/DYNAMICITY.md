@@ -70,6 +70,7 @@ file in `docs/` appears in no row.
 | Event type | `share/events.yaml` | registry walk | ledger validation, `history`, `docs/SCHEMAS.md` |
 | Projection | `.ai/repo/policy.yaml` `projections[]` | policy walk | `update`, `doctor`, `watch` |
 | Context provider | *target:* one table in `lib/context.sh` | registry walk | assembly, budget dropping, JSON |
+| Generated artifact | `generate::Target` and the `Document`s each target builds | the generation plan | `docs/generated/**`, `share/allow/*.txt`, the provider bootstraps, `site/data/registry/registry.json` — and `docs/generated/artifacts.{json,yaml,md}`, the generated index of all of them |
 
 The rows marked *target* are the entities that have no owner today. Each is a row in the
 ledger with the evidence for why it needs one.
