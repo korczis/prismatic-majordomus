@@ -123,6 +123,7 @@ majordomus serve [OPTIONS]
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--host` | `<HOST>` | `127.0.0.1` | Interface to bind; loopback unless you say otherwise |
 | `--port` | `<PORT>` | `8741` | Port to bind; 0 picks a free one and the address is logged on stderr |
+| `--deployment` | `<ID>` | — | Bind the address this deployment object declares (.ai/repo/deployments/<ID>.yaml) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's |
 
 Examples:
 

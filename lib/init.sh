@@ -88,6 +88,12 @@ H
   local sessions_dir="${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
   mkdir -p "$sessions_dir"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$sessions_dir/README.md"
+  # The deployments section, the same way: the contract is there from the start, so a
+  # repository that later deploys something adds one file rather than a directory, a
+  # context document, a manifest entry and a source class.
+  local deployments_dir="${MJ_DEPLOYMENTS_DIR:-$MJ_AI_REPO_DIR/deployments}"
+  mkdir -p "$deployments_dir"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$deployments_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.

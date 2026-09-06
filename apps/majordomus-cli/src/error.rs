@@ -144,6 +144,20 @@ pub enum Error {
         reason: String,
     },
 
+    /// A deployment was named that the layer does not declare.
+    #[error("no deployment '{id}' in this layer (the deployments are the objects under the layer's deployments section)")]
+    DeploymentNotFound {
+        /// The id asked for.
+        id: String,
+    },
+
+    /// A deployment object exists and cannot be read as one.
+    #[error("{reason}")]
+    InvalidDeployment {
+        /// What is wrong, with the file, the key, the value and the correction.
+        reason: String,
+    },
+
     /// No capability has this id.
     #[error("unknown capability: {id} (run: majordomus capabilities list)")]
     CapabilityNotFound {
@@ -210,8 +224,11 @@ impl Error {
             | Error::InvalidPolicy { .. }
             | Error::InvalidProjection { .. }
             | Error::InvalidSurface { .. }
+            | Error::InvalidDeployment { .. }
             | Error::Stale { .. } => 10,
-            Error::CapabilityNotFound { .. } | Error::NotFound { .. } => 12,
+            Error::CapabilityNotFound { .. }
+            | Error::NotFound { .. }
+            | Error::DeploymentNotFound { .. } => 12,
             Error::Git { .. }
             | Error::Io { .. }
             | Error::Transport(_)
