@@ -553,7 +553,14 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
 /// Every artifact the manifest indexes: everything but the manifest itself.
 fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     let mut out = context_artifacts(&app.context, crate::VERSION, targets)?;
-    if targets.contains(&Target::Documents) || targets.contains(&Target::Allow) {
+    // The schemas and their projections belong to the tool's data directory. When that
+    // directory is not inside the repository being generated — a test pointing a fixture at
+    // the distribution beside the crate, an installed tool run in someone else's tree —
+    // their paths do not resolve under this root, and writing them would reach outside it.
+    // There is nothing to project in that case, and saying so here is what keeps every
+    // caller of `write` inside the root it was given.
+    let share_is_here = app.share.dir().starts_with(app.repository.root());
+    if share_is_here && (targets.contains(&Target::Documents) || targets.contains(&Target::Allow)) {
         let protos = document_schemas(&app.share, app.repository.root())?;
         if targets.contains(&Target::Documents) {
             out.extend(document_artifacts(
