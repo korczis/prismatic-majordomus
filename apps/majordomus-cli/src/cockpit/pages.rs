@@ -9,11 +9,13 @@
 
 use serde_json::{json, Value};
 
-use crate::capability::builtin::{GraphList, Health, HealthStatus, ObjectList, RepositoryReport};
+use crate::capability::builtin::{
+    ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
+    ObjectList, Record, RepositoryReport,
+};
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
 use crate::graph::Graph;
-use crate::http::openapi;
 use crate::http::router::percent_encode;
 
 use super::html::{el, empty, El, Node};
@@ -612,7 +614,12 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                         .as_ref()
                         .map(|h| format!("{} {}", h.method.as_str(), h.path)),
                     c.exposure.http.as_ref().map(|_| {
-                        format!("{}#/{}/{}", crate::http::swagger::DOCS_PATH, c.module, c.id)
+                        format!(
+                            "{}#/{}/{}",
+                            crate::http::swagger::SWAGGER_PATH,
+                            c.module,
+                            c.id
+                        )
                     }),
                 ),
                 projection_row(
@@ -1406,9 +1413,430 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
     .script("graph.js")
 }
 
+// --------------------------------------------------------------------- continuity
+
+/// One resolved record: where it is, how far its commit is from this one, and the section
+/// a resuming worker acts on.
+///
+/// The divergence label is a badge and a word, never a colour alone, because the difference
+/// between `advanced` and `diverged` is the difference between "some of this is already
+/// done" and "this describes a history that no longer exists".
+fn record_card(title: &str, r: Option<&Record>, empty_note: &str) -> El {
+    let Some(r) = r else {
+        return card(title, nothing(empty_note));
+    };
+    let level = match r.divergence.as_str() {
+        "exact" => "ok",
+        "advanced" => "info",
+        "unknown" => "warn",
+        _ => "fail",
+    };
+    card_with(
+        title,
+        badge(level, r.divergence.as_str()),
+        el("div")
+            .child(facts(vec![
+                ("Path", Node::Element(mono(r.path.clone()))),
+                ("Written", Node::Element(el("span").text(&r.created_at))),
+                ("Task", Node::Element(mono(r.task_id.clone()))),
+                (
+                    "At",
+                    Node::Element(mono(r.head[..7.min(r.head.len())].to_string())),
+                ),
+                (
+                    "Matched",
+                    Node::Element(el("span").text(word(&r.matched))),
+                ),
+                (
+                    "Working tree then",
+                    Node::Element(el("span").text(&r.working_tree)),
+                ),
+            ]))
+            .when(!r.divergence.trustworthy(), |d| {
+                d.child(alert(
+                    "fail",
+                    "The commit this record was written at is not in this history. Trust git over anything it says.",
+                ))
+            })
+            .when(!r.next_action.is_empty(), |d| {
+                d.child(el("h3").class("mj-card-title").text("Next action"))
+                    .child(pre(r.next_action.clone()))
+            }),
+    )
+}
+
+/// What this checkout's lifecycle is holding.
+///
+/// This is the only page that shows the local half of the layer, and it is the reason the
+/// Cockpit is bound to the loopback interface. Nothing here is projected into the static
+/// site: these records name this machine, and a site that published them would publish the
+/// one part of the layer no other clone can reproduce.
+pub fn continuity(ctx: &Context) -> Page {
+    let c: Continuity = match ask(ctx, "continuity.state", json!({})) {
+        Ok(c) => c,
+        Err(e) => return failed(Area::Continuity, "Continuity", e),
+    };
+
+    let episode = match &c.session {
+        Some(s) => card_with(
+            "Open episode",
+            badge(if s.foreign { "fail" } else { "ok" }, if s.foreign { "foreign" } else { "open" }),
+            el("div")
+                .child(facts(vec![
+                    ("Episode", Node::Element(mono(s.session_id.clone()))),
+                    ("Opened", Node::Element(el("span").text(&s.started_at))),
+                    ("Owner", Node::Element(el("span").text(&s.owner))),
+                    ("Worker", Node::Element(el("span").text(if s.worker.is_empty() { "(not recorded)" } else { &s.worker }))),
+                    ("Provider", Node::Element(el("span").text(if s.provider.is_empty() { "(not recorded)" } else { &s.provider }))),
+                    ("Branch", Node::Element(mono(s.branch.clone()))),
+                ]))
+                .when(s.foreign, |d| {
+                    d.child(alert(
+                        "fail",
+                        "This open record belongs to another checkout. Nothing about it is about the work here.",
+                    ))
+                }),
+        ),
+        None => card(
+            "Open episode",
+            nothing(
+                "No episode is open in this worktree. The provider's start event opens one; `majordomus session start` opens one by hand.",
+            ),
+        ),
+    };
+
+    let task = match &c.task {
+        Some(t) => card_with(
+            "Active task",
+            badge(if t.outcome == "active" { "ok" } else { "info" }, t.outcome.clone()),
+            el("div")
+                .child(el("p").class("mj-prose").text(&t.task))
+                .child(facts(vec![
+                    ("Id", Node::Element(mono(t.id.clone()))),
+                    ("Profile", Node::Element(el("span").text(&t.profile))),
+                    ("Started", Node::Element(el("span").text(&t.started_at))),
+                ]))
+                .child(
+                    el("div")
+                        .class("mj-marks")
+                        .children(t.scope.iter().map(|p| mono(p.clone())).collect::<Vec<_>>()),
+                ),
+        ),
+        None => card(
+            "Active task",
+            nothing(
+                "No task is active here. Work outside a task is permitted; it records nothing a task would, and no checkpoint can be written against it.",
+            ),
+        ),
+    };
+
+    let blockers = if c.blockers.is_empty() {
+        card(
+            "Blockers",
+            nothing("Nothing on this branch is refusing completion."),
+        )
+    } else {
+        card_with(
+            "Blockers",
+            badge("fail", format!("{} open", c.blockers.len())),
+            el("div")
+                .child(el("p").class("mj-prose").text(
+                    "Every unresolved question on this branch refuses `majordomus finish --outcome completed`, whichever task opened it.",
+                ))
+                .child(
+                    el("ul")
+                        .class("mj-list")
+                        .children(c.blockers.iter().map(|b| el("li").text(b)).collect::<Vec<_>>()),
+                ),
+        )
+    };
+
+    let where_ = card(
+        "This checkout",
+        el("div")
+            .child(facts(vec![
+                ("Worktree", Node::Element(mono(c.worktree.clone()))),
+                ("Branch", Node::Element(mono(c.branch.clone()))),
+                (
+                    "HEAD",
+                    Node::Element(mono(c.head[..7.min(c.head.len())].to_string())),
+                ),
+                (
+                    "Working tree",
+                    Node::Element(el("span").text(&c.working_tree)),
+                ),
+            ]))
+            .child(
+                el("div").class("mj-stats").children(
+                    c.tallies
+                        .iter()
+                        .map(|(k, n)| statistic(n.to_string(), k.clone(), ".ai/local/state"))
+                        .collect::<Vec<_>>(),
+                ),
+            )
+            .when(!c.present, |d| {
+                d.child(alert(
+                    "info",
+                    "This checkout has no local state yet. That is a fresh clone, not a fault: the first command that writes a record creates it.",
+                ))
+            }),
+    );
+
+    let findings = if c.findings.is_empty() {
+        empty()
+    } else {
+        Node::Element(card(
+            "Before you trust the above",
+            el("div").children(
+                c.findings
+                    .iter()
+                    .map(|f| alert("warn", f.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+        ))
+    };
+
+    Page::new(
+        Area::Continuity,
+        "Continuity",
+        el("div")
+            .class("mj-grid")
+            .child(where_)
+            .child(episode)
+            .child(task)
+            .child(record_card(
+                "Resume from",
+                c.handover.as_ref(),
+                "No relevant handover for this worktree and branch. That is an answer, not a gap: a record from another branch is never offered, because a briefing quietly about somebody else is worse than none.",
+            ))
+            .child(record_card(
+                "Newest progress note",
+                c.checkpoint.as_ref(),
+                "No checkpoint resolves here yet.",
+            ))
+            .child(blockers)
+            .node(findings),
+    )
+    .subtitle("What this checkout's lifecycle is holding. Local to this machine, served here and published nowhere.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Continuity", None)])
+}
+
 // --------------------------------------------------------------------- health
 
 /// The health report, in full: the expensive comparison included.
+/// The layer's directory contracts: the hierarchy, what each directory owes, and — for one
+/// directory — the local contract beside the chain that actually applies to it.
+///
+/// The tree is not walked here. `directories.list` derives it from the index, so a
+/// directory with tracked content appears in this page, in `/api/v1/directories` and in
+/// the MCP resource at the same moment, and the Cockpit names no directory of its own.
+pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
+    let focus = query
+        .iter()
+        .find(|(k, _)| k == "path")
+        .map(|(_, v)| v.clone())
+        .filter(|v| !v.is_empty());
+
+    let report: DirectoryReport = match ask(ctx, "directories.list", json!({})) {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Directories, "Directories", e),
+    };
+
+    let summary = card(
+        "Coverage",
+        el("div")
+            .child(
+                el("div")
+                    .class("mj-stats")
+                    .child(statistic(
+                        report.tallies.directories.to_string(),
+                        "directories",
+                        "the layer, from the index",
+                    ))
+                    .child(statistic(
+                        report.tallies.documented.to_string(),
+                        "documented",
+                        "carry a contract",
+                    ))
+                    .child(statistic(
+                        report.tallies.exempt.to_string(),
+                        "exempt",
+                        "released from above",
+                    ))
+                    .child(statistic(
+                        report.tallies.owed.to_string(),
+                        "owed",
+                        "owe one and have none",
+                    )),
+            )
+            .child(if report.tallies.owed == 0 {
+                el("p").class("mj-note").text(
+                    "Every directory here says what it is for, or a contract above it says why it need not. These are the directories the index holds content for; the gate that walks the working tree and refuses a commit is `majordomus context validate`.",
+                )
+            } else {
+                alert(
+                    "fail",
+                    format!(
+                        "{} directory(ies) owe a contract and carry none; `majordomus context validate` names them.",
+                        report.tallies.owed
+                    ),
+                )
+            }),
+    );
+
+    let rows: Vec<El> = report
+        .directories
+        .iter()
+        .map(|d| {
+            let indent = "\u{00a0}".repeat(d.depth * 3);
+            let name = d
+                .path
+                .rsplit_once('/')
+                .map(|(_, n)| n.to_string())
+                .unwrap_or_else(|| d.path.clone());
+            let state = match d.state {
+                DirectoryState::Documented => badge("ok", "documented"),
+                DirectoryState::Exempt => badge("info", "exempt"),
+                DirectoryState::Owed => badge("fail", "owed"),
+            };
+            let decided = match (&d.exempted_by, &d.governed_by) {
+                (Some(by), _) | (None, Some(by)) => mono(by.clone()),
+                (None, None) => el("span").class("mj-note").text("nothing declares it"),
+            };
+            row(vec![
+                cell(
+                    el("span")
+                        .child(el("span").class("mj-note").text(indent))
+                        .child(link(
+                            format!("/cockpit/directories?path={}", percent_encode(&d.path)),
+                            name,
+                        )),
+                ),
+                cell(state),
+                cell(match &d.contract {
+                    Some(c) => el("span").child(mono(c.id.clone())).child(
+                        el("span")
+                            .class("mj-note")
+                            .text(c.description.clone().unwrap_or_default()),
+                    ),
+                    None => el("span").class("mj-note").text("no contract of its own"),
+                }),
+                cell(decided),
+                text_cell(d.objects.to_string()),
+            ])
+        })
+        .collect();
+
+    let tree = card(
+        "The hierarchy",
+        if rows.is_empty() {
+            nothing("The index holds no directory of the layer.")
+        } else {
+            table(
+                &["Directory", "State", "Contract", "Decided by", "Objects"],
+                rows,
+            )
+        },
+    );
+
+    let detail = focus.as_ref().map(|path| {
+        let one: Result<DirectoryReport, String> =
+            ask(ctx, "directories.list", json!({ "path": path }));
+        match one {
+            Err(e) => alert("fail", e),
+            Ok(r) => match r.directories.into_iter().next() {
+                None => alert("fail", format!("no directory '{path}' in the layer")),
+                Some(d) => {
+                    let local = match &d.contract {
+                        Some(c) => facts(vec![
+                            ("Identity", Node::Element(mono(c.id.clone()))),
+                            ("Document", Node::Element(mono(c.path.clone()))),
+                            ("Scope", Node::Element(tag(c.scope.clone()))),
+                            ("Composition", Node::Element(tag(c.composition.clone()))),
+                            (
+                                "Order",
+                                Node::Element(el("span").text(c.order.to_string())),
+                            ),
+                            ("Status", Node::Element(tag(c.status.clone()))),
+                            (
+                                "Providers",
+                                Node::Element(el("span").text(c.providers.join(", "))),
+                            ),
+                            (
+                                "Audience",
+                                Node::Element(el("span").text(c.audience.join(", "))),
+                            ),
+                        ]),
+                        None => el("p")
+                            .class("mj-note")
+                            .text("This directory declares no contract of its own."),
+                    };
+                    let chain: Vec<El> = d
+                        .effective
+                        .iter()
+                        .map(|e| {
+                            row(vec![
+                                text_cell(e.depth.to_string()),
+                                cell(mono(e.id.clone())),
+                                cell(if e.local {
+                                    badge("ok", "local")
+                                } else {
+                                    badge("info", "inherited")
+                                }),
+                                cell(tag(e.composition.clone())),
+                                text_cell(e.order.to_string()),
+                                text_cell(e.reason.clone()),
+                            ])
+                        })
+                        .collect();
+                    el("div")
+                        .class("mj-grid")
+                        .child(card_with(
+                            format!("Local contract — {}", d.path),
+                            match d.state {
+                                DirectoryState::Documented => badge("ok", "documented"),
+                                DirectoryState::Exempt => badge("info", "exempt"),
+                                DirectoryState::Owed => badge("fail", "owed"),
+                            },
+                            local,
+                        ))
+                        .child(card(
+                            "Effective contract",
+                            el("div")
+                                .child(el("p").class("mj-prose").text(
+                                    "What applies here once inheritance is resolved: every document whose scope reaches this directory, least specific first — depth, then declared order, then path. This is the chain `majordomus context resolve` composes.",
+                                ))
+                                .child(if chain.is_empty() {
+                                    nothing("No document reaches this directory.")
+                                } else {
+                                    table(
+                                        &["Depth", "Document", "Origin", "Composition", "Order", "Why"],
+                                        chain,
+                                    )
+                                }),
+                        ))
+                }
+            },
+        }
+    });
+
+    let mut main = el("div").class("mj-grid").child(summary);
+    if let Some(d) = detail {
+        main = main.child(d);
+    }
+    main = main.child(tree);
+
+    Page::new(Area::Directories, "Directories", main)
+        .subtitle(
+            "Every directory of the layer, the contract it declares, and the chain it inherits. Derived from the index through `directories.list`; the Cockpit lists no directory itself.",
+        )
+        .trail(vec![
+            ("Cockpit", Some("/cockpit")),
+            ("Directories", None),
+        ])
+}
+
+/// The health report: the verdicts the engines already reach, read through one capability.
 pub fn health(ctx: &Context) -> Page {
     let health: Health = match ask(ctx, "health.report", json!({})) {
         Ok(h) => h,
@@ -1475,6 +1903,120 @@ pub fn health(ctx: &Context) -> Page {
     .trail(vec![("Cockpit", Some("/cockpit")), ("Health", None)])
 }
 
+// --------------------------------------------------------------------- artifacts
+
+/// What the generator writes: every document with the encodings it is committed in, and
+/// every file with its contract and its state against the working tree. Read through
+/// `artifacts.list`, which reads the generator's own manifest; this page keeps no list of
+/// generated files and gains one the moment the generator does.
+pub fn artifacts(ctx: &Context) -> Page {
+    let report: ArtifactReport = match ask(ctx, "artifacts.list", json!({})) {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Artifacts, "Artifacts", e),
+    };
+    let t = &report.tallies;
+    let overall = if !report.present {
+        ("warn", "not generated")
+    } else if t.missing > 0 {
+        ("fail", "missing")
+    } else if t.stale > 0 {
+        ("warn", "stale")
+    } else {
+        ("ok", "current")
+    };
+
+    let documents = table(
+        &["document", "encodings", "schema", "source"],
+        report
+            .documents
+            .iter()
+            .map(|d| {
+                row(vec![
+                    cell(mono(d.id.clone())),
+                    cell(
+                        el("span").class("mj-marks").children(
+                            d.formats
+                                .iter()
+                                .map(|f| tag(f.suffix()))
+                                .collect::<Vec<_>>(),
+                        ),
+                    ),
+                    cell(match &d.schema {
+                        Some(s) => mono(s.clone()),
+                        None => el("span").class("mj-note").text("—"),
+                    }),
+                    text_cell(d.source.clone()),
+                ])
+            })
+            .collect(),
+    );
+
+    let files = table(
+        &["path", "document", "format", "bytes", "state"],
+        report
+            .artifacts
+            .iter()
+            .map(|a| {
+                row(vec![
+                    cell(mono(a.path.clone())),
+                    cell(mono(a.document.clone())),
+                    text_cell(a.format.suffix()),
+                    text_cell(a.bytes.map(|b| b.to_string()).unwrap_or_else(|| "—".into())),
+                    cell(badge(a.state.as_str(), a.state.as_str())),
+                ])
+            })
+            .collect(),
+    );
+
+    Page::new(
+        Area::Artifacts,
+        "Artifacts",
+        el("div")
+            .class("mj-grid")
+            .child(card_with(
+                "Where the generated tree stands",
+                badge(overall.0, overall.1),
+                el("div")
+                    .child(
+                        el("div")
+                            .class("mj-stats")
+                            .child(statistic(
+                                t.documents.to_string(),
+                                "documents",
+                                "the manifest",
+                            ))
+                            .child(statistic(
+                                t.artifacts.to_string(),
+                                "files",
+                                "the manifest",
+                            ))
+                            .child(statistic(t.current.to_string(), "current", "sha256"))
+                            .child(statistic(t.stale.to_string(), "stale", "sha256"))
+                            .child(statistic(t.missing.to_string(), "missing", "the tree")),
+                    )
+                    .child(facts(vec![
+                        ("Manifest", Node::Element(mono(report.manifest.clone()))),
+                        ("Schema", Node::Element(mono(report.schema.clone()))),
+                        ("Rewrite", Node::Element(mono(report.regenerate.clone()))),
+                        ("Verify", Node::Element(mono(report.verify.clone()))),
+                    ]))
+                    .when(!report.present, |d| {
+                        d.child(alert(
+                            "warn",
+                            "This repository has no generated tree yet: the manifest is written by `majordomus generate`.",
+                        ))
+                    })
+                    .child(el("p").class("mj-note").text(
+                        "A document is written in every encoding this repository commits it in, from one value: JSON for a program, YAML beside it, Markdown for a reader. The hashes here are the manifest's; `majordomus generate --check` compares every byte, which is the stronger statement.",
+                    )),
+            ))
+            .child(card("Documents", documents))
+            .child(card("Files", files)),
+    )
+    .subtitle("Every file `majordomus generate` writes, from the generator's own manifest.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Artifacts", None)])
+}
+
 // ------------------------------------------------------------------------ api
 
 /// The surfaces: every HTTP route the registry projects, the projection's own routes, and
@@ -1502,30 +2044,18 @@ pub fn api(ctx: &Context) -> Page {
         .collect();
     rows.sort_by_key(|r| r.render());
 
+    // the projection's own routes and what each one is, read off the surfaces that declare
+    // them: this table has never held a path of its own and must not start
     let infrastructure = table(
         &["Path", "What it is"],
-        openapi::INFRASTRUCTURE_ROUTES
-            .iter()
-            .map(|path| {
+        crate::web::discover::native_all()
+            .into_iter()
+            .map(|surface| {
                 row(vec![
-                    cell(mono(*path)),
-                    text_cell(if *path == "/" {
-                        "the index: what this server is and where its surfaces are"
-                    } else if *path == crate::http::swagger::SPEC_PATH {
-                        "the OpenAPI document, built from the registry per process"
-                    } else if *path == crate::http::swagger::DOCS_PATH {
-                        "Swagger UI over that document"
-                    } else if *path == crate::http::mcp::PATH {
-                        "MCP over HTTP, when this process serves a shared server"
-                    } else {
-                        "a route of the projection itself"
-                    }),
+                    cell(mono(surface.mount.as_str())),
+                    text_cell(&surface.title),
                 ])
             })
-            .chain(std::iter::once(row(vec![
-                cell(mono("/cockpit")),
-                text_cell("this Cockpit: server-rendered pages over the same registry"),
-            ])))
             .collect(),
     );
 
@@ -1536,7 +2066,7 @@ pub fn api(ctx: &Context) -> Page {
             .class("mj-grid")
             .child(card_with(
                 "Swagger UI",
-                link(crate::http::swagger::DOCS_PATH, "Open"),
+                link(crate::http::swagger::SWAGGER_PATH, "Open"),
                 el("p").class("mj-prose").text(
                     format!("Swagger UI is served from this process and reads {}, which is generated from the registry at first request. Nothing about an operation is written twice: the descriptions, the schemas and the examples are the capability's own.", crate::http::swagger::SPEC_PATH),
                 ),

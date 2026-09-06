@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# release-package — build one release artifact for one target of the distribution model.
+#
+#   scripts/release-package --target <rust target> --tag <vX.Y.Z> [--out DIR] [--no-build]
+#
+# The artifact is one archive holding everything an installation needs and nothing else:
+# the shell tool, its libraries, the tool's data directory, the executable built for the
+# target, the licence, and a build record. Its name, its root directory and the set of
+# targets come from share/distribution.yaml through the executable, never from here: this
+# script asks `majordomus distribution artifact` and packs what it is told.
+#
+#   --no-build   use the executable already at target/<triple>/release/majordomus
+#   MAJORDOMUS_BIN   an executable to pack instead of building one (cross builds elsewhere)
+#
+# Exit codes: 0 ok · 2 usage · 10 the model refuses the target · 12 a missing prerequisite.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE="$ROOT/apps/majordomus-cli"
+
+die() { printf 'release-package: %s\n' "$*" >&2; exit "${2:-12}"; }
+
+target=""
+tag=""
+out="$ROOT/dist"
+build=1
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --target) target="${2:-}"; shift 2 ;;
+    --tag) tag="${2:-}"; shift 2 ;;
+    --out) out="${2:-}"; shift 2 ;;
+    --no-build) build=0; shift ;;
+    -h|--help) sed -n '2,16p' "$0"; exit 0 ;;
+    *) die "unknown option: $1" 2 ;;
+  esac
+done
+[ -n "$target" ] || die "--target is required" 2
+[ -n "$tag" ] || die "--tag is required" 2
+case "$tag" in v[0-9]*) ;; *) die "--tag must be v followed by a version, not '$tag'" 2 ;; esac
+
+# The names come from the model. `distribution artifact` is the one place they are derived.
+mj="${MAJORDOMUS_DIST_BIN:-$CRATE/target/debug/majordomus}"
+if [ ! -x "$mj" ]; then
+  command -v cargo >/dev/null 2>&1 || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
+  RUSTFLAGS='' cargo build --quiet --locked --manifest-path "$CRATE/Cargo.toml" 1>&2
+fi
+names="$("$mj" distribution --repo "$ROOT" artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
+  || die "the distribution model does not publish '$target'" 10
+archive="$(printf '%s\n' "$names" | sed -n '1p')"
+rootdir="$(printf '%s\n' "$names" | sed -n '2p')"
+[ -n "$archive" ] && [ -n "$rootdir" ] || die "the model answered no artifact name for '$target'" 10
+
+# The executable for the target.
+binary="${MAJORDOMUS_BIN:-$CRATE/target/$target/release/majordomus}"
+if [ "$build" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
+  command -v cargo >/dev/null 2>&1 || die "cargo is needed to build $target (or pass --no-build / MAJORDOMUS_BIN)"
+  printf 'release-package: building %s (release)\n' "$target" >&2
+  RUSTFLAGS='' cargo build --release --locked --target "$target" --manifest-path "$CRATE/Cargo.toml" 1>&2
+fi
+[ -x "$binary" ] || die "no executable for $target at $binary"
+
+stage="$(mktemp -d)"
+trap 'rm -rf "$stage"' EXIT INT TERM HUP
+tree="$stage/$rootdir"
+
+mkdir -p "$tree/bin" "$tree/lib" "$tree/libexec" "$tree/share"
+cp "$ROOT/bin/majordomus" "$ROOT/bin/majordomus-mcp" "$tree/bin/"
+cp "$ROOT"/lib/* "$tree/lib/"
+cp "$binary" "$tree/libexec/majordomus-cli"
+# the tool's data directory, whole: kinds, schemas, allow-lists, providers, skeleton,
+# the rule package, the cockpit assets and the distribution model itself
+cp -R "$ROOT/share/." "$tree/share/"
+cp "$ROOT/LICENSE" "$tree/LICENSE"
+chmod 0755 "$tree/bin/majordomus" "$tree/bin/majordomus-mcp" "$tree/libexec/majordomus-cli"
+find "$tree/lib" "$tree/share" -type f -exec chmod 0644 {} +
+find "$tree/share" -type d -exec chmod 0755 {} +
+chmod 0644 "$tree/LICENSE"
+
+commit="$(cd "$ROOT" && git rev-parse HEAD 2>/dev/null || echo unknown)"
+cat > "$tree/RELEASE.json" <<JSON
+{
+  "schema": "majordomus/build/v1",
+  "version": "${tag#v}",
+  "tag": "$tag",
+  "target": "$target",
+  "commit": "$commit",
+  "built_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+JSON
+chmod 0644 "$tree/RELEASE.json"
+
+mkdir -p "$out"
+# Deterministic enough to compare two builds of one tree: entries in sorted order, one
+# owner, one timestamp. Reproducibility beyond this needs a reproducible compiler run,
+# which docs/DISTRIBUTION.md records rather than claims.
+( cd "$stage" && find "$rootdir" -print | LC_ALL=C sort > "$stage/.entries" )
+# --no-recursion is not an optimisation: the list already names every directory *and*
+# everything inside it, and a tar that recurses as well archives each file twice — GNU tar
+# writes the second copy as a hard link, which release-verify refuses by name, and bsdtar
+# writes it as a second regular entry, which it does not. Both are wrong; one of them is
+# also invisible on the machine most of this is written on.
+tar -czf "$out/$archive" -C "$stage" --no-recursion -T "$stage/.entries" 2>/dev/null \
+  || tar -czf "$out/$archive" -C "$stage" "$rootdir"
+printf '%s\n' "$out/$archive"

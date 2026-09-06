@@ -1,7 +1,7 @@
 +++
 title = "The repository scope"
 description = "the repository scope: what a worker reads and what it never reads, declared once in `.ai/repo/scope.yaml`, how a path is judged (name, size, content), what the executable does with it, and `majordomus scope`"
-weight = 27
+weight = 31
 [extra]
 source = "docs/SCOPE.md"
 +++
@@ -72,7 +72,7 @@ spans any depth, a trailing `/` names a directory and everything beneath it. The
 anchored at the repository root; `**/target/` is how "at any depth" is said. A `names`
 list is matched against the file name alone and may not carry a slash. A pattern with a
 leading slash, a `:(` prefix or a `..` segment is refused with the file and the key named,
-and so is a key the schema does not declare ([`share/schemas/scope.schema.json`](../share/schemas/scope.schema.json);
+and so is a key the schema does not declare ([`share/schemas/majordomus/scope/scope.v1.schema.json`](../share/schemas/majordomus/scope/scope.v1.schema.json);
 the shell tool's allow-list `share/allow/scope.txt` is generated from it by
 `majordomus generate allow`).
 

@@ -57,7 +57,8 @@ def claim_ref: { id: .id, status: .status, route: ("/guarantees/" + .id + "/"), 
       cli: "/registry/cli/",
       mcp: "/registry/mcp/",
       http: "/docs/api/",
-      benchmarks: "/registry/benchmarks/"
+      benchmarks: "/registry/benchmarks/",
+      artifacts: "/registry/artifacts/"
     },
     # the claims about each whole surface, for the surface's page
     claims: {

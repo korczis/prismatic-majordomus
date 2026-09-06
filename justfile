@@ -43,12 +43,12 @@ clean:
 
 # ---------------------------------------------------------------- serve (Rust executable)
 
-# MCP on stdio for the client that spawned it, joining or starting the repository's one shared server (Swagger UI at /docs). Extra arguments pass through.
+# MCP on stdio for the client that spawned it, joining or starting the repository's one shared server (its home page at / lists every surface). Extra arguments pass through.
 [group('serve')]
 mcp *args: build
     "{{rust_bin}}" mcp {{args}}
 
-# The shared server alone, on 127.0.0.1:8741 by default: Swagger UI /docs, /openapi.json, MCP over HTTP /mcp. Exits 0 if one already runs.
+# The shared server alone, on 127.0.0.1:8741 by default: the home page /, the documentation /docs/, the Cockpit /cockpit, Swagger UI /swagger, /openapi.json, MCP over HTTP /mcp. Exits 0 if one already runs.
 [group('serve')]
 serve *args: build
     "{{rust_bin}}" serve {{args}}
@@ -65,9 +65,15 @@ mcp-status:
 
 # Open Swagger UI of the running shared server in the browser (macOS `open`, else xdg-open).
 [group('serve')]
-docs-ui:
+swagger-ui:
     @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
-    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/docs"; (command -v open >/dev/null && open "$url/docs") || xdg-open "$url/docs"
+    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/swagger"; (command -v open >/dev/null && open "$url/swagger") || xdg-open "$url/swagger"
+
+# Open the running shared server's home page — every surface it serves, derived from the topology.
+[group('serve')]
+home:
+    @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
+    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/"; (command -v open >/dev/null && open "$url/") || xdg-open "$url/"
 
 # Open the Cockpit of the running shared server in the browser (macOS `open`, else xdg-open).
 [group('serve')]
@@ -279,6 +285,13 @@ site-deploy *args:
 site-build:
     scripts/site-build
 
+# Build the same documentation source for the running executable: mounted at /docs, written
+# into target/web/docs with the surface.json that makes it discoverable. One source, one
+# generator, two base URLs; `just serve` then answers /docs/ from it.
+[group('site')]
+site-docs:
+    scripts/site-build --serve
+
 # The static checks over the built site (scripts/site-check).
 [group('site')]
 site-check:
@@ -313,3 +326,10 @@ derive:
 [group('site')]
 derive-check:
     scripts/derive-check
+
+# Declare the `derived` merge driver this clone needs, so .gitattributes resolves the derived artifacts on merge instead of conflicting on their fingerprints (scripts/merge-derived).
+[group('site')]
+derive-merge-driver:
+    git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
+    git config merge.derived.driver "{{root}}/scripts/merge-derived %O %A %B %P"
+    @echo "merge.derived wired; .gitattributes now resolves the derived artifacts on merge"

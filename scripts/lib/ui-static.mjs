@@ -54,9 +54,24 @@ export function scrollingTags(css) {
 /** Tags a browser already puts in the tab order, whatever we do to them. */
 const FOCUSABLE = new Set(['a', 'button', 'input', 'select', 'textarea', 'summary', 'iframe']);
 
-/** Does this opening tag declare a horizontally scrolling box? */
+/**
+ * Does this opening tag declare that *it* scrolls horizontally?
+ *
+ * Tailwind's arbitrary variants read the other way: `[&_pre]:overflow-x-auto` on an article
+ * says the article's `pre` descendants scroll, not the article. Treating it as the element's
+ * own overflow puts a tabindex on a box that never scrolls and, worse, reports a conforming
+ * template as a failure — so those forms are removed before the question is asked. What they
+ * do declare is picked up from the compiled stylesheet by `scrollingTags`, which is where a
+ * descendant rule belongs.
+ *
+ * ```
+ * scrolls('class="overflow-x-auto"')            // true
+ * scrolls('class="[&_pre]:overflow-x-auto"')    // false — the pre scrolls, not this
+ * ```
+ */
 export function scrolls(tag) {
-  return SCROLLING.some((pattern) => pattern.test(tag));
+  const own = tag.replace(/\[&[^\]]*\]:[\w-]+/g, ' ');
+  return SCROLLING.some((pattern) => pattern.test(own));
 }
 
 /**

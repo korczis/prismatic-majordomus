@@ -1,0 +1,797 @@
+# GENERATED FILE — DO NOT EDIT DIRECTLY
+# Source: the generation plan itself, over every other target; regenerate with `majordomus generate`
+# Generator: majordomus-cli 0.2.0
+schema: majordomus/generated-artifacts/v1
+generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`"
+generator: majordomus-cli 0.2.0
+documents:
+  - id: allow/adr
+    source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
+    formats:
+      - text
+  - id: allow/application
+    source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    formats:
+      - text
+  - id: allow/context
+    source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
+    formats:
+      - text
+  - id: allow/current
+    source: "the JSON Schema `majordomus.current/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/deployment
+    source: "the JSON Schema `majordomus.deployment/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/distribution
+    source: "the JSON Schema `majordomus.distribution/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/document
+    source: "the JSON Schema `majordomus.document/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/issue
+    source: "the JSON Schema `majordomus.issue/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/knowledge
+    source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
+    formats:
+      - text
+  - id: allow/manifest
+    source: "the JSON Schema `majordomus.manifest/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/milestone
+    source: "the JSON Schema `majordomus.milestone/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/policy
+    source: "the JSON Schema `majordomus.policy/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/profile
+    source: "the JSON Schema `majordomus.profile/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/project
+    source: "the JSON Schema `majordomus.project/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/prompt
+    source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
+    formats:
+      - text
+  - id: allow/release
+    source: "the JSON Schema `majordomus.release/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/rule
+    source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
+    formats:
+      - text
+  - id: allow/scope
+    source: "the JSON Schema `majordomus.scope/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/session
+    source: "the JSON Schema `majordomus.session/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/session-context
+    source: "the JSON Schema `majordomus.session-context/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/session-record
+    source: "the JSON Schema `majordomus.session-record/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/skill
+    source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
+    formats:
+      - text
+  - id: allow/taxonomy
+    source: "the JSON Schema `majordomus.taxonomy/v1` of the kind it validates"
+    formats:
+      - text
+  - id: allow/use-case
+    source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    formats:
+      - text
+  - id: artifacts
+    schema: majordomus/generated-artifacts/v1
+    source: "the generation plan itself, over every other target"
+    formats:
+      - json
+      - markdown
+      - yaml
+  - id: benchmarks
+    schema: majordomus/benchmark-matrix/v1
+    source: the benchmark projection of the canonical capability registry
+    formats:
+      - json
+      - markdown
+      - yaml
+  - id: capabilities
+    source: the canonical Majordomus capability registry
+    formats:
+      - markdown
+  - id: cli
+    schema: majordomus/cli/v1
+    source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
+    formats:
+      - json
+      - markdown
+      - yaml
+  - id: distribution-matrix
+    source: share/distribution.yaml and the release records
+    formats:
+      - json
+  - id: install-guide
+    source: "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)"
+    formats:
+      - markdown
+  - id: installer
+    source: share/distribution.yaml and the release records
+    formats:
+      - text
+  - id: modules/artifacts
+    source: "the `artifacts` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/capabilities
+    source: "the `capabilities` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/continuity
+    source: "the `continuity` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/deploy
+    source: "the `deploy` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/directories
+    source: "the `directories` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/distribution
+    source: "the `distribution` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/graph
+    source: "the `graph` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/health
+    source: "the `health` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/objects
+    source: "the `objects` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/peers
+    source: "the `peers` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/perf
+    source: "the `perf` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/repository
+    source: "the `repository` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/web
+    source: "the `web` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: modules/why
+    source: "the `why` module of the canonical Majordomus capability registry"
+    formats:
+      - markdown
+  - id: openapi
+    source: the canonical Majordomus capability registry
+    formats:
+      - json
+      - yaml
+  - id: providers/agents
+    source: "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
+    formats:
+      - markdown
+  - id: providers/claude-code
+    source: "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
+    formats:
+      - markdown
+  - id: registry
+    schema: majordomus/capability-registry/v1
+    source: the canonical capability registry
+    formats:
+      - json
+      - yaml
+  - id: schemas/majordomus.adr/v1
+    source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
+    formats:
+      - json
+  - id: schemas/majordomus.application/v1
+    source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    formats:
+      - json
+  - id: schemas/majordomus.capture/v1
+    source: "the document schema `share/schemas/majordomus/capture/capture.v1.proto`"
+    formats:
+      - json
+  - id: schemas/majordomus.context/v1
+    source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
+    formats:
+      - json
+  - id: schemas/majordomus.knowledge/v1
+    source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
+    formats:
+      - json
+  - id: schemas/majordomus.prompt/v1
+    source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
+    formats:
+      - json
+  - id: schemas/majordomus.rule/v1
+    source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
+    formats:
+      - json
+  - id: schemas/majordomus.skill/v1
+    source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
+    formats:
+      - json
+  - id: schemas/majordomus.use-case/v1
+    source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    formats:
+      - json
+  - id: sections/adr
+    source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
+    formats:
+      - text
+  - id: sections/application
+    source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    formats:
+      - text
+  - id: sections/context
+    source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
+    formats:
+      - text
+  - id: sections/knowledge
+    source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
+    formats:
+      - text
+  - id: sections/prompt
+    source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
+    formats:
+      - text
+  - id: sections/rule
+    source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
+    formats:
+      - text
+  - id: sections/skill
+    source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
+    formats:
+      - text
+  - id: sections/use-case
+    source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    formats:
+      - text
+  - id: site-distribution
+    source: share/distribution.yaml and the release records
+    formats:
+      - json
+  - id: site-registry
+    schema: majordomus-site-registry/v2
+    source: "the capability registry and the index of this repository's layer"
+    formats:
+      - json
+  - id: site-why
+    schema: majordomus-site-why/v1
+    source: "the operational moments, audiences and areas of this repository's layer"
+    formats:
+      - json
+  - id: site-why-graph
+    source: "the moments and what answers them, as the derived `why` graph"
+    formats:
+      - json
+  - id: web
+    schema: majordomus/web-topology/v1
+    source: the resolved web topology of this repository
+    formats:
+      - json
+      - yaml
+artifacts:
+  - path: AGENTS.md
+    document: providers/agents
+    format: markdown
+    source: "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
+    bytes: 3030
+    sha256: a9f36ec6bd6b324ab343ca3c8915d7f4d586b52a94f058fb5ac759e6359df882
+  - path: CLAUDE.md
+    document: providers/claude-code
+    format: markdown
+    source: "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
+    bytes: 2319
+    sha256: f7fb19765734777cdaf75dd9612ab5c5d9f583f71ba302b863a60ce73e98755b
+  - path: docs/INSTALL.md
+    document: install-guide
+    format: markdown
+    source: "share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL)"
+    bytes: 9477
+    sha256: 884d10a29b6612327e47976c04cfc105fda9946cbc90fbad96f3f10d35231d11
+  - path: docs/generated/artifacts.json
+    document: artifacts
+    format: json
+    schema: majordomus/generated-artifacts/v1
+    source: "the generation plan itself, over every other target"
+    describes_itself: true
+  - path: docs/generated/artifacts.md
+    document: artifacts
+    format: markdown
+    source: "the generation plan itself, over every other target"
+    describes_itself: true
+  - path: docs/generated/artifacts.yaml
+    document: artifacts
+    format: yaml
+    schema: majordomus/generated-artifacts/v1
+    source: "the generation plan itself, over every other target"
+    describes_itself: true
+  - path: docs/generated/benchmarks.json
+    document: benchmarks
+    format: json
+    schema: majordomus/benchmark-matrix/v1
+    source: the benchmark projection of the canonical capability registry
+    bytes: 11202
+    sha256: 114675f7de0adc3388851d4168072341c54201d1b9ebe2a493dcf64efbdd509f
+  - path: docs/generated/benchmarks.md
+    document: benchmarks
+    format: markdown
+    source: the benchmark projection of the canonical capability registry
+    bytes: 5877
+    sha256: 1a25efea11db16effb2d52cb4bf63f26a303761716da070f3f2d97d7ba3ff709
+  - path: docs/generated/benchmarks.yaml
+    document: benchmarks
+    format: yaml
+    schema: majordomus/benchmark-matrix/v1
+    source: the benchmark projection of the canonical capability registry
+    bytes: 8155
+    sha256: 2e7d3427fa93a214bb3eeca64509723da4dd66f6cc0ad985e90004e1a6dee5c4
+  - path: docs/generated/capabilities.md
+    document: capabilities
+    format: markdown
+    source: the canonical Majordomus capability registry
+    bytes: 9044
+    sha256: 8b2b21cd3647423a71bff63b94436ba38f2a04ac1283523c3b264abfe45485b5
+  - path: docs/generated/cli.json
+    document: cli
+    format: json
+    schema: majordomus/cli/v1
+    source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
+    bytes: 227581
+    sha256: cce509febf50d356a03234d7e537c1a2bbf9a799744a3fdbcc02695de2b29891
+  - path: docs/generated/cli.md
+    document: cli
+    format: markdown
+    source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
+    bytes: 92528
+    sha256: 58dad7082a925794bbbe8903d084a498b2ee3b910716abe1f2469b6cf9296fae
+  - path: docs/generated/cli.yaml
+    document: cli
+    format: yaml
+    schema: majordomus/cli/v1
+    source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
+    bytes: 177088
+    sha256: 864a017f557fee7f2b5c5886efbbf2557c4547b05d0973637db5f8a33c4b9556
+  - path: docs/generated/distribution-matrix.json
+    document: distribution-matrix
+    format: json
+    source: share/distribution.yaml and the release records
+    bytes: 2666
+    sha256: c1bdb64b545586e9be3ea74a0205213113a5403949b83402e057d5f2d6af97ad
+  - path: docs/generated/modules/artifacts.md
+    document: modules/artifacts
+    format: markdown
+    source: "the `artifacts` module of the canonical Majordomus capability registry"
+    bytes: 1741
+    sha256: 8e5075d72ee97e59675b4e2e755d88330d3e96db34b444518a647cb3ea125977
+  - path: docs/generated/modules/capabilities.md
+    document: modules/capabilities
+    format: markdown
+    source: "the `capabilities` module of the canonical Majordomus capability registry"
+    bytes: 2074
+    sha256: a9e7e0da9d9fe1eb8bb20b49e093845e86e7931d1ee98fc1f1a8a348bf9ecab0
+  - path: docs/generated/modules/continuity.md
+    document: modules/continuity
+    format: markdown
+    source: "the `continuity` module of the canonical Majordomus capability registry"
+    bytes: 1519
+    sha256: 2d64319a1225cfe11d11986c84ab419cb7ea373de865e70b83a825a4ab7036c8
+  - path: docs/generated/modules/deploy.md
+    document: modules/deploy
+    format: markdown
+    source: "the `deploy` module of the canonical Majordomus capability registry"
+    bytes: 2737
+    sha256: 8f37e0a6290bd2afb36b87b9b9212d0021d44619789ed32674f4316ce7b99e80
+  - path: docs/generated/modules/directories.md
+    document: modules/directories
+    format: markdown
+    source: "the `directories` module of the canonical Majordomus capability registry"
+    bytes: 1653
+    sha256: 343f562c93995d2acaf4ec7e7412fdbda65dcc7d4f7418a69b896efcbf0f8cbb
+  - path: docs/generated/modules/distribution.md
+    document: modules/distribution
+    format: markdown
+    source: "the `distribution` module of the canonical Majordomus capability registry"
+    bytes: 3610
+    sha256: 2ef9c571fcd5fce3b72a06fdbb2cc15981f3a9698faef97ba51463d6e58cd7bb
+  - path: docs/generated/modules/graph.md
+    document: modules/graph
+    format: markdown
+    source: "the `graph` module of the canonical Majordomus capability registry"
+    bytes: 1797
+    sha256: b0cfa8b6a254b0433968f3c4f94a0be3d355c0e699e8fd033b0c4a1d515e97ce
+  - path: docs/generated/modules/health.md
+    document: modules/health
+    format: markdown
+    source: "the `health` module of the canonical Majordomus capability registry"
+    bytes: 2449
+    sha256: 439e9bce985ab92f59dd56bd9997789a479ba3d673215bdfb394bd84e3adf1f9
+  - path: docs/generated/modules/objects.md
+    document: modules/objects
+    format: markdown
+    source: "the `objects` module of the canonical Majordomus capability registry"
+    bytes: 2793
+    sha256: 5da80ae793d33b0782abfc52138151f497451df4a3e0992a41e315ec423efe7e
+  - path: docs/generated/modules/peers.md
+    document: modules/peers
+    format: markdown
+    source: "the `peers` module of the canonical Majordomus capability registry"
+    bytes: 1943
+    sha256: 892446874e889a66f99ec2f2b85af20db29bba7cc3a116659f10d3f9344e60d6
+  - path: docs/generated/modules/perf.md
+    document: modules/perf
+    format: markdown
+    source: "the `perf` module of the canonical Majordomus capability registry"
+    bytes: 1040
+    sha256: 899e45c90c1d731d061932c387704d2a5210a353c12d9d597014dc4f28261795
+  - path: docs/generated/modules/repository.md
+    document: modules/repository
+    format: markdown
+    source: "the `repository` module of the canonical Majordomus capability registry"
+    bytes: 2522
+    sha256: 09fe9fd19fd08d4e5434cb0c11af8db4a2e92c74630b1de9ac15d6a93b142d28
+  - path: docs/generated/modules/web.md
+    document: modules/web
+    format: markdown
+    source: "the `web` module of the canonical Majordomus capability registry"
+    bytes: 1462
+    sha256: da600d5f2483cc7e80bc3a9c4d42118880064572827ab103e590d741aabb5c8a
+  - path: docs/generated/modules/why.md
+    document: modules/why
+    format: markdown
+    source: "the `why` module of the canonical Majordomus capability registry"
+    bytes: 6121
+    sha256: 4c8dccb290c7ac92d7db9167a9645db38ddb11dd7356fc0e1fb4f51968db46e2
+  - path: docs/generated/openapi.json
+    document: openapi
+    format: json
+    source: the canonical Majordomus capability registry
+    bytes: 303807
+    sha256: f4bd1903eb61bce37ac95446019071b1d044b526fd6d4c9a82b38c230dff331c
+  - path: docs/generated/openapi.yaml
+    document: openapi
+    format: yaml
+    source: the canonical Majordomus capability registry
+    bytes: 234676
+    sha256: d752a858b6bb71c9b284ea7f73d55776843fe0fc3091c22c31de122336e8cc95
+  - path: docs/generated/registry.json
+    document: registry
+    format: json
+    schema: majordomus/capability-registry/v1
+    source: the canonical capability registry
+    bytes: 342260
+    sha256: 57a3594f0d0199d831e5c34e9e3437cffe55e8a741ab4cf2dd4f1083bf491dcf
+  - path: docs/generated/registry.yaml
+    document: registry
+    format: yaml
+    schema: majordomus/capability-registry/v1
+    source: the canonical capability registry
+    bytes: 260382
+    sha256: 6dc7379c7d40a90e27039b7a16fa2c9363687fc6972d5a66f3ba9dc13d64e4bb
+  - path: docs/generated/web.json
+    document: web
+    format: json
+    schema: majordomus/web-topology/v1
+    source: the resolved web topology of this repository
+    bytes: 5598
+    sha256: bd44768be0a1890f3ad58c6cb86cd4e56d02091f297ab25e9960d5c6a4d97fbe
+  - path: docs/generated/web.yaml
+    document: web
+    format: yaml
+    schema: majordomus/web-topology/v1
+    source: the resolved web topology of this repository
+    bytes: 4297
+    sha256: fd8989e2259f19fab0c487d1e969052807815e1840d815c4b165f8c2b04c706f
+  - path: share/allow/adr.txt
+    document: allow/adr
+    format: text
+    source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
+    bytes: 372
+    sha256: 2de0fc9b4fe17702cd28cbde9506af76976bd0c26572fcaa2df1df6a61af7d0b
+  - path: share/allow/application.txt
+    document: allow/application
+    format: text
+    source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    bytes: 383
+    sha256: 9645786e3b58f9dd9fd9d7dff2a6319c71fd33448ed0d1fb959fbdfe7b029efd
+  - path: share/allow/context.txt
+    document: allow/context
+    format: text
+    source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
+    bytes: 446
+    sha256: b0ba3c8239f27b86471c9ec6d370b1290483005dd19377239d9870f3050b8140
+  - path: share/allow/current.txt
+    document: allow/current
+    format: text
+    source: "the JSON Schema `majordomus.current/v1` of the kind it validates"
+    bytes: 336
+    sha256: e00f42873fe329d0420a04826ae835a5fdfcfe54e626e196bed60fcfac57327c
+  - path: share/allow/deployment.txt
+    document: allow/deployment
+    format: text
+    source: "the JSON Schema `majordomus.deployment/v1` of the kind it validates"
+    bytes: 1021
+    sha256: 7f3bff762ddfb1aad2dcecfbfff1e8212c961100025ca1e78577f56493f1facf
+  - path: share/allow/distribution.txt
+    document: allow/distribution
+    format: text
+    source: "the JSON Schema `majordomus.distribution/v1` of the kind it validates"
+    bytes: 996
+    sha256: 034337aeee350578b5972cd31442c4043bb4c786fb8a9c67082392d86b0af935
+  - path: share/allow/document.txt
+    document: allow/document
+    format: text
+    source: "the JSON Schema `majordomus.document/v1` of the kind it validates"
+    bytes: 273
+    sha256: 76e1f9dbc6d40d5e67e5e73d7ad82d42150ce911ca7b3e84d4010aa305891288
+  - path: share/allow/issue.txt
+    document: allow/issue
+    format: text
+    source: "the JSON Schema `majordomus.issue/v1` of the kind it validates"
+    bytes: 788
+    sha256: 47581dcfbfc2d4bf6bd5779430e1ad3802c05b6843b4adb3bf5e56f252510d78
+  - path: share/allow/knowledge.txt
+    document: allow/knowledge
+    format: text
+    source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
+    bytes: 428
+    sha256: 0ccd33e718e17d105e4b33db7eee71ce82f7396d7a1823ff04e9dbdbd29c64ad
+  - path: share/allow/manifest.txt
+    document: allow/manifest
+    format: text
+    source: "the JSON Schema `majordomus.manifest/v1` of the kind it validates"
+    bytes: 627
+    sha256: ebaf4a4e05c3e652908faec41ab4812d06b8adbaa1e9e2f62631b63f18a5cab4
+  - path: share/allow/milestone.txt
+    document: allow/milestone
+    format: text
+    source: "the JSON Schema `majordomus.milestone/v1` of the kind it validates"
+    bytes: 759
+    sha256: c27b9198b42bf6943ab5863c31f55ecdd4aa4935dcf28ee4a68f36c8c5fd95ad
+  - path: share/allow/policy.txt
+    document: allow/policy
+    format: text
+    source: "the JSON Schema `majordomus.policy/v1` of the kind it validates"
+    bytes: 1340
+    sha256: d5982d91d490ea123f73dd7ee08b0cfa08d347b227133d390373049893b2cac5
+  - path: share/allow/profile.txt
+    document: allow/profile
+    format: text
+    source: "the JSON Schema `majordomus.profile/v1` of the kind it validates"
+    bytes: 677
+    sha256: d36e9964f6f279582e937d6e690e905881212d483152c690f7350f24f277d719
+  - path: share/allow/project.txt
+    document: allow/project
+    format: text
+    source: "the JSON Schema `majordomus.project/v1` of the kind it validates"
+    bytes: 244
+    sha256: 6a5f6f3a19f6b24889bdb9017844406afa272f23ecb954e371bc68c5dac94e34
+  - path: share/allow/prompt.txt
+    document: allow/prompt
+    format: text
+    source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
+    bytes: 226
+    sha256: b93e0fed0853bd2664b5c701b7f0f40116e0d3312f6580181d8c8b30846e6a94
+  - path: share/allow/release.txt
+    document: allow/release
+    format: text
+    source: "the JSON Schema `majordomus.release/v1` of the kind it validates"
+    bytes: 403
+    sha256: 4e966d3af30873ff684258df9b06acff1328b8f0252b04da29f8a03bb28369ee
+  - path: share/allow/rule.txt
+    document: allow/rule
+    format: text
+    source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
+    bytes: 516
+    sha256: ae795f0fc4fe671861734387710e7c35d37c9c56d2ef806b9c1ca988f4c6912f
+  - path: share/allow/scope.txt
+    document: allow/scope
+    format: text
+    source: "the JSON Schema `majordomus.scope/v1` of the kind it validates"
+    bytes: 824
+    sha256: edd4faf5b513226a1efa5a6f48a294ea5788feb802557c8c1079c4b401293a2e
+  - path: share/allow/session-context.txt
+    document: allow/session-context
+    format: text
+    source: "the JSON Schema `majordomus.session-context/v1` of the kind it validates"
+    bytes: 326
+    sha256: ad251e2e939f6c4c770b8b10f0f29d8d20d18e36bd29cef073f0f8f1d8db2aee
+  - path: share/allow/session-record.txt
+    document: allow/session-record
+    format: text
+    source: "the JSON Schema `majordomus.session-record/v1` of the kind it validates"
+    bytes: 650
+    sha256: f37d07265e23f64ab65e408cc08af4a92fba07bba8c80ff2b90841ff679ed8e4
+  - path: share/allow/session.txt
+    document: allow/session
+    format: text
+    source: "the JSON Schema `majordomus.session/v1` of the kind it validates"
+    bytes: 303
+    sha256: 8bd4563bfd72c65689d8a9c452074815ada1b1457ddb479b1b82034524d7a50d
+  - path: share/allow/skill.txt
+    document: allow/skill
+    format: text
+    source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
+    bytes: 328
+    sha256: fea066de3f9b6edbfd61b1322367e135a471d71cd2a00513fdb99346bb2d949b
+  - path: share/allow/taxonomy.txt
+    document: allow/taxonomy
+    format: text
+    source: "the JSON Schema `majordomus.taxonomy/v1` of the kind it validates"
+    bytes: 312
+    sha256: 5a5cdcc40f771720fb1224d78835da748c1000c0203dbfa04371c73460b52975
+  - path: share/allow/use-case.txt
+    document: allow/use-case
+    format: text
+    source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    bytes: 546
+    sha256: 67ca9b25a3847cae682c135c2c4cbde8f9fa85e32f97a43734b5d612d1a85eb7
+  - path: share/schemas/majordomus/adr/adr.v1.schema.json
+    document: schemas/majordomus.adr/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
+    bytes: 6106
+    sha256: 0ef304af4336d7b0b18b23ec005dc52458260b9f1499e0f17e0383f5b16ee017
+  - path: share/schemas/majordomus/application/application.v1.schema.json
+    document: schemas/majordomus.application/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    bytes: 3960
+    sha256: 21bb4a3f30f42125a1c092ee36aa7b8b64a0d9e5853835c3fc673999782e12c4
+  - path: share/schemas/majordomus/capture/capture.v1.schema.json
+    document: schemas/majordomus.capture/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/capture/capture.v1.proto`"
+    bytes: 4693
+    sha256: dcc8f15e8340e9071ae06fc5ea42e8a88e5b1c5d8d8459e94479d9d01c26ccf3
+  - path: share/schemas/majordomus/context/context.v1.schema.json
+    document: schemas/majordomus.context/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
+    bytes: 6583
+    sha256: ed9f2a53a23a21569deace091669c33eb3a21b45b90e93d8898cc0fb2c0f7d65
+  - path: share/schemas/majordomus/knowledge/knowledge.v1.schema.json
+    document: schemas/majordomus.knowledge/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
+    bytes: 5722
+    sha256: a620dc2f26c254ec7956b518e8820c457aeffbe65ed7ff403b95ed8512bb96dc
+  - path: share/schemas/majordomus/prompt/prompt.v1.schema.json
+    document: schemas/majordomus.prompt/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
+    bytes: 2410
+    sha256: bc6951de4ed96a9d79da1b536577a2bf4d55a2e80d368717a97d4556064ca777
+  - path: share/schemas/majordomus/rule/rule.v1.schema.json
+    document: schemas/majordomus.rule/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
+    bytes: 5119
+    sha256: 41195108720806a70e36a58ad0b84aaeed96a4ae65c3b58e95d42e63c3989cbe
+  - path: share/schemas/majordomus/skill/skill.v1.schema.json
+    document: schemas/majordomus.skill/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
+    bytes: 4089
+    sha256: 8b3df65a6c4377c16fd63df2f608097658ea0bdcfb144b9857f956a33c7dba03
+  - path: share/schemas/majordomus/use-case/use-case.v1.schema.json
+    document: schemas/majordomus.use-case/v1
+    format: json
+    source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    bytes: 9410
+    sha256: 168cd99329a4b094f6fd078eb581d9b515ffd911a2b05288df21ce424d78e06c
+  - path: share/sections/adr.txt
+    document: sections/adr
+    format: text
+    source: "the document schema `share/schemas/majordomus/adr/adr.v1.proto`"
+    bytes: 319
+    sha256: 8859285556698ca2ca0b5b6991f65292109e179b3039000151a16eb928e19b00
+  - path: share/sections/application.txt
+    document: sections/application
+    format: text
+    source: "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    bytes: 234
+    sha256: 41887d29b4e64e7f4b2e8215184ba900653c0ddabee3016824c834069dc070f4
+  - path: share/sections/context.txt
+    document: sections/context
+    format: text
+    source: "the document schema `share/schemas/majordomus/context/context.v1.proto`"
+    bytes: 297
+    sha256: 221c3b6c56502d866972950dbbcbe40c4d3d4575e52c3f1f24cb6eb4c1eea53b
+  - path: share/sections/knowledge.txt
+    document: sections/knowledge
+    format: text
+    source: "the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`"
+    bytes: 201
+    sha256: f820faead2ed41f7b3059be939bc1c7f78f37d8ab3b639526df13832653be797
+  - path: share/sections/prompt.txt
+    document: sections/prompt
+    format: text
+    source: "the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`"
+    bytes: 195
+    sha256: 6602be0d567e45ebd3a0b9a75fef7a1fa8d37113ec144af5dc0eca692412ac31
+  - path: share/sections/rule.txt
+    document: sections/rule
+    format: text
+    source: "the document schema `share/schemas/majordomus/rule/rule.v1.proto`"
+    bytes: 335
+    sha256: abd741bf4c0b67900fbf3d6fdca387b29b57363f54bddeba4578cf5c7a67c0e8
+  - path: share/sections/skill.txt
+    document: sections/skill
+    format: text
+    source: "the document schema `share/schemas/majordomus/skill/skill.v1.proto`"
+    bytes: 281
+    sha256: 6853ce3f5bc27958c4c76e14c02c0a03bb50525a8fb61b4554a8fa66ff34a1f4
+  - path: share/sections/use-case.txt
+    document: sections/use-case
+    format: text
+    source: "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    bytes: 289
+    sha256: 955c0ee83c492d2f2d0ce6601580b9a0aa9f323bff6fac652e901eb10b637384
+  - path: site/data/registry/distribution.json
+    document: site-distribution
+    format: json
+    source: share/distribution.yaml and the release records
+    bytes: 2842
+    sha256: 2ac359554068d8fd3a14a8b465a8e474c489ed5be43dca08b67bcd116ac5bf42
+  - path: site/data/registry/registry.json
+    document: site-registry
+    format: json
+    schema: majordomus-site-registry/v2
+    source: "the capability registry and the index of this repository's layer"
+    bytes: 1163366
+    sha256: 6bd5f1df2ded9858afb53d6f2a4fc6ca4ace590fdad32f33e9160e76a6f65e86
+  - path: site/data/registry/why-graph.json
+    document: site-why-graph
+    format: json
+    source: "the moments and what answers them, as the derived `why` graph"
+    bytes: 178596
+    sha256: 354006802cf3ed78ea67f1ad020ad5a670b81d2a22b6c794457753d13879fadb
+  - path: site/data/registry/why.json
+    document: site-why
+    format: json
+    schema: majordomus-site-why/v1
+    source: "the operational moments, audiences and areas of this repository's layer"
+    bytes: 349521
+    sha256: f591de9cb04f1eb8e389bd0c615f6cc2b793203cf5df98635ad960b781608795
+  - path: site/static/install.sh
+    document: installer
+    format: text
+    source: share/distribution.yaml and the release records
+    bytes: 28286
+    sha256: 30e8f6d7c9317caab0fab507d35222d13550de228a39a060928e8c9170f9bd7a

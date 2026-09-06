@@ -6,14 +6,28 @@
 #                                 it. Only for a caller that has already established the data is
 #                                 current — scripts/pages does, by fingerprint. Nothing else may.
 #   scripts/site-build --base-url URL   build for another origin (local previews); get_url is absolute in Zola
+#   scripts/site-build --serve    build the same source for `majordomus serve`: mounted under
+#                                 /docs, written into target/web/docs with the surface.json that
+#                                 makes it discoverable. One source, one generator, two base URLs;
+#                                 there is no second copy of the documentation anywhere.
+#   scripts/site-build --output-dir DIR   write the build into DIR instead of site/public
 set -eu
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; NODATA=0; BASE=""
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; NODATA=0; BASE=""; OUT=""; SERVE=0
+# where a build for the running server goes and what it is mounted at; the same two values
+# the executable reads from web::discover (DOCS_ARTIFACT, DOCS_MOUNT)
+SERVE_OUT="target/web/docs"; SERVE_MOUNT="/docs"
 while [ $# -gt 0 ]; do case "$1" in
   --no-css) NOCSS=1; shift ;;
   --no-data) NODATA=1; shift ;;
   --base-url) BASE="$2"; shift 2 ;;
+  --output-dir) OUT="$2"; shift 2 ;;
+  --serve) SERVE=1; shift ;;
   *) echo "site-build: unknown option $1" >&2; exit 2 ;;
 esac; done
+if [ "$SERVE" = 1 ]; then
+  [ -n "$BASE" ] || BASE="$SERVE_MOUNT"
+  [ -n "$OUT" ] || OUT="$SERVE_OUT"
+fi
 command -v zola >/dev/null || { echo "site-build: zola is required (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
 if [ "$NODATA" = 0 ]; then echo "== data";    "$ROOT/scripts/generate-site-data"
 else echo "== data    (committed, not regenerated)"; fi
@@ -55,19 +69,28 @@ if [ "$NOCSS" = 0 ]; then
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )
 fi
 echo "== zola"
-( cd "$SITE" && if [ -n "$BASE" ]; then zola build --force --base-url "$BASE"; else zola build --force; fi )
+# an absolute output path, because zola resolves --output-dir against the site directory
+PUBLIC="$SITE/public"
+if [ -n "$OUT" ]; then case "$OUT" in /*) PUBLIC="$OUT" ;; *) PUBLIC="$ROOT/$OUT" ;; esac; fi
+(
+  cd "$SITE"
+  set -- build --force
+  [ -z "$BASE" ] || set -- "$@" --base-url "$BASE"
+  [ "$PUBLIC" = "$SITE/public" ] || set -- "$@" --output-dir "$PUBLIC"
+  zola "$@"
+)
 # Zola wrote the two highlighting themes into static/ and public/; scope the dark one under .dark
 # (generated CSS, not hand-written) so class-based dark mode picks the right palette.
-if [ -f "$SITE/public/giallo-dark.css" ]; then
-  sed -E 's/(^|,|\})[[:space:]]*(\.[a-z])/\1 .dark \2/g; s/^\.([a-z])/.dark .\1/' "$SITE/public/giallo-dark.css" > "$SITE/public/giallo-dark.css.tmp" && mv "$SITE/public/giallo-dark.css.tmp" "$SITE/public/giallo-dark.css"
+if [ -f "$PUBLIC/giallo-dark.css" ]; then
+  sed -E 's/(^|,|\})[[:space:]]*(\.[a-z])/\1 .dark \2/g; s/^\.([a-z])/.dark .\1/' "$PUBLIC/giallo-dark.css" > "$PUBLIC/giallo-dark.css.tmp" && mv "$PUBLIC/giallo-dark.css.tmp" "$PUBLIC/giallo-dark.css"
 fi
 echo "== a11y (palette)"
-# and raise every colour of those palettes to the WCAG AA threshold against the background
-# the same stylesheet declares. A highlighting theme is chosen for how it reads, by somebody
-# who was not measuring contrast; this makes the choice safe rather than making it again.
-# Hue and saturation are untouched, a palette that already passes is rewritten to itself, and
-# a second pass over the result changes nothing.
-for f in "$SITE/public/giallo-light.css" "$SITE/public/giallo-dark.css"; do
+# Raise every colour of the generated highlighting palettes to the WCAG AA threshold against
+# the background the same stylesheet declares. A theme is chosen for how it reads, by somebody
+# who was not measuring contrast; this makes the choice safe rather than making it again. Hue
+# and saturation are untouched, a palette that already passes is rewritten to itself, and a
+# second pass over the result changes nothing.
+for f in "$PUBLIC/giallo-light.css" "$PUBLIC/giallo-dark.css"; do
   [ -f "$f" ] || continue
   node --input-type=module -e '
 import { readFileSync, writeFileSync } from "node:fs";
@@ -79,16 +102,17 @@ console.log(`  ${path.split("/").pop()}: ${changed} colour(s) raised to ${MINIMU
 ' "$f"
 done
 # Every horizontally scrolling box of the built site is reachable from the keyboard (WCAG
-# 2.1.1). The elements this reaches are the ones a third party emits — the syntax
-# highlighter's <pre>, the typography plugin's <table> — which no configuration of ours can
-# give an attribute to; markup we write is held to the same invariant at its source, by
-# `scripts/ui check`. Which elements scroll is read from the stylesheet the build just
-# compiled, so a theme that stops making <pre> scroll stops this pass touching it.
-if [ "$NOCSS" = 0 ] && [ -d "$SITE/public" ]; then
+# 2.1.1), and a markdown task list's checkbox carries the name of the text beside it. The
+# elements this reaches are the ones a third party emits — the syntax highlighter's <pre>,
+# the typography plugin's <table> — which no configuration of ours can give an attribute to;
+# markup we write is held to the same invariant at its source, by `scripts/ui check`. Which
+# elements scroll is read from the stylesheet the build just compiled, so a theme that stops
+# making <pre> scroll stops this pass touching it. The pass refuses to write a page whose
+# text it changed: it adds attributes, and nothing else.
+if [ "$NOCSS" = 0 ] && [ -d "$PUBLIC" ]; then
   echo "== a11y (markup)"
   node --input-type=module -e '
-import { readFileSync, writeFileSync } from "node:fs";
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { normaliseRendered, scrollingTags } from "'"$ROOT"'/scripts/lib/ui-static.mjs";
 const scrollingTagNames = scrollingTags(readFileSync("'"$SITE"'/static/app.css", "utf8"));
@@ -99,7 +123,7 @@ const pages = [];
     if (entry.isDirectory()) walk(path);
     else if (entry.name.endsWith(".html")) pages.push(path);
   }
-})("'"$SITE"'/public");
+})("'"$PUBLIC"'");
 let touched = 0, elements = 0, named = 0;
 for (const page of pages) {
   const before = readFileSync(page, "utf8");
@@ -117,4 +141,15 @@ for (const page of pages) {
 console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, over ${touched} page(s)`);
 '
 fi
-echo "site-build: ok — $(find "$SITE/public" -name 'index.html' | wc -l | tr -d ' ') routes in site/public/"
+# the declaration that makes the directory a surface: written by the producer, beside its
+# own output, and read back by discovery. Nothing else in the repository is told it exists.
+if [ "$SERVE" = 1 ]; then
+  commit="$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || true)"
+  jq -n --arg mount "$SERVE_MOUNT" --arg built "$commit" \
+    '{schema: "web-surface/v1", id: "docs", mount: $mount,
+      title: "The documentation, as this process serves it",
+      index: "index.html", producer: "scripts/site-build --serve",
+      availability: "served-only", category: "documentation", visibility: "public"}
+     + (if $built == "" then {} else {built_from: $built} end)' > "$PUBLIC/surface.json"
+fi
+echo "site-build: ok — $(find "$PUBLIC" -name 'index.html' | wc -l | tr -d ' ') routes in ${PUBLIC#"$ROOT/"}/"

@@ -4,7 +4,7 @@ description = "Every command of the Rust executable, generated from its clap dec
 sort_by = "weight"
 template = "docs-cli.html"
 page_template = "docs-cli-command.html"
-weight = 10
+weight = 11
 [extra]
 route = "/docs/cli/"
 command = "majordomus"

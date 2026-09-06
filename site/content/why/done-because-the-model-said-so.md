@@ -1,14 +1,14 @@
 +++
 title = "Accepting \"done\" because the model said so"
-description = "Why a sentence is not a completion criterion, and how a finish contract with typed outcomes replaces it."
-weight = 4
+description = "A fluent completion claim is accepted as evidence because nothing wrote down, beforehand, what would have to be true."
+weight = 40
 [extra]
-hook = "accepted \"done\" because the model said so, and paid for it the next morning"
-responsibilities = ["finish"]
-commands = ["finish"]
-claims = ["finish-contract", "typed-outcome", "reproduce-command"]
+id = "done-because-the-model-said-so"
+status = "stable"
+source = ".ai/repo/why/moments/done-because-the-model-said-so.md"
 +++
 {% raw %}
+
 ## The moment
 
 "Done. All tests pass." You merge. In the morning the pipeline is red, the change touched a
@@ -21,6 +21,20 @@ would have to be true for it to be accepted — so the worker's own claim was th
 evidence, and a fluent claim is cheap. The environments studied were full of this: status
 fields with free-text values, completion notes that were never written, and a documented
 per-step audit trail that no gate ever checked.
+
+## Why a better model does not fix it
+
+A more capable model produces a more convincing completion claim. That is the wrong axis
+entirely: the problem is that a claim is being used where evidence is required, and the
+fix is a gate that does not read claims. Confidence and correctness are independent, and
+the more fluent the worker, the less the correlation can be relied on.
+
+## What it costs
+
+The rework, which is the small part. The large part is the erosion of the signal: once
+"done" has meant "asserted done" a few times, nobody can use the word for anything, and
+every completion has to be re-checked by a person, which is the cost the workers were
+supposed to remove.
 
 ## What Majordomus does
 
@@ -35,16 +49,26 @@ The outcome is a value from a closed vocabulary — `completed`, `partial`, `blo
 does not exist; `failed` means the work could not be done. They look alike in a chat and are
 different facts. Every refusal names the command that reproduces the failing line.
 
+## Before and after
+
+```text
+before   worker: "Done. All tests pass."     -> merged
+
+after    majordomus finish --outcome completed --verify-command "make test"
+           OK   scope_respected
+           FAIL verification_ran   exit 1   [reproduce: make test]
+         nothing written
+```
+
+## How to verify it
+
+Run `finish` with a verification command that fails. Nothing is written, the failing line is
+named, and the reproduce command is printed. Then fix it and run again; the ledger carries
+the exit code and duration that were actually observed.
+
 ## What it does not do
 
 It runs the verification command you give it; it does not decide which tests matter. The
 regression-test requirement in the `debugging` profile is a path heuristic and says so in
 its message. It does not review code.
-
-## Try it
-
-```bash
-majordomus finish --outcome completed --verify-command "make test"
-# refused? every failing line names what is missing and how to reproduce it
-```
 {% endraw %}

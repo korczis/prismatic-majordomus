@@ -5,9 +5,10 @@ mod common;
 
 use majordomus_cli::capability::handler::handler;
 use majordomus_cli::capability::{
-    BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability, CapabilityId, CapabilityKind,
-    CapabilityRegistry, CliExposure, Executable, Exposure, HttpExposure, HttpMethod, McpExposure,
-    McpResource, ModuleId, Provenance, RegistryError, Stability,
+    Availability, BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability, CapabilityId,
+    CapabilityKind, CapabilityRegistry, CliExposure, Executable, Exposure, HttpExposure,
+    HttpMethod, McpExposure, McpResource, ModuleId, Provenance, RegistryError, Stability,
+    Visibility,
 };
 use majordomus_cli::discovery::{Sources, VcsIndex};
 use majordomus_cli::git::GitState;
@@ -28,11 +29,14 @@ struct Out {
 }
 
 fn query(id: &str, exposure: Exposure, stability: Stability, module: &str) -> Executable {
+    let kind = CapabilityKind::Query;
     Executable {
         capability: Capability {
+            availability: Availability::classify(kind, &exposure),
+            visibility: Visibility::classify(&exposure),
             id: CapabilityId::parse(id).unwrap_or_else(|_| unchecked(id)),
             module: ModuleId::unchecked(""),
-            kind: CapabilityKind::Query,
+            kind,
             title: format!("Fixture {id}"),
             description: "A fixture capability.".into(),
             input: CanonicalSchema::of::<In>(),

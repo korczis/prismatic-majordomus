@@ -3,10 +3,29 @@
 # the tool, the library, the harness and every case; shellcheck -x -s bash -S warning over
 # the tool, the scripts and every case. Exit 0 clean, non-zero on the first finding, 12
 # when shellcheck is not installed (the gate needs it; a missing linter is not a pass).
+#
+#   scripts/ci/shell-lint            lint everything
+#   scripts/ci/shell-lint --list     print what it would lint, one path per line
 set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
-scripts="bin/majordomus bin/majordomus-mcp lib/*.sh test/run.sh test/lib.sh scripts/generate-site-data scripts/github-sync scripts/site-build scripts/site-check scripts/site-probe scripts/site-serve scripts/site-deploy scripts/rules-package scripts/rust-check scripts/ci-plan scripts/ci-baseline scripts/ci/*"
+# What is linted is discovered, not listed: every tracked file under bin/, lib/, scripts/
+# and the harness whose first line says it is a shell script. A list here would be a mirror
+# of the directory, and the day it went stale would be the day a new script stopped being
+# linted (docs/DYNAMICITY.md).
+shell_files() {
+  git ls-files -z bin lib test/run.sh test/lib.sh scripts 2>/dev/null \
+    | tr '\0' '\n' \
+    | while IFS= read -r f; do
+        [ -f "$f" ] || continue
+        case "$(head -n 1 "$f")" in
+          '#!'*sh) printf '%s\n' "$f" ;;
+        esac
+      done
+}
+if [ "${1:-}" = --list ]; then shell_files; exit 0; fi
+scripts="$(shell_files | tr '\n' ' ')"
+[ -n "$scripts" ] || { echo "shell-lint: found no shell scripts to lint" >&2; exit 12; }
 echo "==> bash -n"
 # shellcheck disable=SC2086
 for f in $scripts test/cases/*.sh; do bash -n "$f" || { echo "shell-lint: syntax: $f"; exit 1; }; done
@@ -15,6 +34,13 @@ echo "==> shellcheck"
 # shellcheck disable=SC2086
 shellcheck -x -s bash -S warning $scripts
 shellcheck -x -s bash -S warning test/cases/*.sh
+# The installer is POSIX shell, not bash, and is generated: it is linted as what it is, and
+# as what is actually published rather than as its template.
+if [ -f site/static/install.sh ]; then
+  echo "==> shellcheck (posix): site/static/install.sh"
+  sh -n site/static/install.sh || { echo "shell-lint: syntax: site/static/install.sh"; exit 1; }
+  shellcheck -s sh -S warning site/static/install.sh
+fi
 # The workflow is YAML GitHub parses on its own terms; a file that does not parse fails
 # every job of every run before any of them starts, so it is linted here, where a person
 # runs it. actionlint is required in CI (the structure job installs it) and reported when

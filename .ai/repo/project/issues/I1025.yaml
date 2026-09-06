@@ -1,0 +1,40 @@
+id: I1025
+milestone: capability-graph
+title: The federated model and its two projections are an architecture decision
+slug: capability-graph-adr
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Record the decision to compose the authoritative registries into one typed graph and to render it as two projections, with the alternatives that were real and the consequences that follow."
+why: "The choices here — composing rather than centralising, generating rather than fetching, progressive enhancement rather than a client application, availability as metadata rather than a condition in a page — will each look arbitrary to somebody later. ADR 12 decided the Cockpit is a projection; this decides what it is a projection of."
+current_state: "ADR 12 establishes the Cockpit as a projection of the registry. ADR 13 establishes that web surfaces are discovered from their producers. Neither covers the composed graph or the static projection."
+desired_state: "One record states the decision, extends rather than restates the two it follows, and says what would have to change to revisit it."
+scope:
+  - .ai/repo/adrs
+non_scope:
+  - Restating ADR 12 or ADR 13
+  - An ADR that documents the implementation instead of the decision
+depends_on:
+  - I1001
+acceptance_criteria:
+  - The record follows the repository's ADR format and frontmatter exactly and relates to the decisions it extends
+  - It states the federated composition, the dual projection, progressive enhancement, availability as metadata and the conditional exposure of runtime surfaces
+  - The alternatives — one central manifest, a client-side application fetching the API, a separate site generator — are recorded with why they were not taken
+  - The consequences state what a new subsystem must do to appear, and what it costs when it does not
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - adr_recorded
+risk: "Written last, it becomes a summary of the code. It is written when the choice between composing and centralising is still open."
+created_at: 2026-09-06
+updated_at: 2026-09-06T16:54:55Z
+started_at: 2026-09-06T16:23:01Z
+completed_at: 2026-09-06T16:54:54Z
+evidence:
+  - covers: adr_recorded
+    type: test
+    command: "bin/majordomus adr check; bin/majordomus doctor; bin/majordomus context validate; bash test/run.sh 99_adr"
+    result: "adr-0018 written at .ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md: adr check accepts the whole set with every identity unique and every reference resolving, doctor reports no failure, context validate reports no problem, and the ADR behavioural case passes"
+    commit: 665f1c4e8c1949f8dc36cd880161ab2bd92c630c
+    recorded_at: 2026-09-06T16:54:52Z

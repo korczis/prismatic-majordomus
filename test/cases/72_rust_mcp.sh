@@ -146,8 +146,11 @@ rm .ai/repo/rules/project/broken.v1.md .ai/repo/rules/project/copy.v1.md; git ad
 # --- the shell tool's allow-lists are a projection of the schemas: derived and in sync
 expect_exit 0 "$RB" generate allow --check
 expect_grep 'generate --check: in sync'
+# every line below the banner is an anchored pattern; the banner itself is `#` comments,
+# which every reader of an allow-list strips before it reads a pattern
 for f in "$ROOT"/share/allow/*.txt; do
-  grep -qvE '^\^' "$f" && { echo "    $f carries a line that is not a pattern"; exit 1; }
+  head -n 1 "$f" | grep -qE '^# GENERATED FILE' || { echo "    $f carries no generated-file banner"; exit 1; }
+  grep -vE '^#' "$f" | grep -qvE '^\^' && { echo "    $f carries a line that is neither a comment nor a pattern"; exit 1; }
   true
 done
 

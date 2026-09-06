@@ -15,6 +15,42 @@
   },
   "nodes": [
     {
+      "id": "claim:distribution-canonical-model",
+      "kind": "claim",
+      "label": "Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused",
+      "status": "guaranteed",
+      "route": "/guarantees/distribution-canonical-model/",
+      "external": false,
+      "note": "share/distribution.yaml is the model. The installer's platform table, the release build matrix, the documentation's table, the website's dataset and the public release metadata are generated from it, and `majordomus generate --check` exits 10 naming any that has fallen behind."
+    },
+    {
+      "id": "claim:install-command-is-derived",
+      "kind": "claim",
+      "label": "The documented one-line install command is composed from the model's parts, and a document that states a different one fails the suite",
+      "status": "guaranteed",
+      "route": "/guarantees/install-command-is-derived/",
+      "external": false,
+      "note": "The download command, the base URL, the script name and the shell are four fields; the command is their composition. README.md and the installation guide are checked against it rather than trusted."
+    },
+    {
+      "id": "claim:installer-verifies-before-installing",
+      "kind": "claim",
+      "label": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
+      "status": "guaranteed",
+      "route": "/guarantees/installer-verifies-before-installing/",
+      "external": false,
+      "note": "A wrong digest, a truncated download, an archive that escapes its own directory or carries a link, and an executable that reports another version are each refused by name, before the launcher is replaced. There is no warn-and-continue path and sudo appears nowhere."
+    },
+    {
+      "id": "claim:release-is-complete-or-absent",
+      "kind": "claim",
+      "label": "A release publishes an artifact for every supported target or it is not published",
+      "status": "guaranteed",
+      "route": "/guarantees/release-is-complete-or-absent/",
+      "external": false,
+      "note": "The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported."
+    },
+    {
       "id": "claim:policy-parse",
       "kind": "claim",
       "label": "The canonical policy is parsed and rejected if it contains an unknown key",
@@ -489,7 +525,7 @@
       "status": "guaranteed",
       "route": "/guarantees/context-coverage/",
       "external": false,
-      "note": "A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the local half and the vendored package."
+      "note": "A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the half the manifest declares untracked; nothing else is skipped by name, and a subtree the layer carries but does not author is released by children.exempt on the contract that governs it, which may name only directories inside its own scope."
     },
     {
       "id": "claim:context-impact",
@@ -807,6 +843,15 @@
       "note": "share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas."
     },
     {
+      "id": "claim:generated-artifacts-typed",
+      "kind": "claim",
+      "label": "Every generated artifact declares the document it projects, the encoding it is written in, the schema its content satisfies and its source, and a structured document is written in every encoding it is committed in from one value",
+      "status": "guaranteed",
+      "route": "/guarantees/generated-artifacts-typed/",
+      "external": false,
+      "note": "JSON, YAML and Markdown of a document are renderings of one value, so they cannot disagree; each carries a provenance header in the form its encoding allows; the index of the whole set, docs/generated/artifacts.json, is itself generated and is read back by artifacts.list."
+    },
+    {
       "id": "claim:generated-projections-checked",
       "kind": "claim",
       "label": "The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one",
@@ -1002,7 +1047,7 @@
       "status": "guaranteed",
       "route": "/guarantees/scope-declared/",
       "external": false,
-      "note": "The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared."
+      "note": "The declaration is typed and schema-validated (share/schemas/majordomus/scope/scope.v1.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared."
     },
     {
       "id": "claim:use-case-coverage",
@@ -1074,7 +1119,7 @@
       "status": "guaranteed",
       "route": "/guarantees/skill-catalogue/",
       "external": false,
-      "note": "share/kinds.yaml declares the kind, share/schemas/skill.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow."
+      "note": "share/kinds.yaml declares the kind, share/schemas/majordomus/skill/skill.v1.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow."
     },
     {
       "id": "claim:skill-check",
@@ -1095,6 +1140,33 @@
       "note": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds."
     },
     {
+      "id": "claim:why-catalogue-discovered",
+      "kind": "claim",
+      "label": "An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed",
+      "status": "guaranteed",
+      "route": "/guarantees/why-catalogue-discovered/",
+      "external": false,
+      "note": "Removing the file removes it from all of them, which is what a hidden registry would fail."
+    },
+    {
+      "id": "claim:why-references-resolve",
+      "kind": "claim",
+      "label": "Every reference a moment makes resolves against the thing it names, and one that does not is an error carrying the nearest candidate",
+      "status": "guaranteed",
+      "route": "/guarantees/why-references-resolve/",
+      "external": false,
+      "note": "Audiences, areas and related moments against the catalogue; commands, capabilities, claims, rules and use cases against their own registries."
+    },
+    {
+      "id": "claim:why-diagnosis-explainable",
+      "kind": "claim",
+      "label": "A diagnosis of a reader's own symptoms is deterministic counting over the catalogue's metadata, and every recommendation names the moments that produced it",
+      "status": "guaranteed",
+      "route": "/guarantees/why-diagnosis-explainable/",
+      "external": false,
+      "note": "No weighting and no percentage; the questionnaire on the website and `majordomus why diagnose` run the same arithmetic over the same data."
+    },
+    {
       "id": "claim:session-records",
       "kind": "claim",
       "label": "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered",
@@ -1106,11 +1178,11 @@
     {
       "id": "claim:session-lifecycle",
       "kind": "claim",
-      "label": "A provider hook opens and closes the execution episode below the model, and the context resolved at the open is frozen beside it",
+      "label": "A provider hook opens the episode below the model and hands the worker what the last one left, records what a compaction is about to discard, and closes the episode with a continuation record beside its envelope",
       "status": "guaranteed",
       "route": "/guarantees/session-lifecycle/",
       "external": false,
-      "note": "The provider's own SessionStart and SessionEnd events draw the boundary; both are idempotent because the events are, neither writes to stdout because a start hook's output reaches the model's context, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation."
+      "note": "The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation."
     },
     {
       "id": "claim:adr-catalogue",
@@ -1119,7 +1191,7 @@
       "status": "guaranteed",
       "route": "/guarantees/adr-catalogue/",
       "external": false,
-      "note": "share/kinds.yaml declares the kind, share/schemas/adr.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section."
+      "note": "share/kinds.yaml declares the kind, share/schemas/majordomus/adr/adr.v1.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section."
     },
     {
       "id": "claim:adr-traceability",
@@ -1147,6 +1219,24 @@
       "route": "/guarantees/cli-documentation-executable/",
       "external": false,
       "note": "The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown."
+    },
+    {
+      "id": "claim:web-surface-declared-once",
+      "kind": "claim",
+      "label": "Every web surface is declared once at its producer and resolved into one topology, from which the router, the landing page and the machine-readable index are each projected",
+      "status": "guaranteed",
+      "route": "/guarantees/web-surface-declared-once/",
+      "external": false,
+      "note": "A surface is a mount, a producer, a kind, a category, a visibility and the provenance of each; the routes the executable answers come from the capability declarations that already exist, a generated directory declares itself beside its output, and the application's site is read from the site generator's configuration. There is no central list. The case asks the page and the index independently and requires the same set of public mounts, so a link written into the page by hand fails it."
+    },
+    {
+      "id": "claim:web-namespaces-reserved",
+      "kind": "claim",
+      "label": "/docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount",
+      "status": "guaranteed",
+      "route": "/guarantees/web-namespaces-reserved/",
+      "external": false,
+      "note": "The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there."
     },
     {
       "id": "impl:.github/workflows/pages.yml",
@@ -1208,6 +1298,13 @@
       "id": "impl:apps/majordomus-cli/src/cli.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/cli.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/distribution/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/distribution/mod.rs",
       "route": null,
       "external": false
     },
@@ -1285,6 +1382,27 @@
       "id": "impl:apps/majordomus-cli/src/site.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/site.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/web/discover.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/web/discover.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/web/model.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/web/model.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/why.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/why.rs",
       "route": null,
       "external": false
     },
@@ -1555,6 +1673,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/release-record",
+      "kind": "implementation",
+      "label": "scripts/release-record",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/rust-check",
       "kind": "implementation",
       "label": "scripts/rust-check",
@@ -1576,6 +1701,13 @@
       "external": false
     },
     {
+      "id": "impl:share/install/install.sh.in",
+      "kind": "implementation",
+      "label": "share/install/install.sh.in",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:test/cases/31_command_coverage.sh",
       "kind": "implementation",
       "label": "test/cases/31_command_coverage.sh",
@@ -1590,6 +1722,13 @@
       "external": false
     },
     {
+      "id": "source:.ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
+      "kind": "source",
+      "label": ".ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:.ai/repo/ci/gates.yaml",
       "kind": "source",
       "label": ".ai/repo/ci/gates.yaml",
@@ -1600,6 +1739,13 @@
       "id": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
       "kind": "source",
       "label": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "source:.ai/repo/rules/project/web-surface-declared-once.v1.md",
+      "kind": "source",
+      "label": ".ai/repo/rules/project/web-surface-declared-once.v1.md",
       "route": null,
       "external": false
     },
@@ -1653,6 +1799,13 @@
       "external": false
     },
     {
+      "id": "source:docs/DISTRIBUTION.md",
+      "kind": "source",
+      "label": "docs/DISTRIBUTION.md",
+      "route": "/docs/distribution/",
+      "external": false
+    },
+    {
       "id": "source:docs/DOCTRINE.md",
       "kind": "source",
       "label": "docs/DOCTRINE.md",
@@ -1678,6 +1831,13 @@
       "kind": "source",
       "label": "docs/GITHUB_PAGES_PERFORMANCE.md",
       "route": "/docs/github-pages-performance/",
+      "external": false
+    },
+    {
+      "id": "source:docs/INSTALL.md",
+      "kind": "source",
+      "label": "docs/INSTALL.md",
+      "route": "/docs/install/",
       "external": false
     },
     {
@@ -1720,6 +1880,13 @@
       "kind": "source",
       "label": "docs/USE_CASES.md",
       "route": "/docs/use-cases/",
+      "external": false
+    },
+    {
+      "id": "source:docs/WHY.md",
+      "kind": "source",
+      "label": "docs/WHY.md",
+      "route": "/docs/why/",
       "external": false
     },
     {
@@ -1770,6 +1937,13 @@
       "label": "apps/majordomus-cli/tests/projections.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/projections.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/why.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/why.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/why.rs"
     },
     {
       "id": "test:test/cases/00_yaml_flatten.sh",
@@ -2003,6 +2177,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/51_derived_artifacts_committed.sh"
     },
     {
+      "id": "test:test/cases/52_generated_artifact_typing.sh",
+      "kind": "test",
+      "label": "test/cases/52_generated_artifact_typing.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/52_generated_artifact_typing.sh"
+    },
+    {
       "id": "test:test/cases/54_session_lifecycle_hooks.sh",
       "kind": "test",
       "label": "test/cases/54_session_lifecycle_hooks.sh",
@@ -2078,6 +2259,34 @@
       "label": "test/cases/77_rust_evidence.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/77_rust_evidence.sh"
+    },
+    {
+      "id": "test:test/cases/84_distribution_model.sh",
+      "kind": "test",
+      "label": "test/cases/84_distribution_model.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/84_distribution_model.sh"
+    },
+    {
+      "id": "test:test/cases/85_installer.sh",
+      "kind": "test",
+      "label": "test/cases/85_installer.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/85_installer.sh"
+    },
+    {
+      "id": "test:test/cases/87_release_pipeline.sh",
+      "kind": "test",
+      "label": "test/cases/87_release_pipeline.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/87_release_pipeline.sh"
+    },
+    {
+      "id": "test:test/cases/89_web_surface.sh",
+      "kind": "test",
+      "label": "test/cases/89_web_surface.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/89_web_surface.sh"
     },
     {
       "id": "test:test/cases/90_mcp_shared_server.sh",
@@ -2157,6 +2366,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_pages_fast_path.sh"
     },
     {
+      "id": "test:test/cases/98_why_catalogue.sh",
+      "kind": "test",
+      "label": "test/cases/98_why_catalogue.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/98_why_catalogue.sh"
+    },
+    {
       "id": "test:test/cases/99_adr.sh",
       "kind": "test",
       "label": "test/cases/99_adr.sh",
@@ -2165,6 +2381,26 @@
     }
   ],
   "edges": [
+    {
+      "source": "claim:distribution-canonical-model",
+      "target": "source:docs/DISTRIBUTION.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:install-command-is-derived",
+      "target": "source:docs/INSTALL.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:installer-verifies-before-installing",
+      "target": "source:docs/INSTALL.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:release-is-complete-or-absent",
+      "target": "source:docs/DISTRIBUTION.md",
+      "kind": "specified_by"
+    },
     {
       "source": "claim:policy-parse",
       "target": "source:docs/SCHEMAS.md",
@@ -2606,6 +2842,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:generated-artifacts-typed",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:generated-projections-checked",
       "target": "source:docs/CAPABILITIES.md",
       "kind": "specified_by"
@@ -2766,6 +3007,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:why-catalogue-discovered",
+      "target": "source:docs/WHY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:why-references-resolve",
+      "target": "source:docs/WHY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:why-diagnosis-explainable",
+      "target": "source:docs/WHY.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:session-records",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -2794,6 +3050,36 @@
       "source": "claim:cli-documentation-executable",
       "target": "source:.ai/repo/rules/project/rust-cli-evidence.v1.md",
       "kind": "specified_by"
+    },
+    {
+      "source": "claim:web-surface-declared-once",
+      "target": "source:.ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:web-namespaces-reserved",
+      "target": "source:.ai/repo/rules/project/web-surface-declared-once.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:distribution-canonical-model",
+      "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:install-command-is-derived",
+      "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:installer-verifies-before-installing",
+      "target": "impl:share/install/install.sh.in",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:release-is-complete-or-absent",
+      "target": "impl:scripts/release-record",
+      "kind": "implemented_by"
     },
     {
       "source": "claim:policy-parse",
@@ -3196,6 +3482,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:generated-artifacts-typed",
+      "target": "impl:apps/majordomus-cli/src/generate.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:generated-projections-checked",
       "target": "impl:apps/majordomus-cli/src/generate.rs",
       "kind": "implemented_by"
@@ -3356,6 +3647,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:why-catalogue-discovered",
+      "target": "impl:apps/majordomus-cli/src/why.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:why-references-resolve",
+      "target": "impl:apps/majordomus-cli/src/why.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:why-diagnosis-explainable",
+      "target": "impl:apps/majordomus-cli/src/why.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:session-records",
       "target": "impl:lib/session.sh",
       "kind": "implemented_by"
@@ -3384,6 +3690,36 @@
       "source": "claim:cli-documentation-executable",
       "target": "impl:apps/majordomus-cli/src/cli.rs",
       "kind": "implemented_by"
+    },
+    {
+      "source": "claim:web-surface-declared-once",
+      "target": "impl:apps/majordomus-cli/src/web/model.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:web-namespaces-reserved",
+      "target": "impl:apps/majordomus-cli/src/web/discover.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:distribution-canonical-model",
+      "target": "test:test/cases/84_distribution_model.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:install-command-is-derived",
+      "target": "test:test/cases/84_distribution_model.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:installer-verifies-before-installing",
+      "target": "test:test/cases/85_installer.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:release-is-complete-or-absent",
+      "target": "test:test/cases/87_release_pipeline.sh",
+      "kind": "proved_by"
     },
     {
       "source": "claim:policy-parse",
@@ -3786,6 +4122,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:generated-artifacts-typed",
+      "target": "test:test/cases/52_generated_artifact_typing.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:generated-projections-checked",
       "target": "test:test/cases/76_capabilities_projections.sh",
       "kind": "proved_by"
@@ -3946,6 +4287,21 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:why-catalogue-discovered",
+      "target": "test:test/cases/98_why_catalogue.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:why-references-resolve",
+      "target": "test:apps/majordomus-cli/tests/why.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:why-diagnosis-explainable",
+      "target": "test:apps/majordomus-cli/tests/why.rs",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:session-records",
       "target": "test:test/cases/63_session_records.sh",
       "kind": "proved_by"
@@ -3973,6 +4329,16 @@
     {
       "source": "claim:cli-documentation-executable",
       "target": "test:apps/majordomus-cli/tests/cli_docs.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:web-surface-declared-once",
+      "target": "test:test/cases/89_web_surface.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:web-namespaces-reserved",
+      "target": "test:test/cases/89_web_surface.sh",
       "kind": "proved_by"
     }
   ]

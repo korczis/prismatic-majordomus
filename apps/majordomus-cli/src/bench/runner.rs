@@ -245,6 +245,17 @@ impl Runner {
         input: &Value,
         mode: CacheMode,
     ) -> Result<Statistics> {
+        self.http_with(method, path, input, mode, &[])
+    }
+
+    fn http_with(
+        &mut self,
+        method: &str,
+        path: &str,
+        input: &Value,
+        mode: CacheMode,
+        headers: &[(&str, &str)],
+    ) -> Result<Statistics> {
         let url = self.http_server()?;
         let (target, body) = match method {
             "GET" => (format!("{path}{}", query_string(input)), None),
@@ -260,7 +271,7 @@ impl Runner {
                 &url,
                 method,
                 &target,
-                &[],
+                headers,
                 body.as_deref(),
                 Duration::from_secs(30),
             )
@@ -392,20 +403,29 @@ impl Runner {
                 Ok(Statistics::of(&samples))
             }
             SystemTarget::HttpIndex
+            | SystemTarget::HttpHome
             | SystemTarget::HttpOpenApi
-            | SystemTarget::HttpDocs
+            | SystemTarget::HttpSwagger
             | SystemTarget::HttpCockpitOverview
             | SystemTarget::HttpCockpitCapabilities
             | SystemTarget::HttpCockpitGraph => {
+                // the mounts come from the surfaces that declare them, so a route that
+                // moves moves its benchmark with it
                 let path = match target {
-                    SystemTarget::HttpIndex => "/",
-                    SystemTarget::HttpOpenApi => "/openapi.json",
-                    SystemTarget::HttpCockpitOverview => "/cockpit",
+                    SystemTarget::HttpIndex | SystemTarget::HttpHome => "/",
+                    SystemTarget::HttpOpenApi => crate::http::swagger::SPEC_PATH,
+                    SystemTarget::HttpCockpitOverview => crate::cockpit::PREFIX,
                     SystemTarget::HttpCockpitCapabilities => "/cockpit/capabilities",
                     SystemTarget::HttpCockpitGraph => "/cockpit/graphs/registry",
-                    _ => crate::http::swagger::DOCS_PATH,
+                    _ => crate::http::swagger::SWAGGER_PATH,
                 };
-                self.http("GET", path, &json!({}), CacheMode::NotApplicable)
+                // the home page is the same route as the index and a different answer:
+                // only an explicit text/html asks for the rendered page
+                let headers: &[(&str, &str)] = match target {
+                    SystemTarget::HttpHome => &[("Accept", "text/html")],
+                    _ => &[],
+                };
+                self.http_with("GET", path, &json!({}), CacheMode::NotApplicable, headers)
             }
         }
     }

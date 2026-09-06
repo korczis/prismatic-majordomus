@@ -1,7 +1,7 @@
 +++
 title = "Block acceptance on a question nobody has answered"
 description = "Open a question against the task, watch finish refuse completion while it is unresolved, resolve it with the answer, and only then complete."
-weight = 18
+weight = 20
 [extra]
 id = "block-acceptance-on-an-open-question"
 source = ".ai/repo/use-cases/block-acceptance-on-an-open-question.md"

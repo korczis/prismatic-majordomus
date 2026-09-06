@@ -1,0 +1,253 @@
+# The release pipeline. An adapter over .ai/repo/ci/release.yaml and the build matrix
+# generated from share/distribution.yaml; it carries no platform, runner, artifact name or
+# URL of its own, and test/cases/87_release_pipeline.sh holds it to that.
+#
+#   git tag v0.2.0 && git push origin v0.2.0
+#
+# The version is not chosen here: the tag must already agree with the crate's version and
+# with bin/majordomus, which is the first thing checked and the reason a mistyped tag costs
+# thirty seconds rather than a published release.
+#
+# Phases: plan -> build (matrix) -> publish -> smoke. Nothing is published unless every
+# supported target built and verified; a release missing a platform is not a release.
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: an existing tag to release from
+        required: true
+
+# Read-only by default: only the publication job is given more, and only what it needs.
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ------------------------------------------------------------------ plan
+  # One version, one model, and the matrix the rest of the run is shaped by.
+  plan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      version: ${{ steps.resolve.outputs.version }}
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      smoke: ${{ steps.matrix.outputs.smoke }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - id: resolve
+        name: the tag, and the version every writer of it agrees on
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          scripts/release-version --check --tag "$tag"
+          {
+            echo "tag=$tag"
+            echo "version=${tag#v}"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/setup-rust
+
+      - name: the distribution model and every recorded release hold their invariants
+        run: |
+          cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+          apps/majordomus-cli/target/debug/majordomus distribution validate
+          apps/majordomus-cli/target/debug/majordomus generate distribution --check
+
+      - id: matrix
+        name: the build matrix, generated from the model
+        run: |
+          matrix="$(jq -c '{include: .include}' docs/generated/distribution-matrix.json)"
+          smoke="$(jq -c '{include: [.include[] | select(.native)]}' docs/generated/distribution-matrix.json)"
+          {
+            echo "matrix=$matrix"
+            echo "smoke=$smoke"
+          } >> "$GITHUB_OUTPUT"
+          jq -r '.include[] | "\(.id)\t\(.runner)\t\(.artifact)"' docs/generated/distribution-matrix.json
+
+  # ------------------------------------------------------------------ build
+  # One archive per supported target, on the runner the model names, verified where it was
+  # built. fail-fast, because a release missing a platform is not a release.
+  build:
+    needs: plan
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: true
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.tag }}
+          fetch-depth: 1
+
+      - name: the packages this target needs
+        if: matrix.packages != ''
+        run: |
+          sudo apt-get update -qq
+          # shellcheck disable=SC2086
+          sudo apt-get install -y --no-install-recommends ${{ matrix.packages }}
+
+      - uses: ./.github/actions/setup-rust
+
+      - name: the target this artifact is for
+        run: rustup target add "${{ matrix.target }}"
+
+      - name: package
+        env:
+          MAJORDOMUS_BUILD_COMMIT: ${{ github.sha }}
+        run: scripts/release-package --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" --out dist
+
+      - name: verify the artifact is what the model says it is
+        run: |
+          artifact="$(printf '%s' "${{ matrix.artifact }}" | sed "s/{tag}/${{ needs.plan.outputs.tag }}/")"
+          native=""
+          [ "${{ matrix.native }}" = "true" ] && native="--native"
+          # shellcheck disable=SC2086
+          scripts/release-verify --archive "dist/$artifact" \
+            --target "${{ matrix.target }}" --tag "${{ needs.plan.outputs.tag }}" $native
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.id }}
+          path: dist/*
+          retention-days: 7
+          if-no-files-found: error
+
+  # ------------------------------------------------------------------ publish
+  # The only job with write permission, and it begins only when every build succeeded.
+  publish:
+    needs: [plan, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+
+      - uses: ./.github/actions/setup-rust
+
+      - name: the executable that answers what an artifact is called
+        run: cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+
+      - name: the conventional digest file
+        run: |
+          cd dist
+          sha256sum ./*.tar.gz > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: the record of what was published
+        run: |
+          scripts/release-record --tag "${{ needs.plan.outputs.tag }}" --dir dist \
+            --commit "${{ github.sha }}" \
+            --notes-url "${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.plan.outputs.tag }}"
+
+      # Not `generate --target distribution` alone: the record moves docs/INSTALL.md, and that
+      # document is a canonical input of the site's derived data, so regenerating only the
+      # distribution's own projections leaves site/data/generated stale and the Pages build —
+      # the one that would publish releases/latest.json — refuses the tree. The whole
+      # derivation graph, in its own order, is what keeps the release readable by the
+      # installer it was published for.
+      - name: every projection of the new record, regenerated in dependency order
+        env:
+          MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
+        run: scripts/derive
+
+      - name: publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ needs.plan.outputs.tag }}" \
+            --title "${{ needs.plan.outputs.tag }}" \
+            --generate-notes \
+            dist/*.tar.gz dist/SHA256SUMS
+
+      - name: commit the record and the metadata it publishes
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # whatever the derivation wrote, rather than a list of trees that can fall behind
+          # it: a release changes more than its own metadata — the installation guide gains a
+          # row, and the site's data and content are projections of that guide. Only the
+          # downloaded artifacts are kept out; the build outputs are already ignored.
+          git add -A -- . ':(exclude)dist'
+          git commit \
+            -m "chore(release): record ${{ needs.plan.outputs.tag }} and the metadata it publishes" \
+            -m "The record is written from the artifacts that were published; every projection of it — the public metadata under site/static/releases/, the installation guide, the site's data and content — is regenerated by scripts/derive. All of it is generated: nothing here was typed."
+          # the default branch may have moved while the artifacts were building
+          for attempt in 1 2 3; do
+            git pull --rebase --quiet && git push && exit 0
+            echo "push attempt $attempt failed; retrying"
+            sleep 5
+          done
+          exit 1
+
+  # ------------------------------------------------------------------ smoke
+  # The published installer, from its published URL, installing the release that was just
+  # published. This is the check that catches a release whose artifacts exist and whose
+  # names the installer does not expect.
+  smoke:
+    needs: [plan, publish]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.smoke) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.plan.outputs.tag }}
+          fetch-depth: 1
+
+      - name: wait for the published metadata to name this release
+        run: |
+          url="$(sed -n 's/.*"latest_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
+          for attempt in $(seq 1 60); do
+            if curl -fsSL "$url" 2>/dev/null | grep -q '"tag": "${{ needs.plan.outputs.tag }}"'; then
+              echo "the site publishes ${{ needs.plan.outputs.tag }} after $attempt attempt(s)"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::$url still does not name ${{ needs.plan.outputs.tag }}"
+          exit 1
+
+      - name: install the published release with the published installer
+        run: |
+          installer="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
+          curl -fsSL "$installer" | sh -s -- --version "${{ needs.plan.outputs.tag }}"
+
+      - name: the installed tool is the release that was published
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          majordomus --version
+          [ "$(majordomus version)" = "majordomus ${{ needs.plan.outputs.version }}" ]
+          majordomus-mcp --help >/dev/null 2>&1 || true
+
+      - name: and it initialises a repository that has none
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          mkdir -p "$RUNNER_TEMP/smoke" && cd "$RUNNER_TEMP/smoke"
+          git init -q .
+          majordomus init
+          test -f .ai/repo/policy.yaml

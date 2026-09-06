@@ -4,7 +4,7 @@
 # adr — the repository's architecture decisions, as data.
 #
 # An ADR is one Markdown file under the manifest's adrs section: YAML front matter (the
-# contract in share/schemas/adr.schema.json) over a body carrying Context, Decision and
+# contract in share/schemas/majordomus/adr/adr.v1.schema.json) over a body carrying Context, Decision and
 # Consequences. Nothing here is a registry: which files are decisions is decided by the
 # source class `adr` in .ai/repo/knowledge/sources.yaml, the same declaration the Rust
 # executable indexes and serves as majordomus://adr/<id>, so the two never disagree about

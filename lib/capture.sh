@@ -128,15 +128,31 @@ MJ_CAPTURE_ADAPTERS='claude-code .claude/settings.json UserPromptSubmit prompt_i
 # assumed. A reason outside the list — a crash, a name this table has not seen — closes the
 # episode as interrupted, because the mistake of calling a cut-short episode complete is
 # worse than the reverse.
-MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit'
+#
+# The third event is the one an episode boundary alone cannot see. A compaction is not the
+# end of an episode — the worker keeps going — but it is the moment the conversation stops
+# being a place anything is kept, and it is by far the most common way state is lost while
+# work is still in progress. The provider announces it before it happens, which is the only
+# moment at which anything can be written about a context that is about to be discarded.
+MJ_CAPTURE_LIFECYCLE='claude-code .claude/settings.json SessionStart SessionEnd .claude/hooks/majordomus-session-start .claude/hooks/majordomus-session-end session_id,sessionId source,session_source reason,end_reason clear,logout,prompt_input_exit PreCompact .claude/hooks/majordomus-session-compact'
+
+# The events an adapter line describes: the kind this tool calls it, the column holding the
+# provider's own name for it, and the column holding the shim. Adding a fourth event is a
+# row here and two columns there, rather than another pair of positional branches in four
+# readers that can disagree about which column means what.
+MJ_LIFECYCLE_COLUMNS='start 3 5
+end 4 6
+compact 11 12'
 
 mj_lifecycle_adapter()   { printf '%s\n' "$MJ_CAPTURE_LIFECYCLE" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
 mj_lifecycle_field()     { mj_lifecycle_adapter "$1" 2>/dev/null | awk -v n="$2" '{ print $n }'; }
 mj_lifecycle_first()     { mj_lifecycle_field "$1" "$2" | cut -d, -f1; }
-# the shim of one event: 5 for the start, 6 for the end
-mj_lifecycle_shim_rel()  { mj_lifecycle_field "$1" "$([ "$2" = start ] && printf 5 || printf 6)"; }
+# every event kind, in the order a configuration writes them
+mj_lifecycle_kinds()     { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk '{ print $1 }'; }
+mj_lifecycle_column()    { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk -v k="$1" -v n="$2" '$1 == k { print $n }'; }
+mj_lifecycle_shim_rel()  { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 3)"; }
 mj_lifecycle_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_lifecycle_shim_rel "$1" "$2")"; }
-mj_lifecycle_event()     { mj_lifecycle_field "$1" "$([ "$2" = start ] && printf 3 || printf 4)"; }
+mj_lifecycle_event()     { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 2)"; }
 
 mj_capture_adapter()   { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk -v p="$1" '$1 == p { print; f = 1 } END { exit !f }'; }
 mj_capture_providers() { printf '%s\n' "$MJ_CAPTURE_ADAPTERS" | awk '{ print $1 }'; }
@@ -356,7 +372,16 @@ mj_capture_render_one() {
   # is this tool's.
   if ! mj_capture_is_pretty "$rec"; then
     if mj_capture_reformat "$rec" "$scan" > "$rec.part" 2>/dev/null && [ -s "$rec.part" ]; then
-      mv "$rec.part" "$rec" 2>/dev/null || rm -f "$rec.part"
+      # and the scan is taken again from what the record now says. The reformat can change a
+      # value — the schema identifier is the one it exists to change — and the renderings
+      # below are built from the scan, so rendering from the one taken before it would
+      # publish the record's old answer beside its new one.
+      if mv "$rec.part" "$rec" 2>/dev/null; then
+        awk -f "$MJ_LIB_DIR/json_scan.awk" < "$rec" > "$scan.new" 2>/dev/null \
+          && mv "$scan.new" "$scan" 2>/dev/null
+        rm -f "$scan.new"
+      fi
+      rm -f "$rec.part"
     else rm -f "$rec.part"; fi
   fi
 
@@ -433,7 +458,10 @@ mj_capture_render_one() {
     # form adds; two spaces of indent are outside the scalar and never reach the text.
     printf 'text: |-\n'
     sed 's/^/  /' "$body"
-    [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ] && printf '\n'
+    # an `if` and not an `&&` chain: this is the last command of the block, so its status is
+    # the block's, and a prompt that already ends in a newline would report the rendering as
+    # having failed after writing it correctly
+    if [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ]; then printf '\n'; fi
   } > "$tmp" 2>/dev/null || rc=1
   rm -f "$scan" "$body"
   [ "$rc" = 0 ] || { rm -f "$tmp"; return 1; }
@@ -452,7 +480,13 @@ mj_capture_reformat() {
   # still names it; a person decides.
   mj_capture_accounted "$scan" "$1" || return 1
   { for k in $MJ_CAPTURE_FIELDS; do
-      if [ "$k" = started_at ]; then v="$(mj_capture_raw "$scan" "$MJ_CAPTURE_STARTED")"
+      # The identifier written back is this version's, never the one the file arrived with.
+      # `mj_capture_is_pretty` asks for the current identifier, so a record that kept an
+      # older one would be reformatted on every run and never converge. Re-stamping is only
+      # safe because `mj_capture_accounted` has already refused anything whose field set is
+      # not this schema's: what is rewritten is the name, and the record was always this.
+      if [ "$k" = schema ]; then v="\"$MJ_CAPTURE_SCHEMA\""
+      elif [ "$k" = started_at ]; then v="$(mj_capture_raw "$scan" "$MJ_CAPTURE_STARTED")"
       else v="$(mj_capture_raw "$scan" "$k")"; fi
       [ -n "$v" ] || v=null
       printf '%s\t%s\n' "$k" "$v"
@@ -596,7 +630,11 @@ mj_capture_render() {
     md="$(mj_capture_md "$f")"
     # a record needs rendering when either rendering is absent, not only the Markdown:
     # skipping on the Markdown alone would leave a missing YAML half unrepairable
-    [ "$force" = 0 ] && [ -e "$md" ] && [ -e "$(mj_capture_yml "$f")" ] && continue
+    # A record not in the current shape needs rendering too, renderings or not: the reformat
+    # that migrates it happens inside `render_one`, so skipping on the renderings alone would
+    # leave the finding standing with the command the finding names reporting success.
+    [ "$force" = 0 ] && [ -e "$md" ] && [ -e "$(mj_capture_yml "$f")" ] \
+      && mj_capture_is_pretty "$f" && continue
     if mj_capture_render_one "$f"; then n=$((n + 1))
     else bad=$((bad + 1)); mj_err "capture render: cannot render $(basename "$f")"; fi
   done
@@ -683,8 +721,9 @@ mj_capture_session() {
     esac
   done
   [ -n "$provider" ] || { mj_err "capture session: --provider is required"; return "$MJ_EX_MISSING"; }
-  case "$event" in start|end) ;;
-    *) mj_err "capture session: --event must be start or end"; return "$MJ_EX_MISSING" ;;
+  case " $(mj_lifecycle_kinds | tr '\n' ' ')" in
+    *" $event "*) ;;
+    *) mj_err "capture session: --event must be one of $(mj_lifecycle_kinds | paste -sd' ' -)"; return "$MJ_EX_MISSING" ;;
   esac
   mj_lifecycle_adapter "$provider" >/dev/null 2>&1 || {
     mj_err "capture session: no lifecycle adapter for provider '$provider'"
@@ -703,9 +742,9 @@ mj_capture_session() {
     payload="$(mktemp "${TMPDIR:-/tmp}/mj.ses.XXXXXX")"; scan="$payload.f"
     cat > "$payload"
     if awk -f "$MJ_LIB_DIR/json_scan.awk" < "$payload" > "$scan" 2>/dev/null; then
-      psession="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
-      source="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
-      reason="$(mj_capture_plain "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
+      psession="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 7)")")"
+      source="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 8)")")"
+      reason="$(mj_capture_safe "$(mj_capture_raw "$scan" "$(mj_lifecycle_field "$provider" 9)")")"
     elif [ -s "$payload" ]; then
       mj_session_context_log "$provider $event payload not understood; the episode boundary was drawn without it"
     fi
@@ -722,15 +761,19 @@ mj_capture_session() {
   fi
 
   case "$event" in
-    start) mj_capture_session_start "$provider" "$psession" "$source" ;;
-    end)   mj_capture_session_end   "$provider" "$psession" "$reason" ;;
+    start)   mj_capture_session_start   "$provider" "$psession" "$source" ;;
+    end)     mj_capture_session_end     "$provider" "$psession" "$reason" ;;
+    compact) mj_capture_session_compact "$provider" "$psession" ;;
   esac
   return 0
 }
 
 # The strings the provider sends are its own; nothing here lets one name a path or reach a
 # shell, so they are reduced to the same safe form the prompt archive uses for an identity.
-mj_capture_plain() {
+# Named apart from `mj_capture_plain` deliberately: that one reads a field out of a scan and
+# takes two arguments, this one takes a value, and a shell keeps only the last definition of
+# a name — so sharing one turned every row of every rendering into the scan's own path.
+mj_capture_safe() {
   local v="$1"
   [ -z "$v" ] && return 0
   [ "$v" = null ] && return 0
@@ -738,6 +781,19 @@ mj_capture_plain() {
   printf '%s' "$v" | tr -c 'A-Za-z0-9._:@/-' '-' | tr -s '-' | cut -c1-64 | sed -e 's/^-//' -e 's/-$//'
 }
 
+# Opening the episode is half of it. The other half is that the worker which just started
+# is told what the last one left, and this is the only moment at which telling it costs
+# nothing: the provider adds what this event writes to standard output to the context it is
+# about to build, before the worker has read anything or decided anything.
+#
+# That is the opposite of the contract the prompt hook runs under, where standard output
+# would inject text into somebody's turn and is therefore forbidden. The difference is not
+# an inconsistency: one event happens inside a conversation and must not alter it, and the
+# other happens before there is one and exists to furnish it.
+#
+# Without this, discovery is automatic and loading is not — the episode opens, the record
+# resolves, and nothing reads it unless a worker remembers to ask. That is the same
+# failure the whole design is against, moved one step later.
 mj_capture_session_start() {
   local provider="$1" psession="$2" source="$3" out
   set -- --if-open keep --provider "$provider"
@@ -747,12 +803,76 @@ mj_capture_session_start() {
     mj_err "capture session: the episode did not open; see the log beside the working contexts"
     return 0; }
   mj_err "capture session: $(printf '%s' "$out" | head -n 1)${source:+ (source $source)}"
+
+  # The briefing is best-effort and never decides the event: an episode that opened and
+  # could not be described is worth more than no episode, and a hook that failed because a
+  # record it wanted to quote was malformed would lose the boundary over a detail.
+  # shellcheck source=derive.sh
+  . "$MJ_LIB_DIR/derive.sh"
+  mj_load_policy || return 0
+  [ "$(mj_pol session.briefing_on_start)" = false ] && return 0
+  mj_derive_briefing 2>/dev/null || mj_session_context_log "$provider start event: the briefing could not be assembled"
   return 0
 }
 
+# A compaction discards the conversation and keeps working. Nothing about the episode ends,
+# so nothing here closes it; what is recorded is a checkpoint, because the state that is
+# about to stop being reachable is exactly what a checkpoint is for. It is derived, since
+# the worker is not asked anything at this moment and could not answer if it were.
+#
+# It is skipped when there is no active task. A checkpoint is a progress note inside a task,
+# and inventing one outside a task in order to have written something would put a record in
+# the ledger that belongs to no work.
+mj_capture_session_compact() {
+  local provider="$1" psession="$2" out
+  # shellcheck source=checkpoint.sh
+  . "$MJ_LIB_DIR/checkpoint.sh"
+  # A policy that does not parse is a failure of the repository, and `doctor` says so. It is
+  # not a reason to fail here: this runs in a provider hook, where the cost of dying is the
+  # episode nobody can reopen. Nothing is recorded and the reason is logged beside the
+  # working contexts, which is where every other failure on this path is reported.
+  mj_load_policy || { mj_session_context_log "$provider compact event: the policy does not parse; nothing recorded"; return 0; }
+  if [ "$(mj_pol session.checkpoint_on_compact)" = false ]; then
+    mj_err "capture session: compaction ahead; session.checkpoint_on_compact is false, so nothing is recorded"
+    return 0
+  fi
+  if ! mj_load_current || [ "$(mj_cur outcome)" != active ]; then
+    mj_err "capture session: compaction with no active task here; nothing to checkpoint"
+    return 0
+  fi
+  out="$( (mj_cmd_checkpoint --derive) 2>&1 )" || {
+    mj_session_context_log "$provider compact event: the checkpoint was not written: $(printf '%s' "$out" | tail -n 1)"
+    mj_err "capture session: the checkpoint was not written; see the log beside the working contexts"
+    return 0; }
+  mj_err "capture session: compaction ahead${psession:+ (provider session $psession)}; checkpointed into $(printf '%s' "$out" | tail -n 1)"
+  return 0
+}
+
+# Closing the envelope says what the episode produced. It does not say what the next worker
+# should do, and those are different documents: the session record is a list of references
+# selected from the ledger, and a handover is the continuation package a worker resumes
+# from. An episode that ends with its task still active has, until now, left the first and
+# not the second — so the next worker inherited an accurate index of a task nobody told it
+# how to continue.
+#
+# It is written only when the task is still active. A task already finished or already
+# handed over has said what it had to say, and a second record restating it would be the
+# accumulation this design refuses.
 mj_capture_session_end() {
   local provider="$1" psession="$2" reason="$3" outcome=interrupted out
   case ",$(mj_lifecycle_field "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
+  # shellcheck source=handover.sh
+  . "$MJ_LIB_DIR/handover.sh"
+  # The same reasoning as the compaction event, with one difference: an end that cannot read
+  # the policy still closes the episode. Only the continuation record is skipped, because
+  # leaving a session open for ever is the worse of the two failures.
+  local policy_ok=1
+  mj_load_policy || { policy_ok=0; mj_session_context_log "$provider end event: the policy does not parse; the episode is closed without a continuation record"; }
+  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ] && mj_load_current && [ "$(mj_cur outcome)" = active ]; then
+    out="$( (mj_cmd_handover --derive --close) 2>&1 )" \
+      && mj_err "capture session: the task was still active; continuation written to $(printf '%s' "$out" | tail -n 1)" \
+      || mj_session_context_log "$provider end event: the continuation was not written: $(printf '%s' "$out" | tail -n 1)"
+  fi
   out="$( (mj_session_close --if-none ignore --outcome "$outcome" < /dev/null) 2>&1 )" || {
     mj_session_context_log "$provider end event: the episode did not close: $(printf '%s' "$out" | tail -n 1)"
     mj_err "capture session: the episode did not close; see the log beside the working contexts"
@@ -817,27 +937,29 @@ mj_capture_selftest() {
   return "$rc"
 }
 
-# The lifecycle aspect: whether this provider's own start and end events reach Majordomus.
-# Both events matter and they fail differently — a start that is not wired loses the episode,
-# an end that is not wired leaves one open for ever — so both are checked and the reason
-# names whichever is missing.
+# The lifecycle aspect: whether this provider's own episode events reach Majordomus. Each
+# one fails differently — a start that is not wired loses the episode and the briefing with
+# it, a compaction that is not wired loses the state a discarded conversation was holding,
+# an end that is not wired leaves an episode open for ever and writes no continuation — so
+# every one is checked and the reason names whichever is missing.
 mj_lifecycle_state() {
   local p="$1" cfg one rel
   mj_lifecycle_adapter "$p" >/dev/null 2>&1 || { printf 'unsupported\tno adapter: this provider has no documented event marking the start and end of a session\n'; return 0; }
   cfg="$MJ_ROOT/$(mj_lifecycle_field "$p" 2)"
   [ -f "$cfg" ] || { printf 'unconfigured\t%s does not exist (run: majordomus capture install)\n' "$(mj_lifecycle_field "$p" 2)"; return 0; }
-  for one in start end; do
+  for one in $(mj_lifecycle_kinds); do
     grep -qF "$(mj_lifecycle_event "$p" "$one")" "$cfg" || {
       printf 'unconfigured\t%s declares no %s hook (run: majordomus capture install)\n' "$(mj_lifecycle_field "$p" 2)" "$(mj_lifecycle_event "$p" "$one")"; return 0; }
   done
-  for one in start end; do
+  for one in $(mj_lifecycle_kinds); do
     rel="$(mj_lifecycle_shim_rel "$p" "$one")"
     grep -qF "$rel" "$cfg" || { printf 'named\t%s declares %s but does not name %s\n' "$(mj_lifecycle_field "$p" 2)" "$(mj_lifecycle_event "$p" "$one")" "$rel"; return 0; }
     [ -f "$MJ_ROOT/$rel" ] || { printf 'named\t%s names %s, which does not exist\n' "$(mj_lifecycle_field "$p" 2)" "$rel"; return 0; }
     [ -x "$MJ_ROOT/$rel" ] || { printf 'named\t%s is not executable, so the provider cannot run it\n' "$rel"; return 0; }
   done
-  if mj_lifecycle_selftest "$p"; then printf 'verified\t%s and %s are wired, and a synthetic payload through the end shim reached the command\n' "$(mj_lifecycle_shim_rel "$p" start)" "$(mj_lifecycle_shim_rel "$p" end)"
-  else printf 'wired\t%s is in place but a synthetic payload through it did not reach the command\n' "$(mj_lifecycle_shim_rel "$p" end)"; fi
+  local shims; shims="$(for one in $(mj_lifecycle_kinds); do mj_lifecycle_shim_rel "$p" "$one"; done | paste -sd, - | sed 's/,/, /g')"
+  if mj_lifecycle_selftest "$p"; then printf 'verified\t%s are wired, and a synthetic payload through the end shim reached the command\n' "$shims"
+  else printf 'wired\t%s are in place but a synthetic payload through the end shim did not reach the command\n' "$shims"; fi
 }
 
 # Drive the end shim the way the provider would, and read what it says it would have done.
@@ -886,7 +1008,7 @@ mj_capture_install_one() {
 
   mj_capture_install_shim "$p" "$(mj_capture_shim_rel "$p")" "$(mj_capture_field "$p" 3)" "capture prompt --provider $p"
   if mj_lifecycle_adapter "$p" >/dev/null 2>&1; then
-    for one in start end; do
+    for one in $(mj_lifecycle_kinds); do
       mj_capture_install_shim "$p" "$(mj_lifecycle_shim_rel "$p" "$one")" "$(mj_lifecycle_event "$p" "$one")" \
         "capture session --provider $p --event $one"
     done
@@ -923,7 +1045,7 @@ mj_capture_events() {
   local p="$1" one
   printf '%s=%s\n' "$(mj_capture_field "$p" 3)" "$(mj_capture_shim_rel "$p")"
   mj_lifecycle_adapter "$p" >/dev/null 2>&1 || return 0
-  for one in start end; do
+  for one in $(mj_lifecycle_kinds); do
     printf '%s=%s\n' "$(mj_lifecycle_event "$p" "$one")" "$(mj_lifecycle_shim_rel "$p" "$one")"
   done
 }

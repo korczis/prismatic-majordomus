@@ -134,7 +134,7 @@ fn header(shell: &Shell<'_>) -> El {
             el("nav")
                 .class("mj-topbar-links")
                 .attr("aria-label", "External surfaces")
-                .child(link(crate::http::swagger::DOCS_PATH, "Swagger"))
+                .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger"))
                 .child(link("/openapi.json", "OpenAPI"))
                 .child(
                     el("button")
@@ -194,7 +194,7 @@ fn footer(shell: &Shell<'_>) -> El {
         .child(el("span").text("·"))
         .child(link("/openapi.json", "openapi.json"))
         .child(el("span").text("·"))
-        .child(link(crate::http::swagger::DOCS_PATH, "Swagger UI"))
+        .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger UI"))
         .child(el("span").text("·"))
         .child(link("/cockpit/health", "health"))
 }

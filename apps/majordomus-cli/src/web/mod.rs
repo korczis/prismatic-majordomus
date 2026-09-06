@@ -9,24 +9,26 @@
 //! topology must satisfy ([`validate`]), composed into a publishable tree ([`compose`]) and
 //! written out for diagnostics ([`manifest`]) — all from the same [`model::Topology`].
 //!
-//! The decisions and what they rejected are in `.ai/repo/adrs/0013-*.md` and
-//! `.ai/repo/adrs/0018-*.md`.
+//! The decision and what it rejected are in `.ai/repo/adrs/0013-*.md`.
 //!
 //! ```
 //! use majordomus_cli::web::{discover, model::Mount};
-//! use majordomus_cli::http::swagger;
-//! // the executable's own routes come from the constants that already declare them, so a
-//! // route that moves moves here without this line changing
+//! // the executable's own routes come from the constants that already declare them
 //! let native = discover::native(discover::Runtime::full());
-//! assert!(native.iter().any(|s| s.mount == Mount::parse(swagger::DOCS_PATH).unwrap()));
+//! assert!(native.iter().any(|s| s.mount == Mount::parse("/swagger").unwrap()));
 //! ```
 
 pub mod compose;
 pub mod discover;
+pub mod files;
+pub mod home;
+pub mod html;
 pub mod manifest;
 pub mod model;
 pub mod report;
 pub mod serve;
 pub mod validate;
 
-pub use model::{Availability, Mount, Provenance, Surface, SurfaceKind, Topology};
+pub use model::{
+    Availability, Category, Feature, Mount, Provenance, Surface, SurfaceKind, Topology, Visibility,
+};

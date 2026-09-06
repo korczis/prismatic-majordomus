@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the canonical Majordomus capability registry, module `capabilities`; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Source: the `capabilities` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.2.0 -->
 # Module `capabilities` — Capabilities
 
 The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.

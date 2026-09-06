@@ -39,6 +39,11 @@ gates:
     runs: scripts/ci/core-check
     summary: doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection, the derived site data
 
+  - id: site-basepath
+    job: structure
+    runs: scripts/site-basepath-check
+    summary: the documentation source states no origin-absolute link, so one build serves both the published site and the executable's /docs mount
+
   - id: shell-suite
     job: suite
     runs: MJ_TEST_JOBS=4 bash test/run.sh
@@ -158,8 +163,15 @@ classes:
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
-    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-build, site-probe, ui-audit]
+    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit]
+
+  # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
+  # and they ask the executable for every name they use, so the crate's registry checks and
+  # the behavioural cases are what decide whether they still work
+  - id: distribution
+    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture]
+    gates: [shell-suite, rust-integration, macos]
 
   # the MCP client configurations and the launcher they name; case 90 reads them
   - id: clients

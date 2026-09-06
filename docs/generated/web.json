@@ -1,0 +1,212 @@
+{
+  "schema": "majordomus/web-topology/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the resolved web topology of this repository; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.2.0",
+  "generated_root": "target/web",
+  "reserved": {
+    "home": "/",
+    "documentation": "/docs",
+    "swagger": "/swagger",
+    "openapi": "/openapi.json",
+    "capabilities": "/api/v1/"
+  },
+  "surfaces": [
+    {
+      "id": "api",
+      "title": "The capability registry over HTTP",
+      "category": "api",
+      "visibility": "public",
+      "kind": "native-route",
+      "mount": "/api/v1",
+      "producer": "capability registry",
+      "availability": "served-only",
+      "provenance": {
+        "kind": {
+          "source": "registry"
+        },
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "benchmarks",
+      "title": "Benchmark results",
+      "category": "report",
+      "visibility": "public",
+      "kind": "static-directory",
+      "mount": "/benchmarks",
+      "producer": "majordomus bench, rendered by majordomus web report benchmarks",
+      "artifact": "target/web/benchmarks",
+      "index": "index.html",
+      "availability": "both",
+      "provenance": {
+        "artifact": {
+          "source": "filesystem",
+          "path": "target/web/benchmarks/surface.json"
+        },
+        "kind": {
+          "source": "filesystem",
+          "path": "target/web/benchmarks/surface.json"
+        },
+        "mount": {
+          "source": "producer-declaration",
+          "path": "target/web/benchmarks/surface.json"
+        }
+      }
+    },
+    {
+      "id": "cockpit",
+      "title": "The registry, rendered for a person",
+      "category": "interface",
+      "visibility": "public",
+      "kind": "native-route",
+      "mount": "/cockpit",
+      "producer": "cockpit",
+      "feature": "cockpit",
+      "availability": "served-only",
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "docs",
+      "title": "The documentation, as this process serves it",
+      "category": "documentation",
+      "visibility": "public",
+      "kind": "static-directory",
+      "mount": "/docs",
+      "producer": "scripts/site-build --serve",
+      "artifact": "target/web/docs",
+      "index": "index.html",
+      "availability": "served-only",
+      "provenance": {
+        "artifact": {
+          "source": "filesystem",
+          "path": "target/web/docs"
+        },
+        "kind": {
+          "source": "site-config",
+          "path": "site/config.toml"
+        },
+        "mount": {
+          "source": "default"
+        }
+      }
+    },
+    {
+      "id": "mcp",
+      "title": "MCP over HTTP for attached clients",
+      "category": "protocol",
+      "visibility": "internal",
+      "kind": "native-route",
+      "mount": "/mcp",
+      "producer": "mcp endpoint",
+      "feature": "mcp",
+      "availability": "served-only",
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "openapi",
+      "title": "The OpenAPI document of the capability registry",
+      "category": "api",
+      "visibility": "public",
+      "kind": "native-route",
+      "mount": "/openapi.json",
+      "producer": "capability registry",
+      "availability": "served-only",
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "swagger",
+      "title": "Swagger UI over the OpenAPI document",
+      "category": "documentation",
+      "visibility": "public",
+      "kind": "native-route",
+      "mount": "/swagger",
+      "producer": "http::swagger",
+      "availability": "served-only",
+      "provenance": {
+        "mount": {
+          "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "tests",
+      "title": "Test results",
+      "category": "report",
+      "visibility": "public",
+      "kind": "static-directory",
+      "mount": "/tests",
+      "producer": "bash test/run.sh + cargo test, rendered by majordomus web report tests",
+      "artifact": "target/web/tests",
+      "index": "index.html",
+      "availability": "both",
+      "provenance": {
+        "artifact": {
+          "source": "filesystem",
+          "path": "target/web/tests/surface.json"
+        },
+        "kind": {
+          "source": "filesystem",
+          "path": "target/web/tests/surface.json"
+        },
+        "mount": {
+          "source": "producer-declaration",
+          "path": "target/web/tests/surface.json"
+        }
+      }
+    },
+    {
+      "id": "app",
+      "title": "The site as it is deployed",
+      "category": "documentation",
+      "visibility": "public",
+      "kind": "static-directory",
+      "mount": "/",
+      "producer": "scripts/site-build",
+      "artifact": "site/public",
+      "index": "index.html",
+      "availability": "published-only",
+      "provenance": {
+        "artifact": {
+          "source": "site-config",
+          "path": "site/config.toml"
+        },
+        "kind": {
+          "source": "site-config",
+          "path": "site/config.toml"
+        },
+        "mount": {
+          "source": "default"
+        }
+      }
+    },
+    {
+      "id": "home",
+      "title": "This process, and everything it serves",
+      "category": "interface",
+      "visibility": "public",
+      "kind": "native-route",
+      "mount": "/",
+      "producer": "web::home",
+      "availability": "served-only",
+      "provenance": {
+        "mount": {
+          "source": "default"
+        }
+      }
+    }
+  ]
+}

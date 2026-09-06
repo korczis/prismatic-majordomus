@@ -2,14 +2,12 @@
 {% block body %}
 {%- set lifecycle = load_data(path="data/generated/lifecycle.json") -%}
 {%- set policy = load_data(path="data/generated/policy.json") -%}
+{%- set dist = load_data(path="data/registry/distribution.json") -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
   <div class="min-w-0">
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
     <ol class="mt-8 space-y-6">
-      <li class="min-w-0"><h2 class="mb-2 text-lg font-semibold text-heading"><span class="font-mono text-fg-brand">1</span> Install the CLI</h2>{% <code label="once per machine"> %}
-git clone {{ project.repository_url }} ~/majordomus
-export PATH="$HOME/majordomus/bin:$PATH"
-{% </code> %}</li>
+      <li class="min-w-0"><h2 class="mb-2 text-lg font-semibold text-heading"><span class="font-mono text-fg-brand">1</span> Install the CLI</h2>{% <code label="once per machine"> %}{{ dist.install_command }}{% </code> %}<p class="mt-2 text-sm text-body">One archive for your machine, its digest verified before anything is unpacked, into <code class="font-mono text-heading">{{ dist.install_dir }}</code>. <a href="{{ get_url(path="/docs/install/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">Pinning a version, choosing where it goes, and the security model &rarr;</a></p></li>
       <li class="min-w-0"><h2 class="mb-2 text-lg font-semibold text-heading"><span class="font-mono text-fg-brand">2</span> Add it to a repository</h2>{% <code label="in your project"> %}
 majordomus init
 majordomus update

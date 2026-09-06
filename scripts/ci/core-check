@@ -57,6 +57,17 @@ scripts/github-sync --plan
 for id in $(bin/majordomus plan list | awk 'NR>1{print $1}'); do
   scripts/github-sync --render "$id" | grep -q '^<!-- majordomus:begin' || { echo "no generated region for $id"; exit 1; }
 done
+# Nothing committed names the machine it was written on. Both halves of the fault — a
+# home directory written into prose, and a generator writing its own location into its
+# output — are one grep over the tracked tree, so they are one script rather than a step
+# per pathspec (project.no-machine-paths@1).
+#
+# This is not hypothetical. The reasoning of I0908 named a home directory, reached
+# plan.json, reached the site, and broke the deploy gate on master (fixed by #67); and
+# share/allow/*.txt was committed twice naming the worktree the generator last ran in,
+# which no amount of regenerating could settle.
+step "nothing committed names a home directory"
+scripts/ci/no-machine-paths
 # The committed derived site data must match the canonical files it is generated from.
 step "derived site data in sync"
 scripts/generate-site-data --check

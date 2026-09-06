@@ -13,7 +13,7 @@
 //!                                         └──── Cockpit ── pages, navigation, runner, graphs
 //! ```
 //!
-//! The routes it serves are the projection's own, like `/docs` and `/openapi.json`: they
+//! The routes it serves are the projection's own, like `/swagger` and `/openapi.json`: they
 //! are not capabilities, they declare no schema, and they are listed as infrastructure in
 //! the OpenAPI document rather than as operations.
 //!
@@ -159,7 +159,10 @@ impl Cockpit {
             },
             "/cockpit/graphs" => pages::graphs(&self.ctx),
             "/cockpit/graphs/topology" => pages::topology(&self.ctx),
+            "/cockpit/continuity" => pages::continuity(&self.ctx),
+            "/cockpit/directories" => pages::directories(&self.ctx, query),
             "/cockpit/health" => pages::health(&self.ctx),
+            "/cockpit/artifacts" => pages::artifacts(&self.ctx),
             "/cockpit/api" => pages::api(&self.ctx),
             "/cockpit/search" => pages::search(&self.ctx, query),
             "/cockpit/activity" => pages::activity(&self.ctx),

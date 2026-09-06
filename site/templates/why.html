@@ -1,34 +1,95 @@
 {% extends "page.html" %}
 {% block body %}
-{%- set readme = load_data(path="data/generated/readme.json") -%}
+{#- One moment. The prose is the moment's own body; everything below it is derived from the
+    front matter and resolved against the repository, so a name here that did not exist
+    would have failed `majordomus why validate` before this page was written. -#}
+{%- set catalogue = load_data(path="data/registry/why.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set cmds = load_data(path="data/generated/commands.json") -%}
-{%- set sec = get_section(path="why/_index.md") -%}
+{%- set readme = load_data(path="data/generated/readme.json") -%}
+{%- set m = [x for x in catalogue.moments if x.id == page.extra.id][0] -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">→ {{ page.extra.hook }}</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto" tabindex="0">{{ page.content | safe }}</article>
-    {%- set why = load_data(path="data/generated/why.json") -%}
-    {%- set m = [x for x in why.moments if x.slug == page.slug][0] -%}
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
-    <p class="mt-2 text-body">Everything below is read out of this page's own front matter and resolved against the repository. A name here that did not exist would fail the build.</p>
+    <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">→ {{ m.hook }}</p>
 
+    <dl class="mb-6 flex flex-wrap gap-x-6 gap-y-2 border-y border-default py-3 text-xs">
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">cost when it happens</dt><dd class="text-heading">{{ m.severity }}</dd></div>
+      <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">how often</dt><dd class="text-heading">{{ m.frequency }}</dd></div>
+      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">area</dt>
+        {%- for a in m.areas %}<dd><a href="{{ get_url(path='/why/areas/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a></dd>{% endfor %}</div>
+      <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">recognised by</dt>
+        {%- for a in m.audiences %}<dd><a href="{{ get_url(path='/why/audiences/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a></dd>{% endfor %}</div>
+    </dl>
+
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+
+    {#- ------------------------------------------------------------- the examples -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What this looks like</h2>
+    <p class="mt-2 text-body">Concrete situations, one per audience. Each is declared in the moment's front matter, so the before and the after are data rather than prose a page could drift from.</p>
+    <ol class="mt-4 space-y-4">
+      {%- for e in m.examples %}
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <span class="text-sm font-medium text-heading">{{ e.title }}</span>
+          <a href="{{ get_url(path='/why/audiences/' ~ e.audience ~ '/', trailing_slash=true) }}" class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading hover:text-fg-brand">{{ e.audience }}</a>
+        </p>
+        <dl class="mt-3 grid gap-3 sm:grid-cols-2">
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">before</dt><dd class="mt-1 break-words text-sm text-body">{{ e.before }}</dd></div>
+          <div class="min-w-0"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">after</dt><dd class="mt-1 break-words text-sm text-body">{{ e.after }}</dd></div>
+        </dl>
+      </li>
+      {%- endfor %}
+    </ol>
+
+    {#- ------------------------------------------------------------- the signals -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">How you would know</h2>
+    <p class="mt-2 text-body">The observable symptoms this moment declares. They are the questionnaire on <a href="{{ get_url(path='/why/', trailing_slash=true) }}#diagnose" class="text-fg-brand hover:underline">the index</a> and the input of <code class="font-mono text-heading">majordomus why diagnose</code>; nothing else defines them.</p>
+    <ul class="mt-4 space-y-2">
+      {%- for s in m.signals %}
+      <li class="flex min-w-0 items-start gap-3 rounded-base border border-default bg-neutral-primary-soft p-3">
+        <span aria-hidden="true" class="font-mono text-fg-brand">◻</span>
+        <span class="min-w-0"><span class="block break-words text-sm text-body">{{ s.text }}</span>
+        <code class="mt-1 block font-mono text-xs text-body-subtle">{{ s.id }}</code></span>
+      </li>
+      {%- endfor %}
+    </ul>
+
+    {#- ------------------------------------------------------------- the mechanism -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this lives in the tool</h2>
+    <p class="mt-2 text-body">Everything below is read out of this moment's own front matter and resolved against the repository. A name here that did not exist would fail validation.</p>
+
+    {%- if m.commands | length > 0 %}
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the commands that answer it</h3>
     <ul class="grid gap-3 sm:grid-cols-2">
-      {%- for c in m.command_detail %}
-      <li><a href="{{ get_url(path='/commands/' ~ c.name ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+      {%- for name in m.commands %}{% set c = [x for x in cmds.commands if x.name == name][0] %}
+      <li><a href="{{ get_url(path='/commands/' ~ name ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col gap-1.5 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-medium text-fg-brand">majordomus {{ c.name }}</span>{% if c.read_only %}<span class="rounded bg-neutral-secondary-medium px-1 font-mono text-xs text-heading">read-only</span>{% endif %}</span>
         <span class="min-w-0 break-words text-sm text-body">{{ c.summary }}</span></a></li>
       {%- endfor %}
     </ul>
+    {%- endif %}
 
-    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what it supervises</h3>
+    {%- if m.capabilities | length > 0 %}
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the capabilities of the executable that answer it</h3>
     <ul class="flex flex-wrap gap-2">
-      {%- for r in m.responsibility_detail %}
-      <li><a href="{{ get_url(path='/supervises/' ~ r.slug ~ '/', trailing_slash=true) }}" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">{{ r.title }}</a></li>
+      {%- for id in m.capabilities %}
+      <li><a href="{{ get_url(path='/registry/capabilities/' ~ id ~ '/', trailing_slash=true) }}" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">{{ id }}</a></li>
       {%- endfor %}
     </ul>
+    {%- endif %}
 
+    {%- if m.responsibilities | length > 0 %}
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">what it supervises <span class="normal-case tracking-normal">— derived from the claims below</span></h3>
+    <ul class="flex flex-wrap gap-2">
+      {%- for slug in m.responsibilities %}{% set r = [x for x in readme.does if x.slug == slug][0] %}
+      <li><a href="{{ get_url(path='/supervises/' ~ slug ~ '/', trailing_slash=true) }}" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">{{ r.title }}</a></li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+
+    {%- if m.claims | length > 0 %}
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the claims that back this page, and the evidence behind each</h3>
     <ul class="space-y-3">
       {%- for id in m.claims %}{% set c = [x for x in caps.claims if x.id == id][0] %}
@@ -37,28 +98,65 @@
           <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a></p>
         <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs">
           <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">defined in</dt>
-            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ project.repository_url }}/blob/master/{{ c.source }}">{{ c.source }}</a></dd></div>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.source }}">{{ c.source }}</a></dd></div>
           {%- if c.implementation %}<div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">implemented in</dt>
-            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ project.repository_url }}/blob/master/{{ c.implementation }}">{{ c.implementation }}</a></dd></div>{% endif %}
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.implementation }}">{{ c.implementation }}</a></dd></div>{% endif %}
           {%- if c.test %}<div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">proved by</dt>
-            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ project.repository_url }}/blob/master/{{ c.test }}">{{ c.test }}</a></dd></div>
+            <dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.test }}">{{ c.test }}</a></dd></div>
           {%- else %}<div class="flex gap-1.5"><dt class="text-body-subtle">proved by</dt><dd class="text-body-subtle">no test — this is a target, not a guarantee</dd></div>{% endif %}
         </dl>
       </li>
       {%- endfor %}
     </ul>
+    {%- endif %}
 
-    {%- set others = [x for x in why.moments if x.slug != page.slug] %}
+    {%- if m.doctrines | length > 0 %}
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the rules that govern it</h3>
+    <ul class="flex flex-wrap gap-2">
+      {%- for id in m.doctrines %}
+      <li><span class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-xs text-heading">{{ id }}</span></li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+
+    {%- if m.use_cases | length > 0 %}
+    <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the use cases that show the way out</h3>
+    <ul class="grid gap-3 sm:grid-cols-2">
+      {%- for id in m.use_cases %}
+      <li><a href="{{ get_url(path='/use-cases/' ~ id ~ '/', trailing_slash=true) }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">{{ id }}</a></li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+
+    {#- ------------------------------------------------------------- relations -#}
+    {%- if m.neighbours | length > 0 %}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">If this one is familiar, so is the next</h2>
+    <p class="mt-2 text-body">What this moment names, what names it, and what shares its area, audience or tags. The second and third are derived; only the first is written down.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2">
-      {%- for o in others %}
-      <li><a href="{{ get_url(path='/why/' ~ o.slug ~ '/', trailing_slash=true) }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+      {%- for id in m.neighbours %}{% set o = [x for x in catalogue.moments if x.id == id][0] %}
+      <li><a href="{{ base }}{{ o.route }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
         <span class="min-w-0 break-words text-sm text-heading">{{ o.hook }}</span></a></li>
       {%- endfor %}
     </ul>
-    <p class="mt-4 text-sm"><a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="font-medium text-fg-brand underline">All {{ why.moments | length }}, and how they connect to the tool &rarr;</a></p>
+    {%- endif %}
+    <p class="mt-6 text-sm"><a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">All {{ catalogue.counts.moments }}, and how they connect to the tool &rarr;</a></p>
   </div>
-  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the {{ sec.pages | length }} moments</h2><ol class="space-y-2 text-sm">{% for p in sec.pages %}<li><a href="{{ p.permalink }}" class="block rounded px-2 py-1 {% if p.permalink == page.permalink %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if p.permalink == page.permalink %} aria-current="page"{% endif %}>{{ p.extra.hook }}</a></li>{% endfor %}</ol></div></aside>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start space-y-5">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">read it anywhere</h2>
+      <ul class="space-y-2 font-mono text-xs text-body">
+        <li>majordomus why show {{ m.id }}</li>
+        <li>GET /api/v1/why/moment?id={{ m.id }}</li>
+        <li>majordomus://moment/{{ m.id }}</li>
+      </ul>
+      <p class="mt-3 border-t border-default pt-3 text-xs text-body-subtle">One record, four readers. The page you are on is the fourth.</p>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the {{ catalogue.counts.moments }} moments</h2>
+      <ol class="space-y-2 text-sm">{% for o in catalogue.moments %}{% if o.status == "stable" %}<li><a href="{{ base }}{{ o.route }}" class="block rounded px-2 py-1 {% if o.id == m.id %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if o.id == m.id %} aria-current="page"{% endif %}>{{ o.hook }}</a></li>{% endif %}{% endfor %}</ol>
+    </div>
+  </aside>
 </div>
 {% endblock body %}

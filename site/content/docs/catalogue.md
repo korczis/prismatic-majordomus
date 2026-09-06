@@ -1,7 +1,7 @@
 +++
 title = "The catalogue"
 description = "the use-case and application registries: what they are for, how they differ from the why pages, the schema, and how to extend them"
-weight = 20
+weight = 23
 [extra]
 source = "docs/CATALOGUE.md"
 +++
@@ -42,7 +42,7 @@ this document is the map.
 
 ## The objects
 
-A use case (`share/schemas/use-case.schema.json`):
+A use case (`share/schemas/majordomus/use-case/use-case.v1.schema.json`):
 
 ```yaml
 ---
@@ -67,7 +67,7 @@ scenario:                              # setup, given, steps (run, expect), then
 # Outcome
 ```
 
-An application (`share/schemas/application.schema.json`): `id`, `kind: application`,
+An application (`share/schemas/majordomus/application/application.v1.schema.json`): `id`, `kind: application`,
 `title`, `summary`, `fits_when`, `does_not_fit_when` (both required: a catalogue that
 only lists fits is marketing), `use_cases` (mutual), `doctrines`, `responsibilities`,
 and a body with `# Context`.

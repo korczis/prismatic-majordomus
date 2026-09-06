@@ -333,6 +333,17 @@ Write an append-only continuation record.
 template placeholders in angle brackets count as empty. Optional: `# Completed`,
 `# Decisions`, `# Verification`, `# Risks`, `# Open Work`.
 
+`--derive` composes the body instead of reading stdin, from the task record, the ledger,
+git, the open questions and the newest checkpoint — each already written, already validated
+and already identity-checked. It calls no model and makes no network request, which is what
+makes it safe for a provider hook to run: a derived body can be wrong only if a record it
+reads is wrong, and every one of those has its own gate. The policy's required sections are
+emitted in the policy's order; a required section this generator cannot fill is refused by
+name rather than written empty, because an empty section passes the section gate and tells
+the next worker nothing. An authored body still says more than a derived one, and `--derive`
+exists so that the absence of somebody willing to type is no longer the same thing as the
+absence of a record.
+
 **Writes:** one new file `state/handovers/<utc-ts>--<branch-key>--<short-head>--<rand>.md`,
 mode `0600`, created atomically (temp file, then hard link; retry with a new random
 suffix on collision). Front matter is computed from git and from `current.yaml`; a body
@@ -344,6 +355,11 @@ that tries to set identity fields is rejected.
 `--close` additionally sets the task's outcome to `handed_over`, so that a new task may
 `start` in this checkout; the old record is archived by that `start`. Without
 `--close` the task stays active for the next session to continue.
+
+The provider's `SessionEnd` event runs `--derive --close` when the task is still active, so
+an episode that ends leaves a continuation record and not only the envelope of what it
+produced. The two answer different questions: the session record indexes the episode, and a
+handover is what the next worker resumes from.
 
 **Refuses** (`10`) if a required section is missing or empty, or if the body contains
 an identity field. Refuses (`12`) with no active task unless `--no-task`.
@@ -607,6 +623,12 @@ An empty body is allowed and writes no file: it updates `checkpoint_at` only, wh
 `check --checkpoint` has always done. The two are the same operation; `checkpoint` is the
 one that can also say what was true.
 
+- `--derive` composes the body from git and the ledger instead of reading stdin: the commit,
+  the working tree, how many files have changed since the task started, the commits since
+  then, and the count of blockers. It stays inside the same cap, and it is what the
+  provider's compaction event runs — a compaction discards the conversation while the work
+  continues, and the moment it is announced is the only moment anything can be written about
+  a context that is about to stop being reachable.
 - `--show` prints the newest checkpoint for the active task in this worktree and branch.
 - `--list` lists this worktree's checkpoints, newest first, with each one's git label.
 
@@ -745,7 +767,7 @@ The repository's skills: provider-neutral procedures for one bounded kind of wor
 under the layer's skills section. Read-only.
 
 A skill is a directory `.ai/repo/skills/<id>/` holding `SKILL.md` — YAML front matter
-satisfying `share/schemas/skill.schema.json` over a Markdown body that is the procedure —
+satisfying `share/schemas/majordomus/skill/skill.v1.schema.json` over a Markdown body that is the procedure —
 and optionally `examples/*.md`. Nothing registers it. The source class `skill` in
 `.ai/repo/knowledge/sources.yaml` discovers it, and that is the same declaration the
 Rust executable indexes, so a skill exists for `skills list`, for `doctor`, for the
@@ -1398,7 +1420,7 @@ The repository's architecture decisions as objects: what was decided, why, what 
 and where the record came from. Under the layer's `adrs` section.
 
 A decision is a file `.ai/repo/adrs/<NNNN>-<slug>.md` — YAML front matter satisfying
-`share/schemas/adr.schema.json` over a body carrying `# Context`, `# Decision` and
+`share/schemas/majordomus/adr/adr.v1.schema.json` over a body carrying `# Context`, `# Decision` and
 `# Consequences`. Nothing registers it: the source class `adr` in
 `.ai/repo/knowledge/sources.yaml` discovers it over the tracked tree, which is the same
 declaration the Rust executable indexes. See [`SCHEMAS.md`](SCHEMAS.md) for the contract.

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the canonical Majordomus capability registry, module `objects`; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.1.0 -->
+     Source: the `objects` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.2.0 -->
 # Module `objects` — Objects
 
 The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched.

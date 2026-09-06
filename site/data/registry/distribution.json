@@ -1,0 +1,89 @@
+{
+  "schema": "majordomus/distribution/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/distribution.yaml and the release records; regenerate with `majordomus generate`",
+  "binary": "majordomus",
+  "repository": "korczis/prismatic-majordomus",
+  "installer_url": "https://korczis.github.io/prismatic-majordomus/install.sh",
+  "install_command": "curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh",
+  "install_and_init_command": "curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --init",
+  "next_command": "majordomus init",
+  "verify_command": "majordomus --version",
+  "install_dir": "$HOME/.local/bin",
+  "prefix": "$HOME/.local/share/majordomus",
+  "latest_url": "https://korczis.github.io/prismatic-majordomus/releases/latest.json",
+  "checksum": "sha256",
+  "supported": 6,
+  "targets": [
+    {
+      "id": "macos-aarch64",
+      "title": "macOS ARM64",
+      "os": "macos",
+      "arch": "aarch64",
+      "libc": null,
+      "rust_target": "aarch64-apple-darwin",
+      "status": "supported",
+      "reason": null
+    },
+    {
+      "id": "macos-x86_64",
+      "title": "macOS x86_64",
+      "os": "macos",
+      "arch": "x86_64",
+      "libc": null,
+      "rust_target": "x86_64-apple-darwin",
+      "status": "supported",
+      "reason": null
+    },
+    {
+      "id": "linux-x86_64-gnu",
+      "title": "Linux x86_64 glibc",
+      "os": "linux",
+      "arch": "x86_64",
+      "libc": "gnu",
+      "rust_target": "x86_64-unknown-linux-gnu",
+      "status": "supported",
+      "reason": null
+    },
+    {
+      "id": "linux-x86_64-musl",
+      "title": "Linux x86_64 musl",
+      "os": "linux",
+      "arch": "x86_64",
+      "libc": "musl",
+      "rust_target": "x86_64-unknown-linux-musl",
+      "status": "supported",
+      "reason": null
+    },
+    {
+      "id": "linux-aarch64-gnu",
+      "title": "Linux ARM64 glibc",
+      "os": "linux",
+      "arch": "aarch64",
+      "libc": "gnu",
+      "rust_target": "aarch64-unknown-linux-gnu",
+      "status": "supported",
+      "reason": null
+    },
+    {
+      "id": "linux-aarch64-musl",
+      "title": "Linux ARM64 musl",
+      "os": "linux",
+      "arch": "aarch64",
+      "libc": "musl",
+      "rust_target": "aarch64-unknown-linux-musl",
+      "status": "supported",
+      "reason": null
+    },
+    {
+      "id": "windows-x86_64",
+      "title": "Windows x86_64",
+      "os": "windows",
+      "arch": "x86_64",
+      "libc": null,
+      "rust_target": "x86_64-pc-windows-msvc",
+      "status": "unavailable",
+      "reason": "The command a person runs is bash: bin/majordomus and lib/*.sh are POSIX shell, and the archive carries them beside the executable. Until that half has a Windows answer, publishing a Windows archive would ship an executable nothing can drive."
+    }
+  ],
+  "latest": null
+}

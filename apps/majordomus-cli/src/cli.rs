@@ -31,7 +31,7 @@ pub struct Cli {
 pub enum Command {
     /// Serve the repository's AI layer to an MCP client over stdio (read-only)
     Mcp(McpArgs),
-    /// Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)
+    /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
     Serve(ServeArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),
@@ -43,6 +43,133 @@ pub enum Command {
     Scope(ScopeArgs),
     /// The repository's web surfaces: what is exposed, where it is mounted, what produced it, and whether the topology is valid
     Web(WebArgs),
+    /// The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation
+    Why(WhyArgs),
+    /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
+    Distribution(DistributionArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus why`. The facets and the output shape are global, so they read the way a
+/// person writes them — `why list --audience solo-builder` — and are declared once.
+pub struct WhyArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `list`, `show`, `audiences`, `areas`, `diagnose` or `validate`; none lists.
+    pub command: Option<WhyCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only moments this audience recognises
+    #[arg(long, global = true)]
+    pub audience: Option<String>,
+    /// Only moments in this operational area
+    #[arg(long, global = true)]
+    pub area: Option<String>,
+    /// Only moments carrying this tag
+    #[arg(long, global = true)]
+    pub tag: Option<String>,
+    /// Only moments of this severity
+    #[arg(long, global = true)]
+    pub severity: Option<String>,
+    /// Only moments of this frequency
+    #[arg(long, global = true)]
+    pub frequency: Option<String>,
+    /// Only moments at this stage of work
+    #[arg(long, global = true)]
+    pub lifecycle: Option<String>,
+    /// Only moments naming this capability of the executable
+    #[arg(long, global = true)]
+    pub capability: Option<String>,
+    /// Only moments naming this command
+    #[arg(long = "names-command", global = true)]
+    pub names_command: Option<String>,
+    /// Only the moments the homepage features
+    #[arg(long, global = true)]
+    pub featured: bool,
+    /// Include drafts and deprecated moments, not only the public ones
+    #[arg(long, global = true)]
+    pub all: bool,
+    /// Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies
+    #[arg(long, short = 'q', global = true)]
+    pub query: Option<String>,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus why`.
+pub enum WhyCommand {
+    /// Every operational moment, narrowed by any facet the catalogue reports
+    List,
+    /// One moment in full, with every relation derived from its metadata
+    Show {
+        /// The moment's id, which is also its slug and its route
+        id: String,
+    },
+    /// Every audience, with the moments that name it
+    Audiences,
+    /// Every operational area, with the moments that fall under it
+    Areas,
+    /// What the symptoms you recognise imply: the areas they weigh towards and the mechanisms that answer them
+    Diagnose {
+        /// A signal id or a moment id; repeat for each one you recognise. Without any, the questionnaire is printed.
+        #[arg(long = "signal")]
+        signals: Vec<String>,
+    },
+    /// Every finding over the catalogue; exit 10 when any is an error
+    Validate,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus distribution`.
+pub struct DistributionArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to ask of the model; none shows it.
+    pub command: Option<DistributionCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus distribution`.
+pub enum DistributionCommand {
+    /// The model: the install command, where an installation goes, and every declared target
+    Show,
+    /// Every invariant of the model and of the release records; exit 10 with each violation named
+    Validate,
+    /// Every declared target, one line each, with the artifact name it derives
+    Targets,
+    /// The release build matrix, as the release workflow reads it
+    Matrix,
+    /// The archive name and root directory a target and a tag derive
+    Artifact {
+        /// A target's id or its Rust target triple
+        #[arg(long, value_name = "TARGET")]
+        target: String,
+        /// The tag, `v` and a version
+        #[arg(long, value_name = "TAG")]
+        tag: String,
+    },
+    /// Every recorded release, newest first, and the one an unpinned installation resolves to
+    Releases,
+    /// The public metadata one release record publishes, rendered from the record alone
+    Metadata {
+        /// A release record; the file the release pipeline writes under .ai/repo/releases/
+        #[arg(long, value_name = "FILE")]
+        record: PathBuf,
+    },
+    /// What this executable is: version, target triple, profile, commit
+    Build,
 }
 
 #[derive(Debug, Args)]
@@ -358,6 +485,12 @@ pub struct ServeArgs {
     /// Port to bind; 0 picks a free one and the address is logged on stderr
     #[arg(long, default_value_t = DEFAULT_PORT)]
     pub port: u16,
+
+    /// Bind the address this deployment object declares (.ai/repo/deployments/<ID>.yaml)
+    /// instead of the local default. What a hosted process is started with; the address is
+    /// the object's, not this command line's
+    #[arg(long, value_name = "ID", conflicts_with_all = ["host", "port"])]
+    pub deployment: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -423,13 +556,14 @@ pub enum GenerateTarget {
     #[default]
     /// Every target.
     All,
-    /// `docs/generated/openapi.json`.
+    /// `docs/generated/openapi.{json,yaml}`.
     Openapi,
-    /// `docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`.
+    /// `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and
+    /// `docs/generated/cli.{md,json,yaml}`.
     Docs,
-    /// `docs/generated/benchmarks.md`: every benchmark target and the coverage
+    /// `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage
     Benchmarks,
-    /// `docs/generated/registry.json`: the builtin registry as data
+    /// `docs/generated/registry.{json,yaml}`: the builtin registry as data
     Registry,
     /// The shell tool's allow-lists under share/allow, derived from the schemas
     Allow,
@@ -437,6 +571,13 @@ pub enum GenerateTarget {
     Providers,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
+    /// docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact
+    Manifest,
+    /// The installer, the installation guide, the release build matrix and the public
+    /// release metadata, from share/distribution.yaml and .ai/repo/releases/
+    Distribution,
+    /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
+    Web,
 }
 
 #[derive(Debug, Args)]
@@ -563,6 +704,105 @@ pub struct CommandExamples {
 /// disposable repository. Adding a command without adding its example does not pass
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
+    CommandExamples {
+        command: "distribution",
+        examples: &[ExampleDoc {
+            id: "distribution-show-default",
+            title: "How this project is installed",
+            description: "`distribution` with nothing after it shows the model: the one-line install command, where an installation goes, and how many platforms a release builds. Every value comes from share/distribution.yaml, which is the only place any of them is written.",
+            argv: &["distribution"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["binary", "install", "targets"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution show",
+        examples: &[ExampleDoc {
+            id: "distribution-show-json",
+            title: "The distribution model as one JSON document",
+            description: "The same answer as a document a script can read: the install command, the default locations, and every declared target with the artifact name the naming function derives for it. This is what the website's install block and the cockpit's install card render.",
+            argv: &["distribution", "show", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/install_command", "/targets"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution targets",
+        examples: &[ExampleDoc {
+            id: "distribution-targets",
+            title: "Every platform, and whether a release builds it",
+            description: "One line per declared target: its id, its Rust target triple, whether it is supported, experimental or unavailable, and how it is written in prose. The supported-platform table in the documentation and the installer's own refusal message are rendered from these same rows.",
+            argv: &["distribution", "targets"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["RUST TARGET", "supported"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution validate",
+        examples: &[ExampleDoc {
+            id: "distribution-validate",
+            title: "Every invariant of the model and of the release records",
+            description: "Refuses a duplicate target id or triple, two targets deriving one artifact name, a Linux target with no C library, a published target with nothing to build it on, an unbuilt target with no recorded reason, a base URL that is not HTTPS, and a release record that misses a supported target, renames an artifact or serves one from another host. Exits 10 with each violation named.",
+            argv: &["distribution", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["distribution"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution matrix",
+        examples: &[ExampleDoc {
+            id: "distribution-matrix",
+            title: "The release build matrix the workflow runs",
+            description: "One entry per published target, with the runner it is built on, the packages that runner needs, and the artifact name with `{tag}` where a release's tag goes. The release workflow reads this and states no platform of its own; adding a target to the model adds a build here and nowhere else.",
+            argv: &["distribution", "matrix"],
+            setup: &[],
+            expect: Expect::Json(&["/include", "/binary"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution artifact",
+        examples: &[ExampleDoc {
+            id: "distribution-artifact",
+            title: "What one target and one tag are called",
+            description: "The one naming function, asked directly: the archive's name, the directory it unpacks into, and where a release publishes it. `scripts/release-package` asks this rather than composing a name, so a change to the naming function reaches the packaging without an edit.",
+            argv: &["distribution", "artifact", "--target", "aarch64-apple-darwin", "--tag", "v0.2.0", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/name", "/root", "/url"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution releases",
+        examples: &[ExampleDoc {
+            id: "distribution-releases",
+            title: "What has been published, and what an unpinned install resolves to",
+            description: "Every release record this repository holds, newest first, and which of them the stable pointer names: the highest version among the stable, unwithdrawn records. The pointer is derived on every read and is authored nowhere.",
+            argv: &["distribution", "releases"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "distribution metadata",
+        examples: &[ExampleDoc {
+            id: "distribution-metadata",
+            title: "What one release record publishes",
+            description: "The public metadata a record turns into, rendered from the record and the model alone: the release pipeline prints this before it commits anything, and the installer's own tests serve it as a release that never existed. Shown here in a repository that has published nothing, where the record does not exist and the command says which file it wanted and exits 10 rather than inventing one.",
+            argv: &["distribution", "metadata", "--record", ".ai/repo/releases/v0.2.0.yaml"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "distribution build",
+        examples: &[ExampleDoc {
+            id: "distribution-build",
+            title: "What this executable is",
+            description: "The crate version, the Rust target triple, the profile and the commit, all compiled in at build time. An installed binary answers this without a repository, a toolchain or git, which is what makes a support question answerable.",
+            argv: &["distribution", "build"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["version", "target", "commit"]),
+        }],
+    },
     CommandExamples {
         command: "mcp",
         examples: &[
@@ -695,11 +935,116 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "why",
+        examples: &[ExampleDoc {
+            id: "why-catalogue",
+            title: "The operational moments this repository holds",
+            description: "`why` with nothing after it lists, because listing is what a person wants when they ask what this section is. The count on the last line is computed from the catalogue; no number anywhere is written down.",
+            argv: &["why"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["SLUG", "moment(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "why list",
+        examples: &[
+            ExampleDoc {
+                id: "why-list",
+                title: "Every public moment, in presentation order",
+                description: "Drafts are excluded unless `--all` is given. The facets a listing may be narrowed by are the ones the catalogue itself reports, so an audience or an area added as a file is a filter without anything being registered.",
+                argv: &["why", "list"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SLUG"]),
+            },
+            ExampleDoc {
+                id: "why-list-audience",
+                title: "Only what one audience recognises",
+                description: "Membership is declared by each moment and never listed in the audience's own file, so this answer is derived. An audience the catalogue does not have is an invalid input naming the ones it does, not an empty answer.",
+                argv: &["why", "list", "--audience", "fixture-team"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SLUG"]),
+            },
+            ExampleDoc {
+                id: "why-list-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "One domain model behind every projection: this document is what `GET /api/v1/why` returns and what the `majordomus_why` tool answers, including the derived facets and the catalogue's fingerprint.",
+                argv: &["why", "list", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/counts/moments", "/facets/audiences", "/fingerprint"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "why show",
+        examples: &[ExampleDoc {
+            id: "why-show",
+            title: "One moment, with every relation derived from its metadata",
+            description: "The record as its file declares it, then what nobody authored: the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.",
+            argv: &["why", "show", "fixture-moment"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-moment", "derived"]),
+        }],
+    },
+    CommandExamples {
+        command: "why audiences",
+        examples: &[ExampleDoc {
+            id: "why-audiences",
+            title: "Who recognises what, with the counts derived",
+            description: "Each audience with how many public moments name it. The number is computed from the moments; an audience's own file never lists one.",
+            argv: &["why", "audiences"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["SLUG", "TITLE"]),
+        }],
+    },
+    CommandExamples {
+        command: "why areas",
+        examples: &[ExampleDoc {
+            id: "why-areas",
+            title: "The operational areas, with the counts derived",
+            description: "The same relation read the other way: each area with the public moments that fall under it.",
+            argv: &["why", "areas"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["SLUG", "TITLE"]),
+        }],
+    },
+    CommandExamples {
+        command: "why diagnose",
+        examples: &[
+            ExampleDoc {
+                id: "why-diagnose-questions",
+                title: "The questionnaire, assembled from the catalogue's own signals",
+                description: "With no selection there is nothing to diagnose, so the questions are printed instead of an empty answer. Every line is a signal a moment declares; nothing here is a list of questions.",
+                argv: &["why", "diagnose"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["Which of these happened to you this week?"]),
+            },
+            ExampleDoc {
+                id: "why-diagnose",
+                title: "What the symptoms you recognise imply",
+                description: "A name is a signal id or a moment id. The answer is counting, not inference: each recommendation carries the moments that produced it, and there is no percentage because there is no model behind one.",
+                argv: &["why", "diagnose", "--signal", "fixture-signal"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["moment(s) matched", "fixture-moment"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "why validate",
+        examples: &[ExampleDoc {
+            id: "why-validate",
+            title: "Check the catalogue before anything projects it",
+            description: "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a public record that does not meet the floor its status promises. Exit 10 on any error.",
+            argv: &["why", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["moment(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
         command: "serve",
         examples: &[ExampleDoc {
             id: "serve-ephemeral-port",
             title: "Serve the same capabilities over HTTP on a free port",
-            description: "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /swagger is the Swagger UI over it.",
+            description: "Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.",
             argv: &["serve", "--port", "0"],
             setup: &[],
             expect: Expect::HttpReady("/openapi.json"),

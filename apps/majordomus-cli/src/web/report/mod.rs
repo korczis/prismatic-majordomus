@@ -13,7 +13,9 @@
 //! creating it.
 
 pub mod benchmarks;
-pub mod html;
+/// The page style every generated surface uses. It lives beside the model now that the
+/// home page renders through it too; this re-export keeps the reports' own path to it.
+pub use super::html;
 pub mod tests;
 pub mod ui;
 
@@ -22,7 +24,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 
 use super::discover::{Declaration, DECLARATION_FILE, DECLARATION_SCHEMA, GENERATED_ROOT};
-use super::model::Availability;
+use super::model::{Availability, Category, Visibility};
 use crate::error::{Error, Result};
 
 /// What every report writes beside its rendering: the declaration that makes the directory
@@ -41,6 +43,9 @@ pub fn declare(root: &Path, id: &str, title: &str, producer: &str) -> Result<Pat
         index: Some("index.html".into()),
         producer: Some(producer.into()),
         availability: Some(Availability::Both),
+        category: Some(Category::Report),
+        visibility: Some(Visibility::Public),
+        built_from: Origin::read(root).revision,
     };
     let path = dir.join(DECLARATION_FILE);
     let mut body =

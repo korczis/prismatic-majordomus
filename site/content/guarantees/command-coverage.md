@@ -1,7 +1,7 @@
 +++
 title = "Every public command has a behavioural test and a negative test, computed rather than remembered"
 description = "For each command in share/commands.yaml marked public, the suite must contain a case that"
-weight = 79
+weight = 83
 [extra]
 claim_id = "command-coverage"
 status = "guaranteed"

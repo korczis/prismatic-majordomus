@@ -15,7 +15,7 @@ use crate::repository::Repository;
 use crate::web::compose::{self, PUBLISH_ROOT};
 use crate::web::discover::{self, Runtime};
 use crate::web::manifest::Manifest;
-use crate::web::model::Topology;
+use crate::web::model::{Availability, Topology};
 use crate::web::validate::{self, Artifacts, Severity};
 
 /// The exit code when the topology does not validate.
@@ -171,20 +171,36 @@ fn list(out: &mut impl Write, topology: &Topology, format: OutputFormat) -> Resu
             .map_err(Error::Transport)?;
         }
         OutputFormat::Text => {
-            writeln!(out, "{:<16} {:<9} {:<16} SOURCE", "ID", "KIND", "MOUNT")
-                .map_err(Error::Transport)?;
+            // master fixed the same clippy finding by inlining SOURCE; this keeps that and
+            // adds the two columns the two worlds need
+            writeln!(
+                out,
+                "{:<16} {:<9} {:<16} {:<14} {:<14} SOURCE",
+                "ID", "KIND", "MOUNT", "CATEGORY", "WHERE"
+            )
+            .map_err(Error::Transport)?;
             for surface in &topology.surfaces {
                 let source = surface
                     .artifact
                     .as_ref()
                     .map(|a| a.to_string_lossy().to_string())
                     .unwrap_or_else(|| surface.producer.clone());
+                // two surfaces may share a mount when they live in different worlds — the
+                // site as it is deployed owns `/` of a publication, the home page owns `/`
+                // of a process — so a listing that hid the world would look like a conflict
+                let world = match surface.availability {
+                    Availability::Both => "served+published",
+                    Availability::ServedOnly => "served",
+                    Availability::PublishedOnly => "published",
+                };
                 writeln!(
                     out,
-                    "{:<16} {:<9} {:<16} {}",
+                    "{:<16} {:<9} {:<16} {:<14} {:<14} {}",
                     surface.id,
                     surface.kind.to_string(),
                     surface.mount.to_string(),
+                    surface.category.to_string(),
+                    world,
                     source
                 )
                 .map_err(Error::Transport)?;
@@ -229,6 +245,17 @@ fn explain(
                 writeln!(out, "  kind       {}", surface.kind).map_err(Error::Transport)?;
                 writeln!(out, "  mount      {}", surface.mount).map_err(Error::Transport)?;
                 writeln!(out, "  producer   {}", surface.producer).map_err(Error::Transport)?;
+                writeln!(out, "  category   {}", surface.category).map_err(Error::Transport)?;
+                writeln!(out, "  visibility {}", surface.visibility).map_err(Error::Transport)?;
+                writeln!(out, "  where      {:?}", surface.availability)
+                    .map_err(Error::Transport)?;
+                if let Some(feature) = surface.feature {
+                    writeln!(out, "  needs      the process to serve {feature}")
+                        .map_err(Error::Transport)?;
+                }
+                if let Some(built) = &surface.built_from {
+                    writeln!(out, "  built from {built}").map_err(Error::Transport)?;
+                }
                 if let Some(artifact) = &surface.artifact {
                     writeln!(out, "  artifact   {}", artifact.display())
                         .map_err(Error::Transport)?;
@@ -300,4 +327,148 @@ fn report(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::web::discover::{self, Runtime};
+    use crate::web::validate::Finding;
+
+    fn topology() -> Topology {
+        Topology::new(discover::native_all())
+    }
+
+    fn rendered(f: impl FnOnce(&mut Vec<u8>) -> Result<u8>) -> String {
+        let mut out = Vec::new();
+        let code = f(&mut out).expect("the renderer writes");
+        assert_eq!(code, 0);
+        String::from_utf8(out).expect("the renderer writes text")
+    }
+
+    #[test]
+    fn a_listing_names_every_surface_with_the_world_it_lives_in() {
+        let text = rendered(|out| list(out, &topology(), OutputFormat::Text));
+        assert!(text.starts_with("ID "), "{text}");
+        for id in topology().ids() {
+            assert!(
+                text.contains(id),
+                "{id} is missing from the listing:\n{text}"
+            );
+        }
+        // the world is on the line, because two surfaces may share a mount across worlds
+        assert!(text.contains("served"), "{text}");
+        assert!(text.contains("documentation"), "{text}");
+    }
+
+    #[test]
+    fn a_listing_as_json_is_the_topology_itself() {
+        let text = rendered(|out| list(out, &topology(), OutputFormat::Json));
+        let parsed: Topology = serde_json::from_str(&text).expect("the JSON is a topology");
+        assert_eq!(parsed.ids(), topology().ids());
+    }
+
+    #[test]
+    fn explaining_a_surface_says_where_each_of_its_values_came_from() {
+        let text = rendered(|out| explain(out, &topology(), Some("swagger"), OutputFormat::Text));
+        assert!(text.contains("swagger"), "{text}");
+        assert!(text.contains("category   documentation"), "{text}");
+        assert!(text.contains("visibility public"), "{text}");
+        assert!(text.contains("came from"), "{text}");
+
+        // no id explains every surface
+        let all = rendered(|out| explain(out, &topology(), None, OutputFormat::Text));
+        for id in topology().ids() {
+            assert!(all.contains(id), "{id}:\n{all}");
+        }
+        let json = rendered(|out| explain(out, &topology(), Some("swagger"), OutputFormat::Json));
+        assert!(serde_json::from_str::<Vec<crate::web::Surface>>(&json).is_ok());
+    }
+
+    #[test]
+    fn explaining_a_surface_that_does_not_exist_lists_the_ones_that_do() {
+        let mut out = Vec::new();
+        let err = explain(&mut out, &topology(), Some("invented"), OutputFormat::Text)
+            .expect_err("a surface nobody declared cannot be explained")
+            .to_string();
+        assert!(err.contains("invented"), "{err}");
+        assert!(err.contains("swagger"), "the ids are named: {err}");
+    }
+
+    #[test]
+    fn a_selector_that_names_nothing_is_a_mistake_rather_than_an_empty_selection() {
+        let topology = topology();
+        assert!(unknown_selectors(&topology, &[], &[]).is_ok());
+        assert!(unknown_selectors(&topology, &["swagger".into()], &[]).is_ok());
+        let err = unknown_selectors(&topology, &["invented".into()], &[])
+            .expect_err("a selector that selects nothing is refused")
+            .to_string();
+        assert!(err.contains("invented"), "{err}");
+        let err = unknown_selectors(&topology, &[], &["invented".into()])
+            .expect_err("an exclusion that excludes nothing is refused too")
+            .to_string();
+        assert!(err.contains("invented"), "{err}");
+    }
+
+    #[test]
+    fn a_clean_topology_reports_no_conflict_and_a_broken_one_exits_ten() {
+        let text = rendered(|out| {
+            check(
+                out,
+                &topology(),
+                std::path::Path::new("/nonexistent"),
+                Artifacts::Ignore,
+                OutputFormat::Text,
+            )
+        });
+        assert!(text.contains("no conflict"), "{text}");
+
+        let mut surfaces = discover::native_all();
+        let mut clone = surfaces
+            .iter()
+            .find(|s| s.id == "cockpit")
+            .expect("the cockpit is declared")
+            .clone();
+        clone.id = "second".into();
+        surfaces.push(clone);
+        let mut out = Vec::new();
+        let code = check(
+            &mut out,
+            &Topology::new(surfaces),
+            std::path::Path::new("/nonexistent"),
+            Artifacts::Ignore,
+            OutputFormat::Text,
+        )
+        .expect("a broken topology reports rather than fails");
+        assert_eq!(code, EXIT_INVALID_TOPOLOGY);
+        let text = String::from_utf8(out).unwrap();
+        assert!(text.contains("FAIL"), "{text}");
+        assert!(
+            text.contains("fix:"),
+            "every finding carries its remedy: {text}"
+        );
+    }
+
+    #[test]
+    fn findings_render_as_json_when_a_program_is_reading() {
+        let findings = vec![Finding {
+            severity: Severity::Warning,
+            rule: "surface.example".into(),
+            surface: "example".into(),
+            message: "something".into(),
+            remedy: "do something".into(),
+        }];
+        let mut out = Vec::new();
+        report(&mut out, &findings, OutputFormat::Json).unwrap();
+        let parsed: Vec<Finding> = serde_json::from_slice(&out).unwrap();
+        assert_eq!(parsed, findings);
+    }
+
+    #[test]
+    fn a_process_that_offers_nothing_lists_only_what_it_can_answer() {
+        let bare = Topology::new(discover::native(Runtime::default()));
+        let text = rendered(|out| list(out, &bare, OutputFormat::Text));
+        assert!(!text.contains("cockpit"), "{text}");
+        assert!(text.contains("swagger"), "{text}");
+    }
 }

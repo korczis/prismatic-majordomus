@@ -250,23 +250,11 @@ fn one_server_per_repository_and_peers_see_each_other() {
     let line = a.wait_log("listening on http://");
     let url = Mcp::url_in(&line);
     assert!(
-        line.contains(&format!(
-            "{url}{}",
-            majordomus_cli::http::swagger::DOCS_PATH
-        )),
-        "the log names Swagger UI: {line}"
+        line.contains(&format!("swagger {url}/swagger")),
+        "the log names Swagger UI at its own mount: {line}"
     );
-    assert!(
-        line.contains(&format!(
-            "{url}{}",
-            majordomus_cli::http::swagger::SPEC_PATH
-        )),
-        "{line}"
-    );
-    assert!(
-        line.contains(&format!("{url}{}", majordomus_cli::http::mcp::PATH)),
-        "{line}"
-    );
+    assert!(line.contains(&format!("{url}/openapi.json")), "{line}");
+    assert!(line.contains(&format!("{url}/mcp")), "{line}");
     assert!(
         lease_path(&f).exists(),
         "the lease is written under .ai/local/"
@@ -290,15 +278,25 @@ fn one_server_per_repository_and_peers_see_each_other() {
 
     let (status, index) = get_json(&url, "/");
     assert_eq!(status, 200);
-    assert_eq!(index["root"], f.root().to_str().unwrap());
-    assert_eq!(index["mcp"], "/mcp");
-    let (status, _, html) = http(
-        &url,
-        "GET",
-        majordomus_cli::http::swagger::DOCS_PATH,
-        &[],
-        None,
+    // the index names the repository and withholds where it sits on the host: whoever can
+    // reach the socket has no use for the checkout path, and somebody else would
+    assert_eq!(
+        index["repository"],
+        f.root().file_name().unwrap().to_str().unwrap()
     );
+    assert!(
+        !index.to_string().contains(f.root().to_str().unwrap()),
+        "the index carries the checkout path: {index}"
+    );
+    assert!(
+        index["surfaces"]
+            .as_array()
+            .expect("the index lists the surfaces")
+            .iter()
+            .any(|s| s["id"] == "mcp" && s["path"] == "/mcp"),
+        "the shared server serves MCP over HTTP and says so: {index}"
+    );
+    let (status, _, html) = http(&url, "GET", "/swagger", &[], None);
     assert_eq!(status, 200);
     assert!(
         html.contains("swagger-ui-dist@"),
@@ -675,13 +673,7 @@ fn a_bridged_peer_takes_over_when_its_server_dies() {
         "the client's identity survived the takeover"
     );
     assert_eq!(sc["peers"][0]["transport"], "stdio");
-    let (status, _, html) = http(
-        &url_b,
-        "GET",
-        majordomus_cli::http::swagger::DOCS_PATH,
-        &[],
-        None,
-    );
+    let (status, _, html) = http(&url_b, "GET", "/swagger", &[], None);
     assert_eq!(status, 200);
     assert!(html.contains("swagger-ui"));
     assert_eq!(b.close(), 0);

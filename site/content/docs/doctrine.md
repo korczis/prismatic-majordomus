@@ -1,7 +1,7 @@
 +++
 title = "Doctrine"
 description = "what rules are enforced, what enforces each one, how the wiring is verified, and what was deliberately left out"
-weight = 14
+weight = 15
 [extra]
 source = "docs/DOCTRINE.md"
 +++

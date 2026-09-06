@@ -30,6 +30,12 @@ test('which elements the theme makes scroll is read from the stylesheet, in eith
   assert.deepEqual(scrollingTags('.card { overflow-y: auto }'), [], 'the other axis is not this');
 });
 
+test('an arbitrary variant scrolls the descendant it names, not the element carrying it', () => {
+  assert.deepEqual(scan('<article class="format [&_pre]:overflow-x-auto"></article>'), [],
+    'the article does not scroll; its pre does, and the stylesheet says so');
+  assert.equal(scan('<div class="overflow-x-auto"></div>').length, 1);
+});
+
 test('a page that declares a scrolling class it does not use has nothing wrong with it', () => {
   const page = '<style>.scroll { overflow-x: auto }</style><p>nothing scrolls here</p>';
   assert.deepEqual(scan(page), [], 'a class with no carrier is not a finding');

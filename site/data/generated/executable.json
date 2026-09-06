@@ -1,6 +1,23 @@
 {
   "capabilities": [
     {
+      "api_anchor": "/docs/api/#op-artifacts-list",
+      "claims": [],
+      "cli": null,
+      "id": "artifacts.list",
+      "kind": "query",
+      "module": "artifacts",
+      "module_route": "/registry/modules/artifacts/",
+      "resource": "majordomus://artifacts",
+      "route": "/registry/capabilities/artifacts-list/",
+      "slug": "artifacts-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+      "tests": [],
+      "title": "List the generated artifacts",
+      "tool": "majordomus_artifacts"
+    },
+    {
       "api_anchor": "/docs/api/#op-capabilities-describe",
       "claims": [],
       "cli": "majordomus capabilities describe",
@@ -35,6 +52,159 @@
       "tool": "majordomus_capabilities"
     },
     {
+      "api_anchor": "/docs/api/#op-continuity-state",
+      "claims": [],
+      "cli": null,
+      "id": "continuity.state",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": "majordomus://continuity",
+      "route": "/registry/capabilities/continuity-state/",
+      "slug": "continuity-state",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "What the lifecycle is holding",
+      "tool": "majordomus_continuity"
+    },
+    {
+      "api_anchor": "/docs/api/#op-deploy-check",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.check",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-check/",
+      "slug": "deploy-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "Would these deployments work",
+      "tool": "majordomus_deploy_check"
+    },
+    {
+      "api_anchor": "/docs/api/#op-deploy-get",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.get",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-get/",
+      "slug": "deploy-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "One deployment",
+      "tool": "majordomus_deployment"
+    },
+    {
+      "api_anchor": "/docs/api/#op-deploy-list",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.list",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": "majordomus://deployments",
+      "route": "/registry/capabilities/deploy-list/",
+      "slug": "deploy-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "Deployments",
+      "tool": "majordomus_deployments"
+    },
+    {
+      "api_anchor": "/docs/api/#op-directories-list",
+      "claims": [],
+      "cli": null,
+      "id": "directories.list",
+      "kind": "query",
+      "module": "directories",
+      "module_route": "/registry/modules/directories/",
+      "resource": "majordomus://directories",
+      "route": "/registry/capabilities/directories-list/",
+      "slug": "directories-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "tests": [],
+      "title": "The layer's directory contracts",
+      "tool": "majordomus_directories"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-artifact",
+      "claims": [],
+      "cli": "majordomus distribution artifact",
+      "id": "distribution.artifact",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-artifact/",
+      "slug": "distribution-artifact",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "The artifact of a target",
+      "tool": "majordomus_artifact"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-build",
+      "claims": [],
+      "cli": "majordomus distribution build",
+      "id": "distribution.build",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-build/",
+      "slug": "distribution-build",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "This build",
+      "tool": "majordomus_build"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-model",
+      "claims": [],
+      "cli": "majordomus distribution show",
+      "id": "distribution.model",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-model/",
+      "slug": "distribution-model",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "The distribution model",
+      "tool": "majordomus_distribution"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-releases",
+      "claims": [],
+      "cli": "majordomus distribution releases",
+      "id": "distribution.releases",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-releases/",
+      "slug": "distribution-releases",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "Published releases",
+      "tool": "majordomus_releases"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -67,6 +237,40 @@
       "tests": [],
       "title": "List graphs",
       "tool": "majordomus_graphs"
+    },
+    {
+      "api_anchor": "/docs/api/#op-health-live",
+      "claims": [],
+      "cli": null,
+      "id": "health.live",
+      "kind": "query",
+      "module": "health",
+      "module_route": "/registry/modules/health/",
+      "resource": null,
+      "route": "/registry/capabilities/health-live/",
+      "slug": "health-live",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "tests": [],
+      "title": "Liveness",
+      "tool": null
+    },
+    {
+      "api_anchor": "/docs/api/#op-health-ready",
+      "claims": [],
+      "cli": null,
+      "id": "health.ready",
+      "kind": "query",
+      "module": "health",
+      "module_route": "/registry/modules/health/",
+      "resource": null,
+      "route": "/registry/capabilities/health-ready/",
+      "slug": "health-ready",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "tests": [],
+      "title": "Readiness",
+      "tool": null
     },
     {
       "api_anchor": "/docs/api/#op-health-report",
@@ -267,6 +471,125 @@
       "tests": [],
       "title": "Judge a path against the scope",
       "tool": "majordomus_scope_classify"
+    },
+    {
+      "api_anchor": "/docs/api/#op-web-surfaces",
+      "claims": [],
+      "cli": null,
+      "id": "web.surfaces",
+      "kind": "query",
+      "module": "web",
+      "module_route": "/registry/modules/web/",
+      "resource": "majordomus://web",
+      "route": "/registry/capabilities/web-surfaces/",
+      "slug": "web-surfaces",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/web.rs",
+      "tests": [],
+      "title": "Every web surface, resolved",
+      "tool": "majordomus_web_surfaces"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-areas",
+      "claims": [],
+      "cli": "majordomus why areas",
+      "id": "why.areas",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": "majordomus://why/areas",
+      "route": "/registry/capabilities/why-areas/",
+      "slug": "why-areas",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "Operational areas",
+      "tool": "majordomus_why_areas"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-audiences",
+      "claims": [],
+      "cli": "majordomus why audiences",
+      "id": "why.audiences",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": "majordomus://why/audiences",
+      "route": "/registry/capabilities/why-audiences/",
+      "slug": "why-audiences",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "Audiences",
+      "tool": "majordomus_why_audiences"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-diagnose",
+      "claims": [],
+      "cli": "majordomus why diagnose",
+      "id": "why.diagnose",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": null,
+      "route": "/registry/capabilities/why-diagnose/",
+      "slug": "why-diagnose",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "Diagnose a selection",
+      "tool": "majordomus_why_diagnose"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-list",
+      "claims": [],
+      "cli": "majordomus why list",
+      "id": "why.list",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": "majordomus://why",
+      "route": "/registry/capabilities/why-list/",
+      "slug": "why-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "The catalogue",
+      "tool": "majordomus_why"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-moment",
+      "claims": [],
+      "cli": "majordomus why show",
+      "id": "why.moment",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": null,
+      "route": "/registry/capabilities/why-moment/",
+      "slug": "why-moment",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "One moment",
+      "tool": "majordomus_why_moment"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-validate",
+      "claims": [],
+      "cli": "majordomus why validate",
+      "id": "why.validate",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": null,
+      "route": "/registry/capabilities/why-validate/",
+      "slug": "why-validate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "Validate the catalogue",
+      "tool": "majordomus_why_validate"
     }
   ],
   "claims": {
@@ -297,6 +620,20 @@
     ],
     "executable": [
       {
+        "id": "distribution-canonical-model",
+        "implementation": "apps/majordomus-cli/src/distribution/mod.rs",
+        "route": "/guarantees/distribution-canonical-model/",
+        "status": "guaranteed",
+        "test": "test/cases/84_distribution_model.sh"
+      },
+      {
+        "id": "install-command-is-derived",
+        "implementation": "apps/majordomus-cli/src/distribution/mod.rs",
+        "route": "/guarantees/install-command-is-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/84_distribution_model.sh"
+      },
+      {
         "id": "mcp-data-driven",
         "implementation": "apps/majordomus-cli/src/index.rs",
         "route": "/guarantees/mcp-data-driven/",
@@ -323,6 +660,13 @@
         "route": "/guarantees/schema-driven-kinds/",
         "status": "guaranteed",
         "test": "test/cases/76_capabilities_projections.sh"
+      },
+      {
+        "id": "generated-artifacts-typed",
+        "implementation": "apps/majordomus-cli/src/generate.rs",
+        "route": "/guarantees/generated-artifacts-typed/",
+        "status": "guaranteed",
+        "test": "test/cases/52_generated_artifact_typing.sh"
       },
       {
         "id": "generated-projections-checked",
@@ -372,6 +716,41 @@
         "route": "/guarantees/scope-declared/",
         "status": "guaranteed",
         "test": "test/cases/93_scope_policy.sh"
+      },
+      {
+        "id": "why-catalogue-discovered",
+        "implementation": "apps/majordomus-cli/src/why.rs",
+        "route": "/guarantees/why-catalogue-discovered/",
+        "status": "guaranteed",
+        "test": "test/cases/98_why_catalogue.sh"
+      },
+      {
+        "id": "why-references-resolve",
+        "implementation": "apps/majordomus-cli/src/why.rs",
+        "route": "/guarantees/why-references-resolve/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/why.rs"
+      },
+      {
+        "id": "why-diagnosis-explainable",
+        "implementation": "apps/majordomus-cli/src/why.rs",
+        "route": "/guarantees/why-diagnosis-explainable/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/why.rs"
+      },
+      {
+        "id": "web-surface-declared-once",
+        "implementation": "apps/majordomus-cli/src/web/model.rs",
+        "route": "/guarantees/web-surface-declared-once/",
+        "status": "guaranteed",
+        "test": "test/cases/89_web_surface.sh"
+      },
+      {
+        "id": "web-namespaces-reserved",
+        "implementation": "apps/majordomus-cli/src/web/discover.rs",
+        "route": "/guarantees/web-namespaces-reserved/",
+        "status": "guaranteed",
+        "test": "test/cases/89_web_surface.sh"
       }
     ],
     "http": [
@@ -422,12 +801,28 @@
     ]
   },
   "counts": {
-    "capabilities": 14,
-    "claims": 21,
-    "modules": 7
+    "capabilities": 33,
+    "claims": 29,
+    "modules": 14
   },
-  "generator": "majordomus-cli 0.1.0",
+  "generator": "majordomus-cli 0.2.0",
   "modules": [
+    {
+      "capabilities": [
+        {
+          "id": "artifacts.list",
+          "route": "/registry/capabilities/artifacts-list/",
+          "slug": "artifacts-list"
+        }
+      ],
+      "claims": [],
+      "id": "artifacts",
+      "route": "/registry/modules/artifacts/",
+      "slug": "artifacts",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/artifacts.rs",
+      "title": "Generated artifacts"
+    },
     {
       "capabilities": [
         {
@@ -452,6 +847,95 @@
     {
       "capabilities": [
         {
+          "id": "continuity.state",
+          "route": "/registry/capabilities/continuity-state/",
+          "slug": "continuity-state"
+        }
+      ],
+      "claims": [],
+      "id": "continuity",
+      "route": "/registry/modules/continuity/",
+      "slug": "continuity",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "title": "Continuity"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "deploy.check",
+          "route": "/registry/capabilities/deploy-check/",
+          "slug": "deploy-check"
+        },
+        {
+          "id": "deploy.get",
+          "route": "/registry/capabilities/deploy-get/",
+          "slug": "deploy-get"
+        },
+        {
+          "id": "deploy.list",
+          "route": "/registry/capabilities/deploy-list/",
+          "slug": "deploy-list"
+        }
+      ],
+      "claims": [],
+      "id": "deploy",
+      "route": "/registry/modules/deploy/",
+      "slug": "deploy",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "title": "Deployment"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "directories.list",
+          "route": "/registry/capabilities/directories-list/",
+          "slug": "directories-list"
+        }
+      ],
+      "claims": [],
+      "id": "directories",
+      "route": "/registry/modules/directories/",
+      "slug": "directories",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "title": "Directory contracts"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "distribution.artifact",
+          "route": "/registry/capabilities/distribution-artifact/",
+          "slug": "distribution-artifact"
+        },
+        {
+          "id": "distribution.build",
+          "route": "/registry/capabilities/distribution-build/",
+          "slug": "distribution-build"
+        },
+        {
+          "id": "distribution.model",
+          "route": "/registry/capabilities/distribution-model/",
+          "slug": "distribution-model"
+        },
+        {
+          "id": "distribution.releases",
+          "route": "/registry/capabilities/distribution-releases/",
+          "slug": "distribution-releases"
+        }
+      ],
+      "claims": [],
+      "id": "distribution",
+      "route": "/registry/modules/distribution/",
+      "slug": "distribution",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "title": "Distribution"
+    },
+    {
+      "capabilities": [
+        {
           "id": "graph.get",
           "route": "/registry/capabilities/graph-get/",
           "slug": "graph-get"
@@ -472,6 +956,16 @@
     },
     {
       "capabilities": [
+        {
+          "id": "health.live",
+          "route": "/registry/capabilities/health-live/",
+          "slug": "health-live"
+        },
+        {
+          "id": "health.ready",
+          "route": "/registry/capabilities/health-ready/",
+          "slug": "health-ready"
+        },
         {
           "id": "health.report",
           "route": "/registry/capabilities/health-report/",
@@ -582,10 +1076,68 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "web.surfaces",
+          "route": "/registry/capabilities/web-surfaces/",
+          "slug": "web-surfaces"
+        }
+      ],
+      "claims": [],
+      "id": "web",
+      "route": "/registry/modules/web/",
+      "slug": "web",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/web.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/web.rs",
+      "title": "Web surfaces"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "why.areas",
+          "route": "/registry/capabilities/why-areas/",
+          "slug": "why-areas"
+        },
+        {
+          "id": "why.audiences",
+          "route": "/registry/capabilities/why-audiences/",
+          "slug": "why-audiences"
+        },
+        {
+          "id": "why.diagnose",
+          "route": "/registry/capabilities/why-diagnose/",
+          "slug": "why-diagnose"
+        },
+        {
+          "id": "why.list",
+          "route": "/registry/capabilities/why-list/",
+          "slug": "why-list"
+        },
+        {
+          "id": "why.moment",
+          "route": "/registry/capabilities/why-moment/",
+          "slug": "why-moment"
+        },
+        {
+          "id": "why.validate",
+          "route": "/registry/capabilities/why-validate/",
+          "slug": "why-validate"
+        }
+      ],
+      "claims": [],
+      "id": "why",
+      "route": "/registry/modules/why/",
+      "slug": "why",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "title": "Why"
     }
   ],
   "registry_schema": "majordomus/capability-registry/v1",
   "routes": {
+    "artifacts": "/registry/artifacts/",
     "benchmarks": "/registry/benchmarks/",
     "capabilities": "/registry/capabilities/",
     "cli": "/registry/cli/",

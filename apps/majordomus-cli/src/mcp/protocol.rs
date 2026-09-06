@@ -319,10 +319,7 @@ impl Server {
         );
         if let Some(url) = &self.endpoint {
             text.push_str(&format!(
-                " This session belongs to the one shared server for this repository at {url}: Swagger UI {url}{swagger}, OpenAPI {url}{spec}, MCP over HTTP {url}{mcp}.",
-                swagger = crate::http::swagger::DOCS_PATH,
-                spec = crate::http::swagger::SPEC_PATH,
-                mcp = crate::http::mcp::PATH
+                " This session belongs to the one shared server for this repository at {url}: its home page at {url}/ lists every surface, Swagger UI is {url}/swagger, OpenAPI {url}/openapi.json, MCP over HTTP {url}/mcp."
             ));
         }
         if let Some(peer) = self.surface.peer() {

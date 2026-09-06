@@ -28,7 +28,13 @@
         "schema",
         "id",
         "kind",
-        "title"
+        "title",
+        "description",
+        "status",
+        "scope",
+        "composition",
+        "order",
+        "providers"
       ],
       "properties": {
         "schema": {
@@ -36,7 +42,8 @@
         },
         "id": {
           "description": "The identity. The file name is a convention; this is what survives a move.",
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$"
         },
         "kind": {
           "const": "context"
@@ -84,6 +91,7 @@
         "providers": {
           "description": "The providers it is rendered for; [\"*\"] is every one.",
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -122,6 +130,13 @@
       "properties": {
         "require_contract": {
           "type": "boolean"
+        },
+        "exempt": {
+          "description": "Directories inside this document's scope that owe no contract, and nor does anything below them: a subtree the layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Repository-relative. The exemption is declared by the contract that governs the subtree, so it travels with the tree it describes instead of living in a list inside the tool; naming a directory outside this document's own scope, or its own directory, is refused.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -180,5 +195,7 @@
         }
       ]
     }
-  }
+  },
+  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/context/context.v1.proto`; regenerate with `majordomus generate`",
+  "x-majordomus-generator": "majordomus-cli 0.2.0"
 }

@@ -19,10 +19,10 @@ use majordomus_cli::bench::{
 };
 use majordomus_cli::capability::handler::handler;
 use majordomus_cli::capability::{
-    builtin, BenchmarkCases, BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability,
-    CapabilityId, CapabilityKind, CapabilityRegistry, CaseContext, Context, Executable, Exposure,
-    HttpExposure, HttpMethod, McpExposure, ModuleId, NamedCase, Provenance as Origin, Stability,
-    WaiverReason,
+    builtin, Availability, BenchmarkCases, BenchmarkPolicy, CachePolicy, CanonicalSchema,
+    Capability, CapabilityId, CapabilityKind, CapabilityRegistry, CaseContext, Context, Executable,
+    Exposure, HttpExposure, HttpMethod, McpExposure, ModuleId, NamedCase, Provenance as Origin,
+    Stability, Visibility, WaiverReason,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -68,11 +68,23 @@ fn fixture<I: BenchmarkCases + serde::de::DeserializeOwned + JsonSchema + 'stati
     benchmark: BenchmarkPolicy,
     cache: CachePolicy,
 ) -> Executable {
+    let kind = CapabilityKind::Query;
+    let exposure = Exposure {
+        mcp: mcp.then(|| McpExposure {
+            tool: Some(id.replace('.', "_")),
+            resource: None,
+        }),
+        http: http.then(|| HttpExposure {
+            method: HttpMethod::Get,
+            path: format!("/api/v1/{}", id.replace('.', "-")),
+        }),
+        cli: None,
+    };
     Executable {
         capability: Capability {
             id: CapabilityId::parse(id).unwrap(),
             module: ModuleId::unchecked(""),
-            kind: CapabilityKind::Query,
+            kind,
             title: format!("Fixture {id}"),
             description: "A fixture.".into(),
             input: CanonicalSchema::of::<I>(),
@@ -80,17 +92,9 @@ fn fixture<I: BenchmarkCases + serde::de::DeserializeOwned + JsonSchema + 'stati
             provenance: Origin::Builtin {
                 module: "fixture".into(),
             },
-            exposure: Exposure {
-                mcp: mcp.then(|| McpExposure {
-                    tool: Some(id.replace('.', "_")),
-                    resource: None,
-                }),
-                http: http.then(|| HttpExposure {
-                    method: HttpMethod::Get,
-                    path: format!("/api/v1/{}", id.replace('.', "-")),
-                }),
-                cli: None,
-            },
+            availability: Availability::classify(kind, &exposure),
+            visibility: Visibility::classify(&exposure),
+            exposure,
             stability: Stability::Experimental,
             tags: vec![],
             benchmark,

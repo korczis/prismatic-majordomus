@@ -22,9 +22,9 @@ pub use benchmark::{BenchmarkCases, CaseContext, CaseProvider, NamedCase};
 pub use executor::CapabilityExecutor;
 pub use handler::{CapabilityError, Context, Executable, Handler};
 pub use model::{
-    BenchmarkPolicy, CachePolicy, Capability, CapabilityId, CapabilityKind, CliExposure, Exposure,
-    HttpExposure, HttpMethod, McpExposure, McpResource, ModuleId, Provenance, Stability,
-    WaiverReason,
+    Availability, BenchmarkPolicy, CachePolicy, Capability, CapabilityId, CapabilityKind,
+    CliExposure, Exposure, HttpExposure, HttpMethod, McpExposure, McpResource, ModuleId,
+    Provenance, Stability, Visibility, WaiverReason,
 };
 pub use module::ModuleDescriptor;
 pub use registry::{CapabilityRegistry, Entry, RegistryError};

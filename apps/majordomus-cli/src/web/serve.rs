@@ -68,10 +68,18 @@ impl StaticSurfaces {
                 continue;
             }
             let Some(artifact) = surface.artifact.as_ref() else {
+                native.push(surface.mount.as_str().to_string());
                 continue;
             };
             let dir = root.join(artifact);
             let Ok(canonical) = dir.canonicalize() else {
+                // Declared but not built. Its mount stays reserved rather than falling to
+                // whoever holds the prefix above it: the application mounted at the root
+                // would otherwise answer /docs with a page of its own the moment the
+                // documentation had not been generated, which is the one thing the
+                // reserved namespaces exist to prevent. The router answers the unbuilt
+                // mount itself, naming the command that builds it.
+                native.push(surface.mount.as_str().to_string());
                 continue;
             };
             mounts.push(Mounted {
@@ -130,7 +138,7 @@ impl StaticSurfaces {
             return Some(Response::new(
                 405,
                 "application/json",
-                r#"{"error":"method_not_allowed","message":"a static surface answers GET"}"#.into(),
+                r#"{"error":"method_not_allowed","message":"a static surface answers GET"}"#,
             ));
         }
         // exactly one separator is removed: `//` is a different URL, and collapsing it here
@@ -253,7 +261,7 @@ fn not_found(surface: &str) -> Response {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web::model::{Availability, Mount, Surface};
+    use crate::web::model::{Availability, Category, Mount, Surface, Visibility};
     use std::collections::BTreeMap;
 
     fn fixture() -> (tempfile::TempDir, StaticSurfaces) {
@@ -267,12 +275,16 @@ mod tests {
         let topology = Topology::new(vec![Surface {
             id: "tests".into(),
             title: "Tests".into(),
+            category: Category::Report,
+            visibility: Visibility::Public,
             kind: SurfaceKind::StaticDirectory,
             mount: Mount::parse("/tests").unwrap(),
             producer: "test".into(),
+            feature: None,
             artifact: Some("target/web/tests".into()),
             index: Some("index.html".into()),
             availability: Availability::Both,
+            built_from: None,
             provenance: BTreeMap::new(),
         }]);
         let surfaces = StaticSurfaces::new(&topology, tmp.path());
@@ -285,7 +297,7 @@ mod tests {
         for path in ["/tests", "/tests/"] {
             let response = s.handle("GET", path).expect("the surface owns it");
             assert_eq!(response.status, 200, "{path}");
-            assert!(response.body.contains("<h1>tests</h1>"), "{path}");
+            assert!(response.body.text().contains("<h1>tests</h1>"), "{path}");
         }
     }
 
@@ -295,7 +307,7 @@ mod tests {
         let json = s.handle("GET", "/tests/results.json").unwrap();
         assert_eq!(json.content_type, "application/json");
         let nested = s.handle("GET", "/tests/coverage/").unwrap();
-        assert!(nested.body.contains("coverage"));
+        assert!(nested.body.text().contains("coverage"));
     }
 
     #[test]
@@ -330,12 +342,16 @@ mod tests {
         surfaces.push(Surface {
             id: "app".into(),
             title: "App".into(),
+            category: Category::Interface,
+            visibility: Visibility::Public,
             kind: SurfaceKind::StaticDirectory,
             mount: Mount::root(),
             producer: "site".into(),
+            feature: None,
             artifact: Some("site/public".into()),
             index: Some("index.html".into()),
             availability: Availability::Both,
+            built_from: None,
             provenance: BTreeMap::new(),
         });
         let s = StaticSurfaces::new(&Topology::new(surfaces), tmp.path());
@@ -343,10 +359,10 @@ mod tests {
         assert_eq!(s.handle("GET", "/").unwrap().status, 200);
         // and never what the executable answers itself
         for path in [
-            crate::http::swagger::DOCS_PATH,
-            crate::http::swagger::SPEC_PATH,
-            crate::http::mcp::PATH,
-            crate::cockpit::PREFIX,
+            "/openapi.json",
+            "/swagger",
+            "/mcp",
+            "/cockpit",
             "/api/v1/capabilities",
         ] {
             assert!(
@@ -363,18 +379,60 @@ mod tests {
         assert_eq!(s.handle("POST", "/tests/").unwrap().status, 405);
     }
 
+    /// The documentation is a static surface like the application, and until its producer
+    /// has run it is a mount with nothing behind it. The application holds `/`, so the one
+    /// thing that must not happen is the application answering `/docs` with a page of its
+    /// own: a declared mount stays its owner's whether or not it has been built.
+    #[test]
+    fn a_declared_surface_that_was_never_built_still_holds_its_mount() {
+        let tmp = tempfile::tempdir().unwrap();
+        let public = tmp.path().join(crate::web::discover::SITE_PUBLIC);
+        std::fs::create_dir_all(public.join("docs")).unwrap();
+        std::fs::write(public.join("index.html"), "<h1>app</h1>").unwrap();
+        std::fs::write(
+            public.join("docs/index.html"),
+            "<h1>the app's own docs</h1>",
+        )
+        .unwrap();
+        let config = tmp.path().join(crate::web::discover::SITE_CONFIG);
+        std::fs::create_dir_all(config.parent().unwrap()).unwrap();
+        std::fs::write(&config, "base_url = \"https://example.invalid\"\n").unwrap();
+
+        // the documentation's own artifact is never written here
+        let surfaces = crate::web::discover::application(tmp.path());
+        let s = StaticSurfaces::new(&Topology::new(surfaces), tmp.path());
+
+        assert_eq!(
+            s.ids(),
+            vec![crate::web::discover::APPLICATION],
+            "only the built surface is mounted"
+        );
+        assert_eq!(s.handle("GET", "/").unwrap().status, 200);
+        for path in ["/docs", "/docs/", "/docs/index.html"] {
+            assert!(
+                s.handle("GET", path).is_none(),
+                "{path} was answered by the application"
+            );
+            assert!(!s.owns(path), "{path}");
+        }
+    }
+
     #[test]
     fn a_surface_whose_producer_has_not_run_is_not_mounted() {
         let tmp = tempfile::tempdir().unwrap();
         let topology = Topology::new(vec![Surface {
             id: "benchmarks".into(),
             title: "Benchmarks".into(),
+            category: Category::Report,
+            visibility: Visibility::Public,
             kind: SurfaceKind::StaticDirectory,
             mount: Mount::parse("/benchmarks").unwrap(),
             producer: "test".into(),
+            feature: None,
             artifact: Some("target/web/benchmarks".into()),
             index: Some("index.html".into()),
             availability: Availability::Both,
+            built_from: None,
             provenance: BTreeMap::new(),
         }]);
         let surfaces = StaticSurfaces::new(&topology, tmp.path());

@@ -50,6 +50,28 @@ pub fn bind(host: &str, port: u16) -> Result<Bound> {
     Ok(Bound { server, address })
 }
 
+/// Bind the address a deployment object declared. The accidental-bind warning does not
+/// fire here and is not suppressed either: it asks "did you mean this", and `source` is the
+/// answer — the canonical object that said so, named in the log so the operator can read
+/// which file decided the address. A hosted process that bound loopback would be
+/// unreachable inside its own machine, which is why this path exists at all.
+pub fn bind_declared(host: &str, port: u16, source: &str) -> Result<Bound> {
+    let server = Arc::new(Server::http((host, port)).map_err(|e| Error::Http {
+        reason: format!("cannot bind {host}:{port}: {e}"),
+    })?);
+    let address = server
+        .server_addr()
+        .to_ip()
+        .map(|a| a.to_string())
+        .unwrap_or_else(|| format!("{host}:{port}"));
+    tracing::info!(
+        address = %address,
+        source = %source,
+        "bound {address}, the address {source} declares; this repository's AI layer is readable by every host that can reach this interface, which is what a deployment means"
+    );
+    Ok(Bound { server, address })
+}
+
 /// Bind `host:port`, and when that port is taken bind a free one instead, saying so on
 /// stderr. For a server whose port is a convenience rather than a contract.
 pub fn bind_or_fallback(host: &str, port: u16) -> Result<Bound> {
@@ -170,13 +192,22 @@ fn answer(router: &Router, mut request: tiny_http::Request) {
     tracing::debug!(method = %method, target = %target, status = response.status, "response");
     // always Content-Length, never chunked: one less thing a small client must decode;
     // a HEAD gets the GET's headers and no body
-    let body = if head { String::new() } else { response.body };
-    let mut out = HttpResponse::from_string(body)
-        .with_chunked_threshold(usize::MAX)
-        .with_status_code(response.status)
-        .with_header(
-            Header::from_bytes("Content-Type", response.content_type).expect("static header"),
-        );
+    let body: Vec<u8> = if head {
+        Vec::new()
+    } else {
+        response.body.as_bytes().to_vec()
+    };
+    let length = body.len();
+    let mut out = HttpResponse::new(
+        response.status.into(),
+        Vec::new(),
+        std::io::Cursor::new(body),
+        Some(length),
+        None,
+    )
+    .with_chunked_threshold(usize::MAX)
+    .with_status_code(response.status)
+    .with_header(Header::from_bytes("Content-Type", response.content_type).expect("static header"));
     // `no-store` is right for an answer derived from a repository that a person is editing;
     // a response that named its own caching (a Cockpit asset whose URL carries its digest)
     // keeps what it said

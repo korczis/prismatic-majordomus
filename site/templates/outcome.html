@@ -5,7 +5,7 @@
     page's own. The moments, commands and claims come from the front matter and are resolved
     against the generated data, so a name that does not exist fails the build. -#}
 {%- set prop = [x for x in m.hero.propositions if x.slug == page.slug][0] -%}
-{%- set why = load_data(path="data/generated/why.json") -%}
+{%- set catalogue = load_data(path="data/registry/why.json") -%}
 {%- set cmds = load_data(path="data/generated/commands.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
@@ -22,8 +22,8 @@
 
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the moments it answers</h3>
     <ul class="grid gap-3 sm:grid-cols-2">
-      {%- for slug in page.extra.moments %}{% set mo = [x for x in why.moments if x.slug == slug][0] %}
-      <li><a href="{{ get_url(path='/why/' ~ mo.slug ~ '/', trailing_slash=true) }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+      {%- for slug in page.extra.moments %}{% set mo = [x for x in catalogue.moments if x.id == slug][0] %}
+      <li><a href="{{ get_url(path='/why/' ~ mo.id ~ '/', trailing_slash=true) }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
         <span aria-hidden="true" class="font-mono text-fg-brand">&rarr;</span>
         <span class="min-w-0 break-words text-sm text-heading">{{ mo.hook }}</span></a></li>
       {%- endfor %}

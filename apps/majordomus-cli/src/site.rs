@@ -36,6 +36,9 @@ pub const SCHEMA: &str = "majordomus-site-registry/v2";
 pub struct SiteRegistry {
     /// [`SCHEMA`].
     pub schema: &'static str,
+    /// That it is generated, in the words every other generated document uses: this file
+    /// is a cache of the registry and the index, and editing it is editing a cache.
+    pub generated: String,
     /// Who wrote it.
     pub generator: Generator,
     /// The capability registry, fingerprinted and counted, with the builtin entries in full.
@@ -252,7 +255,7 @@ pub struct HttpView {
     /// The capability routes, in registry order.
     pub routes: Vec<RouteView>,
     /// The projection's own routes, not capabilities.
-    pub infrastructure: &'static [&'static str],
+    pub infrastructure: Vec<String>,
     /// Where the OpenAPI document is committed, repository-relative.
     pub openapi_path: String,
 }
@@ -514,7 +517,7 @@ pub fn dataset(
                 })
             })
             .collect(),
-        infrastructure: &openapi::INFRASTRUCTURE_ROUTES,
+        infrastructure: openapi::infrastructure_routes(),
         openapi_path: format!("{}/openapi.json", crate::generate::OUT_DIR),
     };
 
@@ -579,6 +582,9 @@ pub fn dataset(
 
     Ok(SiteRegistry {
         schema: SCHEMA,
+        generated: crate::generate::json_banner(
+            "the capability registry and the index of this repository's layer",
+        ),
         generator: Generator {
             id: "majordomus-cli",
             version: crate::VERSION,
@@ -683,6 +689,162 @@ fn enum_name<T: serde::Serialize>(v: T) -> String {
 /// The dataset as the committed file: pretty JSON, trailing newline.
 pub fn render(dataset: &SiteRegistry) -> String {
     let mut s = serde_json::to_string_pretty(dataset).unwrap_or_default();
+    s.push('\n');
+    s
+}
+
+// ---------------------------------------------------------------- the Why catalogue
+
+/// The dataset's own format version.
+pub const WHY_SCHEMA: &str = "majordomus-site-why/v1";
+
+/// Where `why.json` says it came from.
+pub const WHY_SOURCE: &str =
+    "the operational moments, audiences and areas of this repository's layer";
+
+/// Where `why-graph.json` says it came from.
+pub const GRAPH_SOURCE: &str = "the moments and what answers them, as the derived `why` graph";
+
+/// The Why catalogue and its graph, as the site's templates read them:
+/// `site/data/registry/why.json` and `site/data/registry/why-graph.json`.
+///
+/// Both are projections of [`crate::why::Catalogue`], which the context already built.
+/// Nothing here re-reads a file, and nothing here is a second opinion about what a moment
+/// says: the site generator writes one page per entry from this document, and the
+/// templates read it for every listing, filter, count, backlink and questionnaire.
+///
+/// The bodies are not in it: a page's prose is read from the file the record names in
+/// `source`, so the dataset stays the metadata every listing, filter, count and backlink
+/// needs and never becomes a second copy of the writing.
+///
+/// Deterministic and index-independent: the payload depends on the catalogue's own
+/// sources and on nothing else, so `scripts/derive` — which runs `generate`, then the
+/// site generator, then `generate` again over the tree that left — produces the same
+/// bytes in both passes.
+pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
+    let by_cli = |path: &[&str]| -> Option<String> {
+        ctx.registry
+            .by_cli(&path.iter().map(|w| w.to_string()).collect::<Vec<_>>())
+            .map(|c| c.id.to_string())
+    };
+    let run = |path: &[&str], input: serde_json::Value| -> Result<serde_json::Value> {
+        let id = by_cli(path).ok_or_else(|| Error::Protocol {
+            reason: format!(
+                "no capability is exposed as `majordomus {}`",
+                path.join(" ")
+            ),
+        })?;
+        ctx.execute(&id, input).map_err(|e| Error::Protocol {
+            reason: e.to_string(),
+        })
+    };
+
+    // the catalogue, then one detail per moment: the site needs the derived relations and
+    // the body, and asking the capability for them is what keeps this from being a second
+    // reading of the same files
+    let catalogue = run(&["why", "list"], serde_json::json!({ "status": "any" }))?;
+    let mut moments = Vec::new();
+    for m in catalogue["moments"].as_array().into_iter().flatten() {
+        let id = m["id"].as_str().unwrap_or_default();
+        let mut detail = run(&["why", "show"], serde_json::json!({ "id": id }))?;
+        // The prose stays where it was authored. Every page the site generator writes
+        // takes the body from the file this record names in `source`, so the dataset is
+        // the metadata a template reads and not a second copy of the writing.
+        if let Some(o) = detail.as_object_mut() {
+            o.remove("body");
+        }
+        moments.push(detail);
+    }
+    let validation = run(&["why", "validate"], serde_json::json!({}))?;
+
+    // the same for the two taxonomies: their pages take the prose from their own files
+    let strip = |v: &serde_json::Value| -> Vec<serde_json::Value> {
+        v.as_array()
+            .into_iter()
+            .flatten()
+            .map(|e| {
+                let mut e = e.clone();
+                if let Some(o) = e.as_object_mut() {
+                    o.remove("body");
+                }
+                e
+            })
+            .collect()
+    };
+    let audiences = strip(&catalogue["audiences"]);
+    let areas = strip(&catalogue["areas"]);
+
+    // the questionnaire's index: every signal with the moment that owns it, flat, so a
+    // template renders it without joining two lists and a script never learns a mapping
+    let mut signals = Vec::new();
+    for m in &moments {
+        if m["status"] != "stable" {
+            continue;
+        }
+        for s in m["signals"].as_array().into_iter().flatten() {
+            signals.push(serde_json::json!({
+                "id": s["id"],
+                "text": s["text"],
+                "moment": m["id"],
+            }));
+        }
+    }
+
+    let document = serde_json::json!({
+        "schema": WHY_SCHEMA,
+        "generated": crate::generate::json_banner(WHY_SOURCE),
+        "generator": { "id": "majordomus-cli", "version": crate::VERSION },
+        "fingerprint": catalogue["fingerprint"],
+        "route": crate::why::ROUTE,
+        "counts": catalogue["counts"],
+        "facets": catalogue["facets"],
+        "audiences": audiences,
+        "areas": areas,
+        "signals": signals,
+        "moments": moments,
+        "valid": validation["valid"],
+    });
+
+    let graph =
+        crate::graph::derive("why", &ctx.registry, &ctx.index).ok_or_else(|| Error::Protocol {
+            reason: "this executable derives no `why` graph".into(),
+        })?;
+    // the graph is a value of the domain and carries no provenance of its own; the artifact
+    // does, in the members every generated document of this repository carries
+    let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
+    if let Some(o) = graph_document.as_object_mut() {
+        o.insert(
+            "generated".into(),
+            serde_json::Value::String(crate::generate::json_banner(GRAPH_SOURCE)),
+        );
+        o.insert(
+            "generator".into(),
+            serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
+        );
+    }
+
+    Ok(vec![
+        crate::generate::Artifact::verbatim(
+            format!("{}/why.json", crate::generate::SITE_DATA_DIR),
+            "site-why",
+            crate::generate::ArtifactFormat::Json,
+            Some(WHY_SCHEMA.to_string()),
+            WHY_SOURCE,
+            render_json(&document),
+        ),
+        crate::generate::Artifact::verbatim(
+            format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
+            "site-why-graph",
+            crate::generate::ArtifactFormat::Json,
+            None,
+            GRAPH_SOURCE,
+            render_json(&graph_document),
+        ),
+    ])
+}
+
+fn render_json(v: &serde_json::Value) -> String {
+    let mut s = serde_json::to_string_pretty(v).unwrap_or_default();
     s.push('\n');
     s
 }

@@ -294,7 +294,9 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
     // a repository that carries the distribution itself, as this one does
     let dist = common::dist_share();
     // the schema root is a tree — <vendor>/<name>/<name>.v<n>.{proto,schema.json} — so it
-    // is copied as one, not as a directory listing
+    // is copied as one, not as a directory listing. share/schemas/generated/ comes with it:
+    // those are the contracts of the *generated documents* rather than a kind's, and kind
+    // discovery tells the two apart by the vendor level rather than by what was copied.
     copy_tree(&dist.join("schemas"), "share/schemas", &f);
     f.write(
         "share/kinds.yaml",
@@ -304,6 +306,12 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
         "share/skeleton/ai/repo/scope.yaml",
         &std::fs::read_to_string(dist.join("skeleton/ai/repo/scope.yaml")).unwrap(),
     );
+    // the distribution model too: a repository that carries the distribution carries this,
+    // and the capabilities that read a release target have nothing to be timed on without it
+    f.write(
+        "share/distribution.yaml",
+        &std::fs::read_to_string(dist.join("distribution.yaml")).unwrap(),
+    );
     f.commit("distribution");
     let out = std::process::Command::new(BIN)
         .args(["capabilities", "validate"])
@@ -312,10 +320,11 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
         .output()
         .unwrap();
     let text = String::from_utf8(out.stdout).unwrap();
+    // the findings are on stdout; a failure that printed only stderr said nothing about why
     assert_eq!(
         out.status.code(),
         Some(0),
-        "{}",
+        "{text}{}",
         String::from_utf8_lossy(&out.stderr)
     );
     assert!(text.contains("(repository)"), "{text}");

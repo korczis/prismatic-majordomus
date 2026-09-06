@@ -28,6 +28,42 @@ statuses:
     meaning: Considered and deliberately refused, with the reason recorded.
 
 claims:
+  - id: distribution-canonical-model
+    claim: Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused
+    source: docs/DISTRIBUTION.md
+    implementation: apps/majordomus-cli/src/distribution/mod.rs
+    test: test/cases/84_distribution_model.sh
+    status: guaranteed
+    responsibility: projection
+    note: share/distribution.yaml is the model. The installer's platform table, the release build matrix, the documentation's table, the website's dataset and the public release metadata are generated from it, and `majordomus generate --check` exits 10 naming any that has fallen behind.
+
+  - id: install-command-is-derived
+    claim: The documented one-line install command is composed from the model's parts, and a document that states a different one fails the suite
+    source: docs/INSTALL.md
+    implementation: apps/majordomus-cli/src/distribution/mod.rs
+    test: test/cases/84_distribution_model.sh
+    status: guaranteed
+    responsibility: projection
+    note: The download command, the base URL, the script name and the shell are four fields; the command is their composition. README.md and the installation guide are checked against it rather than trusted.
+
+  - id: installer-verifies-before-installing
+    claim: The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working
+    source: docs/INSTALL.md
+    implementation: share/install/install.sh.in
+    test: test/cases/85_installer.sh
+    status: guaranteed
+    responsibility: doctor
+    note: A wrong digest, a truncated download, an archive that escapes its own directory or carries a link, and an executable that reports another version are each refused by name, before the launcher is replaced. There is no warn-and-continue path and sudo appears nowhere.
+
+  - id: release-is-complete-or-absent
+    claim: A release publishes an artifact for every supported target or it is not published
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/release-record
+    test: test/cases/87_release_pipeline.sh
+    status: guaranteed
+    responsibility: projection
+    note: The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported.
+
   - id: policy-parse
     claim: The canonical policy is parsed and rejected if it contains an unknown key
     source: docs/SCHEMAS.md
@@ -487,7 +523,7 @@ claims:
     test: test/cases/69_context_documents.sh
     status: guaranteed
     responsibility: layer
-    note: A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the local half and the vendored package.
+    note: A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the half the manifest declares untracked; nothing else is skipped by name, and a subtree the layer carries but does not author is released by children.exempt on the contract that governs it, which may name only directories inside its own scope.
 
   - id: context-impact
     claim: The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing
@@ -803,6 +839,15 @@ claims:
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas.
 
+  - id: generated-artifacts-typed
+    claim: Every generated artifact declares the document it projects, the encoding it is written in, the schema its content satisfies and its source, and a structured document is written in every encoding it is committed in from one value
+    source: docs/CAPABILITIES.md
+    implementation: apps/majordomus-cli/src/generate.rs
+    test: test/cases/52_generated_artifact_typing.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: JSON, YAML and Markdown of a document are renderings of one value, so they cannot disagree; each carries a provenance header in the form its encoding allows; the index of the whole set, docs/generated/artifacts.json, is itself generated and is read back by artifacts.list.
+
   - id: generated-projections-checked
     claim: The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one
     source: docs/CAPABILITIES.md
@@ -999,7 +1044,7 @@ claims:
     test: test/cases/93_scope_policy.sh
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: The declaration is typed and schema-validated (share/schemas/scope.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared.
+    note: The declaration is typed and schema-validated (share/schemas/majordomus/scope/scope.v1.schema.json; share/allow/scope.txt is generated from it for the shell tool); a repository declaring none is read under the distribution's default and says so; a discovered file outside the scope is an out_of_scope diagnostic naming the rule; a tracked secret is a tracked_secret warning; repository.scope and repository.scope_classify are projected to MCP, HTTP and `majordomus scope`. The crate's tests/scope.rs covers every branch at the library, socket and process level. The doctrine is project.scope-is-declared.
 
   - id: use-case-coverage
     claim: Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish
@@ -1070,7 +1115,7 @@ claims:
     test: test/cases/95_skills.sh
     status: guaranteed
     responsibility: layer
-    note: share/kinds.yaml declares the kind, share/schemas/skill.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow.
+    note: share/kinds.yaml declares the kind, share/schemas/majordomus/skill/skill.v1.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow.
 
   - id: skill-check
     claim: Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed
@@ -1090,6 +1135,33 @@ claims:
     responsibility: none      # the site pipeline, not a supervised responsibility
     note: site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds.
 
+  - id: why-catalogue-discovered
+    claim: An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: test/cases/98_why_catalogue.sh
+    status: guaranteed
+    responsibility: layer
+    note: Removing the file removes it from all of them, which is what a hidden registry would fail.
+
+  - id: why-references-resolve
+    claim: Every reference a moment makes resolves against the thing it names, and one that does not is an error carrying the nearest candidate
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: apps/majordomus-cli/tests/why.rs
+    status: guaranteed
+    responsibility: layer
+    note: Audiences, areas and related moments against the catalogue; commands, capabilities, claims, rules and use cases against their own registries.
+
+  - id: why-diagnosis-explainable
+    claim: A diagnosis of a reader's own symptoms is deterministic counting over the catalogue's metadata, and every recommendation names the moments that produced it
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: apps/majordomus-cli/tests/why.rs
+    status: guaranteed
+    responsibility: layer
+    note: No weighting and no percentage; the questionnaire on the website and `majordomus why diagnose` run the same arithmetic over the same data.
+
   - id: session-records
     claim: A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered
     source: docs/SCHEMAS.md
@@ -1100,13 +1172,13 @@ claims:
     note: The record lives under the manifest's sessions section. Every field is derived - times from the clock, heads and commits from git, the reference lists from the ledger's events for the episode - and the body is the only authored part. The repository is named by its remote and the working copy by a hash, so the resolver can tell one checkout's records from another's without disclosing a path. One source class discovers them; the index, MCP, the object routes, the graph and the site follow.
 
   - id: session-lifecycle
-    claim: A provider hook opens and closes the execution episode below the model, and the context resolved at the open is frozen beside it
+    claim: A provider hook opens the episode below the model and hands the worker what the last one left, records what a compaction is about to discard, and closes the episode with a continuation record beside its envelope
     source: docs/DOCTRINE.md
     implementation: lib/session_context.sh
     test: test/cases/54_session_lifecycle_hooks.sh
     status: guaranteed
     responsibility: policy
-    note: The provider's own SessionStart and SessionEnd events draw the boundary; both are idempotent because the events are, neither writes to stdout because a start hook's output reaches the model's context, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation.
+    note: The provider's own SessionStart, PreCompact and SessionEnd events draw the boundary and drive the lifecycle; each is idempotent because the events are, and doctor proves the wiring by driving a payload through the end shim with the mutation disabled. The start event writes the policy's briefing to stdout, which is how a continuation record reaches a worker who did not ask for one; the other two write none, because they fire inside a turn already under way. The working context each open freezes is local, appended to rather than rewritten, and refused if it carries a conversation.
 
   - id: adr-catalogue
     claim: An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving
@@ -1115,7 +1187,7 @@ claims:
     test: test/cases/99_adr.sh
     status: guaranteed
     responsibility: layer
-    note: share/kinds.yaml declares the kind, share/schemas/adr.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section.
+    note: share/kinds.yaml declares the kind, share/schemas/majordomus/adr/adr.v1.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section.
 
   - id: adr-traceability
     claim: A decision states what it put in force as typed references, each one validated, and the reverse direction — what a rule, a document, an implementation or a case was decided by — is read from the knowledge graph rather than written down a second time
@@ -1143,3 +1215,21 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.
+
+  - id: web-surface-declared-once
+    claim: Every web surface is declared once at its producer and resolved into one topology, from which the router, the landing page and the machine-readable index are each projected
+    source: .ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md
+    implementation: apps/majordomus-cli/src/web/model.rs
+    test: test/cases/89_web_surface.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: A surface is a mount, a producer, a kind, a category, a visibility and the provenance of each; the routes the executable answers come from the capability declarations that already exist, a generated directory declares itself beside its output, and the application's site is read from the site generator's configuration. There is no central list. The case asks the page and the index independently and requires the same set of public mounts, so a link written into the page by hand fails it.
+
+  - id: web-namespaces-reserved
+    claim: /docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount
+    source: .ai/repo/rules/project/web-surface-declared-once.v1.md
+    implementation: apps/majordomus-cli/src/web/discover.rs
+    test: test/cases/89_web_surface.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there.

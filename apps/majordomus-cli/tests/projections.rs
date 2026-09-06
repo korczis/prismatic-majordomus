@@ -9,9 +9,9 @@ use std::collections::BTreeSet;
 
 use majordomus_cli::capability::handler::handler;
 use majordomus_cli::capability::{
-    BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability, CapabilityId, CapabilityKind,
-    CapabilityRegistry, CaseContext, Executable, Exposure, HttpExposure, HttpMethod, McpExposure,
-    ModuleId, Provenance, Stability,
+    Availability, BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability, CapabilityId,
+    CapabilityKind, CapabilityRegistry, CaseContext, Executable, Exposure, HttpExposure,
+    HttpMethod, McpExposure, ModuleId, Provenance, Stability, Visibility,
 };
 use majordomus_cli::generate::{artifacts, Target};
 use majordomus_cli::http::openapi;
@@ -153,11 +153,23 @@ fn echo<I: serde::de::DeserializeOwned + 'static>(
     schema: CanonicalSchema,
     http: bool,
 ) -> Executable {
+    let kind = CapabilityKind::Query;
+    let exposure = Exposure {
+        mcp: Some(McpExposure {
+            tool: Some("fixture_echo".into()),
+            resource: None,
+        }),
+        http: http.then(|| HttpExposure {
+            method: HttpMethod::Get,
+            path: "/api/v1/echo".into(),
+        }),
+        cli: None,
+    };
     Executable {
         capability: Capability {
             id: CapabilityId::parse("fixture.echo").unwrap(),
             module: ModuleId::unchecked("fixture"),
-            kind: CapabilityKind::Query,
+            kind,
             title: "Echo".into(),
             description: description.into(),
             input: schema,
@@ -165,17 +177,9 @@ fn echo<I: serde::de::DeserializeOwned + 'static>(
             provenance: Provenance::Builtin {
                 module: "fixture".into(),
             },
-            exposure: Exposure {
-                mcp: Some(McpExposure {
-                    tool: Some("fixture_echo".into()),
-                    resource: None,
-                }),
-                http: http.then(|| HttpExposure {
-                    method: HttpMethod::Get,
-                    path: "/api/v1/echo".into(),
-                }),
-                cli: None,
-            },
+            availability: Availability::classify(kind, &exposure),
+            visibility: Visibility::classify(&exposure),
+            exposure,
             stability: Stability::Experimental,
             tags: vec![],
             benchmark: BenchmarkPolicy::Required,
@@ -305,16 +309,45 @@ fn generated_artifacts_are_byte_identical_twice_and_carry_no_absolute_path() {
             art.path
         );
     }
-    let doc: Value = serde_json::from_str(&a[0].content).unwrap();
+    let by_path = |arts: &[majordomus_cli::generate::Artifact], p: &str| -> String {
+        arts.iter()
+            .find(|x| x.path == p)
+            .unwrap_or_else(|| panic!("artifact {p}"))
+            .content
+            .clone()
+    };
+    let doc: Value = serde_json::from_str(&by_path(&a, "docs/generated/openapi.json")).unwrap();
     assert!(doc["paths"].as_object().unwrap().keys().is_sorted());
     assert!(doc["components"]["schemas"]
         .as_object()
         .unwrap()
         .keys()
         .is_sorted());
-    assert!(a[1]
-        .content
-        .starts_with("<!-- GENERATED FILE — DO NOT EDIT DIRECTLY"));
+    // every Markdown projection carries the banner, and every YAML one carries it as a
+    // comment: the header is a property of the encoding, not of one file
+    for art in &a {
+        let expected = match art.format {
+            majordomus_cli::generate::ArtifactFormat::Markdown => {
+                "<!-- GENERATED FILE — DO NOT EDIT DIRECTLY"
+            }
+            majordomus_cli::generate::ArtifactFormat::Yaml => {
+                "# GENERATED FILE — DO NOT EDIT DIRECTLY"
+            }
+            _ => continue,
+        };
+        assert!(
+            art.content.starts_with(expected),
+            "{} carries no banner",
+            art.path
+        );
+    }
+    // the same document in two encodings, from one value
+    let json_doc: Value =
+        serde_json::from_str(&by_path(&a, "docs/generated/registry.json")).unwrap();
+    assert_eq!(
+        json_doc["schema"],
+        majordomus_cli::generate::REGISTRY_SCHEMA
+    );
 }
 
 #[test]
@@ -430,7 +463,15 @@ fn every_generated_artifact_is_derived_deterministic_and_traces_to_the_registry(
     );
     let (code, out, _) = common::run_in(&f.root(), &["generate", "benchmarks"], "");
     assert_eq!(code, 0);
-    assert_eq!(out.trim(), "docs/generated/benchmarks.md");
+    // one document, every encoding it is committed in
+    assert_eq!(
+        out.lines().collect::<Vec<_>>(),
+        [
+            "docs/generated/benchmarks.md",
+            "docs/generated/benchmarks.json",
+            "docs/generated/benchmarks.yaml"
+        ]
+    );
 }
 
 /// The whole plan, every target: deterministic, free of the checkout path, and a mirror
@@ -592,7 +633,7 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
     let paths: BTreeSet<String> = doc["paths"].as_object().unwrap().keys().cloned().collect();
     let ds_paths: BTreeSet<String> = ds.http.routes.iter().map(|r| r.path.clone()).collect();
     assert_eq!(paths, ds_paths);
-    assert!(ds.http.infrastructure.contains(&"/openapi.json"));
+    assert!(ds.http.infrastructure.iter().any(|r| r == "/openapi.json"));
 
     // the registry: every builtin descriptor in full, with the file it was composed in;
     // every module's ids are descriptors of the dataset
@@ -783,12 +824,13 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
             }])
             .build()
             .unwrap(),
-        "test",
     );
-    assert!(waived_manifest.contains("\"external_dependency\""));
+    assert!(waived_manifest
+        .to_string()
+        .contains("\"external_dependency\""));
 
     // the registry manifest carries the same descriptor with its source path
-    let manifest: Value = serde_json::from_str(&majordomus_cli::generate::registry_manifest(
+    let manifest: Value = majordomus_cli::generate::registry_manifest(
         &CapabilityRegistry::builder()
             .with_builtin(vec![echo::<EchoV2>(
                 "Echo, renamed.",
@@ -797,9 +839,7 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
             )])
             .build()
             .unwrap(),
-        "test",
-    ))
-    .unwrap();
+    );
     let cap = &manifest["capabilities"][0];
     assert_eq!(cap["id"], "fixture.echo");
     assert_eq!(cap["description"], "Echo, renamed.");

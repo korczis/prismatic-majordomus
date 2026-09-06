@@ -174,6 +174,7 @@ impl Session {
             &args.http_host,
             args.http_port,
             true,
+            None,
             lease,
             Some(app.share.dir()),
         )?;
@@ -195,7 +196,7 @@ impl Session {
         tracing::info!(
             url = %url,
             "a shared server for this repository is already running at {url} (swagger ui {url}{swagger}); bridging this stdio session to it",
-            swagger = crate::http::swagger::DOCS_PATH
+            swagger = crate::http::swagger::SWAGGER_PATH
         );
         let bridge = Arc::new(Mutex::new(Bridge::new(url)));
         let heartbeat = Heartbeat::start(Arc::clone(&bridge));

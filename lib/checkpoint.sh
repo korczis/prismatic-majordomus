@@ -8,18 +8,23 @@
 # the next worker's context verbatim. The policy caps its length for exactly that reason.
 # shellcheck source=handover.sh
 . "$MJ_LIB_DIR/handover.sh"
+# shellcheck source=derive.sh
+. "$MJ_LIB_DIR/derive.sh"
 
 mj_cmd_checkpoint() {
-  local show=0 list=0 path_only=0
+  local show=0 list=0 path_only=0 derive=0
   while [ $# -gt 0 ]; do case "$1" in
     --show) show=1; shift ;; --list) list=1; shift ;; --path) path_only=1; shift ;;
+    --derive) derive=1; shift ;;
     --help|-h) cat <<H
 usage: majordomus checkpoint < body.md      record progress (body optional; empty body = timestamp only)
+       majordomus checkpoint --derive        compose the body from git and the ledger
        majordomus checkpoint --show [--path]
        majordomus checkpoint --list
   writes .ai/local/state/checkpoints/<ts>--<branch>--<head>--<rand>.md (mode 0600, atomic, never staged)
   the body is free text, not sections: at most the policy's checkpoint.max_body_lines lines
   it must not contain identity fields; those are computed from git
+  --derive says what moved since the task started, within the same cap, with no model call
   --show   print the newest checkpoint for the active task in this worktree and branch
   --list   list this worktree's checkpoints, newest first
 H
@@ -48,7 +53,8 @@ H
     *) mj_die "$MJ_EX_REFUSED" "task $id is $(mj_cur outcome); a checkpoint records progress inside an active task" ;;
   esac
 
-  local body; body="$(mktemp "${TMPDIR:-/tmp}/mj.cb.XXXXXX")"; cat > "$body"
+  local body; body="$(mktemp "${TMPDIR:-/tmp}/mj.cb.XXXXXX")"
+  if [ "$derive" = 1 ]; then mj_derive_checkpoint_body > "$body"; else cat > "$body"; fi
   local now; now="$(mj_now)" ; local final=""
   if [ -s "$body" ]; then
     if mj_reject_identity "$body"; then

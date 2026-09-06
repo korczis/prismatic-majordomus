@@ -85,14 +85,25 @@ command a hook runs. The model is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
 ## Quick start
 
 ```bash
-git clone https://github.com/korczis/prismatic-majordomus ~/majordomus
-export PATH="$HOME/majordomus/bin:$PATH"
+curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+```
 
-cd your-project
+Then, in the repository you want supervised:
+
+```bash
 majordomus init            # .ai/: policy, four profiles, prompts, the vendored rule baseline, workflows
 majordomus update          # CLAUDE.md, AGENTS.md, GEMINI.md generated from the policy
 majordomus doctor          # names the two hook lines you still need to add
 ```
+
+The installer needs no git, no Rust, no Node, no Python and no root; it downloads one
+archive for your machine, verifies its SHA-256 against the release metadata before
+unpacking anything, and installs atomically. Pinning a version, choosing where it goes,
+upgrading, uninstalling, the supported platforms and the security model are in
+[`docs/INSTALL.md`](docs/INSTALL.md); building from a checkout is for contributors and is
+in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Per task
 
 Add the hook lines, run `doctor` again, commit `.ai/repo/` and the generated files.
 `.ai/local/` is this checkout's own state and is ignored; it never travels through git.
@@ -382,8 +393,10 @@ and the benchmarks — is rendered from that dataset and from nothing typed by h
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)
 just mcp                        # MCP on stdio for the client that spawned it; the first one in a repository is the shared server
-just serve                      # the shared server alone: the Cockpit at /cockpit, Swagger UI at /swagger, /openapi.json, /mcp
+just serve                      # the shared server alone: the home page at /, the docs at /docs/, the Cockpit at /cockpit, Swagger UI at /swagger, /openapi.json, /mcp
+just home                       # open the running server's home page: every surface it serves
 just cockpit                    # open the running server's Cockpit in a browser
+just site-docs                  # build the documentation for the running server's /docs/ mount
 just cockpit-assets             # build the Cockpit's stylesheet and vendor its pinned libraries (needs npm ci)
 just capabilities               # every capability and its projections
 just derive                     # every derived file of the repository, in dependency order
@@ -416,11 +429,37 @@ navigation entry, its search entry and its benchmark target with no edit to the 
 [ADR 12](.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md)).
 
 **One server per repository.** The first `majordomus mcp` binds the loopback HTTP
-projection beside its stdio session and logs the URL (the Cockpit at `/cockpit`, Swagger UI
-at `/docs`, the OpenAPI document, MCP over HTTP at `/mcp`); every later `majordomus mcp` in the same repository
+projection beside its stdio session and logs the URL and every surface it serves (the home
+page at `/`, the documentation at `/docs/`, the Cockpit at `/cockpit`, Swagger UI at
+`/swagger`, the OpenAPI document, MCP over HTTP at `/mcp`); every later `majordomus mcp` in the same repository
 attaches to it instead of starting another, and the server ends when its last client
 leaves. It writes one file, a lease under `.ai/local/state/mcp/`, and nothing under the
 tracked tree.
+
+**One web surface, discovered from its producer.** What the server serves is not a list
+anybody keeps. A *surface* — the home page, the documentation, the Cockpit, Swagger UI, the
+OpenAPI document, the capability routes, MCP over HTTP, a generated test or benchmark
+report — is discovered from the thing that produces it: the executable's own declarations,
+the site's configuration, or a `surface.json` a producer writes beside its output. One
+resolution then feeds the router, the home page at `/`, the `web.surfaces` capability, the
+validator, the publication and the generated reference; a surface that appears tomorrow
+appears in all of them with no registration anywhere.
+
+```text
+/               the home page: every surface this process serves, grouped and linked
+/docs/          this repository's documentation, the same Zola source GitHub Pages renders
+/swagger        Swagger UI over the OpenAPI document
+/openapi.json   the OpenAPI document, generated from the registry
+/api/v1/        the capability routes; /api/v1/web/surfaces is this topology as JSON
+/cockpit        the registry rendered for a person
+/mcp            MCP over HTTP for a second client
+```
+
+`/docs` is the documentation and `/swagger` is Swagger UI; neither name may be repurposed
+for the other, which `project.web-surface-declared-once` states and `majordomus web
+validate` enforces. `majordomus web list` and `web explain` say what exists and where every
+value came from: [`docs/WEB.md`](docs/WEB.md),
+[ADR 13](.ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md).
 
 **Clients start it themselves.** [`.mcp.json`](.mcp.json) (Claude Code),
 [`.gemini/settings.json`](.gemini/settings.json) (Gemini CLI) and

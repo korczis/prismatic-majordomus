@@ -1,7 +1,7 @@
 # majordomus-covers: capture session
 # majordomus-negative: capture session doctor
-# The episode boundary drawn by the provider: the shims, the two events, what each does
-# twice, and the one thing neither may ever do — write to stdout.
+# The episode boundary drawn by the provider: the shims, the three events, what each does
+# twice, and what exactly one of them may write to stdout.
 #
 # The point of this case is that the boundary is real without anybody typing a command. Every
 # assertion below drives the shim the provider would run, with the payload the provider would
@@ -19,7 +19,7 @@ expect_grep 'majordomus capture session --provider'
 # 12 and not 2, for the reason the prompt path never exits 2: this runs inside a provider
 # hook, and there the wrong exit code costs the person their session.
 expect_exit 12 "$MJ" capture session --provider claude-code
-expect_grep 'must be start or end'
+expect_grep 'must be one of start end compact'
 expect_exit 12 "$MJ" capture session --event start
 expect_grep 'provider is required'
 expect_exit 12 "$MJ" capture session --provider codex --event start
@@ -96,15 +96,27 @@ grep -qF 'provider_session: "cc-1"' "$ctx"
 grep -qF '## Context at open' "$ctx"
 grep -qF '## GIT' "$ctx"
 
-# Nothing reaches stdout. This provider adds a SessionStart hook's output to the model's
-# context, and the local half of the layer is never loaded into a context implicitly — so
-# stdout is empty even though the command has plenty to say on stderr.
+# The start event's stdout is the briefing, because this provider adds it to the context it
+# is about to build. That is the one route by which a continuation record reaches a worker
+# without the worker remembering to ask, and a record nothing loads is a record nobody reads.
 out="$(printf '{"session_id":"cc-1","source":"resume"}' | ./.claude/hooks/majordomus-session-start 2>"$T/err")"
-[ -z "$out" ] || { echo "    the start hook wrote to stdout: $out"; exit 1; }
-[ -s "$T/err" ] || { echo "    the start hook said nothing at all, not even on stderr"; exit 1; }
+[ -n "$out" ] || { echo "    the start hook wrote no briefing to stdout"; exit 1; }
+[ -s "$T/err" ] || { echo "    the start hook said nothing on stderr"; exit 1; }
+printf '%s\n' "$out" | grep -qF 'Majordomus' || { echo "    the briefing does not name itself"; exit 1; }
+# It is bounded by the policy, not by what happens to be lying around.
+budget="$(awk '/^  briefing_budget_lines:/ { print $2 }' .ai/repo/policy.yaml)"
+lines="$(printf '%s\n' "$out" | wc -l | tr -d ' ')"
+[ "$lines" -le "$((budget + 1))" ] || { echo "    the briefing is $lines lines, budget $budget"; exit 1; }
 # ...and a resume is not a second episode: the event fires again, the open one is kept
 [ "$(contexts)" = "$((was_contexts + 1))" ] || { echo "    a resume opened a second episode"; ls -1 .ai/local/session-contexts; exit 1; }
 grep -qF 'kept' "$T/err"
+
+# The repository that wants the older silence gets it, and the switch is the policy's.
+cp .ai/repo/policy.yaml "$T/policy.keep"
+sed 's/^  briefing_on_start: true$/  briefing_on_start: false/' "$T/policy.keep" > .ai/repo/policy.yaml
+out="$(printf '{"session_id":"cc-1","source":"resume"}' | ./.claude/hooks/majordomus-session-start 2>/dev/null)"
+[ -z "$out" ] || { echo "    briefing_on_start: false still wrote to stdout: $out"; exit 1; }
+cp "$T/policy.keep" .ai/repo/policy.yaml
 
 # The end event closes it into the shared record, and the outcome is read from the event
 # rather than assumed.
@@ -172,3 +184,73 @@ chmod +x .claude/hooks/majordomus-session-start
 sed 's/provider-hook:claude-code:session/provider-hook:claude-code:nonsense/' .ai/repo/policy.yaml > "$T/p2" && cp "$T/p2" .ai/repo/policy.yaml
 expect_exit 10 "$MJ" doctor
 expect_grep 'unknown provider-hook aspect'
+
+# ---------------------------------------------------------------- the other two events
+# Everything above ran inside one episode and left it closed, so this opens its own: a
+# compaction and an end are only observable against an episode that is running, and
+# borrowing the one above would have left the assertions after it reading state this block
+# had already changed.
+checkpoints() { find .ai/local/state/checkpoints -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' '; }
+handovers()   { find .ai/local/state/handovers   -maxdepth 1 -name '*.md' 2>/dev/null | wc -l | tr -d ' '; }
+
+"$MJ" start "compaction probe" --scope lib >/dev/null
+printf '{"session_id":"cc-9","source":"startup"}' | ./.claude/hooks/majordomus-session-start >/dev/null 2>&1
+
+# A compaction is not the end of an episode. It records what the conversation is about to
+# stop holding, writes nothing to stdout, and leaves the episode open.
+was_checkpoints="$(checkpoints)"
+out="$(printf '{"session_id":"cc-9"}' | ./.claude/hooks/majordomus-session-compact 2>"$T/err")"
+[ -z "$out" ] || { echo "    the compact hook wrote to stdout: $out"; exit 1; }
+[ "$(checkpoints)" = "$((was_checkpoints + 1))" ] || { echo "    the compaction recorded no checkpoint"; sed 's/^/    | /' "$T/err"; exit 1; }
+expect_exit 0 "$MJ" session status
+expect_grep 'Session: +s-'          # still open: a compaction is not an ending
+# what it wrote is a checkpoint, derived rather than typed, and within the policy's cap
+c="$(find .ai/local/state/checkpoints -maxdepth 1 -name '*.md' | sort | tail -n 1)"
+grep -qF 'Derived, not authored' "$c"
+cap="$(awk '/^  max_body_lines:/ { print $2 }' .ai/repo/policy.yaml)"
+body="$(awk 'c>=2{print} /^---$/{c++}' "$c" | wc -l | tr -d ' ')"
+[ "$body" -le "$cap" ] || { echo "    the derived checkpoint is $body lines, cap $cap"; exit 1; }
+
+# An episode that ends with its task still active leaves a continuation record, not only the
+# envelope. The two answer different questions, and until now the next worker got one of them.
+was_handovers="$(handovers)"
+printf '{"session_id":"cc-9","reason":"clear"}' | ./.claude/hooks/majordomus-session-end >/dev/null 2>"$T/err"
+[ "$(handovers)" = "$((was_handovers + 1))" ] || { echo "    the end event wrote no continuation record"; sed 's/^/    | /' "$T/err"; exit 1; }
+grep -qF 'continuation written' "$T/err"
+h="$(find .ai/local/state/handovers -maxdepth 1 -name '*.md' | sort | tail -n 1)"
+grep -qF '# Objective' "$h"
+grep -qF '# Current State' "$h"
+grep -qF '# Next Action' "$h"
+grep -qF 'no model wrote it' "$h"
+
+# The next episode is handed that record, with the label that says how far to trust it. This
+# is the whole point: nobody typed a command anywhere in this block.
+"$MJ" start "resume probe" --scope lib >/dev/null
+out="$(printf '{"session_id":"cc-10","source":"startup"}' | ./.claude/hooks/majordomus-session-start 2>/dev/null)"
+printf '%s\n' "$out" | grep -qF 'Handover' || { echo "    the next episode was not handed the record:"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1; }
+printf '%s\n' "$out" | grep -qE 'exact|advanced|diverged' || { echo "    the record arrived without a divergence label"; exit 1; }
+printf '%s\n' "$out" | grep -qF 'Next Action' || { echo "    the section a resuming worker acts on did not travel"; exit 1; }
+
+# The section arrives with its shape: blank lines inside it are what separate one paragraph
+# from the next, and a lifter that drops them runs the whole thing together in the one part
+# of the record the next worker is told to act on.
+cat > "$T/two-paragraphs.md" <<'MD'
+# Objective
+
+Prove the section lifter keeps a paragraph break.
+
+# Current State
+
+Two paragraphs below.
+
+# Next Action
+
+The first thing to do.
+
+The second thing to do.
+MD
+"$MJ" handover --no-task < "$T/two-paragraphs.md" >/dev/null
+out="$(printf '{"session_id":"cc-11","source":"startup"}' | ./.claude/hooks/majordomus-session-start 2>/dev/null)"
+printf '%s\n' "$out" | grep -qF 'The first thing to do.' || { echo "    the quoted section lost its first paragraph"; exit 1; }
+printf '%s\n' "$out" | awk '/^The first thing to do\.$/ { got = 1; next } got && !NF { blank = 1 } got && /^The second thing to do\.$/ { exit blank ? 0 : 1 } END { if (!got) exit 1 }' \
+  || { echo "    the paragraph break inside the quoted section was dropped"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1; }

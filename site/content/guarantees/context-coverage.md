@@ -1,7 +1,7 @@
 +++
 title = "Every directory of the layer carries a context document, the exemption is declared by the contract that governs the subtree, and a descendant may narrow that requirement but never weaken it"
 description = "A directory that says nothing about itself is not neutral. It contributes nothing to the"
-weight = 67
+weight = 71
 [extra]
 claim_id = "context-coverage"
 status = "guaranteed"
@@ -18,9 +18,9 @@ into an invariant: every directory of the layer's tree carries a context documen
 directory that does not is the finding `missing-contract`, naming the directory and — where
 an ancestor made the requirement explicit — the contract that did.
 
-The tree is the one the resolver already reads: the manifest's directory, minus `local/`,
-minus the vendored rule package, whose integrity is its own manifest's business rather than
-a reader's.
+The tree is the one the resolver already reads: the manifest's directory, minus the half
+the manifest itself declares untracked (`local.tracked: false`). Nothing else is skipped by
+name — a subtree that owes no contract says so in the contract above it.
 
 ## How it works
 
@@ -40,9 +40,26 @@ inherited `true` is `illegal-override` — the same class a descendant earns for
 a `final` document. It states what descendants owe, so it is accepted on a `subtree`
 document alone, and its value is `true` or `false` and nothing else.
 
-Exempt a subtree when the directories below it are instances of a kind rather than sections
-of the layer: a skill is `SKILL.md` and its examples, and a contract in every instance
-directory would repeat, once per instance, the format the section states once.
+Exempt a subtree with `require_contract: false` when the directories below it are instances
+of a kind rather than sections of the layer: a skill is `SKILL.md` and its examples, and a
+contract in every instance directory would repeat, once per instance, the format the section
+states once.
+
+A subtree the layer carries but does not author is released by name instead:
+
+```yaml
+scope: subtree
+children:
+  require_contract: true
+  exempt: [.ai/repo/rules/vendor]
+```
+
+Everything at or below a named directory owes nothing. An entry must lie inside the scope of
+the document that writes it and must not be that document's own directory: a contract
+releases the directories it governs and no others, so the narrowing rule cannot be escaped by
+exempting a subtree from the side. The vendored rule package is exempt this way — it is
+installed rather than written here, and its integrity is its own manifest's business — while
+every directory this repository does write still owes a contract.
 
 ## How to see it
 

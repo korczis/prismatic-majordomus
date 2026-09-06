@@ -160,6 +160,23 @@ kinds:
       field: schema
       supported: ["session/v1"]
 
+  # The working context of an episode, under the checkout-local half of the layer. It is
+  # declared here so that the kind its front matter names is a kind this distribution knows
+  # and its contract can be found; no source class discovers it, and none should — it names
+  # one machine and it is a snapshot no surface can regenerate (ADR 0015). Declaring a kind
+  # says what a document of this shape is, not that something indexes it.
+  session-context:
+    format: markdown
+    front_matter: required
+    without_front_matter: document
+    schema: majordomus.session-context/v1
+    identity: [session_id]
+    title: title
+    description: title
+    schema_version:
+      field: schema
+      supported: ["session-context/v1"]
+
   adr:
     format: markdown
     front_matter: required
@@ -221,6 +238,78 @@ kinds:
     schema_version:
       field: version
       supported: [1]
+
+  command:
+    format: yaml
+    members: commands
+    schema: majordomus.command/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: version
+      supported: [1]
+
+  moment:
+    format: markdown
+    front_matter: required
+    schema: majordomus.moment/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: schema
+      supported: [moment/v1]
+
+  audience:
+    format: markdown
+    front_matter: required
+    schema: majordomus.audience/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: schema
+      supported: [audience/v1]
+
+  area:
+    format: markdown
+    front_matter: required
+    schema: majordomus.area/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: schema
+      supported: [area/v1]
+
+  deployment:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/deployment/deployment.v1.schema.json
+    schema: majordomus.deployment/v1
+    identity: [id]
+    title: title
+    description: description
+    schema_version:
+      field: schema
+      supported: [deployment/v1]
+
+  distribution-model:
+    format: yaml
+    schema: majordomus.distribution/v1
+    identity: []
+    schema_version:
+      field: schema
+      supported: [majordomus-distribution/v1]
+
+  release-record:
+    format: yaml
+    schema: majordomus.release/v1
+    identity: [tag]
+    title: tag
+    schema_version:
+      field: schema
+      supported: [release/v1]
 
   implementation:
     format: text

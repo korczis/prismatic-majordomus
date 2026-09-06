@@ -23,21 +23,13 @@ pub const SUMMARY: &str = "The read-only projection of a repository's AI layer: 
 
 /// The paragraphs a reader of any projection should have, in order. CommonMark, as
 /// Swagger UI and the site render it; each entry is one paragraph.
-///
-/// Composed rather than written, because one of them names routes: a path spelled here and
-/// declared in `http::swagger` is a path that will one day disagree with itself, and the one
-/// that moved is always the one nobody grepped for.
-pub static PARAGRAPHS: std::sync::LazyLock<Vec<String>> = std::sync::LazyLock::new(|| {
-    vec![
-        String::from("**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand."),
-        format!("**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` lists the routes; `{swagger}` is Swagger UI over this document; `{mcp}` is MCP over HTTP for a second client.",
-            swagger = crate::http::swagger::DOCS_PATH,
-            mcp = crate::http::mcp::PATH),
-        String::from("**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method."),
-        String::from("**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared."),
-        String::from("**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."),
-    ]
-});
+pub const PARAGRAPHS: &[&str] = &[
+    "**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.",
+    "**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.",
+    "**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.",
+    "**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.",
+    "**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+];
 
 /// The paragraphs as one CommonMark text.
 ///
@@ -49,7 +41,7 @@ pub static PARAGRAPHS: std::sync::LazyLock<Vec<String>> = std::sync::LazyLock::n
 /// ```
 pub fn description() -> String {
     let mut text = String::from(SUMMARY);
-    for p in PARAGRAPHS.iter() {
+    for p in PARAGRAPHS {
         text.push_str("\n\n");
         text.push_str(p);
     }

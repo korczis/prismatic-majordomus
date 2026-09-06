@@ -59,7 +59,10 @@ docs/CLAIMS.yaml
 docs/RESPONSIBILITIES.yaml
 docs/generated/openapi.json
 docs/generated/registry.json
+site/data/registry/why.json
+site/data/registry/why-graph.json
 docs/generated/cli.json
+docs/generated/web.json
 apps/majordomus-cli/README.md
 site/config.toml
 README.md
@@ -707,93 +710,35 @@ jq_inplace "$OUT/readme.json" --slurpfile docs "$OUT/doctrines.json" '
         | select((.claims // []) | any(IN($row.claim_ids[]))) | .id ]})'
 
 mj_phase_end "gen:doctrines.json" "$GEN_T0"
-# ---------------------------------------------------------------- why.json (the moments, as data)
-GEN_T0="$(mj_phase_begin "gen:why.json_the_moments_as")"
-# The moments are hand-written prose in site/content-src/why/, but the links out of them are
-# not prose: each page names the commands, responsibilities and claims it rests on. Those are
-# read here, checked against the things they name, and published as data so the index, the
-# graph and the backlinks on claim and responsibility pages are all the same list. A moment
-# that names a claim, command or responsibility that does not exist fails the build; before
-# this, a typo produced a 404 nobody would notice.
-WHY_JSON="$(
-  printf '['
-  first=1
-  for f in $(cd "$ROOT/site/content-src/why" && ls ./*.md | sed 's#^\./##' | grep -v '^_index\.md$' | sort); do
-    p="$ROOT/site/content-src/why/$f"; slug="${f%.md}"
-    [ "$first" = 1 ] || printf ','; first=0
-    fm="$(awk 'BEGIN{n=0} /^\+\+\+$/{n++; next} n==1' "$p")"
-    tget() { printf '%s' "$fm" | sed -n "s/^$1 = \"\(.*\)\"$/\1/p" | head -1; }
-    tnum() { printf '%s' "$fm" | sed -n "s/^$1 = \([0-9]*\)$/\1/p" | head -1; }
-    tarr() { printf '%s' "$fm" | sed -n "s/^$1 = \[\(.*\)\]$/\1/p" | head -1 \
-             | tr ',' '\n' | sed 's/^ *"//; s/" *$//; s/^ *//; s/ *$//' | grep -v '^$' | jarr; }
-    jq -cn --arg slug "$slug" --arg title "$(tget title | sed 's/\\"/"/g')" \
-      --arg desc "$(tget description | sed 's/\\"/"/g')" --arg hook "$(tget hook | sed 's/\\"/"/g')" \
-      --argjson weight "$(tnum weight)" --argjson cmds "$(tarr commands)" \
-      --argjson resp "$(tarr responsibilities)" --argjson claims "$(tarr claims)" \
-      '{slug:$slug, title:$title, description:$desc, hook:$hook, weight:$weight,
-        route:("/why/" + $slug + "/"), commands:$cmds, responsibilities:$resp, claims:$claims}'
-  done
-  printf ']'
-)"
-printf '%s' "$WHY_JSON" | jq --slurpfile caps "$OUT/capabilities.json" --slurpfile rd "$OUT/readme.json" \
-  --slurpfile pr "$OUT/project.json" '
-  ($caps[0].claims | map(.id)) as $claim_ids
-  | ($rd[0].does | map(.slug)) as $resp_slugs
-  | ($pr[0].commands | map(.name)) as $cmd_names
-  | {schema: 1,
-     source: "site/content-src/why/",
-     moments: [ sort_by(.weight)[] | . + {
-       claim_detail: [ .claims[] as $c | $caps[0].claims[] | select(.id == $c) | {id, claim, status} ],
-       command_detail: [ .commands[] as $n | $pr[0].commands[] | select(.name == $n) | {name, summary, read_only} ],
-       responsibility_detail: [ .responsibilities[] as $s | $rd[0].does[] | select(.slug == $s) | {slug, title} ] } ],
-     unknown: { claims: [ .[].claims[] | select(IN($claim_ids[]) | not) ] | unique,
-                responsibilities: [ .[].responsibilities[] | select(IN($resp_slugs[]) | not) ] | unique,
-                commands: [ .[].commands[] | select(IN($cmd_names[]) | not) ] | unique }}' > "$OUT/why.json"
-for k in claims responsibilities commands; do
-  bad="$(jq -r --arg k "$k" '.unknown[$k] | join(", ")' "$OUT/why.json")"
-  [ -z "$bad" ] || { echo "generate-site-data: a why page names $k that do not exist: $bad" >&2; exit 10; }
-done
-jq 'del(.unknown)' "$OUT/why.json" > "$OUT/why.json.tmp" && mv "$OUT/why.json.tmp" "$OUT/why.json"
-[ "$(jq '.moments | length' "$OUT/why.json")" -ge 3 ] || { echo "generate-site-data: site/content-src/why/ produced almost no moments" >&2; exit 10; }
-# the reverse index the claim and responsibility pages need: which moments name this thing
-jq '{schema: .schema, source: .source, moments: .moments,
-     by_claim: (reduce (.moments[] | . as $m | $m.claims[] | {k:., v:$m.slug}) as $e ({}; .[$e.k] += [$e.v])),
-     by_responsibility: (reduce (.moments[] | . as $m | $m.responsibilities[] | {k:., v:$m.slug}) as $e ({}; .[$e.k] += [$e.v])),
-     by_command: (reduce (.moments[] | . as $m | $m.commands[] | {k:., v:$m.slug}) as $e ({}; .[$e.k] += [$e.v]))}' \
-  "$OUT/why.json" > "$OUT/why.json.tmp" && mv "$OUT/why.json.tmp" "$OUT/why.json"
-
-# the moments and the tool, as a graph: moment -> command -> claim, drawn by the same runtime
-# as /map/ and /evidence/ rather than a third picture of the same relationships
-jq '{schema: 1,
-     source: "site/content-src/why/ front matter",
-     edge_kinds: {addressed_by: "the command this moment is answered by",
-                  backed_by: "the claim that says what the tool guarantees here",
-                  supervises: "the responsibility this moment falls under"},
-     nodes: ([.moments[] | {id: ("moment:" + .slug), kind: "moment", label: .hook, route: .route, external: false, summary: .description}]
-             + ([.moments[] | .command_detail[] | {id: ("command:" + .name), kind: "command", label: ("majordomus " + .name), route: ("/commands/" + .name + "/"), external: false, summary: .summary}]
-                + [.moments[] | .claim_detail[] | {id: ("claim:" + .id), kind: "claim", label: .id, status: .status, route: ("/guarantees/" + .id + "/"), external: false, summary: .claim}]
-                + [.moments[] | .responsibility_detail[] | {id: ("responsibility:" + .slug), kind: "responsibility", label: .title, route: ("/supervises/" + .slug + "/"), external: false}]
-                | unique_by(.id))),
-     edges: ([.moments[] | . as $m | $m.commands[] | {source: ("moment:" + $m.slug), target: ("command:" + .), kind: "addressed_by"}]
-             + [.moments[] | . as $m | $m.claims[] | {source: ("moment:" + $m.slug), target: ("claim:" + .), kind: "backed_by"}]
-             + [.moments[] | . as $m | $m.responsibilities[] | {source: ("moment:" + $m.slug), target: ("responsibility:" + .), kind: "supervises"}]
-             | unique)}' "$OUT/why.json" > "$OUT/why-graph.json"
-
-
-mj_phase_end "gen:why.json_the_moments_as" "$GEN_T0"
+# ---------------------------------------------------------------- the Why catalogue
+GEN_T0="$(mj_phase_begin "gen:why_catalogue")"
+# Nothing about the moments is read here. The catalogue is objects of the layer under
+# .ai/repo/why/, and the Rust executable — the one implementation of that domain — writes
+# site/data/registry/why.json and why-graph.json from it (`majordomus generate site`,
+# stage A of scripts/derive). This pass only checks that the dataset is present, current
+# in shape, and valid, so a stale or refused catalogue stops the site build rather than
+# rendering an empty section.
+WHY_DATA="$ROOT/site/data/registry/why.json"
+[ "$(jq -r '.schema' "$WHY_DATA")" = "majordomus-site-why/v1" ] || { echo "generate-site-data: site/data/registry/why.json is not a majordomus-site-why/v1 dataset (regenerate: majordomus generate site)" >&2; exit 10; }
+[ "$(jq -r '.valid' "$WHY_DATA")" = "true" ] || { echo "generate-site-data: the Why catalogue does not validate; the site may not render it (reproduce: majordomus why validate)" >&2; exit 10; }
+[ "$(jq '.moments | length' "$WHY_DATA")" -ge 3 ] || { echo "generate-site-data: .ai/repo/why/moments/ produced almost no moments" >&2; exit 10; }
+mj_phase_end "gen:why_catalogue" "$GEN_T0"
 # ---------------------------------------------------------------- sessions.json (the layer's own memory)
 GEN_T0="$(mj_phase_begin "gen:sessions.json")"
 # The closed execution episodes, from the tool's own listing and the records themselves.
 # Nothing here is a second index: `session list --all --json` reads the section the manifest
 # names, and the body of each record is the only authored part of it (ADR 0014).
+# The listing's `label` is dropped: it is the divergence of the record against the reader's
+# own worktree and branch, so the same record labels itself differently here and on a CI
+# checkout. A published projection may only carry what the record says about itself.
 "$ROOT/bin/majordomus" --repo "$ROOT" session list --all --json > "$STAGE/sessions.raw.json" 2>/dev/null \
   || printf '{"schema":1,"sessions":[]}' > "$STAGE/sessions.raw.json"
 : > "$STAGE/sessions.bodies"
 while IFS="$MJ_TAB" read -r sid path; do
   [ -n "$sid" ] || continue
   body="$(awk 'BEGIN { fm = 0 } /^---$/ { fm++; next } fm >= 2 { print }' "$ROOT/$path")"
-  commits="$(awk '/^commits:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
-  changed="$(awk '/^changed_files:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
+  commits="$(awk '/^commits:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); gsub(/^"|"$/, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
+  changed="$(awk '/^changed_files:$/ { c = 1; next } c && /^  - / { sub(/^  - /, ""); gsub(/^"|"$/, ""); print; next } c { exit }' "$ROOT/$path" | jq -Rn '[inputs]')"
   jq -n --arg id "$sid" --rawfile b <(printf '%s' "$body") --argjson commits "$commits" --argjson changed "$changed" \
      '{session_id: $id, summary: ($b | gsub("^\\s+|\\s+$";"")), commits: $commits, changed_files: $changed}' >> "$STAGE/sessions.bodies"
 done < <(jq -r '.sessions[] | [.session_id, .path] | @tsv' "$STAGE/sessions.raw.json")
@@ -801,14 +746,16 @@ jq -s '.' "$STAGE/sessions.bodies" > "$STAGE/sessions.bodies.json"
 jq --slurpfile bodies "$STAGE/sessions.bodies.json" '
   {schema: 1,
    source: ".ai/repo/sessions/",
-   contract: "share/schemas/session-record.schema.json",
+   contract: "share/schemas/majordomus/session-record/session-record.v1.schema.json",
    count: (.sessions | length),
    sessions: [ .sessions[] as $s
                | ($bodies[0][] | select(.session_id == $s.session_id)) as $b
-               | $s + {route: ("/sessions/" + $s.session_id + "/"),
-                       summary: ($b.summary // ""),
-                       commits: ($b.commits // []),
-                       changed_files: ($b.changed_files // [])} ]}' \
+               | $s
+               | del(.label)
+               | . + {route: ("/sessions/" + $s.session_id + "/"),
+                      summary: ($b.summary // ""),
+                      commits: ($b.commits // []),
+                      changed_files: ($b.changed_files // [])} ]}' \
   "$STAGE/sessions.raw.json" > "$OUT/sessions.json"
 mj_phase_end "gen:sessions.json" "$GEN_T0"
 
@@ -862,7 +809,7 @@ EX_JSON="$(jq -r '.skills[].examples[]' "$STAGE/skills.base.json" | while IFS= r
     --rawfile b <(awk 'done { print; next } /^# / { done = 1; next } { print }' "$ROOT/$ex") '{path: $p, title: $t, body: $b}'
 done | jq -s '.')"
 jq --argjson ex "${EX_JSON:-[]}" --arg src "$AI/repo/skills/" '
-  {schema: 1, source: $src, contract: "share/schemas/skill.schema.json",
+  {schema: 1, source: $src, contract: "share/schemas/majordomus/skill/skill.v1.schema.json",
    skills: [ .skills[] | . + {route: ("/skills/" + .id + "/"),
                               examples: [ .examples[] as $p | $ex[] | select(.path == $p) ]} ],
    count: .count,
@@ -1134,10 +1081,14 @@ GEN_T0="$(mj_phase_begin "gen:derived_Zola_content_site_co")"
 # rewritten to site routes so the same Markdown serves both GitHub and the site.
 CONTENT="$STAGE/content/docs"
 rm -rf "$CONTENT"; mkdir -p "$CONTENT"
-# every document listed in the docs/README.md index becomes a page; adding a row is the only step
-# (AGENTS.md is listed in the index but lives at the repository root; it is rendered as "contract" below)
-for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
-  src="$ROOT/docs/$d.md"; slug="$(doc_slug "$d")"
+# Project one docs/<NAME>.md into its page. Split out of the loop below because the three
+# documents this script generates itself (GENERATED_DOCS) cannot be projected here: at this
+# point $ROOT still holds the *previous* run's copy of them, and projecting that would write a
+# page one generation behind its own source. They are re-projected from $STAGE once they have
+# been written, and this is the one function both paths call.
+project_doc() {
+  local d="$1" src="$2" slug title summary
+  slug="$(doc_slug "$d")"
   title="$(grep -m1 '^# ' "$src" | sed 's/^# //; s/ — .*//')"
   summary="$(jq -r --arg p "$d.md" '.docs[] | select(.path==$p) | .summary' "$OUT/docs.json")"
   { printf -- '+++
@@ -1153,6 +1104,11 @@ source = "docs/%s.md"
     sed '1{/^# /d;}' "$src" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk -v spec="$CLI_SPEC_SLUG" "$DOCLINK"
     printf '{%% endraw %%}\n'
   } > "$CONTENT/$slug.md"
+}
+# every document listed in the docs/README.md index becomes a page; adding a row is the only step
+# (AGENTS.md is listed in the index but lives at the repository root; it is rendered as "contract" below)
+for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
+  project_doc "$d" "$ROOT/docs/$d.md"
 done
 # the repository's own generated contract, as a page
 { printf -- '+++
@@ -1215,6 +1171,62 @@ page_template = "docs-page.html"
 ' > "$CONTENT/_index.md"
 
 mj_phase_end "gen:derived_Zola_content_site_co" "$GEN_T0"
+# ---------------------------------------------------------------- web.json (the web surface)
+GEN_T0="$(mj_phase_begin "gen:web.json_the_web_surface")"
+# Everything this repository exposes over HTTP, resolved by the executable from the producers
+# that declare it and committed as docs/generated/web.json by `majordomus generate`. The site
+# neither discovers surfaces nor lists them: it renders the same resolution the router serves
+# from, so the published route reference cannot describe a topology the process does not have.
+# The rule is project.web-surface-declared-once; the decision is ADR 0013.
+WEB="$ROOT/docs/generated/web.json"
+[ -f "$WEB" ] || { echo "generate-site-data: docs/generated/web.json is missing (run: majordomus generate)" >&2; exit 10; }
+jq -e '.schema == "majordomus/web-topology/v1"' "$WEB" >/dev/null 2>&1 \
+  || { echo "generate-site-data: docs/generated/web.json is not a majordomus/web-topology/v1 document" >&2; exit 10; }
+# every surface carries the fields the page groups and describes by; a missing one would
+# render as an empty cell rather than as the error it is
+BAD="$(jq -r '[.surfaces[] | select((.id|not) or (.title|not) or (.mount|not) or (.category|not) or (.visibility|not) or (.kind|not) or (.availability|not)) | .id // "(no id)"] | join(", ")' "$WEB")"
+[ -z "$BAD" ] || { echo "generate-site-data: web surfaces missing required fields: $BAD" >&2; exit 10; }
+# the reserved names are read from the document rather than repeated here: the page states
+# the reservation from the same value the executable enforces it from
+jq -e '.reserved.documentation == "/docs" and .reserved.swagger == "/swagger"' "$WEB" >/dev/null 2>&1 \
+  || { echo "generate-site-data: docs/generated/web.json does not reserve /docs for documentation and /swagger for the Swagger UI" >&2; exit 10; }
+# `schema: 1` is this dataset's own version, the one every file under site/data/generated/
+# carries and site-check holds them to; the executable's document identity is recorded
+# beside it as `source_schema` rather than passed through, because the two version
+# different things — the site's shape here, the executable's contract there.
+jq '{schema: 1, source_schema: .schema, generated_root, reserved,
+     surfaces: [.surfaces[] | {id, title, mount, category, visibility, kind, producer, availability,
+                               artifact: (.artifact // null), feature: (.feature // null),
+                               provenance: (.provenance // {})}],
+     categories: [.surfaces[] | .category] | unique,
+     counts: {surfaces: (.surfaces | length),
+              public: ([.surfaces[] | select(.visibility == "public")] | length),
+              served: ([.surfaces[] | select(.availability != "published-only")] | length),
+              published: ([.surfaces[] | select(.availability != "served-only")] | length)}}' \
+  "$WEB" > "$OUT/web.json"
+
+# the page: prose the repository wrote, wrapped around tables nobody maintains
+{ printf -- '+++
+title = "Web surface"
+description = "Every surface this repository exposes over HTTP, and the names that are reserved."
+weight = 95
+[extra]
+source = "docs/generated/web.json"
++++
+
+'
+  printf 'Everything below is derived from the resolved web topology that the executable\nserves from. A surface is declared once, where its producer is; the router, the landing\npage, the machine-readable index and this table are projections of that one resolution.\nAdding a surface here is not a step — it is what happens.\n\n'
+  printf '## Reserved names\n\n'
+  printf 'These paths mean one thing. `/docs` served the Swagger UI once, and the day real\ndocumentation arrived the name meant two things; the rule\n`project.web-surface-declared-once` exists so that cannot recur.\n\n'
+  printf '| Role | Path |\n|---|---|\n'
+  jq -r '.reserved | to_entries[] | "| \(.key) | `\(.value)` |"' "$WEB"
+  printf '\n## Surfaces\n\n'
+  printf '| Surface | Path | Kind | Category | Offered to | Availability | Producer |\n|---|---|---|---|---|---|---|\n'
+  jq -r '.surfaces[] | "| \(.title) | `\(.mount)` | \(.kind) | \(.category) | \(.visibility) | \(.availability) | `\(.producer)` |"' "$WEB"
+  printf '\n*Availability* says which world a surface belongs to: `served-only` is answered by a\nrunning process, `published-only` is uploaded as files, `both` is each. *Offered to* is\nwhether a person is shown it on the landing page; an `internal` surface is still served and\nstill introspectable, because hiding a route from its maintainers hides it from nobody else.\n\n'
+  printf 'Ask a running process the same thing at `/api/v1/web/surfaces`, or the repository at\n`majordomus web list`; `majordomus web explain` says where each value came from.\n'
+} > "$CONTENT/web-surface.md"
+mj_phase_end "gen:web.json_the_web_surface" "$GEN_T0"
 # ---------------------------------------------------------------- plan.json (the execution model)
 GEN_T0="$(mj_phase_begin "gen:plan.json_the_execution_mode")"
 # The canonical project model, projected for the website. Every value here comes from
@@ -1418,6 +1430,38 @@ i=0; jq -r '.skills[] | [.id, .title, .description, .status, .version, .path] | 
     mj_record_body "$ROOT/$path" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
       | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/skills/$id.md"; done
+# The Why catalogue's routes: the section, one page per moment, and a page per audience
+# and per area, all from site/data/registry/why.json. Nothing here names an entry: adding
+# .ai/repo/why/moments/<id>.md and regenerating is what puts /why/<id>/ on the site, in the
+# index, in every filter, in the audience and area pages it belongs to, and in the search.
+# The body is the moment's own file, read from the `source` the dataset names.
+rm -rf "$CONTENT_ROOT/why"
+mk_section why "Why you need this" "$(jq -r '.counts.moments' "$WHY_DATA") operational failure modes AI-heavy teams meet, who recognises each, what actually causes it, and what Majordomus does and does not do about it." why-section.html why.html 5
+jq -r '.moments[] | select(.status != "deprecated") | [.id, .title, .summary, .source, .status, (.weight|tostring)] | @tsv' "$WHY_DATA" \
+  | while IFS="$MJ_TAB" read -r id title summary source status weight; do
+  { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nstatus = %s\nsource = %s\n+++\n{%% raw %%}\n' \
+      "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$status")" "$(jstr "$source")"
+    mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
+    printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/why/$id.md"; done
+printf -- '+++\ntitle = "The map"\ndescription = "Every moment with who recognises it, the area it falls under, and the commands, capabilities, claims, rules and use cases that answer it — derived from the moments themselves."\nweight = 1000\ntemplate = "why-graph.html"\n[extra]\nsource = "majordomus graph get why"\n+++\n' > "$CONTENT_ROOT/why/graph.md"
+# the two taxonomies, each a subsection with one page per entry; both are enumerated from
+# the dataset, so an audience or an area added as a file gets its route with no edit here
+for tx in audiences areas; do
+  mkdir -p "$CONTENT_ROOT/why/$tx"
+  case "$tx" in
+    audiences) t="Who this is for"; d="The audiences that recognise these moments, each with the ones it recognises. Membership is declared by every moment and never listed here."; tpl=why-audience.html ;;
+    areas)     t="Operational areas"; d="The parts of running AI-assisted work these moments fall under, each with the ones that fall under it."; tpl=why-area.html ;;
+  esac
+  printf -- '+++\ntitle = %s\ndescription = %s\nsort_by = "weight"\ntemplate = "why-taxonomy.html"\npage_template = "%s"\nweight = %s\n[extra]\ntaxonomy = %s\n+++\n' \
+    "$(jstr "$t")" "$(jstr "$d")" "$tpl" "$([ "$tx" = audiences ] && echo 1 || echo 2)" "$(jstr "$tx")" > "$CONTENT_ROOT/why/$tx/_index.md"
+  jq -r --arg tx "$tx" '.[$tx][] | select(.status != "deprecated") | [.id, .title, .summary, .source, (.weight|tostring)] | @tsv' "$WHY_DATA" \
+    | while IFS="$MJ_TAB" read -r id title summary source weight; do
+    { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\ntaxonomy = %s\nsource = %s\n+++\n{%% raw %%}\n' \
+        "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$tx")" "$(jstr "$source")"
+      mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
+        | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
+      printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/why/$tx/$id.md"; done
+done
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jline)" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
@@ -1458,6 +1502,23 @@ mk_section registry/capabilities "Capabilities" "Every executable capability: it
 printf -- '+++\ntitle = "Command line"\ndescription = "The native command line of the Rust executable, every command and argument, as clap declares it."\nweight = 4\ntemplate = "registry-cli.html"\n[extra]\nsource = "apps/majordomus-cli/src/cli.rs"\n+++\n' > "$CONTENT_ROOT/registry/cli.md"
 printf -- '+++\ntitle = "MCP surface"\ndescription = "The tools and resources the executable serves to an MCP client, the transports, the shared server, and what decides all of it."\nweight = 5\ntemplate = "registry-mcp.html"\n[extra]\nsource = "docs/MCP.md"\n+++\n' > "$CONTENT_ROOT/registry/mcp.md"
 printf -- '+++\ntitle = "Benchmarks"\ndescription = "Every benchmark target derived from the registry, the coverage, the regression policy, and the accepted baselines with their provenance."\nweight = 6\ntemplate = "registry-benchmarks.html"\n[extra]\nsource = ".ai/repo/benchmarks/rust/"\n+++\n' > "$CONTENT_ROOT/registry/benchmarks.md"
+# the generated tree, as a page. The manifest is the executable's own — one file per
+# document per encoding — and this pass only moves its *declarations* under site/data/ so a
+# template can load them. Nothing here lists a generated file.
+#
+# The sizes and hashes are deliberately dropped. They are facts about the bytes of a
+# moment, and two of the manifest's own subjects (the site registry dataset and the
+# benchmark matrix) are written by a later stage of scripts/derive than this one — so a
+# site copy that carried them would be stale the instant that stage ran, and the two
+# generators would never converge. The declarations do not move between the stages. The
+# hashes stay where they are answered live: docs/generated/artifacts.md, `majordomus
+# generate --check`, and the capability that reads the manifest back.
+MAN="$ROOT/docs/generated/artifacts.json"
+[ "$(jq -r '.schema' "$MAN")" = "majordomus/generated-artifacts/v1" ] || { echo "generate-site-data: docs/generated/artifacts.json is not a majordomus/generated-artifacts/v1 manifest (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+[ "$(jq '.artifacts | length' "$MAN")" -gt 0 ] || { echo "generate-site-data: docs/generated/artifacts.json lists no artifact" >&2; exit 10; }
+jq -S '{schema: 1, manifest_schema: .schema, generated, generator, documents,
+        artifacts: [ .artifacts[] | {path, document, format, schema, source} ]}' "$MAN" > "$OUT/artifacts.json"
+printf -- '+++\ntitle = "Artifacts"\ndescription = "Every file the generator writes: each document with the encodings it is committed in, the schema its content satisfies, where it came from and its hash."\nweight = 7\ntemplate = "registry-artifacts.html"\n[extra]\nsource = "docs/generated/artifacts.md"\n+++\n' > "$CONTENT_ROOT/registry/artifacts.md"
 i=0; jq -r '.modules[] | [.id, .slug, .title] | @tsv' "$OUT/executable.json" | while IFS="$MJ_TAB" read -r id slug title; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\nslug = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(jq -r --arg id "$id" '.modules[] | select(.id==$id) | .description' "$REG" | jline)" "$i" "$(jstr "$slug")" "$(jstr "$id")" "$(jq -r --arg id "$id" '.modules[] | select(.id==$id) | .source_path' "$OUT/executable.json" | jline)" > "$CONTENT_ROOT/registry/modules/$slug.md"; done
 i=0; jq -r '.capabilities[] | [.id, .slug, .source_path] | @tsv' "$OUT/executable.json" | while IFS="$MJ_TAB" read -r id slug sp; do i=$((i+1))
@@ -1664,6 +1725,24 @@ Medians unless the column says otherwise.
 } > "$PGS"
 
 mj_phase_end "gen:docs_PAGES_STATUS.md_derived" "$GEN_T0"
+
+# ---------------------------------------------------------------- the generated docs, as pages
+GEN_T0="$(mj_phase_begin "gen:generated_docs_as_pages")"
+# The three documents this script writes are projected here rather than in the loop above,
+# because there they would be read from $ROOT — the previous run's copy — and the page would
+# be one generation behind the document it claims to project. Two consecutive runs would then
+# disagree, which is not a stale checkout but a generator that does not converge in one pass:
+# `--check` would report the page stale immediately after generating it, and the only way to
+# make it agree would be to run the generator twice and commit the second pass by hand.
+# Reading them from $STAGE is what makes one run enough.
+for d in $GENERATED_DOCS; do
+  n="${d%.md}"
+  [ -f "$STAGE/$n.md" ] || continue
+  jq -e --arg p "$d" '.docs[] | select(.path==$p)' "$OUT/docs.json" >/dev/null 2>&1 || continue
+  project_doc "$n" "$STAGE/$n.md"
+done
+mj_phase_end "gen:generated_docs_as_pages" "$GEN_T0"
+
 # ---------------------------------------------------------------- staged output complete
 GEN_T0="$(mj_phase_begin "gen:staged_output_complete")"
 # Everything above wrote into $STAGE only. Nothing under the repository has changed yet, so a

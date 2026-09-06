@@ -16,6 +16,17 @@
 version: 1
 
 sources:
+  # The layer's own contracts. The manifest names the file names that carry the context
+  # contract wherever they appear under .ai/, and this class is where they land: a
+  # directory's contract is discovered because it is one, never because some neighbouring
+  # kind's pathspec happened to reach it. Declared first so the precedence is also the
+  # reading order.
+  - id: context
+    kind: context
+    discovery: vcs
+    pathspec: ':(glob).ai/**/README.md'
+    required: true
+
   - id: policy
     kind: policy
     discovery: vcs
@@ -118,6 +129,36 @@ sources:
     pathspec: ':(glob).ai/repo/applications/*.md'
     required: false
 
+  - id: command
+    kind: command
+    discovery: vcs
+    pathspec: ':(glob)share/commands.yaml'
+    required: false
+
+  - id: moment
+    kind: moment
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/why/moments/*.md'
+    required: false
+
+  - id: audience
+    kind: audience
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/why/audiences/*.md'
+    required: false
+
+  - id: area
+    kind: area
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/why/areas/*.md'
+    required: false
+
+  - id: deployment
+    kind: deployment
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/deployments/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs
@@ -139,6 +180,18 @@ sources:
     kind: document
     discovery: vcs
     pathspec: ':(glob)docs/claims/*.md'
+    required: false
+
+  - id: distribution
+    kind: distribution-model
+    discovery: vcs
+    pathspec: ':(glob)share/distribution.yaml'
+    required: false
+
+  - id: release
+    kind: release-record
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/releases/*.yaml'
     required: false
 
   # The implementation and test classes exist so that the chain a claim already declares —

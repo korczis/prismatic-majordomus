@@ -9,14 +9,19 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::discover::GENERATED_ROOT;
 use super::model::{Availability, SurfaceKind, Topology};
 
 /// How much a finding matters.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
+// `Severity` alone is the index's diagnostic severity; a topology's finding has its own
+#[schemars(rename = "SurfaceFindingSeverity")]
 pub enum Severity {
     /// The topology may not be served or published in this state.
     Error,
@@ -25,7 +30,8 @@ pub enum Severity {
 }
 
 /// One thing wrong with a topology, said so a person can fix it without reading this file.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "SurfaceFinding")]
 pub struct Finding {
     /// How much it matters.
     pub severity: Severity,
@@ -49,10 +55,11 @@ pub struct Finding {
 /// use majordomus_cli::web::{model::*, validate};
 /// # use std::collections::BTreeMap;
 /// # fn s(id: &str, mount: &str) -> Surface {
-/// #     Surface { id: id.into(), title: id.into(), kind: SurfaceKind::StaticDirectory,
-/// #         mount: Mount::parse(mount).unwrap(), producer: "t".into(),
+/// #     Surface { id: id.into(), title: id.into(), category: Category::Report,
+/// #         visibility: Visibility::Public, kind: SurfaceKind::StaticDirectory,
+/// #         mount: Mount::parse(mount).unwrap(), producer: "t".into(), feature: None,
 /// #         artifact: Some("target/web/x".into()), index: Some("index.html".into()),
-/// #         availability: Availability::Both, provenance: BTreeMap::new() }
+/// #         availability: Availability::Both, built_from: None, provenance: BTreeMap::new() }
 /// # }
 /// let clash = Topology::new(vec![s("a", "/tests"), s("b", "/tests")]);
 /// let findings = validate::validate(&clash, std::path::Path::new("."), validate::Artifacts::Ignore);
@@ -63,6 +70,7 @@ pub fn validate(topology: &Topology, root: &Path, artifacts: Artifacts) -> Vec<F
     findings.extend(identities(topology));
     findings.extend(mounts(topology));
     findings.extend(shadowing(topology, root));
+    findings.extend(namespaces(topology));
     findings.extend(roots(topology, root, artifacts));
     findings.sort_by(|a, b| {
         a.severity
@@ -102,59 +110,76 @@ fn identities(topology: &Topology) -> Vec<Finding> {
         .collect()
 }
 
-/// Mount ownership: one owner per path, and nesting only under the root application.
+/// The reserved mounts: a fixed meaning held by the surface that is supposed to hold it.
 ///
-/// A surface owns its mount and everything under it. Two surfaces claiming one mount is a
-/// collision. A surface mounted inside another's subtree is a shadowing conflict — the
-/// outer surface would answer for paths the inner one was built for, or the other way
-/// round, and which one wins would depend on the router. The single exception is the root
-/// application, which exists precisely to answer what nothing else claims.
-fn mounts(topology: &Topology) -> Vec<Finding> {
+/// A collision already refuses two surfaces claiming one path, and while both the
+/// documentation and the viewer exist that is enough to keep them apart. It is not enough
+/// when one of them is gone: remove the documentation surface and nothing stops the viewer
+/// taking `/docs`, which is exactly the state this repository was in before. So the
+/// reservation is checked against the producer that must own it, not only against whoever
+/// else wants it.
+///
+/// The reservations are about what a *process serves*, which is the world these names have
+/// a meaning in; a publication's `/` belongs to the site as it is deployed and always has.
+/// So only served surfaces are checked, for the same reason mount ownership is checked per
+/// world: a rule applied across both would report a conflict that cannot happen.
+///
+/// Absence is not a violation. A process that serves no Cockpit, a build made without a
+/// site, a topology narrowed to one selector — each is a legitimate subset, and a
+/// reservation says who owns a mount *if* it is claimed and *if* its owner is present, never
+/// that every reserved mount must exist.
+///
+/// ```
+/// use majordomus_cli::web::{discover, validate, Mount, Topology};
+/// let mut surfaces = discover::native_all();
+/// // the viewer helps itself to the documentation's name, with the documentation absent
+/// let swagger = surfaces.iter_mut().find(|s| s.id == "swagger").unwrap();
+/// swagger.mount = Mount::parse(discover::DOCS_MOUNT).unwrap();
+/// let findings = validate::validate(
+///     &Topology::new(surfaces), std::path::Path::new("."), validate::Artifacts::Ignore);
+/// assert!(findings.iter().any(|f| f.rule == "surface.reserved-namespace"), "{findings:?}");
+/// ```
+fn namespaces(topology: &Topology) -> Vec<Finding> {
     let mut findings = Vec::new();
-    for (i, outer) in topology.surfaces.iter().enumerate() {
-        for inner in topology.surfaces.iter().skip(i + 1) {
-            if outer.mount == inner.mount {
+    for reservation in super::discover::reserved() {
+        let Ok(mount) = super::model::Mount::parse(reservation.path) else {
+            continue;
+        };
+        for surface in topology
+            .surfaces
+            .iter()
+            .filter(|s| s.availability.is_served())
+        {
+            if surface.mount == mount && surface.id != reservation.owner {
                 findings.push(Finding {
                     severity: Severity::Error,
-                    rule: "surface.mount-collision".into(),
-                    surface: format!("{} and {}", outer.id, inner.id),
+                    rule: "surface.reserved-namespace".into(),
+                    surface: surface.id.clone(),
                     message: format!(
-                        "both claim {} ({} from {}, {} from {})",
-                        outer.mount,
-                        outer.id,
-                        provenance_of(outer, "mount"),
-                        inner.id,
-                        provenance_of(inner, "mount")
+                        "'{}' is mounted at {mount}, which is reserved for the {} and belongs to '{}'",
+                        surface.id, reservation.role, reservation.owner
                     ),
-                    remedy: "one path has one owner: change one producer's declared mount".into(),
+                    remedy: format!(
+                        "mount '{}' somewhere else; {mount} means one thing and '{}' is what means it",
+                        surface.id, reservation.owner
+                    ),
                 });
-                continue;
             }
-            let (over, under) = if outer.mount.contains(&inner.mount) {
-                (outer, inner)
-            } else if inner.mount.contains(&outer.mount) {
-                (inner, outer)
-            } else {
-                continue;
-            };
-            if over.mount.is_root() {
-                continue; // the application answers what nothing else claims: that is its job
+            if surface.id == reservation.owner && surface.mount != mount {
+                findings.push(Finding {
+                    severity: Severity::Error,
+                    rule: "surface.reserved-namespace".into(),
+                    surface: surface.id.clone(),
+                    message: format!(
+                        "'{}' is the {} and is mounted at {} rather than at its reserved {mount}",
+                        surface.id, reservation.role, surface.mount
+                    ),
+                    remedy: format!(
+                        "a reserved mount moves in the constant that declares it, so that everything reading it moves too; leave '{}' at {mount}",
+                        surface.id
+                    ),
+                });
             }
-            findings.push(Finding {
-                severity: Severity::Error,
-                rule: "surface.nested-mount".into(),
-                surface: format!("{} inside {}", under.id, over.id),
-                message: format!(
-                    "{} is mounted at {} inside {}, which owns {} and everything under it",
-                    under.id, under.mount, over.id, over.mount
-                ),
-                remedy: format!(
-                    "move {} outside {}, or let {} produce it as part of its own output",
-                    under.id,
-                    over.mount.prefix(),
-                    over.id
-                ),
-            });
         }
     }
     findings
@@ -241,6 +266,113 @@ fn count_pages(dir: &Path) -> usize {
         }
     }
     total
+}
+
+/// Mount ownership: one owner per path, in each of the two worlds a surface can live in.
+///
+/// A surface owns its mount and everything under it. Two surfaces claiming one mount is a
+/// collision, and a surface mounted inside another's subtree is a shadowing conflict —
+/// whichever answered would depend on the router rather than on the declaration. The single
+/// exception is a root surface, which exists precisely to answer what nothing else claims.
+///
+/// The check is per world, because a topology has two. What a running process serves and
+/// what a publication contains are different sets of surfaces, and a path claimed in one is
+/// not claimed in the other: the site as it is deployed owns `/` of a publication, and the
+/// home page owns `/` of a process, and they never meet. Checking them together would
+/// report a conflict that cannot happen; checking them apart is what makes the two mounts
+/// declarable at all.
+fn mounts(topology: &Topology) -> Vec<Finding> {
+    let mut findings = Vec::new();
+    for world in World::ALL {
+        let surfaces: Vec<&super::model::Surface> = topology
+            .surfaces
+            .iter()
+            .filter(|s| world.holds(s))
+            .collect();
+        for (i, outer) in surfaces.iter().enumerate() {
+            for inner in surfaces.iter().skip(i + 1) {
+                if outer.mount == inner.mount {
+                    findings.push(Finding {
+                        severity: Severity::Error,
+                        rule: "surface.mount-collision".into(),
+                        surface: format!("{} and {}", outer.id, inner.id),
+                        message: format!(
+                            "both claim {} when {} ({} from {}, {} from {})",
+                            outer.mount,
+                            world.describe(),
+                            outer.id,
+                            provenance_of(outer, "mount"),
+                            inner.id,
+                            provenance_of(inner, "mount")
+                        ),
+                        remedy: "one path has one owner: change one producer's declared mount"
+                            .into(),
+                    });
+                    continue;
+                }
+                let (over, under) = if outer.mount.contains(&inner.mount) {
+                    (outer, inner)
+                } else if inner.mount.contains(&outer.mount) {
+                    (inner, outer)
+                } else {
+                    continue;
+                };
+                if over.mount.is_root() {
+                    continue; // a root surface answers what nothing else claims: that is its job
+                }
+                findings.push(Finding {
+                    severity: Severity::Error,
+                    rule: "surface.nested-mount".into(),
+                    surface: format!("{} inside {}", under.id, over.id),
+                    message: format!(
+                        "{} is mounted at {} inside {}, which owns {} and everything under it when {}",
+                        under.id,
+                        under.mount,
+                        over.id,
+                        over.mount,
+                        world.describe()
+                    ),
+                    remedy: format!(
+                        "move {} outside {}, or let {} produce it as part of its own output",
+                        under.id,
+                        over.mount.prefix(),
+                        over.id
+                    ),
+                });
+            }
+        }
+    }
+    findings.sort_by(|a, b| a.rule.cmp(&b.rule).then_with(|| a.surface.cmp(&b.surface)));
+    findings.dedup_by(|a, b| a.rule == b.rule && a.surface == b.surface);
+    findings
+}
+
+/// The two worlds a mount can be claimed in. A surface lives in one, the other, or both,
+/// and a path is only contested by surfaces that share a world.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum World {
+    /// Answered by a running process.
+    Served,
+    /// Present in a publication's files.
+    Published,
+}
+
+impl World {
+    const ALL: [World; 2] = [World::Served, World::Published];
+
+    fn holds(self, surface: &super::model::Surface) -> bool {
+        match self {
+            World::Served => surface.availability.is_served(),
+            World::Published => surface.availability.is_published(),
+        }
+    }
+
+    fn describe(self) -> &'static str {
+        match self {
+            World::Served => "a process serves them",
+            World::Published => "a publication holds them",
+        }
+    }
 }
 
 /// What a static surface's directory must be: inside the generated root or the site's own
@@ -347,13 +479,24 @@ pub fn blocking(findings: &[Finding]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web::model::{Availability, Mount, Surface};
+    use crate::web::model::{Availability, Category, Mount, Surface, Visibility};
     use std::collections::BTreeMap;
+
+    /// The deployment's root: a static surface at `/` that a publication holds and no
+    /// process serves, which is what the site as it is deployed actually is.
+    fn deployment(id: &str) -> Surface {
+        Surface {
+            availability: Availability::PublishedOnly,
+            ..surface(id, "/", Some("site/public"))
+        }
+    }
 
     fn surface(id: &str, mount: &str, artifact: Option<&str>) -> Surface {
         Surface {
             id: id.into(),
             title: id.into(),
+            category: Category::Report,
+            visibility: Visibility::Public,
             kind: if artifact.is_some() {
                 SurfaceKind::StaticDirectory
             } else {
@@ -361,6 +504,7 @@ mod tests {
             },
             mount: Mount::parse(mount).unwrap(),
             producer: format!("producer of {id}"),
+            feature: None,
             artifact: artifact.map(Into::into),
             index: artifact.map(|_| "index.html".to_string()),
             availability: if artifact.is_some() {
@@ -368,6 +512,7 @@ mod tests {
             } else {
                 Availability::ServedOnly
             },
+            built_from: None,
             provenance: BTreeMap::new(),
         }
     }
@@ -375,7 +520,7 @@ mod tests {
     #[test]
     fn a_clean_topology_has_nothing_to_say() {
         let t = Topology::new(vec![
-            surface("app", "/", Some("site/public")),
+            deployment("app"),
             surface("tests", "/tests", Some("target/web/tests")),
             surface("api", "/api/v1", None),
         ]);
@@ -386,7 +531,7 @@ mod tests {
     #[test]
     fn the_root_application_may_hold_every_other_surface() {
         let t = Topology::new(vec![
-            surface("app", "/", Some("site/public")),
+            deployment("app"),
             surface("tests", "/tests", Some("target/web/tests")),
         ]);
         assert!(validate(&t, Path::new("/nonexistent"), Artifacts::Ignore).is_empty());
@@ -405,6 +550,70 @@ mod tests {
             .expect("nesting is a finding");
         assert!(nested.message.contains("/tests/ui"), "{}", nested.message);
         assert!(nested.remedy.contains("tests"), "{}", nested.remedy);
+    }
+
+    #[test]
+    fn a_reserved_mount_held_by_the_wrong_producer_is_refused_with_both_names() {
+        let mut surfaces = crate::web::discover::native_all();
+        let swagger = surfaces.iter_mut().find(|s| s.id == "swagger").unwrap();
+        swagger.mount = Mount::parse(crate::web::discover::DOCS_MOUNT).unwrap();
+        let findings = validate(
+            &Topology::new(surfaces),
+            Path::new("/nonexistent"),
+            Artifacts::Ignore,
+        );
+        let finding = findings
+            .iter()
+            .find(|f| f.rule == "surface.reserved-namespace")
+            .expect("the viewer taking the documentation's name is a finding");
+        assert!(finding.message.contains("/docs"), "{}", finding.message);
+        assert!(finding.message.contains("docs"), "{}", finding.message);
+        assert!(blocking(&findings));
+    }
+
+    #[test]
+    fn a_reserved_owner_that_wandered_off_its_mount_is_refused() {
+        let mut surfaces = crate::web::discover::native_all();
+        let swagger = surfaces.iter_mut().find(|s| s.id == "swagger").unwrap();
+        swagger.mount = Mount::parse("/api-viewer").unwrap();
+        let findings = validate(
+            &Topology::new(surfaces),
+            Path::new("/nonexistent"),
+            Artifacts::Ignore,
+        );
+        assert!(findings
+            .iter()
+            .any(|f| f.rule == "surface.reserved-namespace"));
+    }
+
+    #[test]
+    fn a_reserved_mount_nobody_claims_is_not_a_finding() {
+        // a process that serves no Cockpit, a build with no site, a topology narrowed by a
+        // selector: each is a legitimate subset, and absence is not a violation
+        let surfaces: Vec<Surface> = crate::web::discover::native_all()
+            .into_iter()
+            .filter(|s| s.id == "openapi")
+            .collect();
+        let findings = validate(
+            &Topology::new(surfaces),
+            Path::new("/nonexistent"),
+            Artifacts::Ignore,
+        );
+        assert!(findings.is_empty(), "{findings:?}");
+    }
+
+    #[test]
+    fn the_declared_topology_of_this_repository_holds_every_reserved_name() {
+        let mut surfaces = crate::web::discover::native_all();
+        surfaces.extend(crate::web::discover::application(Path::new("/nonexistent")));
+        // the fixture has no site, so the two site surfaces are absent; what is present
+        // must still sit where it is reserved to sit
+        let findings = validate(
+            &Topology::new(surfaces),
+            Path::new("/nonexistent"),
+            Artifacts::Ignore,
+        );
+        assert!(findings.is_empty(), "{findings:?}");
     }
 
     #[test]
@@ -441,11 +650,11 @@ mod tests {
     #[test]
     fn adding_an_unrelated_surface_does_not_disturb_the_others() {
         let before = Topology::new(vec![
-            surface("app", "/", Some("site/public")),
+            deployment("app"),
             surface("tests", "/tests", Some("target/web/tests")),
         ]);
         let after = Topology::new(vec![
-            surface("app", "/", Some("site/public")),
+            deployment("app"),
             surface("tests", "/tests", Some("target/web/tests")),
             surface(
                 "example-report",

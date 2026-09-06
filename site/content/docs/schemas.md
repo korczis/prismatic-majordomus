@@ -1,7 +1,7 @@
 +++
 title = "File schemas"
 description = "every file: schema, a concrete example, which command reads and writes it"
-weight = 11
+weight = 12
 [extra]
 source = "docs/SCHEMAS.md"
 +++
@@ -161,7 +161,7 @@ The hook line must not swallow the exit code (`|| true`, `|| exit 0`).
 The repository scope: what a worker reads and what it never reads. Named by the
 manifest's `scope` section; a manifest naming none means the distribution's default
 applies (`share/skeleton/ai/repo/scope.yaml`). The schema is
-`share/schemas/scope.schema.json`; the shell tool's allow-list is generated from it.
+`share/schemas/majordomus/scope/scope.v1.schema.json`; the shell tool's allow-list is generated from it.
 [`SCOPE.md`](@/docs/scope.md) explains the judgement.
 
 ```yaml
@@ -342,6 +342,7 @@ supersedes: []                    # replace only: ids of ancestor-chain document
 tracks: [lib/rules.sh]            # git pathspecs this document describes
 children:                         # subtree only: what the directories below owe
   require_contract: true          # true | false; the default where nothing declares it is true
+  exempt: []                      # subtrees this layer carries but does not author
 ---
 ```
 
@@ -363,6 +364,7 @@ children:                         # subtree only: what the directories below owe
 | `supersedes` | with `replace` | ids in the ancestor chain this document stands in for; a `final` ancestor cannot be named |
 | `tracks` | no | pathspecs whose change names this document for review |
 | `children.require_contract` | no | `subtree` only: whether every directory below this one owes a context document. Absent everywhere above a directory means `true`. A descendant may raise `false` to `true`; lowering an inherited `true` is `illegal-override` |
+| `children.exempt` | no | `subtree` only: repository-relative directories inside this document's own scope that owe no context document, and nor does anything below them — a subtree the layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Naming a directory outside the document's scope, or its own directory, is `illegal-override`; a directory that does not exist is `broken-reference` |
 
 </div>
 
@@ -793,6 +795,62 @@ open session, exactly as a foreign task record is.
 
 ---
 
+## `.ai/local/session-contexts/<stamp>--<session-id>.md`
+
+The bounded working context of one episode, written by `session start` and appended to by
+`session close`. Its contract is `majordomus.session-context/v1`
+(`share/schemas/majordomus/session-context/`); the kind is declared in `share/kinds.yaml`
+like every other, and no source class discovers it.
+
+```markdown
+---
+schema: session-context/v1
+kind: session-context
+session_id: s-20260906035523-7b6c
+opened_at: 2026-09-06T03:55:23Z
+opened_by: hook                      # hook | hand
+provider: claude-code                # only when a provider's event opened it
+provider_session: "abc-123"          # the provider's own identity, as it sent it
+branch: master
+head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b
+task_id: none
+profile: none
+worker: "some-provider/some-model"   # optional; recorded only when supplied
+---
+
+# Working context of session s-20260906035523-7b6c
+
+## Context at open
+<the context builder's output, verbatim>
+
+## Notes
+<the worker's own account of the work>
+
+## Close                              # appended by `session close`
+- closed_at: 2026-09-06T05:12:04Z
+- outcome: closed
+- head: 9b1e2d4f…
+- record: .ai/repo/sessions/20260906T051204Z--s-…--master--9b1e2d4--c0ffee1234567890.md
+```
+
+`opened_by` is `hook` exactly when the open named the provider that delivered the event,
+which only something running inside that provider's hook can do; that is what makes it a
+fact rather than a claim. `provider_session` is the string that ties the episode to the
+prompt archive, whose records carry the same one.
+
+The document is **appended to, never rewritten**: the front matter describes the open, and
+the close adds a section, so whatever a worker typed between the two events survives. It is
+**not tracked**, and unlike the other local state it is not tracked for a second reason as
+well: it is a snapshot of a projection, so re-resolving it later produces a different
+document and no surface can reproduce it (ADR 0015).
+
+It is never a transcript. The derived half is the builder's output and the authored half
+summarises the work; a front-matter key naming a message list, a completion or a model's
+reply is refused by the `majordomus.session-lifecycle` doctrine, which is how
+`project.never-store-transcripts` is kept mechanically here rather than by memory.
+
+---
+
 ## `.ai/repo/sessions/<file>.md`
 
 The immutable record of a closed session. Filename:
@@ -963,7 +1021,7 @@ itself, which the budget then pays for twice.
 ## `.ai/repo/skills/<id>/SKILL.md`
 
 A skill: a provider-neutral procedure for one bounded kind of work. Front matter is
-authored, validated against `share/schemas/skill.schema.json` (the allow-list
+authored, validated against `share/schemas/majordomus/skill/skill.v1.schema.json` (the allow-list
 `share/allow/skill.txt` is generated from it); the body is the procedure. The skill's
 identity is the `id`, which must equal the directory name, and its MCP URI is
 `majordomus://skill/<id>`. Discovery is the source class `skill` in
@@ -1019,7 +1077,7 @@ heading. See [`CLI.md`](@/docs/cli-specification.md) for `majordomus skills`.
 ## `.ai/repo/adrs/<NNNN>-<slug>.md`
 
 An architecture decision: what was decided, why, and what it costs. Front matter is
-authored or proposed by the tool, validated against `share/schemas/adr.schema.json` (the
+authored or proposed by the tool, validated against `share/schemas/majordomus/adr/adr.v1.schema.json` (the
 allow-list `share/allow/adr.txt` is generated from it); the body is the narrative. The
 identity is `adr-NNNN`, allocated once, never reused, and it fixes the file-name prefix, so
 a retitle moves the slug and never the number. Discovery is the source class `adr` in
@@ -1090,6 +1148,90 @@ rather than a decision it claims for itself.
 either half missing. Identities are allocated under a lock over the section directory, so
 two worktrees proposing at the same moment get two numbers rather than one number twice.
 See [`CLI.md`](@/docs/cli-specification.md) for `majordomus adr`.
+
+---
+
+## `.ai/repo/deployments/<id>.yaml`
+
+One deployment of this repository's executable, and the only authoritative statement of
+it. The container image definition, its ignore file and the provider configuration
+(`fly.toml`) are **generated** from this object; each carries a provenance header naming
+this file and the command that regenerates it, and `majordomus generate --check` fails
+when one is edited by hand. Contract:
+[`share/schemas/majordomus/deployment/deployment.v1.schema.json`](../share/schemas/majordomus/deployment/deployment.v1.schema.json)
+(`deployment/v1`); keys are closed by `share/allow/deployment.txt`, generated from it.
+
+```yaml
+schema: deployment/v1
+kind: deployment
+id: majordomus                  # identity, [a-z][a-z0-9-]*
+title: ...                      # one line, for a listing
+description: ...                # one line: what it serves and to whom
+status: declared                # declared | active | retired
+
+application: majordomus         # the application's name at the provider
+
+build:
+  package: majordomus-cli       # the Cargo package built
+  binary: majordomus            # the binary target the image runs
+  profile: release              # the Cargo profile
+  inputs: [apps/majordomus-cli, share, .ai, Cargo.toml, Cargo.lock]
+  site: site/public             # what the canonical site pipeline writes; absent = no site
+
+listen:
+  port: 8080                    # >= 1024: the process runs as a non-root user
+  interface: all                # loopback | all — `all` is stated intent, not a suppressed warning
+
+health:
+  liveness: /api/v1/live        # must be a route a capability registers
+  readiness: /api/v1/ready      # likewise
+  grace_seconds: 2
+  interval_seconds: 15
+  timeout_seconds: 2
+
+resources:
+  cpu_kind: shared              # shared | performance
+  cpus: 1
+  memory_mb: 256                # a hypothesis until a measured run under it passes
+
+machines:
+  count: 1                      # the deployed inventory is asserted against this
+  min_running: 0                # 0 with autostop: the cheap profile
+  autostart: true
+  autostop: true
+
+region: fra                     # the provider's own vocabulary
+
+budgets:                        # each written by the run that measured it; none guessed
+  image_bytes: ...
+  binary_bytes: ...
+  build_context_bytes: ...
+  cold_start_ms: ...
+  resident_memory_mb: ...
+  blocking_check_ms: ...
+  request_p99_ms: ...
+
+provider:
+  name: fly                     # provider-specific facts live here and nowhere else
+  fly:
+    org: ...
+    force_https: true
+    concurrency: { soft_limit: 20, hard_limit: 40 }
+```
+
+**The port is stated once.** The process, the image and the provider configuration all
+read this one field; a literal port anywhere else is the drift this kind exists to
+prevent. The same holds for the region, the resources, the machine count, the health
+routes and the build inputs.
+
+**No credential belongs here.** The token that authorises a deployment comes from outside
+the repository and is never written into the object, into a generated file, into an image
+layer or into a log.
+
+The schema decides shape; `majordomus deploy doctor` decides sense — a health route no
+capability registers, a package or binary the workspace does not contain, a build input
+that does not resolve, a `min_running` above `count` — and each refusal names the file, the
+key, the value found and the correction.
 
 ---
 
@@ -1252,6 +1394,49 @@ and `content` then covers the region body only, never the host document around i
 reports policy drift when a stamp names a policy hash that is no longer the policy on
 disk, and `update` refuses to overwrite a target whose content matches neither its stamp
 nor the new output.
+
+---
+
+## Generated artifact header
+
+The provider bootstraps carry the stamp above, which is `majordomus update`'s. Every other
+generated artifact — everything `majordomus generate` writes — carries a provenance header
+in the form its encoding allows, and the three lines say the same thing in every one:
+
+```markdown
+<!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: <what it was derived from>; regenerate with `majordomus generate`
+     Generator: majordomus-cli <version> -->
+```
+
+```yaml
+# GENERATED FILE — DO NOT EDIT DIRECTLY
+# Source: <what it was derived from>; regenerate with `majordomus generate`
+# Generator: majordomus-cli <version>
+```
+
+A JSON document carries them as members instead, `schema` first when it has a contract:
+
+```json
+{
+  "schema": "majordomus/capability-registry/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: …; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.1.0"
+}
+```
+
+and a document whose own specification fixes its member names — the OpenAPI document is
+the only one — carries `x-majordomus-generated` and `x-majordomus-generator` instead. The
+line-oriented text artifacts (`share/allow/*.txt`) take the `#` form; every reader of one
+skips comment lines.
+
+No header carries a timestamp, an absolute path or a fingerprint that moves with an
+unrelated edit. The index of every artifact, with the document each projects, its encoding,
+its contract, its source, its size and its hash, is `docs/generated/artifacts.json` (schema
+`majordomus/generated-artifacts/v1`), and it is itself generated; the contracts of the
+generated documents are `share/schemas/generated/*.schema.json`, each pinned to its
+document by the `const` of the document's `schema` member. The rule is
+`project.generated-artifacts-are-typed@1`.
 
 ---
 

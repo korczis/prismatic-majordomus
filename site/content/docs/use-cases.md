@@ -1,7 +1,7 @@
 +++
 title = "Executable use cases"
 description = "executable use cases: one file each under `.ai/repo/use-cases/`, the scenario that proves it against the tool, evidence, observed maturity, coverage gated by policy, impact analysis, scaffolding, and what the site derives from it"
-weight = 26
+weight = 29
 [extra]
 source = "docs/USE_CASES.md"
 +++
@@ -234,7 +234,7 @@ resolve. Nothing on a page was typed into a template.
 
 | gate | where | what it refuses |
 |---|---|---|
-| schema | `share/schemas/use-case.schema.json`, `application`, `taxonomy`; the Rust executable at index time | a key nothing reads, a missing required field, a bad id |
+| schema | `share/schemas/majordomus/use-case/use-case.v1.schema.json`, `application`, `taxonomy`; the Rust executable at index time | a key nothing reads, a missing required field, a bad id |
 | references | `majordomus usecase validate`; `doctor` under `majordomus.catalogue-integrity` | a command, rule, claim, responsibility, application, category, setup or stdin that does not resolve; a one-way application link |
 | execution | `majordomus usecase run`; `test/cases/94_use_cases.sh`; the site generator | a step whose exit code or output is not what the scenario says |
 | coverage | `majordomus usecase coverage --check`; `doctor`, `check`, `finish` under `majordomus.use-case-coverage` | a required capability no active use case runs |
