@@ -73,6 +73,10 @@ enforcement:
     path: bin/majordomus
     args: [capture, prompt]
     wired_by: provider-hook:claude-code
+  - name: session-lifecycle
+    path: bin/majordomus
+    args: [capture, session]
+    wired_by: provider-hook:claude-code:session
 
 projections:
   - provider: agents
