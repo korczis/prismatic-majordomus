@@ -81,7 +81,14 @@ impl SharedServer {
             url = %url,
             lease = %lease.path().display(),
             surfaces = %if mounted.is_empty() { "none".to_string() } else { mounted.join(", ") },
-            "shared server listening on {url} (cockpit {url}/cockpit, swagger ui {url}/docs, openapi {url}/openapi.json, mcp over http {url}/mcp); the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
+            // Each path comes from the constant the router binds it at, never from a
+            // second spelling here: the line said `{url}/docs` for the Swagger UI, and
+            // would have gone on saying it after that mount moved.
+            "shared server listening on {url} (cockpit {url}{cockpit}, swagger ui {url}{swagger}, openapi {url}{spec}, mcp over http {url}{mcp}); the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves",
+            cockpit = crate::cockpit::PREFIX,
+            swagger = crate::http::swagger::DOCS_PATH,
+            spec = crate::http::swagger::SPEC_PATH,
+            mcp = crate::http::mcp::PATH,
         );
         Ok(SharedServer {
             running,
