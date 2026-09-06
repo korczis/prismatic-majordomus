@@ -37,6 +37,18 @@ site/content/registry/**            merge=derived
 # The schema, allow-list and section projections: `majordomus generate` writes all three out
 # of the kind and capability declarations, and they conflict for the same reason the rest of
 # this file exists — the merged tree's answer appears in neither side.
-share/schemas/**                    merge=derived
+# Only the projected schemas: the `.proto` beside each one is a hand-written source, and
+# merging two edits of a source is exactly what git should do with it.
+share/schemas/**/*.schema.json      merge=derived
 share/allow/**                      merge=derived
 share/sections/**                   merge=derived
+
+# The provider projections. They carry a stamp over the policy hash and their own content,
+# so a merge of two branches leaves a stamp that describes neither.
+AGENTS.md                           merge=derived
+CLAUDE.md                           merge=derived
+
+# The installer and the document that describes it: both are written out of the release and
+# platform declarations, and both carry a fingerprint of the tree they were generated from.
+docs/INSTALL.md                     merge=derived
+site/static/install.sh              merge=derived
