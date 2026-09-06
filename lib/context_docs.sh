@@ -276,19 +276,42 @@ mj_ctxd_require_at() {
 #   <dir> <TAB> <document index or -> <TAB> true|false <TAB> <governing document path or ->
 # A field is never empty: a tab is IFS whitespace, so `read` would collapse two of them and
 # hand the caller the wrong column.
-# One walk, read by the coverage check and by the JSON projection, so the site renders the
-# same verdict the validator reached rather than recomputing it from the same files.
+#
+# One awk over the flat records and the directory list, rather than a shell loop that reads
+# every document again for every directory: this runs inside `context validate`, which runs
+# inside `doctor`, which runs in the pre-commit hook, and a check on that path is measured
+# before it is added (project.blocking-checks-cheap).
 mj_ctxd_directories() {
-  local tree local_rel vendor_rel d i gov val path
+  local tree local_rel vendor_rel
   tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
-  while IFS= read -r d; do
-    [ -n "$d" ] || continue
-    case "$d" in "$local_rel"|"$local_rel"/*|"$vendor_rel"|"$vendor_rel"/*) continue ;; esac
-    i="$(mj_ctxd_index_for_dir "$d")" || i="-"
-    gov="$(mj_ctxd_require_at "$d")"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
-    [ "$val" = false ] || val=true          # nothing declared: a document is owed
-    printf '%s\t%s\t%s\t%s\n' "$d" "$i" "$val" "${path:--}"
-  done < <(cd "$MJ_ROOT" && find "$tree" -type d -print 2>/dev/null | LC_ALL=C sort)
+  ( cd "$MJ_ROOT" && find "$tree" -type d -print 2>/dev/null ) | LC_ALL=C sort \
+  | awk -v flat="$MJ_CTXD_FLAT" -v localrel="$local_rel" -v vendorrel="$vendor_rel" '
+      BEGIN {
+        while ((getline line < flat) > 0) {
+          eq = index(line, "="); if (eq == 0) continue
+          k = substr(line, 1, eq - 1); v = substr(line, eq + 1)
+          if (k !~ /^docs\.[0-9]+\./) continue
+          split(k, a, ".") ; n = a[2] ; field = substr(k, length("docs." n ".") + 1)
+          if      (field == "dir")   { dir[n] = v; at[v] = n }
+          else if (field == "path")  path[n] = v
+          else if (field == "depth") depth[n] = v
+          else if (field == "children_require_contract") req[n] = v
+        }
+        close(flat)
+      }
+      function under(parent, child) { return child == parent || index(child, parent "/") == 1 }
+      {
+        d = $0
+        if (under(localrel, d) || under(vendorrel, d)) next
+        doc = (d in at) ? at[d] : "-"
+        best = -1; val = ""; gov = "-"
+        for (n in req) {
+          if (req[n] == "" || !under(dir[n], d)) continue
+          if (depth[n] + 0 > best) { best = depth[n] + 0; val = req[n]; gov = path[n] }
+        }
+        if (val != "false") val = "true"          # nothing declared: a document is owed
+        printf "%s\t%s\t%s\t%s\n", d, doc, val, gov
+      }'
 }
 
 # Coverage: every directory of the tree carries a context document, and no descendant
