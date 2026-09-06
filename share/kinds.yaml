@@ -3,6 +3,9 @@
 # adds kinds of its own in .ai/repo/knowledge/kinds.yaml and schemas of its own under
 # .ai/repo/knowledge/schemas/, and may not redefine a kind or a schema declared here.
 #
+# Every file under .ai/** is one of these kinds, and the `ai-document-integrity` rule is
+# what makes that true rather than aspirational.
+#
 # Rust carries the mechanism (read a file in a format, validate its keys against a list,
 # take an identity and a title from named fields). This file carries the knowledge of which
 # fields mean what for each kind. Which files are of which kind is not decided here either:
@@ -17,12 +20,19 @@
 #                   for markdown, the kind a file with no front matter is read as instead
 #                   of being refused: a README inside the rules tree is a document, not a
 #                   broken rule. The named kind must itself accept such a file.
-#   schema          the JSON Schema (draft 2020-12) under share/schemas/<name>.schema.json,
-#                   or under the repository's .ai/repo/knowledge/schemas/, that the metadata
-#                   must satisfy; absent means the kind declares no contract and its
-#                   metadata is carried through unvalidated. The shell tool's allow-lists
-#                   under share/allow/ are generated from these schemas
-#                   (`majordomus generate allow`), never written by hand.
+#   schema          the document schema the file must satisfy, by its identity
+#                   `<vendor>.<name>/v<n>`. The identity fixes the path: `majordomus.adr/v1`
+#                   is share/schemas/majordomus/adr/adr.v1.*, under the tool distribution
+#                   for the `majordomus` vendor and under the repository's own
+#                   .ai/repo/knowledge/schemas/ for any other. A Markdown kind is described
+#                   in protobuf (adr.v1.proto: `Header` is the front matter, `Body` names
+#                   the sections, `Document` is the pair); a YAML kind is described in JSON
+#                   Schema (policy.v1.schema.json), because YAML is JSON's data model.
+#                   Absent means the kind declares no contract and its metadata is carried
+#                   through unvalidated. Everything else is projected from these files by
+#                   `majordomus generate` and never written by hand: the JSON Schema beside
+#                   each .proto, the shell tool's allow-lists under share/allow/ and its
+#                   body-section lists under share/sections/.
 #   identity        the metadata fields joined with '@' that make the object's identity;
 #                   empty means the repository-relative path is the identity
 #   title           the metadata field holding the title, or '@heading' for the first
@@ -46,7 +56,7 @@ kinds:
     format: markdown
     front_matter: required
     without_front_matter: document
-    schema: rule
+    schema: majordomus.rule/v1
     identity: [id, version]
     title: title
     description: description
@@ -54,7 +64,7 @@ kinds:
   prompt:
     format: markdown
     front_matter: required
-    schema: prompt
+    schema: majordomus.prompt/v1
     identity: [name]
     title: name
     description: description
@@ -62,7 +72,7 @@ kinds:
   skill:
     format: markdown
     front_matter: required
-    schema: skill
+    schema: majordomus.skill/v1
     identity: [id]
     title: title
     description: description
@@ -72,14 +82,14 @@ kinds:
 
   profile:
     format: yaml
-    schema: profile
+    schema: majordomus.profile/v1
     identity: [name]
     title: name
     description: description
 
   policy:
     format: yaml
-    schema: policy
+    schema: majordomus.policy/v1
     identity: []
     schema_version:
       field: version
@@ -87,7 +97,7 @@ kinds:
 
   scope:
     format: yaml
-    schema: scope
+    schema: majordomus.scope/v1
     identity: []
     schema_version:
       field: version
@@ -95,14 +105,14 @@ kinds:
 
   milestone:
     format: yaml
-    schema: milestone
+    schema: majordomus.milestone/v1
     identity: [id]
     title: title
     description: outcome
 
   issue:
     format: yaml
-    schema: issue
+    schema: majordomus.issue/v1
     identity: [id]
     title: title
     description: objective
@@ -110,13 +120,27 @@ kinds:
   document:
     format: markdown
     front_matter: optional
+    schema: majordomus.document/v1
     identity: []
     title: '@heading'
+    description: description
+
+  # The plan's header — what this repository is, not what is planned in it. The milestones
+  # and issues beside it are their own kinds.
+  project:
+    format: yaml
+    schema: majordomus.project/v1
+    identity: []
+    title: name
+    description: repository
+    schema_version:
+      field: schema_version
+      supported: [1]
 
   context:
     format: markdown
     front_matter: required
-    schema: context
+    schema: majordomus.context/v1
     identity: [id]
     title: title
     description: description
@@ -128,7 +152,7 @@ kinds:
     format: markdown
     front_matter: required
     without_front_matter: document
-    schema: session-record
+    schema: majordomus.session-record/v1
     identity: [session_id]
     title: title
     description: title
@@ -140,7 +164,7 @@ kinds:
     format: markdown
     front_matter: required
     without_front_matter: document
-    schema: adr
+    schema: majordomus.adr/v1
     identity: [id]
     title: title
     description: title
@@ -152,7 +176,7 @@ kinds:
     format: markdown
     front_matter: required
     without_front_matter: document
-    schema: knowledge
+    schema: majordomus.knowledge/v1
     identity: [id]
     title: title
     description: description
@@ -163,7 +187,7 @@ kinds:
   use-case:
     format: markdown
     front_matter: required
-    schema: use-case
+    schema: majordomus.use-case/v1
     identity: [id]
     title: title
     description: summary
@@ -171,7 +195,7 @@ kinds:
   application:
     format: markdown
     front_matter: required
-    schema: application
+    schema: majordomus.application/v1
     identity: [id]
     title: title
     description: summary
@@ -179,7 +203,7 @@ kinds:
   taxonomy:
     format: yaml
     members: categories
-    schema: taxonomy
+    schema: majordomus.taxonomy/v1
     identity: [id]
     title: title
     description: summary
@@ -190,7 +214,7 @@ kinds:
   claim:
     format: yaml
     members: claims
-    schema: claim
+    schema: majordomus.claim/v1
     identity: [id]
     title: claim
     description: note

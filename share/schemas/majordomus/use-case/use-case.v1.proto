@@ -1,0 +1,214 @@
+// A use case under .ai/repo/use-cases/: a task a person performs with the tool, the
+// commands, rules, claims, responsibilities and applications it names, and the scenario
+// that proves it against the real tool.
+//
+// The scenario is a body section, not a header field. Front matter says what an object is
+// — its identity and its classification — and a twenty-line program is neither; a reader
+// opening the file meets the narrative and the proof in the order they happen. `Scenario`
+// below describes the YAML inside that section's fenced block.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/use-case.txt,
+// share/sections/use-case.txt and use-case.v1.schema.json beside it.
+
+syntax = "proto3";
+
+package majordomus.use_case.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.use-case/v1";
+option (majordomus.allow_list) = "use-case";
+option (majordomus.document_format) = "markdown";
+
+// The whole use case: the front matter, then the narrative with the executable scenario
+// inside it.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+message Header {
+  option (majordomus.closed) = true;
+
+  string id = 1 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  string kind = 2 [(majordomus.required) = true, (majordomus.const) = "use-case"];
+
+  string title = 3 [(majordomus.required) = true, (majordomus.min_length) = 1];
+
+  string summary = 4 [(majordomus.required) = true, (majordomus.min_length) = 1];
+
+  string category = 5 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  Status status = 6 [(majordomus.required) = true];
+
+  // The maturity the author aims at; what is observed is computed and never written here.
+  Target target = 7;
+
+  // Orders the listing. Lower comes first.
+  uint32 weight = 8 [(majordomus.minimum) = 0];
+
+  repeated string tags = 9;
+
+  repeated Actor actors = 10;
+
+  Difficulty difficulty = 11;
+
+  // The commands the task runs; every one must exist. A use case that names none is a
+  // story rather than a use case.
+  repeated string commands = 12 [(majordomus.required) = true, (majordomus.min_items) = 1];
+
+  repeated string mcp_tools = 13;
+
+  repeated string doctrines = 14;
+
+  repeated string claims = 15;
+
+  repeated string responsibilities = 16;
+
+  repeated string applications = 17;
+
+  Related related = 18;
+
+  Performance performance = 19;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_ACTIVE = 1 [(majordomus.value) = "active"];
+  STATUS_DRAFT = 2 [(majordomus.value) = "draft"];
+  STATUS_DEPRECATED = 3 [(majordomus.value) = "deprecated"];
+}
+
+enum Target {
+  TARGET_UNSPECIFIED = 0;
+  TARGET_GUARANTEED = 1 [(majordomus.value) = "guaranteed"];
+  TARGET_ADVISORY = 2 [(majordomus.value) = "advisory"];
+}
+
+enum Actor {
+  ACTOR_UNSPECIFIED = 0;
+  ACTOR_MAINTAINER = 1 [(majordomus.value) = "maintainer"];
+  ACTOR_CONTRIBUTOR = 2 [(majordomus.value) = "contributor"];
+  ACTOR_REVIEWER = 3 [(majordomus.value) = "reviewer"];
+  ACTOR_AGENT = 4 [(majordomus.value) = "agent"];
+  ACTOR_OPERATOR = 5 [(majordomus.value) = "operator"];
+}
+
+enum Difficulty {
+  DIFFICULTY_UNSPECIFIED = 0;
+  DIFFICULTY_BASIC = 1 [(majordomus.value) = "basic"];
+  DIFFICULTY_INTERMEDIATE = 2 [(majordomus.value) = "intermediate"];
+  DIFFICULTY_ADVANCED = 3 [(majordomus.value) = "advanced"];
+}
+
+// Neighbouring use cases a listing should raise or hold back beside this one.
+message Related {
+  option (majordomus.closed) = true;
+
+  repeated string boost = 1;
+  repeated string suppress = 2;
+}
+
+// The executable proof, written as YAML inside the fenced block of the body's `Scenario`
+// section: a fresh repository prepared by a setup script, then the steps in order, each a
+// real invocation of the tool with its expected exit code and output.
+//
+// This message is reached from the body rather than from `Header`, so no allow-list row is
+// projected for it; `share/sections/use-case.txt` carries the section and `lib/usecase.sh`
+// parses the block.
+message Scenario {
+  option (majordomus.closed) = true;
+
+  string setup = 1 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // What the reader should take as already true before the first step.
+  repeated string given = 2;
+
+  repeated Step steps = 3 [(majordomus.required) = true, (majordomus.min_items) = 1];
+
+  // What the reader should take from the run, once the steps have passed.
+  repeated string then = 4;
+}
+
+message Step {
+  option (majordomus.closed) = true;
+
+  string id = 1 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // The invocation, one argument per item.
+  repeated string run = 2 [(majordomus.required) = true, (majordomus.min_items) = 1];
+
+  string stdin = 3;
+
+  string note = 4;
+
+  Expect expect = 5 [(majordomus.required) = true];
+}
+
+// What the step must produce. An expectation that names only an exit code still proves
+// something; one that names none proves nothing, so `exit` is required.
+message Expect {
+  option (majordomus.closed) = true;
+
+  uint32 exit = 1 [(majordomus.required) = true, (majordomus.minimum) = 0, (majordomus.maximum) = 255];
+
+  repeated string stdout_contains = 2;
+
+  repeated string stdout_not_contains = 3;
+
+  repeated string files_exist = 4;
+
+  // The step left the working tree byte-identical: how a read-only command proves it is
+  // read-only.
+  bool tree_unchanged = 5;
+
+  repeated FileContains files_contain = 6;
+}
+
+message FileContains {
+  option (majordomus.closed) = true;
+
+  string path = 1 [(majordomus.required) = true];
+  string pattern = 2 [(majordomus.required) = true];
+}
+
+// What the scenario is allowed to cost.
+message Performance {
+  option (majordomus.closed) = true;
+
+  uint32 budget_ms = 1 [(majordomus.required) = true, (majordomus.minimum) = 1];
+}
+
+// The body carries the narrative and the proof: the situation the reader is in, the
+// scenario that demonstrates it against the real tool, and what they are left with.
+message Body {
+  option (majordomus.body) = true;
+
+  Section situation = 1 [
+    (majordomus.heading) = "Situation",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  // One fenced ```yaml block, shaped by `Scenario` above. Required, because a use case
+  // that cannot be executed is a story about the tool rather than a use of it.
+  Section scenario = 2 [
+    (majordomus.heading) = "Scenario",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+  Section outcome = 3 [
+    (majordomus.heading) = "Outcome",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+}
+
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}

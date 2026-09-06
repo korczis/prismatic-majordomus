@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+# cockpit-probe — the Cockpit measured against a running server: every route it serves
+# answered, and a browser sweep over the pages and the interactions.
+#
+# Nothing here lists a route. The server is started, and the routes are derived from it:
+# the areas by crawling the shell's own navigation (which the server rendered from the
+# registry, the index and the graph derivations), then one per capability, one per graph
+# and one per object from `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`.
+# A capability, a kind or a graph added to the backend is probed the first time it exists.
+#
+# Two sweeps, because they answer different questions cheaply and expensively:
+#   status   every derived route, with curl: 200, HTML, the security headers. Hundreds of
+#            routes in a second, so the sweep is total and never a sample.
+#   browser  every area plus a sample of each generated family, in a real Chrome at three
+#            widths: the shell, the stylesheet, horizontal overflow, console errors, failed
+#            requests, and the interactions — the command palette, the theme toggle, the
+#            skip link, the generated runner calling a capability's real route, the graph
+#            drawing, the refusal to be framed, and every page with JavaScript disabled.
+#
+#   scripts/cockpit-probe             both sweeps
+#   scripts/cockpit-probe --quick     the status sweep in full, one of each family in the browser
+#   scripts/cockpit-probe --status    the status sweep alone; no browser needed
+#   COCKPIT_PROBE_URL=http://...      probe a server that is already running, and start none
+#   COCKPIT_PROBE_PORT=N              the port to bind (default: a free one the OS picks)
+#
+# Exit 0 clean, 10 findings, 12 the server or the executable could not be had. A missing
+# Chrome or a missing Playwright is a SKIP of the browser sweep and not a failure: the
+# status sweep still runs, and a browser that is not installed is not a broken Cockpit.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE="$ROOT/apps/majordomus-cli"
+MODE=full
+case "${1:-}" in
+  --quick) MODE=quick ;;
+  --status) MODE=status ;;
+  '') ;;
+  *) echo "cockpit-probe: unknown option $1" >&2; exit 2 ;;
+esac
+command -v curl >/dev/null || { echo "cockpit-probe: curl is required" >&2; exit 12; }
+command -v python3 >/dev/null || { echo "cockpit-probe: python3 is required" >&2; exit 12; }
+
+fails=0
+ok()  { printf 'OK   %-10s %s\n' "$1" "$2"; }
+bad() { printf 'FAIL %-10s %s\n' "$1" "$2"; fails=$((fails+1)); }
+
+# ---------------------------------------------------------------- the server
+# One server per repository is the rule this tool lives by, so the probe does not start a
+# second one: when the lease names a server that answers, that is the server measured. An
+# editor holding the lease with an older executable is therefore visible rather than
+# silently bypassed — the Cockpit check below says so and names what to do.
+BASE="${COCKPIT_PROBE_URL:-}"
+SRV=""
+LEASE="$ROOT/.ai/local/state/mcp/server.json"
+if [ -z "$BASE" ] && [ -f "$LEASE" ]; then
+  held="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$LEASE")"
+  if [ -n "$held" ] && curl -sf -o /dev/null --max-time 2 "$held/"; then
+    BASE="$held"
+    ok lease "this repository's shared server is at $BASE; measuring it rather than starting a second one"
+  fi
+fi
+if [ -z "$BASE" ]; then
+  BIN="${MAJORDOMUS_BIN:-$CRATE/target/debug/majordomus}"
+  if [ ! -x "$BIN" ]; then
+    command -v cargo >/dev/null || { echo "cockpit-probe: no executable at $BIN and no cargo to build one" >&2; exit 12; }
+    RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" || exit 12
+    BIN="$CRATE/target/debug/majordomus"
+  fi
+  LOG="$(mktemp "${TMPDIR:-/tmp}/mj-cockpit-probe.XXXXXX")"
+  # a server of our own on its own port: the repository's shared server may be running an
+  # older executable, and the lease would send us to it
+  "$BIN" serve --repo "$ROOT" --host 127.0.0.1 --port "${COCKPIT_PROBE_PORT:-0}" > "$LOG" 2>&1 < /dev/null &
+  SRV=$!
+  trap 'if [ -n "$SRV" ]; then kill "$SRV" 2>/dev/null || true; fi; rm -f "$LOG"' EXIT
+  for _ in $(seq 1 60); do
+    BASE="$(sed -n 's/.*listening on \(http:\/\/[0-9.]*:[0-9]*\).*/\1/p' "$LOG" | head -1)"
+    [ -n "$BASE" ] && break
+    kill -0 "$SRV" 2>/dev/null || { echo "cockpit-probe: the server exited:" >&2; tail -3 "$LOG" >&2; exit 12; }
+    sleep 0.5
+  done
+  [ -n "$BASE" ] || { echo "cockpit-probe: the server did not report an address" >&2; tail -3 "$LOG" >&2; exit 12; }
+fi
+if ! curl -sf -o /dev/null "$BASE/cockpit"; then
+  echo "cockpit-probe: $BASE serves no /cockpit." >&2
+  echo "  The server measured is the one this repository's lease names. If it was started by" >&2
+  echo "  an editor from an executable older than the Cockpit, stop that client and run this" >&2
+  echo "  again, or point the probe at a server of your own:" >&2
+  echo "    COCKPIT_PROBE_URL=http://127.0.0.1:PORT scripts/cockpit-probe" >&2
+  exit 12
+fi
+ok server "$BASE"
+
+# ---------------------------------------------------------------- the routes
+# Derived from the server, in the same order the browser sweep derives them, so the two
+# sweeps agree on what exists. The crawl of the shell is what makes a new page appear here.
+ROUTES="$(mktemp "${TMPDIR:-/tmp}/mj-cockpit-routes.XXXXXX")"
+trap 'rm -f "$ROUTES"; if [ -n "$SRV" ]; then kill "$SRV" 2>/dev/null || true; fi; rm -f "${LOG:-}"' EXIT
+{
+  curl -s "$BASE/cockpit" \
+    | grep -oE 'href="/cockpit[^"#]*"' | sed 's/^href="//; s/"$//; s/&amp;/\&/g' \
+    | grep -v '^/cockpit/assets/'
+  printf '/cockpit\n/cockpit/graphs/topology\n/cockpit/activity\n'
+  curl -s "$BASE/api/v1/capabilities" | python3 -c '
+import json,sys,urllib.parse
+for c in json.load(sys.stdin)["capabilities"]:
+    print("/cockpit/capabilities/" + urllib.parse.quote(c["id"], safe=""))'
+  curl -s "$BASE/api/v1/graphs" | python3 -c '
+import json,sys,urllib.parse
+for g in json.load(sys.stdin)["graphs"]:
+    print("/cockpit/graphs/" + urllib.parse.quote(g["id"], safe=""))'
+  curl -s "$BASE/api/v1/objects" | python3 -c '
+import json,sys,urllib.parse
+for o in json.load(sys.stdin)["objects"]:
+    print("/cockpit/object?uri=" + urllib.parse.quote(o["uri"], safe=""))'
+} | sort -u > "$ROUTES"
+n="$(wc -l < "$ROUTES" | tr -d ' ')"
+[ "$n" -gt 10 ] || { bad routes "only $n route(s) derived; the server answered something unexpected"; exit 10; }
+
+# ---------------------------------------------------------------- status sweep
+# Every route, not a sample: a 500 on one object page out of six hundred is exactly the kind
+# of thing a sample misses, and asking is cheap.
+statusbad=0
+while IFS= read -r r; do
+  read -r code ctype <<EOF
+$(curl -s -o /dev/null -w '%{http_code} %{content_type}' "$BASE$r")
+EOF
+  case "$code" in
+    200) ;;
+    *) bad status "$r answered $code"; statusbad=$((statusbad+1)) ;;
+  esac
+  case "$ctype" in
+    text/html*) ;;
+    *) bad status "$r answered $ctype"; statusbad=$((statusbad+1)) ;;
+  esac
+  [ "$statusbad" -gt 20 ] && { bad status "more than 20 routes are broken; stopping"; break; }
+done < "$ROUTES"
+[ "$statusbad" = 0 ] && ok status "$n route(s) derived from the server, every one 200 text/html"
+
+# the headers every page carries, checked once rather than n times
+hdr="$(curl -s -D - -o /dev/null "$BASE/cockpit")"
+for h in "content-security-policy: default-src 'none'" "x-content-type-options: nosniff" "referrer-policy: no-referrer"; do
+  printf '%s' "$hdr" | tr 'A-Z' 'a-z' | grep -qF "$h" || bad headers "the landing page carries no '$h'"
+done
+# styles may be inline — a drawing library sets style attributes — and scripts never may
+printf '%s' "$hdr" | grep -qi "unsafe-eval" && bad headers "the policy allows unsafe-eval"
+printf '%s' "$hdr" | tr 'A-Z' 'a-z' | sed -n 's/.*script-src \([^;]*\).*/\1/p' | grep -q "unsafe-inline" \
+  && bad headers "script-src allows unsafe-inline"
+ok headers "the policy is strict and the response headers are what the pages declare"
+
+[ "$MODE" = status ] && { printf 'cockpit-probe: %s finding(s)\n' "$fails"; [ "$fails" = 0 ] || exit 10; exit 0; }
+
+# ---------------------------------------------------------------- browser sweep
+command -v node >/dev/null || { echo "SKIP cockpit-probe: node absent; the status sweep passed"; [ "$fails" = 0 ] || exit 10; exit 0; }
+[ -d "$ROOT/node_modules/playwright" ] || { echo "SKIP cockpit-probe: playwright absent (npm ci); the status sweep passed"; [ "$fails" = 0 ] || exit 10; exit 0; }
+CHROME=0
+for c in "${CHROME_BIN:-}" google-chrome google-chrome-stable chromium chromium-browser "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; do
+  [ -n "$c" ] && { command -v "$c" >/dev/null 2>&1 || [ -x "$c" ]; } && { CHROME=1; break; }
+done
+[ "$CHROME" = 1 ] || { echo "SKIP cockpit-probe: no Chrome found (set CHROME_BIN); the status sweep passed"; [ "$fails" = 0 ] || exit 10; exit 0; }
+
+set +e
+( cd "$ROOT" && node scripts/lib/cockpit-probe.mjs "$BASE" "$MODE" )
+rc=$?
+set -e
+case "$rc" in
+  0)  ;;
+  10) fails=$((fails+1)) ;;
+  # anything else is the sweep itself falling over — a driver error, a browser that would
+  # not start, an assertion that timed out. It is never a pass.
+  *)  bad browser "the sweep did not finish (exit $rc); the output above says where" ;;
+esac
+
+printf 'cockpit-probe: %s finding(s)\n' "$fails"
+[ "$fails" = 0 ] || exit 10
+exit 0

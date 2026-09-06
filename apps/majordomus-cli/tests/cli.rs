@@ -274,18 +274,28 @@ fn capabilities_text_output_names_projections_and_provenance() {
     assert_eq!(v["repository"]["repository"]["discovery"], "filesystem");
 }
 
+/// Copy a directory tree into the fixture, keeping the relative layout.
+fn copy_tree(from: &std::path::Path, to: &str, f: &Fixture) {
+    for entry in std::fs::read_dir(from).unwrap() {
+        let p = entry.unwrap().path();
+        let name = p.file_name().unwrap().to_str().unwrap().to_string();
+        let target = format!("{to}/{name}");
+        if p.is_dir() {
+            copy_tree(&p, &target, f);
+        } else {
+            f.write(&target, &std::fs::read_to_string(&p).unwrap());
+        }
+    }
+}
+
 #[test]
 fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
     let f = Fixture::new();
     // a repository that carries the distribution itself, as this one does
     let dist = common::dist_share();
-    for entry in std::fs::read_dir(dist.join("schemas")).unwrap() {
-        let p = entry.unwrap().path();
-        f.write(
-            &format!("share/schemas/{}", p.file_name().unwrap().to_str().unwrap()),
-            &std::fs::read_to_string(&p).unwrap(),
-        );
-    }
+    // the schema root is a tree — <vendor>/<name>/<name>.v<n>.{proto,schema.json} — so it
+    // is copied as one, not as a directory listing
+    copy_tree(&dist.join("schemas"), "share/schemas", &f);
     f.write(
         "share/kinds.yaml",
         &std::fs::read_to_string(dist.join("kinds.yaml")).unwrap(),

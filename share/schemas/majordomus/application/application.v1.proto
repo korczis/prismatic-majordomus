@@ -1,0 +1,80 @@
+// An application under .ai/repo/applications/: a context the tool suits, when it fits,
+// when it does not, and the use cases, rules and responsibilities it composes.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/application.txt,
+// share/sections/application.txt and application.v1.schema.json beside it.
+
+syntax = "proto3";
+
+package majordomus.application.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.application/v1";
+option (majordomus.allow_list) = "application";
+option (majordomus.document_format) = "markdown";
+
+// The whole application: the front matter, then the narrative.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+message Header {
+  option (majordomus.closed) = true;
+
+  string id = 1 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  string kind = 2 [(majordomus.required) = true, (majordomus.const) = "application"];
+
+  string title = 3 [(majordomus.required) = true, (majordomus.min_length) = 1];
+
+  string summary = 4 [(majordomus.required) = true, (majordomus.min_length) = 1];
+
+  // Orders the listing. Lower comes first.
+  uint32 weight = 5 [(majordomus.minimum) = 0];
+
+  Status status = 6;
+
+  // The conditions under which the tool suits this context. Naming none would make the
+  // record an advertisement.
+  repeated string fits_when = 7 [(majordomus.required) = true, (majordomus.min_items) = 1];
+
+  // The conditions under which it does not. A record that cannot say when it does not fit
+  // has not been thought through.
+  repeated string does_not_fit_when = 8 [(majordomus.required) = true, (majordomus.min_items) = 1];
+
+  // The use cases this application composes; every one must exist.
+  repeated string use_cases = 9 [(majordomus.required) = true, (majordomus.min_items) = 1];
+
+  // The rules it leans on; every one must exist.
+  repeated string doctrines = 10;
+
+  repeated string responsibilities = 11;
+}
+
+enum Status {
+  STATUS_UNSPECIFIED = 0;
+  STATUS_ACTIVE = 1 [(majordomus.value) = "active"];
+  STATUS_DRAFT = 2 [(majordomus.value) = "draft"];
+  STATUS_DEPRECATED = 3 [(majordomus.value) = "deprecated"];
+}
+
+// The body carries the narrative: the situation this application is written for, in the
+// words of someone who has been in it.
+message Body {
+  option (majordomus.body) = true;
+
+  Section context = 1 [
+    (majordomus.heading) = "Context",
+    (majordomus.level) = 1,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+}
+
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}

@@ -42,6 +42,10 @@ pub enum Target {
     Registry,
     /// `<share>/allow/<name>.txt` for every schema that carries `x-majordomus-allow`.
     Allow,
+    /// The projections of every `.proto` document schema: the JSON Schema beside it and
+    /// `<share>/sections/<name>.txt`, the body half of its contract (see
+    /// [`crate::proto::project`]).
+    Documents,
     /// The provider bootstraps the policy's `projections[]` declare, rendered from the
     /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]).
     Providers,
@@ -57,6 +61,7 @@ impl Target {
         Target::Docs,
         Target::Benchmarks,
         Target::Registry,
+        Target::Documents,
         Target::Allow,
         Target::Providers,
         Target::Site,
@@ -126,7 +131,11 @@ pub fn artifacts(
                 path: format!("{OUT_DIR}/registry.json"),
                 content: registry_manifest(registry, version),
             }),
-            Target::Benchmarks | Target::Allow | Target::Providers | Target::Site => {}
+            Target::Benchmarks
+            | Target::Allow
+            | Target::Documents
+            | Target::Providers
+            | Target::Site => {}
         }
     }
     Ok(out)
@@ -139,12 +148,27 @@ pub fn artifacts(
 /// nothing else assembles artifacts.
 pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     let mut out = context_artifacts(&app.context, crate::VERSION, targets)?;
-    if targets.contains(&Target::Allow) {
-        out.extend(allow_artifacts(
-            &app.schema,
-            &app.share,
-            app.repository.root(),
-        ));
+    if targets.contains(&Target::Documents) || targets.contains(&Target::Allow) {
+        let protos = document_schemas(&app.share, app.repository.root())?;
+        if targets.contains(&Target::Documents) {
+            out.extend(document_artifacts(
+                &protos,
+                &app.share,
+                app.repository.root(),
+            )?);
+        }
+        if targets.contains(&Target::Allow) {
+            out.extend(proto_allow_artifacts(
+                &protos,
+                &app.share,
+                app.repository.root(),
+            )?);
+            out.extend(allow_artifacts(
+                &app.schema,
+                &app.share,
+                app.repository.root(),
+            ));
+        }
     }
     let needs_policy = targets.contains(&Target::Providers) || targets.contains(&Target::Site);
     if needs_policy {
@@ -310,6 +334,85 @@ pub fn benchmark_matrix(ctx: &Context, version: &str) -> String {
     s
 }
 
+/// Every `.proto` document schema, from the distribution and then from the repository,
+/// keyed by the identity each declares. A repository may add a schema; it may not redefine
+/// one the distribution declares, and an attempt to is an error naming both files.
+pub fn document_schemas(
+    share: &Share,
+    root: &Path,
+) -> Result<std::collections::BTreeMap<String, crate::proto::ProtoFile>> {
+    let dir = share.schemas_dir();
+    crate::proto::read_dir(&dir, &relative_to(&dir, root))
+}
+
+/// The projections of the `.proto` document schemas: the JSON Schema beside each one, and
+/// the section list the shell tool reads its body contract from.
+///
+/// Both are committed. `bin/majordomus doctor` is pure shell and validates a fresh
+/// checkout with no Rust build having ever run, so the derived forms have to be in the
+/// tree; `generate --check` is what keeps them honest.
+pub fn document_artifacts(
+    protos: &std::collections::BTreeMap<String, crate::proto::ProtoFile>,
+    share: &Share,
+    root: &Path,
+) -> Result<Vec<Artifact>> {
+    let schemas = relative_to(&share.schemas_dir(), root);
+    let sections = relative_to(&share.sections_dir(), root);
+    let mut out = Vec::new();
+    for file in protos.values() {
+        let schema = crate::proto::project::to_json_schema(file)?;
+        out.push(Artifact {
+            path: format!(
+                "{schemas}/{}",
+                crate::proto::project::schema_path(&file.schema_id)?
+            ),
+            content: serde_json::to_string_pretty(&schema).map_err(|e| Error::KindSchema {
+                reason: format!("{}: cannot render the projected schema: {e}", file.source),
+            })? + "\n",
+        });
+        if let Some(name) = &file.allow_list {
+            let lines = crate::proto::project::section_lines(file);
+            out.push(Artifact {
+                path: format!("{sections}/{name}.txt"),
+                content: if lines.is_empty() {
+                    String::new()
+                } else {
+                    lines.join("\n") + "\n"
+                },
+            });
+        }
+    }
+    Ok(out)
+}
+
+/// The allow-lists of the `.proto` document schemas, derived from the same projection the
+/// JSON Schema beside each one carries, so the two can never disagree.
+pub fn proto_allow_artifacts(
+    protos: &std::collections::BTreeMap<String, crate::proto::ProtoFile>,
+    share: &Share,
+    root: &Path,
+) -> Result<Vec<Artifact>> {
+    let dir = relative_to(&share.allow_dir(), root);
+    let mut out = Vec::new();
+    for file in protos.values() {
+        let Some(name) = &file.allow_list else {
+            continue;
+        };
+        let schema = crate::proto::project::to_json_schema(file)?;
+        out.push(Artifact {
+            path: format!("{dir}/{name}.txt"),
+            content: allow_lines(&schema).join("\n") + "\n",
+        });
+    }
+    Ok(out)
+}
+
+/// A share subdirectory as the plan names it: repository-relative when the share is inside
+/// the repository, absolute otherwise.
+fn relative_to(dir: &Path, root: &Path) -> String {
+    dir.strip_prefix(root).unwrap_or(dir).display().to_string()
+}
+
 /// The shell tool's allow-lists, one per schema that carries `x-majordomus-allow`, under
 /// the share directory: a repository-relative path when the share is inside the
 /// repository, absolute otherwise.
@@ -322,6 +425,15 @@ pub fn allow_artifacts(schema: &KindSchema, share: &Share, root: &Path) -> Vec<A
     schema
         .schemas()
         .filter_map(|(_, sch)| {
+            // A schema derived from a `.proto` is projected beside its source, not here;
+            // emitting it twice would make the plan disagree with itself.
+            if sch
+                .json
+                .get(crate::proto::project::DERIVED_EXTENSION)
+                .is_some()
+            {
+                return None;
+            }
             let name = sch.json.get(ALLOW_EXTENSION).and_then(Value::as_str)?;
             Some(Artifact {
                 path: format!("{}/{name}.txt", dir.display()),
@@ -353,7 +465,15 @@ pub fn allow_artifacts(schema: &KindSchema, share: &Share, root: &Path) -> Vec<A
 /// ```
 pub fn allow_lines(schema: &Value) -> Vec<String> {
     let mut out = Vec::new();
-    walk_allow(schema, schema, "", &mut out);
+    // A whole-document schema describes the front matter under `header` and the Markdown
+    // body under `body`; the allow-list is the front matter's keys, because that is what
+    // the shell tool reads a file's front matter against. A schema with no `header`
+    // describes the metadata directly, as every YAML kind's does.
+    let start = schema
+        .get("properties")
+        .and_then(|p| p.get("header"))
+        .unwrap_or(schema);
+    walk_allow(schema, start, "", &mut out);
     out
 }
 
