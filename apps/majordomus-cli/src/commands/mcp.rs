@@ -193,9 +193,10 @@ impl Session {
 
     /// Attach to the shared server another process runs.
     fn attach(url: String) -> Backend {
+        let swagger = crate::http::swagger::SWAGGER_PATH;
         tracing::info!(
             url = %url,
-            "a shared server for this repository is already running at {url} (swagger ui {url}/docs); bridging this stdio session to it"
+            "a shared server for this repository is already running at {url} (swagger ui {url}{swagger}); bridging this stdio session to it"
         );
         let bridge = Arc::new(Mutex::new(Bridge::new(url)));
         let heartbeat = Heartbeat::start(Arc::clone(&bridge));

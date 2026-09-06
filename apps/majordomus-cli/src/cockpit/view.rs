@@ -219,7 +219,7 @@ fn footer(shell: &Shell<'_>) -> El {
         .child(el("span").text("·"))
         .child(link("/openapi.json", "openapi.json"))
         .child(el("span").text("·"))
-        .child(link("/docs", "Swagger UI"))
+        .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger UI"))
         .child(el("span").text("·"))
         .child(link("/cockpit/health", "health"))
 }

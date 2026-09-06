@@ -57,3 +57,22 @@ window.ui = SwaggerUIBundle({{ url: "{spec}", dom_id: "#swagger-ui", deepLinking
 pub fn page() -> &'static str {
     PAGE.as_str()
 }
+
+/// Whether this shell may be offered as a link a reader can follow, in an environment
+/// where the surfaces are what [`crate::web::projection_routes`] resolved.
+///
+/// The console is served by a running process and nothing publishes it, so a published
+/// page must name it rather than link it. The answer comes from the surface's declared
+/// availability and from nowhere else: not from the page's own address, not from a build
+/// flag, not from a template that happens to know which site it is rendering.
+///
+/// ```
+/// use majordomus_cli::http::swagger;
+/// assert!(!swagger::offered_by_a_publication(), "a console needs the server behind it");
+/// ```
+pub fn offered_by_a_publication() -> bool {
+    crate::web::projection_routes()
+        .iter()
+        .find(|r| r.path == SWAGGER_PATH)
+        .is_some_and(|r| r.linkable())
+}
