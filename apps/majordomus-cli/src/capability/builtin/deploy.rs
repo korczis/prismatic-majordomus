@@ -222,7 +222,12 @@ mod tests {
                 c.capability.id
             );
             if let Some(http) = &c.capability.exposure.http {
-                assert_eq!(http.method, HttpMethod::Get, "{} is not a GET", c.capability.id);
+                assert_eq!(
+                    http.method,
+                    HttpMethod::Get,
+                    "{} is not a GET",
+                    c.capability.id
+                );
             }
         }
     }

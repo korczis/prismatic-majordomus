@@ -65,15 +65,12 @@ fn root(children: Vec<CommandDoc>) -> CommandDoc {
         args: Vec::new(),
         examples: Vec::new(),
         subcommands: children,
-        }
+    }
 }
 
 /// The codes reported for a tree, sorted, so an assertion names what it expects.
 fn codes(tree: &CommandDoc) -> Vec<&'static str> {
-    let mut c: Vec<&'static str> = cli::validate(tree)
-        .into_iter()
-        .map(|v| v.code)
-        .collect();
+    let mut c: Vec<&'static str> = cli::validate(tree).into_iter().map(|v| v.code).collect();
     c.sort_unstable();
     c.dedup();
     c

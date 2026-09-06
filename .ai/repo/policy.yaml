@@ -82,6 +82,15 @@ enforcement:
     path: bin/majordomus
     args: [finish, --check]
     wired_by: git-hook:pre-push
+  # .gitattributes marks the derived artifacts `merge=derived`, but the driver that name
+  # resolves to is declared per clone and per worktree. Git says nothing when it is missing:
+  # it falls back to the default text merge and conflicts on every generated file, which is
+  # the state this repository was in. Declaring it here is what makes doctor — and therefore
+  # the pre-commit hook — refuse a clone that has not run `just derive-merge-driver`.
+  - name: derived-merge-driver
+    path: scripts/merge-derived
+    args: []
+    wired_by: git-config:merge.derived.driver
   - name: prompt-capture
     path: bin/majordomus
     args: [capture, prompt]
