@@ -1134,10 +1134,14 @@ GEN_T0="$(mj_phase_begin "gen:derived_Zola_content_site_co")"
 # rewritten to site routes so the same Markdown serves both GitHub and the site.
 CONTENT="$STAGE/content/docs"
 rm -rf "$CONTENT"; mkdir -p "$CONTENT"
-# every document listed in the docs/README.md index becomes a page; adding a row is the only step
-# (AGENTS.md is listed in the index but lives at the repository root; it is rendered as "contract" below)
-for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
-  src="$ROOT/docs/$d.md"; slug="$(doc_slug "$d")"
+# Project one docs/<NAME>.md into its page. Split out of the loop below because the three
+# documents this script generates itself (GENERATED_DOCS) cannot be projected here: at this
+# point $ROOT still holds the *previous* run's copy of them, and projecting that would write a
+# page one generation behind its own source. They are re-projected from $STAGE once they have
+# been written, and this is the one function both paths call.
+project_doc() {
+  local d="$1" src="$2" slug title summary
+  slug="$(doc_slug "$d")"
   title="$(grep -m1 '^# ' "$src" | sed 's/^# //; s/ — .*//')"
   summary="$(jq -r --arg p "$d.md" '.docs[] | select(.path==$p) | .summary' "$OUT/docs.json")"
   { printf -- '+++
@@ -1153,6 +1157,11 @@ source = "docs/%s.md"
     sed '1{/^# /d;}' "$src" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" | awk -v spec="$CLI_SPEC_SLUG" "$DOCLINK"
     printf '{%% endraw %%}\n'
   } > "$CONTENT/$slug.md"
+}
+# every document listed in the docs/README.md index becomes a page; adding a row is the only step
+# (AGENTS.md is listed in the index but lives at the repository root; it is rendered as "contract" below)
+for d in $(jq -r '.docs[].path' "$OUT/docs.json" | grep -E '^[A-Z_]+\.md$' | sed 's/\.md$//' | while read -r n; do [ -f "$ROOT/docs/$n.md" ] && printf '%s\n' "$n"; done); do
+  project_doc "$d" "$ROOT/docs/$d.md"
 done
 # the repository's own generated contract, as a page
 { printf -- '+++
@@ -1664,6 +1673,24 @@ Medians unless the column says otherwise.
 } > "$PGS"
 
 mj_phase_end "gen:docs_PAGES_STATUS.md_derived" "$GEN_T0"
+
+# ---------------------------------------------------------------- the generated docs, as pages
+GEN_T0="$(mj_phase_begin "gen:generated_docs_as_pages")"
+# The three documents this script writes are projected here rather than in the loop above,
+# because there they would be read from $ROOT — the previous run's copy — and the page would
+# be one generation behind the document it claims to project. Two consecutive runs would then
+# disagree, which is not a stale checkout but a generator that does not converge in one pass:
+# `--check` would report the page stale immediately after generating it, and the only way to
+# make it agree would be to run the generator twice and commit the second pass by hand.
+# Reading them from $STAGE is what makes one run enough.
+for d in $GENERATED_DOCS; do
+  n="${d%.md}"
+  [ -f "$STAGE/$n.md" ] || continue
+  jq -e --arg p "$d" '.docs[] | select(.path==$p)' "$OUT/docs.json" >/dev/null 2>&1 || continue
+  project_doc "$n" "$STAGE/$n.md"
+done
+mj_phase_end "gen:generated_docs_as_pages" "$GEN_T0"
+
 # ---------------------------------------------------------------- staged output complete
 GEN_T0="$(mj_phase_begin "gen:staged_output_complete")"
 # Everything above wrote into $STAGE only. Nothing under the repository has changed yet, so a
