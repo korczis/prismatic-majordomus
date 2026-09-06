@@ -35,6 +35,23 @@
       "tool": "majordomus_capabilities"
     },
     {
+      "api_anchor": "/docs/api/#op-directories-list",
+      "claims": [],
+      "cli": null,
+      "id": "directories.list",
+      "kind": "query",
+      "module": "directories",
+      "module_route": "/registry/modules/directories/",
+      "resource": "majordomus://directories",
+      "route": "/registry/capabilities/directories-list/",
+      "slug": "directories-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "tests": [],
+      "title": "The layer's directory contracts",
+      "tool": "majordomus_directories"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -414,9 +431,9 @@
     ]
   },
   "counts": {
-    "capabilities": 14,
+    "capabilities": 15,
     "claims": 20,
-    "modules": 7
+    "modules": 8
   },
   "generator": "majordomus-cli 0.1.0",
   "modules": [
@@ -440,6 +457,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "directories.list",
+          "route": "/registry/capabilities/directories-list/",
+          "slug": "directories-list"
+        }
+      ],
+      "claims": [],
+      "id": "directories",
+      "route": "/registry/modules/directories/",
+      "slug": "directories",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "title": "Directory contracts"
     },
     {
       "capabilities": [

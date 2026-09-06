@@ -25,9 +25,7 @@ use serde_json::Value;
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{
-    CachePolicy, Exposure, McpExposure, McpResource, Stability,
-};
+use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::model::Object;
 use crate::{capability, module};
