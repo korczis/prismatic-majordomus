@@ -257,6 +257,11 @@ git add . &amp;&amp; git commit -qm base</pre></div>
         <span class="rounded border border-default px-1.5 py-0.5 font-mono text-xs bg-danger-soft text-fg-danger-strong">blocking</span>
         <span class="font-mono text-xs text-body-subtle">enforced by doctor, watch</span></span>
         <span class="mt-2 block text-sm text-body">Every repository-local prompt asset renders, and every token in it is one the renderer knows.</span>
+      </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/session-lifecycle/" class="block rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="flex flex-wrap items-center gap-2"><span class="font-mono text-sm font-semibold text-heading">majordomus.session-lifecycle</span>
+        <span class="rounded border border-default px-1.5 py-0.5 font-mono text-xs bg-danger-soft text-fg-danger-strong">blocking</span>
+        <span class="font-mono text-xs text-body-subtle">enforced by doctor, watch</span></span>
+        <span class="mt-2 block text-sm text-body">Where a provider fires session events, the episode is opened and closed by that provider&#39;s hook rather than by the model; the working context each open freezes stays under the ignored half of the layer, carries the declared keys, and never carries a conversation.</span>
       </a></li></ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
     <ul class="mt-4 space-y-3"><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
@@ -270,7 +275,9 @@ git add . &amp;&amp; git commit -qm base</pre></div>
         <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
           <a href="https://korczis.github.io/prismatic-majordomus/guarantees/prompt-asset/" class="text-sm text-heading hover:underline">A repository-local prompt renders against a closed set of state tokens, and an unknown token is an error</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/24_prompt_search.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/24_prompt_search.sh</a></span></li><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
-          <a href="https://korczis.github.io/prismatic-majordomus/guarantees/derived-not-declared/" class="text-sm text-heading hover:underline">What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/28_no_hardcoded_values.sh</a></span></li></ul>
+          <a href="https://korczis.github.io/prismatic-majordomus/guarantees/derived-not-declared/" class="text-sm text-heading hover:underline">What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/28_no_hardcoded_values.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/28_no_hardcoded_values.sh</a></span></li><li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <span class="flex flex-wrap items-center gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
+          <a href="https://korczis.github.io/prismatic-majordomus/guarantees/session-lifecycle/" class="text-sm text-heading hover:underline">A provider hook opens and closes the execution episode below the model, and the context resolved at the open is frozen beside it</a></span><span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/54_session_lifecycle_hooks.sh" class="break-all font-mono text-fg-brand hover:underline">test/cases/54_session_lifecycle_hooks.sh</a></span></li></ul>
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
 <ul class="mt-4 space-y-3">
   <li><a href="https://korczis.github.io/prismatic-majordomus/why/two-rulebooks-one-repository/" class="flex gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
@@ -304,7 +311,7 @@ git add . &amp;&amp; git commit -qm base</pre></div>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a3c4ba7a816dab73bb5407047d606d65a3637558" class="font-mono hover:underline">a3c4ba7</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7002380d417007fea5a5d3df054c62f097614bb3" class="font-mono hover:underline">7002380</a> · inputs <span class="font-mono">8f956d66b449</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

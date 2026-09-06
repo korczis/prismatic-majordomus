@@ -592,17 +592,36 @@ contains the other, which is why they are two records rather than one field.</p>
 <p>Sessions are optional. A worker that never opens one loses the episode boundary and
 nothing else; every other record is written exactly as before.</p>
 <ul>
-<li><code>start [--owner &lt;who&gt;] [--worker &lt;id&gt;]</code> opens the episode. One open session per
-worktree: a second <code>start</code> is refused rather than replacing the first. <code>--worker</code> is a
+<li><code>start [--owner &lt;who&gt;] [--worker &lt;id&gt;] [--if-open refuse|keep]</code> opens the episode. One
+open session per worktree: a second <code>start</code> is refused rather than replacing the first,
+unless <code>--if-open keep</code> says to keep what is open — which is what a provider hook passes,
+because its start event fires again on a resume and on a compaction. <code>--worker</code> is a
 free-form identity string, recorded only when supplied — an unrecorded worker stays
 unrecorded, because a guessed one is indistinguishable from a recorded one the moment it
-is written down.</li>
+is written down. <code>--provider</code> and <code>--provider-session</code> record which provider's event
+opened the episode and that provider's own session identity; only something running
+inside that provider's hook can supply them, which is what makes <code>opened_by: hook</code> in the
+working context a fact rather than a claim.</li>
 <li><code>status</code> prints the open session with the divergence label of the commit it opened at,
 or reports that there is none. Read-only. Absence is an answer, not a failure.</li>
-<li><code>close [--outcome closed|interrupted]</code> closes the episode into an immutable record under
-<code>state/sessions/</code> and removes the open one. An authored summary may arrive on stdin and
-is optional; identity fields in it are refused, as they are in a checkpoint.</li>
+<li><code>close [--outcome closed|interrupted] [--if-none refuse|ignore]</code> closes the episode into
+an immutable record under the layer's sessions section and removes the open one. An
+authored summary may arrive on stdin and is optional; identity fields in it are refused,
+as they are in a checkpoint. <code>--if-none ignore</code> makes "nothing was open" the normal case
+rather than a failure, which is what a provider's end event passes.</li>
+<li><code>context [&lt;session-id&gt;]</code> prints the path of an episode's working context. Read-only, and
+it prints the path rather than the document: the document is local evidence, and a command
+that pours it into a terminal invites it into somebody's context.</li>
 </ul>
+<p><strong>The open freezes the context it was given.</strong> <code>start</code> writes
+<code>.ai/local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md</code> — the front matter of the episode, the
+context builder's output verbatim, and a <code>## Notes</code> section for the worker — and <code>close</code>
+appends a <code>## Close</code> section naming the outcome and the record. The document is appended to
+and never rewritten, so what a worker typed into it survives. The store is local: it names
+this machine and it is a snapshot of a projection, so it is never published and never loaded
+into a context on its own, and <code>doctor</code> refuses a document that carries a conversation. See
+<code>capture session</code> for the hooks that make the boundary independent of anybody remembering
+to draw it.</p>
 <p><strong>The closed record is an envelope of references.</strong> It names the tasks, issues, milestones,
 checkpoints, handovers, decisions, questions and evidence of the episode, and copies the
 body of none of them. It also carries the commits between the opening and closing commit —
@@ -672,7 +691,7 @@ absent is exactly what would let a second <code>start</code> overwrite it.</p>
 <span class="giallo-l"><span>$ majordomus session close &lt;&lt;&#39;EOF&#39;</span></span>
 <span class="giallo-l"><span>The extraction boundary and the session schema landed; the compiler&#39;s discovery stage is next.</span></span>
 <span class="giallo-l"><span>EOF</span></span>
-<span class="giallo-l"><span>.ai/local/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md</span></span></code></pre><h2 id="majordomus-checkpoint"><a class="zola-anchor" href="#majordomus-checkpoint" aria-label="Anchor link for: majordomus-checkpoint"><code>majordomus checkpoint</code></a></h2>
+<span class="giallo-l"><span>.ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md</span></span></code></pre><h2 id="majordomus-checkpoint"><a class="zola-anchor" href="#majordomus-checkpoint" aria-label="Anchor link for: majordomus-checkpoint"><code>majordomus checkpoint</code></a></h2>
 <p>Record compact progress inside an active task. Append-only; the body arrives on stdin.</p>
 <p>A checkpoint is not a small handover. A handover is a deliberate continuation package
 written when a worker stops; a checkpoint is what was true a moment ago, short enough that
@@ -814,8 +833,8 @@ refuses to build the site from a skill that does not validate.</p>
 <span class="giallo-l"><span>OK   skill       1 skill(s) — every one parses, matches its directory and carries its sections</span></span>
 <span class="giallo-l"><span>OK   skill       5 reference(s) — every related id and every example resolves</span></span>
 <span class="giallo-l"><span>skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0</span></span></code></pre><h2 id="majordomus-capture"><a class="zola-anchor" href="#majordomus-capture" aria-label="Anchor link for: majordomus-capture"><code>majordomus capture</code></a></h2>
-<p>Record the person's raw prompts from a provider hook, install that hook, and report what
-each provider actually does in this repository.</p>
+<p>Record the person's raw prompts and draw the episode boundary from the provider's own
+hooks, install those hooks, and report what each provider actually does in this repository.</p>
 <p><strong>Why a hook and not an instruction.</strong> A worker cannot be asked to record its own prompts.
 It never sees the bytes the person typed, only what the provider assembled from them, and a
 record written by a model is missing exactly the prompts that mattered: the first one of a
@@ -823,13 +842,16 @@ session, which arrives before any instruction has been read, and every one where
 was busy doing what it was asked. A line in <code>AGENTS.md</code> is a request, not a mechanism, and
 no behavioural test can prove a request was honoured. So capture happens below the model,
 in the provider's own hook, where running it is the proof that it works.</p>
-<p><code>capture install</code> writes two things and refuses to overwrite either: a shim at
-<code>.claude/hooks/majordomus-capture</code>, and the hook entry in <code>.claude/settings.json</code>. When the
-configuration exists and names something else, the command prints the entry to add and
-exits 15 rather than rewriting a file it did not write. The shim finds the repository from
-its own location: the provider substitutes its project directory into the command string
-textually, so nothing in the environment names the repository, and the working directory a
-hook runs in is not contracted.</p>
+<p><code>capture install</code> writes a shim per event and the matching entries in
+<code>.claude/settings.json</code>, and refuses to overwrite any of them: <code>majordomus-capture</code> for
+<code>UserPromptSubmit</code>, <code>majordomus-session-start</code> for <code>SessionStart</code> and
+<code>majordomus-session-end</code> for <code>SessionEnd</code>. When the configuration exists and does not name
+one of them — including a configuration this tool wrote before it knew about the lifecycle
+events — the command prints the entries to add, one per missing event, and exits 15 rather
+than rewriting a file it did not write. A shim finds the repository from its own location:
+the provider substitutes its project directory into the command string textually, so nothing
+in the environment names the repository, and the working directory a hook runs in is not
+contracted.</p>
 <p><code>capture prompt</code> reads one JSON payload on stdin and writes one record. <strong>It never exits
 2</strong>, because in <code>UserPromptSubmit</code> that exit code rejects the person's prompt, and a broken
 archive must never cost someone their input; a payload it cannot read is written to the
@@ -890,11 +912,50 @@ and because <code>doctor</code> runs on <code>pre-commit</code>, a hook that sto
 Only Claude Code has an adapter today. Codex and Gemini are reported <code>unsupported</code> rather
 than assumed, and no other surface — the web, the desktop app, another machine — is
 observable from here at all.</p>
+<h3 id="capture-session-the-episode-boundary"><a class="zola-anchor" href="#capture-session-the-episode-boundary" aria-label="Anchor link for: capture-session-the-episode-boundary"><code>capture session</code> — the episode boundary</a></h3>
+<p><strong>The same argument, applied to the other thing a worker cannot do for itself: say where its
+own sitting began and ended.</strong> A model told to open a session opens one when it remembers
+to, which is never the episode that mattered — the one that ended in a crash, a compaction,
+or somebody closing the window. The provider fires an event at both edges whether or not a
+model is in a position to notice, so <code>SessionStart</code> opens the episode and <code>SessionEnd</code>
+closes it into the shared record under <code>.ai/repo/sessions/</code> (ADR 0015).</p>
+<p><strong>Both directions are idempotent, because the events are.</strong> <code>SessionStart</code> fires again on a
+resume and on a compaction, so the start passes <code>--if-open keep</code> and the open episode is
+kept rather than replaced; <code>SessionEnd</code> fires whether or not anything was opened, so the
+close passes <code>--if-none ignore</code> and writes nothing when there is nothing to close. The
+event's reason decides the outcome: one the adapter lists as deliberate closes the episode
+as <code>closed</code>, and anything else — a crash, a name the table has not seen — closes it as
+<code>interrupted</code>, because calling a cut-short episode complete is the worse of the two
+mistakes.</p>
+<p><strong>Neither hook writes to standard output.</strong> Claude Code adds a <code>SessionStart</code> hook's output
+to the model's context, and nothing under the local half of the layer may be loaded into a
+context implicitly. Diagnostics go to stderr, and <code>capture session</code> never exits 2, for the
+reason <code>capture prompt</code> never does.</p>
+<p><strong>The open freezes the context it was given.</strong> <code>session start</code> writes
+<code>.ai/local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md</code>: front matter carrying
+<code>schema: session-context/v1</code>, the episode's identity, the provider and the provider's own
+session id — the same string the prompt records carry — then the context builder's output
+verbatim, then a <code>## Notes</code> section for the worker. <code>session close</code> appends a <code>## Close</code>
+section naming the outcome and the record it wrote. The document is appended to and never
+rewritten, so what a worker typed into it survives the close; <code>majordomus session context</code>
+prints its path.</p>
+<p>That store is local and stays local. It names this machine, and it is a snapshot of a
+projection — re-resolving it later gives a different document — so it is never published,
+never indexed, and never loaded into a context on its own. It is also never a transcript:
+the derived half is the builder's output, the authored half summarises the work, and a front
+matter key naming a message list, a completion or a model's reply is a blocking failure.</p>
+<p>The wiring is declared as <code>wired_by: provider-hook:&lt;provider&gt;:session</code> and <code>doctor</code> proves
+it the same way, with one thing left out: the synthetic payload is driven through the end
+shim with the mutation disabled, because closing somebody's open episode is not a price a
+diagnostic may charge. Everything else on the path runs exactly as it does in a real event.</p>
 <pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus capture install</span></span>
 <span class="giallo-l"><span>INFO  capture  .claude/hooks/majordomus-capture  written and made executable</span></span>
-<span class="giallo-l"><span>INFO  capture  .claude/settings.json  written with the UserPromptSubmit hook</span></span>
+<span class="giallo-l"><span>INFO  capture  .claude/hooks/majordomus-session-start  written and made executable</span></span>
+<span class="giallo-l"><span>INFO  capture  .claude/hooks/majordomus-session-end  written and made executable</span></span>
+<span class="giallo-l"><span>INFO  capture  .claude/settings.json  written with the UserPromptSubmit, SessionStart, SessionEnd hook(s)</span></span>
 <span class="giallo-l"><span>$ majordomus capture status</span></span>
-<span class="giallo-l"><span>claude-code    verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record</span></span></code></pre><h2 id="majordomus-search"><a class="zola-anchor" href="#majordomus-search" aria-label="Anchor link for: majordomus-search"><code>majordomus search</code></a></h2>
+<span class="giallo-l"><span>claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record</span></span>
+<span class="giallo-l"><span>claude-code:session    verified     .claude/hooks/majordomus-session-start and .claude/hooks/majordomus-session-end are wired, and a synthetic payload through the end shim reached the command</span></span></code></pre><h2 id="majordomus-search"><a class="zola-anchor" href="#majordomus-search" aria-label="Anchor link for: majordomus-search"><code>majordomus search</code></a></h2>
 <p>Find durable records without reading all of them. Read-only.</p>
 <p>A literal, case-insensitive, fixed-string search across handovers, checkpoints, decisions,
 questions, prompt assets and the ledger, in that order — authority order, so the most
@@ -1405,7 +1466,7 @@ are inert until the first <code>start</code>.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a3c4ba7a816dab73bb5407047d606d65a3637558" class="font-mono hover:underline">a3c4ba7</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7002380d417007fea5a5d3df054c62f097614bb3" class="font-mono hover:underline">7002380</a> · inputs <span class="font-mono">8f956d66b449</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -239,6 +239,7 @@ majordomus.roadmap-integrity           blocking  mj_validate_roadmap      doctor
 majordomus.rule-package-integrity      blocking  mj_validate_rule_package doctor,watch
 majordomus.scope-integrity             blocking  mj_validate_scope        check,finish,watch
 majordomus.session-records             blocking  mj_validate_session_records doctor,watch
+majordomus.session-lifecycle           blocking  mj_validate_session_lifecycle doctor,watch
 majordomus.skill-integrity             blocking  mj_validate_skills       doctor,watch
 majordomus.state-consistency           blocking  mj_validate_state        check,finish,watch
 majordomus.task-continuity             advisory  mj_validate_continuity   finish
@@ -267,7 +268,7 @@ INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    36 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+OK   doctrine    37 doctrines — validator, dispatch, propagation, test and CI resolve for every one
 FAIL wiring      doctor-on-commit — hook .git/hooks/pre-commit does not exist  [reproduce: ls -l .git/hooks/pre-commit]
 FAIL wiring      finish-on-push — hook .git/hooks/pre-push does not exist  [reproduce: ls -l .git/hooks/pre-push]
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
@@ -289,7 +290,9 @@ OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
-OK   rules       47 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   rules       48 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   session     .ai/local/session-contexts — ignored and untracked
+OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
 INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
 OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
@@ -301,8 +304,8 @@ doctor: 2 failure(s)</code></pre>
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span class="font-mono text-xs text-body-subtle">3</span>
           <a href="https://korczis.github.io/prismatic-majordomus/commands/doctrine/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus doctrine status</a>
-          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the resolved rule set as the tool applies it</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>declared doctrines:   36
-blocking:             32
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the resolved rule set as the tool applies it</p><pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>declared doctrines:   37
+blocking:             33
 advisory:             4
 missing validators:   0
 without a test file:  0
@@ -366,7 +369,7 @@ wiring is verified by: majordomus doctor</code></pre>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a3c4ba7a816dab73bb5407047d606d65a3637558" class="font-mono hover:underline">a3c4ba7</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7002380d417007fea5a5d3df054c62f097614bb3" class="font-mono hover:underline">7002380</a> · inputs <span class="font-mono">8f956d66b449</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

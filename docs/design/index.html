@@ -488,6 +488,12 @@ recorded, its values are closed and checked.</li>
 <li><strong>Append-only stores have a retention cap.</strong> One repository accumulated 10 GB of
 metrics snapshots that nothing ever read. <code>ledger.jsonl</code> and <code>handovers/</code> declare a
 cap and <code>doctor</code> reports when it is exceeded.</li>
+<li><strong>Every directory of the layer has a producer.</strong> <code>local/session-contexts/</code> was created
+by <code>init</code> and filled by nothing for as long as the layout existed, which reads as a
+feature that does not work. It now holds one document per episode, written when
+<code>session start</code> freezes the context the builder resolved and appended to when the episode
+closes. A directory the skeleton creates and no command writes into is a defect of the
+same kind as a claim with no test.</li>
 <li><strong>Records are never staged or committed by Majordomus.</strong> The writer creates one new
 file atomically under <code>local/</code> and prints its path. A record reaches another checkout
 only by being carried there — a handover names it, git does not move it.</li>
@@ -810,7 +816,7 @@ state half of that loop honestly and leaves the measurement half explicitly unbu
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a3c4ba7a816dab73bb5407047d606d65a3637558" class="font-mono hover:underline">a3c4ba7</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7002380d417007fea5a5d3df054c62f097614bb3" class="font-mono hover:underline">7002380</a> · inputs <span class="font-mono">8f956d66b449</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

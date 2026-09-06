@@ -174,14 +174,14 @@
   <div class="min-w-0"><p class="text-lg text-body">Open, inspect and close one execution episode.</p>
     <ul class="mt-4 flex flex-wrap gap-2 text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">state-mutating</span></li>
-      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">context</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 border-l-2 border-default pl-4 text-sm text-body">One open session per worktree; the open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">majordomus session &lt;start|status|close|list|show|latest&gt; [options]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">context</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 border-l-2 border-default pl-4 text-sm text-body">One open session per worktree; the open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store and close appends the outcome to it; --if-open and --if-none are what let a provider hook run both on every event.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">majordomus session &lt;start|status|close|list|show|latest|context&gt; [options]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
     <ol class="mt-3 flex flex-wrap gap-2 text-sm"><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Set up</li><li class="rounded-base border px-3 py-1.5 border-brand-subtle bg-brand-softer font-medium text-fg-brand-strong" aria-current="step">Begin</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Work</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Verify</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Conclude</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Inspect</li></ol>
     <p class="mt-3 text-sm text-body-subtle">Other commands at this stage:<a href="https://korczis.github.io/prismatic-majordomus/commands/start/" class="font-mono text-fg-brand hover:underline">start</a>, <a href="https://korczis.github.io/prismatic-majordomus/commands/plan/" class="font-mono text-fg-brand hover:underline">plan</a>.</p><div class="mt-10 grid gap-6 sm:grid-cols-2">
       <div class="min-w-0">
-        <h2 class="text-xl font-semibold tracking-tight text-heading">Reads</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/local/state/session-current.yaml</li><li class="break-all font-mono text-body">.ai/local/state/sessions/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
+        <h2 class="text-xl font-semibold tracking-tight text-heading">Reads</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/local/state/session-current.yaml</li><li class="break-all font-mono text-body">.ai/repo/sessions/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
       <div class="min-w-0">
-        <h2 class="text-xl font-semibold tracking-tight text-heading">Writes</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/local/state/session-current.yaml</li><li class="break-all font-mono text-body">.ai/local/state/sessions/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
+        <h2 class="text-xl font-semibold tracking-tight text-heading">Writes</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/local/state/session-current.yaml</li><li class="break-all font-mono text-body">.ai/repo/sessions/</li><li class="break-all font-mono text-body">.ai/local/session-contexts/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
     </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exit codes</h2>
     <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="https://korczis.github.io/prismatic-majordomus/commands/" class="text-fg-brand hover:underline">commands index</a>.</p>
     <ul class="mt-3 space-y-1 text-sm"><li><code class="font-mono font-semibold text-heading">0</code> <span class="text-body">ok</span></li><li><code class="font-mono font-semibold text-heading">2</code> <span class="text-body">usage</span></li><li><code class="font-mono font-semibold text-heading">10</code> <span class="text-body">contract unmet</span></li><li><code class="font-mono font-semibold text-heading">12</code> <span class="text-body">missing artifact</span></li><li><code class="font-mono font-semibold text-heading">13</code> <span class="text-body">internal error</span></li><li><code class="font-mono font-semibold text-heading">15</code> <span class="text-body">refused</span></li></ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">One worker&#39;s sitting, as a durable envelope</h2>
@@ -195,7 +195,9 @@
           class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
           :class="s === 'closes' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Closing into an envelope</button><button type="button" role="tab" x-on:click="s = 'close-none'" :aria-selected="s === 'close-none' ? 'true' : 'false'"
           class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-          :class="s === 'close-none' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Closing when nothing is open</button></div><div x-show="s === 'opens'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+          :class="s === 'close-none' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Closing when nothing is open</button><button type="button" role="tab" x-on:click="s = 'working-context'" :aria-selected="s === 'working-context' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === 'working-context' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Where the episode&#39;s working context is</button></div><div x-show="s === 'opens'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <h3 class="text-base font-semibold text-heading">Opening an episode</h3>
         <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
             <dt class="text-body">session open</dt>
@@ -253,12 +255,12 @@ git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono tex
         <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus session close</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
-        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^.ai/local/state/sessions/</li></ul>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^\.ai/repo/sessions/</li></ul>
         <p class="mt-3 text-sm">
           <span class="text-body-subtle">exit</span>
           <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-success-soft text-fg-success-strong">0</code>
         </p>
-        <p class="mt-4 text-sm text-body">The closed record names the tasks, checkpoints, handovers, decisions and questions of the episode and copies none of them. The path printed is the record.</p>
+        <p class="mt-4 text-sm text-body">The closed record names the tasks, checkpoints, handovers, decisions and questions of the episode and copies none of them. The path printed is the record, under the layer&#39;s tracked sessions section: a closed episode is a shared object (ADR 0014).</p>
       </div><div x-show="s === 'close-none'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <h3 class="text-base font-semibold text-heading">Closing when nothing is open</h3>
         <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-neutral-secondary-medium">
@@ -283,6 +285,26 @@ git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono tex
           <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-danger-soft text-fg-danger-strong">12</code>
         </p>
         <p class="mt-4 text-sm text-body">Absence is reported as a missing artifact, exit 12, and never as a silent success.</p>
+      </div><div x-show="s === 'working-context'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">Where the episode&#39;s working context is</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
+            <dt class="text-body">session open</dt>
+            <dd class="font-mono font-medium text-fg-success-strong">yes</dd>
+          </div></dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># Installed, with one execution episode open in this worktree.
+. &quot;$FIXTURE_SETUP/installed.sh&quot;
+&quot;$MJ&quot; session start --worker some-provider/some-model &gt;/dev/null</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus session context</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^\.ai/local/session-contexts/</li></ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">exit</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-success-soft text-fg-success-strong">0</code>
+        </p>
+        <p class="mt-4 text-sm text-body">`start` freezes what the context builder resolved into the local working-context store, and this prints the path rather than the document: local evidence is never poured into a terminal where a context can pick it up.</p>
       </div></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"><p>Open, inspect and close one execution episode. A session is the seventh durable record and
 the only one that is not task-shaped.</p>
@@ -293,17 +315,36 @@ contains the other, which is why they are two records rather than one field.</p>
 <p>Sessions are optional. A worker that never opens one loses the episode boundary and
 nothing else; every other record is written exactly as before.</p>
 <ul>
-<li><code>start [--owner &lt;who&gt;] [--worker &lt;id&gt;]</code> opens the episode. One open session per
-worktree: a second <code>start</code> is refused rather than replacing the first. <code>--worker</code> is a
+<li><code>start [--owner &lt;who&gt;] [--worker &lt;id&gt;] [--if-open refuse|keep]</code> opens the episode. One
+open session per worktree: a second <code>start</code> is refused rather than replacing the first,
+unless <code>--if-open keep</code> says to keep what is open — which is what a provider hook passes,
+because its start event fires again on a resume and on a compaction. <code>--worker</code> is a
 free-form identity string, recorded only when supplied — an unrecorded worker stays
 unrecorded, because a guessed one is indistinguishable from a recorded one the moment it
-is written down.</li>
+is written down. <code>--provider</code> and <code>--provider-session</code> record which provider's event
+opened the episode and that provider's own session identity; only something running
+inside that provider's hook can supply them, which is what makes <code>opened_by: hook</code> in the
+working context a fact rather than a claim.</li>
 <li><code>status</code> prints the open session with the divergence label of the commit it opened at,
 or reports that there is none. Read-only. Absence is an answer, not a failure.</li>
-<li><code>close [--outcome closed|interrupted]</code> closes the episode into an immutable record under
-<code>state/sessions/</code> and removes the open one. An authored summary may arrive on stdin and
-is optional; identity fields in it are refused, as they are in a checkpoint.</li>
+<li><code>close [--outcome closed|interrupted] [--if-none refuse|ignore]</code> closes the episode into
+an immutable record under the layer's sessions section and removes the open one. An
+authored summary may arrive on stdin and is optional; identity fields in it are refused,
+as they are in a checkpoint. <code>--if-none ignore</code> makes "nothing was open" the normal case
+rather than a failure, which is what a provider's end event passes.</li>
+<li><code>context [&lt;session-id&gt;]</code> prints the path of an episode's working context. Read-only, and
+it prints the path rather than the document: the document is local evidence, and a command
+that pours it into a terminal invites it into somebody's context.</li>
 </ul>
+<p><strong>The open freezes the context it was given.</strong> <code>start</code> writes
+<code>.ai/local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md</code> — the front matter of the episode, the
+context builder's output verbatim, and a <code>## Notes</code> section for the worker — and <code>close</code>
+appends a <code>## Close</code> section naming the outcome and the record. The document is appended to
+and never rewritten, so what a worker typed into it survives. The store is local: it names
+this machine and it is a snapshot of a projection, so it is never published and never loaded
+into a context on its own, and <code>doctor</code> refuses a document that carries a conversation. See
+<code>capture session</code> for the hooks that make the boundary independent of anybody remembering
+to draw it.</p>
 <p><strong>The closed record is an envelope of references.</strong> It names the tasks, issues, milestones,
 checkpoints, handovers, decisions, questions and evidence of the episode, and copies the
 body of none of them. It also carries the commits between the opening and closing commit —
@@ -373,16 +414,16 @@ absent is exactly what would let a second <code>start</code> overwrite it.</p>
 <span class="giallo-l"><span>$ majordomus session close &lt;&lt;&#39;EOF&#39;</span></span>
 <span class="giallo-l"><span>The extraction boundary and the session schema landed; the compiler&#39;s discovery stage is next.</span></span>
 <span class="giallo-l"><span>EOF</span></span>
-<span class="giallo-l"><span>.ai/local/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md</span></span></code></pre></article><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
+<span class="giallo-l"><span>.ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md</span></span></code></pre></article><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
     <p class="mt-2 text-sm text-body-subtle">Every case below runs in CI on Linux and macOS. The site refuses to build if a public command has no behavioural case, no negative case, or no demonstration.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/60_session_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline">60_session_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/63_session_records.sh" class="break-all font-mono text-fg-brand hover:underline">63_session_records</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/54_session_lifecycle_hooks.sh" class="break-all font-mono text-fg-brand hover:underline">54_session_lifecycle_hooks</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/55_session_context.sh" class="break-all font-mono text-fg-brand hover:underline">55_session_context</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/60_session_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline">60_session_lifecycle</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/63_session_records.sh" class="break-all font-mono text-fg-brand hover:underline">63_session_records</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/60_session_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline">60_session_lifecycle</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/54_session_lifecycle_hooks.sh" class="break-all font-mono text-fg-brand hover:underline">54_session_lifecycle_hooks</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/55_session_context.sh" class="break-all font-mono text-fg-brand hover:underline">55_session_context</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/60_session_lifecycle.sh" class="break-all font-mono text-fg-brand hover:underline">60_session_lifecycle</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementation</h3>
@@ -427,7 +468,7 @@ absent is exactly what would let a second <code>start</code> overwrite it.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a3c4ba7a816dab73bb5407047d606d65a3637558" class="font-mono hover:underline">a3c4ba7</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7002380d417007fea5a5d3df054c62f097614bb3" class="font-mono hover:underline">7002380</a> · inputs <span class="font-mono">8f956d66b449</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

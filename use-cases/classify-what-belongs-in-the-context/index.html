@@ -226,7 +226,7 @@ INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   command     surface — 27 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
-OK   doctrine    36 doctrines — validator, dispatch, propagation, test and CI resolve for every one
+OK   doctrine    37 doctrines — validator, dispatch, propagation, test and CI resolve for every one
 OK   wiring      doctor-on-commit — wired via .githooks/pre-commit
 OK   wiring      finish-on-push — wired via .githooks/pre-push
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
@@ -248,7 +248,9 @@ OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.1.0))
-OK   rules       47 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   rules       48 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override
+OK   session     .ai/local/session-contexts — ignored and untracked
+OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
 INFO skill       .ai/repo/skills/ — no skills; nothing to validate
 INFO use-case    27 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:bench  [reproduce: majordomus usecase coverage]
 OK   use-case    0 of 27 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
@@ -309,6 +311,7 @@ rule        shared      rule       cc00432f6e4e  .ai/repo/rules/vendor/majordomu
 rule        shared      rule       848a019157cf  .ai/repo/rules/vendor/majordomus/rules/roadmap-integrity.v1.md
 rule        shared      rule       e254bad15ecd  .ai/repo/rules/vendor/majordomus/rules/rule-package-integrity.v1.md
 rule        shared      rule       5bae41c80fda  .ai/repo/rules/vendor/majordomus/rules/scope-integrity.v1.md
+rule        shared      rule       a5edecdf55cf  .ai/repo/rules/vendor/majordomus/rules/session-lifecycle.v1.md
 rule        shared      rule       8f779c44c5c2  .ai/repo/rules/vendor/majordomus/rules/session-records.v1.md
 rule        shared      rule       09607d5f2e00  .ai/repo/rules/vendor/majordomus/rules/skill-integrity.v1.md
 rule        shared      rule       70a6e878886b  .ai/repo/rules/vendor/majordomus/rules/state-consistency.v1.md
@@ -335,7 +338,7 @@ readme      shared      document   5b11f2037bb5  CLAUDE.md
 readme      shared      document   1d3c2948afc5  GEMINI.md
 decisions   operational decision   0885fc07773e  .ai/local/state/decisions.md
 questions   operational question   ebeb154be99d  .ai/local/state/open-questions.md
-knowledge sources: 75 file(s) in scope all</code></pre>
+knowledge sources: 76 file(s) in scope all</code></pre>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^policy +shared/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^scope +shared/</li></ul>
       </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -404,6 +407,7 @@ rule        shared      cc00432f6e4e  rule:majordomus.retention-caps            
 rule        shared      848a019157cf  rule:majordomus.roadmap-integrity                    The roadmap is a projection, never a document
 rule        shared      e254bad15ecd  rule:majordomus.rule-package-integrity               Rule package integrity
 rule        shared      5bae41c80fda  rule:majordomus.scope-integrity                      Scope integrity
+rule        shared      a5edecdf55cf  rule:majordomus.session-lifecycle                    The episode boundary is drawn below the model, and its working context is local
 rule        shared      8f779c44c5c2  rule:majordomus.session-records                      Session records are shared objects with a closed field set
 rule        shared      84f5b9f70992  rule:majordomus.sessions-are-workers                 Sessions are workers, not memory
 rule        shared      09607d5f2e00  rule:majordomus.skill-integrity                      Skill integrity
@@ -414,7 +418,7 @@ rule        shared      489da6725d95  rule:majordomus.verification-integrity    
 rule        shared      1b01d93b42fa  rule:majordomus.verify-outcomes                      Verify outcomes, not activity
 scope       shared      2be34c73e9c5  scope:.ai/repo/scope.yaml                            
 taxonomy    shared      0b3f050b9c77  taxonomy:.ai/repo/use-cases/taxonomy.yaml            
-knowledge nodes: 73 in scope shared</code></pre>
+knowledge nodes: 74 in scope shared</code></pre>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /shared/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_not_contains /operational/</li></ul>
       </li></ol>
 
@@ -473,7 +477,7 @@ knowledge nodes: 73 in scope shared</code></pre>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a3c4ba7a816dab73bb5407047d606d65a3637558" class="font-mono hover:underline">a3c4ba7</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7002380d417007fea5a5d3df054c62f097614bb3" class="font-mono hover:underline">7002380</a> · inputs <span class="font-mono">8f956d66b449</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
