@@ -1041,6 +1041,15 @@
       "note": "The case runs the whole path against a local bare remote, no network; the footer of every page names the commit, so a deploy is verifiable with curl. The workflow calls the same script with --skip-build after its gate. Pointing GitHub Pages at the branch is a one-time --configure-pages. The hand procedure is .ai/repo/skills/deploy-site/SKILL.md."
     },
     {
+      "id": "claim:derived-data-current",
+      "kind": "claim",
+      "label": "A commit whose derived data is behind its canonical inputs is refused before it exists, and a repository that unwires that gate is a doctor failure",
+      "status": "guaranteed",
+      "route": "/guarantees/derived-data-current/",
+      "external": false,
+      "note": "The generator records the input hash in site/data/generated/source.json, so `pages current` answers \"must this be regenerated?\" in a fifth of a second without generating anything, which is what lets it run on every commit rather than only in CI. It is declared in the policy's enforcement list as derived-current, wired by git-hook:pre-commit, and doctor verifies that wiring the way it verifies the others - so the gate refuses the stale commit and the doctrine refuses the repository that removes the gate. Before this, staleness surfaced only after a merge, and the person it stopped was never the person who caused it."
+    },
+    {
       "id": "claim:executable-reference-derived",
       "kind": "claim",
       "label": "The site's pages about the Rust executable (one per module, one per capability, the command line, the MCP surface, the benchmarks, the executable's own narrative) are derived from the registry manifest and the registry dataset the executable generates, nothing names a capability by hand, and a capability that joins or leaves the registry gains or loses its page, its index entries and its links from the generators alone",
@@ -1523,6 +1532,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/pages",
+      "kind": "implementation",
+      "label": "scripts/pages",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/rust-check",
       "kind": "implementation",
       "label": "scripts/rust-check",
@@ -1969,6 +1985,13 @@
       "label": "test/cases/54_session_lifecycle_hooks.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/54_session_lifecycle_hooks.sh"
+    },
+    {
+      "id": "test:test/cases/56_derived_current_gate.sh",
+      "kind": "test",
+      "label": "test/cases/56_derived_current_gate.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/56_derived_current_gate.sh"
     },
     {
       "id": "test:test/cases/63_session_records.sh",
@@ -2690,6 +2713,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:derived-data-current",
+      "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:executable-reference-derived",
       "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
       "kind": "specified_by"
@@ -3270,6 +3298,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:derived-data-current",
+      "target": "impl:scripts/pages",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:executable-reference-derived",
       "target": "impl:scripts/lib/executable-site.jq",
       "kind": "implemented_by"
@@ -3847,6 +3880,11 @@
     {
       "source": "claim:site-deploy-one-path",
       "target": "test:test/cases/96_site_deploy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:derived-data-current",
+      "target": "test:test/cases/56_derived_current_gate.sh",
       "kind": "proved_by"
     },
     {
