@@ -69,6 +69,23 @@
       "tool": "majordomus_graphs"
     },
     {
+      "api_anchor": "/docs/api/#op-health-report",
+      "claims": [],
+      "cli": null,
+      "id": "health.report",
+      "kind": "query",
+      "module": "health",
+      "module_route": "/registry/modules/health/",
+      "resource": "majordomus://health",
+      "route": "/registry/capabilities/health-report/",
+      "slug": "health-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "tests": [],
+      "title": "Health of this process",
+      "tool": "majordomus_health"
+    },
+    {
       "api_anchor": "/docs/api/#op-objects-get",
       "claims": [
         {
@@ -250,23 +267,6 @@
       "tests": [],
       "title": "Judge a path against the scope",
       "tool": "majordomus_scope_classify"
-    },
-    {
-      "api_anchor": "/docs/api/#op-system-health",
-      "claims": [],
-      "cli": null,
-      "id": "system.health",
-      "kind": "query",
-      "module": "system",
-      "module_route": "/registry/modules/system/",
-      "resource": "majordomus://health",
-      "route": "/registry/capabilities/system-health/",
-      "slug": "system-health",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/system.rs",
-      "tests": [],
-      "title": "Health of this process",
-      "tool": "majordomus_health"
     }
   ],
   "claims": {
@@ -465,6 +465,22 @@
     {
       "capabilities": [
         {
+          "id": "health.report",
+          "route": "/registry/capabilities/health-report/",
+          "slug": "health-report"
+        }
+      ],
+      "claims": [],
+      "id": "health",
+      "route": "/registry/modules/health/",
+      "slug": "health",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
+      "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
           "id": "objects.get",
           "route": "/registry/capabilities/objects-get/",
           "slug": "objects-get"
@@ -558,22 +574,6 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
-    },
-    {
-      "capabilities": [
-        {
-          "id": "system.health",
-          "route": "/registry/capabilities/system-health/",
-          "slug": "system-health"
-        }
-      ],
-      "claims": [],
-      "id": "system",
-      "route": "/registry/modules/system/",
-      "slug": "system",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/system.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/system.rs",
-      "title": "System"
     }
   ],
   "registry_schema": "majordomus/capability-registry/v1",
