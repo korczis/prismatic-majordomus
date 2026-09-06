@@ -6425,7 +6425,7 @@
         "A hand-written list of unavailable capabilities"
       ],
       "objective": "Separate the local mode that inspects a developer's repository from the hosted mode that serves a packaged layer, and report the capabilities that are unavailable in hosted mode from capability metadata rather than from a hand-written list.",
-      "why": "Majordomus reads a repository checkout. A Machine has no /Users/korczis/dev. Without an explicit boundary the hosted process either panics on the first read or silently serves an empty layer, and a hand-maintained list of what does not work remotely would be one more thing to drift.",
+      "why": "Majordomus reads a repository checkout. A Machine has no developer's home directory. Without an explicit boundary the hosted process either panics on the first read or silently serves an empty layer, and a hand-maintained list of what does not work remotely would be one more thing to drift.",
       "current_state": "The executable resolves a repository from the working directory. Nothing distinguishes a packaged deployment from a local checkout, and no absolute path scan exists.",
       "desired_state": "The hosted process serves the packaged layer, the documentation, the UI and the API; a capability that genuinely requires a writable local checkout reports itself unavailable with a reason; and no absolute developer path exists anywhere in the image or its configuration.",
       "acceptance_criteria": [
