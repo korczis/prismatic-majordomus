@@ -92,7 +92,7 @@ person runs:
 
 ```bash
 scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases
-scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, site data
+scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, references, site data
 MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
 scripts/rust-check --ci                # every Rust gate but coverage, plus the benchmark check
 scripts/rust-check --integration       # the executable built and the registry checks only

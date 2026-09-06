@@ -15,11 +15,11 @@
 #                a path inside a fence is an instruction to a reader — `printf ... >
 #                docs/MISSING.md` demonstrating a gate, a `target:` in an example config —
 #                while a path in prose is a claim about where something lives.
-#   schemas      a schema path anywhere in the tree, fences included, has the shape the
-#                identity rule produces. `share/kinds.yaml` fixes it: `majordomus.adr/v1`
-#                is share/schemas/majordomus/adr/adr.v1.*. A flat share/schemas/adr.schema.json
-#                is not a stale path, it is a path the rule cannot produce, so it is refused
-#                by shape wherever it is written, including in a test fixture.
+#   schemas      a schema path anywhere outside the suite, fences included, is one the
+#                identity rule can produce. `share/kinds.yaml` fixes it: `majordomus.adr/v1`
+#                is share/schemas/majordomus/adr/adr.v1.*, and a file lying directly under
+#                share/schemas/ is not a stale path but one the rule could never have
+#                produced, so it is refused wherever it is written.
 #   contracts    every `contract` the generated site data publishes to a reader resolves.
 #                That field is a promise that a file is there to read; it was published
 #                pointing at the old flat schema paths for as long as they were wrong.
@@ -121,16 +121,18 @@ fi
 # it. That makes the check exact — a token under share/schemas/ is a schema path when some
 # file in the tree begins with it, which accepts the file itself, the vendor and kind
 # directories, and the stem of `capture.v1.{schema.json,proto}`, and accepts nothing the
-# identity rule could not have produced. It runs over every tracked file, fences included:
-# a flat path in a test fixture is as wrong as one in a document, and the flat form is
-# exactly what eight documents and one fixture carried after the schemas moved.
+# identity rule could not have produced. It runs over every tracked file outside test/,
+# fences included, because the wrong path is as easy to write in a shell script or a
+# template as in a sentence — that is where one of the nine after the schemas moved was.
 #
-# Tokens introduced by `$` are variable expansions ("$share/schemas/x.json", the fixture
-# share directory a case builds) and name nothing in this tree.
+# The suite is out of scope, and has to be: its cases build repositories that carry the
+# faults the gates refuse, so a gate reading them would refuse itself. Tokens introduced
+# by `$` are variable expansions (the fixture share directory a case builds under
+# "$share/schemas/") and name nothing in this tree either.
 git grep -h -I -o -E '(^|[^A-Za-z0-9_$./-])share/schemas/[A-Za-z0-9._/-]+' -- \
     ':!.ai/repo/sessions' ':!.ai/repo/adrs' ':!.ai/repo/project' \
     ':!docs/generated' ':!site/data/generated' ':!site/data/registry' \
-    ':!site/content/plan' ':!site/content/sessions' 2>/dev/null \
+    ':!site/content/plan' ':!site/content/sessions' ':!test' 2>/dev/null \
   | sed -E 's/^[^s]*//; s/[.,;:)]+$//' | sort -u > "$TMP/schemapaths" || true
 : > "$TMP/badschema"
 while IFS= read -r sp; do
@@ -142,7 +144,7 @@ if [ -s "$TMP/badschema" ]; then
   echo "share/schemas/<vendor>/<name>/<name>.v<n>.<ext> — see share/kinds.yaml:" >&2
   while IFS= read -r sp; do
     printf '  %s\n' "$sp" >&2
-    git grep -n -I -F -- "$sp" | grep -vE '^(\.ai/repo/(sessions|adrs|project)|docs/generated|site/data)' | sed 's/^/    /' >&2 || true
+    git grep -n -I -F -- "$sp" -- ':!test' | grep -vE '^(\.ai/repo/(sessions|adrs|project)|docs/generated|site/data)' | sed 's/^/    /' >&2 || true
   done < "$TMP/badschema"
   rc=1
 fi

@@ -59,7 +59,10 @@ expect_exit 1 "$ROOT/scripts/ci/reference-check" "$R"
 expect_grep 'docs/README.md names docs/PROTOCOL.md'
 git -C "$R" checkout -q -- docs/README.md
 
-# 2. a schema named by a path no identity can produce, in a document and in a fixture alike
+# 2. a schema named by a path no identity can produce, in a document and in a script alike.
+#    The suite of the repository being checked is out of scope — its cases carry faults on
+#    purpose — so the script here is one at the root of the fixture repository, which is
+#    where a template, a generator or a hook would put the same mistake.
 printf '\nThe policy schema is `share/schemas/policy.schema.json`.\n' >> "$R/docs/README.md"
 expect_exit 1 "$ROOT/scripts/ci/reference-check" "$R"
 expect_grep 'share/schemas/<vendor>/<name>/<name>.v<n>'
