@@ -115,7 +115,7 @@ how each kind is read from the tool distribution at run time. The rest is data:
 | which sections exist | `sections:` in the manifest |
 | which files are sources, of which kind | `.ai/repo/knowledge/sources.yaml`, one pathspec and kind per class, through the git index |
 | how a kind is read and which keys it may carry | `share/kinds.yaml` and `share/schemas/<kind>.schema.json` in the distribution, plus a repository's own under `.ai/repo/knowledge/` |
-| which tools exist | the executable capabilities with an MCP tool exposure, composed in `apps/majordomus-cli/src/capability/builtin.rs` |
+| which tools exist | the executable capabilities with an MCP tool exposure, composed under `apps/majordomus-cli/src/capability/builtin/` |
 
 Consequences a repository can rely on:
 

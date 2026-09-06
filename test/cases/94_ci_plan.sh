@@ -44,7 +44,7 @@ for g in rust-check rust-coverage rust-bench macos; do lacks "$s" "$g" || { echo
 
 # --- the distribution is read by both implementations and by the site: every gate but the
 #     always ones comes from the class, none from escalation
-p="$(plan share/schemas/policy.schema.json)"
+p="$(plan share/schemas/majordomus/policy/policy.v1.schema.json)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = affected ] || { echo "    a share change escalated instead of selecting by class"; exit 1; }
 s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
 for g in rust-check rust-coverage rust-bench shell-suite site-build site-probe macos; do has "$s" "$g" || { echo "    a share change did not select $g: $s"; exit 1; }; done

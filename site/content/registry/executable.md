@@ -116,8 +116,8 @@ directory and reads `kinds.yaml` and `schemas/<name>.schema.json` from it, in th
 </div>
 
 
-None found: exit 12, every directory tried named. A repository adds kinds under
-`.ai/repo/knowledge/kinds.yaml` and schemas under `.ai/repo/knowledge/schemas/`; a name the
+None found: exit 12, every directory tried named. A repository adds kinds in its own
+`kinds.yaml` under `.ai/repo/knowledge/` and schemas under `.ai/repo/knowledge/schemas/`; a name the
 distribution already declares is an error naming both files.
 
 ## Command reference
@@ -255,7 +255,7 @@ layer itself documents, `.ai/manifest.yaml` and `sources.yaml` under the manifes
 | which sections exist | `sections:` in the manifest | repository |
 | which file names must carry the context contract | `context.documents:` in the manifest | repository |
 | which files carry which kind | `.ai/repo/knowledge/sources.yaml` | repository |
-| how a kind is read | `share/kinds.yaml`, plus `.ai/repo/knowledge/kinds.yaml` | distribution, repository |
+| how a kind is read | `share/kinds.yaml`, plus a `kinds.yaml` under `.ai/repo/knowledge/` | distribution, repository |
 | which keys and values a kind may carry | `share/schemas/<kind>.schema.json`, plus `.ai/repo/knowledge/schemas/` | distribution, repository |
 
 </div>

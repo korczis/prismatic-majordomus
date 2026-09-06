@@ -28,7 +28,7 @@ suite is present, and records for each target and mode the count, minimum, p50, 
 p99, maximum, mean and standard deviation. A read-only command is sampled warm in one
 repository after one cold run; a command that mutates state is sampled cold in a fresh
 repository per sample and has no warm distribution. Runs are local evidence under
-`.ai/local/benchmarks/`; the baseline is `.ai/repo/benchmarks/baseline.json`, written only
+`.ai/local/benchmarks/`; the baseline is `baseline.json` under `.ai/repo/benchmarks/`, written only
 by `--write-baseline` on a clean tree; `--check` refuses a regression over the policy's
 `benchmark.regression` thresholds by exit code.
 
