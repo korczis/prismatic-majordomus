@@ -621,5 +621,13 @@ fn the_registry_graph_holds_every_builtin_capability_and_its_projections() {
                 c.id
             );
         }
+        // the Cockpit is not declared per capability — every one of them has a page — so
+        // the assertion is that the edge is always there rather than that it matches an
+        // exposure. A capability missing from this projection is a page that does not exist.
+        assert!(
+            edge(&capability, "projection:cockpit"),
+            "{} has no Cockpit page in the graph the Cockpit draws",
+            c.id
+        );
     }
 }

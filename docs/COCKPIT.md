@@ -274,6 +274,39 @@ The unit tests in `src/cockpit/` cover the escaping (both contexts), the void el
 status-word-to-class mapping, the asset cache and the path refusals, the CSP digest, and
 the navigation being the registry's rather than a list.
 
+## What it deliberately does not do
+
+Four things a control plane is expected to have, left out on purpose. Each is a decision
+rather than a gap, and each names what would have to change first.
+
+**No live transport — no WebSocket, no SSE.** The activity page polls `/api/v1/perf` while
+it is on screen and stops when it is not. A stream would be a fourth capability kind beside
+query, command and resource: the registry has no way to declare one, the executor has no way
+to run one, the benchmark projection has no way to time one, and `capabilities validate` has
+no way to refuse a malformed one. Adding a noun to the core to make a counter update without
+a poll is the trade this repository's `optional-complexity` rule exists to refuse. When
+something genuinely long-running arrives — a capability that takes minutes and reports
+progress — the stream kind will be worth its own decision, and the typed event envelope
+belongs in that decision rather than ahead of it.
+
+**No rule-precedence resolution.** "What instructions apply at this path?" is a question the
+Cockpit is the right place to answer and the wrong place to *decide*. The shell tool owns
+context resolution (`majordomus context resolve`), and a second implementation in Rust would
+be a second opinion about precedence — exactly the drift every rule here is written against.
+What the Cockpit does instead is show the inputs: every rule as an object, the rule
+dependency graph, and the directory contracts as objects of kind `context`. The resolution
+itself waits for one engine both tools can call.
+
+**The health page is not `majordomus doctor`.** Doctor decides whether Majordomus is *wired
+into this repository* — the hooks, the projections, the retention, the state. `health.report`
+decides whether what this process *serves* is sound. Different subjects with different
+engines, and the Rust server dispatches no shell, so there is no third thing that runs both.
+A reader who wants both runs both; each names the other's territory.
+
+**No write path.** Every capability the Cockpit can reach is a query, or the one command
+that changes this process's own memory. Nothing in it writes to the repository, and a
+capability that did would need its own decision (ADR 12 says so explicitly).
+
 ## In a browser
 
 `scripts/cockpit-probe` measures the Cockpit against a running server. Nothing in it lists

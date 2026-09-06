@@ -255,7 +255,10 @@ mod tests {
         assert!(policy.contains("script-src 'self' 'sha256-"), "{policy}");
         assert!(!policy.contains("unsafe-eval"), "{policy}");
         // the asymmetry, asserted rather than assumed: styles may be inline, scripts never
-        assert!(policy.contains("style-src 'self' 'unsafe-inline'"), "{policy}");
+        assert!(
+            policy.contains("style-src 'self' 'unsafe-inline'"),
+            "{policy}"
+        );
         let script_src = policy
             .split("script-src ")
             .nth(1)
