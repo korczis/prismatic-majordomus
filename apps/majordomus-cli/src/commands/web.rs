@@ -167,6 +167,8 @@ fn list(out: &mut impl Write, topology: &Topology, format: OutputFormat) -> Resu
             .map_err(Error::Transport)?;
         }
         OutputFormat::Text => {
+            // master fixed the same clippy finding by inlining SOURCE; this keeps that and
+            // adds the two columns the two worlds need
             writeln!(
                 out,
                 "{:<16} {:<9} {:<16} {:<14} {:<14} SOURCE",

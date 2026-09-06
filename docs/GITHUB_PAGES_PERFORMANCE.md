@@ -118,6 +118,24 @@ is a projection; a projection that disagrees with its sources is a defect to fix
 source, and a publication path that quietly papers over it would be publishing something no
 gate had seen.
 
+### The derived content is committed for the same reason
+
+`site/data/generated` is only half of what the generator produces. The other half is the
+derived *content* — `site/content/{docs,guarantees,commands,doctrines,plan,use-cases,
+applications,skills,registry,profiles,supervises,why,outcomes}/` and the projections of
+`site/content-src/*.md` — and Zola renders that, not the JSON. So it is committed too. A
+fresh clone has no other way to obtain it: `site-build --no-data` does not run the generator,
+which is the whole of why the build fits its budget, and generating the content instead would
+cost about twice the twenty seconds `build` is allowed. Left ignored, the fast path could not
+build a clone at all; the first link into a section that does not exist fails the whole render.
+
+What keeps a committed projection honest is not ignoring it but the same gate the data lives
+under. `scripts/generate-site-data --check` diffs every derived page against a fresh staging
+generation and names every orphan, so an edited or stale page is refused exactly as stale data
+is, and `scripts/site-check` asserts the sections are committed and unignored rather than the
+reverse. Nothing under `site/content/` is anybody's to edit by hand: the file it is projected
+from is the original, and `--check` says so the moment the projection moves.
+
 ### `site-check` spawned seven thousand processes
 
 Five loops over the 416 built pages, each spawning grep, sed and awk per page: about eighteen

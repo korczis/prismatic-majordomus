@@ -11,30 +11,23 @@
 # test scratch
 /test/tmp/
 
+# the generated web root: one directory per web surface, written by its producer, plus the
+# resolved manifest and the composed publication. Derived state, reproducible from source,
+# never read as truth (ADR 0013).
+/target/
+
 # site build dependencies (not part of the CLI)
 node_modules
 
 # derived site, rebuilt by scripts/generate-site-data and scripts/site-build
 # (site/static/images/ is copied from assets/ at build but committed, so it stays tracked)
-site/content/docs/
-site/content/render-test.md
-site/content/architecture.md
-site/content/map.md
-site/content/evidence.md
-site/content/contract.md
-site/content/profiles/
-site/content/guarantees/
-site/content/supervises/
-site/content/commands/
-site/content/skills/
-site/content/context/
-site/content/doctrines/
-site/content/why/
-site/content/outcomes/
-site/content/use-cases/
-site/content/applications/
-site/content/plan/
-site/content/registry/
+#
+# site/content/ is NOT here. The derived content is a projection of the same canonical inputs
+# as site/data/generated, produced by the same generator in the same run, and it is committed
+# for the same reason: the publication path renders what is committed rather than regenerating
+# it (docs/GITHUB_PAGES_PERFORMANCE.md — the fast path's build budget is 20 s and a generation
+# costs twice that). `scripts/generate-site-data --check` diffs it exactly as it diffs the data,
+# so a stale page is refused by the same gate that refuses stale data.
 site/public/
 site/static/app.css
 site/static/openapi.json
@@ -52,13 +45,6 @@ share/cockpit/vendor/three.module.min.js
 share/cockpit/vendor/three.core.min.js
 share/cockpit/vendor/p5.min.js
 
-# Generated web surfaces: one directory per producer under target/web/, and the tree a
-# publication is composed into. Reproducible, never read as source, and never committed —
-# a stale artifact here is a `majordomus web validate --artifacts` finding, not a diff.
-# See ADR 0013 and the producers that write them (scripts/site-build --serve,
-# majordomus web report ...).
-/target/
-
 # transient staging for scripts/generate-site-data (removed on exit)
 .mj-stage.*/
 
@@ -70,3 +56,12 @@ share/cockpit/vendor/p5.min.js
 
 # personal Claude Code settings; the shared ones, including the capture hook, are tracked
 .claude/settings.local.json
+
+# The Cockpit's heavy vendored libraries: built by scripts/cockpit-assets from the pinned
+# npm packages, lazy-loaded by one page each, and every page complete without them.
+# share/cockpit/vendor/alpine.csp.min.js is committed: the interaction depends on it and it
+# is small. share/cockpit/cockpit.css is committed: it is a generated artifact, drift-checked.
+share/cockpit/vendor/cytoscape.min.js
+share/cockpit/vendor/three.module.min.js
+share/cockpit/vendor/three.core.min.js
+share/cockpit/vendor/p5.min.js

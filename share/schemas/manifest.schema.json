@@ -6,47 +6,105 @@
   "x-majordomus-allow": "manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "repo", "local", "sections"],
+  "required": [
+    "schema",
+    "repo",
+    "local",
+    "sections"
+  ],
   "properties": {
-    "schema": { "const": "ai-repository/v1" },
+    "schema": {
+      "const": "ai-repository/v1"
+    },
     "repo": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path"],
-      "properties": { "path": { "type": "string" } }
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        }
+      }
     },
     "local": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "tracked", "implicit_context"],
+      "required": [
+        "path",
+        "tracked",
+        "implicit_context"
+      ],
       "properties": {
-        "path": { "type": "string" },
-        "tracked": { "type": "boolean" },
-        "implicit_context": { "type": "boolean" }
+        "path": {
+          "type": "string"
+        },
+        "tracked": {
+          "type": "boolean"
+        },
+        "implicit_context": {
+          "type": "boolean"
+        }
       }
     },
     "sections": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "policy": { "type": "string" },
-        "scope": { "type": "string" },
-        "profiles": { "type": "string" },
-        "rules": { "type": "string" },
-        "prompts": { "type": "string" },
-        "skills": { "type": "string" },
-        "workflows": { "type": "string" },
-        "knowledge": { "type": "string" },
-        "adrs": { "type": "string" },
-        "project": { "type": "string" },
-        "use-cases": { "type": "string" },
-        "applications": { "type": "string" }
+        "policy": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "profiles": {
+          "type": "string"
+        },
+        "rules": {
+          "type": "string"
+        },
+        "prompts": {
+          "type": "string"
+        },
+        "skills": {
+          "type": "string"
+        },
+        "workflows": {
+          "type": "string"
+        },
+        "knowledge": {
+          "type": "string"
+        },
+        "adrs": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "use-cases": {
+          "type": "string"
+        },
+        "applications": {
+          "type": "string"
+        },
+        "sessions": {
+          "type": "string",
+          "description": "The closed execution episodes, one record each (ADR 0014)."
+        }
       }
     },
     "context": {
       "type": "object",
       "additionalProperties": false,
-      "properties": { "documents": { "type": "array", "items": { "type": "string" } } }
+      "properties": {
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

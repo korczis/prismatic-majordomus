@@ -330,6 +330,16 @@
       "external": false
     },
     {
+      "id": "lib/session.sh",
+      "kind": "module",
+      "label": "session",
+      "command": "session",
+      "summary": "open, inspect and close one execution episode",
+      "read_only": null,
+      "route": "/commands/session/",
+      "external": false
+    },
+    {
       "id": "lib/project.sh",
       "kind": "module",
       "label": "project",
@@ -617,16 +627,6 @@
       "summary": "find durable records without reading all of them",
       "read_only": true,
       "route": "/commands/search/",
-      "external": false
-    },
-    {
-      "id": "lib/session.sh",
-      "kind": "module",
-      "label": "session",
-      "command": "session",
-      "summary": "open, inspect and close one execution episode",
-      "read_only": null,
-      "route": "/commands/session/",
       "external": false
     },
     {
@@ -1069,6 +1069,11 @@
     {
       "source": "lib/doctor.sh",
       "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/session.sh",
       "kind": "sources"
     },
     {
