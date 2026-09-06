@@ -61,4 +61,60 @@ echo "== zola"
 if [ -f "$SITE/public/giallo-dark.css" ]; then
   sed -E 's/(^|,|\})[[:space:]]*(\.[a-z])/\1 .dark \2/g; s/^\.([a-z])/.dark .\1/' "$SITE/public/giallo-dark.css" > "$SITE/public/giallo-dark.css.tmp" && mv "$SITE/public/giallo-dark.css.tmp" "$SITE/public/giallo-dark.css"
 fi
+echo "== a11y (palette)"
+# and raise every colour of those palettes to the WCAG AA threshold against the background
+# the same stylesheet declares. A highlighting theme is chosen for how it reads, by somebody
+# who was not measuring contrast; this makes the choice safe rather than making it again.
+# Hue and saturation are untouched, a palette that already passes is rewritten to itself, and
+# a second pass over the result changes nothing.
+for f in "$SITE/public/giallo-light.css" "$SITE/public/giallo-dark.css"; do
+  [ -f "$f" ] || continue
+  node --input-type=module -e '
+import { readFileSync, writeFileSync } from "node:fs";
+import { enforce, MINIMUM } from "'"$ROOT"'/scripts/lib/ui-contrast.mjs";
+const path = process.argv[1];
+const { css, changed, background } = enforce(readFileSync(path, "utf8"));
+if (changed) writeFileSync(path, css);
+console.log(`  ${path.split("/").pop()}: ${changed} colour(s) raised to ${MINIMUM}:1 against ${background}`);
+' "$f"
+done
+# Every horizontally scrolling box of the built site is reachable from the keyboard (WCAG
+# 2.1.1). The elements this reaches are the ones a third party emits — the syntax
+# highlighter's <pre>, the typography plugin's <table> — which no configuration of ours can
+# give an attribute to; markup we write is held to the same invariant at its source, by
+# `scripts/ui check`. Which elements scroll is read from the stylesheet the build just
+# compiled, so a theme that stops making <pre> scroll stops this pass touching it.
+if [ "$NOCSS" = 0 ] && [ -d "$SITE/public" ]; then
+  echo "== a11y (markup)"
+  node --input-type=module -e '
+import { readFileSync, writeFileSync } from "node:fs";
+import { readdirSync } from "node:fs";
+import { join } from "node:path";
+import { normaliseRendered, scrollingTags } from "'"$ROOT"'/scripts/lib/ui-static.mjs";
+const scrollingTagNames = scrollingTags(readFileSync("'"$SITE"'/static/app.css", "utf8"));
+const pages = [];
+(function walk(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) walk(path);
+    else if (entry.name.endsWith(".html")) pages.push(path);
+  }
+})("'"$SITE"'/public");
+let touched = 0, elements = 0, named = 0;
+for (const page of pages) {
+  const before = readFileSync(page, "utf8");
+  let result;
+  try {
+    result = normaliseRendered(before, { scrollingTagNames });
+  } catch (error) {
+    console.error(`site-build: ${page}: ${error.message}`);
+    process.exit(10);
+  }
+  if (!result.scrolling && !result.named) continue;
+  writeFileSync(page, result.text);
+  touched += 1; elements += result.scrolling; named += result.named;
+}
+console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, over ${touched} page(s)`);
+'
+fi
 echo "site-build: ok — $(find "$SITE/public" -name 'index.html' | wc -l | tr -d ' ') routes in site/public/"

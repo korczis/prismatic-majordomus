@@ -79,7 +79,7 @@ projection on the next start or the next `majordomus generate`; nothing is edite
 
 A **capability** is a descriptor with:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | field | meaning |
 |---|---|
@@ -247,7 +247,7 @@ written by hand.
 
 ## Projections
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | projection | derived from | where |
 |---|---|---|
@@ -368,7 +368,7 @@ with a document edit. The committed files are caches: reviewable, never edited.
 
 ## When something fails
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | message | meaning | remedy |
 |---|---|---|
@@ -393,7 +393,7 @@ with a document edit. The committed files are caches: reviewable, never edited.
 
 ## Stability
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | | status |
 |---|---|

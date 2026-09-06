@@ -6,7 +6,7 @@
   <h3 class="font-mono text-sm font-semibold text-heading">{{ label }}{% if schema.title %} · {{ schema.title }}{% endif %}</h3>
   {%- if schema.description %}<p class="mt-1 text-sm text-body">{{ schema.description }}</p>{% endif -%}
   {%- if schema.properties -%}
-  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+  <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody>
@@ -26,6 +26,6 @@
   {%- endif -%}
   <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
-    <div class="overflow-x-auto border-t border-default"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading">{{ schema | json_encode(pretty=true) }}</pre></div>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading">{{ schema | json_encode(pretty=true) }}</pre></div>
   </details>
 </div>

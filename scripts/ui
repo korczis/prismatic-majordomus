@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+# ui — the repository's UI conformance surface: which pages exist, at which widths they must
+# work, and whether they do.
+#
+#   scripts/ui pages [--json]      every page of the built site, and where each was found
+#   scripts/ui viewports [--json]  the widths every page is audited at, and where they came from
+#   scripts/ui check               the static invariants: markup a keyboard cannot use
+#   scripts/ui audit [OPTIONS]     visit every page in a browser and write the results document
+#   scripts/ui test                the UI tooling's own tests
+#
+# Options of `audit`:
+#   --only SUBSTRING   only pages whose route contains it (local iteration; marks the run partial)
+#   --limit N          only the first N pages (the same)
+#   --out FILE         where the results document goes (default target/web/run-ui.json)
+#   --origin URL       audit an already-running server instead of starting one
+#   --port N           the port the audit's own server binds (default 8790)
+#   --no-build         do not rebuild the site for the audit's origin (see below)
+#   --report           render the results into the tests surface afterwards (/tests/ui)
+#
+# Zola writes absolute URLs, so a site built for the published base URL asks the *published*
+# origin for its stylesheets and scripts while the local server answers for its pages. An
+# audit of that is a measurement of two different sites, and it silently passes defects that
+# production has already fixed and fails ones it has not. So the audit builds the site for
+# the origin it is about to serve, audits it, and rebuilds it for the configured base URL
+# afterwards, leaving the checkout as it found it.
+#
+# Nothing here holds a list. The pages come from the built site — its filesystem and its
+# sitemap, unioned, so an orphan is still audited — and the widths from the media queries the
+# CSS build emitted, so a breakpoint added to the theme is audited without a test changing.
+# The server the audit drives is the repository's own `majordomus serve`, so the audit holds
+# no second opinion about how the site is served.
+#
+# Exit: 0 clean, 10 findings, 12 the site is not built, 13 no browser.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PUBLIC="$ROOT/site/public"
+CSS="$ROOT/site/static/app.css"
+
+usage() { sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'; }
+
+sub="${1:-pages}"; [ $# -gt 0 ] && shift || true
+json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=1
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --json) json=1 ;;
+    --only) only="${2:?--only needs a substring}"; shift ;;
+    --limit) limit="${2:?--limit needs a count}"; shift ;;
+    --out) out="${2:?--out needs a path}"; shift ;;
+    --origin) origin="${2:?--origin needs a URL}"; build=0; shift ;;
+    --port) port="${2:?--port needs a number}"; shift ;;
+    --no-build) build=0 ;;
+    --report) render=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "ui: unknown option '$1'" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+case "$sub" in
+  -h|--help|help) usage; exit 0 ;;
+  test) exec node "$ROOT/scripts/lib/ui.test.mjs" ;;
+  check) ;;
+  pages|viewports|audit) ;;
+  *) echo "ui: unknown subcommand '$sub'" >&2; usage >&2; exit 2 ;;
+esac
+
+# ------------------------------------------------------------------- the static check
+# The check reads markup, so it reads files that *are* markup: every tracked .html of the
+# repository (its templates and its authored pages) and every rendered .html the build has
+# produced. Nothing is listed — the set is an extension and a directory — and a generator
+# written in awk, Rust or shell is covered through its output rather than through a scan of
+# its source, where a tag inside a regex is indistinguishable from a tag being written.
+# The stylesheets are read for a second, weaker question: which classes scroll at all.
+if [ "$sub" = check ]; then
+  files="$( cd "$ROOT" && {
+    git ls-files -- '*.html' '*.css' ':!site/public' ':!node_modules' 2>/dev/null || true
+    for d in site/public target/web; do [ -d "$d" ] && find "$d" -name '*.html' -type f; done
+  } | LC_ALL=C sort -u )"
+  [ -n "$files" ] || { echo "ui check: no markup in the work tree"; exit 0; }
+  ( cd "$ROOT" && printf '%s\n' "$files" | node --input-type=module -e '
+import { existsSync, readFileSync } from "node:fs";
+import { scan, scrollingTags } from "'"$ROOT"'/scripts/lib/ui-static.mjs";
+const files = (await new Promise((r) => { let s = ""; process.stdin.on("data", (d) => (s += d)); process.stdin.on("end", () => r(s)); }))
+  .split("\n").map((l) => l.trim()).filter(Boolean);
+// A rendered page is held to the whole invariant: every box the theme makes scroll is in
+// the tab order, however it got there. A source is held to the half it can answer for —
+// the scrolling utilities it writes — because what the theme does to a bare <pre> is a
+// matter for the build, which normalises it.
+const css = "'"$CSS"'";
+const themeTags = existsSync(css) ? scrollingTags(readFileSync(css, "utf8")) : [];
+const rendered = (file) => file.startsWith("site/public/") || file.startsWith("target/web/");
+let errors = 0, warnings = 0, scrolling = 0;
+for (const file of files) {
+  const offences = scan(readFileSync(file, "utf8"), { scrollingTagNames: rendered(file) ? themeTags : [] });
+  if (offences.length) scrolling += 1;
+  for (const o of offences) {
+    const warn = o.severity === "warning";
+    warn ? (warnings += 1) : (errors += 1);
+    console.log(`${warn ? "WARN" : "FAIL"} ${file}:${o.line}  ${o.rule}\n     ${o.detail}\n     fix: ${o.remedy}\n     ${o.excerpt}`);
+  }
+}
+console.log(`ui check: ${files.length} file(s) of markup, ${errors} failure(s), ${warnings} warning(s)`);
+process.exitCode = errors ? 10 : 0;
+' )
+  exit $?
+fi
+
+[ -d "$PUBLIC" ] || { echo "ui: the site is not built ($PUBLIC); run: scripts/site-build" >&2; exit 12; }
+[ -f "$CSS" ] || { echo "ui: the stylesheet is not compiled ($CSS); run: scripts/site-build" >&2; exit 12; }
+
+# ---------------------------------------------------------------------------- the audit
+if [ "$sub" = audit ]; then
+  [ -d "$ROOT/node_modules/playwright" ] && [ -d "$ROOT/node_modules/axe-core" ] || {
+    echo "SKIP ui audit: playwright and axe-core are not installed; run: npm ci" >&2; exit 13; }
+
+  server_pid=""
+  trap 'cleanup' EXIT INT TERM
+
+  restore=0
+  restore_site() { [ "$restore" = 1 ] && { echo "== rebuilding the site for its published base URL"; "$ROOT/scripts/site-build" --no-data >/dev/null; }; }
+  cleanup() { [ -n "$server_pid" ] && kill "$server_pid" 2>/dev/null; restore_site; return 0; }
+
+  if [ -z "$origin" ]; then
+    origin="http://127.0.0.1:$port"
+    # the site asks its own origin for its assets, or the audit measures two sites at once
+    if [ "$build" = 1 ]; then
+      echo "== building the site for $origin"
+      "$ROOT/scripts/site-build" --no-data --base-url "$origin" >/dev/null
+      restore=1
+    fi
+    MJ="${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}"
+    [ -x "$MJ" ] || { echo "ui: no executable at $MJ; run: cargo build --manifest-path apps/majordomus-cli/Cargo.toml" >&2; exit 12; }
+    log="$(mktemp "${TMPDIR:-/tmp}/mj-ui-serve.XXXXXX")"
+    "$MJ" serve --repo "$ROOT" --port "$port" >"$log" 2>&1 &
+    server_pid=$!
+    # readiness is a request that answers, not a line in a log: the log names the origin
+    # while it is still taking over a stale lease, which is not the same as listening
+    ready=0
+    for _ in $(seq 1 150); do
+      curl -fsS -o /dev/null "$origin/" 2>/dev/null && { ready=1; break; }
+      kill -0 "$server_pid" 2>/dev/null || { cat "$log" >&2; echo "ui: the server exited before it answered on $origin" >&2; exit 12; }
+      sleep 0.2
+    done
+    [ "$ready" = 1 ] || { cat "$log" >&2; echo "ui: the server did not answer on $origin" >&2; exit 12; }
+    rm -f "$log"
+  fi
+
+  node --input-type=module -e '
+import { run, write } from "'"$ROOT"'/scripts/lib/ui-run.mjs";
+const only = "'"$only"'" || undefined;
+const limit = "'"$limit"'" ? Number("'"$limit"'") : undefined;
+const started = Date.now();
+let done = 0;
+const results = await run("'"$origin"'", "'"$PUBLIC"'", "'"$CSS"'", {
+  select: only, limit,
+  onVisit: (visit) => {
+    done += 1;
+    if (visit.findings.length || done % 50 === 0)
+      process.stderr.write(`  ${String(done).padStart(4)}  ${visit.route} @${visit.width}  ${visit.findings.length} finding(s)\n`);
+  },
+});
+write("'"$out"'", results);
+const total = results.findings.length;
+if ('"$json"') { console.log(JSON.stringify(results, null, 2)); }
+else {
+  for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
+  const scope = results.complete ? "every page" : "a selected part of the site";
+  console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${scope} in ${results.seconds}s -> ${"'"$out"'".replace("'"$ROOT"'/", "")}`);
+}
+process.exitCode = total ? 10 : 0;
+' || status=$?
+  status="${status:-0}"
+  if [ "$render" = 1 ]; then
+    "${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}" web report ui --from "$out" --repo "$ROOT"
+  fi
+  exit "$status"
+fi
+
+# ------------------------------------------------------------------- pages and viewports
+node --input-type=module -e '
+import { plan } from "'"$ROOT"'/scripts/lib/ui-discover.mjs";
+const p = plan("'"$PUBLIC"'", "'"$CSS"'");
+const sub = "'"$sub"'", json = '"$json"';
+if (json) { console.log(JSON.stringify(sub === "pages" ? { schema: 1, source: p.source.pages, pages: p.pages } : { schema: 1, source: p.source.viewports, breakpoints: p.breakpoints, viewports: p.viewports }, null, 2)); }
+else if (sub === "pages") {
+  console.log("ROUTE".padEnd(52) + "TIER      WIDTHS  RENDERED  PUBLISHED");
+  for (const page of p.pages)
+    console.log(page.route.padEnd(52) + page.tier.padEnd(10) + String(page.widths.length).padEnd(8) + String(page.rendered).padEnd(10) + page.published);
+  const visits = p.pages.reduce((n, page) => n + page.widths.length, 0);
+  console.log(`${p.pages.length} page(s), ${visits} visit(s), from ${p.source.pages}`);
+} else {
+  console.log(`breakpoints: ${p.breakpoints.join(", ")} (from ${p.source.viewports})`);
+  console.log(`viewports:   ${p.viewports.join(", ")}`);
+  const visits = p.pages.reduce((n, page) => n + page.widths.length, 0);
+  const sweeps = p.pages.filter((page) => page.tier === "sweep").length;
+  console.log(`${p.viewports.length} width(s) in the sweep, ${p.pages.length} page(s), ${sweeps} of them swept: ${visits} visit(s)`);
+}
+'

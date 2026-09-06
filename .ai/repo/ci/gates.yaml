@@ -27,6 +27,12 @@ gates:
     runs: scripts/ci/shell-lint
     summary: bash -n over every script, shellcheck over the tool, the scripts and the cases
 
+  - id: ui-check
+    job: structure
+    always: true
+    runs: scripts/ui check
+    summary: the static half of UI conformance — every scrolling box this repository writes is reachable from the keyboard
+
   - id: core-check
     job: structure
     always: true
@@ -85,6 +91,12 @@ gates:
     runs: SITE_PROBE_JOBS=4 scripts/site-probe
     summary: every route at three widths in a real browser, the menu, the dropdown, the theme toggle, the diagrams
 
+  - id: ui-audit
+    job: site
+    requires: [site-build]
+    runs: scripts/ui audit --report
+    summary: every discovered page at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
+
   - id: macos
     job: macos
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
@@ -121,28 +133,28 @@ classes:
   # the site generator
   - id: share
     paths: [share/**]
-    gates: [rust-check, rust-coverage, rust-bench, shell-suite, site-build, site-probe, macos]
+    gates: [rust-check, rust-coverage, rust-bench, shell-suite, site-build, site-probe, macos, ui-audit]
 
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, macos]
+    gates: [shell-suite, rust-integration, site-build, site-probe, macos, ui-audit]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
   - id: layer
     paths: [.ai/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe]
+    gates: [shell-suite, rust-integration, site-build, site-probe, ui-audit]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
     paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe]
+    gates: [shell-suite, rust-integration, site-build, site-probe, ui-audit]
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
-    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-probe, scripts/site-serve]
-    gates: [shell-suite, site-build, site-probe]
+    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
+    gates: [shell-suite, site-build, site-probe, ui-audit]
 
   # the MCP client configurations and the launcher they name; case 90 reads them
   - id: clients

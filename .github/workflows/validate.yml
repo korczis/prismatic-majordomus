@@ -48,6 +48,7 @@ jobs:
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
+      ui_audit: ${{ steps.plan.outputs.ui_audit }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       macos: ${{ steps.plan.outputs.macos }}
     steps:
@@ -101,6 +102,11 @@ jobs:
           actionlint -version
       - name: shell-lint
         run: scripts/ci/shell-lint
+      # The static half of UI conformance: no browser, no built site, no dependency beyond
+      # the Node the runner already has. It reads markup — templates and rendered pages —
+      # and refuses a scrolling box a keyboard cannot reach.
+      - name: ui-check
+        run: scripts/ui check
       - name: core-check
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/core-check
       - if: always()
@@ -267,6 +273,29 @@ jobs:
       - name: probe the site in a browser
         if: needs.plan.outputs.site_probe == 'true'
         run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed site-probe site-probe timings.tsv scripts/site-probe
+      # Every discovered page at every width the compiled theme implies, in a browser,
+      # against the responsive, semantic, component and WCAG invariants. It drives the
+      # repository's own server, so it needs the executable; the Rust cache makes that a
+      # restore rather than a build in nearly every run.
+      - id: rust
+        if: needs.plan.outputs.ui_audit == 'true'
+        uses: ./.github/actions/setup-rust
+      - name: the executable the audit drives
+        if: needs.plan.outputs.ui_audit == 'true'
+        run: |
+          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+      - name: audit the UI in a browser
+        if: needs.plan.outputs.ui_audit == 'true'
+        run: scripts/ci/timed ui-audit ui-audit timings.tsv scripts/ui audit --report
+      - if: always() && needs.plan.outputs.ui_audit == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit
+          path: |
+            target/web/run-ui.json
+            target/web/tests/ui
+          retention-days: 14
       - name: manifest
         run: cat site/data/generated/source.json
       - if: always()

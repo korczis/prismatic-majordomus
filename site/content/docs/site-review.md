@@ -1,7 +1,7 @@
 +++
 title = "Site review"
 description = "route audit, ownership of site facts, validation performed"
-weight = 34
+weight = 35
 [extra]
 source = "docs/SITE_REVIEW.md"
 +++
@@ -15,7 +15,7 @@ recompute them are given.
 
 ## Route audit
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | route | purpose | audience | source | primary action | action taken |
 |---|---|---|---|---|---|
@@ -54,7 +54,7 @@ claim pages is: Majordomus declares scope up front, detects a file outside it at
 
 ## Canonical ownership of site facts
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | fact | canonical home | reaches the site through |
 |---|---|---|

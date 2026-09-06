@@ -6,7 +6,7 @@ template = "architecture.html"
 {% raw %}
 ## Ownership
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | layer | owns | lives in |
 |---|---|---|

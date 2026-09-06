@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance"
 description = "how a push becomes public: the publication path separated from the gates that decide merging, controlled against external latency, the derived trigger, the input fingerprint that replaces a generation, the caches and what each is worth, the budgets and where they live, how publication itself is measured, and the bottlenecks that remain"
-weight = 32
+weight = 33
 [extra]
 source = "docs/GITHUB_PAGES_PERFORMANCE.md"
 +++
@@ -211,7 +211,7 @@ because the larger half of it is GitHub's.
 Each domain is invalidated by its own inputs and nothing else, so a documentation change does
 not evict a toolchain and a lockfile change does not evict the site.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | cache | key | what a hit saves |
 |---|---|---|

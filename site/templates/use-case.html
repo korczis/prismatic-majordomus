@@ -20,7 +20,7 @@
     </div>
 
     {#- the authored narrative: the body of the object, rendered as it was written -#}
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full">{{ page.content | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
 
     {%- if u.scenario %}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
@@ -54,7 +54,7 @@
           {%- if st.stdin %}<span class="font-mono text-xs text-body-subtle">&lt; {{ st.stdin }}</span>{% endif -%}
         </div>
         {%- if decl and decl.note %}<p class="mt-2 text-sm text-body">{{ decl.note }}</p>{% endif -%}
-        <pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading"><code>{{ st.output }}</code></pre>
+        <pre class="mt-3 max-h-80 overflow-auto rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>{{ st.output }}</code></pre>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs">
           {%- for a in st.assertions -%}
           <li class="rounded border px-1.5 py-0.5 font-mono {% if a.result == 'pass' %}border-success-subtle bg-success-soft text-fg-success-strong{% else %}border-danger-subtle bg-danger-soft text-fg-danger-strong{% endif %}">{{ a.kind }}{% if a.pattern %} /{{ a.pattern }}/{% endif %}{% if a.path %} {{ a.path }}{% endif %}{% if a.kind == 'exit' %} {{ a.expected }}{% endif %}</li>
@@ -79,7 +79,7 @@
       {%- endfor -%}
     </ul>
     {%- if u.mcp_tools %}
-    <p class="mt-3 text-sm text-body">Over MCP the same layer is reached through {% for t in u.mcp_tools %}<code class="font-mono text-heading">{{ t }}</code>{% if not loop.last %}, {% endif %}{% endfor %} (<a href="{{ get_url(path='/docs/mcp/', trailing_slash=true) }}" class="text-fg-brand hover:underline">the MCP surface</a>).</p>
+    <p class="mt-3 text-sm text-body">Over MCP the same layer is reached through {% for t in u.mcp_tools %}<code class="font-mono text-heading">{{ t }}</code>{% if not loop.last %}, {% endif %}{% endfor %} (<a href="{{ get_url(path='/docs/mcp/', trailing_slash=true) }}" class="text-fg-brand underline">the MCP surface</a>).</p>
     {%- endif %}
 
     {%- if u.doctrines | length > 0 %}

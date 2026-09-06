@@ -88,6 +88,10 @@ pub fn run(args: WebArgs) -> Result<u8> {
                         .to_string();
                     crate::web::report::benchmarks::render(&root, &document, &source)?
                 }
+                ReportCommand::Ui { from } => {
+                    let run = crate::web::report::ui::read(&from)?;
+                    crate::web::report::ui::render(&root, &run)?
+                }
             };
             let rel = dir.strip_prefix(&root).unwrap_or(&dir);
             writeln!(out, "web report: {}", rel.display()).map_err(Error::Transport)?;

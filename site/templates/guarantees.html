@@ -8,7 +8,7 @@
 <div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 <p class="max-w-3xl text-body">A supervisory tool that overstates itself is the thing it was built to prevent. This page is generated from <code>docs/CLAIMS.yaml</code>; the build fails if any source, implementation or test path in it does not exist, or if a guaranteed claim names no test.</p>
-<p class="mt-3 max-w-3xl text-body">The same data, drawn as the graph it is: <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">every claim wired to the document, the implementation and the test behind it &rarr;</a></p>
+<p class="mt-3 max-w-3xl text-body">The same data, drawn as the graph it is: <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">every claim wired to the document, the implementation and the test behind it &rarr;</a></p>
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
   {%- for status in ["guaranteed", "advisory", "planned", "rejected"] -%}
@@ -18,7 +18,7 @@
 {%- for status in ["guaranteed", "advisory", "planned", "rejected"] -%}
 <section id="{{ status }}" class="mt-12">
   <h2 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-heading">{{ <badge status={status} /> }} <span class="capitalize">{{ status }}</span></h2>
-  <div class="overflow-x-auto rounded-base border border-default">
+  <div class="overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[40rem] text-left text-sm">
       <thead class="bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-3">claim</th><th scope="col" class="px-4 py-3">source</th><th scope="col" class="px-4 py-3">implementation</th><th scope="col" class="px-4 py-3">test</th></tr></thead>
       <tbody class="divide-y divide-default bg-neutral-primary-soft">

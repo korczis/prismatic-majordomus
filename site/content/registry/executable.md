@@ -104,7 +104,7 @@ executable is missing or older than its sources, sets `MAJORDOMUS_SHARE`, and `e
 Nothing about kinds or keys is compiled in. On every start the executable locates a share
 directory and reads `kinds.yaml` and `schemas/<name>.schema.json` from it, in this order:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | source | when |
 |---|---|
@@ -147,7 +147,7 @@ declare it in clap, declare at least one example beside it, implement it, `just 
 
 The same contract as `docs/CLI.md`:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | code | meaning | examples |
 |---|---|---|
@@ -162,7 +162,7 @@ The same contract as `docs/CLI.md`:
 
 ### Side-effect table
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | command | filesystem mutation | git mutation | network | stdout |
 |---|---|---|---|---|
@@ -243,7 +243,7 @@ layer itself documents, `.ai/manifest.yaml` and `sources.yaml` under the manifes
 `knowledge` section, and the file names of the distribution (`kinds.yaml`,
 `schemas/*.schema.json`). Everything else is read from data at run time:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | decides | read from | owner |
 |---|---|---|
@@ -291,7 +291,7 @@ session.
 
 ## Stability
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | | status |
 |---|---|

@@ -51,7 +51,7 @@ home.
 
 ## Six kinds of durable record, and a seventh that is not task-shaped
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Record | Answers | Mutability | Where |
 |---|---|---|---|
@@ -79,7 +79,7 @@ touch three tasks in an afternoon. Nothing in the six records that two decisions
 apart, filed under different tasks, were made by the same person in the same sitting — and
 that is exactly the causal thread a later reader is trying to pick up.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Record | Answers | Mutability | Where |
 |---|---|---|---|
@@ -192,7 +192,7 @@ them and marked as such.
 Nothing is trusted because it exists. On read, the recorded `head` is compared with the
 current `HEAD` through `git merge-base`, and the record is labelled:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Label | Meaning | What to do |
 |---|---|---|

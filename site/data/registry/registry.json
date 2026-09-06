@@ -5,22 +5,22 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "2682e1f77a989016ddb4fb52fcf0a862e9884d0e09a94d58db902161092751a2",
+    "fingerprint": "116b2d24a6171c60de40fdaf38285c2bc30bb8767fb85e930e5e92b51fde85e1",
     "summary": {
-      "total": 699,
+      "total": 704,
       "builtin": 14,
-      "declarative": 685,
+      "declarative": 690,
       "by_kind": {
         "command": 1,
         "query": 13,
-        "resource": 685
+        "resource": 690
       },
       "by_stability": {
         "behaviorally_verified": 14,
-        "implemented": 685
+        "implemented": 690
       },
       "mcp_tools": 14,
-      "mcp_resources": 689,
+      "mcp_resources": 694,
       "http_routes": 14,
       "cli_commands": 4,
       "modules": 24,
@@ -3961,7 +3961,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 173,
+        "capabilities": 174,
         "capability_ids": []
       },
       {
@@ -4095,7 +4095,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 81,
+        "capabilities": 83,
         "capability_ids": []
       },
       {
@@ -4135,7 +4135,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 93,
+        "capabilities": 95,
         "capability_ids": []
       },
       {
@@ -4149,7 +4149,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8f397014f76bfd4ce0965539883c3f2f12d1d8867ad4c0ab8885f39e8093e8a0",
+    "fingerprint": "b114026c0de786844ccfa121fdd6888f28d4431e3c23d08e096c89d065c425f9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -4171,19 +4171,19 @@
       "application": 5,
       "claim": 124,
       "context": 9,
-      "document": 173,
+      "document": 174,
       "implementation": 38,
       "issue": 90,
       "milestone": 11,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "rule": 81,
+      "rule": 83,
       "scope": 1,
       "session": 1,
       "skill": 3,
       "taxonomy": 10,
-      "test": 93,
+      "test": 95,
       "use-case": 37
     },
     "diagnostics": {},
@@ -5928,7 +5928,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2258
+        "bytes": 2298
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -5964,7 +5964,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 9181
+        "bytes": 9478
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -6010,6 +6010,15 @@
         "path": "docs/SITE_REVIEW.md",
         "source_class": "document",
         "bytes": 7305
+      },
+      {
+        "uri": "majordomus://document/docs/UI.md",
+        "kind": "document",
+        "identity": "docs/UI.md",
+        "title": "UI conformance — `scripts/ui`",
+        "path": "docs/UI.md",
+        "source_class": "document",
+        "bytes": 7489
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -9819,6 +9828,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.ui-conformance@1",
+        "kind": "rule",
+        "identity": "project.ui-conformance@1",
+        "title": "Every page of every web surface is audited, and the audit names no page",
+        "description": "The user interface is held to one executable standard — responsive at every width the theme declares, keyboard-operable, and WCAG 2.1 AA — over a page set and a width set that are discovered rather than listed.",
+        "path": ".ai/repo/rules/project/ui-conformance.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5047,
+        "tags": [
+          "ui",
+          "accessibility",
+          "web",
+          "projections"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.unknown-keys-are-errors@1",
         "kind": "rule",
         "identity": "project.unknown-keys-are-errors@1",
@@ -9846,6 +9872,22 @@
           "use-cases",
           "evidence",
           "documentation"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.web-surface-topology@1",
+        "kind": "rule",
+        "identity": "project.web-surface-topology@1",
+        "title": "A web surface is discovered from its producer, never registered twice",
+        "description": "Everything this repository exposes over HTTP is one resolved topology, discovered from producers and projected to serving, publication, validation and documentation from that one resolution.",
+        "path": ".ai/repo/rules/project/web-surface-topology.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4020,
+        "tags": [
+          "web",
+          "architecture",
+          "projections"
         ]
       },
       {
@@ -10661,6 +10703,22 @@
         "bytes": 2470
       },
       {
+        "uri": "majordomus://test/test/cases/84_web_surfaces.sh",
+        "kind": "test",
+        "identity": "test/cases/84_web_surfaces.sh",
+        "path": "test/cases/84_web_surfaces.sh",
+        "source_class": "case",
+        "bytes": 5510
+      },
+      {
+        "uri": "majordomus://test/test/cases/85_ui_conformance.sh",
+        "kind": "test",
+        "identity": "test/cases/85_ui_conformance.sh",
+        "path": "test/cases/85_ui_conformance.sh",
+        "source_class": "case",
+        "bytes": 10165
+      },
+      {
         "uri": "majordomus://test/test/cases/88_rust_command_tested.sh",
         "kind": "test",
         "identity": "test/cases/88_rust_command_tested.sh",
@@ -11227,7 +11285,7 @@
       "format": "markdown",
       "front_matter": "optional",
       "identity": [],
-      "objects": 173
+      "objects": 174
     },
     {
       "name": "implementation",
@@ -11303,7 +11361,7 @@
         "id",
         "version"
       ],
-      "objects": 81
+      "objects": 83
     },
     {
       "name": "scope",
@@ -11348,7 +11406,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 93
+      "objects": 95
     },
     {
       "name": "use-case",
@@ -14329,6 +14387,158 @@
                       ".ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json"
                     ],
                     "command": "majordomus web report benchmarks --from .ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json",
+                    "setup": [],
+                    "expectation": "exits 13"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "web",
+                  "report",
+                  "ui"
+                ],
+                "route": "/docs/cli/web/report/ui/",
+                "executable": true,
+                "usage": "majordomus web report ui [OPTIONS]",
+                "about": "The UI conformance audit, rendered as a section of the test surface (/tests/ui)",
+                "args": [
+                  {
+                    "name": "from",
+                    "long": "from",
+                    "positional": false,
+                    "help": "A results document from `scripts/ui audit`",
+                    "value_name": "FROM",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract)"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  },
+                  {
+                    "name": "only",
+                    "long": "only",
+                    "positional": false,
+                    "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+                    "value_name": "ONLY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "exclude",
+                    "long": "exclude",
+                    "positional": false,
+                    "help": "Every surface except these, by discovered id",
+                    "value_name": "EXCLUDE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "web-report-ui",
+                    "title": "Render the UI conformance audit into /tests/ui",
+                    "description": "`scripts/ui audit` drives a browser over every page of the built site at every width the compiled stylesheet's breakpoints imply, and writes one results document; this renders it. The rendering is a section of the test surface rather than a surface of its own, because a conformance run is a test run and the topology refuses a surface mounted inside another's subtree. Without that document there is nothing to render and the command says so.",
+                    "argv": [
+                      "web",
+                      "report",
+                      "ui",
+                      "--from",
+                      "target/web/run-ui.json"
+                    ],
+                    "command": "majordomus web report ui --from target/web/run-ui.json",
                     "setup": [],
                     "expectation": "exits 13"
                   }

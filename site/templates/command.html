@@ -19,7 +19,7 @@
 
     {#- C. Syntax -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">{{ c.syntax }}</pre></div>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">{{ c.syntax }}</pre></div>
 
     {#- J. Where it sits in the lifecycle -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
@@ -53,7 +53,7 @@
 
     {#- H. Exit semantics, joined to the one exit-code contract -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exit codes</h2>
-    <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="text-fg-brand hover:underline">commands index</a>.</p>
+    <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="{{ get_url(path="/commands/", trailing_slash=true) }}" class="text-fg-brand underline">commands index</a>.</p>
     <ul class="mt-3 space-y-1 text-sm">
       {%- for e in project.exit_codes -%}
         {%- if e.code in c.exit_codes -%}
@@ -89,14 +89,14 @@
         </dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ sc.setup_sh }}</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ sc.setup_sh }}</pre></div>
         {%- if sc.stdin_body %}
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">…and this body on standard input</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ sc.stdin_body }}</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body">{{ sc.stdin_body }}</pre></div>
         {% endif -%}
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus{% for a in sc.run %} {{ a }}{% endfor %}{% if sc.stdin_body %} &lt; body.md{% endif %}</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus{% for a in sc.run %} {{ a }}{% endfor %}{% if sc.stdin_body %} &lt; body.md{% endif %}</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1">{% for line in sc.expect.stdout_contains %}<li class="break-all font-mono text-sm text-body">{{ line }}</li>{% endfor %}</ul>
@@ -111,7 +111,7 @@
 
     {#- B, D, G, K. The authored reference: when to use it, its options, its output, examples -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto">{{ c.doc_md | markdown | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0">{{ c.doc_md | markdown | safe }}</article>
 
     {#- M. Evidence. Generated from coverage metadata; nothing here is typed by hand. -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
@@ -119,25 +119,25 @@
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.behaviour %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline">{{ t }}</a></li>{% endfor %}</ul>
+        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.behaviour %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ t }}</a></li>{% endfor %}</ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
-        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.negative %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline">{{ t }}</a></li>{% endfor %}</ul>
+        <ul class="mt-2 space-y-1 text-sm">{% for t in c.tests.negative %}<li><a href="{{ repo }}/blob/master/test/cases/{{ t }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ t }}</a></li>{% endfor %}</ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementation</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="{{ repo }}/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline">bin/majordomus</a></li>
-          {%- if c.name != "version" %}<li><a href="{{ repo }}/blob/master/lib/{{ c.name }}.sh" class="break-all font-mono text-fg-brand hover:underline">lib/{{ c.name }}.sh</a></li>{% endif -%}
-          <li><a href="{{ repo }}/blob/master/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline">share/commands.yaml</a></li>
+          <li><a href="{{ repo }}/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">bin/majordomus</a></li>
+          {%- if c.name != "version" %}<li><a href="{{ repo }}/blob/master/lib/{{ c.name }}.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">lib/{{ c.name }}.sh</a></li>{% endif -%}
+          <li><a href="{{ repo }}/blob/master/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">share/commands.yaml</a></li>
         </ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Demonstration</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="{{ repo }}/blob/master/test/fixtures/commands/{{ c.name }}.json" class="break-all font-mono text-fg-brand hover:underline">fixtures/{{ c.name }}.json</a></li>
-          <li><a href="{{ repo }}/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline">34_command_fixtures</a></li>
+          <li><a href="{{ repo }}/blob/master/test/fixtures/commands/{{ c.name }}.json" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">fixtures/{{ c.name }}.json</a></li>
+          <li><a href="{{ repo }}/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">34_command_fixtures</a></li>
         </ul>
       </div>
     </div>
@@ -162,7 +162,7 @@
         <ul class="space-y-1 text-sm">{% for q in group %}<li><a href="{{ get_url(path="/commands/" ~ q.name ~ "/", trailing_slash=true) }}" class="block rounded px-2 py-1 font-mono {% if q.name == c.name %}bg-brand-softer text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if q.name == c.name %} aria-current="page"{% endif %}>{{ q.name }}</a></li>{% endfor %}</ul>
         {%- endif -%}
       {%- endfor -%}
-      <p class="mt-4 text-xs text-body-subtle"><a href="{{ get_url(path="/docs/cli-specification/", trailing_slash=true) }}" class="hover:underline">Full shell CLI specification →</a></p>
+      <p class="mt-4 text-xs text-body-subtle"><a href="{{ get_url(path="/docs/cli-specification/", trailing_slash=true) }}" class="underline">Full shell CLI specification →</a></p>
     </div>
   </aside>
 </div>

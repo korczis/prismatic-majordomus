@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 31
+weight = 32
 [extra]
 source = "docs/CI.md"
 +++
@@ -141,7 +141,7 @@ Caches hold reusable dependency and build state; artifacts carry a job's outputs
 later job or a later phase. Jobs run on isolated runners, so nothing relies on a shared
 filesystem.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | cache | holds | key | invalidation | scope |
 |---|---|---|---|---|
@@ -154,7 +154,7 @@ filesystem.
 Nothing else is cached: Zola is one download, shellcheck one package, Chrome is on the
 runner image. What a cache holds is never a source of truth: every gate reads the checkout.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | artifact | from | for | retention |
 |---|---|---|---|

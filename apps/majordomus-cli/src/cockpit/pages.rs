@@ -791,6 +791,7 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure) -> El {
                     el("code")
                         .class("mj-mono mj-preview")
                         .attr("data-mj-preview", "")
+                        .attr("tabindex", "0")
                         .text(format!("{} {}", http.method.as_str(), http.path)),
                 ),
         )

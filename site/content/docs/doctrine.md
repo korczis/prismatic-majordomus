@@ -51,7 +51,7 @@ with a validator of its own, in the same format.
 
 Each doctrine, read from its rule object, carries:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | field | meaning |
 |---|---|
