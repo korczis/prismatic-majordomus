@@ -9,13 +9,19 @@ CORE="$ROOT/scripts/ci/core-check"; LINT="$ROOT/scripts/ci/shell-lint"
 [ -f "$W" ] || { echo "    no validate workflow"; exit 1; }
 [ -x "$CORE" ] && [ -x "$LINT" ] || { echo "    scripts/ci/core-check or scripts/ci/shell-lint is missing or not executable"; exit 1; }
 
-# 1. one canonical validation command, and CI calls exactly that. Two workflows and no more:
-#    this one decides whether a change may merge, .github/workflows/pages.yml decides what the
-#    public site shows, and neither repeats the other's work. The publication path is held to
-#    its own shape by test/cases/97_pages_fast_path.sh.
+# 1. one canonical validation command, and CI calls exactly that. This workflow decides
+#    whether a change may merge, .github/workflows/pages.yml decides what the public site
+#    shows, .github/workflows/release.yml decides what a tag publishes, and none of them
+#    repeats another's work. Every workflow has a model under .ai/repo/ci/ — that is the
+#    invariant, not how many there are; the shapes of the other two are held by
+#    test/cases/97_pages_fast_path.sh and test/cases/87_release_pipeline.sh.
 grep -q 'bash test/run.sh' "$W" || { echo "    validate.yml does not run bash test/run.sh"; exit 1; }
-[ "$(ls "$ROOT"/.github/workflows/*.yml | wc -l | tr -d ' ')" = 2 ] || { echo "    there are not exactly two workflows (validate.yml and pages.yml)"; ls "$ROOT"/.github/workflows/; exit 1; }
+for w in "$ROOT"/.github/workflows/*.yml; do
+  n="$(basename "$w" .yml)"; [ "$n" = validate ] && n=gates    # validate.yml's model is gates.yaml
+  [ -f "$ROOT/.ai/repo/ci/$n.yaml" ] || { echo "    .github/workflows/$(basename "$w") has no model under .ai/repo/ci/"; exit 1; }
+done
 [ -f "$ROOT/.github/workflows/pages.yml" ] || { echo "    no pages.yml; nothing publishes the site"; exit 1; }
+grep -q 'bash test/run.sh' "$ROOT/.github/workflows/pages.yml" && { echo "    pages.yml repeats the validation workflow's suite"; exit 1; }
 grep -qE 'actions/deploy-pages|scripts/site-deploy' "$ROOT/.github/workflows/pages.yml" || { echo "    pages.yml does not deploy the site"; exit 1; }
 
 # 2. the runner discovers every case rather than naming a list that can fall behind
@@ -100,7 +106,12 @@ done
 #     machine with a token is not a projection anyone can trust.
 grep -qE '^bin/majordomus plan validate$' "$CORE" || { echo "    core-check does not run plan validate as a blocking step"; exit 1; }
 grep -q 'scripts/github-sync --plan' "$CORE" || { echo "    core-check does not check the GitHub projection offline"; exit 1; }
-grep -qE 'scripts/github-sync' "$LINT" || { echo "    shell-lint does not shellcheck the GitHub adapter"; exit 1; }
+# shell-lint discovers what it lints rather than listing it, so the assertion is over what
+# it would actually lint, not over a name written inside it
+"$LINT" --list > "$T/linted"
+for f in scripts/github-sync bin/majordomus lib/common.sh scripts/generate-site-data; do
+  grep -qx "$f" "$T/linted" || { echo "    shell-lint would not lint $f"; exit 1; }
+done
 # the gate scripts must need no credential: a gate that only runs where a token exists is a
 # gate that does not run on a fork
 grep -qiE 'secrets\.|GITHUB_TOKEN|gh auth' "$CORE" "$LINT" && { echo "    a gate script reaches for a credential"; exit 1; }
