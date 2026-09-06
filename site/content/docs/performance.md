@@ -58,8 +58,7 @@ milliseconds; a thousand of them cost the tool its users. The fixes are the same
   `jarr` and `jline` instead of a jq per value.
 
 The measured deltas of each step are in the commit messages (`git log --grep perf`), the
-accepted state is [`.ai/repo/benchmarks/baseline.json`](../.ai/repo/benchmarks/baseline.json)
-once one is written, and the history of local runs is under `.ai/local/benchmarks/`. This
+accepted state is `baseline.json` under `.ai/repo/benchmarks/` once one is written, and the history of local runs is under `.ai/local/benchmarks/`. This
 document carries no numbers on purpose: they go stale, and the files above do not.
 
 ## Benchmarking: `majordomus bench`
@@ -97,7 +96,7 @@ Three things that are easy to confuse and are kept apart:
   one line per run in `history.jsonl`. It records the commit, whether the tree was dirty,
   the platform and the profile. It is ignored by git and proves nothing about another
   machine.
-- **The baseline** is the accepted state: `.ai/repo/benchmarks/baseline.json`, tracked,
+- **The baseline** is the accepted state: `baseline.json` under `.ai/repo/benchmarks/`, tracked,
   written only by `majordomus bench --write-baseline` on a clean tree (or with `--force`),
   in its own commit with the reason. It is reviewed like any other change.
 - **The check** is `majordomus bench --check`: a fresh run compared with the baseline, per

@@ -73,6 +73,13 @@ if [ -n "$hits" ]; then
   printf 'a home directory is named in an authored document; write what the path means instead:\n%s\n' "$hits" >&2
   exit 1
 fi
+# Every repository path an authored document names must be there. The same reasoning as the
+# gate above, one step further from the deploy: a document that points at a file which has
+# moved costs a reader the time to look and teaches them a layout that is wrong, and nothing
+# else notices — the site builds, the schemas validate, the suite passes. `reference-check`
+# says what it checks and what it exempts.
+step "every reference resolves"
+scripts/ci/reference-check
 # The committed derived site data must match the canonical files it is generated from.
 step "derived site data in sync"
 scripts/generate-site-data --check
