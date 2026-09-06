@@ -107,8 +107,12 @@
     border: 1px solid var(--mj-border);
   }
 
+  /* Wraps rather than overflows: at 390px the brand, the palette button and the external
+     links do not fit on one line, and a control plane that scrolls sideways on a laptop in
+     a split pane is worse than one that is two lines tall. The browser probe measures this
+     at 390, 1024 and 1600. */
   .mj-topbar {
-    @apply sticky top-0 z-30 flex items-center gap-4 px-4 py-2;
+    @apply sticky top-0 z-30 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2;
     background: var(--mj-bg-raised);
     border-bottom: 1px solid var(--mj-border);
   }
@@ -125,12 +129,13 @@
     @apply tracking-tight;
   }
   .mj-brand-suffix {
-    @apply text-[11px] uppercase tracking-[0.14em];
+    @apply hidden text-[11px] uppercase tracking-[0.14em] sm:inline;
     color: var(--mj-text-muted);
   }
 
   .mj-palette-open {
-    @apply ml-auto flex max-w-md flex-1 items-center justify-between gap-3 rounded px-3 py-1.5 text-left;
+    @apply order-3 flex w-full min-w-0 items-center justify-between gap-3 rounded px-3 py-1.5 text-left;
+    @apply sm:order-none sm:ml-auto sm:w-auto sm:max-w-md sm:flex-1;
     background: var(--mj-bg-sunken);
     border: 1px solid var(--mj-border);
     color: var(--mj-text-muted);
@@ -146,7 +151,7 @@
   }
 
   .mj-topbar-links {
-    @apply flex items-center gap-3 text-[12px];
+    @apply ml-auto flex shrink-0 items-center gap-3 text-[12px] sm:ml-0;
   }
   .mj-theme-toggle {
     @apply rounded px-2 py-1 text-[12px];
@@ -162,7 +167,7 @@
   }
 
   .mj-layout {
-    @apply mx-auto flex w-full max-w-[1600px] items-start gap-6 px-4;
+    @apply mx-auto flex w-full min-w-0 max-w-[1600px] items-start gap-6 px-4;
   }
 
   .mj-sidebar {
@@ -209,15 +214,18 @@
   .mj-page-head {
     @apply mb-5;
   }
+  /* A heading is an identity here — `document.docs/EXTRACTION_REPORT.md` — and an identity
+     has no spaces to break at. Breaking anywhere is right for a name; wrapping the page
+     sideways is not. */
   .mj-page-title {
-    @apply text-xl font-semibold tracking-tight;
+    @apply text-xl font-semibold tracking-tight [overflow-wrap:anywhere];
   }
   .mj-page-subtitle {
-    @apply mt-1 max-w-3xl;
+    @apply mt-1 max-w-3xl [overflow-wrap:anywhere];
     color: var(--mj-text-muted);
   }
   .mj-crumbs {
-    @apply mb-2 flex flex-wrap items-center gap-1 text-[11px];
+    @apply mb-2 flex min-w-0 flex-wrap items-center gap-1 text-[11px] [overflow-wrap:anywhere];
     color: var(--mj-text-muted);
   }
   .mj-crumbs li + li::before {
@@ -284,7 +292,7 @@
   /* ---------------------------------------------------------------- statistics */
 
   .mj-stats {
-    @apply grid gap-px overflow-hidden rounded-lg sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6;
+    @apply grid min-w-0 gap-px overflow-hidden rounded-lg sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6;
     background: var(--mj-border);
     border: 1px solid var(--mj-border);
   }
@@ -305,8 +313,11 @@
 
   /* -------------------------------------------------------------------- tables */
 
+  /* No negative margin: it made the wrapper eight pixels wider than its parent, which the
+     browser probe measured as a document eight pixels wider than the viewport. A table that
+     needs the room scrolls inside itself; the page never does. */
   .mj-table-wrap {
-    @apply -mx-1 overflow-x-auto;
+    @apply w-full overflow-x-auto;
   }
   .mj-table {
     @apply w-full border-collapse text-left;
@@ -329,7 +340,7 @@
 
   .mj-facts {
     @apply grid gap-x-4 gap-y-1;
-    grid-template-columns: minmax(8rem, max-content) 1fr;
+    grid-template-columns: minmax(min(8rem, 40%), max-content) minmax(0, 1fr);
   }
   .mj-facts-key {
     @apply text-[11px] uppercase tracking-[0.1em];
@@ -346,7 +357,7 @@
     @apply mt-2 space-y-1;
   }
   .mj-checklist-item {
-    @apply flex flex-wrap items-baseline gap-2;
+    @apply flex min-w-0 flex-wrap items-baseline gap-2 [overflow-wrap:anywhere];
   }
   .mj-checklist-title {
     @apply font-medium;
@@ -411,18 +422,21 @@
   }
   .mj-badge--ok,
   .mj-badge--declared,
-  .mj-badge--query {
+  .mj-badge--query,
+  .mj-badge--current {
     @apply text-green-700 dark:text-green-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
   }
   .mj-badge--warn,
   .mj-badge--command,
-  .mj-badge--stale {
+  .mj-badge--stale,
+  .mj-badge--not-generated {
     @apply text-amber-700 dark:text-amber-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
   }
   .mj-badge--fail,
-  .mj-badge--error {
+  .mj-badge--error,
+  .mj-badge--missing {
     @apply text-red-700 dark:text-red-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
   }
@@ -434,6 +448,7 @@
   .mj-badge--resource,
   .mj-badge--generated,
   .mj-badge--cached,
+  .mj-badge--present,
   .mj-badge--runtime {
     color: var(--color-accent-600);
     border-color: color-mix(in oklch, currentColor 40%, transparent);
@@ -442,6 +457,7 @@
   :where(.dark) .mj-badge--resource,
   :where(.dark) .mj-badge--generated,
   :where(.dark) .mj-badge--cached,
+  :where(.dark) .mj-badge--present,
   :where(.dark) .mj-badge--runtime {
     color: var(--color-accent-200);
   }
@@ -494,7 +510,7 @@
     @apply grid gap-3 sm:grid-cols-2;
   }
   .mj-field {
-    @apply flex min-w-[10rem] flex-col gap-1;
+    @apply flex min-w-0 flex-col gap-1 sm:min-w-[10rem];
   }
   .mj-field-label {
     @apply flex items-baseline gap-2 text-[11px] font-medium uppercase tracking-[0.1em];
@@ -559,7 +575,7 @@
     @apply mt-3 flex flex-wrap items-center gap-3;
   }
   .mj-preview {
-    @apply min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded px-2 py-1.5;
+    @apply w-full min-w-0 overflow-x-auto whitespace-nowrap rounded px-2 py-1.5 sm:w-auto sm:flex-1;
     background: var(--mj-bg-sunken);
     border: 1px solid var(--mj-border);
     color: var(--mj-text-muted);
@@ -591,10 +607,10 @@
     height: 200px;
   }
   .mj-graph-controls {
-    @apply flex items-center gap-2;
+    @apply flex min-w-0 flex-wrap items-center gap-2;
   }
   .mj-graph-controls .mj-input {
-    @apply w-56;
+    @apply w-40 sm:w-56;
   }
   /* Until a drawing library fills it, the frame says why it is empty rather than sitting
      there as a grey rectangle. */

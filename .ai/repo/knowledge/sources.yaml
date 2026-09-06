@@ -16,6 +16,17 @@
 version: 1
 
 sources:
+  # The layer's own contracts. The manifest names the file names that carry the context
+  # contract wherever they appear under .ai/, and this class is where they land: a
+  # directory's contract is discovered because it is one, never because some neighbouring
+  # kind's pathspec happened to reach it. Declared first so the precedence is also the
+  # reading order.
+  - id: context
+    kind: context
+    discovery: vcs
+    pathspec: ':(glob).ai/**/README.md'
+    required: true
+
   - id: policy
     kind: policy
     discovery: vcs

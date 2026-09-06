@@ -371,9 +371,9 @@ proptest! {
 #[test]
 fn the_generated_reference_and_document_hold_every_command_and_every_example() {
     let t = tree();
-    let md = majordomus_cli::generate::cli_reference(&t, "test");
-    let json = majordomus_cli::generate::cli_document(&t, "test");
-    let doc: serde_json::Value = serde_json::from_str(&json).expect("cli.json is JSON");
+    let md = majordomus_cli::generate::cli_reference(&t);
+    let doc = majordomus_cli::generate::cli_document(&t, "test");
+    let json = doc.to_string();
     assert_eq!(doc["schema"], cli::SCHEMA);
     assert_eq!(doc["source"], cli::DECLARATION);
     for c in t.flatten() {
@@ -410,8 +410,8 @@ fn the_generated_reference_and_document_hold_every_command_and_every_example() {
 #[test]
 fn two_generations_of_the_reference_and_the_document_are_identical() {
     assert_eq!(
-        majordomus_cli::generate::cli_reference(&tree(), "test"),
-        majordomus_cli::generate::cli_reference(&tree(), "test")
+        majordomus_cli::generate::cli_reference(&tree()),
+        majordomus_cli::generate::cli_reference(&tree())
     );
     assert_eq!(
         majordomus_cli::generate::cli_document(&tree(), "test"),
@@ -420,7 +420,7 @@ fn two_generations_of_the_reference_and_the_document_are_identical() {
     // and nothing in either carries an absolute path, a timestamp or this machine
     let text = format!(
         "{}{}",
-        majordomus_cli::generate::cli_reference(&tree(), "test"),
+        majordomus_cli::generate::cli_reference(&tree()),
         majordomus_cli::generate::cli_document(&tree(), "test")
     );
     assert!(

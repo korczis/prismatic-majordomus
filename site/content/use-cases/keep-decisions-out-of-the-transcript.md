@@ -6,12 +6,48 @@ weight = 30
 id = "keep-decisions-out-of-the-transcript"
 source = ".ai/repo/use-cases/keep-decisions-out-of-the-transcript.md"
 category = "continuity"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
 
 A session decides something in the middle of a task: a trade-off, a refusal, a convention. The decision lives in the conversation, so the next worker either re-derives it, contradicts it, or reads the whole transcript to find it.
+
+## Scenario
+
+```yaml
+setup: active-task
+given:
+  - 'an active task scoped to lib'
+steps:
+  - id: decide
+    run: ['decision', 'add', 'refuse tabs in the parser', '--why', 'two encodings for one token']
+    note: 'what was decided, why, and which task decided it; superseded by a later entry, never edited'
+    expect:
+      exit: 0
+      stdout_contains: ['recorded: refuse tabs in the parser']
+  - id: read-back
+    run: ['decision', 'list']
+    note: 'the decisions of this branch, newest first'
+    expect:
+      exit: 0
+      stdout_contains: ['refuse tabs in the parser', 'Why: two encodings']
+  - id: find-it
+    run: ['search', 'tabs']
+    note: 'a literal scan over the durable records, no index'
+    expect:
+      exit: 0
+      stdout_contains: ['decision', 'match']
+  - id: what-happened
+    run: ['history']
+    note: 'the ledger names the event and the task'
+    expect:
+      exit: 0
+      stdout_contains: ['decision.recorded', 'task.started']
+then:
+  - 'a decision is one line of state with an author, a task and a reason'
+  - 'nothing has to be re-explained to the next session'
+```
 
 ## Outcome
 

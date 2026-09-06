@@ -1176,19 +1176,19 @@
               "name": "all"
             },
             {
-              "help": "`docs/generated/openapi.json`",
+              "help": "`docs/generated/openapi.{json,yaml}`",
               "name": "openapi"
             },
             {
-              "help": "`docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`",
+              "help": "`docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`",
               "name": "docs"
             },
             {
-              "help": "`docs/generated/benchmarks.md`: every benchmark target and the coverage",
+              "help": "`docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage",
               "name": "benchmarks"
             },
             {
-              "help": "`docs/generated/registry.json`: the builtin registry as data",
+              "help": "`docs/generated/registry.{json,yaml}`: the builtin registry as data",
               "name": "registry"
             },
             {
@@ -1202,6 +1202,10 @@
             {
               "help": "site/data/registry/registry.json, the registry dataset the site renders",
               "name": "site"
+            },
+            {
+              "help": "docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact",
+              "name": "manifest"
             },
             {
               "help": "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/",
@@ -3113,7 +3117,7 @@
         {
           "defaults": [],
           "global": false,
-          "help": "The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)",
+          "help": "The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)",
           "long": "suite",
           "name": "suite",
           "positional": false,

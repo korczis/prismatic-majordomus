@@ -85,6 +85,11 @@ cockpit-assets:
 cockpit-assets-check:
     scripts/cockpit-assets --check
 
+# Every Cockpit route the server serves, answered; then the pages and the interactions in a real browser.
+[group('serve')]
+cockpit-probe *args:
+    scripts/cockpit-probe {{args}}
+
 # ---------------------------------------------------------------- registry (Rust executable)
 
 # Every capability with its projections (Rust registry). Extra arguments pass through (--kind, --exposure, --format).

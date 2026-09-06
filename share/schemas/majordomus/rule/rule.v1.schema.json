@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/rule/rule.v1.schema.json",
+  "x-majordomus-schema": "majordomus.rule/v1",
+  "x-majordomus-derived-from": "majordomus/rule/rule.v1.proto",
+  "x-majordomus-allow": "rule",
+  "description": "The whole rule: the front matter is the machine side, the body the human side.",
+  "title": "rule",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "kind",
+        "title",
+        "description",
+        "statement",
+        "status",
+        "class"
+      ],
+      "properties": {
+        "id": {
+          "description": "Identity, namespaced by origin (project.example, majordomus.scope-integrity).",
+          "type": "string"
+        },
+        "version": {
+          "description": "An exact integer; id@version is the identity.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "kind": {
+          "const": "rule"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "description": "What the rule requires, in one sentence.",
+          "type": "string"
+        },
+        "statement": {
+          "description": "The normative sentence a worker follows.",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "deprecated"
+          ]
+        },
+        "class": {
+          "enum": [
+            "blocking",
+            "advisory"
+          ]
+        },
+        "depends_on": {
+          "description": "An exact reference, id@version.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "x-majordomus": {
+          "$ref": "#/$defs/Enforcement"
+        }
+      }
+    },
+    "Enforcement": {
+      "description": "Present only on a rule the tool enforces. The key is written `x-majordomus`; the field name here is the proto spelling of it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "validator": {
+          "description": "The function mj_validate_<validator>.",
+          "type": "string"
+        },
+        "category": {
+          "description": "The finding category the validator reports under.",
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "exit_code": {
+          "type": "integer"
+        },
+        "enforced_by": {
+          "description": "The commands that dispatch it.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "claims": {
+          "description": "Ids in docs/CLAIMS.yaml.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tests": {
+          "description": "The behavioural cases that prove it.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The body: why the rule exists, what it requires, what happens when it is broken, and what proves it. A rule whose body is missing a half is a rule nobody can act on.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": [
+        {
+          "heading": "Rationale",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Required behaviour",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Failure behaviour",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Verification",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        }
+      ]
+    }
+  },
+  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/rule/rule.v1.proto`; regenerate with `majordomus generate`",
+  "x-majordomus-generator": "majordomus-cli 0.2.0"
+}

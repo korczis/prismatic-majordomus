@@ -2,8 +2,8 @@
 
 A use case is an executable object of this repository, not documentation about it:
 one file under `.ai/repo/use-cases/`, the commands, rules, claims, responsibilities and
-applications it names, and a scenario the tool runs against itself. `docs/USE_CASES.md`
-is the contract; this is what a worker does with it.
+applications it names in its front matter, and a `# Scenario` section the tool runs
+against itself. `docs/USE_CASES.md` is the contract; this is what a worker does with it.
 
 ## When you change a capability
 
@@ -13,7 +13,8 @@ is the contract; this is what a worker does with it.
 2. A new public command, a new guaranteed claim or a new MCP tool is a coverage gap the
    moment it exists. `majordomus usecase coverage` shows it; `majordomus usecase scaffold
    --for command:<name>` writes a draft with what is already known. Complete the
-   narrative (`# Situation`, `# Outcome`), tighten the assertions, set `status: active`.
+   narrative (`# Situation`, `# Outcome`), tighten the assertions in `# Scenario`, set
+   `status: active`.
 3. `majordomus usecase validate`, then `majordomus usecase run <id>`. A step that does
    not behave as the scenario says is a failure with the step named, never a page.
 4. `scripts/generate-site-data` and commit the regenerated data with the change: the

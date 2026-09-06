@@ -22,12 +22,13 @@ ONE CANONICAL DECLARATION   capability! { id, kind?, title, description, input, 
         ↓
 MODULE COMPOSITION          module! { id, title, description, stability, capabilities: [...] }
         ↓
-ROOT COMPOSITION            compose_modules![repository, objects, capabilities, peers, perf]
+ROOT COMPOSITION            compose_modules![repository, objects, capabilities, graph, health, peers, perf]
         ↓
 CAPABILITY REGISTRY         + every declarative object of the layer, validated, frozen, fingerprinted
         ↓
-DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · benchmark targets and coverage
-                            · cache policy · perf counters · docs/generated/*
+DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · the Cockpit
+                            · benchmark targets and coverage · cache policy · perf counters
+                            · docs/generated/* · the website's /registry/ pages
 ```
 
 A contributor adding one capability edits one `capability!` block (with its typed input
@@ -42,12 +43,15 @@ capability! blocks, one per module file     MCP tools and resources        examp
   builtin/<module>.rs, composed by          OpenAPI document               the committed snapshots
   module! and compose_modules!              Swagger UI configuration         under docs/generated/
 declarative objects of the layer            capabilities list/describe       (caches of the registry)
-  .ai/** as sources.yaml maps them          benchmark targets, coverage    a latency number in prose
-how each kind is read and validated         cache behaviour (executor)       (evidence lives under
-  share/kinds.yaml, share/schemas/*.json    perf counters                    .ai/local/benchmarks/ and
-  .ai/repo/knowledge/kinds.yaml, schemas/   docs/generated/*                 .ai/repo/benchmarks/rust/)
-the regression policy                       share/allow/*.txt (shell tool)
-  .ai/repo/benchmarks/rust/policy.yaml
+  .ai/** as sources.yaml maps them          the Cockpit's pages,           a latency number in prose
+how each kind is read and validated           navigation, search, palette,   (evidence lives under
+  share/kinds.yaml, share/schemas/*.json      runner form and graphs         .ai/local/benchmarks/ and
+  .ai/repo/knowledge/kinds.yaml, schemas/   benchmark targets, coverage      .ai/repo/benchmarks/rust/)
+the regression policy                       cache behaviour (executor)     the Cockpit's own markup
+  .ai/repo/benchmarks/rust/policy.yaml      perf counters                    (a projection, never a
+the graph derivations                       docs/generated/*                  place a fact is stated)
+  graph::DERIVATIONS, from the registry     share/allow/*.txt (shell tool)
+  and the index                             the website's /registry/ pages
 ```
 
 ```mermaid
@@ -59,12 +63,20 @@ flowchart TD
   R --> H[HTTP routes]
   R --> O[OpenAPI document] --> S[Swagger UI]
   R --> C[capabilities list / describe]
-  R --> G[docs/generated]
+  R --> K2[the Cockpit<br/>pages, navigation, runner, graphs]
+  R --> G[docs/generated] --> W[the website's /registry/ pages]
   K --> A[share/allow/*.txt]
 ```
 
 A change to one descriptor, one declarative file, one kind or one schema reaches every
 projection on the next start or the next `majordomus generate`; nothing is edited twice.
+
+The Cockpit ([`COCKPIT.md`](COCKPIT.md), ADR 12) is the projection a person reads. It is on
+this list rather than beside it: its pages are laid out from what a capability answered
+through the same executor every other transport calls, its navigation catalogues are the
+registry's modules and the index's kinds, its runner's form is generated from the input
+schema, and its examples are the capability's own benchmark cases. Nothing in it names a
+capability, a kind, a route or a graph.
 
 ## The model
 
@@ -241,11 +253,12 @@ written by hand.
 | OpenAPI 3.1 | the same routes; `operationId` is the id; the tags are the modules with their descriptions; every example is one of the capability's benchmark cases, by name, evaluated against the repository's index; the responses are the statuses the router answers for the kind (422 for a command only) and `default` for what the transport adds; a query parameter is never nullable; `x-majordomus-id`, `-kind`, `-stability`, `-provenance`, `-benchmark`, `-cache`, `-mcp`, `-cli` carry the rest; `info`, licence, contact and `externalDocs` from `about.rs` and the crate manifest; schemas hoisted into sorted components; the OAS 3.1 base dialect | `GET /openapi.json`, `docs/generated/openapi.json`, and the site's `/docs/api/` and `/openapi.json` |
 | Swagger UI | a shell page that loads `/openapi.json`; it embeds no specification; its assets come from the pinned `swagger-ui-dist` on unpkg, the one part that is not offline | `GET /docs` |
 | command line | `capabilities list` and `describe` dispatch through the registry's `cli` exposure; `schema` and `validate` are views of the registry, not capabilities | `majordomus capabilities …` |
-| reference | the index of modules and builtin capabilities, one page per executable module with every capability in full; declarative resources described by rule, listed live; the command line as clap declares it | `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md`, `docs/generated/cli.md` |
-| benchmark targets | every required executable per exposed transport per case, plus the system targets; the coverage tallies | `majordomus bench`, `docs/generated/benchmarks.md` |
-| registry manifest | the builtin registry as data: modules, descriptors with schemas and the file each was composed in, declarative kinds, system targets; the boundary the site generator reads for its routes | `docs/generated/registry.json` (`majordomus/capability-registry/v1`) |
+| reference | the index of modules and builtin capabilities, one page per executable module with every capability in full; declarative resources described by rule, listed live; the command line as clap declares it | `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md`, `docs/generated/cli.md`, `docs/generated/cli.{json,yaml}` (`majordomus/cli/v1`) |
+| benchmark targets | every required executable per exposed transport per case, plus the system targets; the coverage tallies | `majordomus bench`, `docs/generated/benchmarks.md` and `docs/generated/benchmarks.{json,yaml}` (`majordomus/benchmark-matrix/v1`) — one computation, three encodings |
+| registry manifest | the builtin registry as data: modules, descriptors with schemas and the file each was composed in, declarative kinds, system targets; the boundary the site generator reads for its routes | `docs/generated/registry.{json,yaml}` (`majordomus/capability-registry/v1`) |
+| artifact manifest | the generation plan itself: every artifact with the document it projects, its encoding, the schema its content satisfies, its source, size and hash | `docs/generated/artifacts.{json,yaml,md}` (`majordomus/generated-artifacts/v1`); read back by `artifacts.list` — `majordomus_artifacts`, `GET /api/v1/artifacts`, `majordomus://artifacts`, `/cockpit/artifacts`, and the site's `/registry/artifacts/` |
 | perf counters | the executor's and the startup phases' counters | `perf.counters`: `majordomus_perf`, `GET /api/v1/perf` |
-| allow-lists | the schemas | `share/allow/*.txt` |
+| allow-lists | the schemas | `share/allow/*.txt`, each under a `#` provenance banner every reader of one skips |
 | site dataset | the registry (fingerprint, counts, every builtin descriptor in full with its source file, every module with its ids), the index (fingerprint, every object without its content), the kinds, the declared provider projections, the command line, the MCP tools and resources, the HTTP routes, the benchmark targets, coverage, policy and accepted baselines; no timestamps of its own, no absolute paths, no git state | `site/data/registry/registry.json` (`majordomus-site-registry/v2`) — `majordomus generate site`; rendered under `/registry/` (overview, executable, modules, capabilities, cli, mcp, benchmarks) |
 | provider bootstraps | the policy's `projections[]`, the profiles and the provider templates (`.ai/repo/providers/`, else `share/providers/`); the stamp carries the policy hash and the content hash; byte-identical to the shell tool's `update` | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, … — `majordomus generate providers` |
 
@@ -335,17 +348,48 @@ matrix and its entry in the manifest are generated.
 
 ## Generated projections and synchronization
 
-`majordomus generate [all|openapi|docs|benchmarks|registry|allow|providers|site]` writes
-`docs/generated/openapi.json`, `docs/generated/capabilities.md` with
-`docs/generated/modules/<id>.md` and `docs/generated/cli.md`, `docs/generated/benchmarks.md`,
-`docs/generated/registry.json`, `share/allow/*.txt`, the provider bootstraps and
-`site/data/registry/registry.json`; `majordomus generate --check` derives them again,
-compares byte for byte, writes nothing, and exits 10 naming every stale file. CI runs the
-check. The site generator consumes `registry.json` and `openapi.json` and nothing else of
-the crate; `scripts/derive` runs the two generators in dependency order and
-`scripts/derive-check` composes both checks (`docs/GITHUB_PAGES_ARCHITECTURE.md`). Every generated file says so in its first line and names
-its source; none carries a timestamp, an absolute path or a fingerprint that would move
-with a document edit. The committed files are caches: reviewable, never edited.
+`majordomus generate [all|openapi|docs|benchmarks|registry|allow|providers|site|manifest]`
+writes every artifact of the selected targets; `majordomus generate --check` derives them
+again, compares byte for byte, writes nothing, and exits 10 naming every stale file. CI
+runs the check. The site generator consumes `registry.json`, `openapi.json` and
+`artifacts.json` and nothing else of the crate; `scripts/derive` runs the two generators in
+dependency order and `scripts/derive-check` composes both checks
+(`docs/GITHUB_PAGES_ARCHITECTURE.md`). The committed files are caches: reviewable, never
+edited. What is generated is not written down here — `docs/generated/artifacts.md` is that
+list, and it is generated.
+
+**Every artifact is typed.** It declares the *document* it projects, the *encoding* it is
+written in (`json`, `yaml`, `markdown`, `text`, matching its own suffix), the *schema* its
+content satisfies when the document has a contract, and the *source* it was derived from.
+The rule is [`project.generated-artifacts-are-typed@1`](../.ai/repo/rules/project/generated-artifacts-are-typed.v1.md);
+`generate` and `generate --check` verify the plan before a byte is written or compared and
+refuse a half-typed tree.
+
+**A structured document is written in every encoding it is committed in, from one value.**
+`generate::Document` holds the value; the JSON and the YAML are two renderings of it, never
+two computations, and a document whose audience includes a reader also has a Markdown
+rendering of the same value. That is why the benchmark matrix in `benchmarks.md` cannot
+disagree with `benchmarks.json`.
+
+**Every artifact carries its provenance in the form its encoding allows**: `schema`,
+`generated` and `generator` as members in JSON; `x-majordomus-generated` and
+`x-majordomus-generator` where the document's own specification fixes its member names (the
+OpenAPI document); a `#` comment banner in YAML and in line-oriented text; an HTML comment
+in Markdown. A provider bootstrap carries the `majordomus update` stamp of the policy it was
+rendered from instead. None carries a timestamp, an absolute path or a fingerprint that
+would move with a document edit.
+
+**A document that names a schema has a published contract.** They live under
+`share/schemas/generated/`, one file per document, pinned to it by the `const` of its
+`schema` member — kind-schema discovery does not recurse, so nothing there is ever read as
+an object kind's schema. `generate` validates every document against its contract.
+
+**The whole set is indexed by `docs/generated/artifacts.{json,yaml,md}`**, itself generated:
+every artifact with its encoding, contract, source, size and hash. Its own three encodings
+carry no hash — a document that hashed itself would have no fixed point — and `--check`
+compares them byte for byte instead. `artifacts.list` reads that manifest back and
+reconciles it with the working tree, which is what the MCP tool, the HTTP route, the
+Cockpit's Artifacts page and the site's `/registry/artifacts/` all show.
 
 ## When something fails
 

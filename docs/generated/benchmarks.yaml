@@ -1,0 +1,266 @@
+# GENERATED FILE — DO NOT EDIT DIRECTLY
+# Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
+# Generator: majordomus-cli 0.2.0
+schema: majordomus/benchmark-matrix/v1
+generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
+generator: majordomus-cli 0.2.0
+coverage:
+  - scope: direct
+    required: 20
+    covered: 20
+    missing: 0
+    waived: 0
+  - scope: http
+    required: 20
+    covered: 20
+    missing: 0
+    waived: 0
+  - scope: mcp
+    required: 20
+    covered: 20
+    missing: 0
+    waived: 0
+  - scope: system
+    required: 12
+    covered: 12
+    missing: 0
+    waived: 0
+  - scope: total
+    required: 72
+    covered: 72
+    missing: 0
+    waived: 0
+capabilities:
+  - id: artifacts.list
+    module: artifacts
+    kind: query
+    cache: "process, 8 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - one-encoding
+  - id: capabilities.describe
+    module: capabilities
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - repository-info
+  - id: capabilities.list
+    module: capabilities
+    kind: query
+    cache: "process, 16 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - queries
+  - id: continuity.state
+    module: continuity
+    kind: query
+    cache: "process, 2 entries, 2s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: directories.list
+    module: directories
+    kind: query
+    cache: "process, 8 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole-tree
+      - one-directory
+      - effective-everywhere
+      - owed
+  - id: distribution.build
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: distribution.model
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: distribution.releases
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: graph.get
+    module: graph
+    kind: query
+    cache: "process, 16 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - registry
+      - layer
+      - rules
+      - adrs
+      - use-cases
+  - id: graph.list
+    module: graph
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: health.report
+    module: health
+    kind: query
+    cache: "process, 4 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: objects.get
+    module: objects
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-object
+      - repository
+  - id: objects.list
+    module: objects
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - first-kind
+  - id: objects.search
+    module: objects
+    kind: query
+    cache: "process, 64 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - common-word
+      - no-hit
+  - id: peers.announce
+    module: peers
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: peers.list
+    module: peers
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: perf.counters
+    module: perf
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: repository.info
+    module: repository
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: repository.scope
+    module: repository
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: repository.scope_classify
+    module: repository
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - layer-file
+      - local-half
+      - secret
+      - undeclared
+      - first-object
+system_targets:
+  - key: system.mcp.process_cold
+    transport: mcp
+    measures: "spawn a majordomus mcp process, initialize, first tools/list"
+  - key: system.mcp.initialize
+    transport: mcp
+    measures: initialize on a running process
+  - key: system.mcp.ping
+    transport: mcp
+    measures: "ping: the protocol round trip with nothing behind it"
+  - key: system.mcp.tools_list
+    transport: mcp
+    measures: tools/list
+  - key: system.mcp.resources_list
+    transport: mcp
+    measures: resources/list
+  - key: system.mcp.resources_read
+    transport: mcp
+    measures: resources/read of the first declarative resource
+  - key: system.http.index
+    transport: http
+    measures: GET /
+  - key: system.http.openapi
+    transport: http
+    measures: GET /openapi.json
+  - key: system.http.docs
+    transport: http
+    measures: GET /docs (the Swagger UI shell)
+  - key: system.http.cockpit_overview
+    transport: http
+    measures: "GET /cockpit (the Cockpit's landing page, server-rendered)"
+  - key: system.http.cockpit_capabilities
+    transport: http
+    measures: "GET /cockpit/capabilities (every capability as a table: the widest page)"
+  - key: system.http.cockpit_graph
+    transport: http
+    measures: GET /cockpit/graphs/registry (a page whose content is a derived graph)

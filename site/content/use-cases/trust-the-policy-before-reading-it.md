@@ -6,7 +6,7 @@ weight = 16
 id = "trust-the-policy-before-reading-it"
 source = ".ai/repo/use-cases/trust-the-policy-before-reading-it.md"
 category = "policy"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -17,6 +17,31 @@ The policy is the one file everything else is derived from. If it carries a key 
 
 - `doctor`: the policy and every profile parsed with unknown keys refused, every value the code reads declared, the default profile present, and each declared enforcement reconciled against what actually runs
 - `check`: outside a task, exit 12 rather than a run that checked nothing
+
+## Scenario
+
+```yaml
+setup: installed-wired
+given:
+  - 'installed, and the two enforcements the policy declares are actually in place as hooks'
+steps:
+  - id: policy
+    run: ['doctor']
+    note: 'the policy parses, every value the code reads is declared with no reader-side default, every profile parses and the default profile exists, and every declared enforcement is reconciled against a hook that calls the tool'
+    expect:
+      exit: 0
+      stdout_contains: ['^OK   policy      .ai/repo/policy.yaml — parsed', 'no reader-side default', '^OK   profiles', "default 'implementation' exists", '^OK   wiring      doctor-on-commit', '^OK   wiring      finish-on-push', 'doctor: 0 failure']
+  - id: no-task
+    run: ['check']
+    note: 'outside a task the same contract answers with a precondition code, not a green run that checked nothing'
+    expect:
+      exit: 12
+      stdout_contains: ['no active task']
+then:
+  - 'an unknown key in the policy or a profile is a parse failure, not an ignored line'
+  - 'a policy value the code reads without a declaration is a failure'
+  - 'exit 12 means a precondition is missing; it is never confused with a clean run'
+```
 
 ## Outcome
 

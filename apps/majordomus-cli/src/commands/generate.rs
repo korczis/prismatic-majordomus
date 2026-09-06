@@ -21,8 +21,14 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::Providers => &[Target::Providers],
         GenerateTarget::Site => &[Target::Site],
         GenerateTarget::Distribution => &[Target::Distribution],
+        GenerateTarget::Manifest => &[Target::Manifest],
     };
     let artifacts = generate::plan(&app, targets)?;
+    // the contract before the bytes: an artifact that carries no provenance, declares an
+    // encoding its suffix contradicts, or breaks the schema it names is never written and
+    // never reported in sync
+    let schemas = generate::GeneratedSchemas::load(&app.share.generated_schemas_dir())?;
+    generate::verify(&artifacts, &schemas)?;
     let root = args
         .out
         .clone()
@@ -32,8 +38,13 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
     if args.check {
         generate::check(&root, &artifacts)?;
         for a in &artifacts {
-            writeln!(out, "OK   generated   {} — matches the registry", a.path)
-                .map_err(Error::Transport)?;
+            writeln!(
+                out,
+                "OK   generated   {} — {}, matches the registry",
+                a.path,
+                a.schema.as_deref().unwrap_or(a.format.suffix())
+            )
+            .map_err(Error::Transport)?;
         }
         writeln!(out, "generate --check: in sync").map_err(Error::Transport)?;
     } else {

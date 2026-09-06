@@ -1,5 +1,5 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the canonical Majordomus capability registry, module `graph`; regenerate with `majordomus generate`
+     Source: the `graph` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
      Generator: majordomus-cli 0.2.0 -->
 # Module `graph` — Graphs
 

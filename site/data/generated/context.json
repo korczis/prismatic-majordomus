@@ -297,7 +297,7 @@
       "status": "active",
       "title": "Repository rules",
       "description": "The rule object format, where rules live, how they are loaded and composed.",
-      "children_require_contract": null,
+      "children_require_contract": true,
       "providers": [
         "*"
       ],
@@ -335,7 +335,7 @@
       "supersedes": [],
       "tracks": [
         "lib/session.sh",
-        "share/schemas/session-record.schema.json"
+        "share/schemas/majordomus/session-record/session-record.v1.schema.json"
       ]
     },
     {
@@ -370,7 +370,7 @@
       "order": 100,
       "status": "active",
       "title": "Use cases",
-      "description": "The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario that proves it.",
+      "description": "The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario section that proves it.",
       "children_require_contract": null,
       "providers": [
         "*"
@@ -583,7 +583,7 @@
         "supersedes": [],
         "tracks": [],
         "paths": [],
-        "sha256": "0c6e637040c4d78c6e2699a4e0485279f44f856729ec2f891a67e234859adf3f"
+        "sha256": "4cc466ecbcb9282ed51a8dc1fd2b206f19b2574d28abab5421ec41fadd1317b6"
       }
     },
     {
@@ -1147,7 +1147,7 @@
       "dir": ".ai/repo/rules",
       "document": "ai.repo.rules",
       "requires_contract": true,
-      "governed_by": null,
+      "governed_by": ".ai/repo/rules/README.md",
       "depth": 2,
       "name": "rules",
       "contract": {
@@ -1162,7 +1162,7 @@
         "status": "active",
         "title": "Repository rules",
         "description": "The rule object format, where rules live, how they are loaded and composed.",
-        "children_require_contract": null,
+        "children_require_contract": true,
         "providers": [
           "*"
         ],
@@ -1178,14 +1178,14 @@
           "share/allow/rule.txt"
         ],
         "paths": [],
-        "sha256": "1b3f1bd7d5b2ef7eb6061552e44d5cd14fcb7428da6b0690138d50ce2862a4b8"
+        "sha256": "9f5599b5845fd8e3528f2cf150e49283bd9ef19e51bfe1ef62e55b27024a1228"
       }
     },
     {
       "dir": ".ai/repo/rules/project",
       "document": "ai.repo.rules.project",
       "requires_contract": true,
-      "governed_by": null,
+      "governed_by": ".ai/repo/rules/README.md",
       "depth": 3,
       "name": "project",
       "contract": {
@@ -1244,10 +1244,10 @@
         "supersedes": [],
         "tracks": [
           "lib/session.sh",
-          "share/schemas/session-record.schema.json"
+          "share/schemas/majordomus/session-record/session-record.v1.schema.json"
         ],
         "paths": [],
-        "sha256": "644dbaca1dbbe653684519d5f7a0cc4830cc30b1009812e5a05df1636b9f6107"
+        "sha256": "def1ec2391ae3323a01bab39baa0b53b0dc47f3250e403ecd4f47d2f22afcf91"
       }
     },
     {
@@ -1346,7 +1346,7 @@
         "order": 100,
         "status": "active",
         "title": "Use cases",
-        "description": "The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario that proves it.",
+        "description": "The tasks people perform with the tool, each one a file with the commands, rules and claims it names and the scenario section that proves it.",
         "children_require_contract": null,
         "providers": [
           "*"
@@ -1358,7 +1358,7 @@
         "supersedes": [],
         "tracks": [],
         "paths": [],
-        "sha256": "6914b4c98843ec57d3ab080548393a20629ec7c69c6e1b692a807932c2ba88cc"
+        "sha256": "a883fd2937e208c0d1a1e7709c4c256d135b8615128d924fda3f8a44d4f413fd"
       }
     },
     {

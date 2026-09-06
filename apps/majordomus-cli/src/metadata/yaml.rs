@@ -320,6 +320,230 @@ pub fn scalar_string(v: &Value) -> Option<String> {
     }
 }
 
+// ---------------------------------------------------------------- rendering
+
+/// Render a JSON value as a YAML document in the layer's subset wherever the value fits
+/// it, and in a conservative quoted style wherever it does not.
+///
+/// The reader above is the contract this writer aims at: a document it produces from a
+/// value whose keys are identifiers and whose scalars are strings, integers and booleans
+/// parses back to the same value through [`parse_mapping`]. Values outside the subset —
+/// a key like `$ref` or `/api/v1/peers`, a floating exponent, a null — are still written,
+/// quoted so that a general YAML 1.2 parser reads them back, because the generated
+/// OpenAPI and registry documents carry them and a projection that silently dropped them
+/// would be a lie.
+///
+/// The style is fixed so that the output is byte-deterministic: two-space indent, block
+/// mappings and block sequences, `{}` and `[]` for the empty collections, keys bare when
+/// they are identifiers and double-quoted otherwise, and scalars plain only when reading
+/// them back cannot change their type.
+///
+/// ```
+/// use majordomus_cli::metadata::yaml::{render, parse_mapping};
+/// use serde_json::json;
+/// let doc = json!({ "id": "peers.list", "tags": ["peers", "coordination"], "cached": true });
+/// assert_eq!(render(&doc), "id: peers.list\ntags:\n  - peers\n  - coordination\ncached: true\n");
+/// assert_eq!(serde_json::Value::Object(parse_mapping(&render(&doc)).unwrap()), doc);
+/// ```
+pub fn render(value: &Value) -> String {
+    let mut out = String::new();
+    match value {
+        Value::Object(map) if map.is_empty() => out.push_str("{}\n"),
+        Value::Object(map) => write_mapping(map, 0, &mut out),
+        Value::Array(items) if items.is_empty() => out.push_str("[]\n"),
+        Value::Array(items) => write_sequence(items, 0, &mut out),
+        scalar => {
+            out.push_str(&scalar_literal(scalar));
+            out.push('\n');
+        }
+    }
+    out
+}
+
+/// Render a value as a YAML document under a comment banner, one `# ` line per line of
+/// `banner`. The banner is a comment and never part of the data.
+pub fn render_with_banner(value: &Value, banner: &str) -> String {
+    let mut out = String::new();
+    for line in banner.lines() {
+        if line.is_empty() {
+            out.push_str("#\n");
+        } else {
+            out.push_str("# ");
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    out.push_str(&render(value));
+    out
+}
+
+fn indent(depth: usize, out: &mut String) {
+    for _ in 0..depth {
+        out.push_str("  ");
+    }
+}
+
+fn write_mapping(map: &Map<String, Value>, depth: usize, out: &mut String) {
+    for (key, value) in map {
+        indent(depth, out);
+        out.push_str(&key_literal(key));
+        out.push(':');
+        write_child(value, depth, out);
+    }
+}
+
+fn write_sequence(items: &[Value], depth: usize, out: &mut String) {
+    for item in items {
+        indent(depth, out);
+        out.push('-');
+        match item {
+            Value::Object(map) if !map.is_empty() => {
+                // `- key: value`, the remaining keys aligned under it
+                let mut nested = String::new();
+                write_mapping(map, depth + 1, &mut nested);
+                let body = nested
+                    .strip_prefix(&"  ".repeat(depth + 1))
+                    .unwrap_or(&nested);
+                out.push(' ');
+                out.push_str(body);
+            }
+            Value::Array(items) if !items.is_empty() => {
+                out.push('\n');
+                write_sequence(items, depth + 1, out);
+            }
+            other => {
+                out.push(' ');
+                out.push_str(&inline(other));
+                out.push('\n');
+            }
+        }
+    }
+}
+
+/// The right-hand side of `key:`: inline for a scalar and for an empty collection, a
+/// block on the following lines for a non-empty one.
+fn write_child(value: &Value, depth: usize, out: &mut String) {
+    match value {
+        Value::Object(map) if !map.is_empty() => {
+            out.push('\n');
+            write_mapping(map, depth + 1, out);
+        }
+        Value::Array(items) if !items.is_empty() => {
+            out.push('\n');
+            write_sequence(items, depth + 1, out);
+        }
+        other => {
+            out.push(' ');
+            out.push_str(&inline(other));
+            out.push('\n');
+        }
+    }
+}
+
+fn inline(value: &Value) -> String {
+    match value {
+        Value::Object(_) => "{}".into(),
+        Value::Array(_) => "[]".into(),
+        scalar => scalar_literal(scalar),
+    }
+}
+
+/// A YAML key: bare when it is an identifier the reader accepts, double-quoted otherwise.
+/// The reader flattens nested keys into dotted paths, so a key holding a `.` is quoted
+/// too — quoting does not make it readable by the subset, and it does make the document
+/// readable by a general parser.
+fn key_literal(key: &str) -> String {
+    if is_plain_key(key) {
+        key.to_string()
+    } else {
+        quoted(key)
+    }
+}
+
+fn is_plain_key(key: &str) -> bool {
+    let mut chars = key.chars();
+    match chars.next() {
+        Some(c) if c.is_ascii_alphabetic() || c == '_' => {}
+        _ => return false,
+    }
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+}
+
+fn scalar_literal(value: &Value) -> String {
+    match value {
+        Value::Null => "null".into(),
+        Value::Bool(true) => "true".into(),
+        Value::Bool(false) => "false".into(),
+        Value::Number(n) => n.to_string(),
+        Value::String(s) if is_plain_scalar(s) => s.clone(),
+        Value::String(s) => quoted(s),
+        other => other.to_string(),
+    }
+}
+
+/// A string may be written unquoted only when reading it back yields the same string:
+/// not empty, not a word or a number the reader types, no leading or trailing space, no
+/// character that starts a construct, and no ` #` that the reader would cut as a comment.
+fn is_plain_scalar(s: &str) -> bool {
+    if s.is_empty() || s.trim() != s {
+        return false;
+    }
+    if matches!(
+        s,
+        "true" | "false" | "null" | "~" | "yes" | "no" | "on" | "off"
+    ) {
+        return false;
+    }
+    if looks_numeric(s) {
+        return false;
+    }
+    let first = s.as_bytes()[0];
+    if !(first.is_ascii_alphanumeric() || first == b'_' || first == b'/' || first == b'.') {
+        return false;
+    }
+    if s.contains(": ") || s.ends_with(':') || s.contains(" #") || s.contains('\t') {
+        return false;
+    }
+    s.chars().all(|c| {
+        !c.is_control()
+            && !matches!(
+                c,
+                '"' | '\''
+                    | '\\'
+                    | '['
+                    | ']'
+                    | '{'
+                    | '}'
+                    | ','
+                    | '&'
+                    | '*'
+                    | '|'
+                    | '>'
+                    | '%'
+                    | '@'
+                    | '`'
+            )
+    })
+}
+
+fn looks_numeric(s: &str) -> bool {
+    let body = s.strip_prefix('-').unwrap_or(s);
+    !body.is_empty()
+        && body
+            .chars()
+            .all(|c| c.is_ascii_digit() || c == '.' || c == 'e' || c == 'E' || c == '+' || c == '-')
+        && body
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_digit() || c == '.')
+}
+
+/// A double-quoted YAML scalar. YAML 1.2's double-quoted style takes JSON's escapes, so
+/// the JSON encoding of the string is a correct YAML scalar and needs no second rule.
+fn quoted(s: &str) -> String {
+    Value::String(s.to_string()).to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -445,6 +669,134 @@ mod tests {
         assert!(parse_mapping("x:\n  a: 1\n  a: 2\n")
             .unwrap_err()
             .contains("'x.a' is given twice"));
+    }
+
+    // ------------------------------------------------------------ rendering
+
+    /// Anything the writer emits from a value inside the subset must read back identical:
+    /// this is the one property the two halves of this module owe each other.
+    fn round_trips(doc: Value) {
+        let text = render(&doc);
+        let back = parse_mapping(&text).unwrap_or_else(|e| panic!("{e}\n--- rendered ---\n{text}"));
+        assert_eq!(Value::Object(back), doc, "--- rendered ---\n{text}");
+    }
+
+    #[test]
+    fn renders_scalars_maps_and_sequences() {
+        assert_eq!(
+            render(&json!({ "id": "peers.list", "count": 2, "cached": true })),
+            "id: peers.list\ncount: 2\ncached: true\n"
+        );
+        assert_eq!(
+            render(&json!({ "tags": ["a", "b"] })),
+            "tags:\n  - a\n  - b\n"
+        );
+        assert_eq!(
+            render(&json!({ "x": { "y": { "z": 1 } } })),
+            "x:\n  y:\n    z: 1\n"
+        );
+        assert_eq!(
+            render(&json!({ "items": [{ "id": "a", "n": 1 }, { "id": "b", "n": 2 }] })),
+            "items:\n  - id: a\n    n: 1\n  - id: b\n    n: 2\n"
+        );
+        assert_eq!(render(&json!({})), "{}\n");
+        assert_eq!(render(&json!([])), "[]\n");
+        assert_eq!(
+            render(&json!({ "empty": [], "none": {} })),
+            "empty: []\nnone: {}\n"
+        );
+    }
+
+    #[test]
+    fn quotes_whatever_would_read_back_as_something_else() {
+        // a string that looks like a number, a boolean or nothing at all
+        assert_eq!(render(&json!({ "a": "1" })), "a: \"1\"\n");
+        assert_eq!(render(&json!({ "a": "true" })), "a: \"true\"\n");
+        assert_eq!(render(&json!({ "a": "" })), "a: \"\"\n");
+        assert_eq!(render(&json!({ "a": " x " })), "a: \" x \"\n");
+        // a string carrying what the reader treats as syntax
+        assert_eq!(render(&json!({ "a": "k: v" })), "a: \"k: v\"\n");
+        assert_eq!(render(&json!({ "a": "x #c" })), "a: \"x #c\"\n");
+        assert_eq!(render(&json!({ "a": "[a, b]" })), "a: \"[a, b]\"\n");
+        assert_eq!(render(&json!({ "a": "&anchor" })), "a: \"&anchor\"\n");
+        assert_eq!(
+            render(&json!({ "a": "line\nbreak" })),
+            "a: \"line\\nbreak\"\n"
+        );
+        // a key outside the reader's identifier form is quoted rather than dropped
+        assert_eq!(render(&json!({ "$ref": "#/x" })), "\"$ref\": \"#/x\"\n");
+        assert_eq!(
+            render(&json!({ "/api/v1/peers": 1 })),
+            "\"/api/v1/peers\": 1\n"
+        );
+        assert_eq!(render(&json!({ "a.b": 1 })), "\"a.b\": 1\n");
+        // null has no place in the subset and is still written
+        assert_eq!(render(&json!({ "a": Value::Null })), "a: null\n");
+    }
+
+    #[test]
+    fn every_shape_of_the_subset_round_trips() {
+        round_trips(json!({ "id": "x", "n": 0, "neg": -3, "t": true, "f": false }));
+        round_trips(json!({ "s": "1", "b": "true", "e": "", "pad": " x ", "colon": "k: v" }));
+        round_trips(json!({ "tags": ["a", "b"], "empty": [] }));
+        round_trips(json!({ "outer": { "inner": { "deep": "value" } } }));
+        round_trips(json!({ "items": [{ "id": "a", "tags": ["x"] }, { "id": "b", "tags": [] }] }));
+        round_trips(json!({ "path": "docs/generated/registry.json", "sha": "0a1b2c" }));
+        round_trips(json!({ "text": "a sentence, with punctuation - and a dash" }));
+        round_trips(json!({ "dec": 1.5, "negdec": -0.25 }));
+    }
+
+    /// A sequence whose items are themselves collections: the item opens on its own line
+    /// and its body is indented under the dash. Outside the reader's subset — it flattens
+    /// by dotted path and has no shape for a list of lists — and written correctly anyway,
+    /// because the OpenAPI document has them.
+    #[test]
+    fn sequences_of_collections_open_under_their_dash() {
+        assert_eq!(
+            render(&json!({ "m": [[1, 2], [3]] })),
+            "m:\n  -\n    - 1\n    - 2\n  -\n    - 3\n"
+        );
+        assert_eq!(
+            render(&json!({ "m": [{ "a": [1] }, {}] })),
+            "m:\n  - a:\n      - 1\n  - {}\n"
+        );
+        assert_eq!(render(&json!({ "m": [[], {}] })), "m:\n  - []\n  - {}\n");
+    }
+
+    /// A document that is not a mapping at all: the writer renders the value it was given
+    /// rather than inventing a key to hang it on.
+    #[test]
+    fn a_document_that_is_not_a_mapping_is_still_a_document() {
+        assert_eq!(render(&json!([1, "two"])), "- 1\n- two\n");
+        assert_eq!(render(&json!("bare")), "bare\n");
+        assert_eq!(render(&json!(7)), "7\n");
+        assert_eq!(render(&json!(true)), "true\n");
+        assert_eq!(render(&Value::Null), "null\n");
+    }
+
+    /// The one shape the two halves disagree on, stated rather than hidden: an empty
+    /// mapping. The reader has no `{}` — an empty document and a key with no children are
+    /// both nothing to it — while the writer must emit `{}` or hand a general parser a
+    /// null. Every generated document this repository writes has keys, so the divergence
+    /// is at the edge of the subset and never in an artifact.
+    #[test]
+    fn the_empty_mapping_is_the_edge_of_the_subset() {
+        assert_eq!(render(&json!({})), "{}\n");
+        assert!(parse_mapping("{}").is_err());
+        assert!(parse_mapping("").unwrap().is_empty());
+        assert_eq!(render(&json!({ "a": {} })), "a: {}\n");
+        assert_eq!(
+            parse_mapping("a: {}\n").unwrap().get("a"),
+            Some(&Value::String("{}".into()))
+        );
+    }
+
+    #[test]
+    fn a_banner_is_a_comment_and_never_data() {
+        let doc = json!({ "a": 1 });
+        let text = render_with_banner(&doc, "GENERATED\n\nsource: nowhere");
+        assert_eq!(text, "# GENERATED\n#\n# source: nowhere\na: 1\n");
+        assert_eq!(Value::Object(parse_mapping(&text).unwrap()), doc);
     }
 
     #[test]

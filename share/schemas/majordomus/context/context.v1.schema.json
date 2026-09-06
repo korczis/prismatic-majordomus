@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/context/context.v1.schema.json",
+  "x-majordomus-schema": "majordomus.context/v1",
+  "x-majordomus-derived-from": "majordomus/context/context.v1.proto",
+  "x-majordomus-allow": "context",
+  "description": "The whole document: the contract that makes it resolvable, then the prose a person reads.",
+  "title": "context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "id",
+        "kind",
+        "title",
+        "description",
+        "status",
+        "scope",
+        "composition",
+        "order",
+        "providers"
+      ],
+      "properties": {
+        "schema": {
+          "const": "context/v1"
+        },
+        "id": {
+          "description": "The identity. The file name is a convention; this is what survives a move.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$"
+        },
+        "kind": {
+          "const": "context"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "description": "One line saying what the directory is for, as a listing shows it.",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "deprecated"
+          ]
+        },
+        "scope": {
+          "description": "Where the document applies: its own directory, its directory and everything below, or the directories `paths` lists.",
+          "enum": [
+            "directory",
+            "subtree",
+            "explicit"
+          ]
+        },
+        "composition": {
+          "description": "How it composes with its ancestors: extend appends, replace supersedes the ancestors it names, final marks a document no descendant may supersede.",
+          "enum": [
+            "extend",
+            "replace",
+            "final"
+          ]
+        },
+        "order": {
+          "description": "Ties documents at one depth. Lower comes first.",
+          "type": "integer"
+        },
+        "paths": {
+          "description": "For `scope: explicit`: the directories it applies to.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "providers": {
+          "description": "The providers it is rendered for; [\"*\"] is every one.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "audience": {
+          "description": "Who it is written for: human, agent.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "supersedes": {
+          "description": "For `composition: replace`: the ancestor documents it stands in for.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tracks": {
+          "description": "Pathspecs outside the tree this document also covers, so that a document about lib/rules.sh reaches a worker editing it.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "children": {
+          "description": "What the directories below this one owe. Subtree documents only; the value nearest a directory applies, and a descendant may raise require_contract to true but never lower an inherited true.",
+          "$ref": "#/$defs/Children"
+        }
+      }
+    },
+    "Children": {
+      "description": "The obligation a document places on the subtree beneath it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "require_contract": {
+          "type": "boolean"
+        },
+        "exempt": {
+          "description": "Directories inside this document's scope that owe no contract, and nor does anything below them: a subtree the layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Repository-relative. The exemption is declared by the contract that governs the subtree, so it travels with the tree it describes instead of living in a list inside the tool; naming a directory outside this document's own scope, or its own directory, is refused.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The body. A reader who opens a directory's README wants three things and usually in this order: what is this for, what is in it, and what do I call the file I am about to add. Everything else a directory needs to say is welcome after them.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": [
+        {
+          "heading": "Purpose",
+          "level": 2,
+          "required": true,
+          "non_empty": true,
+          "description": "What the directory is for, and what does not belong in it."
+        },
+        {
+          "heading": "Structure",
+          "level": 2,
+          "required": true,
+          "non_empty": true,
+          "description": "What is in it: the files and subdirectories, and what each holds."
+        },
+        {
+          "heading": "Naming conventions",
+          "level": 2,
+          "required": true,
+          "non_empty": true,
+          "description": "What a new file here is called, and what fixes the name."
+        }
+      ]
+    }
+  },
+  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/context/context.v1.proto`; regenerate with `majordomus generate`",
+  "x-majordomus-generator": "majordomus-cli 0.2.0"
+}

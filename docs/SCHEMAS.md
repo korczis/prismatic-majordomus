@@ -324,6 +324,7 @@ supersedes: []                    # replace only: ids of ancestor-chain document
 tracks: [lib/rules.sh]            # git pathspecs this document describes
 children:                         # subtree only: what the directories below owe
   require_contract: true          # true | false; the default where nothing declares it is true
+  exempt: []                      # subtrees this layer carries but does not author
 ---
 ```
 
@@ -343,6 +344,7 @@ children:                         # subtree only: what the directories below owe
 | `supersedes` | with `replace` | ids in the ancestor chain this document stands in for; a `final` ancestor cannot be named |
 | `tracks` | no | pathspecs whose change names this document for review |
 | `children.require_contract` | no | `subtree` only: whether every directory below this one owes a context document. Absent everywhere above a directory means `true`. A descendant may raise `false` to `true`; lowering an inherited `true` is `illegal-override` |
+| `children.exempt` | no | `subtree` only: repository-relative directories inside this document's own scope that owe no context document, and nor does anything below them — a subtree the layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Naming a directory outside the document's scope, or its own directory, is `illegal-override`; a directory that does not exist is `broken-reference` |
 
 The allowed keys are `share/allow/context.txt`; any other key is an error. There are no
 defaults: a required key that is missing is `invalid-front-matter`, not a silent value.
@@ -765,7 +767,63 @@ open session, exactly as a foreign task record is.
 
 ---
 
-## `.ai/local/state/sessions/<file>.md`
+## `.ai/local/session-contexts/<stamp>--<session-id>.md`
+
+The bounded working context of one episode, written by `session start` and appended to by
+`session close`. Its contract is `majordomus.session-context/v1`
+(`share/schemas/majordomus/session-context/`); the kind is declared in `share/kinds.yaml`
+like every other, and no source class discovers it.
+
+```markdown
+---
+schema: session-context/v1
+kind: session-context
+session_id: s-20260906035523-7b6c
+opened_at: 2026-09-06T03:55:23Z
+opened_by: hook                      # hook | hand
+provider: claude-code                # only when a provider's event opened it
+provider_session: "abc-123"          # the provider's own identity, as it sent it
+branch: master
+head: 9b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b
+task_id: none
+profile: none
+worker: "some-provider/some-model"   # optional; recorded only when supplied
+---
+
+# Working context of session s-20260906035523-7b6c
+
+## Context at open
+<the context builder's output, verbatim>
+
+## Notes
+<the worker's own account of the work>
+
+## Close                              # appended by `session close`
+- closed_at: 2026-09-06T05:12:04Z
+- outcome: closed
+- head: 9b1e2d4f…
+- record: .ai/repo/sessions/20260906T051204Z--s-…--master--9b1e2d4--c0ffee1234567890.md
+```
+
+`opened_by` is `hook` exactly when the open named the provider that delivered the event,
+which only something running inside that provider's hook can do; that is what makes it a
+fact rather than a claim. `provider_session` is the string that ties the episode to the
+prompt archive, whose records carry the same one.
+
+The document is **appended to, never rewritten**: the front matter describes the open, and
+the close adds a section, so whatever a worker typed between the two events survives. It is
+**not tracked**, and unlike the other local state it is not tracked for a second reason as
+well: it is a snapshot of a projection, so re-resolving it later produces a different
+document and no surface can reproduce it (ADR 0015).
+
+It is never a transcript. The derived half is the builder's output and the authored half
+summarises the work; a front-matter key naming a message list, a completion or a model's
+reply is refused by the `majordomus.session-lifecycle` doctrine, which is how
+`project.never-store-transcripts` is kept mechanically here rather than by memory.
+
+---
+
+## `.ai/repo/sessions/<file>.md`
 
 The immutable record of a closed session. Filename:
 `<utc-compact>--<session-id>--<branch-key>--<short-head>--<16 hex>.md`, e.g.
@@ -1199,6 +1257,49 @@ and `content` then covers the region body only, never the host document around i
 reports policy drift when a stamp names a policy hash that is no longer the policy on
 disk, and `update` refuses to overwrite a target whose content matches neither its stamp
 nor the new output.
+
+---
+
+## Generated artifact header
+
+The provider bootstraps carry the stamp above, which is `majordomus update`'s. Every other
+generated artifact — everything `majordomus generate` writes — carries a provenance header
+in the form its encoding allows, and the three lines say the same thing in every one:
+
+```markdown
+<!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: <what it was derived from>; regenerate with `majordomus generate`
+     Generator: majordomus-cli <version> -->
+```
+
+```yaml
+# GENERATED FILE — DO NOT EDIT DIRECTLY
+# Source: <what it was derived from>; regenerate with `majordomus generate`
+# Generator: majordomus-cli <version>
+```
+
+A JSON document carries them as members instead, `schema` first when it has a contract:
+
+```json
+{
+  "schema": "majordomus/capability-registry/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: …; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.1.0"
+}
+```
+
+and a document whose own specification fixes its member names — the OpenAPI document is
+the only one — carries `x-majordomus-generated` and `x-majordomus-generator` instead. The
+line-oriented text artifacts (`share/allow/*.txt`) take the `#` form; every reader of one
+skips comment lines.
+
+No header carries a timestamp, an absolute path or a fingerprint that moves with an
+unrelated edit. The index of every artifact, with the document each projects, its encoding,
+its contract, its source, its size and its hash, is `docs/generated/artifacts.json` (schema
+`majordomus/generated-artifacts/v1`), and it is itself generated; the contracts of the
+generated documents are `share/schemas/generated/*.schema.json`, each pinned to its
+document by the `const` of the document's `schema` member. The rule is
+`project.generated-artifacts-are-typed@1`.
 
 ---
 

@@ -1,21 +1,27 @@
 #!/usr/bin/env bash
 # sourced by several commands; guard against re-sourcing
 [ -n "${MJ_LIB_handover:-}" ] && return 0 || MJ_LIB_handover=1
-# handover — write an append-only continuation record (body on stdin), or --resolve the most
-# relevant prior one. Never stages, commits, or modifies any other file.
+# handover — write an append-only continuation record (body on stdin or --derive), or
+# --resolve the most relevant prior one. Never stages, commits, or modifies any other file.
+# shellcheck source=derive.sh
+. "$MJ_LIB_DIR/derive.sh"
+
 mj_cmd_handover() {
-  local resolve=0 path_only=0 close=0 no_task=0 list=0 want_task=""
+  local resolve=0 path_only=0 close=0 no_task=0 list=0 derive=0 want_task=""
   while [ $# -gt 0 ]; do case "$1" in
     --resolve) resolve=1; shift ;; --path) path_only=1; shift ;; --close) close=1; shift ;; --no-task) no_task=1; shift ;;
-    --list) list=1; shift ;;
+    --list) list=1; shift ;; --derive) derive=1; shift ;;
     --task) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--task needs a task id"; want_task="$2"; shift 2 ;;
     --task=*) want_task="${1#--task=}"; shift ;;
     --help|-h) cat <<H
 usage: majordomus handover [--close] [--no-task] < body.md
+       majordomus handover --derive [--close] [--no-task]
        majordomus handover --resolve [--task <id>] [--path]
        majordomus handover --list
   writes .ai/local/state/handovers/<ts>--<branch>--<head>--<rand>.md (mode 0600, atomic, never staged)
   body needs these non-empty level-one headings: the policy's handover.required_sections
+  --derive    compose the body from the task record, the ledger, git and the open questions
+              instead of reading stdin; deterministic, and no model is called
   --close     also mark the active task handed_over so a new task may start
   --no-task   allow writing without an active task
   --resolve   print the most relevant prior handover for this worktree and branch (never repo-wide)
@@ -35,8 +41,9 @@ H
   if mj_load_current; then task_id="$(mj_cur id)"; profile="$(mj_cur profile)"; owner="$(mj_cur owner)"
   elif [ "$no_task" != 1 ]; then mj_die "$MJ_EX_MISSING" "no active task; run majordomus start, or pass --no-task"; fi
 
-  local body; body="$(mktemp "${TMPDIR:-/tmp}/mj.hb.XXXXXX")"; cat > "$body"
-  [ -s "$body" ] || { rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: empty body on stdin"; }
+  local body; body="$(mktemp "${TMPDIR:-/tmp}/mj.hb.XXXXXX")"
+  if [ "$derive" = 1 ]; then mj_derive_handover_body > "$body"; else cat > "$body"; fi
+  [ -s "$body" ] || { rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: empty body on stdin (or pass --derive)"; }
   if mj_reject_identity "$body"; then
     rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: body must not contain identity fields; they are computed"
   fi

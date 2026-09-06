@@ -1,5 +1,5 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the canonical Majordomus capability registry, module `distribution`; regenerate with `majordomus generate`
+     Source: the `distribution` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
      Generator: majordomus-cli 0.2.0 -->
 # Module `distribution` — Distribution
 

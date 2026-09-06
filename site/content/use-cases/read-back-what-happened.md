@@ -6,7 +6,7 @@ weight = 23
 id = "read-back-what-happened"
 source = ".ai/repo/use-cases/read-back-what-happened.md"
 category = "knowledge"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -19,6 +19,50 @@ Something happened to the task last week: a checkpoint, a decision, a handover. 
 - `history --validate`: every line well-formed, exit 10 otherwise
 - `search <text>`: durable records matched literally across kinds
 - `watch`: the retention caps on the ledger, the handovers and the checkpoints
+
+## Scenario
+
+```yaml
+setup: active-task-records
+given:
+  - 'an active task that has already produced a checkpoint, a decision and an open question'
+steps:
+  - id: history
+    run: ['history']
+    note: 'the ledger read back oldest first, one event per line, from a closed vocabulary'
+    expect:
+      exit: 0
+      stdout_contains: ['task.started', 'task.checkpoint', 'decision.recorded']
+  - id: by-event
+    run: ['history', '--event', 'task.checkpoint']
+    note: 'only the events of one kind'
+    expect:
+      exit: 0
+      stdout_contains: ['task.checkpoint']
+      stdout_not_contains: ['decision.recorded']
+  - id: valid
+    run: ['history', '--validate']
+    note: 'every line is a well-formed event; a malformed line would be a failure, not a skipped record'
+    expect:
+      exit: 0
+      stdout_contains: ['every event is registered', 'history --validate: ok']
+  - id: find
+    run: ['search', 'parser']
+    note: 'a durable record found literally, across kinds, without an index'
+    expect:
+      exit: 0
+      stdout_contains: ['^decision ', '^checkpoint ', 'match']
+  - id: caps
+    run: ['watch']
+    note: 'the ledger, the handovers and the checkpoints are under their retention caps'
+    expect:
+      exit: 0
+      stdout_contains: ['^OK   retention   ledger', '^OK   retention   checkpoints', '0 drift finding']
+then:
+  - 'every event has a name from the closed vocabulary'
+  - 'the ledger is never silently repaired or truncated'
+  - 'rotation archives, it does not delete'
+```
 
 ## Outcome
 

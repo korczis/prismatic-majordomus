@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/generated-artifacts.schema.json",
+  "title": "Generated artifacts manifest",
+  "description": "docs/generated/artifacts.{json,yaml}: the index of every file majordomus generate writes — the documents with the encodings each is committed in, and every file with its encoding, contract, source, size and hash. docs/generated/artifacts.md is the same index for a reader.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "documents", "artifacts"],
+  "properties": {
+    "schema": { "const": "majordomus/generated-artifacts/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "pattern": "^majordomus-cli " },
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "source", "formats"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "description": "The document two encodings share." },
+          "schema": { "type": "string", "minLength": 1, "description": "The schema id its structured encodings carry." },
+          "source": { "type": "string", "minLength": 1 },
+          "formats": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/format" }
+          }
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "document", "format", "source"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1, "description": "Repository-relative, or absolute for an allow-list when the tool distribution lives outside the repository it is supervising." },
+          "document": { "type": "string", "minLength": 1 },
+          "format": { "$ref": "#/$defs/format" },
+          "schema": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "bytes": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+          "describes_itself": {
+            "const": true,
+            "description": "This manifest's own encodings, which carry no hash: a document that hashed itself would have no fixed point. `majordomus generate --check` compares them byte for byte instead."
+          }
+        },
+        "allOf": [
+          {
+            "description": "Every artifact but the manifest's own carries its size and hash.",
+            "if": { "not": { "required": ["describes_itself"] } },
+            "then": { "required": ["bytes", "sha256"] }
+          },
+          {
+            "description": "The manifest's own encodings carry neither.",
+            "if": { "required": ["describes_itself"] },
+            "then": { "not": { "anyOf": [{ "required": ["bytes"] }, { "required": ["sha256"] }] } }
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "format": {
+      "enum": ["json", "yaml", "markdown", "text"],
+      "description": "The encoding, which also fixes the form of the provenance header: members for json, a comment banner for yaml and text, an HTML comment for markdown."
+    }
+  }
+}

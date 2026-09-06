@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+# rust-command-check — a command asserts, in the file that declares it, what it claims.
+#
+# The subject is the executable's command modules: the capability modules that
+# `compose_modules!` composes into the application. The denominator is read from that
+# composition, so a module added tomorrow is measured tomorrow and this script never carries
+# a list of what exists — the same property the rule asks of the commands themselves.
+#
+# Per composed module:
+#   - at least one assertion that runs, in the file that declares the command: an in-file
+#     `#[test]`, or a doc example, which `cargo test --doc` executes. Either form counts;
+#     demanding a particular one buys a token test beside a real example.
+#   - it declares at least one capability, or it is not a command module. What the registry
+#     already refuses — a capability outside its module's namespace, a duplicate identity —
+#     is not repeated here (rule capability-modules, case 91).
+# And across the tree: a module declared with `module!` that the root composes nowhere, and
+# a coverage floor that is absent or below MIN_FLOOR.
+#
+# Enforcement is a ratchet, not a cliff. The modules that do not satisfy the rule today are
+# recorded in the baseline; the check fails only when a module that is not in the baseline
+# is found wanting, so the debt can shrink and cannot grow. That is why this is a gate and
+# not a warning: nothing already broken blocks anybody, and nothing new gets in.
+#
+#   scripts/ci/rust-command-check                    report, and fail on new debt
+#   MJ_ROOT=<dir> scripts/ci/rust-command-check      measure another tree (the case does)
+#   scripts/ci/rust-command-check --write-baseline   record today's debt (a deliberate act)
+#   scripts/ci/rust-command-check --strict           fail on any finding, baseline ignored
+#
+# Exit: 0 clean or debt unchanged, 10 new debt (or any debt under --strict), 12 unusable.
+set -eu
+# MJ_ROOT lets the behavioural case point this at a fixture; without it the repository the
+# script lives in is the subject, which is what CI wants.
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+DIR="apps/majordomus-cli/src/capability/builtin"
+BASELINE=".ai/repo/rust-command-baseline.txt"
+MIN_FLOOR=90
+FLOOR_FILE="scripts/rust-coverage-threshold"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "rust-command-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+if [ ! -f "$DIR/mod.rs" ]; then
+  echo "rust-command-check: no Rust capability modules here; nothing to measure"
+  exit 0
+fi
+
+# the composed modules, from the composition itself
+composed="$(awk '
+  /compose_modules!\[/ { f = 1; next }
+  f && /\]/            { exit }
+  f                    { gsub(/[ \t,]/, ""); if ($0 != "" && $0 !~ /^\/\//) print }
+' "$DIR/mod.rs")"
+[ -n "$composed" ] || { echo "rust-command-check: the composition names no module" >&2; exit 12; }
+
+findings=""   # one "<module>\t<what>" per line
+add() { findings="$findings$1	$2
+"; }
+
+for m in $composed; do
+  f="$DIR/$m.rs"
+  if [ ! -f "$f" ]; then add "$m" "is composed but has no module file"; continue; fi
+  grep -qE '^[[:space:]]*capability!' "$f" 2>/dev/null \
+    || add "$m" "is composed and declares no capability; it is not a command module"
+  t="$(grep -c '#\[test\]' "$f" 2>/dev/null || true)"
+  d="$(grep -cE '^[[:space:]]*//[/!] *```' "$f" 2>/dev/null || true)"
+  [ "$t" -eq 0 ] && [ "$d" -eq 0 ] \
+    && add "$m" "carries no assertion that runs: no in-file #[test] and no doc example"
+done
+
+# a module that declares itself and that nothing composes
+for f in "$DIR"/*.rs; do
+  m="$(basename "$f" .rs)"; [ "$m" = mod ] && continue
+  grep -qE '^[[:space:]]*module!' "$f" 2>/dev/null || continue
+  case " $(echo "$composed" | tr '\n' ' ') " in
+    *" $m "*) ;;
+    *) add "$m" "declares a module the root composes nowhere; it is reachable by nothing" ;;
+  esac
+done
+
+# "high coverage" is a number or it is an opinion
+if [ ! -f "$FLOOR_FILE" ] || ! grep -qE '^[0-9]+$' "$FLOOR_FILE" 2>/dev/null; then
+  add "-" "no coverage floor is declared in $FLOOR_FILE"
+else
+  v="$(grep -m1 -oE '^[0-9]+$' "$FLOOR_FILE")"
+  [ "$v" -lt "$MIN_FLOOR" ] && add "-" "the coverage floor is ${v}%, below the ${MIN_FLOOR}% this rule calls high"
+fi
+
+current="$(printf '%s' "$findings" | grep -v '^$' | cut -f1 | sort -u || true)"
+
+if [ "$MODE" = write ]; then
+  { echo "# Modules that do not yet satisfy project.rust-command-tested-in-file."
+    echo "# Written by scripts/ci/rust-command-check --write-baseline. The list may shrink;"
+    echo "# a module not on it that is found wanting fails the gate. Do not add by hand."
+    printf '%s\n' "$current" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "rust-command-check: baseline written with $(printf '%s\n' "$current" | grep -vc '^$' || echo 0) module(s)"
+  exit 0
+fi
+
+[ -n "$findings" ] && printf '%s' "$findings" | grep -v '^$' | while IFS="	" read -r m what; do
+  printf 'FAIL rust-command %-14s %s\n' "$m" "$what"
+done
+
+known=""
+[ -f "$BASELINE" ] && known="$(grep -vE '^\s*(#|$)' "$BASELINE" || true)"
+
+if [ "$MODE" = strict ]; then
+  [ -z "$current" ] && { echo "rust-command-check: every composed command asserts what it declares"; exit 0; }
+  echo "rust-command-check: $(printf '%s\n' "$current" | grep -vc '^$') module(s) with findings (--strict)" >&2
+  exit 10
+fi
+
+new="$(comm -23 <(printf '%s\n' "$current" | grep -v '^$' | sort -u) <(printf '%s\n' "$known" | grep -v '^$' | sort -u) || true)"
+gone="$(comm -13 <(printf '%s\n' "$current" | grep -v '^$' | sort -u) <(printf '%s\n' "$known" | grep -v '^$' | sort -u) || true)"
+
+[ -n "$gone" ] && { echo; echo "rust-command-check: debt cleared, run --write-baseline to record it:"; printf '  %s\n' $gone; }
+
+if [ -n "$new" ]; then
+  echo >&2
+  echo "rust-command-check: new debt, not in $BASELINE:" >&2
+  printf '  %s\n' $new >&2
+  echo "  A command declared without an assertion beside it is the rule this gate holds:" >&2
+  echo "  project.rust-command-tested-in-file. Add an in-file #[test] or a doc example." >&2
+  exit 10
+fi
+echo "rust-command-check: no new debt ($(printf '%s\n' "$known" | grep -vc '^$' || echo 0) module(s) known, $(printf '%s\n' "$composed" | wc -w | tr -d ' ') composed)"

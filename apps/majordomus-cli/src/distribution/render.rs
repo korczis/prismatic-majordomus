@@ -8,6 +8,11 @@ use serde_json::{json, Value};
 use super::release::{Channel, Releases};
 use super::{Model, Status};
 
+/// Where every artifact of this module comes from, for the provenance line the generated
+/// manifest carries. One string, because one file is the source of all of them.
+pub const SOURCE: &str =
+    "share/distribution.yaml, and the release records under .ai/repo/releases/";
+
 /// The placeholder the naming function leaves for the tag a release will have. The build
 /// matrix carries names with this in them, so that the workflow substitutes a tag rather
 /// than composing a name of its own.
@@ -47,6 +52,7 @@ pub fn matrix(model: &Model) -> Value {
         .collect();
     json!({
         "schema": "majordomus/distribution-matrix/v1",
+        "generated": crate::generate::json_banner(SOURCE),
         "binary": model.project.binary,
         "repository": model.project.repository,
         "checksums_file": model.archive.checksums_file,
@@ -92,6 +98,7 @@ pub fn site_dataset(model: &Model, releases: &Releases) -> String {
     });
     let value = json!({
         "schema": "majordomus/distribution/v1",
+        "generated": crate::generate::json_banner(SOURCE),
         "binary": model.project.binary,
         "repository": model.project.repository,
         "installer_url": model.installer_url(),

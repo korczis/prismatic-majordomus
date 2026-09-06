@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/skill/skill.v1.schema.json",
+  "x-majordomus-schema": "majordomus.skill/v1",
+  "x-majordomus-derived-from": "majordomus/skill/skill.v1.proto",
+  "x-majordomus-allow": "skill",
+  "description": "The whole skill. The body is the procedure; nothing in the front matter repeats it.",
+  "title": "skill",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "body"
+  ],
+  "properties": {
+    "header": {
+      "$ref": "#/$defs/Header"
+    },
+    "body": {
+      "$ref": "#/$defs/Body"
+    }
+  },
+  "$defs": {
+    "Header": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "id",
+        "version",
+        "title",
+        "description",
+        "status"
+      ],
+      "properties": {
+        "schema": {
+          "description": "The contract this file follows.",
+          "const": "skill/v1"
+        },
+        "id": {
+          "description": "Identity; must equal the directory name. Lower-case letters, digits and hyphens.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "version": {
+          "description": "An exact integer, raised when the procedure changes in a way a reader of an older copy should notice.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "description": "What the skill is for, in one sentence; shown by every listing.",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "active",
+            "deprecated"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
+        },
+        "related": {
+          "description": "Ids of other skills this one hands over to or builds on; every one must exist.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
+        },
+        "inputs": {
+          "description": "What the worker must have before the procedure starts, one item each.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outputs": {
+          "description": "What the procedure leaves behind, one item each.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "Section": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "heading": {
+          "type": "string"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "empty": {
+          "type": "boolean"
+        }
+      }
+    },
+    "Body": {
+      "description": "The body is the procedure a worker follows, and what it leaves behind.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "description": "Every heading of the body, in document order, as the reader flattens it.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Section"
+          }
+        }
+      },
+      "x-majordomus-sections": [
+        {
+          "heading": "Purpose",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Procedure",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        },
+        {
+          "heading": "Output",
+          "level": 1,
+          "required": true,
+          "non_empty": true
+        }
+      ]
+    }
+  },
+  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/skill/skill.v1.proto`; regenerate with `majordomus generate`",
+  "x-majordomus-generator": "majordomus-cli 0.2.0"
+}

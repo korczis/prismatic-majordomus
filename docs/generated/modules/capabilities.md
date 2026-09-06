@@ -1,5 +1,5 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the canonical Majordomus capability registry, module `capabilities`; regenerate with `majordomus generate`
+     Source: the `capabilities` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
      Generator: majordomus-cli 0.2.0 -->
 # Module `capabilities` — Capabilities
 

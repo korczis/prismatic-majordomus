@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/capability-registry.schema.json",
+  "title": "Capability registry manifest",
+  "description": "docs/generated/registry.{json,yaml}: the builtin capability registry as data — the modules, every builtin descriptor with the file it was composed in, the declarative kinds by name, and the transports' own benchmark targets.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "modules", "capabilities", "declarative_kinds", "system_benchmark_targets"],
+  "properties": {
+    "schema": { "const": "majordomus/capability-registry/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "pattern": "^majordomus-cli " },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "description", "source", "capabilities"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "source": { "type": "string" },
+          "capabilities": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "module", "kind", "title", "description", "source_path"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "module": { "type": "string", "minLength": 1 },
+          "kind": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 },
+          "source_path": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "declarative_kinds": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "system_benchmark_targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["key", "transport", "description"],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "description": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}
