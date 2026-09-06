@@ -6,28 +6,28 @@
     "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "a02dab8edbacfcb2608ac82cc93c27c85419a1d1c520698a7b7394c41fdc4d40",
+    "fingerprint": "d8ba4d8a3ef33354c1944e5962231b7186e0508712b555ffda96f5647bf2c1a4",
     "summary": {
-      "total": 946,
-      "builtin": 33,
-      "declarative": 913,
+      "total": 967,
+      "builtin": 34,
+      "declarative": 933,
       "by_kind": {
         "command": 1,
-        "query": 32,
-        "resource": 913
+        "query": 33,
+        "resource": 933
       },
       "by_stability": {
-        "behaviorally_verified": 33,
-        "implemented": 913
+        "behaviorally_verified": 34,
+        "implemented": 933
       },
-      "mcp_tools": 31,
-      "mcp_resources": 925,
-      "http_routes": 33,
+      "mcp_tools": 32,
+      "mcp_resources": 946,
+      "http_routes": 34,
       "cli_commands": 14,
-      "modules": 38,
-      "benchmark_required": 33,
+      "modules": 39,
+      "benchmark_required": 34,
       "benchmark_waived": 0,
-      "cached": 15
+      "cached": 16
     },
     "builtin": [
       {
@@ -4658,6 +4658,196 @@
           "policy": "disabled"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+      },
+      {
+        "id": "health.coverage",
+        "module": "health",
+        "kind": "query",
+        "title": "What backs every capability",
+        "description": "For every capability, what documents it, what tests it, what rule is in force over it, what times it and what reaches it — each cell naming the artifact it was resolved from, and every required dimension with nothing behind it reported as a gap. Resolved from the composed graph and the benchmark projection, so nothing here is a second opinion and nothing is filled from a claim.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "CoverageMatrix",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`majordomus/capability-coverage/v1`."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many capabilities carry each dimension, by dimension word, plus `total`."
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/CapabilityCoverage"
+                },
+                "description": "One row per capability, by id."
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Every gap: a required dimension with nothing behind it, and every reference the\nlayer declares that resolves to nothing, each naming which end failed."
+              }
+            },
+            "required": [
+              "schema",
+              "tallies",
+              "capabilities"
+            ],
+            "description": "The matrix: what is actually finished, read from artifacts rather than from claims.",
+            "title": "CoverageMatrix",
+            "$defs": {
+              "CapabilityCoverage": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The canonical id."
+                  },
+                  "module": {
+                    "type": "string",
+                    "description": "The module that composes it."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Where it is declared, so every cell can be traced to the same place they were\nresolved from."
+                  },
+                  "required": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Dimension"
+                    },
+                    "description": "What the policy asks of it."
+                  },
+                  "cells": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/CoverageCell"
+                    },
+                    "description": "Every dimension with what backs it."
+                  },
+                  "missing": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Dimension"
+                    },
+                    "description": "Required dimensions nothing backs."
+                  }
+                },
+                "required": [
+                  "id",
+                  "module",
+                  "source",
+                  "required",
+                  "cells"
+                ],
+                "description": "One capability's row."
+              },
+              "Dimension": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "documented",
+                    "description": "A document, a decision or a directory contract names the file it is declared in."
+                  },
+                  {
+                    "type": "string",
+                    "const": "tested",
+                    "description": "A behavioural case is named over the file it is declared in."
+                  },
+                  {
+                    "type": "string",
+                    "const": "enforced",
+                    "description": "A rule is in force over the file it is declared in."
+                  },
+                  {
+                    "type": "string",
+                    "const": "benchmarked",
+                    "description": "The benchmark projection's coverage counts a case for it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "exposed",
+                    "description": "It is reachable through a transport a caller can use."
+                  }
+                ],
+                "description": "One dimension of evidence a capability can carry.\n\nThe dimensions are what a reader wants to know before trusting a capability: is it\nreachable, is it timed, does anything explain it, does anything hold it to a rule, does\nanything prove it runs. Each is decided by an engine that already owns the answer, and\neach cell names the artifact it was decided from."
+              },
+              "CoverageCell": {
+                "type": "object",
+                "properties": {
+                  "dimension": {
+                    "$ref": "#/$defs/Dimension",
+                    "description": "Which dimension."
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The artifacts behind it, each nameable and followable."
+                  }
+                },
+                "required": [
+                  "dimension"
+                ],
+                "description": "One cell: a dimension and the artifacts that satisfy it. An empty cell is an empty\ncell; nothing here is filled from a claim."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::health"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_coverage",
+            "resource": {
+              "uri": "majordomus://coverage",
+              "name": "coverage"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/coverage"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "health",
+          "introspection",
+          "capabilities"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 2,
+          "ttl_seconds": 5
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
       },
       {
         "id": "health.live",
@@ -9455,6 +9645,14 @@
     ],
     "modules": [
       {
+        "id": "adr",
+        "title": "adr",
+        "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 20,
+        "capability_ids": []
+      },
+      {
         "id": "application",
         "title": "application",
         "description": "Declarative objects of kind 'application' from the repository's AI layer.",
@@ -9623,8 +9821,9 @@
         "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 3,
+        "capabilities": 4,
         "capability_ids": [
+          "health.coverage",
           "health.live",
           "health.ready",
           "health.report"
@@ -9836,7 +10035,7 @@
     ]
   },
   "index": {
-    "fingerprint": "208cc6f5b03a8868823315c6484111d8b0f9702271ab6f40764d3c1c34b47643",
+    "fingerprint": "55ed941424f5edd4bcde6468c621b1b5f77b4068219c080f3530e8acfb319379",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -9858,6 +10057,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
+      "adr": 20,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -9885,6 +10085,318 @@
     },
     "diagnostics": {},
     "objects": [
+      {
+        "uri": "majordomus://adr/adr-0001",
+        "kind": "adr",
+        "identity": "adr-0001",
+        "title": "A Rust executable with a data-driven, read-only MCP surface over stdio",
+        "description": "A Rust executable with a data-driven, read-only MCP surface over stdio",
+        "path": ".ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6860,
+        "tags": [
+          "rust",
+          "mcp",
+          "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0002",
+        "kind": "adr",
+        "identity": "adr-0002",
+        "title": "A canonical capability registry, with MCP, HTTP, OpenAPI, Swagger UI, the CLI and the reference as projections",
+        "description": "A canonical capability registry, with MCP, HTTP, OpenAPI, Swagger UI, the CLI and the reference as projections",
+        "path": ".ai/repo/adrs/0002-canonical-capability-registry.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6278,
+        "tags": [
+          "registry",
+          "projections",
+          "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0003",
+        "kind": "adr",
+        "identity": "adr-0003",
+        "title": "One shared MCP server per repository, peers, and clients that start it themselves",
+        "description": "One shared MCP server per repository, peers, and clients that start it themselves",
+        "path": ".ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 11387,
+        "tags": [
+          "mcp",
+          "concurrency",
+          "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0004",
+        "kind": "adr",
+        "identity": "adr-0004",
+        "title": "One canonical declaration, composed modules, derived projections, and performance as evidence",
+        "description": "One canonical declaration, composed modules, derived projections, and performance as evidence",
+        "path": ".ai/repo/adrs/0004-canonical-architecture-and-performance-truth.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 12051,
+        "tags": [
+          "registry",
+          "performance",
+          "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0005",
+        "kind": "adr",
+        "identity": "adr-0005",
+        "title": "One projection plan over the canonical inputs, named owners for every truth, and the site as a view of the registry",
+        "description": "One projection plan over the canonical inputs, named owners for every truth, and the site as a view of the registry",
+        "path": ".ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 12216,
+        "tags": [
+          "projections",
+          "site",
+          "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0006",
+        "kind": "adr",
+        "identity": "adr-0006",
+        "title": "CI planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it",
+        "description": "CI planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it",
+        "path": ".ai/repo/adrs/0006-ci-planned-from-one-model-and-the-site-deployed-from-its-verified-run.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5809,
+        "tags": [
+          "ci",
+          "deployment"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0007",
+        "kind": "adr",
+        "identity": "adr-0007",
+        "title": "Skills are data under the layer's skills section, and every surface that shows one is a projection",
+        "description": "Skills are data under the layer's skills section, and every surface that shows one is a projection",
+        "path": ".ai/repo/adrs/0007-skills-are-data-not-registrations.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 3731,
+        "tags": [
+          "skills",
+          "projections"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0008",
+        "kind": "adr",
+        "identity": "adr-0008",
+        "title": "Use cases are executable canonical objects of the layer",
+        "description": "Use cases are executable canonical objects of the layer",
+        "path": ".ai/repo/adrs/0008-executable-use-cases.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6346,
+        "tags": [
+          "use-cases",
+          "evidence"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0009",
+        "kind": "adr",
+        "identity": "adr-0009",
+        "title": "Prompt capture happens below the model, or is reported as unavailable",
+        "description": "Prompt capture happens below the model, or is reported as unavailable",
+        "path": ".ai/repo/adrs/0009-prompt-capture-happens-below-the-model.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9183,
+        "tags": [
+          "capture",
+          "providers",
+          "privacy"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0010",
+        "kind": "adr",
+        "identity": "adr-0010",
+        "title": "Curated knowledge is one kind with a class, not a second store",
+        "description": "Curated knowledge is one kind with a class, not a second store",
+        "path": ".ai/repo/adrs/0010-curated-knowledge-is-one-kind-with-a-class-not-a-second-stor.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 787,
+        "tags": [
+          "knowledge"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0011",
+        "kind": "adr",
+        "identity": "adr-0011",
+        "title": "Every directory in the layer carries a contract",
+        "description": "Every directory in the layer carries a contract",
+        "path": ".ai/repo/adrs/0011-every-directory-in-the-layer-carries-a-contract.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6959,
+        "tags": [
+          "context",
+          "governance"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0012",
+        "kind": "adr",
+        "identity": "adr-0012",
+        "title": "The Cockpit is a sixth projection of the registry, not an application over it",
+        "description": "The Cockpit is a sixth projection of the registry, not an application over it",
+        "path": ".ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9670,
+        "tags": [
+          "architecture",
+          "capabilities",
+          "rust",
+          "interface"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0013",
+        "kind": "adr",
+        "identity": "adr-0013",
+        "title": "Every web surface is discovered from its producer, resolved once, and projected",
+        "description": "Every web surface is discovered from its producer, resolved once, and projected",
+        "path": ".ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6456,
+        "tags": [
+          "architecture",
+          "web"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0014",
+        "kind": "adr",
+        "identity": "adr-0014",
+        "title": "A closed session is a shared object of the layer, not a local note",
+        "description": "A closed session is a shared object of the layer, not a local note",
+        "path": ".ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5827,
+        "tags": [
+          "architecture",
+          "records"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0015",
+        "kind": "adr",
+        "identity": "adr-0015",
+        "title": "The episode boundary is drawn by the provider, not by the model",
+        "description": "The episode boundary is drawn by the provider, not by the model",
+        "path": ".ai/repo/adrs/0015-the-episode-boundary-is-drawn-by-the-provider-not-by-the-mod.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6675,
+        "tags": [
+          "architecture",
+          "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0016",
+        "kind": "adr",
+        "identity": "adr-0016",
+        "title": "The scenario is a body section, not a header field",
+        "description": "The scenario is a body section, not a header field",
+        "path": ".ai/repo/adrs/0016-the-scenario-is-a-body-section-not-a-header-field.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4393,
+        "tags": [
+          "use-cases",
+          "schemas",
+          "context"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0017",
+        "kind": "adr",
+        "identity": "adr-0017",
+        "title": "An episode that opens is handed what the last one left",
+        "description": "An episode that opens is handed what the last one left",
+        "path": ".ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 10383,
+        "tags": [
+          "architecture",
+          "continuity",
+          "provider"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0018",
+        "kind": "adr",
+        "identity": "adr-0018",
+        "title": "Operational moments are objects of the layer, not pages of the site",
+        "description": "Operational moments are objects of the layer, not pages of the site",
+        "path": ".ai/repo/adrs/0018-operational-moments-are-objects-of-the-layer-not-pages-of-th.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6478,
+        "tags": [
+          "why",
+          "catalogue",
+          "projections"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0019",
+        "kind": "adr",
+        "identity": "adr-0019",
+        "title": "Distribution is one model, and every surface that ships the tool is a projection of it",
+        "description": "Distribution is one model, and every surface that ships the tool is a projection of it",
+        "path": ".ai/repo/adrs/0019-distribution-is-one-model-and-every-surface-that-ships-the-t.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7389,
+        "tags": [
+          "distribution",
+          "release"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0020",
+        "kind": "adr",
+        "identity": "adr-0020",
+        "title": "The capability graph is composed, not centralised, and projected twice",
+        "description": "The capability graph is composed, not centralised, and projected twice",
+        "path": ".ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 10902,
+        "tags": [
+          "architecture",
+          "capabilities",
+          "interface",
+          "web"
+        ]
+      },
       {
         "uri": "majordomus://application/ci-gated-project",
         "kind": "application",
@@ -12520,7 +13032,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 34551
+        "bytes": 34891
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -15559,7 +16071,7 @@
         "path": ".ai/repo/project/issues/I1005.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1941
+        "bytes": 3700
       },
       {
         "uri": "majordomus://issue/I1006",
@@ -15625,7 +16137,7 @@
         "path": ".ai/repo/project/issues/I1011.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2018
+        "bytes": 3352
       },
       {
         "uri": "majordomus://issue/I1012",
@@ -19620,7 +20132,7 @@
       "identity": [
         "id"
       ],
-      "objects": 0
+      "objects": 20
     },
     {
       "name": "application",
@@ -20935,6 +21447,10 @@
               {
                 "name": "web",
                 "help": "`docs/generated/web.json`: the resolved web topology the site's route reference renders"
+              },
+              {
+                "name": "graph",
+                "help": "docs/generated/graph.json and its schema: the composed graph as data"
               }
             ],
             "defaults": [
@@ -26042,6 +26558,16 @@
         "output": "GraphList"
       },
       {
+        "name": "majordomus_coverage",
+        "id": "health.coverage",
+        "title": "What backs every capability",
+        "description": "For every capability, what documents it, what tests it, what rule is in force over it, what times it and what reaches it — each cell naming the artifact it was resolved from, and every required dimension with nothing behind it reported as a gap. Resolved from the composed graph and the benchmark projection, so nothing here is a second opinion and nothing is filled from a claim.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "CoverageMatrix"
+      },
+      {
         "name": "majordomus_health",
         "id": "health.report",
         "title": "Health of this process",
@@ -26249,6 +26775,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://coverage",
+        "name": "coverage",
+        "id": "health.coverage",
+        "title": "What backs every capability",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://health",
         "name": "health",
         "id": "health.report",
@@ -26384,6 +26917,12 @@
         "method": "GET",
         "path": "/api/v1/graphs",
         "id": "graph.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/coverage",
+        "id": "health.coverage",
         "kind": "query"
       },
       {
@@ -27236,6 +27775,35 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/graphs"
+      },
+      {
+        "key": "health.coverage|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "health.coverage",
+        "module": "health",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "health.coverage|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "health.coverage",
+        "module": "health",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_coverage"
+      },
+      {
+        "key": "health.coverage|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "health.coverage",
+        "module": "health",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/coverage"
       },
       {
         "key": "health.live|direct|default",
@@ -28419,6 +28987,27 @@
           "cases": 1
         },
         {
+          "subject": "health.coverage",
+          "module": "health",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "health.coverage",
+          "module": "health",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "health.coverage",
+          "module": "health",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "health.live",
           "module": "health",
           "transport": "direct",
@@ -28897,20 +29486,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 33,
-          "covered": 33,
+          "required": 34,
+          "covered": 34,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 33,
-          "covered": 33,
+          "required": 34,
+          "covered": 34,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 31,
-          "covered": 31,
+          "required": 32,
+          "covered": 32,
           "missing": 0,
           "waived": 0
         },
@@ -28921,8 +29510,8 @@
           "waived": 0
         },
         "total": {
-          "required": 110,
-          "covered": 110,
+          "required": 113,
+          "covered": 113,
           "missing": 0,
           "waived": 0
         }

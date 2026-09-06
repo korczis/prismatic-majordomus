@@ -485,6 +485,91 @@
         }
       }
     },
+    "/api/v1/coverage": {
+      "get": {
+        "operationId": "health.coverage",
+        "summary": "What backs every capability",
+        "description": "For every capability, what documents it, what tests it, what rule is in force over it, what times it and what reaches it — each cell naming the artifact it was resolved from, and every required dimension with nothing behind it reported as a gap. Resolved from the composed graph and the benchmark projection, so nothing here is a second opinion and nothing is filled from a claim.",
+        "tags": [
+          "health"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "What backs every capability: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CoverageMatrix"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "health.coverage",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::health"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 2,
+          "ttl_seconds": 5
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_coverage",
+          "resource": {
+            "uri": "majordomus://coverage",
+            "name": "coverage"
+          }
+        }
+      }
+    },
     "/api/v1/deployment": {
       "get": {
         "operationId": "deploy.get",
@@ -1603,7 +1688,7 @@
             "description": "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`).",
             "examples": {
               "first-object": {
-                "value": "majordomus://application/ci-gated-project"
+                "value": "majordomus://adr/adr-0001"
               },
               "repository": {
                 "value": "majordomus://repository"
@@ -1700,7 +1785,7 @@
             "description": "Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer.",
             "examples": {
               "first-kind": {
-                "value": "application"
+                "value": "adr"
               }
             }
           },
@@ -2313,7 +2398,7 @@
             "description": "Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input.",
             "examples": {
               "first-object": {
-                "value": ".ai/repo/applications/ci-gated-project.md"
+                "value": ".ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md"
               },
               "layer-file": {
                 "value": ".ai/manifest.yaml"
@@ -4209,6 +4294,52 @@
         ],
         "description": "Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page's own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n[`Availability::classify`] is the one place the rule lives."
       },
+      "CapabilityCoverage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The canonical id."
+          },
+          "module": {
+            "type": "string",
+            "description": "The module that composes it."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where it is declared, so every cell can be traced to the same place they were\nresolved from."
+          },
+          "required": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            },
+            "description": "What the policy asks of it."
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CoverageCell"
+            },
+            "description": "Every dimension with what backs it."
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            },
+            "description": "Required dimensions nothing backs."
+          }
+        },
+        "required": [
+          "id",
+          "module",
+          "source",
+          "required",
+          "cells"
+        ],
+        "description": "One capability's row."
+      },
       "CapabilityId": {
         "type": "string",
         "description": "A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `<kind>.<identity>` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind's identity rule produced it."
@@ -4967,6 +5098,64 @@
         ],
         "description": "How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down."
       },
+      "CoverageCell": {
+        "type": "object",
+        "properties": {
+          "dimension": {
+            "$ref": "#/components/schemas/Dimension",
+            "description": "Which dimension."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The artifacts behind it, each nameable and followable."
+          }
+        },
+        "required": [
+          "dimension"
+        ],
+        "description": "One cell: a dimension and the artifacts that satisfy it. An empty cell is an empty\ncell; nothing here is filled from a claim."
+      },
+      "CoverageMatrix": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "`majordomus/capability-coverage/v1`."
+          },
+          "tallies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many capabilities carry each dimension, by dimension word, plus `total`."
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CapabilityCoverage"
+            },
+            "description": "One row per capability, by id."
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every gap: a required dimension with nothing behind it, and every reference the\nlayer declares that resolves to nothing, each naming which end failed."
+          }
+        },
+        "required": [
+          "schema",
+          "tallies",
+          "capabilities"
+        ],
+        "description": "The matrix: what is actually finished, read from artifacts rather than from claims."
+      },
       "CpuKind": {
         "oneOf": [
           {
@@ -5328,6 +5517,36 @@
           "message"
         ],
         "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+      },
+      "Dimension": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "documented",
+            "description": "A document, a decision or a directory contract names the file it is declared in."
+          },
+          {
+            "type": "string",
+            "const": "tested",
+            "description": "A behavioural case is named over the file it is declared in."
+          },
+          {
+            "type": "string",
+            "const": "enforced",
+            "description": "A rule is in force over the file it is declared in."
+          },
+          {
+            "type": "string",
+            "const": "benchmarked",
+            "description": "The benchmark projection's coverage counts a case for it."
+          },
+          {
+            "type": "string",
+            "const": "exposed",
+            "description": "It is reachable through a transport a caller can use."
+          }
+        ],
+        "description": "One dimension of evidence a capability can carry.\n\nThe dimensions are what a reader wants to know before trusting a capability: is it\nreachable, is it timed, does anything explain it, does anything hold it to a rule, does\nanything prove it runs. Each is decided by an engine that already owns the answer, and\neach cell names the artifact it was decided from."
       },
       "DirectoryNode": {
         "type": "object",

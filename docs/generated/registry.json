@@ -65,7 +65,7 @@
       "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 3
+      "capabilities": 4
     },
     {
       "id": "objects",
@@ -4745,6 +4745,196 @@
         "policy": "disabled"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/graph.rs"
+    },
+    {
+      "id": "health.coverage",
+      "module": "health",
+      "kind": "query",
+      "title": "What backs every capability",
+      "description": "For every capability, what documents it, what tests it, what rule is in force over it, what times it and what reaches it — each cell naming the artifact it was resolved from, and every required dimension with nothing behind it reported as a gap. Resolved from the composed graph and the benchmark projection, so nothing here is a second opinion and nothing is filled from a claim.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "CoverageMatrix",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "`majordomus/capability-coverage/v1`."
+            },
+            "tallies": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0
+              },
+              "description": "How many capabilities carry each dimension, by dimension word, plus `total`."
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CapabilityCoverage"
+              },
+              "description": "One row per capability, by id."
+            },
+            "gaps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Every gap: a required dimension with nothing behind it, and every reference the\nlayer declares that resolves to nothing, each naming which end failed."
+            }
+          },
+          "required": [
+            "schema",
+            "tallies",
+            "capabilities"
+          ],
+          "description": "The matrix: what is actually finished, read from artifacts rather than from claims.",
+          "title": "CoverageMatrix",
+          "$defs": {
+            "CapabilityCoverage": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The canonical id."
+                },
+                "module": {
+                  "type": "string",
+                  "description": "The module that composes it."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Where it is declared, so every cell can be traced to the same place they were\nresolved from."
+                },
+                "required": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Dimension"
+                  },
+                  "description": "What the policy asks of it."
+                },
+                "cells": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/CoverageCell"
+                  },
+                  "description": "Every dimension with what backs it."
+                },
+                "missing": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Dimension"
+                  },
+                  "description": "Required dimensions nothing backs."
+                }
+              },
+              "required": [
+                "id",
+                "module",
+                "source",
+                "required",
+                "cells"
+              ],
+              "description": "One capability's row."
+            },
+            "Dimension": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "documented",
+                  "description": "A document, a decision or a directory contract names the file it is declared in."
+                },
+                {
+                  "type": "string",
+                  "const": "tested",
+                  "description": "A behavioural case is named over the file it is declared in."
+                },
+                {
+                  "type": "string",
+                  "const": "enforced",
+                  "description": "A rule is in force over the file it is declared in."
+                },
+                {
+                  "type": "string",
+                  "const": "benchmarked",
+                  "description": "The benchmark projection's coverage counts a case for it."
+                },
+                {
+                  "type": "string",
+                  "const": "exposed",
+                  "description": "It is reachable through a transport a caller can use."
+                }
+              ],
+              "description": "One dimension of evidence a capability can carry.\n\nThe dimensions are what a reader wants to know before trusting a capability: is it\nreachable, is it timed, does anything explain it, does anything hold it to a rule, does\nanything prove it runs. Each is decided by an engine that already owns the answer, and\neach cell names the artifact it was decided from."
+            },
+            "CoverageCell": {
+              "type": "object",
+              "properties": {
+                "dimension": {
+                  "$ref": "#/$defs/Dimension",
+                  "description": "Which dimension."
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The artifacts behind it, each nameable and followable."
+                }
+              },
+              "required": [
+                "dimension"
+              ],
+              "description": "One cell: a dimension and the artifacts that satisfy it. An empty cell is an empty\ncell; nothing here is filled from a claim."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::health"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_coverage",
+          "resource": {
+            "uri": "majordomus://coverage",
+            "name": "coverage"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/coverage"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "health",
+        "introspection",
+        "capabilities"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 2,
+        "ttl_seconds": 5
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
     },
     {
       "id": "health.live",
@@ -9541,6 +9731,7 @@
     }
   ],
   "declarative_kinds": [
+    "adr",
     "application",
     "area",
     "audience",
