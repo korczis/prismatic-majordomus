@@ -25,6 +25,11 @@ pub const ALLOW_DIR: &str = "allow";
 /// contract and this is the body half; a shell cannot read either out of a schema.
 pub const SECTIONS_DIR: &str = "sections";
 
+/// The subdirectory of [`SCHEMAS_DIR`] holding one JSON Schema per generated document.
+/// A kind's schema is projected from a `.proto` under `<vendor>/<name>/`, so nothing here
+/// is ever read as a kind's schema.
+pub const GENERATED_SCHEMAS_DIR: &str = "generated";
+
 /// The suffix of a schema file: `<name>.schema.json`.
 pub const SCHEMA_SUFFIX: &str = ".schema.json";
 
@@ -108,6 +113,12 @@ impl Share {
     pub fn sections_dir(&self) -> PathBuf {
         self.dir.join(SECTIONS_DIR)
     }
+
+    /// `<share>/schemas/generated`: the contracts of the generated documents, matched to a
+    /// document by the `const` of its `schema` member.
+    pub fn generated_schemas_dir(&self) -> PathBuf {
+        self.dir.join(SCHEMAS_DIR).join(GENERATED_SCHEMAS_DIR)
+    }
 }
 
 /// Every `<vendor>/<name>/<name>.v<n>.schema.json` under a schema root, parsed, keyed by
@@ -137,6 +148,15 @@ fn read_schema_tree(
     for entry in std::fs::read_dir(dir).map_err(|e| Error::io(dir, e))? {
         let path = entry.map_err(|e| Error::io(dir, e))?.path();
         if path.is_dir() {
+            // `<schemas>/generated/` holds the contracts of the *generated documents* —
+            // the manifest, the registry, the benchmark matrix. Those are not kinds of the
+            // layer, carry no `<vendor>/<name>/` identity, and are read by
+            // [`read_generated_schema_dir`] instead.
+            if dir == root
+                && path.file_name().and_then(|f| f.to_str()) == Some(GENERATED_SCHEMAS_DIR)
+            {
+                continue;
+            }
             read_schema_tree(root, &path, out)?;
             continue;
         }
@@ -164,6 +184,37 @@ fn read_schema_tree(
         out.push((identity, json));
     }
     Ok(())
+}
+
+/// Every `<name>.schema.json` directly under a directory, parsed, keyed by that `<name>`
+/// and sorted by it. A directory that does not exist yields nothing.
+///
+/// This is the reader for `<share>/schemas/generated/`, whose files are the contracts of
+/// the *generated documents* rather than of the layer's kinds: they answer to the document
+/// id they pin in `properties.schema.const`, not to a `<vendor>/<name>` path, so the shape
+/// [`read_schema_dir`] insists on does not apply to them.
+pub fn read_generated_schema_dir(dir: &Path) -> Result<Vec<(String, serde_json::Value)>> {
+    let mut out = Vec::new();
+    if !dir.is_dir() {
+        return Ok(out);
+    }
+    for entry in std::fs::read_dir(dir).map_err(|e| Error::io(dir, e))? {
+        let path = entry.map_err(|e| Error::io(dir, e))?.path();
+        let Some(file) = path.file_name().and_then(|f| f.to_str()) else {
+            continue;
+        };
+        if path.is_dir() || !file.ends_with(SCHEMA_SUFFIX) {
+            continue;
+        }
+        let text = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+        let json: serde_json::Value =
+            serde_json::from_str(&text).map_err(|e| Error::KindSchema {
+                reason: format!("{}: not JSON: {e}", path.display()),
+            })?;
+        out.push((file[..file.len() - SCHEMA_SUFFIX.len()].to_string(), json));
+    }
+    out.sort_by(|a, b| a.0.cmp(&b.0));
+    Ok(out)
 }
 
 /// The identity a schema path carries: `majordomus/adr/adr.v1.schema.json` is

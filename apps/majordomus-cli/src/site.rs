@@ -36,6 +36,9 @@ pub const SCHEMA: &str = "majordomus-site-registry/v2";
 pub struct SiteRegistry {
     /// [`SCHEMA`].
     pub schema: &'static str,
+    /// That it is generated, in the words every other generated document uses: this file
+    /// is a cache of the registry and the index, and editing it is editing a cache.
+    pub generated: String,
     /// Who wrote it.
     pub generator: Generator,
     /// The capability registry, fingerprinted and counted, with the builtin entries in full.
@@ -579,6 +582,9 @@ pub fn dataset(
 
     Ok(SiteRegistry {
         schema: SCHEMA,
+        generated: crate::generate::json_banner(
+            "the capability registry and the index of this repository's layer",
+        ),
         generator: Generator {
             id: "majordomus-cli",
             version: crate::VERSION,

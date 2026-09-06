@@ -50,6 +50,7 @@ jobs:
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
       site_probe: ${{ steps.plan.outputs.site_probe }}
+      cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       macos: ${{ steps.plan.outputs.macos }}
     steps:
@@ -296,6 +297,10 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      # the graph and topology pages load vendored libraries that are deliberately not
+      # committed (two megabytes nothing on the critical path needs), so the runner has to
+      # build them out of node_modules before a browser is pointed at those pages. Without
+      # this the probe reports a console 404 on every page that lazily loads one.
       - name: vendor the lazy-loaded libraries the probe expects to find
         run: scripts/ci/timed cockpit-assets cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit

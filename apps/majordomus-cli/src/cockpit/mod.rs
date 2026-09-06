@@ -162,6 +162,7 @@ impl Cockpit {
             "/cockpit/continuity" => pages::continuity(&self.ctx),
             "/cockpit/directories" => pages::directories(&self.ctx, query),
             "/cockpit/health" => pages::health(&self.ctx),
+            "/cockpit/artifacts" => pages::artifacts(&self.ctx),
             "/cockpit/api" => pages::api(&self.ctx),
             "/cockpit/search" => pages::search(&self.ctx, query),
             "/cockpit/activity" => pages::activity(&self.ctx),
