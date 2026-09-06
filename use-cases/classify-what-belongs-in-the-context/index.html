@@ -76,11 +76,11 @@
           <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
           <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
             <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
-              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
             </ul>
           </div>
           <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
-          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
         </li>
         
         
@@ -219,7 +219,7 @@ OK   records     ledger.jsonl — every line is a well-formed event
 OK   policy      19 key(s) — every policy value the code reads is declared, with no reader-side default
 OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
 OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
-OK   context     .ai/ — 14 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
+OK   context     .ai/ — 15 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 OK   policy      .ai/repo/policy.yaml — parsed, version 1
 OK   profiles    4 files — parsed; default &#39;implementation&#39; exists
 INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
@@ -325,6 +325,7 @@ workflow    shared      document   a43c0936e7e3  .ai/repo/workflows/continuity.m
 workflow    shared      document   726b52e6993e  .ai/repo/workflows/plan.md
 workflow    shared      document   39db3723e051  .ai/repo/workflows/task-lifecycle.md
 workflow    shared      document   09ea91004f94  .ai/repo/workflows/use-cases.md
+session     shared      session    1def171af7e0  .ai/repo/sessions/README.md
 curated     shared      knowledge  3be0a8483464  .ai/repo/knowledge/curated/README.md
 use_case    shared      use-case   6914b4c98843  .ai/repo/use-cases/README.md
 taxonomy    shared      taxonomy   0b3f050b9c77  .ai/repo/use-cases/taxonomy.yaml
@@ -334,7 +335,7 @@ readme      shared      document   5b11f2037bb5  CLAUDE.md
 readme      shared      document   1d3c2948afc5  GEMINI.md
 decisions   operational decision   0885fc07773e  .ai/local/state/decisions.md
 questions   operational question   ebeb154be99d  .ai/local/state/open-questions.md
-knowledge sources: 74 file(s) in scope all</code></pre>
+knowledge sources: 75 file(s) in scope all</code></pre>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^policy +shared/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^scope +shared/</li></ul>
       </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -345,6 +346,7 @@ document    shared      3be0a8483464  document:.ai/repo/knowledge/curated/README
 document    shared      aaade142a03c  document:.ai/repo/prompts/README.md                  Prompt assets
 document    shared      653b383d09e2  document:.ai/repo/rules/README.md                    Repository rules
 document    shared      39f8246be04e  document:.ai/repo/rules/project/README.md            Project rules
+document    shared      1def171af7e0  document:.ai/repo/sessions/README.md                 Session records
 document    shared      6914b4c98843  document:.ai/repo/use-cases/README.md                Use cases
 document    shared      124141e223e4  document:.ai/repo/workflows/README.md                Workflows
 document    shared      a43c0936e7e3  document:.ai/repo/workflows/continuity.md            Continuity
@@ -412,7 +414,7 @@ rule        shared      489da6725d95  rule:majordomus.verification-integrity    
 rule        shared      1b01d93b42fa  rule:majordomus.verify-outcomes                      Verify outcomes, not activity
 scope       shared      2be34c73e9c5  scope:.ai/repo/scope.yaml                            
 taxonomy    shared      0b3f050b9c77  taxonomy:.ai/repo/use-cases/taxonomy.yaml            
-knowledge nodes: 72 in scope shared</code></pre>
+knowledge nodes: 73 in scope shared</code></pre>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /shared/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_not_contains /operational/</li></ul>
       </li></ol>
 
@@ -471,7 +473,7 @@ knowledge nodes: 72 in scope shared</code></pre>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/092fa19f13dcded36de53dfb947a0402d858e254" class="font-mono hover:underline">092fa19</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a3c4ba7a816dab73bb5407047d606d65a3637558" class="font-mono hover:underline">a3c4ba7</a> · inputs <span class="font-mono">fd6dc83cdcf6</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
