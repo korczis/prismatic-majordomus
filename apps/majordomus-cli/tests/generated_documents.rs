@@ -98,6 +98,28 @@ fn every_artifact_declares_its_encoding_its_source_and_carries_a_header() {
 }
 
 #[test]
+fn no_artifact_reaches_outside_the_repository_the_plan_was_made_for() {
+    // The fixture's share is the distribution beside this crate, which is outside the
+    // fixture. Every artifact path is joined to the repository root by `generate::write`,
+    // so a path that is absolute, or that climbs, is a write into somebody else's tree —
+    // which is what happened to this repository's own share/ until the plan stopped
+    // projecting the schemas of a share it does not contain.
+    let f = common::Fixture::new();
+    for a in plan(&f) {
+        assert!(
+            !std::path::Path::new(&a.path).is_absolute(),
+            "{} is an absolute path",
+            a.path
+        );
+        assert!(
+            !a.path.split('/').any(|c| c == ".."),
+            "{} climbs out of the root",
+            a.path
+        );
+    }
+}
+
+#[test]
 fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document() {
     let f = common::Fixture::new();
     let artifacts = plan(&f);
