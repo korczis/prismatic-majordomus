@@ -29,5 +29,19 @@ evidence_required:
   - relations_from_registries
 risk: "Every kind has its own vocabulary, and flattening them into one node type loses what makes each useful. The node carries the kind's own metadata rather than a lowest common denominator."
 created_at: 2026-09-06
-updated_at: 2026-09-06T16:22:39Z
+updated_at: 2026-09-06T17:11:15Z
 started_at: 2026-09-06T16:22:39Z
+completed_at: 2026-09-06T17:11:14Z
+evidence:
+  - covers: kinds_in_graph
+    type: test
+    command: "cargo test --lib graph (apps/majordomus-cli) and graph::derive(\"composed\") over this repository"
+    result: "every indexed kind is a node carrying what its own kind declares: a rule its class and statement, a skill its inputs and outputs, a use case its category and actors, read from the front matter the schema validated and never named in the derivation; 901 nodes across 25 node kinds over 778 objects"
+    commit: 434d18d725acaf04d216b97544b43afdf4ed20a9
+    recorded_at: 2026-09-06T17:10:49Z
+  - covers: relations_from_registries
+    type: test
+    command: "graph::unresolved_relations over this repository, and cargo test --lib graph"
+    result: "the relation table grew from nine declared fields to nineteen and every one is a field a kind schema already declares: the claim chain (126 defined_in, 118 implemented_by, 118 tested_by), the plan DAG (278 depends_on, 152 belongs_to), the application triangle (62 serves, 15 governed_by) and 109 exercises; 2100 edges in total and no unresolved reference across 778 objects"
+    commit: 434d18d725acaf04d216b97544b43afdf4ed20a9
+    recorded_at: 2026-09-06T17:11:01Z
