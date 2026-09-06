@@ -274,7 +274,7 @@ impl Releases {
     }
 
     pub(crate) fn ordered(mut releases: Vec<Release>) -> Self {
-        releases.sort_by(|a, b| version_key(&b.version).cmp(&version_key(&a.version)));
+        releases.sort_by_key(|r| std::cmp::Reverse(version_key(&r.version)));
         Releases { releases }
     }
 
