@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# release-verify — prove one release artifact is what the distribution model says it is.
+#
+#   scripts/release-verify --archive FILE --target <rust target> --tag <vX.Y.Z> [--native]
+#
+# Checks, in order: the file name the naming function derives, that the archive reads, that
+# every entry is an ordinary file or directory under the archive's own root (no absolute
+# path, no traversal, no link, no device), that the tree holds the shell tool, its
+# libraries, the tool's data directory, the executable and the licence, that the executable
+# carries the executable bit, and that the archive is neither empty nor implausibly small.
+# With --native it also runs the unpacked tool and requires it to report the release's own
+# version — the check that catches a release built from the wrong tree.
+#
+# Exit codes: 0 ok · 2 usage · 10 the artifact is not what the model says · 12 prerequisite.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+CRATE="$ROOT/apps/majordomus-cli"
+
+fail() { printf 'release-verify: FAIL %s\n' "$*" >&2; bad=$((bad + 1)); }
+die() { printf 'release-verify: %s\n' "$*" >&2; exit "${2:-12}"; }
+ok() { printf 'release-verify: OK   %s\n' "$*"; }
+
+archive=""; target=""; tag=""; native=0
+# an archive that is smaller than this is not a build of this tool
+MIN_BYTES=200000
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --archive) archive="${2:-}"; shift 2 ;;
+    --target) target="${2:-}"; shift 2 ;;
+    --tag) tag="${2:-}"; shift 2 ;;
+    --native) native=1; shift ;;
+    -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
+    *) die "unknown option: $1" 2 ;;
+  esac
+done
+[ -n "$archive" ] && [ -n "$target" ] && [ -n "$tag" ] || die "--archive, --target and --tag are required" 2
+[ -f "$archive" ] || die "no such archive: $archive"
+
+mj="${MAJORDOMUS_DIST_BIN:-$CRATE/target/debug/majordomus}"
+[ -x "$mj" ] || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
+names="$("$mj" distribution artifact --target "$target" --tag "$tag" --format text 2>/dev/null)" \
+  || die "the distribution model does not publish '$target'" 10
+expected_name="$(printf '%s\n' "$names" | sed -n '1p')"
+expected_root="$(printf '%s\n' "$names" | sed -n '2p')"
+
+bad=0
+
+[ "$(basename "$archive")" = "$expected_name" ] \
+  && ok "name $expected_name" \
+  || fail "name is $(basename "$archive"), the model derives $expected_name"
+
+size="$(wc -c < "$archive" | tr -d ' ')"
+[ "$size" -ge "$MIN_BYTES" ] \
+  && ok "size ${size} bytes" \
+  || fail "size ${size} bytes is below the ${MIN_BYTES} a build of this tool cannot be under"
+
+listing="$(mktemp)"; trap 'rm -f "$listing"' EXIT INT TERM HUP
+tar -tzvf "$archive" > "$listing" 2>/dev/null || die "the archive does not read as a gzipped tar" 10
+
+entries=0
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  entries=$((entries + 1))
+  case "$line" in
+    -*|d*) ;;
+    *) fail "entry is not a file or a directory: $line"; continue ;;
+  esac
+  name="${line##*[0-9][0-9]:[0-9][0-9] }"
+  case "$name" in
+    /*) fail "entry is an absolute path: $name" ;;
+    *..*) fail "entry traverses upwards: $name" ;;
+    "$expected_root"|"$expected_root"/*) ;;
+    *) fail "entry is outside $expected_root/: $name" ;;
+  esac
+done < "$listing"
+[ "$entries" -gt 0 ] || fail "the archive is empty"
+ok "$entries entries, all under $expected_root/"
+
+for required in \
+  "$expected_root/bin/majordomus" \
+  "$expected_root/bin/majordomus-mcp" \
+  "$expected_root/libexec/majordomus-cli" \
+  "$expected_root/lib/common.sh" \
+  "$expected_root/share/kinds.yaml" \
+  "$expected_root/share/distribution.yaml" \
+  "$expected_root/LICENSE" \
+  "$expected_root/RELEASE.json"
+do
+  grep -q " $required\$" "$listing" || fail "the archive holds no $required"
+done
+ok "every required member is present"
+
+for executable in "$expected_root/bin/majordomus" "$expected_root/bin/majordomus-mcp" "$expected_root/libexec/majordomus-cli"; do
+  mode="$(grep " $executable\$" "$listing" | sed -n '1s/^\(.\{10\}\).*/\1/p')"
+  case "$mode" in
+    *x*) ;;
+    *) fail "$executable is not executable in the archive (mode $mode)" ;;
+  esac
+done
+ok "every executable carries its executable bit"
+
+work="$(mktemp -d)"
+trap 'rm -f "$listing"; rm -rf "$work"' EXIT INT TERM HUP
+tar -xzf "$archive" -C "$work"
+[ -x "$work/$expected_root/bin/majordomus" ] || fail "the unpacked shell tool is not executable"
+
+recorded="$(sed -n 's/.*"tag": "\([^"]*\)".*/\1/p' "$work/$expected_root/RELEASE.json" | head -n 1)"
+[ "$recorded" = "$tag" ] && ok "RELEASE.json records $tag" || fail "RELEASE.json records '$recorded', not $tag"
+recorded_target="$(sed -n 's/.*"target": "\([^"]*\)".*/\1/p' "$work/$expected_root/RELEASE.json" | head -n 1)"
+[ "$recorded_target" = "$target" ] && ok "RELEASE.json records $target" \
+  || fail "RELEASE.json records target '$recorded_target', not $target"
+
+if [ "$native" = 1 ]; then
+  reported="$("$work/$expected_root/bin/majordomus" version 2>/dev/null || true)"
+  [ "$reported" = "majordomus ${tag#v}" ] \
+    && ok "the unpacked tool reports ${tag#v}" \
+    || fail "the unpacked tool reports '$reported', not 'majordomus ${tag#v}'"
+  reported_bin="$("$work/$expected_root/libexec/majordomus-cli" --version 2>/dev/null || true)"
+  [ "$reported_bin" = "majordomus ${tag#v}" ] \
+    && ok "the unpacked executable reports ${tag#v}" \
+    || fail "the unpacked executable reports '$reported_bin', not 'majordomus ${tag#v}'"
+fi
+
+[ "$bad" = 0 ] || { printf 'release-verify: %s check(s) failed for %s\n' "$bad" "$(basename "$archive")" >&2; exit 10; }
+printf 'release-verify: %s is what the model says it is\n' "$(basename "$archive")"
