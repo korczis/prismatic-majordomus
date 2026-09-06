@@ -290,7 +290,9 @@ pub struct ErrorBody {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 /// What went wrong, as the HTTP projection names it.
 pub struct ErrorDetail {
-    /// `invalid_input`, `not_found`, `refused`, `internal`, `method_not_allowed`.
+    /// What kind of failure it is: `invalid_input`, `not_found`, `method_not_allowed`,
+    /// `refused`, `forbidden`, `too_large`, `unavailable` (a surface whose producer has not
+    /// run) or `internal`.
     pub code: String,
     /// The reason, for a person.
     pub message: String,

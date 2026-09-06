@@ -211,13 +211,19 @@ impl Files {
     }
 
     /// What a request under a surface whose producer has not run answers with: the reason,
-    /// the directory that is missing, and the command that writes it.
+    /// the directory that is missing, the command that writes it, and that this process
+    /// resolved its surfaces once at start.
+    ///
+    /// Restart-based rediscovery is this executable's contract everywhere — the index, the
+    /// registry and the topology are all read at start and immutable for the process — so
+    /// building the directory while the server runs does not make it appear, and saying so
+    /// is cheaper than a reader wondering why.
     fn unavailable(&self) -> Response {
         Response::error(
             503,
             "unavailable",
             &format!(
-                "'{}' ({}) is not built: {} does not exist. Run: {}",
+                "'{}' ({}) is not built: {} does not exist when this process started. Run: {} — then restart this server",
                 self.surface.id, self.surface.title, self.artifact, self.surface.producer
             ),
         )
