@@ -1546,6 +1546,9 @@ fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
             source: Some(m.source.clone()),
             status: Some(m.severity.clone()),
             external: false,
+            // the moment's own vocabulary is not modelled as facts yet; an empty map is
+            // the honest statement, and `skip_serializing_if` keeps it out of the output
+            facts: Default::default(),
         }) {
             break;
         }
@@ -1580,6 +1583,7 @@ fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
                         source: None,
                         status: None,
                         external: false,
+                        facts: Default::default(),
                     }) {
                         break 'outer;
                     }

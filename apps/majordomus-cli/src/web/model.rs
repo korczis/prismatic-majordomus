@@ -116,6 +116,10 @@ impl fmt::Display for Category {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "kebab-case")]
+// A surface's visibility and a capability's are different vocabularies — that one has a
+// third value, `developer`. The schema component namespace is flat, so each says which of
+// the two it is (see `crate::capability::model::Visibility`).
+#[schemars(rename = "SurfaceVisibility")]
 pub enum Visibility {
     /// Listed for a person: it appears on the home page.
     Public,
@@ -368,6 +372,7 @@ impl fmt::Display for Mount {
 /// or both.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
+#[schemars(rename = "SurfaceAvailability")]
 pub enum Availability {
     /// Served by the running executable and published as files.
     Both,

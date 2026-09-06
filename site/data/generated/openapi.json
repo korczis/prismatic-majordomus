@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 33,
-    "schemas": 143,
+    "schemas": 146,
     "tags": 14
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -832,32 +832,6 @@
       "variants": []
     },
     {
-      "description": "Whether a surface is part of the static publication, served only while a process runs,\nor both.",
-      "is_enum": true,
-      "name": "Availability",
-      "properties": [],
-      "type": "\"both\" | \"served-only\" | \"published-only\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
-      ],
-      "values": [
-        {
-          "description": "Served by the running executable and published as files.",
-          "value": "both"
-        },
-        {
-          "description": "Answered by the running executable and never published: a route the process\ncomputes, or a build made for this server's own mount rather than for deployment.",
-          "value": "served-only"
-        },
-        {
-          "description": "Published as files; the running executable serves it from the same directory.",
-          "value": "published-only"
-        }
-      ],
-      "variants": []
-    },
-    {
       "description": "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides.",
       "is_enum": false,
       "name": "BenchmarkPolicy",
@@ -1248,6 +1222,24 @@
           "type": "Exposure"
         },
         {
+          "description": "Where it means anything: classified from the kind and the transports above, so\nthat a projection reads a field instead of deciding for itself.",
+          "name": "availability",
+          "refs": [
+            "CapabilityAvailability"
+          ],
+          "required": true,
+          "type": "CapabilityAvailability"
+        },
+        {
+          "description": "Who it is for: classified from the same transports.",
+          "name": "visibility",
+          "refs": [
+            "CapabilityVisibility"
+          ],
+          "required": true,
+          "type": "CapabilityVisibility"
+        },
+        {
           "description": "Where it stands.",
           "name": "stability",
           "refs": [
@@ -1288,6 +1280,36 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a capability means anything: the environment a caller must be in for it to\nanswer at all.\n\nThe published site and the running server are genuinely different places. Without this\non the model, every template grows its own idea of what works where — and the usual\nshape that takes is a condition on the page's own address, which is a rule hidden\nwhere nobody will find it and nothing can test it. This is the only thing a projection\nmay ask.\n\nIt is classified rather than declared: the facts that decide it — what kind of thing\nthis is and which transports it is projected through — are already on the descriptor,\nand asking each declaration to restate them would be the same knowledge written twice.\n[`Availability::classify`] is the one place the rule lives.",
+      "is_enum": true,
+      "name": "CapabilityAvailability",
+      "properties": [],
+      "type": "\"always\" | \"runtime\" | \"build_time\" | \"authenticated\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability"
+      ],
+      "values": [
+        {
+          "description": "True in every environment, a published page with no server included: the layer's\nown content, which a build renders and a process serves from the same index.",
+          "value": "always"
+        },
+        {
+          "description": "A process must be running to answer: everything with a handler, whether it is\nreached over HTTP, over MCP or from the command line.",
+          "value": "runtime"
+        },
+        {
+          "description": "A value captured when the site was generated, rendered afterwards as the capture\nit is. Nothing classifies to this yet; the static projection of the graph is what\nwill declare it, and it is on the model so that a captured value can be labelled\nas captured instead of being shown as current.",
+          "value": "build_time"
+        },
+        {
+          "description": "A process must be running and the caller must be one it has authenticated. Nothing\nin this repository authenticates a caller yet; a surface that does will say so\nhere rather than in the template that renders its link.",
+          "value": "authenticated"
+        }
+      ],
       "variants": []
     },
     {
@@ -1567,6 +1589,32 @@
         "CapabilityList"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who a capability is for, and whether anything offers it.\n\nInternal is a statement, not an omission: a capability nothing projects is invisible\neither way, and the difference between deliberate and forgotten is exactly what this\nrecords.",
+      "is_enum": true,
+      "name": "CapabilityVisibility",
+      "properties": [],
+      "type": "\"public\" | \"developer\" | \"internal\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability"
+      ],
+      "values": [
+        {
+          "description": "Offered to anyone who can reach the process: an HTTP route or an MCP entry.",
+          "value": "public"
+        },
+        {
+          "description": "Offered to whoever runs the executable, and to nobody over a network.",
+          "value": "developer"
+        },
+        {
+          "description": "Projected nowhere. It exists, it is listed as existing, and no surface offers it.",
+          "value": "internal"
+        }
+      ],
       "variants": []
     },
     {
@@ -3468,6 +3516,19 @@
       "variants": []
     },
     {
+      "description": "One fact a node carries from its object's front matter, in the shapes a node can hold.",
+      "is_enum": false,
+      "name": "Fact",
+      "properties": [],
+      "type": "boolean | integer (int64) | string | array of string",
+      "used_by": [],
+      "used_by_schemas": [
+        "Node"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic.",
       "is_enum": true,
       "name": "Feature",
@@ -4836,6 +4897,15 @@
           "refs": [],
           "required": false,
           "type": "boolean"
+        },
+        {
+          "description": "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share.",
+          "name": "facts",
+          "refs": [
+            "Fact"
+          ],
+          "required": false,
+          "type": "map of Fact"
         }
       ],
       "type": "object",
@@ -6769,10 +6839,10 @@
           "description": "Whether a person is shown it.",
           "name": "visibility",
           "refs": [
-            "Visibility"
+            "SurfaceVisibility"
           ],
           "required": true,
-          "type": "Visibility"
+          "type": "SurfaceVisibility"
         },
         {
           "description": "How it answers.",
@@ -6826,10 +6896,10 @@
           "description": "Where the surface's files go and who answers for it.",
           "name": "availability",
           "refs": [
-            "Availability"
+            "SurfaceAvailability"
           ],
           "required": true,
-          "type": "Availability"
+          "type": "SurfaceAvailability"
         },
         {
           "description": "The revision the artifact was built from, when its producer recorded one: what\nmakes a stale build a finding rather than a surprise.",
@@ -6854,6 +6924,32 @@
         "SurfaceReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a surface is part of the static publication, served only while a process runs,\nor both.",
+      "is_enum": true,
+      "name": "SurfaceAvailability",
+      "properties": [],
+      "type": "\"both\" | \"served-only\" | \"published-only\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Surface"
+      ],
+      "values": [
+        {
+          "description": "Served by the running executable and published as files.",
+          "value": "both"
+        },
+        {
+          "description": "Answered by the running executable and never published: a route the process\ncomputes, or a build made for this server's own mount rather than for deployment.",
+          "value": "served-only"
+        },
+        {
+          "description": "Published as files; the running executable serves it from the same directory.",
+          "value": "published-only"
+        }
+      ],
       "variants": []
     },
     {
@@ -7040,6 +7136,28 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it.",
+      "is_enum": true,
+      "name": "SurfaceVisibility",
+      "properties": [],
+      "type": "\"public\" | \"internal\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Surface"
+      ],
+      "values": [
+        {
+          "description": "Listed for a person: it appears on the home page.",
+          "value": "public"
+        },
+        {
+          "description": "Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it.",
+          "value": "internal"
+        }
+      ],
       "variants": []
     },
     {
@@ -7297,28 +7415,6 @@
         {
           "description": "Never read; the reason says why.",
           "value": "out"
-        }
-      ],
-      "variants": []
-    },
-    {
-      "description": "Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it.",
-      "is_enum": true,
-      "name": "Visibility",
-      "properties": [],
-      "type": "\"public\" | \"internal\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Surface"
-      ],
-      "values": [
-        {
-          "description": "Listed for a person: it appears on the home page.",
-          "value": "public"
-        },
-        {
-          "description": "Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it.",
-          "value": "internal"
         }
       ],
       "variants": []

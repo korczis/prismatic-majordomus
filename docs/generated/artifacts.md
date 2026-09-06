@@ -113,10 +113,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/repository.md` | `modules/repository` | markdown | 2522 | `09fe9fd19fd08d4e` |
 | `docs/generated/modules/web.md` | `modules/web` | markdown | 1462 | `da600d5f2483cc7e` |
 | `docs/generated/modules/why.md` | `modules/why` | markdown | 6121 | `4c8dccb290c7ac92` |
-| `docs/generated/openapi.json` | `openapi` | json | 298911 | `a222c92422d7be17` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 230481 | `ccc4d7259ebe1c0f` |
-| `docs/generated/registry.json` | `registry` | json | 334842 | `866e4457672e0fc1` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 254317 | `f53dbbf605a82e67` |
+| `docs/generated/openapi.json` | `openapi` | json | 303807 | `f4bd1903eb61bce3` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 234676 | `d752a858b6bb71c9` |
+| `docs/generated/registry.json` | `registry` | json | 342260 | `57a3594f0d0199d8` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 260382 | `6dc7379c7d40a90e` |
 | `docs/generated/web.json` | `web` | json | 4063 | `d9d055d8d7a2de0d` |
 | `docs/generated/web.yaml` | `web` | yaml | 3130 | `b483fa40057de33f` |
 | `share/allow/adr.txt` | `allow/adr` | text | 372 | `2de0fc9b4fe17702` |
@@ -161,7 +161,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `6853ce3f5bc27958` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `955c0ee83c492d2f` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 2842 | `2ac359554068d8fd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1145385 | `367616f016fb899c` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1153378 | `bf4bf9809afe1c71` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 178596 | `354006802cf3ed78` |
 | `site/data/registry/why.json` | `site-why` | json | 349521 | `f591de9cb04f1eb8` |
 | `site/static/install.sh` | `installer` | text | 28286 | `30e8f6d7c9317caa` |
