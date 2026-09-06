@@ -58,13 +58,18 @@ mj_validate_command_surface() {
     bad=1
   fi
 
+  # A here-string rather than `printf | grep -q`: grep exits at the first match and closes
+  # the pipe, and the printf behind it then writes to a closed descriptor. The EPIPE
+  # diagnostic that bash prints is harmless, appears only when the timing is unlucky, and
+  # lands in the middle of doctor's output — which is recorded as evidence, so a committed
+  # artifact ended up differing between machines by whether the race happened to fire.
   for c in $dispatched; do
-    printf '%s\n' "$ids" | grep -Fxq "$c" || {
+    grep -Fxq "$c" <<<"$ids" || {
       mj_doctrine_fail command "$c" "dispatched by bin/majordomus but absent from share/commands.yaml" "grep -n 'id: $c' share/commands.yaml"; bad=1; }
   done
   for c in $public; do
     [ "$c" = version ] && continue      # dispatched ahead of the option parser
-    printf '%s\n' "$dispatched" | grep -Fxq "$c" || {
+    grep -Fxq "$c" <<<"$dispatched" || {
       mj_doctrine_fail command "$c" "declared public but bin/majordomus does not dispatch it" "grep -n '$c)' bin/majordomus"; bad=1; }
   done
   # a command is public exactly when the usage text lists it, in both directions
@@ -112,7 +117,7 @@ mj_validate_command_coverage() {
   # a header naming a command that does not exist is a broken reference, not documentation
   for c in $(printf '%s\n' $behaviour $negative | sort -u); do
     [ "$c" = none ] && continue
-    printf '%s\n' "$public" | grep -Fxq "$c" || {
+    grep -Fxq "$c" <<<"$public" || {
       mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1; }
   done
 

@@ -336,6 +336,12 @@ mj_uc_cmd_validate() {
 # next machine — so it is normalised here rather than fixed in every scenario. All three
 # renderings of the same field are covered: the aligned column a command prints, the
 # flattened `owner=` a record dump shows, and the JSON member.
+#
+# The EPIPE diagnostic goes for the same reason. A reader that stops early closes the pipe
+# under the writer, and bash reports the failed write on stderr, which the recorder captures
+# along with everything else. Whether the race fires depends on the machine, so recording it
+# makes the artifact differ by where it was generated. It is a fact about the recording, not
+# about the command, and the pipes that produce it are removed where they are ours.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -365,7 +371,8 @@ mj_uc_normalise() { # repo-path
     -e 's/(bash|git|jq|shellcheck) [0-9][0-9.]*/\1 <version>/g' \
     -e 's/^(owner +).*$/\1<owner>/' \
     -e 's/^( *owner=).*$/\1<owner>/' \
-    -e 's/"owner":"[^"]*"/"owner":"<owner>"/g'
+    -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \
+    -e '/: printf: write error: Broken pipe$/d'
 }
 # a JSON string body: backslash and quote escaped, newlines and tabs as escapes, every
 # other control byte dropped; the newlines of a command's output are its structure
