@@ -167,12 +167,8 @@ fn list(out: &mut impl Write, topology: &Topology, format: OutputFormat) -> Resu
             .map_err(Error::Transport)?;
         }
         OutputFormat::Text => {
-            writeln!(
-                out,
-                "{:<16} {:<9} {:<16} {}",
-                "ID", "KIND", "MOUNT", "SOURCE"
-            )
-            .map_err(Error::Transport)?;
+            writeln!(out, "{:<16} {:<9} {:<16} SOURCE", "ID", "KIND", "MOUNT")
+                .map_err(Error::Transport)?;
             for surface in &topology.surfaces {
                 let source = surface
                     .artifact
