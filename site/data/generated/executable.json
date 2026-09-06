@@ -381,6 +381,20 @@
         "route": "/guarantees/scope-declared/",
         "status": "guaranteed",
         "test": "test/cases/93_scope_policy.sh"
+      },
+      {
+        "id": "web-surface-declared-once",
+        "implementation": "apps/majordomus-cli/src/web/model.rs",
+        "route": "/guarantees/web-surface-declared-once/",
+        "status": "guaranteed",
+        "test": "test/cases/89_web_surface.sh"
+      },
+      {
+        "id": "web-namespaces-reserved",
+        "implementation": "apps/majordomus-cli/src/web/discover.rs",
+        "route": "/guarantees/web-namespaces-reserved/",
+        "status": "guaranteed",
+        "test": "test/cases/89_web_surface.sh"
       }
     ],
     "http": [
@@ -432,7 +446,7 @@
   },
   "counts": {
     "capabilities": 15,
-    "claims": 20,
+    "claims": 22,
     "modules": 8
   },
   "generator": "majordomus-cli 0.1.0",
