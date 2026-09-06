@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# site-basepath-check — the same documentation source must serve from two base paths.
+#
+# The site is published at https://korczis.github.io/prismatic-majordomus/ and the running
+# executable serves the same Zola output under /docs/. One source, two mounts, and the only
+# thing that makes that possible is that no link in the source states an origin-absolute
+# path of its own. `href="/rules/"` is correct on Pages and a 404 under /docs; `{{
+# get_url(path="...") }}` is correct under both, because Zola resolves it against whatever
+# base_url the build was given.
+#
+# So this is a source check, not a crawl: it refuses the literal that breaks the second
+# mount, at the moment it is written, rather than after a build nobody ran. It is cheap
+# enough to sit in the always-on structure job — no zola, no node, no network.
+#
+# When a build is present it also checks the output, which is where a base path can leak in
+# ways the source cannot show: a link to the wrong origin, or a loopback URL baked into a
+# page by a preview build that was then published.
+#
+#   scripts/site-basepath-check              check the source, and the build if one exists
+#   scripts/site-basepath-check --built DIR  also check this build output
+#
+# Exit: 0 clean, 10 findings, 12 a dependency is missing.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BUILT=""
+while [ $# -gt 0 ]; do case "$1" in
+  --built) BUILT="$2"; shift 2 ;;
+  *) echo "site-basepath-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+cd "$ROOT"
+command -v git >/dev/null || { echo "site-basepath-check: git is required" >&2; exit 12; }
+
+FINDINGS=0
+finding() { FINDINGS=$((FINDINGS + 1)); printf 'FAIL %s\n' "$1"; [ -n "${2:-}" ] && printf '%s\n' "$2"; return 0; }
+
+# ---------------------------------------------------------------- the canonical base_url
+# The committed configuration is the published one. A build for any other mount overrides
+# it on the command line (`scripts/site-build --base-url /docs`), so a committed base_url
+# that is not the publication's would silently publish the wrong links.
+CONFIG="site/config.toml"
+[ -f "$CONFIG" ] || { echo "site-basepath-check: $CONFIG is missing" >&2; exit 12; }
+BASE="$(sed -n 's/^base_url *= *"\(.*\)"/\1/p' "$CONFIG" | head -1)"
+case "$BASE" in
+  https://*) : ;;
+  *) finding "site/config.toml base_url is '$BASE'" \
+       "     the committed configuration must carry the published origin; another mount is a --base-url override" ;;
+esac
+
+# ---------------------------------------------------------------- the source
+# Tracked files only: site/static/js holds vendored libraries copied in at build time, and
+# a third party's bundle is not ours to lint.
+#
+# What is refused is an origin-absolute URL written by hand. What is allowed is every form
+# that resolves against the build's base: get_url and its relatives, a relative path, an
+# anchor, a full URL to somewhere else, and a protocol-relative URL.
+sources="$(git ls-files 'site/templates/*.html' 'site/content/*' 'site/*.js' 2>/dev/null || true)"
+[ -n "$sources" ] || { echo "site-basepath-check: no tracked site sources found" >&2; exit 12; }
+
+for f in $sources; do
+  [ -f "$f" ] || continue
+  # href="/x" and src="/x" in markup, excluding "//host" (protocol-relative) and any line
+  # that resolves the value through Zola.
+  hits="$(grep -n -E '(href|src)="/[^/"]' "$f" 2>/dev/null | grep -v 'get_url\|get_taxonomy\|config.base_url' || true)"
+  [ -n "$hits" ] && finding "$f states an origin-absolute link" "$hits"
+  # the Markdown form: ](/x)
+  hits="$(grep -n -E '\]\(/[^/)]' "$f" 2>/dev/null || true)"
+  [ -n "$hits" ] && finding "$f states an origin-absolute Markdown link" "$hits"
+  # a script that fetches from the site's root rather than relative to the page
+  case "$f" in *.js)
+    hits="$(grep -n -E "fetch\(\s*['\"]/" "$f" 2>/dev/null || true)"
+    [ -n "$hits" ] && finding "$f fetches from an origin-absolute path" "$hits" ;;
+  esac
+  # a loopback origin written into the source: correct for whoever wrote it, wrong for
+  # everybody the site is published to
+  hits="$(grep -n -E 'https?://(127\.0\.0\.1|localhost)' "$f" 2>/dev/null || true)"
+  [ -n "$hits" ] && finding "$f names a loopback origin" "$hits"
+done
+
+# ---------------------------------------------------------------- a build, when there is one
+[ -z "$BUILT" ] && [ -d "site/public" ] && BUILT="site/public"
+if [ -n "$BUILT" ] && [ -d "$BUILT" ]; then
+  hits="$(grep -rln -E 'https?://(127\.0\.0\.1|localhost)' "$BUILT" 2>/dev/null | head -5 || true)"
+  [ -n "$hits" ] && finding "the build at $BUILT carries a loopback origin" "$hits"
+  # Zola writes the base into every resolved link, so a build made for one mount must not
+  # be published to the other. Find which base the output actually carries.
+  idx="$BUILT/index.html"
+  if [ -f "$idx" ] && [ -n "$BASE" ]; then
+    if ! grep -q "$BASE" "$idx" && ! grep -q 'href="/docs/' "$idx"; then
+      finding "the build at $BUILT carries neither the published base nor a /docs mount" \
+        "     a build serves exactly one base path; rebuild with --base-url for the mount you are publishing"
+    fi
+  fi
+fi
+
+if [ "$FINDINGS" != 0 ]; then
+  echo
+  echo "site-basepath-check: $FINDINGS finding(s)."
+  echo "  The same source serves the published site and the executable's /docs mount."
+  echo "  Resolve links through Zola (get_url) or write them relative, never from the origin."
+  echo "  The rule is project.web-surface-declared-once."
+  exit 10
+fi
+echo "site-basepath-check: the source is base-path independent (base_url $BASE)"
