@@ -60,6 +60,7 @@ listing="$(mktemp)"; trap 'rm -f "$listing"' EXIT INT TERM HUP
 tar -tzvf "$archive" > "$listing" 2>/dev/null || die "the archive does not read as a gzipped tar" 10
 
 entries=0
+names="$(mktemp)"; trap 'rm -f "$listing" "$names"' EXIT INT TERM HUP
 while IFS= read -r line; do
   [ -n "$line" ] || continue
   entries=$((entries + 1))
@@ -74,8 +75,18 @@ while IFS= read -r line; do
     "$expected_root"|"$expected_root"/*) ;;
     *) fail "entry is outside $expected_root/: $name" ;;
   esac
+  printf '%s\n' "$name" >> "$names"
 done < "$listing"
 [ "$entries" -gt 0 ] || fail "the archive is empty"
+# One entry per path. A packer that lists a directory and its contents to a tar that also
+# recurses writes everything twice; where that lands as a hard link the check above catches
+# it, and where it lands as a second regular entry nothing did until here.
+dupes="$(LC_ALL=C sort "$names" | uniq -d | head -n 5)"
+if [ -n "$dupes" ]; then
+  fail "the archive carries a path more than once: $(printf '%s' "$dupes" | tr '\n' ' ')"
+else
+  ok "one entry per path ($entries)"
+fi
 ok "$entries entries, all under $expected_root/"
 
 for required in \

@@ -5,36 +5,36 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 32,
-      "covered": 32,
+      "required": 33,
+      "covered": 33,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "http",
-      "required": 32,
-      "covered": 32,
+      "required": 33,
+      "covered": 33,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "mcp",
-      "required": 30,
-      "covered": 30,
+      "required": 31,
+      "covered": 31,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "system",
-      "required": 12,
-      "covered": 12,
+      "required": 13,
+      "covered": 13,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "total",
-      "required": 106,
-      "covered": 106,
+      "required": 110,
+      "covered": 110,
       "missing": 0,
       "waived": 0
     }
@@ -371,6 +371,18 @@
       ]
     },
     {
+      "id": "web.surfaces",
+      "module": "web",
+      "kind": "query",
+      "cache": "process, 2 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "why.areas",
       "module": "why",
       "kind": "query",
@@ -479,7 +491,12 @@
     {
       "key": "system.http.index",
       "transport": "http",
-      "measures": "GET /"
+      "measures": "GET / (the topology as JSON)"
+    },
+    {
+      "key": "system.http.home",
+      "transport": "http",
+      "measures": "GET / with Accept: text/html (the home page, rendered from the topology)"
     },
     {
       "key": "system.http.openapi",
@@ -487,9 +504,9 @@
       "measures": "GET /openapi.json"
     },
     {
-      "key": "system.http.docs",
+      "key": "system.http.swagger",
       "transport": "http",
-      "measures": "GET /docs (the Swagger UI shell)"
+      "measures": "GET /swagger (the Swagger UI shell)"
     },
     {
       "key": "system.http.cockpit_overview",

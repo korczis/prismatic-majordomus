@@ -134,7 +134,7 @@ fn header(shell: &Shell<'_>) -> El {
             el("nav")
                 .class("mj-topbar-links")
                 .attr("aria-label", "External surfaces")
-                .child(link("/docs", "Swagger"))
+                .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger"))
                 .child(link("/openapi.json", "OpenAPI"))
                 .child(
                     el("button")

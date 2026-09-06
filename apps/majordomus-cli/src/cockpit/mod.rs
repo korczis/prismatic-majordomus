@@ -13,7 +13,7 @@
 //!                                         └──── Cockpit ── pages, navigation, runner, graphs
 //! ```
 //!
-//! The routes it serves are the projection's own, like `/docs` and `/openapi.json`: they
+//! The routes it serves are the projection's own, like `/swagger` and `/openapi.json`: they
 //! are not capabilities, they declare no schema, and they are listed as infrastructure in
 //! the OpenAPI document rather than as operations.
 //!
