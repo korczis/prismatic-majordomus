@@ -1,7 +1,7 @@
 +++
 title = "Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies"
 description = "The lease under .ai/local/state/mcp/ is the only thing the shared server writes, and it is the only thing that can go wrong between clients. Whatever it contains when the next majordomus mcp starts, that process gets a server: a live one is attached to, a stale one (the server was killed), a corrupt one (not a lease document), an empty one (the owner died between creating and writing it) or an abandoned one (no URL after the bind grace) is taken over, and the log says which it was. When the file cannot be written or replaced at all, or the shared server cannot start, the client is served alone exactly as --standalone would serve it, with cannot use the shared server and the reason in the log; only the layer's own errors turn a client away. Ctrl-C, a client killing its server, or a closing terminal remove the lease before the process dies."
-weight = 104
+weight = 105
 [extra]
 claim_id = "mcp-lease-resilience"
 status = "guaranteed"

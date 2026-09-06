@@ -1,7 +1,7 @@
 +++
 title = "The behavioural suite runs a bounded number of cases at a time with the serial runner's semantics, a case that writes into the checkout declares itself exclusive and runs alone, and the parallel phase fails naming the paths when the checkout changed under it"
 description = "MJ_TEST_JOBS=4 bash test/run.sh runs the cases four at a time and means exactly what bash test/run.sh means: every case runs, in a disposable repository each, a failing case turns the run red with its own output in front of its verdict, the summary is one deterministic block in name order, a filter that matches nothing is a usage error, and so is an empty case directory. Each case runs in its own repository already, which is what makes them independent; the one thing they share is the checkout they read from, so a case that must write into it says so with # majordomus-exclusive: <reason> and runs after the pool, alone."
-weight = 119
+weight = 120
 [extra]
 claim_id = "suite-parallel"
 status = "guaranteed"

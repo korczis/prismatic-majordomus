@@ -1,7 +1,7 @@
 +++
 title = "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout"
 description = "majordomus mcp, the one command of the Rust executable in apps/majordomus-cli/, is a process an MCP client spawns. It reads the .ai/ layer once, answers initialize, resources/list, resources/read, tools/list and tools/call over stdin and stdout, and ends when the client closes the pipe. Nothing but JSON-RPC frames is written to stdout; everything else goes to stderr. It writes no file, touches no git state and listens on no port."
-weight = 96
+weight = 97
 [extra]
 claim_id = "mcp-stdio-surface"
 status = "guaranteed"

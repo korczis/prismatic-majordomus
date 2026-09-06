@@ -1,7 +1,7 @@
 +++
 title = "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten"
 description = "scripts/github-sync renders each canonical record through majordomus plan body and projects it onto a GitHub milestone or issue: title, body region, milestone assignment, labels, and whether the issue is open. Comments, assignees and any text a human writes outside the generated region belong to GitHub and are never touched. A human edit *inside* the generated region is reported as drift and left alone."
-weight = 95
+weight = 96
 [extra]
 claim_id = "github-projection"
 status = "guaranteed"

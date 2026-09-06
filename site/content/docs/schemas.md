@@ -340,6 +340,8 @@ composition: extend               # extend | replace | final
 order: 100                        # integer; ties within one depth are broken by path
 supersedes: []                    # replace only: ids of ancestor-chain documents, none of them final
 tracks: [lib/rules.sh]            # git pathspecs this document describes
+children:                         # subtree only: what the directories below owe
+  require_contract: true          # true | false; the default where nothing declares it is true
 ---
 ```
 
@@ -360,6 +362,7 @@ tracks: [lib/rules.sh]            # git pathspecs this document describes
 | `order` | yes | an integer; less is earlier within one depth |
 | `supersedes` | with `replace` | ids in the ancestor chain this document stands in for; a `final` ancestor cannot be named |
 | `tracks` | no | pathspecs whose change names this document for review |
+| `children.require_contract` | no | `subtree` only: whether every directory below this one owes a context document. Absent everywhere above a directory means `true`. A descendant may raise `false` to `true`; lowering an inherited `true` is `illegal-override` |
 
 </div>
 
@@ -965,6 +968,11 @@ status: accepted
 date: 2026-09-05
 tags: [architecture, capabilities]
 supersedes: [adr-0002]
+related:
+  - rule:majordomus.capability-registry
+  - claim:capability-registry
+  - file:apps/majordomus-cli/src/capability
+  - test:test/cases/91_canonical_architecture.sh
 provenance:
   origin: extracted
   derived_from:
@@ -992,6 +1000,7 @@ provenance:
 | `tags` | no | ids, same pattern as elsewhere |
 | `supersedes` | no | decisions this one stands in for; each must exist and name this one back |
 | `superseded_by` | no | present exactly when the status is `superseded` |
+| `related` | no | what the decision put in force: `rule:<id>`, `claim:<id>`, `file:<path>`, `test:<path>`. Each is validated, and the knowledge graph turns it into an edge — `declares`, `supports`, `references`, `tested_by` — so the reverse direction is a query, never a second edge to maintain |
 | `provenance.origin` | no | `authored` (a person wrote it) or `extracted` (`adr propose` derived it) |
 | `provenance.derived_from` | no | typed references: `decision:`, `session:`, `commit:`, `issue:`, `file:`, `test:` |
 
@@ -1095,6 +1104,7 @@ Events and their extra fields:
 | `plan_done` | `issue` |
 | `layout.migrated` | `from`, `to`, `backup` (the copy of local state made before it moved, or empty) |
 | `rules.vendored` | `package` (the revision of the package now vendored) |
+| `adr.proposed` | `adr` (the identity written), `title`; never written for an acceptance, which is a person's edit to the file |
 
 </div>
 
