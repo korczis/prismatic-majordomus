@@ -163,6 +163,47 @@ expect_grep '0 rendering'
 expect_exit 2 "$MJ" capture render --nonsense
 expect_grep 'unknown option'
 
+# A prompt that already ends in a newline is the ordinary case for anything pasted out of a
+# file, and it must not be the case the repair reports as broken. The YAML half is written
+# last and its trailing guard is the last command of the block that writes it, so a guard
+# left to decide the block's status turns "this prompt needed no extra newline" into "this
+# record cannot be rendered" — after both halves were written correctly.
+trailing='{"prompt":"the last line ends in a newline\n","prompt_id":"pn"}'
+printf '%s' "$trailing" | ./.claude/hooks/majordomus-capture
+nlrec="$(find .ai/local/prompts -maxdepth 1 -name '*-the-last-line-ends*.json')"
+[ -n "$nlrec" ] || { echo "    the prompt ending in a newline was not captured"; ls -1 .ai/local/prompts; exit 1; }
+rm -f "${nlrec%.json}.md" "${nlrec%.json}.yaml"
+expect_exit 0 "$MJ" capture render
+expect_no_grep 'cannot render'
+[ -f "${nlrec%.json}.md" ] || { echo "    a prompt ending in a newline rebuilt no Markdown rendering"; exit 1; }
+[ -f "${nlrec%.json}.yaml" ] \
+  || { echo "    a prompt ending in a newline rebuilt no YAML rendering"; ls -1 .ai/local/prompts; exit 1; }
+rm -f "$nlrec" "${nlrec%.json}.md" "${nlrec%.json}.yaml"
+
+# A record an older version wrote carries an older identifier, and `capture render` is the
+# command the doctrine's finding names. So it must actually migrate one: reformatting a
+# record while copying its old identifier back leaves the finding exactly where it was, and
+# the repair then reports success on every run without ever converging. The renderings are
+# left in place on purpose — a record can be in the wrong shape with both halves beside it,
+# and a repair that only looks for a missing rendering never reaches it.
+sed -i.bak 's|"schema": "majordomus.capture/v1"|"schema": "majordomus.prompt/v1"|' "$rec"
+rm -f "$rec.bak"
+expect_exit 0 "$MJ" capture render
+sed -n '2p' "$rec" | grep -qxF '  "schema": "majordomus.capture/v1",' \
+  || { echo "    capture render did not migrate a record written by an older version"; sed 's/^/    | /' "$rec"; exit 1; }
+python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$rec" \
+  || { echo "    the migrated record is not valid JSON"; sed 's/^/    | /' "$rec"; exit 1; }
+grep -qxF '  "text": "he said \"no\"\nand left"' "$rec" \
+  || { echo "    the migration did not leave the prompt byte for byte"; sed 's/^/    | /' "$rec"; exit 1; }
+# the renderings are rebuilt from the record as it now stands, not as the scan first read it
+grep -qF "schema: 'majordomus.capture/v1'" "$md" \
+  || { echo "    the Markdown rendering kept the identifier the migration replaced"; sed 's/^/    | /' "$md"; exit 1; }
+grep -qF "schema: 'majordomus.capture/v1'" "$yml" \
+  || { echo "    the YAML rendering kept the identifier the migration replaced"; sed 's/^/    | /' "$yml"; exit 1; }
+# and it converges: the run after a migration has nothing left to do
+expect_exit 0 "$MJ" capture render
+expect_grep '0 rendering'
+
 # idempotent on the provider's own prompt identity: a hook delivered twice writes once
 printf '%s' "$payload" | ./.claude/hooks/majordomus-capture
 [ "$(records)" = 1 ] || { echo "    a repeated prompt_id wrote a second record"; ls -1 .ai/local/prompts; exit 1; }

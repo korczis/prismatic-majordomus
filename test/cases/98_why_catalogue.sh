@@ -255,5 +255,5 @@ sed 's|^status: stable$|status: stable\nroute: /why/probe-team/|' .ai/repo/why/a
 cp "$S/bad.md" .ai/repo/why/audiences/probe-team.md
 git add -A >/dev/null && git commit -qm "derived key"
 expect_exit 10 "$RB" why validate
-expect_grep "not in schema 'audience': route"
+expect_grep "not in schema 'majordomus.audience/v1': route"
 expect_exit 10 "$RB" mcp --inspect --strict
