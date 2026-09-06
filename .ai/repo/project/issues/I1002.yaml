@@ -29,4 +29,19 @@ evidence_required:
   - dangling_refused
 risk: "Strict resolution can make an unrelated documentation edit fail the build. The message has to be good enough that the failure is a five-second fix rather than an investigation."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-06T16:19:14Z
+started_at: 2026-09-06T15:54:48Z
+completed_at: 2026-09-06T16:19:14Z
+evidence:
+  - covers: relations_resolve
+    type: test
+    command: "cargo test --lib graph (apps/majordomus-cli) and unresolved_relations over this repository"
+    result: "the layer resolves cleanly: 778 objects, 0 unresolved references; edges cover depends_on, supersedes, put_in_force, related_to, runs, exercises, evidences, tracks and documents, each through a stable identity, a declared id or a repository-relative path"
+    commit: c5ecfa1f47021705956447372bbecd37d2699b59
+    recorded_at: 2026-09-06T16:18:57Z
+  - covers: dangling_refused
+    type: test
+    command: "cargo test --lib graph::tests::a_reference_to_a_kind_we_hold_that_names_nothing_is_a_finding and a_finding_is_never_drawn_as_an_edge"
+    result: "a reference naming a kind this repository holds that resolves to nothing yields a finding with the file, the key, the reference and the correction, and no node or edge is drawn for it; a file or test outside the layer resolves to an external node and is not a finding"
+    commit: c5ecfa1f47021705956447372bbecd37d2699b59
+    recorded_at: 2026-09-06T16:19:06Z
