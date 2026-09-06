@@ -372,6 +372,73 @@ defaults: a required key that is missing is `invalid-front-matter`, not a silent
 `majordomus context validate` checks every constraint over the whole tree, and
 `majordomus doctor` dispatches the same check through `majordomus.context-integrity`.
 
+## `.ai/repo/sessions/<stamp>--<id>--<branch>--<head>--<digest>.md`
+
+One closed execution episode, written by `majordomus session close` and by nothing else. A
+shared object of the layer: discovered by the source class `session`, projected to the
+index, `majordomus://session/<id>`, the object routes, the graph and the site, with no list
+of sessions kept anywhere (ADR 0014).
+
+```yaml
+---
+schema: session/v1                # the contract; a version this executable does not read is refused
+kind: session
+session_id: s-20260906035523-7b6c # identity, allocated at open, never reused
+created_at: 2026-09-06T03:55:24Z  # when the record was written: the close
+started_at: 2026-09-06T03:55:23Z
+closed_at: 2026-09-06T03:55:24Z
+outcome: closed                   # closed | interrupted
+title: "Session s-… on feature/x" # one line for a listing; the task's title when it had one
+task_id: none                     # the task the episode belonged to, or none
+profile: none
+worker: "claude-code/opus-5"      # what did the work, as it identified itself
+repository_id: git@github.com:…   # the remote; `local:<hash>` when there is none
+worktree_id: e2d0ee3a34301bd5     # the working copy, named without naming a path
+branch: feature/session-records
+start_head: 4658856…              # the commit the episode started from
+head: 4658856…                    # the commit it ended at
+start_working_tree: dirty         # clean | dirty, at open
+working_tree: dirty               # and at close
+commits: []                       # between the two heads, oldest first
+changed_files: []                 # repository-relative, as git reported them
+tasks: []                         # every list below is read from the ledger's events
+issues: []                        # for this episode: nothing here is authored
+milestones: []
+checkpoints: []
+handovers: []
+decisions: []
+questions: []
+evidence: []
+---
+
+The body: a summary of the work, given on standard input at close.
+```
+
+<div class="overflow-x-auto">
+
+| Key | Required | Meaning |
+|---|---|---|
+| `schema` | yes | `session/v1` |
+| `kind` | yes | `session` |
+| `session_id` | yes | identity; the file name is a convenience |
+| `started_at`, `closed_at` | yes | RFC 3339, UTC |
+| `outcome` | yes | `closed` or `interrupted` |
+| `title`, `task_id`, `profile`, `worker` | no | what the episode was and what worked it |
+| `repository_id`, `worktree_id` | no | where it ran, without naming a path |
+| `branch`, `start_head`, `head` | no | from git |
+| `start_working_tree`, `working_tree` | no | `clean` or `dirty` |
+| `commits`, `changed_files` | no | from git |
+| `tasks`, `issues`, `milestones`, `checkpoints`, `handovers`, `decisions`, `questions`, `evidence` | no | from the ledger's events for this episode |
+
+</div>
+
+
+Unknown keys are errors, and no value may be an absolute path: a shared record carries what
+the repository can prove, never a fact about the machine that ran it. There is no field for
+a conversation, which is `project.never-store-transcripts` enforced by the contract rather
+than by a habit. The open episode's own state file is a different object with its own schema
+(`session`), and it stays in the checkout-local half.
+
 ## `.ai/repo/rules/vendor/majordomus/manifest.yaml`
 
 The package manifest: every rule file the vendored baseline holds, its identity and the

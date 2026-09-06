@@ -45,7 +45,7 @@ BEGIN {
     # Every kind this extractor can assert. A source class declaring a kind that is not
     # here is not guessed at: its nodes carry `unknown` and a finding names the class, so
     # a new source class cannot quietly acquire a made-up type.
-    known = " policy scope profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge "
+    known = " policy scope profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session "
     # The edge types are a closed set. An undeclared type is a defect rather than a new
     # vocabulary word, because a reader who cannot enumerate the relations cannot tell a
     # missing one from one that was never modelled.
@@ -119,13 +119,14 @@ function extract_one(i, k,   p, id, title) {
     id = ""
     if      (k == "milestone" || k == "issue" || k == "rule") id = f(p, "id")
     else if (k == "adr" || k == "skill" || k == "use-case" || k == "application") id = f(p, "id")
+    else if (k == "session")                   id = f(p, "session_id")
     else if (k == "profile" || k == "prompt")  id = f(p, "name")
     else if (k == "session")                   id = f(p, "session_id")
     else if (k == "handover" || k == "checkpoint") id = basename_noext(p)
 
     title = ""
     if      (k == "milestone" || k == "issue" || k == "rule") title = f(p, "title")
-    else if (k == "adr" || k == "skill" || k == "use-case" || k == "application") title = f(p, "title")
+    else if (k == "adr" || k == "skill" || k == "use-case" || k == "application" || k == "session") title = f(p, "title")
     else if (k == "profile" || k == "prompt")  title = f(p, "description")
     # a curated note and a taxonomy carry no identity of their own: the file is the object,
     # and its first heading, or the comment the file opens with, is what a reader sees

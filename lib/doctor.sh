@@ -27,6 +27,8 @@
 # shellcheck source=skills.sh
 . "$MJ_LIB_DIR/skills.sh"
 # the decision and knowledge validators read the catalogues their own commands read
+# shellcheck source=session.sh
+. "$MJ_LIB_DIR/session.sh"
 # shellcheck source=adr.sh
 . "$MJ_LIB_DIR/adr.sh"
 # the capture doctrine and the provider states the wiring verifier reports

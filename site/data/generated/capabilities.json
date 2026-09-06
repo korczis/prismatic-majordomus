@@ -1555,6 +1555,19 @@
       "test_case": "95_skills"
     },
     {
+      "id": "session-records",
+      "claim": "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/session.sh",
+      "test": "test/cases/63_session_records.sh",
+      "status": "guaranteed",
+      "note": "The record lives under the manifest's sessions section. Every field is derived - times from the clock, heads and commits from git, the reference lists from the ledger's events for the episode - and the body is the only authored part. The repository is named by its remote and the working copy by a hash, so the resolver can tell one checkout's records from another's without disclosing a path. One source class discovers them; the index, MCP, the object routes, the graph and the site follow.",
+      "responsibility": "layer",
+      "source_route": "/docs/schemas/",
+      "command": "session",
+      "test_case": "63_session_records"
+    },
+    {
       "id": "adr-catalogue",
       "claim": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
       "source": "docs/SCHEMAS.md",

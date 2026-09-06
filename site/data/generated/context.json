@@ -292,6 +292,31 @@
       ]
     },
     {
+      "id": "ai.repo.sessions",
+      "path": ".ai/repo/sessions/README.md",
+      "dir": ".ai/repo/sessions",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Session records",
+      "description": "One immutable record per closed execution episode, derived from git and the ledger and shared with every surface.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "lib/session.sh",
+        "share/schemas/session-record.schema.json"
+      ]
+    },
+    {
       "id": "ai.repo.skills",
       "path": ".ai/repo/skills/README.md",
       "dir": ".ai/repo/skills",
@@ -679,7 +704,7 @@
       "depth": 3,
       "name": "pages",
       "contract": {
-        "index": 16,
+        "index": 17,
         "id": "ai.repo.benchmarks.pages",
         "path": ".ai/repo/benchmarks/pages/README.md",
         "dir": ".ai/repo/benchmarks/pages",
@@ -714,7 +739,7 @@
       "depth": 3,
       "name": "rust",
       "contract": {
-        "index": 17,
+        "index": 18,
         "id": "ai.repo.benchmarks.rust",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "dir": ".ai/repo/benchmarks/rust",
@@ -823,7 +848,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 18,
+        "index": 19,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -929,7 +954,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 19,
+        "index": 20,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -964,7 +989,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 20,
+        "index": 21,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1109,7 +1134,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 21,
+        "index": 22,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -1135,6 +1160,42 @@
       }
     },
     {
+      "dir": ".ai/repo/sessions",
+      "document": "ai.repo.sessions",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "sessions",
+      "contract": {
+        "index": 13,
+        "id": "ai.repo.sessions",
+        "path": ".ai/repo/sessions/README.md",
+        "dir": ".ai/repo/sessions",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Session records",
+        "description": "One immutable record per closed execution episode, derived from git and the ledger and shared with every surface.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "lib/session.sh",
+          "share/schemas/session-record.schema.json"
+        ],
+        "paths": [],
+        "sha256": "644dbaca1dbbe653684519d5f7a0cc4830cc30b1009812e5a05df1636b9f6107"
+      }
+    },
+    {
       "dir": ".ai/repo/skills",
       "document": "ai.repo.skills",
       "requires_contract": false,
@@ -1142,7 +1203,7 @@
       "depth": 2,
       "name": "skills",
       "contract": {
-        "index": 13,
+        "index": 14,
         "id": "ai.repo.skills",
         "path": ".ai/repo/skills/README.md",
         "dir": ".ai/repo/skills",
@@ -1220,7 +1281,7 @@
       "depth": 2,
       "name": "use-cases",
       "contract": {
-        "index": 14,
+        "index": 15,
         "id": "ai.repo.use-cases",
         "path": ".ai/repo/use-cases/README.md",
         "dir": ".ai/repo/use-cases",
@@ -1253,7 +1314,7 @@
       "depth": 2,
       "name": "workflows",
       "contract": {
-        "index": 15,
+        "index": 16,
         "id": "ai.repo.workflows",
         "path": ".ai/repo/workflows/README.md",
         "dir": ".ai/repo/workflows",
@@ -1286,8 +1347,8 @@
     }
   ],
   "counts": {
-    "directories": 26,
-    "documented": 21,
+    "directories": 27,
+    "documented": 22,
     "exempt": 5
   }
 }

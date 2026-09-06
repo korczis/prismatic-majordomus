@@ -41,6 +41,85 @@ pub enum Command {
     Bench(BenchArgs),
     /// The repository scope: what a worker reads and what it never reads; with paths, whether each is in or out and why
     Scope(ScopeArgs),
+    /// The repository's web surfaces: what is exposed, where it is mounted, what produced it, and whether the topology is valid
+    Web(WebArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus web`.
+pub struct WebArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to do with the topology; none lists it.
+    pub command: Option<WebCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only these surfaces, by discovered id (repeat or separate with commas)
+    #[arg(long, value_delimiter = ',', global = true)]
+    pub only: Vec<String>,
+
+    /// Every surface except these, by discovered id
+    #[arg(long, value_delimiter = ',', global = true)]
+    pub exclude: Vec<String>,
+}
+
+#[derive(Debug, Subcommand)]
+/// The reports this executable can render. Each reads evidence a run already produced and
+/// writes a surface; none of them runs anything or decides what passed.
+pub enum ReportCommand {
+    /// The test run: the behavioural cases' report, and the crate's own totals
+    Tests {
+        /// The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)
+        #[arg(long)]
+        suite: PathBuf,
+        /// The output of `cargo test`, for its totals
+        #[arg(long)]
+        crate_output: Option<PathBuf>,
+    },
+    /// The benchmark run: a results document, or the accepted baseline
+    Benchmarks {
+        /// A results document from `majordomus bench`, or a baseline under the layer
+        #[arg(long)]
+        from: PathBuf,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus web`.
+pub enum WebCommand {
+    /// Every discovered surface: id, kind, mount, producer
+    List,
+    /// Why each surface exists and where each of its values came from
+    Explain {
+        /// Only this surface; none explains every one
+        id: Option<String>,
+    },
+    /// Check the topology's invariants; exit 10 on any error finding
+    Validate {
+        /// Also require every static surface's directory and index to exist
+        #[arg(long)]
+        artifacts: bool,
+    },
+    /// Write the resolved topology to the generated manifest
+    Manifest,
+    /// Render a generated report into its own surface under the generated web root
+    Report {
+        #[command(subcommand)]
+        /// Which report to render.
+        report: ReportCommand,
+    },
+    /// Compose every published surface into one publishable tree
+    Compose {
+        /// Where to write it; the default is target/site
+        #[arg(long)]
+        destination: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -506,6 +585,97 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::McpReady,
             },
         ],
+    },
+    CommandExamples {
+        command: "web list",
+        examples: &[ExampleDoc {
+            id: "web-list",
+            title: "Every web surface this repository exposes",
+            description: "The resolved topology, in route-precedence order: the routes the executable answers itself, the application's site, and every generated report that declared itself under the generated web root. Nothing is registered anywhere; each line was discovered.",
+            argv: &["web", "list"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["MOUNT", "/api/v1", "/docs"]),
+        }],
+    },
+    CommandExamples {
+        command: "web",
+        examples: &[ExampleDoc {
+            id: "web-topology",
+            title: "The topology, from the command with no subcommand",
+            description: "`web` with nothing after it lists, because listing is what a person wants when they ask what this repository exposes.",
+            argv: &["web"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["ID", "MOUNT"]),
+        }],
+    },
+    CommandExamples {
+        command: "web explain",
+        examples: &[ExampleDoc {
+            id: "web-explain",
+            title: "Why a surface exists and where each of its values came from",
+            description: "For each field a reader could be surprised by — the mount, the kind, the directory — the source that decided it: a producer's own declaration, the site configuration, the capability registry, or the model's documented default.",
+            argv: &["web", "explain", "swagger"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["swagger", "came from"]),
+        }],
+    },
+    CommandExamples {
+        command: "web validate",
+        examples: &[ExampleDoc {
+            id: "web-validate",
+            title: "Check the topology before anything serves or publishes it",
+            description: "Two surfaces claiming one path, a surface nested inside another's subtree, a directory outside the generated root or one that walks out of the repository: each is a named finding with the surface, the value, its source and the fix. Exit 10 on any error finding. `--artifacts` also requires every static surface's directory and index to exist, which is what serving and publishing need.",
+            argv: &["web", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["no conflict"]),
+        }],
+    },
+    CommandExamples {
+        command: "web manifest",
+        examples: &[ExampleDoc {
+            id: "web-manifest",
+            title: "Write the resolved topology down for another tool to read",
+            description: "The manifest under the generated web root is derived state: a publisher or a CI job may read it instead of resolving the topology again, and nothing may edit it, because the next run overwrites it from the same discovery.",
+            argv: &["web", "manifest"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["web manifest", "surface"]),
+        }],
+    },
+    CommandExamples {
+        command: "web report tests",
+        examples: &[ExampleDoc {
+            id: "web-report-tests",
+            title: "Render the suite's own results into the /tests surface",
+            description: "The runner writes its report with `MJ_TEST_REPORT=<file> bash test/run.sh`; this renders it, keeps the machine-readable results beside the page, and declares the directory so discovery finds it. Without that file there is nothing to render and the command says so rather than publishing an empty page.",
+            argv: &["web", "report", "tests", "--suite", "target/web/run.tsv"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "web report benchmarks",
+        examples: &[ExampleDoc {
+            id: "web-report-benchmarks",
+            title: "Render a benchmark run into the /benchmarks surface",
+            description: "Reads a results document — a run's own output, or an accepted baseline under the layer's benchmarks section, which have the same shape — and renders every measured target ordered by median. It measures nothing itself: a figure on the page is a figure a run produced.",
+            argv: &[
+                "web", "report", "benchmarks",
+                "--from", ".ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json",
+            ],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "web compose",
+        examples: &[ExampleDoc {
+            id: "web-compose",
+            title: "Compose every published surface into one publishable tree",
+            description: "Each producer owns its own output directory; publication needs one tree, and the mapping is the resolved mount and nothing else. A surface that is discovered is published without a copy step being written anywhere, and a repository with nothing generated yet composes an empty tree rather than an error. Where a surface exists and its directory does not, composition refuses and names the producer to run.",
+            argv: &["web", "compose", "--destination", "target/site"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
     },
     CommandExamples {
         command: "serve",
