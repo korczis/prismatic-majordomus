@@ -1,12 +1,12 @@
 +++
 title = "Resume in the right worktree, never against somebody else’s task"
 description = "Find the handover that belongs to this worktree and branch, and see a task record from another checkout reported as foreign rather than enforced here."
-weight = 13
+weight = 14
 [extra]
 id = "resume-in-the-right-worktree"
 source = ".ai/repo/use-cases/resume-in-the-right-worktree.md"
 category = "continuity"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -18,6 +18,37 @@ Two checkouts of one repository, two workers. A task record that travels with a 
 - `handover --resolve`: the most relevant prior handover for this worktree and branch, or a clear absence
 - `check`: refuses to evaluate a task this checkout does not own
 - `context`: this worktree’s own identity, with no task borrowed from elsewhere
+
+## Scenario
+
+```yaml
+setup: two-worktrees
+given:
+  - 'installed and wired, with a second worktree on another branch holding an active task scoped to lib'
+steps:
+  - id: nothing-here
+    run: ['handover', '--resolve']
+    note: 'no handover was written for this worktree and branch; absence is reported, never a record from elsewhere'
+    expect:
+      exit: 0
+      stdout_contains: ['No relevant handover']
+  - id: not-my-task
+    run: ['check']
+    note: 'the other worktree’s task is not this checkout’s; check reports no active task here instead of holding this checkout to a scope it never claimed'
+    expect:
+      exit: 12
+      stdout_contains: ['no active task']
+  - id: read-only-view
+    run: ['context']
+    note: 'what this worktree knows: its own git identity and no task'
+    expect:
+      exit: 0
+      stdout_contains: ['^## GIT', 'none active']
+then:
+  - 'handover --resolve never offered a record from another branch'
+  - 'check did not enforce the other worktree’s scope here'
+  - 'local state under .ai/local/ is this checkout’s own and untracked'
+```
 
 ## Outcome
 

@@ -108,6 +108,20 @@
           "items": {
             "type": "string"
           }
+        },
+        "children": {
+          "description": "What the directories below this one owe. Subtree documents only; the value nearest a directory applies, and a descendant may raise require_contract to true but never lower an inherited true.",
+          "$ref": "#/$defs/Children"
+        }
+      }
+    },
+    "Children": {
+      "description": "The obligation a document places on the subtree beneath it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "require_contract": {
+          "type": "boolean"
         }
       }
     },

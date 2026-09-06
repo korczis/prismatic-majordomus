@@ -1,7 +1,7 @@
 +++
 title = "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp"
 description = "Nobody runs a server by hand. Open this repository in Claude Code, Gemini CLI or Codex and the client finds its configuration at the root, spawns bin/majordomus-mcp, and speaks MCP to it; the launcher builds the Rust executable when it is missing or older than its sources, then runs majordomus mcp, which starts the repository's shared server or attaches to the one already running. The first client to open the repository becomes the server; the second shares it."
-weight = 106
+weight = 107
 [extra]
 claim_id = "mcp-client-autostart"
 status = "guaranteed"

@@ -1,12 +1,12 @@
 +++
 title = "Find an object of the layer without reading everything"
 description = "Search durable records literally across kinds from the shell, and ask the shared server the same question over MCP with majordomus_search and majordomus_get."
-weight = 23
+weight = 25
 [extra]
 id = "find-an-object-without-reading-everything"
 source = ".ai/repo/use-cases/find-an-object-without-reading-everything.md"
 category = "mcp"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -19,6 +19,37 @@ A client wants the rule about scope, or the decision about the parser, and has t
 - `knowledge nodes --kind <k>`: the canonical objects of one kind, with identity
 - `prompt list`: the prompt assets, also served as resources
 - over MCP: `majordomus_search`, `majordomus_get` by `majordomus://` URI, `majordomus_list` by kind
+
+## Scenario
+
+```yaml
+setup: active-task-records
+given:
+  - 'an active task that has already produced a checkpoint, a decision and an open question'
+steps:
+  - id: search
+    run: ['search', 'parser']
+    note: 'durable records matched literally, across kinds, without an index'
+    expect:
+      exit: 0
+      stdout_contains: ['^decision ', 'parser', 'match']
+  - id: nodes
+    run: ['knowledge', 'nodes', '--kind', 'rule']
+    note: 'one node per canonical object of one kind, with its identity'
+    expect:
+      exit: 0
+      stdout_contains: ['^rule ']
+  - id: prompts
+    run: ['prompt', 'list']
+    note: 'the repository’s own prompt assets, the ones an MCP client can also read as resources'
+    expect:
+      exit: 0
+      stdout_contains: ['^continue ', '^debug ']
+then:
+  - 'the shell and the MCP server answer from the same files'
+  - 'a majordomus:// URI resolves the same way through the resource read, the tool and the HTTP route'
+  - 'no index has to exist for the literal search to work'
+```
 
 ## Outcome
 

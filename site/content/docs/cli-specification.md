@@ -842,7 +842,7 @@ the prompt last under `## PROMPT`, decoded and fenced.
 
 ````markdown
 ---
-schema: 'majordomus.prompt/v1'
+schema: 'majordomus.capture/v1'
 ts: '2026-09-05T12:48:55Z'
 provider: 'claude-code'
 event: 'UserPromptSubmit'
@@ -868,7 +868,7 @@ record: '20260905124855-make-it-a-file-per-prompt.json'
 | **Repository** | `/Users/you/dev/your-repo` |
 | **Branch** | `feature/prompt-capture-markdown` · `a0ccbc9` |
 | **Directory** | `/Users/you/dev/your-repo` |
-| **Schema** | `majordomus.prompt/v1` · `.ai/repo/schemas/majordomus/prompt/v1.proto` |
+| **Schema** | `majordomus.capture/v1` · `share/schemas/majordomus/capture/capture.v1.proto` |
 | **Record** | `20260905124855-make-it-a-file-per-prompt.json` |
 
 ## PROMPT
@@ -884,8 +884,8 @@ one pass, so they cannot drift. A row is omitted rather than printed as `null`, 
 row reading `null` tells a person less than an absent row does.
 
 **The schema identifier is the path to the file that describes it.** `<namespace>.<name>/<version>`
-is `.ai/repo/schemas/<namespace>/<name>/<version>.proto`, so `majordomus.prompt/v1` resolves
-to `.ai/repo/schemas/majordomus/prompt/v1.proto` with no registry in between — a reader
+is `share/schemas/<vendor>/<name>/<name>.v<n>.proto`, so `majordomus.capture/v1` resolves
+to `share/schemas/majordomus/capture/capture.v1.proto` with no registry in between — a reader
 holding a record holds the way to read it, and there is nothing that can fall out of step
 with the records it claims to describe. That file is protobuf used as a schema language and
 not as a wire format: nothing serialises these messages, and it is the one place the record's
@@ -1383,6 +1383,7 @@ majordomus adr show <id> [--json]                     the path, then the file as
 majordomus adr propose "<title>" [--from <ref>]...    write a new decision, status proposed
                        [--tag <tag>]... [--supersedes <id>]
 majordomus adr check [--json]                         validate every decision and every reference
+majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisions a change set touches
 ```
 
 - `list` prints one line per discovered decision, invalid ones included; `--status`
@@ -1399,14 +1400,31 @@ majordomus adr check [--json]                         validate every decision an
   `2`. Referenced evidence makes the record `provenance.origin: extracted`, and an
   extracted record with no evidence is refused as an assertion. `--supersedes` writes both
   halves of the relation, so the chain is walkable from either end.
+- `related` is the other half of a record's references, and it is authored rather than
+  written by `propose`: `rule:<id>`, `claim:<id>`, `file:<path>`, `test:<path>` — what the
+  decision put in force, as against `provenance.derived_from`, which is where it came from.
+  Each is validated where its type says the target lives, and the extractor turns it into a
+  graph edge (`declares`, `supports`, `references`, `tested_by`), so the reverse direction —
+  which decision put this rule in force — is `knowledge edges`, not a second list somebody
+  keeps in step.
 - `check` validates every record against the allow-list generated from the schema (no
   unknown key), `schema: adr/v1`, the closed status set, an `id` whose number equals the
   file-name prefix, the required body sections; and across the set: duplicate identities,
   a `superseded` record with no `superseded_by`, one-sided supersession, and a reference
   that resolves to nothing. It exits `10` on any failure.
 
+- `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
+  for the index, `--base <ref>` for `<ref>..HEAD` plus the working tree — and names every
+  decision whose own file changed, or whose `related` names a path the change touches (a
+  reference to a directory covers everything below it). Every item is a `WARN` review note
+  and the exit code stays `0`: whether a decision still holds after the code it governs
+  moved is the judgement a tool may not make. It is the reverse question the graph answers
+  — what decided this file? — asked from the change set instead of from a record.
+
 `doctor` and `watch` run the same examination through the doctrine
-`majordomus.adr-integrity`.
+`majordomus.adr-integrity`. The threshold for recording a decision at all is the rule
+`majordomus.decision-threshold`, which a reviewer decides: the tool validates records and
+reports what a change reaches, and never claims to know that a diff embodied a decision.
 
 ```
 $ majordomus adr propose "The registry is the one canonical declaration" --from file:docs/CAPABILITIES.md

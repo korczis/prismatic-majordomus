@@ -1,7 +1,7 @@
 +++
 title = "The public command surface is declared, and reconciled against the dispatcher"
 description = "There is one file that says what the public commands are and what each one means:"
-weight = 77
+weight = 78
 [extra]
 claim_id = "command-surface"
 status = "guaranteed"

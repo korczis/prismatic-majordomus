@@ -1,12 +1,12 @@
 +++
 title = "Checkpoint long work so a stop costs minutes, not the day"
 description = "Record compact progress inside the active task at the profile interval, so a session that ends without warning leaves the next one a place to start."
-weight = 10
+weight = 11
 [extra]
 id = "checkpoint-long-work"
 source = ".ai/repo/use-cases/checkpoint-long-work.md"
 category = "continuity"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -18,6 +18,38 @@ A task runs for hours. The session that holds it can be cut off by a context lim
 - `checkpoint`: a short body on stdin becomes a capped record under the local half, with identity computed from git
 - `check`: reports whether the checkpoint is fresh against the profile's interval, beside scope and blockers
 - `context`: the next worker reads the newest checkpoint inside the assembled context, not a pasted log
+
+## Scenario
+
+```yaml
+setup: active-task
+given:
+  - 'an active task scoped to lib, with work done inside that scope'
+steps:
+  - id: checkpoint
+    run: ['checkpoint']
+    stdin: checkpoint-body.md
+    note: 'a capped progress record; its branch and head are computed from git, never written by hand'
+    expect:
+      exit: 0
+      stdout_contains: ['\.ai/local/state/checkpoints/']
+  - id: fresh
+    run: ['check']
+    note: 'the checkpoint is fresh against the profile interval and the task is consistent with git'
+    expect:
+      exit: 0
+      stdout_contains: ['0 failing']
+  - id: resume
+    run: ['context']
+    note: 'the newest checkpoint is part of what the next worker reads'
+    expect:
+      exit: 0
+      stdout_contains: ['^## TASK', 'checkpoint']
+then:
+  - 'the checkpoint file carries the branch and head it was written at'
+  - 'check reports the checkpoint age against the profile interval'
+  - 'context names the task and its newest checkpoint'
+```
 
 ## Outcome
 
