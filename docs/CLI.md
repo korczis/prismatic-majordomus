@@ -767,7 +767,7 @@ The repository's skills: provider-neutral procedures for one bounded kind of wor
 under the layer's skills section. Read-only.
 
 A skill is a directory `.ai/repo/skills/<id>/` holding `SKILL.md` — YAML front matter
-satisfying `share/schemas/skill.schema.json` over a Markdown body that is the procedure —
+satisfying `share/schemas/majordomus/skill/skill.v1.schema.json` over a Markdown body that is the procedure —
 and optionally `examples/*.md`. Nothing registers it. The source class `skill` in
 `.ai/repo/knowledge/sources.yaml` discovers it, and that is the same declaration the
 Rust executable indexes, so a skill exists for `skills list`, for `doctor`, for the
@@ -1420,7 +1420,7 @@ The repository's architecture decisions as objects: what was decided, why, what 
 and where the record came from. Under the layer's `adrs` section.
 
 A decision is a file `.ai/repo/adrs/<NNNN>-<slug>.md` — YAML front matter satisfying
-`share/schemas/adr.schema.json` over a body carrying `# Context`, `# Decision` and
+`share/schemas/majordomus/adr/adr.v1.schema.json` over a body carrying `# Context`, `# Decision` and
 `# Consequences`. Nothing registers it: the source class `adr` in
 `.ai/repo/knowledge/sources.yaml` discovers it over the tracked tree, which is the same
 declaration the Rust executable indexes. See [`SCHEMAS.md`](SCHEMAS.md) for the contract.

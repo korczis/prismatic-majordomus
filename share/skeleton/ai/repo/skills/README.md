@@ -34,7 +34,7 @@ website and the MCP server all read. Adding the directory and tracking it in git
 whole act of adding a skill; removing it removes the skill from every surface.
 
 `SKILL.md` is YAML front matter over a Markdown body. The front matter satisfies
-`share/schemas/skill.schema.json` of the tool distribution — an unknown key is an error:
+`share/schemas/majordomus/skill/skill.v1.schema.json` of the tool distribution — an unknown key is an error:
 
 ```yaml
 ---
