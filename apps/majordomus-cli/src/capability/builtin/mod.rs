@@ -11,6 +11,7 @@ pub mod continuity;
 pub mod deploy;
 pub mod directories;
 pub mod distribution;
+pub mod environment;
 pub mod graph;
 pub mod health;
 pub mod objects;
@@ -45,6 +46,7 @@ pub use distribution::{
     BuildReport, DistributionReport, ReleaseArtifactInput, ReleaseArtifactView, ReleaseView,
     ReleasesReport, TargetView,
 };
+pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENVIRONMENT_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
@@ -74,6 +76,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         directories,
         artifacts,
+        environment,
         distribution,
         why,
         web
