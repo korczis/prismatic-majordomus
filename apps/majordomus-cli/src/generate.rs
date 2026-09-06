@@ -978,7 +978,7 @@ pub fn proto_allow_artifacts(
 /// or firmlinked component is enough — and the fallback then wrote the generator's own
 /// absolute path into a committed artifact. That made the output depend on which worktree
 /// last ran `majordomus generate`, which is precisely what `derive-check` cannot see.
-fn relative_to(dir: &Path, root: &Path) -> String {
+pub(crate) fn relative_to(dir: &Path, root: &Path) -> String {
     let resolved = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
     let (dir_resolved, root_resolved) = (resolved(dir), resolved(root));
     match dir_resolved.strip_prefix(&root_resolved) {

@@ -3,6 +3,9 @@
 # the tool, the library, the harness and every case; shellcheck -x -s bash -S warning over
 # the tool, the scripts and every case. Exit 0 clean, non-zero on the first finding, 12
 # when shellcheck is not installed (the gate needs it; a missing linter is not a pass).
+#
+#   scripts/ci/shell-lint            lint everything
+#   scripts/ci/shell-lint --list     print what it would lint, one path per line
 set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
@@ -20,6 +23,7 @@ shell_files() {
         esac
       done
 }
+if [ "${1:-}" = --list ]; then shell_files; exit 0; fi
 scripts="$(shell_files | tr '\n' ' ')"
 [ -n "$scripts" ] || { echo "shell-lint: found no shell scripts to lint" >&2; exit 12; }
 echo "==> bash -n"
