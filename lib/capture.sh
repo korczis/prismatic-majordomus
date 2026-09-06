@@ -372,7 +372,16 @@ mj_capture_render_one() {
   # is this tool's.
   if ! mj_capture_is_pretty "$rec"; then
     if mj_capture_reformat "$rec" "$scan" > "$rec.part" 2>/dev/null && [ -s "$rec.part" ]; then
-      mv "$rec.part" "$rec" 2>/dev/null || rm -f "$rec.part"
+      # and the scan is taken again from what the record now says. The reformat can change a
+      # value — the schema identifier is the one it exists to change — and the renderings
+      # below are built from the scan, so rendering from the one taken before it would
+      # publish the record's old answer beside its new one.
+      if mv "$rec.part" "$rec" 2>/dev/null; then
+        awk -f "$MJ_LIB_DIR/json_scan.awk" < "$rec" > "$scan.new" 2>/dev/null \
+          && mv "$scan.new" "$scan" 2>/dev/null
+        rm -f "$scan.new"
+      fi
+      rm -f "$rec.part"
     else rm -f "$rec.part"; fi
   fi
 
@@ -449,7 +458,10 @@ mj_capture_render_one() {
     # form adds; two spaces of indent are outside the scalar and never reach the text.
     printf 'text: |-\n'
     sed 's/^/  /' "$body"
-    [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ] && printf '\n'
+    # an `if` and not an `&&` chain: this is the last command of the block, so its status is
+    # the block's, and a prompt that already ends in a newline would report the rendering as
+    # having failed after writing it correctly
+    if [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ]; then printf '\n'; fi
   } > "$tmp" 2>/dev/null || rc=1
   rm -f "$scan" "$body"
   [ "$rc" = 0 ] || { rm -f "$tmp"; return 1; }
@@ -468,7 +480,13 @@ mj_capture_reformat() {
   # still names it; a person decides.
   mj_capture_accounted "$scan" "$1" || return 1
   { for k in $MJ_CAPTURE_FIELDS; do
-      if [ "$k" = started_at ]; then v="$(mj_capture_raw "$scan" "$MJ_CAPTURE_STARTED")"
+      # The identifier written back is this version's, never the one the file arrived with.
+      # `mj_capture_is_pretty` asks for the current identifier, so a record that kept an
+      # older one would be reformatted on every run and never converge. Re-stamping is only
+      # safe because `mj_capture_accounted` has already refused anything whose field set is
+      # not this schema's: what is rewritten is the name, and the record was always this.
+      if [ "$k" = schema ]; then v="\"$MJ_CAPTURE_SCHEMA\""
+      elif [ "$k" = started_at ]; then v="$(mj_capture_raw "$scan" "$MJ_CAPTURE_STARTED")"
       else v="$(mj_capture_raw "$scan" "$k")"; fi
       [ -n "$v" ] || v=null
       printf '%s\t%s\n' "$k" "$v"
@@ -612,7 +630,11 @@ mj_capture_render() {
     md="$(mj_capture_md "$f")"
     # a record needs rendering when either rendering is absent, not only the Markdown:
     # skipping on the Markdown alone would leave a missing YAML half unrepairable
-    [ "$force" = 0 ] && [ -e "$md" ] && [ -e "$(mj_capture_yml "$f")" ] && continue
+    # A record not in the current shape needs rendering too, renderings or not: the reformat
+    # that migrates it happens inside `render_one`, so skipping on the renderings alone would
+    # leave the finding standing with the command the finding names reporting success.
+    [ "$force" = 0 ] && [ -e "$md" ] && [ -e "$(mj_capture_yml "$f")" ] \
+      && mj_capture_is_pretty "$f" && continue
     if mj_capture_render_one "$f"; then n=$((n + 1))
     else bad=$((bad + 1)); mj_err "capture render: cannot render $(basename "$f")"; fi
   done
