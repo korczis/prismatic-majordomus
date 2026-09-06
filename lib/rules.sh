@@ -217,7 +217,7 @@ mj_rules_render() {
         for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), dep[i]
         printf "]}\n"
       } else
-        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] == 1 ? "enforced by " eb[i] : "not machine-enforced")
+        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] == 1 ? "enforced by " eb[i] : "no validator; see the rule")
     }' "$MJ_RULES_FLAT"
 }
 
@@ -350,6 +350,11 @@ usage: majordomus rules list [--json]           the effective set in resolved or
 H
 }
 
+# The last column is about this rule's own validator, not about whether anything enforces
+# it: a rule that names none says "no validator; see the rule", because a repository can
+# hold a rule through a gate it declares in the policy — doctor proves that wiring — and
+# reading "not machine-enforced" there sent people looking for an enforcement that was
+# already running.
 mj_rules_list() {
   [ $# = 0 ] || mj_die "$MJ_EX_USAGE" "rules list: unknown option $1"
   mj_rules_load || mj_die "$MJ_EX_CONTRACT" "rules do not resolve: $MJ_RULES_ERROR"
