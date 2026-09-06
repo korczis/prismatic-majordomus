@@ -1,7 +1,7 @@
 +++
 title = "Distribution"
 description = "how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release"
-weight = 21
+weight = 22
 [extra]
 source = "docs/DISTRIBUTION.md"
 +++
