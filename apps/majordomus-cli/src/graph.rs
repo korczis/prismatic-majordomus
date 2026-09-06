@@ -47,6 +47,81 @@ pub struct Node {
     /// reference that resolves to nothing in this repository.
     #[serde(default, skip_serializing_if = "is_false")]
     pub external: bool,
+    /// What the object's own kind declares about it, as its schema validated it: the
+    /// fields of its front matter that are facts about the thing rather than the document
+    /// itself. A rule carries its class and its statement, a skill its inputs and
+    /// outputs, a decision its date — the vocabulary that makes each kind worth having,
+    /// rather than the four fields every kind happens to share.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub facts: BTreeMap<String, Fact>,
+}
+
+/// One fact a node carries from its object's front matter, in the shapes a node can hold.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum Fact {
+    /// A yes or a no.
+    Flag(bool),
+    /// A whole number: an order, a version, a weight.
+    Count(i64),
+    /// One short value.
+    Text(String),
+    /// Several short values.
+    List(Vec<String>),
+}
+
+/// The longest value a node carries as a fact. Beyond it the field is prose — an
+/// objective, a rationale, an acceptance criterion — and prose belongs to the object,
+/// which `objects.get` serves whole and which every node links to by its route. Copying
+/// it here would put the layer in the graph twice.
+const FACT_LIMIT: usize = 200;
+
+/// The fields the node already shows through `label`, `summary`, `status` and `kind`.
+/// Carrying them again would say the same thing twice in one node.
+const PROJECTED_FIELDS: &[&str] = &[
+    "id",
+    "version",
+    "kind",
+    "title",
+    "description",
+    "status",
+    "schema",
+];
+
+/// The facts of one object's front matter: every declared field that is a fact about the
+/// thing, in the object's own vocabulary. Nothing is named here — the fields are whatever
+/// the kind's schema let the object declare, minus the ones the node already shows.
+fn facts(metadata: &Value) -> BTreeMap<String, Fact> {
+    let Some(map) = metadata.as_object() else {
+        return BTreeMap::new();
+    };
+    let short = |s: &str| s.len() <= FACT_LIMIT;
+    map.iter()
+        .filter(|(k, _)| !PROJECTED_FIELDS.contains(&k.as_str()))
+        .filter_map(|(k, v)| {
+            let fact = match v {
+                Value::Bool(b) => Fact::Flag(*b),
+                Value::Number(n) => Fact::Count(n.as_i64()?),
+                Value::String(s) if short(s) => Fact::Text(s.clone()),
+                Value::Array(items) => {
+                    // a list is a fact only whole: half a list of criteria is a claim the
+                    // reader cannot check
+                    let texts: Option<Vec<String>> = items
+                        .iter()
+                        .map(|i| match i {
+                            Value::String(s) if short(s) => Some(s.clone()),
+                            Value::Bool(b) => Some(b.to_string()),
+                            Value::Number(n) => Some(n.to_string()),
+                            _ => None,
+                        })
+                        .collect();
+                    Fact::List(texts?)
+                }
+                _ => return None,
+            };
+            Some((k.clone(), fact))
+        })
+        .collect()
 }
 
 fn is_false(b: &bool) -> bool {
@@ -222,7 +297,7 @@ impl Builder {
 /// use majordomus_cli::graph::{is_acyclic, Edge, Node};
 /// fn n(id: &str) -> Node {
 ///     Node { id: id.into(), kind: "x".into(), label: id.into(), summary: None, route: None,
-///             source: None, status: None, external: false }
+///             source: None, status: None, external: false, facts: Default::default() }
 /// }
 /// fn e(a: &str, b: &str) -> Edge { Edge { source: a.into(), target: b.into(), kind: "k".into() } }
 /// assert!(is_acyclic(&[n("a"), n("b")], &[e("a", "b")]));
@@ -370,6 +445,7 @@ fn registry_graph(registry: &CapabilityRegistry, _index: &Index) -> Graph {
             source: None,
             status: Some(enum_word(&m.source)),
             external: false,
+            facts: BTreeMap::new(),
         });
     }
 
@@ -401,6 +477,7 @@ fn registry_graph(registry: &CapabilityRegistry, _index: &Index) -> Graph {
             source: None,
             status: None,
             external: false,
+            facts: BTreeMap::new(),
         });
     }
 
@@ -420,6 +497,7 @@ fn registry_graph(registry: &CapabilityRegistry, _index: &Index) -> Graph {
             source: Some(c.provenance.source_path()),
             status: Some(kind_word(c.kind)),
             external: false,
+            facts: BTreeMap::new(),
         }) {
             break;
         }
@@ -436,6 +514,7 @@ fn registry_graph(registry: &CapabilityRegistry, _index: &Index) -> Graph {
             source: Some(path.clone()),
             status: None,
             external: false,
+            facts: BTreeMap::new(),
         });
         b.edge(&node_id, &source_id, "declared_in");
 
@@ -497,6 +576,7 @@ fn layer_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
                 source: Some(path.clone()),
                 status: None,
                 external: false,
+                facts: BTreeMap::new(),
             }) {
                 break;
             }
@@ -519,6 +599,7 @@ fn layer_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
                 source: Some((*dir).to_string()),
                 status: None,
                 external: false,
+                facts: BTreeMap::new(),
             }) {
                 break;
             }
@@ -556,6 +637,7 @@ fn rules_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
             source: Some(o.provenance.path.clone()),
             status: metadata_string(&o.metadata, "class"),
             external: false,
+            facts: BTreeMap::new(),
         }) {
             break;
         }
@@ -573,6 +655,7 @@ fn rules_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
                     source: None,
                     status: None,
                     external: true,
+                    facts: BTreeMap::new(),
                 });
             }
             b.edge(&format!("rule:{}", o.identity), &target, "depends_on");
@@ -610,6 +693,7 @@ fn adrs_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
             source: Some(o.provenance.path.clone()),
             status: metadata_string(&o.metadata, "status"),
             external: false,
+            facts: BTreeMap::new(),
         }) {
             break;
         }
@@ -659,6 +743,7 @@ fn adrs_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
                         source: Some(c.provenance.path.clone()),
                         status: None,
                         external: false,
+                        facts: BTreeMap::new(),
                     },
                     None => Node {
                         id: target.clone(),
@@ -669,6 +754,7 @@ fn adrs_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
                         source: (prefix == "file" || prefix == "test").then(|| rest.to_string()),
                         status: None,
                         external: true,
+                        facts: BTreeMap::new(),
                     },
                 };
                 if !b.node(node) {
@@ -710,6 +796,7 @@ fn use_cases_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
             source: Some(o.provenance.path.clone()),
             status: metadata_string(&o.metadata, "status"),
             external: false,
+            facts: BTreeMap::new(),
         }) {
             break;
         }
@@ -730,6 +817,7 @@ fn use_cases_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
                         source: None,
                         status: None,
                         external: false,
+                        facts: BTreeMap::new(),
                     })
                 {
                     break;
@@ -756,8 +844,9 @@ fn use_cases_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
 /// declares, an object is of its kind — every reference the layer's own front matter
 /// already carries becomes a typed edge: a rule to the rules it depends on, a decision to
 /// what it put in force and what it stands in for, a use case to what it runs, exercises
-/// and evidences, a context document to what it tracks, a document to the capability it
-/// documents. The conventions are in [`RELATIONS`] and nowhere else, and
+/// and evidences, a context document to what it tracks, a claim to the file that
+/// implements it and the case that proves it. The conventions are in [`RELATIONS`] and
+/// nowhere else, and
 /// [`unresolved_relations`] is the same resolution read as a verdict: a reference that
 /// names a kind this repository holds and resolves to nothing is a finding, not an edge.
 fn composed_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
@@ -796,7 +885,12 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
     .edge_kind("exercises", "the scenario exercises that doctrine")
     .edge_kind("evidences", "the object is evidence for that claim")
     .edge_kind("tracks", "the document tracks that file")
-    .edge_kind("documents", "the document documents that capability");
+    .edge_kind("defined_in", "the claim is defined by that file")
+    .edge_kind("implemented_by", "the claim is implemented by that file")
+    .edge_kind("tested_by", "the claim is proved by that case")
+    .edge_kind("belongs_to", "the issue belongs to that milestone")
+    .edge_kind("serves", "the use case serves that application")
+    .edge_kind("governed_by", "the application is governed by that doctrine");
 
     // the kinds are read off what was indexed; a kind named here would be a second
     // declaration of something share/kinds.yaml already owns
@@ -816,6 +910,7 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
             source: None,
             status: None,
             external: false,
+            facts: BTreeMap::new(),
         }) {
             break;
         }
@@ -831,6 +926,7 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
             source: None,
             status: None,
             external: false,
+            facts: BTreeMap::new(),
         });
     }
 
@@ -851,6 +947,7 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
                 source: None,
                 status: None,
                 external: false,
+                facts: BTreeMap::new(),
             })
         {
             break;
@@ -865,6 +962,7 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
             source: Some(c.provenance.source_path()),
             status: Some(kind_word(c.kind)),
             external: false,
+            facts: BTreeMap::new(),
         }) {
             break;
         }
@@ -892,6 +990,7 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
             source: Some(o.provenance.path.clone()),
             status: metadata_string(&o.metadata, "status"),
             external: false,
+            facts: facts(&o.metadata),
         }) {
             break;
         }
@@ -901,25 +1000,37 @@ fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
     // the references the layer already carries, resolved through the same table the
     // check reads: an edge appears here exactly when `unresolved_relations` says nothing
     // about it
-    let resolver = Resolver::new(objects);
+    let resolver = Resolver::new(registry, objects);
     for o in objects {
         for rel in RELATIONS {
             if !rel.kinds.is_empty() && !rel.kinds.contains(&o.kind.as_str()) {
                 continue;
             }
             for reference in metadata_strings(&o.metadata, rel.field) {
-                match resolver.resolve(rel, &reference) {
-                    Outcome::Node(target) => b.edge(&o.uri, &target, rel.edge),
+                if is_absence(&reference) {
+                    continue;
+                }
+                // the edge runs the way the relationship does, which is not always the
+                // way the file that declared it is read
+                let target = match resolver.resolve(rel, &reference) {
+                    Outcome::Node(target) => Some(target),
                     Outcome::External(node) => {
-                        let target = node.id.clone();
-                        if !b.has(&target) && !b.node(node) {
+                        let id = node.id.clone();
+                        if !b.has(&id) && !b.node(node) {
                             break;
                         }
-                        b.edge(&o.uri, &target, rel.edge);
+                        Some(id)
                     }
                     // a reference that resolves to nothing is a finding, and a finding is
                     // not drawn: an edge to a phantom reads as an answer
-                    Outcome::Missing(_) => {}
+                    Outcome::Missing(_) => None,
+                };
+                if let Some(target) = target {
+                    if rel.inverted {
+                        b.edge(&target, &o.uri, rel.edge);
+                    } else {
+                        b.edge(&o.uri, &target, rel.edge);
+                    }
                 }
             }
         }
@@ -945,6 +1056,11 @@ struct Relation {
     edge: &'static str,
     /// How the reference names its target.
     target: Target,
+    /// True when the edge runs from the thing named towards the object that named it.
+    /// Two kinds sometimes declare one relationship from both ends — an application names
+    /// the use cases that serve it and each of those names the application — and one
+    /// relationship deserves one edge in one direction rather than two half-truths.
+    inverted: bool,
 }
 
 /// How a reference names what it points at.
@@ -963,8 +1079,15 @@ enum Target {
     Name(&'static str),
     /// A repository-relative path.
     Path,
-    /// A capability of the registry, by its canonical id.
-    Capability,
+    /// A capability of the registry, by the MCP tool name it is exposed under.
+    McpTool,
+}
+
+/// The layer writes a reference that points at nothing on purpose as `-`: a claim with no
+/// implementation yet says so rather than omitting the field. That is an absence, not a
+/// reference, and neither an edge nor a finding follows from it.
+fn is_absence(reference: &str) -> bool {
+    reference == "-"
 }
 
 const RELATIONS: &[Relation] = &[
@@ -973,18 +1096,21 @@ const RELATIONS: &[Relation] = &[
         field: "depends_on",
         edge: "depends_on",
         target: Target::Object("rule"),
+        inverted: false,
     },
     Relation {
         kinds: &["adr"],
         field: "supersedes",
         edge: "supersedes",
         target: Target::DeclaredAdr,
+        inverted: false,
     },
     Relation {
         kinds: &["adr"],
         field: "related",
         edge: "put_in_force",
         target: Target::Prefixed,
+        inverted: false,
     },
     // a skill names its siblings by their bare identity, not as `<kind>:<name>`: the
     // convention is the layer's, and this table follows it rather than correcting it
@@ -993,36 +1119,124 @@ const RELATIONS: &[Relation] = &[
         field: "related",
         edge: "related_to",
         target: Target::Object("skill"),
+        inverted: false,
     },
     Relation {
         kinds: &["use-case"],
         field: "commands",
         edge: "runs",
         target: Target::Name("command"),
+        inverted: false,
     },
     Relation {
         kinds: &["use-case"],
         field: "doctrines",
         edge: "exercises",
         target: Target::ObjectOrName("rule", "doctrine"),
+        inverted: false,
     },
+    // the claims of docs/CLAIMS.yaml are indexed objects, so a use case's claim is the
+    // claim itself rather than a string that looks like one
     Relation {
         kinds: &["use-case"],
         field: "claims",
         edge: "evidences",
-        target: Target::Name("claim"),
+        target: Target::Object("claim"),
+        inverted: false,
     },
     Relation {
         kinds: &[],
         field: "tracks",
         edge: "tracks",
         target: Target::Path,
+        inverted: false,
+    },
+    // A claim names the file that defines it, the one that implements it and the case
+    // that proves it. The layer indexes all three as objects for exactly this reason:
+    // sources.yaml says the implementation and test classes exist so that the chain a
+    // claim declares resolves to real nodes instead of to three strings.
+    Relation {
+        kinds: &["claim"],
+        field: "source",
+        edge: "defined_in",
+        target: Target::Path,
+        inverted: false,
     },
     Relation {
-        kinds: &[],
-        field: "capability",
-        edge: "documents",
-        target: Target::Capability,
+        kinds: &["claim"],
+        field: "implementation",
+        edge: "implemented_by",
+        target: Target::Path,
+        inverted: false,
+    },
+    Relation {
+        kinds: &["claim"],
+        field: "test",
+        edge: "tested_by",
+        target: Target::Path,
+        inverted: false,
+    },
+    // The plan is a graph the repository already draws for itself; until now it was the
+    // one graph missing from the graph.
+    Relation {
+        kinds: &["issue"],
+        field: "milestone",
+        edge: "belongs_to",
+        target: Target::Object("milestone"),
+        inverted: false,
+    },
+    Relation {
+        kinds: &["issue"],
+        field: "depends_on",
+        edge: "depends_on",
+        target: Target::Object("issue"),
+        inverted: false,
+    },
+    Relation {
+        kinds: &["milestone"],
+        field: "depends_on",
+        edge: "depends_on",
+        target: Target::Object("milestone"),
+        inverted: false,
+    },
+    Relation {
+        kinds: &["milestone"],
+        field: "claims",
+        edge: "evidences",
+        target: Target::Object("claim"),
+        inverted: false,
+    },
+    // An application and a use case name each other; the relationship is one, and it runs
+    // from the scenario to the situation it serves.
+    Relation {
+        kinds: &["use-case"],
+        field: "applications",
+        edge: "serves",
+        target: Target::Object("application"),
+        inverted: false,
+    },
+    Relation {
+        kinds: &["application"],
+        field: "use_cases",
+        edge: "serves",
+        target: Target::Object("use-case"),
+        inverted: true,
+    },
+    Relation {
+        kinds: &["application"],
+        field: "doctrines",
+        edge: "governed_by",
+        target: Target::ObjectOrName("rule", "doctrine"),
+        inverted: false,
+    },
+    // A use case that names an MCP tool names a capability of this registry, under the
+    // name the registry exposes it by.
+    Relation {
+        kinds: &["use-case"],
+        field: "mcp_tools",
+        edge: "exercises",
+        target: Target::McpTool,
+        inverted: false,
     },
 ];
 
@@ -1049,8 +1263,8 @@ pub struct Unresolved {
 /// Empty is the healthy answer. A consumer that generates an artifact from the graph
 /// refuses to write one while this is not empty, which is why the finding names the file,
 /// the key and the correction rather than only the missing name.
-pub fn unresolved_relations(objects: &[Object]) -> Vec<Unresolved> {
-    let r = Resolver::new(objects);
+pub fn unresolved_relations(registry: &CapabilityRegistry, objects: &[Object]) -> Vec<Unresolved> {
+    let r = Resolver::new(registry, objects);
     let mut out = Vec::new();
     for o in objects {
         for rel in RELATIONS {
@@ -1058,6 +1272,9 @@ pub fn unresolved_relations(objects: &[Object]) -> Vec<Unresolved> {
                 continue;
             }
             for reference in metadata_strings(&o.metadata, rel.field) {
+                if is_absence(&reference) {
+                    continue;
+                }
                 if let Outcome::Missing(correction) = r.resolve(rel, &reference) {
                     out.push(Unresolved {
                         declared_in: o.provenance.path.clone(),
@@ -1087,6 +1304,7 @@ enum Outcome {
 /// The index read once into the lookups every reference needs, so that resolving three
 /// hundred references does not walk eight hundred objects three hundred times.
 struct Resolver<'a> {
+    registry: &'a CapabilityRegistry,
     by_kind_identity: BTreeMap<(&'a str, &'a str), &'a Object>,
     by_kind_stem: BTreeMap<(&'a str, &'a str), &'a Object>,
     by_path: BTreeMap<&'a str, &'a Object>,
@@ -1095,7 +1313,7 @@ struct Resolver<'a> {
 }
 
 impl<'a> Resolver<'a> {
-    fn new(objects: &'a [Object]) -> Self {
+    fn new(registry: &'a CapabilityRegistry, objects: &'a [Object]) -> Self {
         let mut by_kind_identity = BTreeMap::new();
         let mut by_kind_stem = BTreeMap::new();
         let mut by_path = BTreeMap::new();
@@ -1117,6 +1335,7 @@ impl<'a> Resolver<'a> {
             }
         }
         Resolver {
+            registry,
             by_kind_identity,
             by_kind_stem,
             by_path,
@@ -1180,7 +1399,12 @@ impl<'a> Resolver<'a> {
                 Some(o) => Outcome::Node(o.uri.clone()),
                 None => Outcome::External(external_node("file", reference, Some(reference))),
             },
-            Target::Capability => Outcome::Node(format!("capability:{reference}")),
+            Target::McpTool => match self.registry.by_mcp_tool(reference) {
+                Some(c) => Outcome::Node(format!("capability:{}", c.id)),
+                None => Outcome::Missing(format!(
+                    "no capability is exposed as the MCP tool `{reference}`; correct the name or declare the exposure"
+                )),
+            },
         }
     }
 }
@@ -1196,6 +1420,7 @@ fn external_node(kind: &str, name: &str, path: Option<&str>) -> Node {
         source: path.map(str::to_string),
         status: None,
         external: true,
+        facts: BTreeMap::new(),
     }
 }
 
@@ -1321,6 +1546,9 @@ fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
             source: Some(m.source.clone()),
             status: Some(m.severity.clone()),
             external: false,
+            // the moment's own vocabulary is not modelled as facts yet; an empty map is
+            // the honest statement, and `skip_serializing_if` keeps it out of the output
+            facts: Default::default(),
         }) {
             break;
         }
@@ -1355,6 +1583,7 @@ fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
                         source: None,
                         status: None,
                         external: false,
+                        facts: Default::default(),
                     }) {
                         break 'outer;
                     }
@@ -1380,6 +1609,7 @@ mod tests {
             source: None,
             status: None,
             external: false,
+            facts: BTreeMap::new(),
         }
     }
 
@@ -1583,7 +1813,7 @@ mod tests {
             .any(|e| e.source == "majordomus://rule/project.second@1"
                 && e.target == "majordomus://rule/project.first@1"
                 && e.kind == "depends_on"));
-        assert_eq!(unresolved_relations(&objects), vec![]);
+        assert_eq!(unresolved_relations(&registry(), &objects), vec![]);
     }
 
     #[test]
@@ -1604,7 +1834,7 @@ mod tests {
             .edges
             .iter()
             .any(|e| e.target == node.id && e.kind == "put_in_force"));
-        assert_eq!(unresolved_relations(&objects), vec![]);
+        assert_eq!(unresolved_relations(&registry(), &objects), vec![]);
     }
 
     #[test]
@@ -1617,7 +1847,7 @@ mod tests {
                 serde_json::json!({ "id": "adr-0001", "related": ["rule:project.imaginary"] }),
             ),
         ];
-        let found = unresolved_relations(&objects);
+        let found = unresolved_relations(&registry(), &objects);
         assert_eq!(found.len(), 1, "one reference names nothing: {found:?}");
         let f = &found[0];
         assert_eq!(f.declared_in, ".ai/repo/adrs/0001-a-decision.md");
@@ -1675,6 +1905,7 @@ mod tests {
     fn a_use_case_reaches_what_it_runs_exercises_and_evidences() {
         let objects = vec![
             object_with("rule", "majordomus.a-doctrine@1", serde_json::json!({})),
+            object_with("claim", "claim-one", serde_json::json!({})),
             object_with(
                 "use-case",
                 "a-scenario",
@@ -1699,9 +1930,10 @@ mod tests {
         );
         assert_eq!(
             edge("evidences").map(|e| e.target.as_str()),
-            Some("claim:claim-one")
+            Some("majordomus://claim/claim-one"),
+            "the claims of docs/CLAIMS.yaml are indexed objects, so the edge reaches the claim itself"
         );
-        assert_eq!(unresolved_relations(&objects), vec![]);
+        assert_eq!(unresolved_relations(&registry(), &objects), vec![]);
     }
 
     #[test]
@@ -1710,7 +1942,7 @@ mod tests {
             object_with(
                 "context",
                 "a-document",
-                serde_json::json!({ "tracks": ["lib/session.sh"], "capability": "repository.info" }),
+                serde_json::json!({ "tracks": ["lib/session.sh"] }),
             ),
             object_with("rule", "project.real@1", serde_json::json!({})),
         ];
@@ -1720,10 +1952,6 @@ mod tests {
             assert!(ids.contains(e.source.as_str()), "source missing: {e:?}");
             assert!(ids.contains(e.target.as_str()), "target missing: {e:?}");
         }
-        assert!(g
-            .edges
-            .iter()
-            .any(|e| e.kind == "documents" && e.target == "capability:repository.info"));
         assert!(g.edges.iter().any(|e| e.kind == "tracks"));
     }
     #[test]
@@ -1745,6 +1973,198 @@ mod tests {
             .any(|e| e.source == "majordomus://skill/implement"
                 && e.target == "majordomus://skill/repo-review"
                 && e.kind == "related_to"));
-        assert_eq!(unresolved_relations(&objects), vec![]);
+        assert_eq!(unresolved_relations(&registry(), &objects), vec![]);
+    }
+    #[test]
+    fn a_rule_carries_its_class_and_its_statement_and_an_issue_does_not_carry_its_prose() {
+        let long = "x".repeat(FACT_LIMIT + 1);
+        let objects = vec![
+            object_with(
+                "rule",
+                "project.thing@1",
+                serde_json::json!({
+                    "id": "project.thing",
+                    "class": "blocking",
+                    "statement": "A capability is defined once and every interface is derived from it.",
+                    "tags": ["architecture", "capabilities"],
+                }),
+            ),
+            object_with(
+                "issue",
+                "I0001",
+                serde_json::json!({ "priority": "p0", "objective": long }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        let rule = g
+            .nodes
+            .iter()
+            .find(|n| n.kind == "rule")
+            .expect("the rule is a node");
+        assert_eq!(
+            rule.facts.get("class"),
+            Some(&Fact::Text("blocking".into())),
+            "how a rule is enforced is a fact about it"
+        );
+        assert!(matches!(rule.facts.get("statement"), Some(Fact::Text(_))));
+        assert_eq!(
+            rule.facts.get("tags"),
+            Some(&Fact::List(vec![
+                "architecture".into(),
+                "capabilities".into()
+            ]))
+        );
+        assert!(
+            !rule.facts.contains_key("id") && !rule.facts.contains_key("title"),
+            "the node already shows these; carrying them again says one thing twice"
+        );
+        let issue = g.nodes.iter().find(|n| n.kind == "issue").unwrap();
+        assert_eq!(issue.facts.get("priority"), Some(&Fact::Text("p0".into())));
+        assert!(
+            !issue.facts.contains_key("objective"),
+            "prose belongs to the object, which the node's route reaches"
+        );
+    }
+
+    #[test]
+    fn a_claim_reaches_what_defines_implements_and_proves_it() {
+        // sources.yaml indexes implementations and tests so that this chain resolves to
+        // real nodes instead of to three strings
+        let mut implementation = object("implementation", "lib/session.sh", "session");
+        implementation.provenance.path = "lib/session.sh".into();
+        let mut case = object("test", "test/cases/01_a.sh", "a case");
+        case.provenance.path = "test/cases/01_a.sh".into();
+        let mut source = object("document", "docs/A.md", "a document");
+        source.provenance.path = "docs/A.md".into();
+        let objects = vec![
+            implementation,
+            case,
+            source,
+            object_with(
+                "claim",
+                "a-claim",
+                serde_json::json!({
+                    "source": "docs/A.md",
+                    "implementation": "lib/session.sh",
+                    "test": "test/cases/01_a.sh",
+                }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        let from = "majordomus://claim/a-claim";
+        for (edge, target) in [
+            ("defined_in", "majordomus://document/docs/A.md"),
+            (
+                "implemented_by",
+                "majordomus://implementation/lib/session.sh",
+            ),
+            ("tested_by", "majordomus://test/test/cases/01_a.sh"),
+        ] {
+            assert!(
+                g.edges
+                    .iter()
+                    .any(|e| e.source == from && e.kind == edge && e.target == target),
+                "the claim should reach {target} by {edge}"
+            );
+        }
+        assert_eq!(unresolved_relations(&registry(), &objects), vec![]);
+    }
+
+    #[test]
+    fn a_claim_that_nothing_implements_yet_says_so_and_that_is_not_a_finding() {
+        let objects = vec![object_with(
+            "claim",
+            "a-claim",
+            serde_json::json!({ "implementation": "-", "test": "-" }),
+        )];
+        let g = compose(&registry(), &objects);
+        assert!(
+            !g.edges.iter().any(|e| e.kind == "implemented_by"),
+            "an absence is not a reference"
+        );
+        assert_eq!(unresolved_relations(&registry(), &objects), vec![]);
+    }
+
+    #[test]
+    fn the_plan_is_a_graph_of_the_graph() {
+        let objects = vec![
+            object_with("milestone", "a-milestone", serde_json::json!({})),
+            object_with(
+                "issue",
+                "I0001",
+                serde_json::json!({ "milestone": "a-milestone" }),
+            ),
+            object_with(
+                "issue",
+                "I0002",
+                serde_json::json!({ "milestone": "a-milestone", "depends_on": ["I0001"] }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.source == "majordomus://issue/I0002"
+                && e.target == "majordomus://issue/I0001"
+                && e.kind == "depends_on"));
+        assert_eq!(
+            g.edges
+                .iter()
+                .filter(
+                    |e| e.kind == "belongs_to" && e.target == "majordomus://milestone/a-milestone"
+                )
+                .count(),
+            2
+        );
+        assert_eq!(unresolved_relations(&registry(), &objects), vec![]);
+    }
+
+    #[test]
+    fn one_relationship_gets_one_edge_however_many_files_declare_it() {
+        // the application names the use case and the use case names the application; that
+        // is one relationship, and it runs from the scenario to the situation it serves
+        let objects = vec![
+            object_with(
+                "application",
+                "an-application",
+                serde_json::json!({ "use_cases": ["a-scenario"] }),
+            ),
+            object_with(
+                "use-case",
+                "a-scenario",
+                serde_json::json!({ "applications": ["an-application"] }),
+            ),
+        ];
+        let g = compose(&registry(), &objects);
+        let serves: Vec<&Edge> = g.edges.iter().filter(|e| e.kind == "serves").collect();
+        assert_eq!(serves.len(), 1, "one relationship, one edge: {serves:?}");
+        assert_eq!(serves[0].source, "majordomus://use-case/a-scenario");
+        assert_eq!(serves[0].target, "majordomus://application/an-application");
+    }
+
+    #[test]
+    fn a_use_case_reaches_the_capability_behind_the_tool_it_names() {
+        let objects = vec![object_with(
+            "use-case",
+            "a-scenario",
+            serde_json::json!({ "mcp_tools": ["majordomus_get"] }),
+        )];
+        let g = compose(&registry(), &objects);
+        assert!(
+            g.edges
+                .iter()
+                .any(|e| e.source == "majordomus://use-case/a-scenario"
+                    && e.kind == "exercises"
+                    && e.target == "capability:objects.get"),
+            "the registry knows which capability answers to a tool name"
+        );
+        let named_wrongly = vec![object_with(
+            "use-case",
+            "a-scenario",
+            serde_json::json!({ "mcp_tools": ["majordomus_imaginary"] }),
+        )];
+        let found = unresolved_relations(&registry(), &named_wrongly);
+        assert_eq!(found.len(), 1);
+        assert!(found[0].correction.contains("MCP tool"));
     }
 }

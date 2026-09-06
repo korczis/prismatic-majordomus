@@ -4,8 +4,9 @@ The Rust executable of Majordomus. It builds a binary named `majordomus` that re
 repository's provider-neutral AI layer under `.ai/`, composes one capability registry from
 its own executable capabilities and the layer's objects, and serves that registry through
 several interfaces, all read-only: MCP over stdio (`mcp`), which also starts, or attaches
-to, the repository's one shared server (HTTP with an OpenAPI document, a Swagger UI shell
-and MCP over HTTP on the loopback interface, the same server `serve` runs alone),
+to, the repository's one shared server (a home page listing every surface it serves, this
+repository's documentation, an OpenAPI document, a Swagger UI shell, the Cockpit and MCP
+over HTTP on the loopback interface, the same server `serve` runs alone),
 introspection on the command line (`capabilities`), and generated reference files
 (`generate`). Every client attached to the shared server is a peer the others can see.
 
@@ -38,7 +39,10 @@ $B --version
 $B mcp --inspect                  # what would be served, every diagnostic; exit 10 when degraded
 $B mcp                            # MCP on stdio until the client goes; the first one in a repository is the shared server (Swagger UI at the URL it logs), every later one attaches
 $B mcp --standalone               # this client alone: no port, no lease, no peers
-$B serve                          # the shared server alone: 127.0.0.1:8741, /openapi.json, /docs, /mcp, /api/v1/...; exits 0 when one already runs
+$B serve                          # the shared server alone: 127.0.0.1:8741, the home page /, /docs/, /swagger, /openapi.json, /mcp, /api/v1/...; exits 0 when one already runs
+$B web list                       # every web surface: id, kind, mount, category, world, source — discovered, never registered
+$B web explain docs               # one surface and where each of its values came from
+$B web validate                   # the topology's invariants; exit 10 with every finding and its remedy
 bin/majordomus-mcp                # builds $B when needed, then `mcp`: what .mcp.json, .gemini/settings.json and .codex/config.toml name
 just                              # the recipes a person runs, routed to $B wherever it can serve them
 $B capabilities list              # every capability with its projections
@@ -189,8 +193,14 @@ capability/           the canonical model: model.rs (descriptor, kinds, cache an
                       mod.rs composes the application), declarative.rs
 mcp/                  surface.rs (the registry as resources and tools), protocol.rs (JSON-RPC and MCP), stdio.rs,
                       bridge.rs (a stdio session forwarded to another process's shared server; its own HTTP client)
-http/                 router.rs (routes and binding from the registry), openapi.rs, swagger.rs, server.rs (tiny_http,
-                      a few worker threads), mcp.rs (MCP over HTTP at /mcp: sessions, expiry)
+http/                 surfaces.rs (the resolved topology narrowed to this process, one handler bound per surface;
+                      a native surface with no handler refuses the router), router.rs (asks the topology who owns a
+                      path, and binds a capability's input from the registry), openapi.rs, swagger.rs,
+                      server.rs (tiny_http, a few worker threads), mcp.rs (MCP over HTTP: sessions, expiry)
+web/                  the web surfaces as one model: model.rs (Surface, Mount, Topology, and the two worlds a mount
+                      can be claimed in), discover.rs (the executable's own declarations, the site's configuration,
+                      a producer's surface.json), validate.rs, files.rs (serving a static surface safely),
+                      home.rs (the page at /), html.rs, compose.rs, manifest.rs, report/
 generate.rs           the one generator pipeline and the allow-list derivation
 git/                  read-only git: toplevel, head, branch, dirty state, ls-files
 logging.rs, error.rs  tracing to stderr; the typed errors and their exit codes
@@ -205,6 +215,31 @@ worker threads over one immutable registry, not an async runtime, and a bridge's
 thirty lines over `TcpStream`. The one trait, `DiscoverySource`, exists because two
 enumerations ship. Dependencies: `clap`, `serde`, `serde_json`, `schemars`, `jsonschema`,
 `tiny_http`, `thiserror`, `tracing`, `tracing-subscriber`; dev: `tempfile`, `criterion`.
+
+## The web surface
+
+Everything this executable exposes over HTTP is a *surface*, and no list of them exists.
+They are discovered — from `capability!` declarations and the constants in
+`web::discover::native_all()`, from `site/config.toml`, and from a `surface.json` a producer
+writes beside its output under `target/web/<id>/`. One resolution, held on `Context::web`
+and resolved once per process, feeds the router, the home page at `/`, the `web.surfaces`
+capability, the validator, the publication, the startup log and `docs/generated/web.json`.
+
+**If you are changing anything under `src/http/`, `src/web/` or `src/cockpit/`, the
+invariant is: an HTTP surface is declared once, where its producer is, and every other
+appearance of it is derived.** Do not add a path to the home page, to the OpenAPI
+document's infrastructure list, to a benchmark inventory, to the Cockpit's tables or to a
+documentation table — none of those is written by hand, and all of them read the same
+resolution. Adding a static surface is a `surface.json` and no Rust at all; adding a route
+this executable answers is one `Surface` in `web::discover::native_all()` and one arm in
+`http::surfaces::Native::of`, which the router checks at construction.
+
+`/docs` is this repository's documentation and `/swagger` is Swagger UI. Neither name may
+be repurposed for the other: `project.web-surface-declared-once` states it,
+`majordomus web validate` enforces it in `scripts/rust-check`, and
+`test/cases/89_web_surface.sh` proves it over a real socket. The whole design, the metadata
+a surface carries, how `/docs` is built for its mount and what is enforced where, is
+[`docs/WEB.md`](../../docs/WEB.md); the decision is ADR 13.
 
 ## Repository discovery
 

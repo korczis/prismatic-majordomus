@@ -81,6 +81,12 @@ pub enum Target {
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
+    /// `docs/generated/web.json`: the resolved web topology, `majordomus/web-topology/v1`.
+    ///
+    /// The site generator has no Rust toolchain and reads committed files; this is how the
+    /// topology reaches the published documentation without the site shelling out to this
+    /// executable, and how `generate --check` notices when it has gone stale.
+    Web,
     /// Everything derived from the distribution model (see [`crate::distribution`]): the
     /// release build matrix, the installer, the installation guide, the site's dataset,
     /// and the public metadata of every recorded release.
@@ -103,22 +109,24 @@ impl Target {
         Target::Documents,
         Target::Providers,
         Target::Site,
+        Target::Web,
         Target::Distribution,
         Target::Manifest,
     ];
 
-    /// Every target but the manifest: the artifacts the manifest indexes.
-    pub const INDEXED: &'static [Target] = &[
-        Target::OpenApi,
-        Target::Docs,
-        Target::Benchmarks,
-        Target::Registry,
-        Target::Allow,
-        Target::Documents,
-        Target::Providers,
-        Target::Site,
-        Target::Distribution,
-    ];
+    /// Every target but the manifest, in generation order: the artifacts the manifest
+    /// indexes.
+    ///
+    /// Derived from [`Target::ALL`] rather than written beside it. It was a second list by
+    /// hand, and three times a target was added to `ALL` and forgotten here, which made
+    /// that target's artifacts the only ones the index said nothing about.
+    pub fn indexed() -> Vec<Target> {
+        Target::ALL
+            .iter()
+            .copied()
+            .filter(|t| *t != Target::Manifest)
+            .collect()
+    }
 
     /// The name the command line and the manifest use.
     pub fn name(self) -> &'static str {
@@ -131,6 +139,7 @@ impl Target {
             Target::Documents => "documents",
             Target::Providers => "providers",
             Target::Site => "site",
+            Target::Web => "web",
             Target::Distribution => "distribution",
             Target::Manifest => "manifest",
         }
@@ -153,6 +162,9 @@ pub enum ArtifactFormat {
     /// provenance as `#` comments.
     Text,
 }
+
+/// The schema of `web.json`.
+pub const WEB_SCHEMA: &str = "majordomus/web-topology/v1";
 
 impl ArtifactFormat {
     /// The file suffix, without the dot.
@@ -512,6 +524,7 @@ pub fn artifacts(
             | Target::Documents
             | Target::Providers
             | Target::Site
+            | Target::Web
             | Target::Distribution
             | Target::Manifest => {}
         }
@@ -531,7 +544,7 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     let wants_manifest = targets.contains(&Target::Manifest);
     let alone = targets == [Target::Manifest];
     let indexed: Vec<Target> = if alone {
-        Target::INDEXED.to_vec()
+        Target::indexed()
     } else {
         targets
             .iter()
@@ -758,7 +771,59 @@ pub fn context_artifacts(
             .artifacts(version),
         );
     }
+    if targets.contains(&Target::Web) {
+        out.extend(
+            Document::new(
+                "web",
+                WEB_SCHEMA,
+                "the resolved web topology of this repository",
+                web_topology(ctx),
+            )
+            .artifacts(version),
+        );
+    }
     Ok(out)
+}
+
+/// The resolved web topology as data: every surface with its mount, category, visibility,
+/// kind, producer, artifact, runtime feature and provenance, in route-precedence order.
+///
+/// It is the same value the `web.surfaces` capability answers and the same one the router
+/// serves from — this file exists because the site generator runs without a Rust toolchain
+/// and reads committed artifacts, not because the topology has a second source.
+///
+/// A surface whose existence depends on a producer having run is in it either way: the
+/// topology says what this repository exposes, and whether a directory is presently on disk
+/// is a fact of a checkout, not of the repository. That is what keeps the file stable
+/// enough for `generate --check` to compare.
+pub fn web_topology(ctx: &Context) -> Value {
+    let surfaces: Vec<Value> = ctx
+        .web
+        .surfaces
+        .iter()
+        .map(|s| {
+            let mut v = serde_json::to_value(s).unwrap_or(Value::Null);
+            // a built revision is a fact of one checkout's artifacts, never of the
+            // repository: it would make this file differ per machine
+            if let Some(map) = v.as_object_mut() {
+                map.remove("built_from");
+            }
+            v
+        })
+        .collect();
+    // The schema, the provenance and the generator are the document's, added by
+    // `Document`: stating them here as well would be two statements of one thing, and the
+    // encodings would then have to agree about which of them was right.
+    serde_json::json!({
+        "generated_root": crate::web::discover::GENERATED_ROOT,
+        // the reservations as data, from the one place that declares them: the validator
+        // refuses a topology that breaks one of these, and the site renders this map
+        "reserved": crate::web::discover::reserved()
+            .into_iter()
+            .map(|r| (r.role.to_string(), Value::String(r.path.to_string())))
+            .collect::<serde_json::Map<String, Value>>(),
+        "surfaces": surfaces,
+    })
 }
 
 /// The builtin registry as data: modules, descriptors with their schemas, and the
@@ -1743,14 +1808,14 @@ fn reference(registry: &CapabilityRegistry) -> String {
     s.push_str(".\n\n## Infrastructure routes\n\n");
     s.push_str("The HTTP projection's own routes, not capabilities: ");
     s.push_str(
-        &openapi::INFRASTRUCTURE_ROUTES
+        &openapi::infrastructure_routes()
             .iter()
             .map(|r| format!("`{r}`"))
             .collect::<Vec<_>>()
             .join(", "),
     );
     s.push_str(
-        ". `/docs` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/mcp` is MCP over HTTP on the shared server.\n",
+        ". `/swagger` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/docs/` is this repository's own documentation, and `/mcp` is MCP over HTTP on the shared server.\n",
     );
     let _ = CapabilityKind::Query; // the kind vocabulary is documented in docs/CAPABILITIES.md
     s
@@ -2065,6 +2130,28 @@ mod tests {
         );
     }
 
+    /// The manifest indexes every target but itself, and it is generated last. Three times
+    /// a target was added to `ALL` and left out of the list beside it, which made that
+    /// target's artifacts the only ones the index said nothing about. The set is derived
+    /// now; this is what holds the order.
+    #[test]
+    fn every_target_but_the_manifest_is_indexed_and_the_manifest_is_last() {
+        assert_eq!(
+            Target::ALL.last(),
+            Some(&Target::Manifest),
+            "the manifest indexes the others, so it is generated after them"
+        );
+        assert!(
+            !Target::indexed().contains(&Target::Manifest),
+            "the manifest does not index itself"
+        );
+        assert_eq!(
+            Target::indexed(),
+            Target::ALL[..Target::ALL.len() - 1].to_vec(),
+            "the indexed targets are ALL up to the manifest, in generation order"
+        );
+    }
+
     /// Every target has a name and every name is distinct: the manifest and the command
     /// line both address a target by it.
     #[test]
@@ -2076,8 +2163,7 @@ mod tests {
         assert_eq!(names.len(), unique.len(), "{names:?}");
         assert!(names.iter().all(|n| !n.is_empty()));
         assert_eq!(Target::Manifest.name(), "manifest");
-        assert_eq!(Target::INDEXED.len(), Target::ALL.len() - 1);
-        assert!(!Target::INDEXED.contains(&Target::Manifest));
+        assert_eq!(Target::indexed().len(), Target::ALL.len() - 1);
     }
 
     /// The encoding is read from the suffix, and anything the generator does not encode

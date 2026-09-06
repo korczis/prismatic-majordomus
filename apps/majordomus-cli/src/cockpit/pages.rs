@@ -16,7 +16,6 @@ use crate::capability::builtin::{
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
 use crate::graph::Graph;
-use crate::http::openapi;
 use crate::http::router::percent_encode;
 
 use super::html::{el, empty, El, Node};
@@ -614,10 +613,14 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                         .http
                         .as_ref()
                         .map(|h| format!("{} {}", h.method.as_str(), h.path)),
-                    c.exposure
-                        .http
-                        .as_ref()
-                        .map(|_| format!("/docs#/{}/{}", c.module, c.id)),
+                    c.exposure.http.as_ref().map(|_| {
+                        format!(
+                            "{}#/{}/{}",
+                            crate::http::swagger::SWAGGER_PATH,
+                            c.module,
+                            c.id
+                        )
+                    }),
                 ),
                 projection_row(
                     "Command line",
@@ -2040,28 +2043,18 @@ pub fn api(ctx: &Context) -> Page {
         .collect();
     rows.sort_by_key(|r| r.render());
 
+    // the projection's own routes and what each one is, read off the surfaces that declare
+    // them: this table has never held a path of its own and must not start
     let infrastructure = table(
         &["Path", "What it is"],
-        openapi::INFRASTRUCTURE_ROUTES
-            .iter()
-            .map(|path| {
+        crate::web::discover::native_all()
+            .into_iter()
+            .map(|surface| {
                 row(vec![
-                    cell(mono(*path)),
-                    text_cell(match *path {
-                        "/" => "the index: what this server is and where its surfaces are",
-                        "/openapi.json" => {
-                            "the OpenAPI document, built from the registry per process"
-                        }
-                        "/docs" => "Swagger UI over that document",
-                        "/mcp" => "MCP over HTTP, when this process serves a shared server",
-                        _ => "a route of the projection itself",
-                    }),
+                    cell(mono(surface.mount.as_str())),
+                    text_cell(&surface.title),
                 ])
             })
-            .chain(std::iter::once(row(vec![
-                cell(mono("/cockpit")),
-                text_cell("this Cockpit: server-rendered pages over the same registry"),
-            ])))
             .collect(),
     );
 
@@ -2072,7 +2065,7 @@ pub fn api(ctx: &Context) -> Page {
             .class("mj-grid")
             .child(card_with(
                 "Swagger UI",
-                link("/docs", "Open"),
+                link(crate::http::swagger::SWAGGER_PATH, "Open"),
                 el("p").class("mj-prose").text(
                     "Swagger UI is served from this process and reads /openapi.json, which is generated from the registry at first request. Nothing about an operation is written twice: the descriptions, the schemas and the examples are the capability's own.",
                 ),

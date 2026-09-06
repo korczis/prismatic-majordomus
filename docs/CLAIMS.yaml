@@ -1215,3 +1215,21 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.
+
+  - id: web-surface-declared-once
+    claim: Every web surface is declared once at its producer and resolved into one topology, from which the router, the landing page and the machine-readable index are each projected
+    source: .ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md
+    implementation: apps/majordomus-cli/src/web/model.rs
+    test: test/cases/89_web_surface.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: A surface is a mount, a producer, a kind, a category, a visibility and the provenance of each; the routes the executable answers come from the capability declarations that already exist, a generated directory declares itself beside its output, and the application's site is read from the site generator's configuration. There is no central list. The case asks the page and the index independently and requires the same set of public mounts, so a link written into the page by hand fails it.
+
+  - id: web-namespaces-reserved
+    claim: /docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount
+    source: .ai/repo/rules/project/web-surface-declared-once.v1.md
+    implementation: apps/majordomus-cli/src/web/discover.rs
+    test: test/cases/89_web_surface.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there.

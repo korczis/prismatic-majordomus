@@ -192,13 +192,22 @@ fn answer(router: &Router, mut request: tiny_http::Request) {
     tracing::debug!(method = %method, target = %target, status = response.status, "response");
     // always Content-Length, never chunked: one less thing a small client must decode;
     // a HEAD gets the GET's headers and no body
-    let body = if head { String::new() } else { response.body };
-    let mut out = HttpResponse::from_string(body)
-        .with_chunked_threshold(usize::MAX)
-        .with_status_code(response.status)
-        .with_header(
-            Header::from_bytes("Content-Type", response.content_type).expect("static header"),
-        );
+    let body: Vec<u8> = if head {
+        Vec::new()
+    } else {
+        response.body.as_bytes().to_vec()
+    };
+    let length = body.len();
+    let mut out = HttpResponse::new(
+        response.status.into(),
+        Vec::new(),
+        std::io::Cursor::new(body),
+        Some(length),
+        None,
+    )
+    .with_chunked_threshold(usize::MAX)
+    .with_status_code(response.status)
+    .with_header(Header::from_bytes("Content-Type", response.content_type).expect("static header"));
     // `no-store` is right for an answer derived from a repository that a person is editing;
     // a response that named its own caching (a Cockpit asset whose URL carries its digest)
     // keeps what it said

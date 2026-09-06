@@ -2,7 +2,8 @@
 # The gates the Rust executable must pass, in the order CI runs them: format, lints with
 # warnings as errors (a public item without documentation is one), the suites including
 # doctests, rustdoc with warnings denied, the benchmarks compiling, the registry's own
-# validation, the committed projections in sync, the benchmark coverage complete, and line
+# validation, the committed projections in sync, the benchmark coverage complete, the web
+# topology valid (one owner per path, every native surface answerable), and line
 # coverage above the threshold in scripts/rust-coverage-threshold when cargo-llvm-cov is
 # installed. One script, so that CI and a person run the same gates in the same order.
 #
@@ -11,7 +12,7 @@
 #                                       benchmark check against this platform's baseline
 #   scripts/rust-check --integration    the executable built and the registry checks only:
 #                                       capabilities validate, generate --check, bench
-#                                       coverage --check. What a change outside the crate
+#                                       coverage --check, web validate. What a change outside the crate
 #                                       can affect: the layer, the schemas, the documents the
 #                                       registry dataset is derived from.
 #   --artifact DIR                      after building, copy the executable into DIR with a
@@ -53,6 +54,11 @@ step "cargo build";                  cargo build --quiet
 step "capabilities validate";        cargo run --quiet -- capabilities validate
 step "generate --check";             cargo run --quiet -- generate --check
 step "bench coverage --check";       cargo run --quiet -- bench coverage --check
+# the web topology this repository declares: ids unique, one owner per path in each world,
+# every artifact inside the generated root, and every native surface answerable. Without
+# --artifacts, so it is a check on the declarations rather than on whether a producer has
+# run in this checkout; the serving path requires the artifact at the moment it serves.
+step "web validate";                 cargo run --quiet -- web validate
 if [ "$MODE" = ci ]; then
   # a conservative measurement through the real transports, compared with this platform's
   # baseline under .ai/repo/benchmarks/rust/ when one is committed

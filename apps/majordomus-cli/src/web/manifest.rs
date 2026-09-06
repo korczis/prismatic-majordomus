@@ -77,7 +77,7 @@ impl Manifest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web::model::{Availability, Mount, Surface, SurfaceKind};
+    use crate::web::model::{Availability, Category, Mount, Surface, SurfaceKind, Visibility};
     use std::collections::BTreeMap;
 
     #[test]
@@ -85,12 +85,16 @@ mod tests {
         let topology = Topology::new(vec![Surface {
             id: "tests".into(),
             title: "Test report".into(),
+            category: Category::Report,
+            visibility: Visibility::Public,
             kind: SurfaceKind::StaticDirectory,
             mount: Mount::parse("/tests").unwrap(),
             producer: "quality".into(),
+            feature: None,
             artifact: Some("target/web/tests".into()),
             index: Some("index.html".into()),
             availability: Availability::Both,
+            built_from: None,
             provenance: BTreeMap::new(),
         }]);
         let manifest = Manifest::new(topology, Vec::new(), "0.0.0");
