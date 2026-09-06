@@ -43,14 +43,39 @@ impl SharedServer {
         };
         let url = bound.url();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&ctx), version, url.clone()));
-        let router = Router::new(ctx, version)
+        // The static surfaces of the repository, resolved once at startup: whatever the
+        // producers have generated is served from its own directory, and nothing here names
+        // one of them (ADR 0013). A repository with none mounts none.
+        let root = ctx.index.repository.root.clone();
+        let surfaces = crate::web::discover::discover(
+            std::path::Path::new(&root),
+            crate::web::discover::Runtime::full(),
+        )
+        .map(|topology| {
+            Arc::new(crate::web::serve::StaticSurfaces::new(
+                &topology,
+                std::path::Path::new(&root),
+            ))
+        })
+        .ok();
+        let mounted: Vec<String> = surfaces
+            .as_ref()
+            .map(|s| s.ids().into_iter().map(str::to_string).collect())
+            .unwrap_or_default();
+        let mut router = Router::new(ctx, version)
             .with_mcp(Arc::clone(&endpoint))
             .with_cockpit(share_dir);
+        if let Some(surfaces) = surfaces {
+            if !surfaces.is_empty() {
+                router = router.with_surfaces(surfaces);
+            }
+        }
         lease.publish(&url)?;
         let running = bound.start(router);
         tracing::info!(
             url = %url,
             lease = %lease.path().display(),
+            surfaces = %if mounted.is_empty() { "none".to_string() } else { mounted.join(", ") },
             "shared server listening on {url} (cockpit {url}/cockpit, swagger ui {url}/docs, openapi {url}/openapi.json, mcp over http {url}/mcp); the one server for this repository: every later `majordomus mcp` here attaches to it, and it ends when the last peer leaves"
         );
         Ok(SharedServer {
