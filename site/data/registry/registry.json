@@ -6,7 +6,7 @@
     "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "a02dab8edbacfcb2608ac82cc93c27c85419a1d1c520698a7b7394c41fdc4d40",
+    "fingerprint": "3b8f0a25f1da5a941946b6ebce71238ea53954b4c838ebc1fc2d60613369e1b4",
     "summary": {
       "total": 946,
       "builtin": 33,
@@ -9836,7 +9836,7 @@
     ]
   },
   "index": {
-    "fingerprint": "208cc6f5b03a8868823315c6484111d8b0f9702271ab6f40764d3c1c34b47643",
+    "fingerprint": "992eb6a1c453b9d873278448247e837f821a03bfea96a3b574c8f693b4ca2878",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -12520,7 +12520,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 34551
+        "bytes": 34444
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -15669,7 +15669,7 @@
         "path": ".ai/repo/project/issues/I1015.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1805
+        "bytes": 1848
       },
       {
         "uri": "majordomus://issue/I1016",
@@ -26502,11 +26502,42 @@
       }
     ],
     "infrastructure": [
-      "/",
-      "/openapi.json",
-      "/swagger",
-      "/mcp",
-      "/cockpit"
+      {
+        "id": "home",
+        "path": "/",
+        "what": "This process, and everything it serves",
+        "availability": "served-only"
+      },
+      {
+        "id": "api",
+        "path": "/api/v1",
+        "what": "The capability registry over HTTP",
+        "availability": "served-only"
+      },
+      {
+        "id": "openapi",
+        "path": "/openapi.json",
+        "what": "The OpenAPI document of the capability registry",
+        "availability": "both"
+      },
+      {
+        "id": "swagger",
+        "path": "/swagger",
+        "what": "Swagger UI over the OpenAPI document",
+        "availability": "served-only"
+      },
+      {
+        "id": "mcp",
+        "path": "/mcp",
+        "what": "MCP over HTTP for attached clients",
+        "availability": "served-only"
+      },
+      {
+        "id": "cockpit",
+        "path": "/cockpit",
+        "what": "The registry, rendered for a person",
+        "availability": "served-only"
+      }
     ],
     "openapi_path": "docs/generated/openapi.json"
   },

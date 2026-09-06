@@ -33,7 +33,7 @@ documentation arrived the name meant two things; the rule
 | The registry, rendered for a person | `/cockpit` | native-route | interface | public | served-only | `cockpit` |
 | The documentation, as this process serves it | `/docs` | static-directory | documentation | public | served-only | `scripts/site-build --serve` |
 | MCP over HTTP for attached clients | `/mcp` | native-route | protocol | internal | served-only | `mcp endpoint` |
-| The OpenAPI document of the capability registry | `/openapi.json` | native-route | api | public | served-only | `capability registry` |
+| The OpenAPI document of the capability registry | `/openapi.json` | native-route | api | public | both | `capability registry` |
 | Swagger UI over the OpenAPI document | `/swagger` | native-route | documentation | public | served-only | `http::swagger` |
 | The site as it is deployed | `/` | static-directory | documentation | public | published-only | `scripts/site-build` |
 | This process, and everything it serves | `/` | native-route | interface | public | served-only | `web::home` |
