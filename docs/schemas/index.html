@@ -812,6 +812,53 @@ durable records and are tracked.</p>
 <p>The defence stays in place regardless: a session record from another worktree is reported and is not treated as this checkout's
 open session, exactly as a foreign task record is.</p>
 <hr />
+<h2 id="ai-local-session-contexts-stamp-session-id-md"><a class="zola-anchor" href="#ai-local-session-contexts-stamp-session-id-md" aria-label="Anchor link for: ai-local-session-contexts-stamp-session-id-md"><code>.ai/local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md</code></a></h2>
+<p>The bounded working context of one episode, written by <code>session start</code> and appended to by
+<code>session close</code>. Its contract is <code>majordomus.session-context/v1</code>
+(<code>share/schemas/majordomus/session-context/</code>); the kind is declared in <code>share/kinds.yaml</code>
+like every other, and no source class discovers it.</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">ession-context/v1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">k</span><span class="z-l-4 z-d-1">ind</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">ession-context</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">ession_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> s</span><span class="z-l-8 z-d-8">-20260906035523-7b6c</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">pened_at</span><span class="z-l-6 z-d-9">:</span><span class="z-l-3 z-d-7"> 2026-09-06T03:55:23Z</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">o</span><span class="z-l-4 z-d-1">pened_by</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> h</span><span class="z-l-8 z-d-8">ook</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> hook | hand</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rovider</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">laude-code</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> only when a provider&#39;s event opened it</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rovider_session</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">abc-123</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the provider&#39;s own identity, as it sent it</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">ranch</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">aster</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">h</span><span class="z-l-4 z-d-1">ead</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> 9</span><span class="z-l-8 z-d-8">b1e2d4f8c3a5e7b1d0f2a4c6e8b0d3f5a7c9e1b</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">ask_id</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">one</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">p</span><span class="z-l-4 z-d-1">rofile</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> n</span><span class="z-l-8 z-d-8">one</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">w</span><span class="z-l-4 z-d-1">orker</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">some-provider/some-model</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> optional; recorded only when supplied</span></span>
+<span class="giallo-l"><span>---</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">#</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Working context of session s-20260906035523-7b6c</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">##</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Context at open</span></span>
+<span class="giallo-l"><span class="z-l-5 z-d-2">&lt;</span><span class="z-l-4 z-d-1">the</span><span class="z-l-14 z-d-18"> context</span><span class="z-l-14 z-d-18"> builder</span><span class="z-l-13 z-d-12">&#39;s</span><span class="z-l-14 z-d-18"> output,</span><span class="z-l-14 z-d-18"> verbatim</span><span class="z-l-5 z-d-2">&gt;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">##</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Notes</span></span>
+<span class="giallo-l"><span class="z-l-5 z-d-2">&lt;</span><span class="z-l-4 z-d-1">the</span><span class="z-l-14 z-d-18"> worker</span><span class="z-l-13 z-d-12">&#39;s</span><span class="z-l-14 z-d-18"> own</span><span class="z-l-14 z-d-18"> account</span><span class="z-l-14 z-d-18"> of</span><span class="z-l-14 z-d-18"> the</span><span class="z-l-14 z-d-18"> work</span><span class="z-l-5 z-d-2">&gt;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span class="z-l-8 z-l-b z-d-8 z-d-b">##</span><span class="z-l-8 z-l-b z-d-8 z-d-b"> Close                              # appended by </span><span class="z-l-16 z-l-b z-d-16 z-d-b">`</span><span class="z-l-16 z-l-b z-d-16 z-d-b">session close</span><span class="z-l-16 z-l-b z-d-16 z-d-b">`</span></span>
+<span class="giallo-l"><span class="z-l-14 z-d-18">-</span><span> closed_at: 2026-09-06T05:12:04Z</span></span>
+<span class="giallo-l"><span class="z-l-14 z-d-18">-</span><span> outcome: closed</span></span>
+<span class="giallo-l"><span class="z-l-14 z-d-18">-</span><span> head: 9b1e2d4f…</span></span>
+<span class="giallo-l"><span class="z-l-14 z-d-18">-</span><span> record: .ai/repo/sessions/20260906T051204Z--s-…--master--9b1e2d4--c0ffee1234567890.md</span></span></code></pre>
+<p><code>opened_by</code> is <code>hook</code> exactly when the open named the provider that delivered the event,
+which only something running inside that provider's hook can do; that is what makes it a
+fact rather than a claim. <code>provider_session</code> is the string that ties the episode to the
+prompt archive, whose records carry the same one.</p>
+<p>The document is <strong>appended to, never rewritten</strong>: the front matter describes the open, and
+the close adds a section, so whatever a worker typed between the two events survives. It is
+<strong>not tracked</strong>, and unlike the other local state it is not tracked for a second reason as
+well: it is a snapshot of a projection, so re-resolving it later produces a different
+document and no surface can reproduce it (ADR 0015).</p>
+<p>It is never a transcript. The derived half is the builder's output and the authored half
+summarises the work; a front-matter key naming a message list, a completion or a model's
+reply is refused by the <code>majordomus.session-lifecycle</code> doctrine, which is how
+<code>project.never-store-transcripts</code> is kept mechanically here rather than by memory.</p>
+<hr />
 <h2 id="ai-repo-sessions-file-md"><a class="zola-anchor" href="#ai-repo-sessions-file-md" aria-label="Anchor link for: ai-repo-sessions-file-md"><code>.ai/repo/sessions/&lt;file&gt;.md</code></a></h2>
 <p>The immutable record of a closed session. Filename:
 <code>&lt;utc-compact&gt;--&lt;session-id&gt;--&lt;branch-key&gt;--&lt;short-head&gt;--&lt;16 hex&gt;.md</code>, e.g.
@@ -1209,7 +1256,7 @@ the note but does not validate that block. On success the note is copied to
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7a4bba74e6fb9eaf6286681ce5acbc299d4f6594" class="font-mono hover:underline">7a4bba7</a> · inputs <span class="font-mono">f2e70628659c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/09a1689fbd419dee6f61e88ecd69323791892a1f" class="font-mono hover:underline">09a1689</a> · inputs <span class="font-mono">09e1493df34d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

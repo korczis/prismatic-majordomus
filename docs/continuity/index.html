@@ -230,8 +230,14 @@ that is exactly the causal thread a later reader is trying to pick up.</p>
 <div class="overflow-x-auto">
 <table><thead><tr><th>Record</th><th>Answers</th><th>Mutability</th><th>Where</th></tr></thead><tbody>
 <tr><td><strong>session</strong></td><td>what one execution episode did, between which commits, producing which records</td><td>one open per worktree, then immutable</td><td><code>local/state/session-current.yaml</code>, then the layer’s <code>repo/sessions/</code></td></tr>
+<tr><td><strong>working context</strong></td><td>what the worker was told when the episode opened, and what it noted while working</td><td>appended to, never rewritten</td><td><code>local/session-contexts/&lt;stamp&gt;--&lt;session-id&gt;.md</code></td></tr>
 </tbody></table>
 </div>
+<p>The two are not the same record and answer opposite questions. The closed session says what
+the episode produced, derived from git and the ledger, and it is shared. The working context
+says what the episode was given, frozen from the builder at the open, and it is local: it
+names this machine, and re-resolving it later would produce a different document, so no
+surface can reproduce it and none publishes it (ADR 0015).</p>
 <p>A session opens, may cross several tasks, and closes. <code>task != session</code> in both
 directions: a task spanning two sessions is named by both, and a session spanning two
 tasks names both.</p>
@@ -486,7 +492,7 @@ models are shaped this way.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/7a4bba74e6fb9eaf6286681ce5acbc299d4f6594" class="font-mono hover:underline">7a4bba7</a> · inputs <span class="font-mono">f2e70628659c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/09a1689fbd419dee6f61e88ecd69323791892a1f" class="font-mono hover:underline">09a1689</a> · inputs <span class="font-mono">09e1493df34d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
