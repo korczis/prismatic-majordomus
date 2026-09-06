@@ -10,7 +10,6 @@
     from a symptom to a recommendation anywhere in this template or in any script: adding
     one file under the layer changes every part of what follows. -#}
 {%- set catalogue = load_data(path="data/registry/why.json") -%}
-{%- set graph = load_data(path="data/registry/why-graph.json") -%}
 {%- set public = [m for m in catalogue.moments if m.status == "stable"] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 
@@ -114,29 +113,29 @@
                class="w-full max-w-sm rounded-base border border-default bg-neutral-primary px-3 py-1.5 text-sm text-heading placeholder:text-body-subtle focus:border-brand focus:ring-brand">
         <button type="button" x-on:click="reset()" x-show="q || audience || area || severity"
                 class="rounded-base border border-default px-2.5 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium">clear</button>
-        <span class="font-mono text-xs text-body-subtle" x-text="count + ' of {{ public | length }}'"></span>
+        <span class="font-mono text-xs text-body-subtle" role="status" aria-live="polite" x-text="count + ' of {{ public | length }} shown'"></span>
       </div>
       {#- One row per facet. The values are the catalogue's, counted; only the three
           bound names differ, which is why the rows are written out rather than looped. -#}
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">who</span>
-        <button type="button" x-on:click="audience = ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="audience === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
+        <button type="button" x-on:click="audience = ''" :aria-pressed="audience === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="audience === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
         {%- for v in catalogue.facets.audiences %}
-        <button type="button" x-on:click="audience = (audience === '{{ v.value }}' ? '' : '{{ v.value }}')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="audience === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
+        <button type="button" x-on:click="audience = (audience === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="audience === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="audience === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
         {%- endfor %}
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">area</span>
-        <button type="button" x-on:click="area = ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="area === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
+        <button type="button" x-on:click="area = ''" :aria-pressed="area === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="area === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
         {%- for v in catalogue.facets.areas %}
-        <button type="button" x-on:click="area = (area === '{{ v.value }}' ? '' : '{{ v.value }}')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="area === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
+        <button type="button" x-on:click="area = (area === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="area === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="area === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
         {%- endfor %}
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">cost</span>
-        <button type="button" x-on:click="severity = ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="severity === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
+        <button type="button" x-on:click="severity = ''" :aria-pressed="severity === ''" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="severity === '' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">any</button>
         {%- for v in catalogue.facets.severities %}
-        <button type="button" x-on:click="severity = (severity === '{{ v.value }}' ? '' : '{{ v.value }}')" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="severity === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
+        <button type="button" x-on:click="severity = (severity === '{{ v.value }}' ? '' : '{{ v.value }}')" :aria-pressed="severity === '{{ v.value }}'" class="rounded-base border px-2.5 py-1 font-mono text-xs" :class="severity === '{{ v.value }}' ? 'border-brand bg-brand-softer text-fg-brand-strong' : 'border-default text-body hover:bg-neutral-secondary-medium'">{{ v.label }} <span class="text-body-subtle">{{ v.count }}</span></button>
         {%- endfor %}
       </div>
     </div>
@@ -173,17 +172,14 @@
     <template x-if="count === 0"><p class="mt-6 text-sm text-body-subtle">Nothing matches that. <button type="button" x-on:click="reset()" class="font-medium text-fg-brand hover:underline">Clear the filters</button>.</p></template>
   </section>
 
-  {#- ------------------------------------------------------------------ the graph -#}
-  {%- set graph_id = "why" -%}
-  {%- set graph_rings = "moment,command,capability,claim" -%}
-  {%- set graph_label = "Every moment, who recognises it, the area it falls under, and the commands, capabilities, claims, rules and use cases that answer it. Derived from the moments themselves — a moment naming something this repository does not have fails validation before it can draw an edge to nothing." -%}
-  <h2 class="mt-14 text-2xl font-bold tracking-tight text-heading">How the moments connect to the tool</h2>
-  <p class="mt-2 max-w-3xl text-body">Every arrow below is read out of a moment's own front matter. Nothing on this page is a second list.</p>
-  {% include "partials/graph.html" %}
+  <section class="mt-14">
+    <h2 class="text-2xl font-bold tracking-tight text-heading">How the moments connect to the tool</h2>
+    <p class="mt-2 max-w-3xl text-body">Every moment, who recognises it, the area it falls under, and the commands, capabilities, claims, rules and use cases that answer it — one graph, derived from the moments themselves. Nothing on this site is a second list.</p>
+    <p class="mt-4"><a href="{{ get_url(path='/why/graph/', trailing_slash=true) }}" class="inline-flex items-center rounded-base border border-brand-subtle bg-neutral-primary-soft px-4 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium">Open the map &rarr;</a></p>
+  </section>
 </div>
 {% endblock content %}
 {% block scripts %}
-{% include "partials/graph-scripts.html" %}
 {#- The questionnaire's arithmetic. The data is the catalogue, projected at build time;
     there is no mapping from a symptom to a recommendation written in JavaScript. -#}
 <script id="why-data" type="application/json">{{ {

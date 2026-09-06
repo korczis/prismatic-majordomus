@@ -12,7 +12,7 @@ difficulty: intermediate
 commands: [init, context, knowledge, doctor]
 mcp_tools: [majordomus_why, majordomus_why_moment, majordomus_why_audiences, majordomus_why_areas, majordomus_why_diagnose, majordomus_why_validate]
 doctrines: [majordomus.context-integrity, majordomus.ai-layout-integrity, majordomus.projection-integrity]
-claims: [context-documents, schema-driven-kinds, interfaces-are-projections, mcp-data-driven, generated-projections-checked]
+claims: [why-catalogue-discovered, why-references-resolve, why-diagnosis-explainable, context-documents, schema-driven-kinds, interfaces-are-projections, mcp-data-driven, generated-projections-checked]
 responsibilities: [layer, projection, doctor]
 applications: [repository-with-authored-governance, repository-opened-in-ai-clients]
 scenario:

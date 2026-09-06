@@ -49,7 +49,9 @@ rather than guessed.
 
 The file name is the `id` is the slug is the route. `moments/two-agents-one-bug.md` is
 `majordomus://moment/two-agents-one-bug` is `/why/two-agents-one-bug/`; there is no
-mapping table anywhere.
+mapping table anywhere. Four identities are reserved because the section's own routes use
+them — `audiences`, `areas`, `graph` and `index` — and a moment claiming one is refused
+rather than quietly replacing a page.
 
 ## Discovery
 

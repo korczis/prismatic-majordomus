@@ -42,6 +42,11 @@ pub const AREA: &str = "area";
 /// The section the catalogue is published under.
 pub const ROUTE: &str = "/why/";
 
+/// The identities the section's own routes use. A moment called one of these would claim a
+/// route the section already owns — `/why/audiences/` is the taxonomy, not a moment — and
+/// the collision would show up as a page quietly replaced rather than as an error.
+pub const RESERVED: &[&str] = &["audiences", "areas", "graph", "index"];
+
 /// A moment that is complete and public. Draft records are listed as drafts and counted
 /// nowhere; deprecated ones keep their route and are listed nowhere.
 pub const STABLE: &str = "stable";
@@ -529,6 +534,21 @@ impl Catalogue {
                         did_you_mean: nearest(&e.audience, audiences.iter().map(String::as_str)),
                     });
                 }
+            }
+            if RESERVED.contains(&m.id.as_str()) {
+                findings.push(Finding {
+                    severity: Severity::Error,
+                    code: "reserved_identity".into(),
+                    path: m.source.clone(),
+                    id: Some(m.id.clone()),
+                    field: Some("id".into()),
+                    message: format!(
+                        "'{}' is a route this section owns; a moment may not claim it (reserved: {})",
+                        m.id,
+                        RESERVED.join(", ")
+                    ),
+                    did_you_mean: None,
+                });
             }
             if m.related.contains(&m.id) {
                 findings.push(Finding {

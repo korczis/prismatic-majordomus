@@ -481,3 +481,21 @@ fn a_repository_with_no_catalogue_answers_an_empty_one_rather_than_failing() {
     let report = app.context.execute("why.validate", json!({})).unwrap();
     assert_eq!(report["valid"], true, "an empty catalogue is a valid one");
 }
+
+#[test]
+fn a_moment_may_not_claim_a_route_the_section_owns() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/why/moments/areas.md",
+        &common::MOMENT.replace("id: fixture-moment", "id: areas"),
+    );
+    f.commit("reserved");
+    let (_app, c) = catalogue(&f);
+    let found = c
+        .findings()
+        .iter()
+        .find(|d| d.code == "reserved_identity")
+        .expect("a reserved identity is a finding");
+    assert!(found.message.contains("route this section owns"));
+    assert_eq!(c.errors(), 1);
+}

@@ -1336,6 +1336,7 @@ jq -r '.moments[] | select(.status != "deprecated") | [.id, .title, .summary, .s
       "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$status")" "$(jstr "$source")"
     mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/why/$id.md"; done
+printf -- '+++\ntitle = "The map"\ndescription = "Every moment with who recognises it, the area it falls under, and the commands, capabilities, claims, rules and use cases that answer it — derived from the moments themselves."\nweight = 1000\ntemplate = "why-graph.html"\n[extra]\nsource = "majordomus graph get why"\n+++\n' > "$CONTENT_ROOT/why/graph.md"
 # the two taxonomies, each a subsection with one page per entry; both are enumerated from
 # the dataset, so an audience or an area added as a file gets its route with no edit here
 for tx in audiences areas; do

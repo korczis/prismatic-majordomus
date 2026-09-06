@@ -10,7 +10,7 @@
 //! Numbers are reported, not asserted; no budget is promised in the documentation until one
 //! is measured on CI.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use majordomus_cli::capability::{builtin, CapabilityRegistry};
@@ -84,7 +84,7 @@ fn repository(n: usize) -> (tempfile::TempDir, PathBuf) {
     (dir, root)
 }
 
-fn index_of(root: &PathBuf) -> Index {
+fn index_of(root: &Path) -> Index {
     let repo = Repository::discover(root).unwrap();
     let share =
         Share::locate(Some(&majordomus_cli::synthetic::crate_share()), repo.root()).unwrap();

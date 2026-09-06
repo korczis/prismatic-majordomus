@@ -1,0 +1,15 @@
+{% extends "page.html" %}
+{% block body %}
+{#- The catalogue as a graph. Every arrow is read out of a moment's own front matter; a
+    moment naming something this repository does not have fails validation before it can
+    draw an edge to nothing. The list below the figure IS the graph — the canvas is an
+    enhancement over it, and its library loads only when the figure scrolls into view. -#}
+{%- set graph = load_data(path="data/registry/why-graph.json") -%}
+{%- set catalogue = load_data(path="data/registry/why.json") -%}
+{%- set graph_id = "why" -%}
+{%- set graph_rings = "moment,command,capability,claim" -%}
+{%- set graph_label = "Every moment, who recognises it, the area it falls under, and the commands, capabilities, claims, rules and use cases that answer it." -%}
+{% include "partials/graph.html" %}
+<p class="mt-6 max-w-3xl text-sm text-body-subtle">Read the other way it answers the coverage question: which moments does this capability answer, which does this rule govern, and which parts of operations have nothing behind them yet. Nothing here is authored — <code class="font-mono text-heading">majordomus why show &lt;id&gt;</code> and <code class="font-mono text-heading">GET /api/v1/graph?id=why</code> derive the same edges from the same records.</p>
+{% endblock body %}
+{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}

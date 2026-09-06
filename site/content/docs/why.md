@@ -27,7 +27,8 @@ the rule is `project.why-catalogue-is-canonical`; the directory's own contract i
 
 The file name is the `id` is the slug is the route. `moments/two-agents-one-bug.md` is
 `majordomus://moment/two-agents-one-bug` is `/why/two-agents-one-bug/`, and no table
-anywhere maps one to another.
+anywhere maps one to another. `audiences`, `areas`, `graph` and `index` are reserved: the
+section's own routes use them, and a moment claiming one is refused.
 
 ## The flow
 
@@ -172,6 +173,7 @@ list, no Rust and no schema change.
 |---|---|---|
 | front matter shape | `share/schemas/{moment,audience,area}.schema.json` | the index validates every object at build; an unknown key, an unknown enum value or an unsupported `schema:` version excludes the file and degrades the index |
 | the file name is the id | the record's `id` | `why validate` — `filename_mismatch`, naming the file it should be |
+| a moment does not claim a route the section owns | `why::RESERVED` | `why validate` — `reserved_identity` |
 | one identity per file | the index | two claimants are both excluded; the catalogue adopts the diagnostic rather than reporting itself valid |
 | references | the catalogue, the registries, the rule set | `why validate` — `unknown_reference`, with the nearest candidate |
 | what a public record owes | `status: stable` | `why validate` — `missing_content` warnings; a `draft` is exempt and says so |
