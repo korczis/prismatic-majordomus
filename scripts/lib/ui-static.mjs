@@ -113,7 +113,13 @@ export function scan(text, { scrollingTagNames = [] } = {}) {
   // unless the elements carrying it are in this same document, where the check can see them
   // and has already judged them.
   for (const match of text.matchAll(/\.([a-zA-Z][\w-]*)\s*\{[^}]*overflow-x\s*:\s*(auto|scroll)/g)) {
+    // A document that declares the class and carries it can be judged here, and is: the
+    // warning stands only when the elements are somewhere this scan cannot see. A stylesheet
+    // whose consumers are in another language is that case; a self-contained page with no
+    // element carrying the class at all is not — there is nothing there to be wrong.
     const carriers = tags(text).filter((t) => new RegExp(`\\b${match[1]}\\b`).test(t.attributes));
+    const selfContained = /<style[^>]*>/i.test(text);
+    if (selfContained && carriers.every((t) => /\btabindex\s*=/.test(t.attributes))) continue;
     if (carriers.length && carriers.every((t) => /\btabindex\s*=/.test(t.attributes))) continue;
     offences.push({
       line: text.slice(0, match.index).split('\n').length,

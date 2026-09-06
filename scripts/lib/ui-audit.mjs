@@ -54,8 +54,18 @@ export async function auditPage(page, origin, route, width) {
     if (message.type() === 'error') console_errors.push(message.text().slice(0, 300));
   });
   page.on('requestfailed', (request) => {
-    // only the site's own assets: an outside host failing is the network's business
-    if (request.url().startsWith(origin)) failed_requests.push(`${request.method()} ${request.url()}`);
+    // only the site's own assets: an outside host failing is the network's business. The
+    // browser's own reason is carried through, because "an asset failed" and "the browser
+    // cancelled a request it no longer needed" are different findings and look identical
+    // without it.
+    if (!request.url().startsWith(origin)) return;
+    const reason = request.failure()?.errorText ?? 'unknown';
+    // A cancelled request is not a failed one. `net::ERR_ABORTED` is the browser saying it
+    // no longer needs the response — a navigation replaced the page, or a script dropped
+    // the element that asked for it — and a lazily loaded asset in flight when the audit
+    // moves to the next visit produces exactly that. It says nothing about the site.
+    if (reason.includes('ERR_ABORTED')) return;
+    failed_requests.push(`${request.method()} ${request.url()} (${reason})`);
   });
 
   await page.setViewportSize({ width, height: 900 });
@@ -229,7 +239,7 @@ export async function audit(origin, pages, { onVisit } = {}) {
   // so a CI runner and a laptop use one browser and neither downloads another
   const browser = await chromium.launch({ channel: 'chrome' });
   const context = await browser.newContext();
-  const page = await context.newPage();
+  let page = await context.newPage();
   const visits = [];
   try {
     // One throwaway visit first. The server answers its readiness probe before it has built
@@ -237,7 +247,7 @@ export async function audit(origin, pages, { onVisit } = {}) {
     // once — long enough, on a loaded machine, to exceed a per-visit timeout and report the
     // first page of the run as unreachable. Warming it costs one page load and removes a
     // whole class of finding that says more about the machine than about the site.
-    await page.goto(origin, { waitUntil: 'load', timeout: 120000 }).catch(() => {});
+    await page.goto(origin, { waitUntil: 'networkidle', timeout: 120000 }).catch(() => {});
     for (const target of pages) {
       for (const width of target.widths) {
         let visit;
@@ -248,7 +258,19 @@ export async function audit(origin, pages, { onVisit } = {}) {
             `${target.route} at ${width}px`,
           );
         } catch (error) {
-          // whatever went wrong on this page, the next page is still worth measuring
+          // A refused connection is not a fact about this page. The server the audit drives
+          // is gone, and every remaining visit would be recorded as an unreachable page —
+          // 173 findings that say nothing, over a run that measured nothing after the first
+          // failure. Stop, and say what actually happened.
+          if (String(error?.message ?? error).includes('ERR_CONNECTION_REFUSED')) {
+            throw new Error(
+              `the server at ${origin} stopped answering during the run, at ${target.route} ` +
+                `(${visits.length} visit(s) measured); the audit cannot speak for the rest`,
+            );
+          }
+          // Whatever else went wrong on this page, the next page is still worth measuring — but
+          // a deadline only stops *waiting*; the work it abandoned is still running in that
+          // tab, and every later operation would queue behind it. So the tab goes with it.
           visit = {
             route: target.route,
             width,
@@ -258,6 +280,8 @@ export async function audit(origin, pages, { onVisit } = {}) {
               detail: String(error?.message ?? error).split('\n')[0],
             }],
           };
+          await page.close().catch(() => {});
+          page = await context.newPage();
         }
         visits.push({ ...visit, tier: target.tier });
         onVisit?.(visit);

@@ -113,12 +113,21 @@ if [ "$sub" = audit ]; then
   [ -d "$ROOT/node_modules/playwright" ] && [ -d "$ROOT/node_modules/axe-core" ] || {
     echo "SKIP ui audit: playwright and axe-core are not installed; run: npm ci" >&2; exit 13; }
 
-  server_pid=""
+  server_pid=""; server_log=""
   trap 'cleanup' EXIT INT TERM
 
   restore=0
   restore_site() { [ "$restore" = 1 ] && { echo "== rebuilding the site for its published base URL"; "$ROOT/scripts/site-build" --no-data >/dev/null; }; }
-  cleanup() { [ -n "$server_pid" ] && kill "$server_pid" 2>/dev/null; restore_site; return 0; }
+  cleanup() {
+    if [ -n "$server_pid" ] && ! kill -0 "$server_pid" 2>/dev/null; then
+      echo "ui: the server exited before the audit finished; the last of its log follows" >&2
+      [ -n "$server_log" ] && tail -30 "$server_log" >&2
+    fi
+    [ -n "$server_pid" ] && kill "$server_pid" 2>/dev/null
+    [ -n "$server_log" ] && rm -f "$server_log"
+    restore_site
+    return 0
+  }
 
   if [ -z "$origin" ]; then
     origin="http://127.0.0.1:$port"
@@ -143,7 +152,7 @@ if [ "$sub" = audit ]; then
     done
     [ "$ready" = 1 ] || { cat "$log" >&2; echo "ui: the server did not answer on $origin" >&2; exit 12; }
     echo "== serving $origin"
-    rm -f "$log"
+    server_log="$log"                              # kept: a server that dies mid-run leaves evidence
   fi
 
   node --input-type=module -e '

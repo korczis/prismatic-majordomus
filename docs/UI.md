@@ -69,7 +69,10 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
   `data-accordion-target`, `data-tabs-toggle`, `data-tooltip-target`, `data-popover-target`,
   and the toggles beside them) names a target that exists and has an accessible name.
 - **`runtime.console-error` / `runtime.asset-failed`** — the page loaded without an error and
-  without a same-origin request failing.
+  without a same-origin request failing. A *cancelled* request is not a failed one:
+  `net::ERR_ABORTED` is the browser saying it no longer needs the response, which is what a
+  lazily loaded asset in flight when the audit moves on produces, and it says nothing about
+  the site.
 - **`page.status` / `page.unreachable` / `page.audit-failed`** — the page answered, and it
   answered in time. A page that does not is a finding about that page, never the end of the
   run.
@@ -108,6 +111,19 @@ source to fix:
 
 Both passes are idempotent: a conforming input is rewritten to itself, and a second pass
 changes nothing. The audit proves it from the outside, which is the only reason to trust it.
+
+## What the audit refuses to attribute to a page
+
+Three failures look like findings and are not, and each one cost a run before it was
+classified:
+
+- a **cancelled** request (`net::ERR_ABORTED`) is the browser saying it no longer needs the
+  response — a lazily loaded asset in flight when the audit moves on — not a failed one;
+- a **refused connection** means the server the audit drives is gone, so the run stops and
+  says how many visits it actually measured, rather than recording every remaining page as
+  unreachable;
+- a **visit that exceeds its deadline** is reported as that page's finding, and the tab it
+  was using is discarded, because a deadline stops waiting and not the work it abandoned.
 
 ## Where the report is
 
