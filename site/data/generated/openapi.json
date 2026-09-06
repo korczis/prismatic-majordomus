@@ -1158,7 +1158,7 @@
         "capabilities.describe",
         "graph.get",
         "graph.list",
-        "system.health",
+        "health.report",
         "objects.get",
         "objects.list",
         "peers.list",
@@ -1597,7 +1597,7 @@
       ],
       "type": "object",
       "used_by": [
-        "system.health"
+        "health.report"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -3457,6 +3457,67 @@
       ]
     },
     {
+      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+      "name": "health",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/health\"",
+          "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+          "id": "health.report",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "health",
+            "uri": "majordomus://health"
+          },
+          "mcp_tool": "majordomus_health",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/health",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::health",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Health of this process: the result.",
+              "schema": "Health",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Health",
+          "stability": "behaviorally_verified",
+          "summary": "Health of this process"
+        }
+      ]
+    },
+    {
       "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched.",
       "name": "objects",
       "operations": [
@@ -4063,67 +4124,6 @@
           "result_schema": "Classification",
           "stability": "behaviorally_verified",
           "summary": "Judge a path against the scope"
-        }
-      ]
-    },
-    {
-      "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
-      "name": "system",
-      "operations": [
-        {
-          "benchmark": "required",
-          "benchmark_reason": "",
-          "body_examples": [],
-          "body_schema": "",
-          "cache": "process",
-          "cache_detail": "max_entries=4, ttl_seconds=5",
-          "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/health\"",
-          "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
-          "id": "system.health",
-          "kind": "query",
-          "mcp_resource": {
-            "name": "health",
-            "uri": "majordomus://health"
-          },
-          "mcp_tool": "majordomus_health",
-          "method": "GET",
-          "parameters": [],
-          "path": "/api/v1/health",
-          "provenance": {
-            "module": "majordomus_cli::capability::builtin::system",
-            "source": "builtin"
-          },
-          "responses": [
-            {
-              "description": "Health of this process: the result.",
-              "schema": "Health",
-              "status": "200"
-            },
-            {
-              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-              "schema": "ErrorBody",
-              "status": "400"
-            },
-            {
-              "description": "`not_found`: The input names something the repository does not hold.",
-              "schema": "ErrorBody",
-              "status": "404"
-            },
-            {
-              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-              "schema": "ErrorBody",
-              "status": "500"
-            },
-            {
-              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-              "schema": "ErrorBody",
-              "status": "default"
-            }
-          ],
-          "result_schema": "Health",
-          "stability": "behaviorally_verified",
-          "summary": "Health of this process"
         }
       ]
     }
