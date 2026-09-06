@@ -100,16 +100,6 @@
       "external": false
     },
     {
-      "id": "lib/session.sh",
-      "kind": "module",
-      "label": "session",
-      "command": "session",
-      "summary": "open, inspect and close one execution episode",
-      "read_only": null,
-      "route": "/commands/session/",
-      "external": false
-    },
-    {
       "id": "lib/check.sh",
       "kind": "module",
       "label": "check",
@@ -340,6 +330,16 @@
       "external": false
     },
     {
+      "id": "lib/session.sh",
+      "kind": "module",
+      "label": "session",
+      "command": "session",
+      "summary": "open, inspect and close one execution episode",
+      "read_only": null,
+      "route": "/commands/session/",
+      "external": false
+    },
+    {
       "id": "lib/project.sh",
       "kind": "module",
       "label": "project",
@@ -510,9 +510,9 @@
       "external": false
     },
     {
-      "id": ".ai/repo/sessions}",
+      "id": ".ai/repo/sessions/README.md",
       "kind": "artifact",
-      "label": "repo/sessions}",
+      "label": "repo/sessions/README.md",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -637,16 +637,6 @@
       "summary": "find durable records without reading all of them",
       "read_only": true,
       "route": "/commands/search/",
-      "external": false
-    },
-    {
-      "id": "lib/session_context.sh",
-      "kind": "module",
-      "label": "session_context",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
       "external": false
     },
     {
@@ -982,11 +972,6 @@
       "kind": "sources"
     },
     {
-      "source": "lib/capture.sh",
-      "target": "lib/session.sh",
-      "kind": "sources"
-    },
-    {
       "source": "lib/check.sh",
       "target": "lib/commands.sh",
       "kind": "sources"
@@ -1159,16 +1144,6 @@
     {
       "source": "lib/session.sh",
       "target": "lib/project.sh",
-      "kind": "sources"
-    },
-    {
-      "source": "lib/session.sh",
-      "target": "lib/session_context.sh",
-      "kind": "sources"
-    },
-    {
-      "source": "lib/session_context.sh",
-      "target": "lib/context.sh",
       "kind": "sources"
     },
     {
@@ -1388,7 +1363,7 @@
     },
     {
       "source": "lib/init.sh",
-      "target": ".ai/repo/sessions}",
+      "target": ".ai/repo/sessions/README.md",
       "kind": "uses"
     },
     {
@@ -1479,6 +1454,11 @@
     {
       "source": "lib/migrate.sh",
       "target": ".ai/repo/scope.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/migrate.sh",
+      "target": ".ai/repo/sessions/README.md",
       "kind": "uses"
     },
     {

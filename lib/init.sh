@@ -76,10 +76,12 @@ H
   mj_init_tree "$skel/ai/repo/use-cases" "$MJ_AI_REPO_DIR/use-cases" '*'
   mj_init_tree "$skel/ai/repo/applications" "$MJ_AI_REPO_DIR/applications" '*'
   mkdir -p "$MJ_PROJECT_DIR"
-  # the sessions section, at the path the manifest names — or, on the first init, at the
-  # path the skeleton's manifest is about to name. The layout variables were resolved
-  # before that manifest existed, so reading them alone would seed nothing here and then
-  # seed it on the next --extend, which is a repository that reports work to do forever.
+  # The sessions section, at the path the manifest names — or, on the first init, at the
+  # path the skeleton's manifest is about to name. The resolved variable is empty on that
+  # first run, because the manifest that names the section is being seeded in the same pass,
+  # so reading it alone would seed nothing here and seed it on the next --extend: a
+  # repository that reports work to do forever. The variable is still preferred when it does
+  # resolve, so a layer whose manifest names another path is honoured rather than overruled.
   local sessions_dir="${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
   mkdir -p "$sessions_dir"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$sessions_dir/README.md"
