@@ -39,6 +39,17 @@ subject, means a test names one behaviour and a reader looking for it opens one 
 module that grows into several unrelated commands makes every test in it ambiguous about
 what it protects.
 
+The coverage floor is part of the same argument, and there is a case for it from this
+repository rather than from principle. A branch that added a model, a static file server and
+a command surface came back at 89.40% against a floor of 90. The floor did not find
+anything — it refused to move, and that refusal is what sent its author looking. What turned
+up was in code written an hour earlier and believed to be covered: vocabulary whose `Display`
+and serialisation could have disagreed, an empty selector that could have meant "none"
+instead of "every", a root-mounted static surface, a surface with no index. A target rather
+than a floor would have allowed 89.40 to be rounded up to basically ninety, and four
+untested branches would have shipped in a file whose whole job is deciding which surface
+answers a request.
+
 The last part is composition. A command is reached because the root composes its module, not
 because a list somewhere was told it exists — the same property `project.interfaces-are-projections`
 requires of every other surface. A module nobody composes is a command that exists and is
