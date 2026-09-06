@@ -1,0 +1,34 @@
+id: I0923
+milestone: fly-deployment
+title: Cold start and endpoint cost are benchmark targets like everything else
+slug: coldstart-and-endpoint-bench
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Measure the cold start of the container and the cost of the cheap endpoints through the benchmark infrastructure the repository already has, and record them as baselines."
+why: "A profile with no minimum running machines means every idle period ends with a cold start that a user pays for. A number nobody measured cannot be improved and cannot be defended."
+current_state: "The benchmark command derives its targets from the command registry and holds a committed baseline. Nothing measures a container or an HTTP endpoint under deployment conditions."
+desired_state: "Process start to listening, process start to readiness and container start to readiness are recorded, the cheap endpoints have latency distributions under the constrained profile, and both are baselines the regression check knows about."
+scope:
+  - .ai/repo/benchmarks/rust
+  - apps/majordomus-cli/src/bench
+non_scope:
+  - A load-testing framework
+  - A throughput claim derived from one machine
+  - Promising a cold-start guarantee from an unrepeatable measurement
+depends_on:
+  - I0930
+acceptance_criteria:
+  - Process start to listening, process start to readiness and container start to readiness are each measured separately
+  - The cheap endpoints are benchmarked under the constrained resource profile with distributions rather than a single number
+  - The measurements are recorded as artifacts through the existing benchmark infrastructure with the environment they were taken on
+  - No cold-start guarantee is stated that the repeatability of the measurement does not support
+validation:
+  - majordomus bench --check
+evidence_required:
+  - coldstart_measured
+  - endpoint_bench
+  - baseline_recorded
+risk: "Container timings on a laptop and on a hosted machine differ enough that one cannot be a baseline for the other. The environment is part of the record."
+created_at: 2026-09-06
+updated_at: 2026-09-06

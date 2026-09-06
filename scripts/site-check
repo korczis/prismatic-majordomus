@@ -309,8 +309,10 @@ jq -r '.coverage.rows[] | select(.class=="command") | .id' "$SITE/data/generated
   grep -q "/commands/$c/" "$PUB/use-cases/coverage/index.html" || bad catalogue "the coverage page does not link command $c"
 done
 ok catalogue "$(jq -r '.counts.use_cases' "$SITE/data/generated/catalogue.json") use case(s) in $(jq -r '.counts.categories' "$SITE/data/generated/catalogue.json") categor(y/ies) and $(jq -r '.counts.applications' "$SITE/data/generated/catalogue.json") application(s): every command, rule, category, related and cross-reference is a link that resolves, and every scenario shown was executed"
-for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
-for r in limitations roadmap why supervises commands plan plan/dag; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
+for slug in $(jq -r '.moments[] | select(.status != "deprecated") | .id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
+for slug in $(jq -r '.audiences[].id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/audiences/$slug/index.html" ] || bad tiles "no page for why/audiences/$slug"; done
+for slug in $(jq -r '.areas[].id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/areas/$slug/index.html" ] || bad tiles "no page for why/areas/$slug"; done
+for r in limitations roadmap why why/audiences why/areas supervises commands plan plan/dag; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
 # the plan: every milestone and every issue is a page, and the DAG the page draws is the DAG
 # the data holds. A diagram that has drifted from its own edge list is the failure this catches.
 PJ="$SITE/data/generated/plan.json"
@@ -412,23 +414,35 @@ done < "$PAGEROWS.nojs"; rm -f "$PAGEROWS.nojs"
 # claims, and every one of those pages carries a link back. A one-way link is how the section
 # drifted out of the rest of the site before — the pages knew about the tool, the tool did not
 # know about the pages.
-WJ="$SITE/data/generated/why.json"
-for slug in $(jq -r '.moments[].slug' "$WJ"); do
+WJ="$SITE/data/registry/why.json"
+for slug in $(jq -r '.moments[] | select(.status == "stable") | .id' "$WJ"); do
   page="$PUB/why/$slug/index.html"
   [ -f "$page" ] || { bad why "no page for moment $slug"; continue; }
   grep -qF "why/$slug/" "$PUB/why/index.html" || bad why "the index does not link moment $slug"
-  for id in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .claims[]' "$WJ"); do
+  for id in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .claims[]' "$WJ"); do
     grep -qF "guarantees/$id/" "$page" || bad why "moment $slug names claim $id but does not link it"
     grep -qF "why/$slug/" "$PUB/guarantees/$id/index.html" || bad why "claim $id is named by moment $slug but does not link back"
   done
-  for r in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .responsibilities[]' "$WJ"); do
-    grep -qF "why/$slug/" "$PUB/supervises/$r/index.html" || bad why "responsibility $r is named by moment $slug but does not link back"
+  for r in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .responsibilities[]' "$WJ"); do
+    grep -qF "why/$slug/" "$PUB/supervises/$r/index.html" || bad why "responsibility $r is derived for moment $slug and does not link back"
   done
-  for n in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .commands[]' "$WJ"); do
+  for n in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .commands[]' "$WJ"); do
     grep -qF "commands/$n/" "$page" || bad why "moment $slug names command $n but does not link it"
   done
+  for a in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .audiences[]' "$WJ"); do
+    grep -qF "why/$slug/" "$PUB/why/audiences/$a/index.html" || bad why "audience $a is named by moment $slug and does not list it"
+  done
+  for a in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .areas[]' "$WJ"); do
+    grep -qF "why/$slug/" "$PUB/why/areas/$a/index.html" || bad why "area $a is named by moment $slug and does not list it"
+  done
 done
-ok why "$(jq '.moments | length' "$WJ") moments: every command, responsibility and claim is linked, and links back"
+# the derived taxonomies hold nothing nobody declared: a page listing a moment that does not
+# name it would be a membership authored somewhere other than the moment
+for a in $(jq -r '.audiences[].id' "$WJ"); do
+  n="$(jq -r --arg a "$a" '[.moments[] | select(.status == "stable") | select(.audiences | index($a))] | length' "$WJ")"
+  grep -qF ">$n moment" "$PUB/why/audiences/$a/index.html" || bad why "audience $a does not show the $n moments derived for it"
+done
+ok why "$(jq '[.moments[] | select(.status == "stable")] | length' "$WJ") moments, $(jq '.audiences | length' "$WJ") audiences, $(jq '.areas | length' "$WJ") areas: every command, claim, audience and area is linked, and links back"
 
 # 13e. the skills section is the catalogue and nothing else: every skill in skills.json has a
 # page that names its URI and its canonical file, renders every example, links every related
@@ -538,5 +552,65 @@ for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do
   done
 done
 [ "$respbad" = 0 ] && ok supervises "every responsibility names its state, its command, its guarantees, and two deep links that land on real headings"
+
+
+# 14. distribution: the installer and the release metadata are served, and every install
+# command the site shows is the one the model composes. This is the check that catches the
+# ordinary failure — the docs say /install.sh and Pages serves it somewhere else.
+DIST="$SITE/data/registry/distribution.json"
+distbad=0
+if [ ! -f "$DIST" ]; then
+  bad install "site/data/registry/distribution.json missing; run majordomus generate"
+  distbad=1
+else
+  # the installer's file name is the last segment of the URL the model composes
+  script="$(jq -r '.installer_url' "$DIST")"; script="${script##*/}"
+  [ -f "$PUB/$script" ] || { bad install "/$script is not served; the installer's canonical URL would 404"; distbad=1; }
+  if [ -f "$PUB/$script" ]; then
+    cmp -s "$PUB/$script" "$SITE/static/$script" \
+      || { bad install "the served installer differs from site/static/$script"; distbad=1; }
+    head -n 1 "$PUB/$script" | grep -q '^#!/bin/sh' \
+      || { bad install "the served installer does not start with a POSIX shell shebang"; distbad=1; }
+    grep -q 'generated from share/distribution.yaml' "$PUB/$script" \
+      || { bad install "the served installer carries no generated region"; distbad=1; }
+    grep -qF "$(jq -r '.latest_url' "$DIST" | sed 's#/releases/latest.json##')" "$PUB/$script" \
+      || { bad install "the served installer does not carry the model's base URL"; distbad=1; }
+  fi
+  # the one-line command, verbatim, on the homepage and on the installation page
+  cmd="$(jq -r '.install_command' "$DIST")"
+  # the rendered command may be split across syntax-highlighting spans, so the comparison is
+  # against the page's text rather than its markup
+  for page in "$PUB/index.html" "$PUB/docs/install/index.html"; do
+    [ -f "$page" ] || { bad install "${page#"$PUB"} is not rendered"; distbad=1; continue; }
+    sed -e 's/<[^>]*>//g' "$page" | grep -qF "$cmd" \
+      || { bad install "${page#"$PUB"} does not show the install command the model composes"; distbad=1; }
+  done
+  # the homepage reaches the installation documentation
+  grep -qF "$PREFIX/docs/install/" "$PUB/index.html" \
+    || { bad install "the homepage does not link the installation documentation"; distbad=1; }
+  # every release the site publishes is served, and the stable pointer is one of them
+  if [ -d "$SITE/static/releases" ]; then
+    for f in "$SITE/static/releases"/*.json; do
+      [ -f "$f" ] || continue
+      n="$(basename "$f")"
+      [ -f "$PUB/releases/$n" ] || { bad install "/releases/$n is not served"; distbad=1; continue; }
+      jq -e '.schema and .tag and .artifacts' "$PUB/releases/$n" >/dev/null 2>&1 \
+        || { bad install "/releases/$n is not a release document"; distbad=1; }
+    done
+    if [ -f "$PUB/releases/latest.json" ]; then
+      tag="$(jq -r '.tag' "$PUB/releases/latest.json")"
+      [ -f "$PUB/releases/$tag.json" ] \
+        || { bad install "/releases/latest.json names $tag and /releases/$tag.json is not served"; distbad=1; }
+      cmp -s "$PUB/releases/latest.json" "$PUB/releases/$tag.json" \
+        || { bad install "/releases/latest.json differs from the release it names"; distbad=1; }
+      # every target the model publishes has an artifact in the stable release
+      for t in $(jq -r '.targets[] | select(.status=="supported" or .status=="experimental") | .rust_target' "$DIST"); do
+        jq -e --arg t "$t" '.artifacts[$t]' "$PUB/releases/latest.json" >/dev/null 2>&1 \
+          || { bad install "/releases/latest.json publishes nothing for $t"; distbad=1; }
+      done
+    fi
+  fi
+fi
+[ "$distbad" = 0 ] && ok install "/install.sh is served as the model's URL names it, the homepage and the installation page show the command it composes, and every published release is complete"
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

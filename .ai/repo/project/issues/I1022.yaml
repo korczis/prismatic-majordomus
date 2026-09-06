@@ -1,0 +1,31 @@
+id: I1022
+milestone: capability-graph
+title: Drift in any derived surface fails the build
+slug: drift-coverage
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Extend the generation check to cover every artifact this milestone introduces — the graph, the static projection, the navigation, the indexes, the search data — so a stale committed projection cannot merge."
+why: "Generation without a check is a suggestion. This is the mechanism that makes every derived surface in this milestone actually derived."
+current_state: "The generation check covers the existing target set."
+desired_state: "The new artifacts are in the same set, and a drift failure names the source to change rather than the file that differs."
+scope:
+  - apps/majordomus-cli/src/generate.rs
+non_scope:
+  - A separate drift script for the new artifacts
+depends_on:
+  - I1007
+acceptance_criteria:
+  - Every new artifact is part of the canonical target set and its check
+  - A drift failure names the authoritative source to change, not only the generated file that differs
+  - Generation is deterministic, so an unchanged repository never reports drift
+  - CI executes the check on every change
+validation:
+  - majordomus generate --check
+  - bash test/run.sh
+evidence_required:
+  - drift_covered
+  - source_named
+risk: "A non-deterministic generator turns this check into noise within a day, and the response to noise is to disable the check."
+created_at: 2026-09-06
+updated_at: 2026-09-06

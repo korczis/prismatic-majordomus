@@ -1,0 +1,34 @@
+id: I0910
+milestone: fly-deployment
+title: The release profile is chosen by measurement, not by folklore
+slug: release-profile-measured
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Measure the size, startup, memory and latency consequences of the candidate release configurations and select the smallest one that does not regress runtime behaviour materially, recording the decision and the numbers."
+why: "Every list of Cargo size flags on the internet is asserted rather than measured, and several of them trade startup or throughput for megabytes. The repository already refuses claims without evidence."
+current_state: "The workspace has its existing release profile and no deployment-specific profile. No size or startup numbers exist for any configuration."
+desired_state: "A deployment profile exists if and only if it is justified by measurement, the existing release semantics are unchanged for everyone else, and the numbers behind the decision are recorded."
+scope:
+  - Cargo.toml
+  - .ai/repo/benchmarks/rust
+non_scope:
+  - Profile-guided optimisation
+  - Any target-cpu setting that assumes the build host's processor
+  - Changing the existing release profile's semantics for local development
+depends_on:
+  - I0909
+acceptance_criteria:
+  - Binary size, container size, startup to readiness, resident memory and endpoint latency are measured for the existing release profile and for each candidate configuration
+  - The chosen configuration is the smallest that does not regress runtime behaviour materially, and the threshold for material is stated
+  - The measurements are recorded as artifacts through the existing benchmark infrastructure rather than pasted into prose
+  - The decision is captured where a reader can find the reasoning, and the existing release profile stays valid for local builds
+validation:
+  - cargo test --workspace --all-features
+  - majordomus bench --check
+evidence_required:
+  - profile_measured
+  - profile_chosen
+risk: "panic=abort changes observable behaviour for a process that currently unwinds. If any test or capability depends on unwinding, the flag costs correctness rather than bytes."
+created_at: 2026-09-06
+updated_at: 2026-09-06

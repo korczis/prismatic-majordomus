@@ -306,6 +306,12 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
         "share/skeleton/ai/repo/scope.yaml",
         &std::fs::read_to_string(dist.join("skeleton/ai/repo/scope.yaml")).unwrap(),
     );
+    // the distribution model too: a repository that carries the distribution carries this,
+    // and the capabilities that read a release target have nothing to be timed on without it
+    f.write(
+        "share/distribution.yaml",
+        &std::fs::read_to_string(dist.join("distribution.yaml")).unwrap(),
+    );
     f.commit("distribution");
     let out = std::process::Command::new(BIN)
         .args(["capabilities", "validate"])
@@ -314,10 +320,11 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
         .output()
         .unwrap();
     let text = String::from_utf8(out.stdout).unwrap();
+    // the findings are on stdout; a failure that printed only stderr said nothing about why
     assert_eq!(
         out.status.code(),
         Some(0),
-        "{}",
+        "{text}{}",
         String::from_utf8_lossy(&out.stderr)
     );
     assert!(text.contains("(repository)"), "{text}");

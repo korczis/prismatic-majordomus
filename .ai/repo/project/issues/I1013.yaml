@@ -1,0 +1,32 @@
+id: I1013
+milestone: capability-graph
+title: Search over the graph, generated, with nothing to run
+slug: capability-search
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Provide one search over identities, titles, descriptions, tags, categories, commands, routes and documents, from a generated index that works in the static build with no service behind it."
+why: "A repository this size does not need a search service, and adding one would put the published site behind an availability dependency it currently does not have."
+current_state: "No unified search exists over the layer."
+desired_state: "One generated index serves both projections, its contents derive from the graph, and it costs nothing to operate."
+scope:
+  - share/cockpit/src
+non_scope:
+  - An external search service for a graph of this size
+  - A hand-maintained index or keyword list
+depends_on:
+  - I1007
+acceptance_criteria:
+  - The index is generated from the graph and covers identities, titles, descriptions, tags, categories, commands, routes and documents
+  - Search works in the static build with no backend
+  - A newly registered capability is findable after generation with no further edit
+  - The index size is measured and counted against the asset budget
+validation:
+  - bash test/run.sh
+  - majordomus generate --check
+evidence_required:
+  - search_generated
+  - static_search_works
+risk: "A client-side index grows with the repository until it dominates the page weight. Measuring it now is what makes the later decision to page or trim it a measurement rather than a surprise."
+created_at: 2026-09-06
+updated_at: 2026-09-06

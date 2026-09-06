@@ -1,0 +1,47 @@
+id: I1002
+milestone: capability-graph
+title: Relations are typed, inferred from stable identities, and never dangle
+slug: typed-relations
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Give the graph typed relations — implements, documents, exposes, generated from, enforced by, tested by, benchmarked by, depends on, projects to, served at — inferred where a stable convention exists, declared where it does not, and resolved or refused."
+why: "A list of capabilities is an inventory; a graph of them is an architecture a person can navigate. The value is entirely in the edges, and an edge that points at nothing is worse than a missing one because it renders as an empty section instead of an error."
+current_state: "Relations exist implicitly in frontmatter references, capability tags, rule metadata and ADR related lists. Nothing resolves them into a common edge type, and nothing fails when one does not resolve."
+desired_state: "Every edge has a type, both ends resolve to a node, and an unresolvable edge fails generation with a message naming the declaration, the missing end and the correction."
+scope:
+  - apps/majordomus-cli/src/graph.rs
+non_scope:
+  - Inference by substring or title matching where a stable identity exists
+  - Requiring a contributor to restate a relation the metadata already implies
+depends_on:
+  - I1001
+acceptance_criteria:
+  - Each relation type is explicit, and the direction is part of its meaning
+  - Inference uses stable identities only, and an ambiguous case requires an explicit declaration instead of a guess
+  - A relation whose target does not exist fails generation, naming where it was declared and what is missing
+  - Tests cover malformed metadata, duplicate identities and dangling relations
+validation:
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - relations_resolve
+  - dangling_refused
+risk: "Strict resolution can make an unrelated documentation edit fail the build. The message has to be good enough that the failure is a five-second fix rather than an investigation."
+created_at: 2026-09-06
+updated_at: 2026-09-06T16:19:14Z
+started_at: 2026-09-06T15:54:48Z
+completed_at: 2026-09-06T16:19:14Z
+evidence:
+  - covers: relations_resolve
+    type: test
+    command: "cargo test --lib graph (apps/majordomus-cli) and unresolved_relations over this repository"
+    result: "the layer resolves cleanly: 778 objects, 0 unresolved references; edges cover depends_on, supersedes, put_in_force, related_to, runs, exercises, evidences, tracks and documents, each through a stable identity, a declared id or a repository-relative path"
+    commit: c5ecfa1f47021705956447372bbecd37d2699b59
+    recorded_at: 2026-09-06T16:18:57Z
+  - covers: dangling_refused
+    type: test
+    command: "cargo test --lib graph::tests::a_reference_to_a_kind_we_hold_that_names_nothing_is_a_finding and a_finding_is_never_drawn_as_an_edge"
+    result: "a reference naming a kind this repository holds that resolves to nothing yields a finding with the file, the key, the reference and the correction, and no node or edge is drawn for it; a file or test outside the layer resolves to an external node and is not a finding"
+    commit: c5ecfa1f47021705956447372bbecd37d2699b59
+    recorded_at: 2026-09-06T16:19:06Z

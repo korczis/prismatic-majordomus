@@ -1,6 +1,6 @@
 [package]
 name = "majordomus-cli"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.85"
 description = "Majordomus control-plane CLI: a data-driven stdio MCP server over the repository's .ai/ layer"
@@ -64,6 +64,10 @@ harness = false
 
 [[bench]]
 name = "routes"
+harness = false
+
+[[bench]]
+name = "why"
 harness = false
 
 [profile.release]

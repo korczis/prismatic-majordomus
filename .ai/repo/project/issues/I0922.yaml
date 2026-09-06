@@ -1,0 +1,33 @@
+id: I0922
+milestone: fly-deployment
+title: The memory hypothesis is tested, not asserted
+slug: memory-budget
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Run the production image under the intended memory limit, measure resident memory through a representative request sequence, and let the evidence decide the memory the deployment declares."
+why: "The cheap profile rests on a guess about memory. Raising it because a run failed once is how a hosting bill quadruples; keeping it because it looks tidy is how a Machine gets killed under load. Only a measurement settles it."
+current_state: "The canonical object states a memory hypothesis. Nothing has been run under any limit."
+desired_state: "Resident memory is measured at startup and after each representative request, the high-water mark is recorded, and the declared memory is the smallest value the evidence supports."
+scope:
+  - .ai/repo/benchmarks/rust
+non_scope:
+  - Raising the limit before diagnosing what consumed the memory
+  - A load test; this is a resource envelope, not a throughput study
+depends_on:
+  - I0930
+acceptance_criteria:
+  - The image runs under the declared limit and stays alive through the whole representative sequence
+  - Resident memory is measured after startup and after a landing, documentation, API, OpenAPI and cockpit request, and the high-water mark is recorded
+  - If the declared limit does not hold, the cause is diagnosed and the waste addressed before the limit is raised, and the raise is recorded with its evidence
+  - The measurement is recorded through the existing benchmark infrastructure and becomes a regression budget
+validation:
+  - majordomus bench --check
+  - bash test/run.sh
+evidence_required:
+  - rss_measured
+  - runs_at_limit
+  - budget_recorded
+risk: "A single machine's measurement is not a guarantee on another host. The high-water mark needs headroom, and the headroom needs to be stated."
+created_at: 2026-09-06
+updated_at: 2026-09-06

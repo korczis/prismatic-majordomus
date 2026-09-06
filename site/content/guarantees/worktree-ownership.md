@@ -1,7 +1,7 @@
 +++
 title = "A task record names the checkout it belongs to, and another checkout is never held to its scope"
 description = "Before the .ai layout, the state directory was tracked by default, so the active task record travelled with the branch. A second worktree checking out that branch read a record it never wrote — and, before this, was held to a scope it never claimed. Its pre-push hook ran finish --check against someone else's task and refused every file outside that task's paths."
-weight = 82
+weight = 86
 [extra]
 claim_id = "worktree-ownership"
 status = "guaranteed"

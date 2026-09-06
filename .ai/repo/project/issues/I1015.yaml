@@ -1,0 +1,32 @@
+id: I1015
+milestone: capability-graph
+title: A surface with no server behind it is not offered as if it had one
+slug: conditional-runtime-surfaces
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the exposure of backend-only surfaces — the API console, live status, runtime reads — follow from availability metadata, and prove both projections behave correctly."
+why: "The published site has no server. A link to a runtime console on it is a broken promise, and the usual fix is a check on the page's own address, which is a rule hidden where nobody will find it."
+current_state: "The Swagger shell and the API are served by the running process. The published site has no way to know that."
+desired_state: "Exposure follows from availability metadata alone, and there is a test for each projection that keeps it that way."
+scope:
+  - apps/majordomus-cli/src/http/swagger.rs
+non_scope:
+  - Any decision made from a hostname, an address or a build flag inside a page
+  - Rendering a dead destination as if it were live
+depends_on:
+  - I1004
+acceptance_criteria:
+  - A backend-only surface is offered as usable only where a backend is available, decided from metadata
+  - The static build contains no active link to a runtime-only surface
+  - Where mentioning an unavailable surface is useful, it is shown as unavailable rather than omitted silently or linked
+  - Both cases are tested — the static build and a running server with the API present
+validation:
+  - bash test/run.sh
+  - scripts/cockpit-probe
+evidence_required:
+  - availability_drives_exposure
+  - both_projections_tested
+risk: "This is the check that quietly rots, because a broken link on a published page fails nothing. The test for it has to run on every build."
+created_at: 2026-09-06
+updated_at: 2026-09-06
