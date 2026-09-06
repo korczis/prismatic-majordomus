@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0012
+id: adr-0014
 kind: adr
 title: The scenario is a body section, not a header field
 status: accepted
@@ -13,7 +13,7 @@ provenance:
   origin: authored
 ---
 
-# 12. The scenario is a body section, not a header field
+# 14. The scenario is a body section, not a header field
 
 Refines ADR 8 (use cases are executable canonical objects), which established the
 scenario and put it in the front matter.
