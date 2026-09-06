@@ -1,5 +1,5 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the canonical Majordomus capability registry, module `deploy`; regenerate with `majordomus generate`
+     Source: the `deploy` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
      Generator: majordomus-cli 0.1.0 -->
 # Module `deploy` — Deployment
 

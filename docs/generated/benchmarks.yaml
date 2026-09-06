@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.1.0
 coverage:
   - scope: direct
-    required: 17
-    covered: 17
+    required: 22
+    covered: 22
     missing: 0
     waived: 0
   - scope: http
-    required: 17
-    covered: 17
+    required: 22
+    covered: 22
     missing: 0
     waived: 0
   - scope: mcp
-    required: 17
-    covered: 17
+    required: 20
+    covered: 20
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 63
-    covered: 63
+    required: 76
+    covered: 76
     missing: 0
     waived: 0
 capabilities:
@@ -69,6 +69,33 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: deploy.check
+    module: deploy
+    kind: query
+    cache: "process, 2 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: deploy.get
+    module: deploy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-deployment
+  - id: deploy.list
+    module: deploy
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: directories.list
     module: directories
     kind: query
@@ -100,6 +127,24 @@ capabilities:
     cache: "—"
     direct: covered
     mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: health.live
+    module: health
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: none
+    http: covered
+    cases:
+      - default
+  - id: health.ready
+    module: health
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: none
     http: covered
     cases:
       - default
