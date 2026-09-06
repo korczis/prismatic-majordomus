@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "0bc111f94f5badb21f2b9a5ac9b9aef6076ddc309e97dbb96e89fc7374548b56",
+    "fingerprint": "4d16640aa0879991f53b6908b2d0e344955b10e6dfac703f8dc543f822c6f69b",
     "summary": {
       "total": 794,
       "builtin": 16,
@@ -2053,6 +2053,13 @@
                   "external": {
                     "type": "boolean",
                     "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+                  },
+                  "facts": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/$defs/Fact"
+                    },
+                    "description": "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share."
                   }
                 },
                 "required": [
@@ -2061,6 +2068,31 @@
                   "label"
                 ],
                 "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
+              },
+              "Fact": {
+                "anyOf": [
+                  {
+                    "type": "boolean",
+                    "description": "A yes or a no."
+                  },
+                  {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "A whole number: an order, a version, a weight."
+                  },
+                  {
+                    "type": "string",
+                    "description": "One short value."
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Several short values."
+                  }
+                ],
+                "description": "One fact a node carries from its object's front matter, in the shapes a node can hold."
               },
               "Edge": {
                 "type": "object",
@@ -4921,7 +4953,7 @@
     ]
   },
   "index": {
-    "fingerprint": "672b4d12973721f6cc060cb5d23cf885f57ad89065743e323c8a5bdaef8b4046",
+    "fingerprint": "8c9ac7d19a47dda60c99f00775edc0c1647e7648218dfb0b3c426b1466e2f23d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -6874,7 +6906,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 34350
+        "bytes": 34590
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -9744,7 +9776,7 @@
         "path": ".ai/repo/project/issues/I1001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2617
+        "bytes": 3552
       },
       {
         "uri": "majordomus://issue/I1002",
@@ -9755,7 +9787,7 @@
         "path": ".ai/repo/project/issues/I1002.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2144
+        "bytes": 2187
       },
       {
         "uri": "majordomus://issue/I1003",
@@ -9766,7 +9798,7 @@
         "path": ".ai/repo/project/issues/I1003.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2156
+        "bytes": 2199
       },
       {
         "uri": "majordomus://issue/I1004",

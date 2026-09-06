@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 16,
-    "schemas": 77,
+    "schemas": 78,
     "tags": 9
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1823,6 +1823,19 @@
       "variants": []
     },
     {
+      "description": "One fact a node carries from its object's front matter, in the shapes a node can hold.",
+      "is_enum": false,
+      "name": "Fact",
+      "properties": [],
+      "type": "boolean | integer (int64) | string | array of string",
+      "used_by": [],
+      "used_by_schemas": [
+        "Node"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The `fixtures` category: where fixtures live and how large one may be.",
       "is_enum": false,
       "name": "Fixtures",
@@ -2484,6 +2497,15 @@
           "refs": [],
           "required": false,
           "type": "boolean"
+        },
+        {
+          "description": "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share.",
+          "name": "facts",
+          "refs": [
+            "Fact"
+          ],
+          "required": false,
+          "type": "map of Fact"
         }
       ],
       "type": "object",
