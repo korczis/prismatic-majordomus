@@ -8,10 +8,10 @@
 # the commands themselves.
 #
 # What it measures, per composed module:
-#   - at least one in-file `#[test]`, in the module that declares the command rather than in
-#     a suite somewhere else;
-#   - at least one doc example, which `cargo test --doc` executes, so the documentation is
-#     run rather than merely written;
+#   - at least one assertion that runs, in the module that declares the command rather than
+#     in a suite somewhere else: an in-file `#[test]`, or a doc example, which
+#     `cargo test --doc` executes. Either form counts; the form is the author's choice and
+#     demanding a particular one only buys a token test beside a real example.
 #   - the module file exists at all.
 # And across the tree: a module that declares itself with `module!` and is composed by
 # nobody, which is a command that exists and is served to no one; and the coverage floor the
@@ -71,17 +71,15 @@ mj_validate_rust_command_tested() {
     # both doc forms are executed by `cargo test --doc`: `//!` on the module and `///`
     # on an item, so both count as the module documenting itself by example
     docs="$(grep -cE '^[[:space:]]*//[/!] *```' "$f" 2>/dev/null || true)"
-    if [ "$tests" -eq 0 ]; then
+    # One finding, not two. What the rule wants is evidence beside the declaration that
+    # the declaration is what it claims; requiring a particular *form* of it only invites a
+    # token #[test] beside a doc example that already asserts the same thing. A doc example
+    # is executed by `cargo test --doc`, so either form is an assertion that runs.
+    if [ "$tests" -eq 0 ] && [ "$docs" -eq 0 ]; then
       bad=$((bad + 1))
       mj_doctrine_fail rust-command "$m" \
-        "declares a command and carries no in-file #[test]; the test belongs beside the declaration" \
+        "declares a command and carries no assertion that runs: no in-file #[test] and no doc example" \
         "grep -n 'capability!' apps/majordomus-cli/src/capability/builtin/$m.rs"
-    fi
-    if [ "$docs" -eq 0 ]; then
-      bad=$((bad + 1))
-      mj_doctrine_fail rust-command "$m" \
-        "carries no doc example, so nothing in its documentation is executed by cargo test --doc" \
-        "grep -nE '//[/!] *\`\`\`' apps/majordomus-cli/src/capability/builtin/$m.rs"
     fi
   done
 
