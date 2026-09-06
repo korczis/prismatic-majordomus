@@ -1,5 +1,5 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the canonical Majordomus capability registry, module `distribution`; regenerate with `majordomus generate`
+     Source: the `distribution` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
      Generator: majordomus-cli 0.2.0 -->
 # Module `distribution` — Distribution
 
@@ -28,7 +28,7 @@ The archive name a target and a tag derive, the directory it unpacks into, and w
 | `target` | string | yes | A target's id or its Rust target triple. |
 | `tag` | string | yes | The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in. |
 
-Output: `ArtifactView`.
+Output: `ReleaseArtifactView`.
 
 ## `distribution.build` — This build
 

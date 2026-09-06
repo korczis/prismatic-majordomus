@@ -124,6 +124,7 @@ fixture_repo() {
   local dst="$1" p; shift
   mkdir -p "$dst"
   cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$dst/"
+  mkdir -p "$dst/site"; cp -R "$ROOT/site/templates" "$dst/site/templates"
   for p in $("$ROOT/scripts/generate-site-data" --inputs); do
     mkdir -p "$dst/$(dirname "$p")"
     cp "$ROOT/$p" "$dst/$p"
@@ -138,7 +139,7 @@ fixture_repo() {
   # repositories from, and the executable's registry the MCP tools resolve against
   if [ ! -f "$dst/.ai/manifest.yaml" ]; then
     mkdir -p "$dst/.ai/repo"; cp "$ROOT/.ai/README.md" "$ROOT/.ai/manifest.yaml" "$dst/.ai/"
-    for p in README.md policy.yaml scope.yaml knowledge rules profiles prompts workflows use-cases applications adrs; do
+    for p in README.md policy.yaml scope.yaml knowledge rules profiles prompts workflows use-cases applications adrs why; do
       [ -e "$ROOT/.ai/repo/$p" ] && [ ! -e "$dst/.ai/repo/$p" ] && cp -R "$ROOT/.ai/repo/$p" "$dst/.ai/repo/$p"
     done
     for p in "$ROOT"/.ai/repo/use-cases/* "$ROOT"/.ai/repo/applications/*; do

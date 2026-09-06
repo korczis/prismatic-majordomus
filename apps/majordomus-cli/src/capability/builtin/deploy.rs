@@ -139,14 +139,12 @@ impl BenchmarkCases for GetDeploymentInput {
                     },
                 )]
             })
-            .unwrap_or_else(|| {
-                vec![NamedCase::new(
-                    "absent",
-                    GetDeploymentInput {
-                        id: "absent".into(),
-                    },
-                )]
-            })
+            // A repository with no deployment has nothing to time here. The case that used
+            // to stand in named one that is not there, and a benchmark case that cannot be
+            // answered is a run that fails rather than a measurement: `bench baseline
+            // update` in a fresh layer exited 13 on it. Coverage reports the target as
+            // missing, which is what it is.
+            .unwrap_or_default()
     }
 }
 

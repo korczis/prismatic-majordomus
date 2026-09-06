@@ -35,12 +35,13 @@ pub use directories::{
     DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,
 };
 pub use deploy::{DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI};
-// `ArtifactView` means two different things here: a file the generator writes, and a
-// binary built for a release target. The release one is re-exported under the name that
-// says which it is; inside its own module it keeps the short name.
+// `ArtifactView` would mean two different things here — a file the generator writes and a
+// binary built for a release target — and the OpenAPI document names a schema component
+// after the type, so the two would collide there rather than merely read ambiguously. The
+// release one carries the longer name at its definition.
 pub use distribution::{
-    ArtifactInput, ArtifactView as ReleaseArtifactView, BuildReport, DistributionReport,
-    ReleaseView, ReleasesReport, TargetView,
+    ArtifactInput, BuildReport, DistributionReport, ReleaseArtifactView, ReleaseView,
+    ReleasesReport, TargetView,
 };
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
@@ -51,6 +52,8 @@ pub use objects::{
 pub use peers::{AnnounceInput, PeerList};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
+pub mod why;
+
 pub use views::{Empty, ObjectSummary, ObjectView};
 pub use web::{SurfaceReport, SURFACES_URI};
 
@@ -70,7 +73,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         artifacts,
         web,
         directories,
-        distribution
+        distribution,
+        why
     ]
 }
 

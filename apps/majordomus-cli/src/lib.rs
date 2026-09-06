@@ -44,6 +44,7 @@ pub mod shared;
 pub mod site;
 pub mod synthetic;
 pub mod web;
+pub mod why;
 
 pub use error::Error;
 pub use index::Index;

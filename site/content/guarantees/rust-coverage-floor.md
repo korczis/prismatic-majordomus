@@ -1,7 +1,7 @@
 +++
 title = "Line coverage of the Rust crate is measured on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold, one integer read by CI, by scripts/rust-check and by just coverage"
 description = "The crate's line coverage is a number with a committed floor, and a push that drops under the floor does not go green. The floor is one integer in scripts/rust-coverage-threshold, read by every place that measures: the coverage job in CI, scripts/rust-check when cargo-llvm-cov is installed, and just coverage. There is no second copy of the number to drift."
-weight = 114
+weight = 115
 [extra]
 claim_id = "rust-coverage-floor"
 status = "guaranteed"

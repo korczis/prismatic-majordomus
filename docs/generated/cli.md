@@ -1,6 +1,5 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the clap declaration of the command line and the examples declared with it (apps/majordomus-cli/src/cli.rs);
-     regenerate with `majordomus generate`
+     Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
      Generator: majordomus-cli 0.2.0 -->
 # Command line of the Rust executable
 
@@ -17,7 +16,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | command | route | does |
 |---|---|---|
 | [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio (read-only) |
-| [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only) |
+| [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only) |
 | [`majordomus capabilities`](#majordomus-capabilities) | `/docs/cli/capabilities/` | Introspect the capability registry: what exists, where it came from, how it is exposed |
 | [`majordomus capabilities list`](#majordomus-capabilities-list) | `/docs/cli/capabilities/list/` | Every capability, one line each, with its projections |
 | [`majordomus capabilities describe`](#majordomus-capabilities-describe) | `/docs/cli/capabilities/describe/` | One capability by canonical id: schemas, provenance, every projection |
@@ -47,13 +46,20 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus distribution releases`](#majordomus-distribution-releases) | `/docs/cli/distribution/releases/` | Every recorded release, newest first, and the one an unpinned installation resolves to |
 | [`majordomus distribution metadata`](#majordomus-distribution-metadata) | `/docs/cli/distribution/metadata/` | The public metadata one release record publishes, rendered from the record alone |
 | [`majordomus distribution build`](#majordomus-distribution-build) | `/docs/cli/distribution/build/` | What this executable is: version, target triple, profile, commit |
+| [`majordomus why`](#majordomus-why) | `/docs/cli/why/` | The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation |
+| [`majordomus why list`](#majordomus-why-list) | `/docs/cli/why/list/` | Every operational moment, narrowed by any facet the catalogue reports |
+| [`majordomus why show`](#majordomus-why-show) | `/docs/cli/why/show/` | One moment in full, with every relation derived from its metadata |
+| [`majordomus why audiences`](#majordomus-why-audiences) | `/docs/cli/why/audiences/` | Every audience, with the moments that name it |
+| [`majordomus why areas`](#majordomus-why-areas) | `/docs/cli/why/areas/` | Every operational area, with the moments that fall under it |
+| [`majordomus why diagnose`](#majordomus-why-diagnose) | `/docs/cli/why/diagnose/` | What the symptoms you recognise imply: the areas they weigh towards and the mechanisms that answer them |
+| [`majordomus why validate`](#majordomus-why-validate) | `/docs/cli/why/validate/` | Every finding over the catalogue; exit 10 when any is an error |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus distribution`](#majordomus-distribution).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus distribution`](#majordomus-distribution), [`majordomus why`](#majordomus-why).
 
 ```text
 majordomus <COMMAND>
@@ -112,7 +118,7 @@ Examples:
 <a id="majordomus-serve"></a>
 ## `majordomus serve`
 
-Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)
+Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
 
 ```text
 majordomus serve [OPTIONS]
@@ -126,10 +132,11 @@ majordomus serve [OPTIONS]
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--host` | `<HOST>` | `127.0.0.1` | Interface to bind; loopback unless you say otherwise |
 | `--port` | `<PORT>` | `8741` | Port to bind; 0 picks a free one and the address is logged on stderr |
+| `--deployment` | `<ID>` | — | Bind the address this deployment object declares (.ai/repo/deployments/<ID>.yaml) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's |
 
 Examples:
 
-- **Serve the same capabilities over HTTP on a free port** — Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.
+- **Serve the same capabilities over HTTP on a free port** — Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.
 
   ```console
   $ majordomus serve --port 0
@@ -289,7 +296,7 @@ majordomus generate [OPTIONS] [TARGET]
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
-| `<TARGET>` | `all` \| `openapi` \| `docs` \| `benchmarks` \| `registry` \| `allow` \| `providers` \| `site` \| `distribution` | `all` | What to generate — `all`: Every target; `openapi`: `docs/generated/openapi.json`; `docs`: `docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`; `benchmarks`: `docs/generated/benchmarks.md`: every benchmark target and the coverage; `registry`: `docs/generated/registry.json`: the builtin registry as data; `allow`: The shell tool's allow-lists under share/allow, derived from the schemas; `providers`: The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...); `site`: site/data/registry/registry.json, the registry dataset the site renders; `distribution`: The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/ |
+| `<TARGET>` | `all` \| `openapi` \| `docs` \| `benchmarks` \| `registry` \| `allow` \| `providers` \| `site` \| `manifest` \| `web` \| `distribution` | `all` | What to generate — `all`: Every target; `openapi`: `docs/generated/openapi.{json,yaml}`; `docs`: `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`; `benchmarks`: `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage; `registry`: `docs/generated/registry.{json,yaml}`: the builtin registry as data; `allow`: The shell tool's allow-lists under share/allow, derived from the schemas; `providers`: The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...); `site`: site/data/registry/registry.json, the registry dataset the site renders; `manifest`: docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact; `web`: `docs/generated/web.json`: the resolved web topology the site's route reference renders; `distribution`: The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/ |
 | `--check` | flag | — | Compare with what is on disk and exit 10 when stale; write nothing |
 | `--out` | `<DIR>` | — | Write under this directory instead of the repository root (docs/generated is appended) |
 
@@ -531,7 +538,7 @@ Examples:
   $ majordomus web list
   ```
 
-  Verified: exits 0; prints MOUNT, /api/v1, /docs.
+  Verified: exits 0; prints MOUNT, /api/v1, /swagger.
 
 <a id="majordomus-web-explain"></a>
 ## `majordomus web explain`
@@ -654,7 +661,7 @@ majordomus web report tests [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--suite` | `<SUITE>` | required | The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh) |
+| `--suite` | `<SUITE>` | required | The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`) |
 | `--crate-output` | `<CRATE_OUTPUT>` | — | The output of `cargo test`, for its totals |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
@@ -981,4 +988,298 @@ Examples:
   ```
 
   Verified: exits 0; prints version, target, commit.
+
+<a id="majordomus-why"></a>
+## `majordomus why`
+
+The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation
+
+Subcommands: [`majordomus why list`](#majordomus-why-list), [`majordomus why show`](#majordomus-why-show), [`majordomus why audiences`](#majordomus-why-audiences), [`majordomus why areas`](#majordomus-why-areas), [`majordomus why diagnose`](#majordomus-why-diagnose), [`majordomus why validate`](#majordomus-why-validate).
+
+```text
+majordomus why [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--audience` | `<AUDIENCE>` | — | Only moments this audience recognises (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only moments in this operational area (accepted by every subcommand) |
+| `--tag` | `<TAG>` | — | Only moments carrying this tag (accepted by every subcommand) |
+| `--severity` | `<SEVERITY>` | — | Only moments of this severity (accepted by every subcommand) |
+| `--frequency` | `<FREQUENCY>` | — | Only moments of this frequency (accepted by every subcommand) |
+| `--lifecycle` | `<LIFECYCLE>` | — | Only moments at this stage of work (accepted by every subcommand) |
+| `--capability` | `<CAPABILITY>` | — | Only moments naming this capability of the executable (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only moments naming this command (accepted by every subcommand) |
+| `--featured` | flag | — | Only the moments the homepage features (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated moments, not only the public ones (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **The operational moments this repository holds** — `why` with nothing after it lists, because listing is what a person wants when they ask what this section is. The count on the last line is computed from the catalogue; no number anywhere is written down.
+
+  ```console
+  $ majordomus why
+  ```
+
+  Verified: exits 0; prints SLUG, moment(s).
+
+<a id="majordomus-why-list"></a>
+## `majordomus why list`
+
+Every operational moment, narrowed by any facet the catalogue reports
+
+```text
+majordomus why list [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--audience` | `<AUDIENCE>` | — | Only moments this audience recognises (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only moments in this operational area (accepted by every subcommand) |
+| `--tag` | `<TAG>` | — | Only moments carrying this tag (accepted by every subcommand) |
+| `--severity` | `<SEVERITY>` | — | Only moments of this severity (accepted by every subcommand) |
+| `--frequency` | `<FREQUENCY>` | — | Only moments of this frequency (accepted by every subcommand) |
+| `--lifecycle` | `<LIFECYCLE>` | — | Only moments at this stage of work (accepted by every subcommand) |
+| `--capability` | `<CAPABILITY>` | — | Only moments naming this capability of the executable (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only moments naming this command (accepted by every subcommand) |
+| `--featured` | flag | — | Only the moments the homepage features (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated moments, not only the public ones (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **Every public moment, in presentation order** — Drafts are excluded unless `--all` is given. The facets a listing may be narrowed by are the ones the catalogue itself reports, so an audience or an area added as a file is a filter without anything being registered.
+
+  ```console
+  $ majordomus why list
+  ```
+
+  Verified: exits 0; prints SLUG.
+
+- **Only what one audience recognises** — Membership is declared by each moment and never listed in the audience's own file, so this answer is derived. An audience the catalogue does not have is an invalid input naming the ones it does, not an empty answer.
+
+  ```console
+  $ majordomus why list --audience fixture-team
+  ```
+
+  Verified: exits 0; prints SLUG.
+
+- **The same, as the shape the API and MCP answer with** — One domain model behind every projection: this document is what `GET /api/v1/why` returns and what the `majordomus_why` tool answers, including the derived facets and the catalogue's fingerprint.
+
+  ```console
+  $ majordomus why list --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /counts/moments, /facets/audiences, /fingerprint.
+
+<a id="majordomus-why-show"></a>
+## `majordomus why show`
+
+One moment in full, with every relation derived from its metadata
+
+```text
+majordomus why show [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The moment's id, which is also its slug and its route |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--audience` | `<AUDIENCE>` | — | Only moments this audience recognises (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only moments in this operational area (accepted by every subcommand) |
+| `--tag` | `<TAG>` | — | Only moments carrying this tag (accepted by every subcommand) |
+| `--severity` | `<SEVERITY>` | — | Only moments of this severity (accepted by every subcommand) |
+| `--frequency` | `<FREQUENCY>` | — | Only moments of this frequency (accepted by every subcommand) |
+| `--lifecycle` | `<LIFECYCLE>` | — | Only moments at this stage of work (accepted by every subcommand) |
+| `--capability` | `<CAPABILITY>` | — | Only moments naming this capability of the executable (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only moments naming this command (accepted by every subcommand) |
+| `--featured` | flag | — | Only the moments the homepage features (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated moments, not only the public ones (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **One moment, with every relation derived from its metadata** — The record as its file declares it, then what nobody authored: the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.
+
+  ```console
+  $ majordomus why show fixture-moment
+  ```
+
+  Verified: exits 0; prints fixture-moment, derived.
+
+<a id="majordomus-why-audiences"></a>
+## `majordomus why audiences`
+
+Every audience, with the moments that name it
+
+```text
+majordomus why audiences [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--audience` | `<AUDIENCE>` | — | Only moments this audience recognises (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only moments in this operational area (accepted by every subcommand) |
+| `--tag` | `<TAG>` | — | Only moments carrying this tag (accepted by every subcommand) |
+| `--severity` | `<SEVERITY>` | — | Only moments of this severity (accepted by every subcommand) |
+| `--frequency` | `<FREQUENCY>` | — | Only moments of this frequency (accepted by every subcommand) |
+| `--lifecycle` | `<LIFECYCLE>` | — | Only moments at this stage of work (accepted by every subcommand) |
+| `--capability` | `<CAPABILITY>` | — | Only moments naming this capability of the executable (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only moments naming this command (accepted by every subcommand) |
+| `--featured` | flag | — | Only the moments the homepage features (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated moments, not only the public ones (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **Who recognises what, with the counts derived** — Each audience with how many public moments name it. The number is computed from the moments; an audience's own file never lists one.
+
+  ```console
+  $ majordomus why audiences
+  ```
+
+  Verified: exits 0; prints SLUG, TITLE.
+
+<a id="majordomus-why-areas"></a>
+## `majordomus why areas`
+
+Every operational area, with the moments that fall under it
+
+```text
+majordomus why areas [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--audience` | `<AUDIENCE>` | — | Only moments this audience recognises (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only moments in this operational area (accepted by every subcommand) |
+| `--tag` | `<TAG>` | — | Only moments carrying this tag (accepted by every subcommand) |
+| `--severity` | `<SEVERITY>` | — | Only moments of this severity (accepted by every subcommand) |
+| `--frequency` | `<FREQUENCY>` | — | Only moments of this frequency (accepted by every subcommand) |
+| `--lifecycle` | `<LIFECYCLE>` | — | Only moments at this stage of work (accepted by every subcommand) |
+| `--capability` | `<CAPABILITY>` | — | Only moments naming this capability of the executable (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only moments naming this command (accepted by every subcommand) |
+| `--featured` | flag | — | Only the moments the homepage features (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated moments, not only the public ones (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **The operational areas, with the counts derived** — The same relation read the other way: each area with the public moments that fall under it.
+
+  ```console
+  $ majordomus why areas
+  ```
+
+  Verified: exits 0; prints SLUG, TITLE.
+
+<a id="majordomus-why-diagnose"></a>
+## `majordomus why diagnose`
+
+What the symptoms you recognise imply: the areas they weigh towards and the mechanisms that answer them
+
+```text
+majordomus why diagnose [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--signal` | `<SIGNALS>` | — | A signal id or a moment id; repeat for each one you recognise. Without any, the questionnaire is printed |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--audience` | `<AUDIENCE>` | — | Only moments this audience recognises (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only moments in this operational area (accepted by every subcommand) |
+| `--tag` | `<TAG>` | — | Only moments carrying this tag (accepted by every subcommand) |
+| `--severity` | `<SEVERITY>` | — | Only moments of this severity (accepted by every subcommand) |
+| `--frequency` | `<FREQUENCY>` | — | Only moments of this frequency (accepted by every subcommand) |
+| `--lifecycle` | `<LIFECYCLE>` | — | Only moments at this stage of work (accepted by every subcommand) |
+| `--capability` | `<CAPABILITY>` | — | Only moments naming this capability of the executable (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only moments naming this command (accepted by every subcommand) |
+| `--featured` | flag | — | Only the moments the homepage features (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated moments, not only the public ones (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **The questionnaire, assembled from the catalogue's own signals** — With no selection there is nothing to diagnose, so the questions are printed instead of an empty answer. Every line is a signal a moment declares; nothing here is a list of questions.
+
+  ```console
+  $ majordomus why diagnose
+  ```
+
+  Verified: exits 0; prints Which of these happened to you this week?.
+
+- **What the symptoms you recognise imply** — A name is a signal id or a moment id. The answer is counting, not inference: each recommendation carries the moments that produced it, and there is no percentage because there is no model behind one.
+
+  ```console
+  $ majordomus why diagnose --signal fixture-signal
+  ```
+
+  Verified: exits 0; prints moment(s) matched, fixture-moment.
+
+<a id="majordomus-why-validate"></a>
+## `majordomus why validate`
+
+Every finding over the catalogue; exit 10 when any is an error
+
+```text
+majordomus why validate [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--audience` | `<AUDIENCE>` | — | Only moments this audience recognises (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only moments in this operational area (accepted by every subcommand) |
+| `--tag` | `<TAG>` | — | Only moments carrying this tag (accepted by every subcommand) |
+| `--severity` | `<SEVERITY>` | — | Only moments of this severity (accepted by every subcommand) |
+| `--frequency` | `<FREQUENCY>` | — | Only moments of this frequency (accepted by every subcommand) |
+| `--lifecycle` | `<LIFECYCLE>` | — | Only moments at this stage of work (accepted by every subcommand) |
+| `--capability` | `<CAPABILITY>` | — | Only moments naming this capability of the executable (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only moments naming this command (accepted by every subcommand) |
+| `--featured` | flag | — | Only the moments the homepage features (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated moments, not only the public ones (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **Check the catalogue before anything projects it** — A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a public record that does not meet the floor its status promises. Exit 10 on any error.
+
+  ```console
+  $ majordomus why validate
+  ```
+
+  Verified: exits 0; prints moment(s), valid.
 

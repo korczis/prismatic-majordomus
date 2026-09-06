@@ -111,7 +111,7 @@ pub enum Format {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "lowercase")]
-pub enum Status {
+pub enum TargetStatus {
     /// Built by every release, offered by the installer, listed as supported. A release
     /// that is missing this artifact is not published.
     Supported,
@@ -121,10 +121,10 @@ pub enum Status {
     Unavailable,
 }
 
-impl Status {
+impl TargetStatus {
     /// Is an artifact of this target built and published?
     pub fn is_published(self) -> bool {
-        matches!(self, Status::Supported | Status::Experimental)
+        matches!(self, TargetStatus::Supported | TargetStatus::Experimental)
     }
 }
 
@@ -263,7 +263,7 @@ pub struct Target {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub binary_suffix: Option<String>,
     /// What the project promises.
-    pub status: Status,
+    pub status: TargetStatus,
     /// Why, when the status is not `supported`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reason: Option<String>,

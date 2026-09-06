@@ -245,7 +245,7 @@ pub enum CpuKind {
 /// Where a deployment stands.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Status {
+pub enum DeploymentStatus {
     /// The object exists and nothing is deployed from it yet.
     Declared,
     /// It is deployed.
@@ -432,7 +432,7 @@ pub struct Deployment {
     pub description: Option<String>,
     /// Where it stands.
     #[serde(default)]
-    pub status: Option<Status>,
+    pub status: Option<DeploymentStatus>,
     /// The application's name at the provider.
     pub application: String,
     /// What is shipped and what it is built from.

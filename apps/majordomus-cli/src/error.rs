@@ -165,6 +165,15 @@ pub enum Error {
         id: String,
     },
 
+    /// A caller named something this repository does not hold. Not the caller's fault in
+    /// the sense an internal error is: the request was well formed and the thing is
+    /// absent, which is the missing-artifact code and not the internal one.
+    #[error("{reason}")]
+    NotFound {
+        /// What was asked for and where the caller can see what exists.
+        reason: String,
+    },
+
     /// The policy file does not parse, or does not carry what the projections need.
     #[error("policy {path} is invalid: {reason}")]
     InvalidPolicy {
@@ -235,7 +244,9 @@ impl Error {
             | Error::InvalidDistribution { .. }
             | Error::InvalidRelease { .. }
             | Error::Stale { .. } => 10,
-            Error::CapabilityNotFound { .. } | Error::DeploymentNotFound { .. } => 12,
+            Error::CapabilityNotFound { .. }
+            | Error::NotFound { .. }
+            | Error::DeploymentNotFound { .. } => 12,
             Error::Git { .. }
             | Error::Io { .. }
             | Error::Transport(_)

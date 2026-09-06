@@ -6,7 +6,7 @@
 use serde_json::{json, Value};
 
 use super::release::{Channel, Releases};
-use super::{Model, Status};
+use super::{Model, TargetStatus};
 
 /// The placeholder the naming function leaves for the tag a release will have. The build
 /// matrix carries names with this in them, so that the workflow substitutes a tag rather
@@ -172,7 +172,7 @@ pub fn installer_region(model: &Model) -> String {
     let unavailable: Vec<String> = model
         .targets
         .iter()
-        .filter(|t| t.status == Status::Unavailable)
+        .filter(|t| t.status == TargetStatus::Unavailable)
         .map(|t| {
             format!(
                 "{} {}",
@@ -295,7 +295,7 @@ pub fn unavailable_section(model: &Model) -> String {
     let rows: Vec<&super::Target> = model
         .targets
         .iter()
-        .filter(|t| t.status == Status::Unavailable)
+        .filter(|t| t.status == TargetStatus::Unavailable)
         .collect();
     if rows.is_empty() {
         return "Every target the model declares is built.\n".to_string();

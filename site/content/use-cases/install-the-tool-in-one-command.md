@@ -6,7 +6,7 @@ weight = 3
 id = "install-the-tool-in-one-command"
 source = ".ai/repo/use-cases/install-the-tool-in-one-command.md"
 category = "adoption"
-maturity = "guaranteed"
+maturity = "described"
 +++
 
 ## Situation
@@ -52,3 +52,35 @@ installation that is there now.
 The platforms this works on are not written down anywhere a person maintains: they are
 `share/distribution.yaml`, and the installer's table, the release build, the documentation
 and this page all read it (`docs/DISTRIBUTION.md`).
+
+## Scenario
+
+```yaml
+setup: bare
+given:
+  - 'a repository with no AI layer, and a machine with the tool already installed the way the installer installs it'
+steps:
+  - id: version
+    run: ['version']
+    note: 'the installed tool says which release it is; the installer refused to install an archive whose executable said anything else'
+    expect:
+      exit: 0
+      stdout_contains: ['^majordomus [0-9]']
+  - id: init
+    run: ['init']
+    note: 'the command the installer points at next, in the repository you want supervised'
+    expect:
+      exit: 0
+      stdout_contains: ['next: majordomus update', 'next: majordomus doctor']
+      files_exist: ['.ai/repo/policy.yaml', '.ai/manifest.yaml']
+  - id: doctor
+    run: ['doctor']
+    note: 'the layer the installed tool created is a layer the installed tool accepts; the hook lines init printed are not in place yet, which is exactly what doctor is for'
+    expect:
+      exit: 12
+      stdout_contains: ['^OK   layout      .ai/']
+then:
+  - 'nothing was installed into the project except .ai/ and the files the policy names'
+  - 'the hook line init printed names the launcher, so an upgrade does not break it'
+  - 'uninstalling removes the launchers and the prefix, and no repository state'
+```

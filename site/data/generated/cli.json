@@ -12,7 +12,7 @@
           "route": "/docs/cli/mcp/"
         },
         {
-          "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+          "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
           "command": "majordomus serve",
           "name": "serve",
           "route": "/docs/cli/serve/"
@@ -52,6 +52,12 @@
           "command": "majordomus distribution",
           "name": "distribution",
           "route": "/docs/cli/distribution/"
+        },
+        {
+          "about": "The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation",
+          "command": "majordomus why",
+          "name": "why",
+          "route": "/docs/cli/why/"
         }
       ],
       "command": "majordomus",
@@ -292,7 +298,7 @@
       "usage": "majordomus mcp [OPTIONS]"
     },
     {
-      "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+      "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
       "ancestors": [
         {
           "command": "majordomus",
@@ -389,6 +395,18 @@
           "required": false,
           "takes_value": true,
           "value_name": "PORT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Bind the address this deployment object declares (.ai/repo/deployments/<ID>.yaml) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's",
+          "long": "deployment",
+          "name": "deployment",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
         }
       ],
       "children": [],
@@ -402,7 +420,7 @@
             "0"
           ],
           "command": "majordomus serve --port 0",
-          "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+          "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.",
           "expectation": "binds a port, answers GET /openapi.json, exits 0 when stopped",
           "id": "serve-ephemeral-port",
           "setup": [],
@@ -1176,19 +1194,19 @@
               "name": "all"
             },
             {
-              "help": "`docs/generated/openapi.json`",
+              "help": "`docs/generated/openapi.{json,yaml}`",
               "name": "openapi"
             },
             {
-              "help": "`docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`",
+              "help": "`docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`",
               "name": "docs"
             },
             {
-              "help": "`docs/generated/benchmarks.md`: every benchmark target and the coverage",
+              "help": "`docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage",
               "name": "benchmarks"
             },
             {
-              "help": "`docs/generated/registry.json`: the builtin registry as data",
+              "help": "`docs/generated/registry.{json,yaml}`: the builtin registry as data",
               "name": "registry"
             },
             {
@@ -1202,6 +1220,14 @@
             {
               "help": "site/data/registry/registry.json, the registry dataset the site renders",
               "name": "site"
+            },
+            {
+              "help": "docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact",
+              "name": "manifest"
+            },
+            {
+              "help": "`docs/generated/web.json`: the resolved web topology the site's route reference renders",
+              "name": "web"
             },
             {
               "help": "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/",
@@ -2434,7 +2460,7 @@
           ],
           "command": "majordomus web list",
           "description": "The resolved topology, in route-precedence order: the routes the executable answers itself, the application's site, and every generated report that declared itself under the generated web root. Nothing is registered anywhere; each line was discovered.",
-          "expectation": "exits 0; prints MOUNT, /api/v1, /docs",
+          "expectation": "exits 0; prints MOUNT, /api/v1, /swagger",
           "id": "web-list",
           "setup": [],
           "title": "Every web surface this repository exposes"
@@ -3113,7 +3139,7 @@
         {
           "defaults": [],
           "global": false,
-          "help": "The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)",
+          "help": "The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`)",
           "long": "suite",
           "name": "suite",
           "positional": false,
@@ -4865,13 +4891,1971 @@
       ],
       "route": "/docs/cli/distribution/build/",
       "usage": "majordomus distribution build [OPTIONS]"
+    },
+    {
+      "about": "The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments this audience recognises",
+          "long": "audience",
+          "name": "audience",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AUDIENCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments in this operational area",
+          "long": "area",
+          "name": "area",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments carrying this tag",
+          "long": "tag",
+          "name": "tag",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TAG"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this severity",
+          "long": "severity",
+          "name": "severity",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SEVERITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this frequency",
+          "long": "frequency",
+          "name": "frequency",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FREQUENCY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments at this stage of work",
+          "long": "lifecycle",
+          "name": "lifecycle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIFECYCLE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this capability of the executable",
+          "long": "capability",
+          "name": "capability",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this command",
+          "long": "names-command",
+          "name": "names_command",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES_COMMAND"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Only the moments the homepage features",
+          "long": "featured",
+          "name": "featured",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FEATURED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Include drafts and deprecated moments, not only the public ones",
+          "long": "all",
+          "name": "all",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+          "long": "query",
+          "name": "query",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": true,
+          "value_name": "QUERY"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every operational moment, narrowed by any facet the catalogue reports",
+          "command": "majordomus why list",
+          "name": "list",
+          "route": "/docs/cli/why/list/"
+        },
+        {
+          "about": "One moment in full, with every relation derived from its metadata",
+          "command": "majordomus why show",
+          "name": "show",
+          "route": "/docs/cli/why/show/"
+        },
+        {
+          "about": "Every audience, with the moments that name it",
+          "command": "majordomus why audiences",
+          "name": "audiences",
+          "route": "/docs/cli/why/audiences/"
+        },
+        {
+          "about": "Every operational area, with the moments that fall under it",
+          "command": "majordomus why areas",
+          "name": "areas",
+          "route": "/docs/cli/why/areas/"
+        },
+        {
+          "about": "What the symptoms you recognise imply: the areas they weigh towards and the mechanisms that answer them",
+          "command": "majordomus why diagnose",
+          "name": "diagnose",
+          "route": "/docs/cli/why/diagnose/"
+        },
+        {
+          "about": "Every finding over the catalogue; exit 10 when any is an error",
+          "command": "majordomus why validate",
+          "name": "validate",
+          "route": "/docs/cli/why/validate/"
+        }
+      ],
+      "command": "majordomus why",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "why"
+          ],
+          "command": "majordomus why",
+          "description": "`why` with nothing after it lists, because listing is what a person wants when they ask what this section is. The count on the last line is computed from the catalogue; no number anywhere is written down.",
+          "expectation": "exits 0; prints SLUG, moment(s)",
+          "id": "why-catalogue",
+          "setup": [],
+          "title": "The operational moments this repository holds"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "why",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "why"
+      ],
+      "route": "/docs/cli/why/",
+      "usage": "majordomus why [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Every operational moment, narrowed by any facet the catalogue reports",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus why",
+          "name": "why",
+          "route": "/docs/cli/why/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments this audience recognises",
+          "long": "audience",
+          "name": "audience",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AUDIENCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments in this operational area",
+          "long": "area",
+          "name": "area",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments carrying this tag",
+          "long": "tag",
+          "name": "tag",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TAG"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this severity",
+          "long": "severity",
+          "name": "severity",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SEVERITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this frequency",
+          "long": "frequency",
+          "name": "frequency",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FREQUENCY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments at this stage of work",
+          "long": "lifecycle",
+          "name": "lifecycle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIFECYCLE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this capability of the executable",
+          "long": "capability",
+          "name": "capability",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this command",
+          "long": "names-command",
+          "name": "names_command",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES_COMMAND"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Only the moments the homepage features",
+          "long": "featured",
+          "name": "featured",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FEATURED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Include drafts and deprecated moments, not only the public ones",
+          "long": "all",
+          "name": "all",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+          "long": "query",
+          "name": "query",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": true,
+          "value_name": "QUERY"
+        }
+      ],
+      "children": [],
+      "command": "majordomus why list",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "why",
+            "list"
+          ],
+          "command": "majordomus why list",
+          "description": "Drafts are excluded unless `--all` is given. The facets a listing may be narrowed by are the ones the catalogue itself reports, so an audience or an area added as a file is a filter without anything being registered.",
+          "expectation": "exits 0; prints SLUG",
+          "id": "why-list",
+          "setup": [],
+          "title": "Every public moment, in presentation order"
+        },
+        {
+          "argv": [
+            "why",
+            "list",
+            "--audience",
+            "fixture-team"
+          ],
+          "command": "majordomus why list --audience fixture-team",
+          "description": "Membership is declared by each moment and never listed in the audience's own file, so this answer is derived. An audience the catalogue does not have is an invalid input naming the ones it does, not an empty answer.",
+          "expectation": "exits 0; prints SLUG",
+          "id": "why-list-audience",
+          "setup": [],
+          "title": "Only what one audience recognises"
+        },
+        {
+          "argv": [
+            "why",
+            "list",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus why list --format json",
+          "description": "One domain model behind every projection: this document is what `GET /api/v1/why` returns and what the `majordomus_why` tool answers, including the derived facets and the catalogue's fingerprint.",
+          "expectation": "exits 0; prints one JSON document carrying /counts/moments, /facets/audiences, /fingerprint",
+          "id": "why-list-json",
+          "setup": [],
+          "title": "The same, as the shape the API and MCP answer with"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "list",
+      "parent_route": "/docs/cli/why/",
+      "path": [
+        "majordomus",
+        "why",
+        "list"
+      ],
+      "route": "/docs/cli/why/list/",
+      "usage": "majordomus why list [OPTIONS]"
+    },
+    {
+      "about": "One moment in full, with every relation derived from its metadata",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus why",
+          "name": "why",
+          "route": "/docs/cli/why/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The moment's id, which is also its slug and its route",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments this audience recognises",
+          "long": "audience",
+          "name": "audience",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AUDIENCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments in this operational area",
+          "long": "area",
+          "name": "area",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments carrying this tag",
+          "long": "tag",
+          "name": "tag",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TAG"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this severity",
+          "long": "severity",
+          "name": "severity",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SEVERITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this frequency",
+          "long": "frequency",
+          "name": "frequency",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FREQUENCY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments at this stage of work",
+          "long": "lifecycle",
+          "name": "lifecycle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIFECYCLE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this capability of the executable",
+          "long": "capability",
+          "name": "capability",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this command",
+          "long": "names-command",
+          "name": "names_command",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES_COMMAND"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Only the moments the homepage features",
+          "long": "featured",
+          "name": "featured",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FEATURED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Include drafts and deprecated moments, not only the public ones",
+          "long": "all",
+          "name": "all",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+          "long": "query",
+          "name": "query",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": true,
+          "value_name": "QUERY"
+        }
+      ],
+      "children": [],
+      "command": "majordomus why show",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "why",
+            "show",
+            "fixture-moment"
+          ],
+          "command": "majordomus why show fixture-moment",
+          "description": "The record as its file declares it, then what nobody authored: the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.",
+          "expectation": "exits 0; prints fixture-moment, derived",
+          "id": "why-show",
+          "setup": [],
+          "title": "One moment, with every relation derived from its metadata"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "show",
+      "parent_route": "/docs/cli/why/",
+      "path": [
+        "majordomus",
+        "why",
+        "show"
+      ],
+      "route": "/docs/cli/why/show/",
+      "usage": "majordomus why show [OPTIONS] <ID>"
+    },
+    {
+      "about": "Every audience, with the moments that name it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus why",
+          "name": "why",
+          "route": "/docs/cli/why/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments this audience recognises",
+          "long": "audience",
+          "name": "audience",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AUDIENCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments in this operational area",
+          "long": "area",
+          "name": "area",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments carrying this tag",
+          "long": "tag",
+          "name": "tag",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TAG"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this severity",
+          "long": "severity",
+          "name": "severity",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SEVERITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this frequency",
+          "long": "frequency",
+          "name": "frequency",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FREQUENCY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments at this stage of work",
+          "long": "lifecycle",
+          "name": "lifecycle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIFECYCLE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this capability of the executable",
+          "long": "capability",
+          "name": "capability",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this command",
+          "long": "names-command",
+          "name": "names_command",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES_COMMAND"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Only the moments the homepage features",
+          "long": "featured",
+          "name": "featured",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FEATURED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Include drafts and deprecated moments, not only the public ones",
+          "long": "all",
+          "name": "all",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+          "long": "query",
+          "name": "query",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": true,
+          "value_name": "QUERY"
+        }
+      ],
+      "children": [],
+      "command": "majordomus why audiences",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "why",
+            "audiences"
+          ],
+          "command": "majordomus why audiences",
+          "description": "Each audience with how many public moments name it. The number is computed from the moments; an audience's own file never lists one.",
+          "expectation": "exits 0; prints SLUG, TITLE",
+          "id": "why-audiences",
+          "setup": [],
+          "title": "Who recognises what, with the counts derived"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "audiences",
+      "parent_route": "/docs/cli/why/",
+      "path": [
+        "majordomus",
+        "why",
+        "audiences"
+      ],
+      "route": "/docs/cli/why/audiences/",
+      "usage": "majordomus why audiences [OPTIONS]"
+    },
+    {
+      "about": "Every operational area, with the moments that fall under it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus why",
+          "name": "why",
+          "route": "/docs/cli/why/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments this audience recognises",
+          "long": "audience",
+          "name": "audience",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AUDIENCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments in this operational area",
+          "long": "area",
+          "name": "area",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments carrying this tag",
+          "long": "tag",
+          "name": "tag",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TAG"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this severity",
+          "long": "severity",
+          "name": "severity",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SEVERITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this frequency",
+          "long": "frequency",
+          "name": "frequency",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FREQUENCY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments at this stage of work",
+          "long": "lifecycle",
+          "name": "lifecycle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIFECYCLE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this capability of the executable",
+          "long": "capability",
+          "name": "capability",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this command",
+          "long": "names-command",
+          "name": "names_command",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES_COMMAND"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Only the moments the homepage features",
+          "long": "featured",
+          "name": "featured",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FEATURED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Include drafts and deprecated moments, not only the public ones",
+          "long": "all",
+          "name": "all",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+          "long": "query",
+          "name": "query",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": true,
+          "value_name": "QUERY"
+        }
+      ],
+      "children": [],
+      "command": "majordomus why areas",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "why",
+            "areas"
+          ],
+          "command": "majordomus why areas",
+          "description": "The same relation read the other way: each area with the public moments that fall under it.",
+          "expectation": "exits 0; prints SLUG, TITLE",
+          "id": "why-areas",
+          "setup": [],
+          "title": "The operational areas, with the counts derived"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "areas",
+      "parent_route": "/docs/cli/why/",
+      "path": [
+        "majordomus",
+        "why",
+        "areas"
+      ],
+      "route": "/docs/cli/why/areas/",
+      "usage": "majordomus why areas [OPTIONS]"
+    },
+    {
+      "about": "What the symptoms you recognise imply: the areas they weigh towards and the mechanisms that answer them",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus why",
+          "name": "why",
+          "route": "/docs/cli/why/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A signal id or a moment id; repeat for each one you recognise. Without any, the questionnaire is printed",
+          "long": "signal",
+          "name": "signals",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SIGNALS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments this audience recognises",
+          "long": "audience",
+          "name": "audience",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AUDIENCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments in this operational area",
+          "long": "area",
+          "name": "area",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments carrying this tag",
+          "long": "tag",
+          "name": "tag",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TAG"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this severity",
+          "long": "severity",
+          "name": "severity",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SEVERITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this frequency",
+          "long": "frequency",
+          "name": "frequency",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FREQUENCY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments at this stage of work",
+          "long": "lifecycle",
+          "name": "lifecycle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIFECYCLE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this capability of the executable",
+          "long": "capability",
+          "name": "capability",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this command",
+          "long": "names-command",
+          "name": "names_command",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES_COMMAND"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Only the moments the homepage features",
+          "long": "featured",
+          "name": "featured",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FEATURED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Include drafts and deprecated moments, not only the public ones",
+          "long": "all",
+          "name": "all",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+          "long": "query",
+          "name": "query",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": true,
+          "value_name": "QUERY"
+        }
+      ],
+      "children": [],
+      "command": "majordomus why diagnose",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "why",
+            "diagnose"
+          ],
+          "command": "majordomus why diagnose",
+          "description": "With no selection there is nothing to diagnose, so the questions are printed instead of an empty answer. Every line is a signal a moment declares; nothing here is a list of questions.",
+          "expectation": "exits 0; prints Which of these happened to you this week?",
+          "id": "why-diagnose-questions",
+          "setup": [],
+          "title": "The questionnaire, assembled from the catalogue's own signals"
+        },
+        {
+          "argv": [
+            "why",
+            "diagnose",
+            "--signal",
+            "fixture-signal"
+          ],
+          "command": "majordomus why diagnose --signal fixture-signal",
+          "description": "A name is a signal id or a moment id. The answer is counting, not inference: each recommendation carries the moments that produced it, and there is no percentage because there is no model behind one.",
+          "expectation": "exits 0; prints moment(s) matched, fixture-moment",
+          "id": "why-diagnose",
+          "setup": [],
+          "title": "What the symptoms you recognise imply"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "diagnose",
+      "parent_route": "/docs/cli/why/",
+      "path": [
+        "majordomus",
+        "why",
+        "diagnose"
+      ],
+      "route": "/docs/cli/why/diagnose/",
+      "usage": "majordomus why diagnose [OPTIONS]"
+    },
+    {
+      "about": "Every finding over the catalogue; exit 10 when any is an error",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus why",
+          "name": "why",
+          "route": "/docs/cli/why/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments this audience recognises",
+          "long": "audience",
+          "name": "audience",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AUDIENCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments in this operational area",
+          "long": "area",
+          "name": "area",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments carrying this tag",
+          "long": "tag",
+          "name": "tag",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TAG"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this severity",
+          "long": "severity",
+          "name": "severity",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SEVERITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments of this frequency",
+          "long": "frequency",
+          "name": "frequency",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FREQUENCY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments at this stage of work",
+          "long": "lifecycle",
+          "name": "lifecycle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIFECYCLE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this capability of the executable",
+          "long": "capability",
+          "name": "capability",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only moments naming this command",
+          "long": "names-command",
+          "name": "names_command",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES_COMMAND"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Only the moments the homepage features",
+          "long": "featured",
+          "name": "featured",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FEATURED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Include drafts and deprecated moments, not only the public ones",
+          "long": "all",
+          "name": "all",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies",
+          "long": "query",
+          "name": "query",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": true,
+          "value_name": "QUERY"
+        }
+      ],
+      "children": [],
+      "command": "majordomus why validate",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "why",
+            "validate"
+          ],
+          "command": "majordomus why validate",
+          "description": "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a public record that does not meet the floor its status promises. Exit 10 on any error.",
+          "expectation": "exits 0; prints moment(s), valid",
+          "id": "why-validate",
+          "setup": [],
+          "title": "Check the catalogue before anything projects it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "validate",
+      "parent_route": "/docs/cli/why/",
+      "path": [
+        "majordomus",
+        "why",
+        "validate"
+      ],
+      "route": "/docs/cli/why/validate/",
+      "usage": "majordomus why validate [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 200,
-    "commands": 32,
-    "examples": 35,
-    "runnable": 28
+    "arguments": 315,
+    "commands": 39,
+    "examples": 45,
+    "runnable": 35
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.2.0",

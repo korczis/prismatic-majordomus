@@ -281,6 +281,7 @@ const DERIVATIONS: &[(&str, Derivation)] = &[
     ("rules", rules_graph),
     ("adrs", adrs_graph),
     ("use-cases", use_cases_graph),
+    ("why", why_graph),
 ];
 
 /// The ids of every graph, in the order they are listed.
@@ -787,6 +788,99 @@ pub fn routes(object: &Object) -> String {
 /// The Cockpit route of a capability.
 pub fn capability_page(c: &Capability) -> String {
     capability_route(c.id.as_str())
+}
+
+/// The Why catalogue as a graph: every operational moment with the audiences that
+/// recognise it, the areas it falls under, and the mechanisms of this repository it names
+/// — the commands, the capabilities of this executable, the claims, the rules and the use
+/// cases. Read backwards it answers the question a page asks: which moments does this
+/// capability answer, and which does this rule govern.
+///
+/// Derived from the front matter of the moments and from nothing else. No edge here is
+/// authored twice: a moment names an audience, and the audience's membership is this
+/// graph read in the other direction.
+fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
+    let catalogue = crate::why::Catalogue::build(index, registry);
+    let mut b = Builder::new(
+        "why",
+        "The moments, and what answers them",
+        "Every operational moment this tool is a response to, with who recognises it, the operational area it falls under, and the commands, capabilities, claims, rules and use cases that answer it. A moment that named something this repository does not have would fail validation rather than draw an edge to nothing.",
+        "the front matter of every object of kind `moment`",
+    )
+    .node_kind("moment", "one operational failure mode")
+    .node_kind("audience", "who recognises it")
+    .node_kind("area", "the operational area it falls under")
+    .node_kind("command", "a command that answers it")
+    .node_kind("capability", "a capability of this executable that answers it")
+    .node_kind("claim", "a claim that says what is guaranteed here")
+    .node_kind("rule", "a rule of the effective set that governs it")
+    .node_kind("use-case", "a use case that shows the way out")
+    .edge_kind("recognised_by", "that audience recognises this moment")
+    .edge_kind("falls_under", "this moment falls under that area")
+    .edge_kind("answered_by", "that command or capability answers this moment")
+    .edge_kind("backed_by", "that claim says what is guaranteed here")
+    .edge_kind("governed_by", "that rule governs this moment")
+    .edge_kind("resolved_by", "that use case shows the way out")
+    .edge_kind("related_to", "the moment names that one as related");
+
+    'outer: for m in catalogue
+        .all()
+        .iter()
+        .filter(|m| m.status == crate::why::STABLE)
+    {
+        let id = format!("moment:{}", m.id);
+        if !b.node(Node {
+            id: id.clone(),
+            kind: "moment".into(),
+            label: m.label().to_string(),
+            summary: Some(m.summary.clone()),
+            route: Some(m.route.clone()),
+            source: Some(m.source.clone()),
+            status: Some(m.severity.clone()),
+            external: false,
+        }) {
+            break;
+        }
+        for (values, kind, edge) in [
+            (&m.audiences, "audience", "recognised_by"),
+            (&m.areas, "area", "falls_under"),
+            (&m.commands, "command", "answered_by"),
+            (&m.capabilities, "capability", "answered_by"),
+            (&m.claims, "claim", "backed_by"),
+            (&m.doctrines, "rule", "governed_by"),
+            (&m.use_cases, "use-case", "resolved_by"),
+            (&m.related, "moment", "related_to"),
+        ] {
+            for name in values {
+                let target = format!("{kind}:{name}");
+                if !b.has(&target) {
+                    let route = match kind {
+                        "audience" => Some(format!("{}audiences/{name}/", crate::why::ROUTE)),
+                        "area" => Some(format!("{}areas/{name}/", crate::why::ROUTE)),
+                        "moment" => Some(format!("{}{name}/", crate::why::ROUTE)),
+                        "command" => Some(format!("/commands/{name}/")),
+                        "claim" => Some(format!("/guarantees/{name}/")),
+                        "use-case" => Some(format!("/use-cases/{name}/")),
+                        _ => None,
+                    };
+                    if !b.node(Node {
+                        id: target.clone(),
+                        kind: kind.into(),
+                        label: name.clone(),
+                        summary: None,
+                        route,
+                        source: None,
+                        status: None,
+                        external: false,
+                    }) {
+                        break 'outer;
+                    }
+                }
+                b.edge(&id, &target, edge);
+            }
+        }
+    }
+    b.finish()
 }
 
 #[cfg(test)]

@@ -15,7 +15,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::distribution::release::{Channel, Releases};
-use crate::distribution::{Arch, Libc, Model, Os, Status};
+use crate::distribution::{Arch, Libc, Model, Os, TargetStatus};
 use crate::{capability, module};
 
 use super::{get, mcp, Empty};
@@ -40,7 +40,7 @@ pub struct TargetView {
     /// The Rust target triple.
     pub rust_target: String,
     /// What the project promises about it.
-    pub status: Status,
+    pub status: TargetStatus,
     /// Why, when it is not built.
     pub reason: Option<String>,
     /// The artifact name, with `{tag}` where a release's tag goes.
@@ -154,7 +154,7 @@ impl BenchmarkCases for ArtifactInput {
 
 /// The artifact a target and a tag name, and the directory it unpacks into.
 #[derive(Debug, Clone, Serialize, JsonSchema)]
-pub struct ArtifactView {
+pub struct ReleaseArtifactView {
     /// The target's id in the model.
     pub target: String,
     /// The Rust target triple.
@@ -254,7 +254,7 @@ fn build(ctx: &Context, _: Empty) -> Result<BuildReport, CapabilityError> {
     })
 }
 
-fn artifact(ctx: &Context, input: ArtifactInput) -> Result<ArtifactView, CapabilityError> {
+fn artifact(ctx: &Context, input: ArtifactInput) -> Result<ReleaseArtifactView, CapabilityError> {
     let m = model(ctx)?;
     let t = m
         .targets
@@ -282,7 +282,7 @@ fn artifact(ctx: &Context, input: ArtifactInput) -> Result<ArtifactView, Capabil
         )));
     }
     let name = t.artifact_name(&m.project, &m.archive, &tag);
-    Ok(ArtifactView {
+    Ok(ReleaseArtifactView {
         target: t.id.clone(),
         rust_target: t.rust_target.clone(),
         url: format!("{}{tag}/{name}", m.project.download_prefix()),
@@ -350,7 +350,7 @@ pub fn module() -> ModuleDescriptor {
                 title: "The artifact of a target",
                 description: "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.",
                 input: ArtifactInput,
-                output: ArtifactView,
+                output: ReleaseArtifactView,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure {
                     mcp: mcp("majordomus_artifact"),

@@ -75,6 +75,9 @@ H
   # and the context documents, so that the first use case is one file
   mj_init_tree "$skel/ai/repo/use-cases" "$MJ_AI_REPO_DIR/use-cases" '*'
   mj_init_tree "$skel/ai/repo/applications" "$MJ_AI_REPO_DIR/applications" '*'
+  # the why catalogue: the section and its contract exist from the start, so that the first
+  # moment is one file and nothing has to be registered for it
+  mj_init_tree "$skel/ai/repo/why" "$MJ_AI_REPO_DIR/why" '*'
   mkdir -p "$MJ_PROJECT_DIR"
   # The sessions section, at the path the manifest names — or, on the first init, at the
   # path the skeleton's manifest is about to name. The resolved variable is empty on that

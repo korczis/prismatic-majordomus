@@ -1,7 +1,7 @@
 +++
 title = "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp"
 description = "Nobody runs a server by hand. Open this repository in Claude Code, Gemini CLI or Codex and the client finds its configuration at the root, spawns bin/majordomus-mcp, and speaks MCP to it; the launcher builds the Rust executable when it is missing or older than its sources, then runs majordomus mcp, which starts the repository's shared server or attaches to the one already running. The first client to open the repository becomes the server; the second shares it."
-weight = 111
+weight = 112
 [extra]
 claim_id = "mcp-client-autostart"
 status = "guaranteed"
@@ -23,7 +23,7 @@ Nobody runs a server by hand. Open this repository in Claude Code, Gemini CLI or
 cat .mcp.json .gemini/settings.json .codex/config.toml            # the same launcher in each
 bin/majordomus-mcp --help                                         # builds if needed, then: Usage: majordomus mcp ...
 printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"you","version":"0"}}}\n' | bin/majordomus-mcp
-# stderr: shared server listening on http://127.0.0.1:8741 (swagger ui http://127.0.0.1:8741/docs, ...); stdout: the initialize result
+# stderr: shared server listening on http://127.0.0.1:8741 — 7 surface(s): api .../api/v1, cockpit .../cockpit, ...; stdout: the initialize result
 claude                                                            # in this directory: approve the project server once; the majordomus_* tools are there
 ```
 

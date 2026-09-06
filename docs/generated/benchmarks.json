@@ -1,40 +1,40 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.1.0",
+  "generator": "majordomus-cli 0.2.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 15,
-      "covered": 15,
+      "required": 33,
+      "covered": 33,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "http",
-      "required": 15,
-      "covered": 15,
+      "required": 33,
+      "covered": 33,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "mcp",
-      "required": 15,
-      "covered": 15,
+      "required": 31,
+      "covered": 31,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "system",
-      "required": 12,
-      "covered": 12,
+      "required": 13,
+      "covered": 13,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "total",
-      "required": 57,
-      "covered": 57,
+      "required": 110,
+      "covered": 110,
       "missing": 0,
       "waived": 0
     }
@@ -79,6 +79,117 @@
       ]
     },
     {
+      "id": "continuity.state",
+      "module": "continuity",
+      "kind": "query",
+      "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "deploy.check",
+      "module": "deploy",
+      "kind": "query",
+      "cache": "process, 2 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "deploy.get",
+      "module": "deploy",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-deployment"
+      ]
+    },
+    {
+      "id": "deploy.list",
+      "module": "deploy",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "directories.list",
+      "module": "directories",
+      "kind": "query",
+      "cache": "process, 8 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "whole-tree",
+        "one-directory",
+        "effective-everywhere",
+        "owed"
+      ]
+    },
+    {
+      "id": "distribution.artifact",
+      "module": "distribution",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-published-target"
+      ]
+    },
+    {
+      "id": "distribution.build",
+      "module": "distribution",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "distribution.model",
+      "module": "distribution",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "distribution.releases",
+      "module": "distribution",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "graph.get",
       "module": "graph",
       "kind": "query",
@@ -91,7 +202,8 @@
         "layer",
         "rules",
         "adrs",
-        "use-cases"
+        "use-cases",
+        "why"
       ]
     },
     {
@@ -101,6 +213,30 @@
       "cache": "—",
       "direct": "covered",
       "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "health.live",
+      "module": "health",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "none",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "health.ready",
+      "module": "health",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "none",
       "http": "covered",
       "cases": [
         "default"
@@ -232,6 +368,92 @@
         "undeclared",
         "first-object"
       ]
+    },
+    {
+      "id": "web.surfaces",
+      "module": "web",
+      "kind": "query",
+      "cache": "process, 2 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "why.areas",
+      "module": "why",
+      "kind": "query",
+      "cache": "process, 4 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "why.audiences",
+      "module": "why",
+      "kind": "query",
+      "cache": "process, 4 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "why.diagnose",
+      "module": "why",
+      "kind": "query",
+      "cache": "process, 32 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "three-moments"
+      ]
+    },
+    {
+      "id": "why.list",
+      "module": "why",
+      "kind": "query",
+      "cache": "process, 32 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "by-audience",
+        "search"
+      ]
+    },
+    {
+      "id": "why.moment",
+      "module": "why",
+      "kind": "query",
+      "cache": "process, 64 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-moment"
+      ]
+    },
+    {
+      "id": "why.validate",
+      "module": "why",
+      "kind": "query",
+      "cache": "process, 2 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
     }
   ],
   "system_targets": [
@@ -268,7 +490,12 @@
     {
       "key": "system.http.index",
       "transport": "http",
-      "measures": "GET /"
+      "measures": "GET / (the topology as JSON)"
+    },
+    {
+      "key": "system.http.home",
+      "transport": "http",
+      "measures": "GET / with Accept: text/html (the home page, rendered from the topology)"
     },
     {
       "key": "system.http.openapi",
@@ -276,9 +503,9 @@
       "measures": "GET /openapi.json"
     },
     {
-      "key": "system.http.docs",
+      "key": "system.http.swagger",
       "transport": "http",
-      "measures": "GET /docs (the Swagger UI shell)"
+      "measures": "GET /swagger (the Swagger UI shell)"
     },
     {
       "key": "system.http.cockpit_overview",

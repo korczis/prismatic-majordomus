@@ -9,6 +9,7 @@ pub mod mcp;
 pub mod scope;
 pub mod serve;
 pub mod web;
+pub mod why;
 
 use crate::cli::{Cli, Command};
 use crate::error::Result;
@@ -24,5 +25,6 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Scope(args) => scope::run(args),
         Command::Web(args) => web::run(args),
         Command::Distribution(args) => distribution::run(args),
+        Command::Why(args) => why::run(args),
     }
 }

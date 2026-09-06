@@ -1,7 +1,7 @@
 +++
 title = "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered"
 description = "A stretch of work ends, and what it did becomes a file the whole repository can read: when"
-weight = 138
+weight = 143
 [extra]
 claim_id = "session-records"
 status = "guaranteed"
@@ -25,7 +25,7 @@ input when the episode closes.
 
 `majordomus session close` writes it into the section the manifest names, `.ai/repo/sessions/`,
 and nothing else writes or edits one. The front matter satisfies
-`share/schemas/session-record.schema.json`, from which the allow-list
+`share/schemas/majordomus/session-record/session-record.v1.schema.json`, from which the allow-list
 `share/allow/session-record.txt` is generated; `schema: session/v1` identifies the format and
 a version the executable does not read is refused rather than guessed at.
 

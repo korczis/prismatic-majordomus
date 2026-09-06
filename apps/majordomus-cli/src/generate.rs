@@ -384,6 +384,27 @@ impl Document {
         }
     }
 
+    /// The same document written somewhere other than `docs/generated/`.
+    ///
+    /// The site's data directory is the one such place: the site generator reads committed
+    /// JSON, so a document it needs is written beside its other data rather than moved.
+    pub fn in_dir(mut self, dir: impl Into<String>) -> Document {
+        self.dir = dir.into();
+        self
+    }
+
+    /// Only the JSON encoding of this document.
+    ///
+    /// For a directory that commits one encoding: the site's data directory holds JSON and
+    /// its generator reads nothing else, so writing a YAML copy there would put a file in
+    /// the tree that nothing reads and `generate --check` would still have to keep current.
+    pub fn json(&self, version: &str) -> Artifact {
+        self.artifacts(version)
+            .into_iter()
+            .find(|a| a.format == ArtifactFormat::Json)
+            .expect("every document is rendered as JSON")
+    }
+
     /// The value with its provenance in it: what both encodings serialise.
     pub fn stamped(&self, version: &str) -> Value {
         let Value::Object(members) = &self.value else {
@@ -612,6 +633,11 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                 "the capability registry and the index of this repository's layer",
                 crate::site::render(&dataset),
             ));
+            // The Why catalogue as the site reads it, and the graph of it. Both are
+            // derived from the catalogue alone — never from the index's fingerprint —
+            // so the two `generate` passes of the derivation graph agree byte for byte
+            // even though the pass between them adds documents to the index.
+            out.extend(crate::site::why_artifacts(&app.context)?);
         }
     }
     if targets.contains(&Target::Distribution) {
