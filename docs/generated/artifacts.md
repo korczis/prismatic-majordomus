@@ -25,6 +25,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `allow/rule` | `text` | — | the document schema `share/schemas/majordomus/rule/rule.v1.proto` |
 | `allow/scope` | `text` | — | the JSON Schema `majordomus.scope/v1` of the kind it validates |
 | `allow/session` | `text` | — | the JSON Schema `majordomus.session/v1` of the kind it validates |
+| `allow/session-context` | `text` | — | the JSON Schema `majordomus.session-context/v1` of the kind it validates |
 | `allow/session-record` | `text` | — | the JSON Schema `majordomus.session-record/v1` of the kind it validates |
 | `allow/skill` | `text` | — | the document schema `share/schemas/majordomus/skill/skill.v1.proto` |
 | `allow/taxonomy` | `text` | — | the JSON Schema `majordomus.taxonomy/v1` of the kind it validates |
@@ -111,6 +112,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/prompt.txt` | `allow/prompt` | text | 226 | `fc020f8543426c24` |
 | `share/allow/rule.txt` | `allow/rule` | text | 516 | `81db5b7a5978055f` |
 | `share/allow/scope.txt` | `allow/scope` | text | 824 | `bad87aff002dccc5` |
+| `share/allow/session-context.txt` | `allow/session-context` | text | 326 | `47d708972e4de86a` |
 | `share/allow/session-record.txt` | `allow/session-record` | text | 650 | `161a55bd5f97bbee` |
 | `share/allow/session.txt` | `allow/session` | text | 303 | `fbb1b27a6903fd3b` |
 | `share/allow/skill.txt` | `allow/skill` | text | 328 | `9756c26fc3f0cf67` |
@@ -133,4 +135,4 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/rule.txt` | `sections/rule` | text | 335 | `9810b6c9375302bc` |
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `949be69ddae1374f` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `f195f898cb3ac688` |
-| `site/data/registry/registry.json` | `site-registry` | json | 739548 | `807c248694647fcf` |
+| `site/data/registry/registry.json` | `site-registry` | json | 739774 | `e9593e77605db29b` |
