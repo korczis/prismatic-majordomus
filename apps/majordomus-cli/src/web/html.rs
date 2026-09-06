@@ -116,7 +116,7 @@ pub fn summary(items: &[(&str, String)]) -> String {
 }
 
 /// The footer every report carries: where the evidence came from.
-pub fn origin(origin: &super::Origin, evidence: &[(&str, &str)]) -> String {
+pub fn origin(origin: &super::report::Origin, evidence: &[(&str, &str)]) -> String {
     let mut out = String::from("<footer>");
     out.push_str(&format!(
         "rendered {} by majordomus {}",

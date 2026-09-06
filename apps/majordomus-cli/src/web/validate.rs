@@ -49,10 +49,11 @@ pub struct Finding {
 /// use majordomus_cli::web::{model::*, validate};
 /// # use std::collections::BTreeMap;
 /// # fn s(id: &str, mount: &str) -> Surface {
-/// #     Surface { id: id.into(), title: id.into(), kind: SurfaceKind::StaticDirectory,
-/// #         mount: Mount::parse(mount).unwrap(), producer: "t".into(),
+/// #     Surface { id: id.into(), title: id.into(), category: Category::Report,
+/// #         visibility: Visibility::Public, kind: SurfaceKind::StaticDirectory,
+/// #         mount: Mount::parse(mount).unwrap(), producer: "t".into(), feature: None,
 /// #         artifact: Some("target/web/x".into()), index: Some("index.html".into()),
-/// #         availability: Availability::Both, provenance: BTreeMap::new() }
+/// #         availability: Availability::Both, built_from: None, provenance: BTreeMap::new() }
 /// # }
 /// let clash = Topology::new(vec![s("a", "/tests"), s("b", "/tests")]);
 /// let findings = validate::validate(&clash, std::path::Path::new("."), validate::Artifacts::Ignore);
@@ -263,13 +264,15 @@ pub fn blocking(findings: &[Finding]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::web::model::{Availability, Mount, Surface};
+    use crate::web::model::{Availability, Category, Mount, Surface, Visibility};
     use std::collections::BTreeMap;
 
     fn surface(id: &str, mount: &str, artifact: Option<&str>) -> Surface {
         Surface {
             id: id.into(),
             title: id.into(),
+            category: Category::Report,
+            visibility: Visibility::Public,
             kind: if artifact.is_some() {
                 SurfaceKind::StaticDirectory
             } else {
@@ -277,6 +280,7 @@ mod tests {
             },
             mount: Mount::parse(mount).unwrap(),
             producer: format!("producer of {id}"),
+            feature: None,
             artifact: artifact.map(Into::into),
             index: artifact.map(|_| "index.html".to_string()),
             availability: if artifact.is_some() {
@@ -284,6 +288,7 @@ mod tests {
             } else {
                 Availability::ServedOnly
             },
+            built_from: None,
             provenance: BTreeMap::new(),
         }
     }

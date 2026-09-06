@@ -17,7 +17,9 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
-use super::model::{Availability, Mount, Provenance, Surface, SurfaceKind, Topology};
+use super::model::{
+    Availability, Category, Feature, Mount, Provenance, Surface, SurfaceKind, Topology, Visibility,
+};
 use crate::capability::model::HttpExposure;
 use crate::cockpit;
 use crate::error::{Error, Result};
@@ -54,6 +56,21 @@ impl Runtime {
         Runtime {
             mcp: true,
             cockpit: true,
+        }
+    }
+
+    /// Does this process have the capability a surface needs?
+    ///
+    /// ```
+    /// use majordomus_cli::web::discover::Runtime;
+    /// use majordomus_cli::web::model::Feature;
+    /// assert!(Runtime::full().has(Feature::Cockpit));
+    /// assert!(!Runtime::default().has(Feature::Cockpit));
+    /// ```
+    pub fn has(self, feature: Feature) -> bool {
+        match feature {
+            Feature::Mcp => self.mcp,
+            Feature::Cockpit => self.cockpit,
         }
     }
 }
@@ -93,6 +110,17 @@ pub struct Declaration {
     /// Whether the surface is published, served, or both; both when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub availability: Option<Availability>,
+    /// What the surface is for; a generated directory is a report when it says nothing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub category: Option<Category>,
+    /// Whether a person is shown it; public when absent, because a producer that went to
+    /// the trouble of declaring a mount meant it to be found.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub visibility: Option<Visibility>,
+    /// The revision the output was built from, when the producer knows it: what makes a
+    /// stale artifact a finding instead of a surprise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub built_from: Option<String>,
 }
 
 /// The whole topology of a repository: the executable's routes, the generated reports and
@@ -112,19 +140,40 @@ pub fn discover(root: &Path, runtime: Runtime) -> Result<Topology> {
 ///
 /// This function names no path of its own: every mount below is the same constant the
 /// router, the OpenAPI document and the Cockpit already use, so a prefix that moves moves
-/// here too.
-pub fn native(runtime: Runtime) -> Vec<Surface> {
-    let mut out = vec![
+/// here too. It is the whole list — a process that does not offer a feature simply does
+/// not serve the surfaces that declare it, which [`Runtime`] decides and nothing here
+/// repeats.
+pub fn native_all() -> Vec<Surface> {
+    vec![
+        Surface {
+            id: HOME.into(),
+            title: "This process, and everything it serves".into(),
+            category: Category::Interface,
+            visibility: Visibility::Public,
+            kind: SurfaceKind::NativeRoute,
+            mount: Mount::root(),
+            producer: "web::home".into(),
+            feature: None,
+            artifact: None,
+            index: None,
+            availability: Availability::ServedOnly,
+            built_from: None,
+            provenance: provenance([("mount", Provenance::Default)]),
+        },
         Surface {
             id: "api".into(),
             title: "The capability registry over HTTP".into(),
+            category: Category::Api,
+            visibility: Visibility::Public,
             kind: SurfaceKind::NativeRoute,
             mount: Mount::parse(HttpExposure::PREFIX.trim_end_matches('/'))
                 .expect("the capability prefix is a mount"),
             producer: "capability registry".into(),
+            feature: None,
             artifact: None,
             index: None,
             availability: Availability::ServedOnly,
+            built_from: None,
             provenance: provenance([
                 ("mount", Provenance::Registry),
                 ("kind", Provenance::Registry),
@@ -133,90 +182,165 @@ pub fn native(runtime: Runtime) -> Vec<Surface> {
         Surface {
             id: "openapi".into(),
             title: "The OpenAPI document of the capability registry".into(),
+            category: Category::Api,
+            visibility: Visibility::Public,
             kind: SurfaceKind::NativeRoute,
             mount: Mount::parse(swagger::SPEC_PATH).expect("the OpenAPI path is a mount"),
             producer: "capability registry".into(),
+            feature: None,
             artifact: None,
             index: None,
             availability: Availability::ServedOnly,
+            built_from: None,
             provenance: provenance([("mount", Provenance::Registry)]),
         },
         Surface {
             id: "swagger".into(),
             title: "Swagger UI over the OpenAPI document".into(),
+            category: Category::Documentation,
+            visibility: Visibility::Public,
             kind: SurfaceKind::NativeRoute,
-            mount: Mount::parse(swagger::DOCS_PATH).expect("the Swagger path is a mount"),
+            mount: Mount::parse(swagger::SWAGGER_PATH).expect("the Swagger path is a mount"),
             producer: "http::swagger".into(),
+            feature: None,
             artifact: None,
             index: None,
             availability: Availability::ServedOnly,
+            built_from: None,
             provenance: provenance([("mount", Provenance::Registry)]),
         },
-    ];
-    if runtime.mcp {
-        out.push(Surface {
+        Surface {
             id: "mcp".into(),
             title: "MCP over HTTP for attached clients".into(),
+            category: Category::Protocol,
+            visibility: Visibility::Internal,
             kind: SurfaceKind::NativeRoute,
             mount: Mount::parse(mcp::PATH).expect("the MCP path is a mount"),
             producer: "mcp endpoint".into(),
+            feature: Some(Feature::Mcp),
             artifact: None,
             index: None,
             availability: Availability::ServedOnly,
+            built_from: None,
             provenance: provenance([("mount", Provenance::Registry)]),
-        });
-    }
-    if runtime.cockpit {
-        out.push(Surface {
+        },
+        Surface {
             id: "cockpit".into(),
             title: "The registry, rendered for a person".into(),
+            category: Category::Interface,
+            visibility: Visibility::Public,
             kind: SurfaceKind::NativeRoute,
             mount: Mount::parse(cockpit::PREFIX).expect("the Cockpit prefix is a mount"),
             producer: "cockpit".into(),
+            feature: Some(Feature::Cockpit),
             artifact: None,
             index: None,
             availability: Availability::ServedOnly,
+            built_from: None,
             provenance: provenance([("mount", Provenance::Registry)]),
-        });
-    }
-    out
+        },
+    ]
 }
 
-/// The Zola application, when this repository has one.
+/// The identity of the surface that answers `/`: the page this process is entered through.
+pub const HOME: &str = "home";
+
+/// The identity of the served documentation build, mounted under [`DOCS_MOUNT`].
+pub const DOCS: &str = "docs";
+
+/// The identity of the site as it is published, which owns `/` of a deployment.
+pub const APPLICATION: &str = "app";
+
+/// Where the documentation is served by a running process, and the base URL its build is
+/// made for. `/` belongs to the process's own home page, so the site is mounted below it.
+pub const DOCS_MOUNT: &str = "/docs";
+
+/// Where the documentation build for [`DOCS_MOUNT`] is written, repository-relative.
+pub const DOCS_ARTIFACT: &str = "target/web/docs";
+
+/// The site's own configuration, repository-relative: what says this repository has a site
+/// at all.
+pub const SITE_CONFIG: &str = "site/config.toml";
+
+/// Where the site generator writes the build made for deployment, repository-relative.
+pub const SITE_PUBLIC: &str = "site/public";
+
+/// The routes the executable answers itself, narrowed to what this process offers.
+pub fn native(runtime: Runtime) -> Vec<Surface> {
+    native_all()
+        .into_iter()
+        .filter(|s| s.feature.is_none_or(|f| runtime.has(f)))
+        .collect()
+}
+
+/// The site, when this repository has one: the deployment and the local build of it.
 ///
-/// Its existence is inferred from the site's own configuration rather than assumed, and its
-/// output directory is where the site generator writes: the application owns `/` and
-/// nothing else needs to know that.
-pub fn application(root: &Path) -> Option<Surface> {
-    let config = root.join("site/config.toml");
+/// One configuration, two surfaces, because the same source is built twice for two
+/// different mounts and neither build is a copy of the source. The deployment owns `/` of
+/// whatever origin it is published to and is never served by this process; the local build
+/// is made for [`DOCS_MOUNT`] and is never published. Nothing about the site is assumed:
+/// its existence is read from its own configuration, and a repository without one has
+/// neither surface.
+pub fn application(root: &Path) -> Vec<Surface> {
+    let config = root.join(SITE_CONFIG);
     if !config.is_file() {
-        return None;
+        return Vec::new();
     }
-    Some(Surface {
-        id: "app".into(),
-        title: "The application: the repository's own site".into(),
-        kind: SurfaceKind::StaticDirectory,
-        mount: Mount::root(),
-        producer: "scripts/site-build".into(),
-        artifact: Some(PathBuf::from("site/public")),
-        index: Some("index.html".into()),
-        availability: Availability::Both,
-        provenance: provenance([
-            (
-                "kind",
-                Provenance::SiteConfig {
-                    path: "site/config.toml".into(),
-                },
-            ),
-            ("mount", Provenance::Default),
-            (
-                "artifact",
-                Provenance::SiteConfig {
-                    path: "site/config.toml".into(),
-                },
-            ),
-        ]),
-    })
+    let from_config = || Provenance::SiteConfig {
+        path: SITE_CONFIG.into(),
+    };
+    vec![
+        Surface {
+            id: APPLICATION.into(),
+            title: "The site as it is deployed".into(),
+            category: Category::Documentation,
+            visibility: Visibility::Public,
+            kind: SurfaceKind::StaticDirectory,
+            mount: Mount::root(),
+            producer: "scripts/site-build".into(),
+            feature: None,
+            artifact: Some(PathBuf::from(SITE_PUBLIC)),
+            index: Some("index.html".into()),
+            availability: Availability::PublishedOnly,
+            built_from: None,
+            provenance: provenance([
+                ("kind", from_config()),
+                ("mount", Provenance::Default),
+                ("artifact", from_config()),
+            ]),
+        },
+        Surface {
+            id: DOCS.into(),
+            title: "The documentation, as this process serves it".into(),
+            category: Category::Documentation,
+            visibility: Visibility::Public,
+            kind: SurfaceKind::StaticDirectory,
+            mount: Mount::parse(DOCS_MOUNT).expect("the documentation mount is a mount"),
+            producer: "scripts/site-build --serve".into(),
+            feature: None,
+            artifact: Some(PathBuf::from(DOCS_ARTIFACT)),
+            index: Some("index.html".into()),
+            availability: Availability::ServedOnly,
+            built_from: built_from(&root.join(DOCS_ARTIFACT)),
+            provenance: provenance([
+                ("kind", from_config()),
+                ("mount", Provenance::Default),
+                (
+                    "artifact",
+                    Provenance::Filesystem {
+                        path: DOCS_ARTIFACT.into(),
+                    },
+                ),
+            ]),
+        },
+    ]
+}
+
+/// The revision a producer recorded beside its output, when it recorded one.
+fn built_from(dir: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(dir.join(DECLARATION_FILE)).ok()?;
+    let declaration: Declaration = serde_json::from_str(&text).ok()?;
+    declaration.built_from
 }
 
 /// Every generated static surface: one directory under the generated root, each declaring
@@ -240,6 +364,12 @@ pub fn generated(root: &Path) -> Result<Vec<Surface>> {
     for path in entries {
         let declaration = path.join(DECLARATION_FILE);
         if !declaration.is_file() {
+            continue;
+        }
+        // the documentation build is discovered from the site's configuration, which knows
+        // it should exist even when it has not been built; its declaration carries the
+        // revision and nothing else this walk would add
+        if path.file_name().is_some_and(|n| n == DOCS) {
             continue;
         }
         let rel = format!(
@@ -276,12 +406,16 @@ pub fn generated(root: &Path) -> Result<Vec<Surface>> {
         out.push(Surface {
             id: decl.id.clone(),
             title: decl.title.unwrap_or_else(|| decl.id.clone()),
+            category: decl.category.unwrap_or(Category::Report),
+            visibility: decl.visibility.unwrap_or(Visibility::Public),
             kind: SurfaceKind::StaticDirectory,
             mount,
             producer: decl.producer.unwrap_or_else(|| "unknown".into()),
+            feature: None,
             artifact: Some(artifact),
             index: Some(decl.index.unwrap_or_else(|| "index.html".into())),
             availability: decl.availability.unwrap_or(Availability::Both),
+            built_from: decl.built_from,
             provenance: provenance([
                 (
                     "mount",
@@ -357,19 +491,34 @@ mod tests {
     #[test]
     fn the_application_is_discovered_from_its_configuration() {
         let tmp = tempfile::tempdir().unwrap();
-        assert!(application(tmp.path()).is_none());
+        assert!(application(tmp.path()).is_empty());
         std::fs::create_dir_all(tmp.path().join("site")).unwrap();
         std::fs::write(tmp.path().join("site/config.toml"), "base_url = \"/\"\n").unwrap();
-        let app = application(tmp.path()).expect("a site is an application");
+        let surfaces = application(tmp.path());
+        let app = surfaces
+            .iter()
+            .find(|s| s.id == APPLICATION)
+            .expect("a site is deployed");
         assert!(app.mount.is_root());
-        assert_eq!(app.artifact.as_deref(), Some(Path::new("site/public")));
+        assert_eq!(app.artifact.as_deref(), Some(Path::new(SITE_PUBLIC)));
+        assert!(!app.availability.is_served(), "the deployment is not served");
+        let docs = surfaces
+            .iter()
+            .find(|s| s.id == DOCS)
+            .expect("the same site is served under its own mount");
+        assert_eq!(docs.mount.as_str(), DOCS_MOUNT);
+        assert_eq!(docs.artifact.as_deref(), Some(Path::new(DOCS_ARTIFACT)));
+        assert!(
+            !docs.availability.is_published(),
+            "the local build is never deployed"
+        );
     }
 
     #[test]
     fn the_native_routes_come_from_the_constants_that_declare_them() {
         let all = native(Runtime::full());
         let mounts: Vec<&str> = all.iter().map(|s| s.mount.as_str()).collect();
-        assert!(mounts.contains(&swagger::DOCS_PATH));
+        assert!(mounts.contains(&swagger::SWAGGER_PATH));
         assert!(mounts.contains(&mcp::PATH));
         assert!(mounts.contains(&cockpit::PREFIX));
         // a process that serves neither advertises neither

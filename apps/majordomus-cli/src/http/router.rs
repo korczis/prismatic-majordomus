@@ -1,7 +1,12 @@
-//! Routing and binding, transport-neutral: a request in, a response out. Every route
-//! under `/api/v1/` is a capability with an HTTP exposure; the infrastructure routes
-//! (`/`, `/openapi.json`, `/docs`, `/cockpit`, and `/mcp` when the router serves a shared
-//! server) are the projection's own and are documented as such. Nothing else exists.
+//! Routing and binding, transport-neutral: a request in, a response out.
+//!
+//! The router names no surface. It asks [`super::surfaces::Served`] — the web topology this
+//! process resolved, narrowed to what it can answer — who owns a path, and dispatches to
+//! what that surface bound. A route under `/api/v1/` is a capability with an HTTP exposure;
+//! `/`, `/openapi.json`, `/swagger`, `/cockpit` and `/mcp` are routes the executable answers
+//! itself; `/docs/` and every generated report are directories a producer wrote. All of them
+//! are declared once, in `crate::web::discover`, and reach the router, the home page, the
+//! `web.surfaces` capability and the publication from there.
 
 use std::sync::Arc;
 
@@ -11,8 +16,11 @@ use serde_json::{json, Value};
 
 use crate::capability::{CapabilityError, CaseContext, Context, HttpMethod};
 use crate::cockpit::Cockpit;
+use crate::web::discover::Runtime;
+use crate::web::home;
 
 use super::mcp::McpEndpoint;
+use super::surfaces::{Bound, Native, Served};
 use super::{openapi, swagger};
 
 /// A request as the router sees it: method, path without query, decoded query pairs,
@@ -155,6 +163,87 @@ impl Request {
     }
 }
 
+/// What a response carries. Text for everything this projection computes; bytes for a file
+/// it serves from disk, which is not always UTF-8 and must not be repaired into it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Body {
+    /// A string this process produced.
+    Text(String),
+    /// Bytes read from somewhere else, passed through unchanged.
+    Bytes(Vec<u8>),
+}
+
+impl Body {
+    /// The bytes on the wire.
+    pub fn as_bytes(&self) -> &[u8] {
+        match self {
+            Body::Text(t) => t.as_bytes(),
+            Body::Bytes(b) => b,
+        }
+    }
+
+    /// How many bytes it is.
+    pub fn len(&self) -> usize {
+        self.as_bytes().len()
+    }
+
+    /// Is it empty?
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// The body as text: borrowed when it is text, and lossy when it is not, which only a
+    /// diagnostic or a test ever asks for.
+    ///
+    /// ```
+    /// use majordomus_cli::http::router::Body;
+    /// assert_eq!(Body::Text("a".into()).text(), "a");
+    /// assert_eq!(Body::Bytes(vec![0xff]).text(), "\u{fffd}");
+    /// ```
+    pub fn text(&self) -> std::borrow::Cow<'_, str> {
+        match self {
+            Body::Text(t) => std::borrow::Cow::Borrowed(t),
+            Body::Bytes(b) => String::from_utf8_lossy(b),
+        }
+    }
+}
+
+impl From<String> for Body {
+    fn from(value: String) -> Self {
+        Body::Text(value)
+    }
+}
+
+impl From<&str> for Body {
+    fn from(value: &str) -> Self {
+        Body::Text(value.to_string())
+    }
+}
+
+impl From<Vec<u8>> for Body {
+    fn from(value: Vec<u8>) -> Self {
+        Body::Bytes(value)
+    }
+}
+
+impl PartialEq<str> for Body {
+    fn eq(&self, other: &str) -> bool {
+        self.as_bytes() == other.as_bytes()
+    }
+}
+
+impl PartialEq<&str> for Body {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_bytes() == other.as_bytes()
+    }
+}
+
+impl std::fmt::Display for Body {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.text())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// A response as the router produces it; the server adds the wire.
 pub struct Response {
@@ -163,20 +252,26 @@ pub struct Response {
     /// The `Content-Type` value.
     pub content_type: &'static str,
     /// The body.
-    pub body: String,
+    pub body: Body,
     /// Further headers (`Mcp-Session-Id`); the server adds `Content-Length` and `Cache-Control`.
     pub headers: Vec<(String, String)>,
 }
 
 impl Response {
     /// A response with no further headers.
-    pub fn new(status: u16, content_type: &'static str, body: String) -> Self {
+    pub fn new(status: u16, content_type: &'static str, body: impl Into<Body>) -> Self {
         Response {
             status,
             content_type,
-            body,
+            body: body.into(),
             headers: Vec::new(),
         }
+    }
+
+    /// The same response with one more header.
+    pub fn with_header(mut self, name: &str, value: impl Into<String>) -> Self {
+        self.headers.push((name.to_string(), value.into()));
+        self
     }
 
     /// The JSON error body every failure of the projection uses.
@@ -202,22 +297,32 @@ pub struct ErrorDetail {
 }
 
 #[derive(Clone)]
-/// Routes requests to capabilities by the registry's HTTP exposures, and serves the
-/// projection's own routes. Cheap to clone: every worker thread holds one.
+/// Routes requests to the surfaces this process serves. Cheap to clone: every worker
+/// thread holds one, and the resolution behind it is shared.
 pub struct Router {
     ctx: Arc<Context>,
     version: &'static str,
     /// The OpenAPI document, rendered once: the registry is immutable for the process.
     openapi: Arc<std::sync::OnceLock<Result<String, String>>>,
-    /// MCP over HTTP at `/mcp`, when this router serves a shared server.
+    /// MCP over HTTP at the mount its surface declares, when this router serves a shared
+    /// server.
     mcp: Option<Arc<McpEndpoint>>,
-    /// The Cockpit under `/cockpit`, when the process located a distribution to serve its
-    /// assets from. Absent only for a router built without one.
+    /// The Cockpit, when the process located a distribution to serve its assets from.
     cockpit: Option<Arc<Cockpit>>,
+    /// The resolved surfaces and their handlers, and the context narrowed to them. Built
+    /// on first use, because the builder learns what this process offers after `new`.
+    served: Arc<std::sync::OnceLock<Result<Resolution, String>>>,
+}
+
+/// What one router serves: the bound surfaces, and the context every capability call is
+/// given so that `web.surfaces` answers with what this process actually serves.
+struct Resolution {
+    served: Served,
+    ctx: Arc<Context>,
 }
 
 impl Router {
-    /// A router over a loaded context, without `/mcp`.
+    /// A router over a loaded context, without `/mcp` and without the Cockpit.
     pub fn new(ctx: Arc<Context>, version: &'static str) -> Self {
         crate::perf::Counters::bump(&crate::perf::COUNTERS.http_projection_builds);
         Router {
@@ -226,11 +331,11 @@ impl Router {
             openapi: Arc::new(std::sync::OnceLock::new()),
             mcp: None,
             cockpit: None,
+            served: Arc::new(std::sync::OnceLock::new()),
         }
     }
 
-    /// The same router, serving the Cockpit's pages under `/cockpit` with its assets read
-    /// from `share_dir`.
+    /// The same router, serving the Cockpit's pages with its assets read from `share_dir`.
     pub fn with_cockpit(mut self, share_dir: Option<&std::path::Path>) -> Self {
         self.cockpit = Some(Arc::new(Cockpit::new(
             Arc::clone(&self.ctx),
@@ -240,10 +345,49 @@ impl Router {
         self
     }
 
-    /// The same router, serving MCP over HTTP at `/mcp` through `endpoint`.
+    /// The same router, serving MCP over HTTP through `endpoint`.
     pub fn with_mcp(mut self, endpoint: Arc<McpEndpoint>) -> Self {
         self.mcp = Some(endpoint);
         self
+    }
+
+    /// What this process offers, as the topology's feature gates read it.
+    fn runtime(&self) -> Runtime {
+        Runtime {
+            mcp: self.mcp.is_some(),
+            cockpit: self.cockpit.is_some(),
+        }
+    }
+
+    /// The resolved surfaces, narrowed and validated once.
+    fn resolution(&self) -> Result<&Resolution, &String> {
+        self.served
+            .get_or_init(|| {
+                let root = std::path::Path::new(&self.ctx.index.repository.root);
+                Served::resolve(&self.ctx.web, root, self.runtime())
+                    .map(|served| Resolution {
+                        ctx: Arc::new(self.ctx.with_web(served.shared())),
+                        served,
+                    })
+                    .map_err(|e| e.to_string())
+            })
+            .as_ref()
+    }
+
+    /// The surfaces this router serves, for a caller that wants to describe them: the
+    /// server's startup line, and the tests.
+    ///
+    /// The answer is the resolution, not a fresh discovery — a router that could not
+    /// resolve its topology never answered a request either, and says the same thing here
+    /// that it says to a client.
+    pub fn served(&self) -> crate::error::Result<&Served> {
+        match self.resolution() {
+            Ok(resolution) => Ok(&resolution.served),
+            Err(reason) => Err(crate::error::Error::InvalidSurface {
+                surface: "topology".into(),
+                reason: reason.clone(),
+            }),
+        }
     }
 
     fn openapi(&self) -> Response {
@@ -260,7 +404,7 @@ impl Router {
         }
     }
 
-    /// Answer one request: an infrastructure route, `/mcp`, the Cockpit, or a capability.
+    /// Answer one request: the surface that owns its path, or nothing.
     ///
     /// A request that carries an `Origin` header came from a page in a browser. A browser
     /// cannot read a cross-origin response without the headers this server never sends,
@@ -273,58 +417,118 @@ impl Router {
                 return refusal;
             }
         }
-        if let Some(cockpit) = &self.cockpit {
-            if Cockpit::owns(&req.path) {
-                return cockpit.handle(req);
+        let resolution = match self.resolution() {
+            Ok(resolution) => resolution,
+            Err(reason) => return error_response(500, "internal", reason),
+        };
+        let Some((surface, bound)) = resolution.served.owner(&req.path) else {
+            return error_response(
+                404,
+                "not_found",
+                &format!(
+                    "no surface owns {}; what this process serves is listed at / and at {}web/surfaces",
+                    req.path,
+                    crate::capability::model::HttpExposure::PREFIX
+                ),
+            );
+        };
+        match bound {
+            Bound::Directory(files) => {
+                if req.method != "GET" {
+                    return error_response(
+                        405,
+                        "method_not_allowed",
+                        &format!("{} is a generated directory; it is read with GET", surface.mount),
+                    );
+                }
+                files.respond(&req.path)
             }
+            Bound::Route(Native::Home) => self.home(req, resolution),
+            Bound::Route(Native::OpenApi) => self.openapi(),
+            Bound::Route(Native::Swagger) => swagger_response(&req.path),
+            Bound::Route(Native::Mcp) => match &self.mcp {
+                Some(endpoint) => endpoint.handle(req),
+                None => error_response(500, "internal", "the MCP surface is served with no endpoint behind it"),
+            },
+            Bound::Route(Native::Cockpit) => match &self.cockpit {
+                Some(cockpit) => cockpit.handle(req),
+                None => error_response(500, "internal", "the Cockpit surface is served with no Cockpit behind it"),
+            },
+            Bound::Route(Native::Api) => self.capability(req, &resolution.ctx),
         }
-        match (req.method.as_str(), req.path.as_str()) {
-            ("GET", "/") => {
-                let mut index = json!({
-                    "name": "majordomus",
-                    "version": self.version,
-                    "description": crate::about::SUMMARY,
-                    "reference": crate::about::REFERENCE_URL,
-                    "root": self.ctx.index.repository.root,
-                    "openapi": "/openapi.json",
-                    "docs": swagger::DOCS_PATH,
-                    "capabilities": "/api/v1/capabilities",
-                    "peers": "/api/v1/peers",
-                });
-                if self.mcp.is_some() {
-                    index["mcp"] = json!(super::mcp::PATH);
+    }
+
+    /// `/`: the home page for a browser, the same topology as JSON for everything else.
+    ///
+    /// The root surface owns every path nothing else claims, so a request for a path that
+    /// is not the root is the 404 this server can answer most usefully — it knows what it
+    /// does serve.
+    fn home(&self, req: &Request, resolution: &Resolution) -> Response {
+        if req.path != "/" {
+            return error_response(
+                404,
+                "not_found",
+                &format!(
+                    "no surface owns {}; what this process serves is listed at / and at {}web/surfaces",
+                    req.path,
+                    crate::capability::model::HttpExposure::PREFIX
+                ),
+            );
+        }
+        if req.method != "GET" {
+            return error_response(405, "method_not_allowed", "the home page is read with GET");
+        }
+        let topology = resolution.served.topology();
+        if prefers_html(req) {
+            let identity = home::Identity {
+                version: self.version,
+                summary: crate::about::SUMMARY,
+                repository: repository_name(&self.ctx.index.repository.root),
+                revision: match &self.ctx.index.repository.git {
+                    crate::git::GitState::Available(info) => info.head.as_deref(),
+                    crate::git::GitState::Unavailable { .. } => None,
+                },
+                capabilities: self.ctx.registry.summary().total,
+            };
+            let ready = |id: &str| {
+                if resolution.served.ready(id) {
+                    home::Availability::Ready
+                } else {
+                    home::Availability::NotBuilt
                 }
-                if self.cockpit.is_some() {
-                    index["cockpit"] = json!(crate::cockpit::PREFIX);
-                    // a browser asking for the index gets the Cockpit; a client that does
-                    // not say it wants HTML gets the JSON this route has always answered
-                    if prefers_html(req) {
-                        return Response {
-                            status: 303,
-                            content_type: "text/plain; charset=utf-8",
-                            body: String::from("the Cockpit is at /cockpit\n"),
-                            headers: vec![("Location".into(), crate::cockpit::PREFIX.into())],
-                        };
-                    }
-                }
-                json_response(200, &index)
-            }
-            ("GET", "/openapi.json") => self.openapi(),
-            ("GET", "/docs") => Response::new(
+            };
+            return Response::new(
                 200,
                 "text/html; charset=utf-8",
-                swagger::page().to_string(),
-            ),
-            (_, "/mcp") => match &self.mcp {
-                Some(endpoint) => endpoint.handle(req),
-                None => error_response(
-                    404,
-                    "not_found",
-                    "this server serves no MCP over HTTP; `majordomus mcp` and `majordomus serve` do, at /mcp",
-                ),
-            },
-            _ => self.capability(req),
+                home::page(topology, &identity, &ready),
+            );
         }
+        let surfaces: Vec<Value> = topology
+            .surfaces
+            .iter()
+            .map(|s| {
+                json!({
+                    "id": s.id,
+                    "title": s.title,
+                    "path": s.mount.as_str(),
+                    "category": s.category.to_string(),
+                    "visibility": s.visibility.to_string(),
+                    "kind": s.kind.to_string(),
+                    "ready": resolution.served.ready(&s.id),
+                })
+            })
+            .collect();
+        json_response(
+            200,
+            &json!({
+                "name": "majordomus",
+                "version": self.version,
+                "description": crate::about::SUMMARY,
+                "reference": crate::about::REFERENCE_URL,
+                "root": self.ctx.index.repository.root,
+                "surfaces": surfaces,
+            }),
+        )
     }
 
     /// The refusal for a state-changing request from another origin, when there is one.
@@ -355,7 +559,7 @@ impl Router {
         ))
     }
 
-    fn capability(&self, req: &Request) -> Response {
+    fn capability(&self, req: &Request, ctx: &Arc<Context>) -> Response {
         let Some(method) = HttpMethod::parse(&req.method) else {
             return error_response(
                 405,
@@ -363,11 +567,11 @@ impl Router {
                 &format!("method {} is not served", req.method),
             );
         };
-        let Some(c) = self.ctx.registry.by_http(method, &req.path) else {
+        let Some(c) = ctx.registry.by_http(method, &req.path) else {
             let other_method = [HttpMethod::Get, HttpMethod::Post]
                 .into_iter()
                 .filter(|m| *m != method)
-                .any(|m| self.ctx.registry.by_http(m, &req.path).is_some());
+                .any(|m| ctx.registry.by_http(m, &req.path).is_some());
             return if other_method {
                 error_response(
                     405,
@@ -440,7 +644,7 @@ impl Router {
         // one line per request is debug: a client that does not drain stderr must not be
         // able to wedge the workers on a full pipe at the default level
         tracing::debug!(capability_id = %c.id, route = %format!("{} {}", req.method, req.path), "http");
-        match self.ctx.execute(c.id.as_str(), input) {
+        match ctx.execute(c.id.as_str(), input) {
             Ok(v) => json_response(200, &v),
             Err(CapabilityError::InvalidInput(m)) => error_response(400, "invalid_input", &m),
             Err(CapabilityError::NotFound(m)) => error_response(404, "not_found", &m),
@@ -471,6 +675,19 @@ pub fn prefers_html(req: &Request) -> bool {
                 .is_some_and(|t| t.trim() == "text/html")
         })
     })
+}
+
+/// The repository's name: the last component of its root, which is what a person calls it.
+/// The root itself is a filesystem path and is not put on a page anyone can reach.
+fn repository_name(root: &str) -> &str {
+    root.rsplit('/').find(|s| !s.is_empty()).unwrap_or("repository")
+}
+
+/// The Swagger UI shell. `/swagger` and `/swagger/` both answer it: the page loads its
+/// distribution and the document by absolute path, so neither form can resolve wrongly.
+fn swagger_response(path: &str) -> Response {
+    let _ = path;
+    Response::new(200, "text/html; charset=utf-8", swagger::page().to_string())
 }
 
 fn json_response(status: u16, v: &Value) -> Response {

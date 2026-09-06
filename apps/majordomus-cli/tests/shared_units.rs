@@ -162,7 +162,7 @@ fn the_endpoint_opens_reaps_and_closes_sessions() {
         Some(&session),
     );
     assert_eq!(batch.status, 200);
-    let v: Value = serde_json::from_str(&batch.body).unwrap();
+    let v: Value = serde_json::from_str(&batch.body.text()).unwrap();
     assert_eq!(
         v.as_array().unwrap().len(),
         1,
@@ -247,7 +247,14 @@ fn the_bridge_client_speaks_to_a_real_socket_and_names_every_failure() {
         .starts_with("application/json"));
     assert!(reply.header("X-None").is_none());
     let v: Value = serde_json::from_str(&reply.body).unwrap();
-    assert_eq!(v["mcp"], "/mcp");
+    assert!(
+        v["surfaces"]
+            .as_array()
+            .expect("the index lists the surfaces")
+            .iter()
+            .any(|s| s["id"] == "mcp" && s["path"] == "/mcp"),
+        "{v}"
+    );
     assert!(bridge::request(
         "http://nohost.invalid:1",
         "GET",
@@ -281,11 +288,17 @@ fn a_router_without_an_endpoint_has_no_mcp_route() {
     let router = Router::new(app.context.clone(), "test");
     let r = router.handle(&Request::parse_target("POST", "/mcp", b"{}".to_vec()));
     assert_eq!(r.status, 404);
-    assert!(r.body.contains("no MCP over HTTP"));
+    assert!(r.body.text().contains("no surface owns /mcp"), "{}", r.body);
     let index = router.handle(&Request::parse_target("GET", "/", vec![]));
-    let v: Value = serde_json::from_str(&index.body).unwrap();
-    assert!(v.get("mcp").is_none());
-    assert_eq!(v["peers"], "/api/v1/peers");
+    let v: Value = serde_json::from_str(&index.body.text()).unwrap();
+    let ids: Vec<&str> = v["surfaces"]
+        .as_array()
+        .expect("the index lists the surfaces")
+        .iter()
+        .filter_map(|s| s["id"].as_str())
+        .collect();
+    assert!(!ids.contains(&"mcp"), "{v}");
+    assert!(ids.contains(&"api") && ids.contains(&"swagger"), "{v}");
     let taken = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = taken.local_addr().unwrap().port();
     let err = match server::bind("127.0.0.1", port) {
