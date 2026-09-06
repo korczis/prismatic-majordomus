@@ -31,7 +31,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
-| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why` |
+| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
