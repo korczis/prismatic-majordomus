@@ -51,7 +51,7 @@
 # The archive is evidence, not knowledge: nothing loads it into a context, no command
 # retrieves from it, and it lives under the ignored half of the AI layer.
 
-MJ_CAPTURE_SCHEMA="majordomus.prompt/v1"
+MJ_CAPTURE_SCHEMA="majordomus.capture/v1"
 # The schema identifier is also the path to what describes it: `<namespace>.<name>/<version>`
 # lives at `share/schemas/<namespace>/<name>/<version>`, and there are two files there because
 # there are two projections and they are not the same kind of thing. The record is JSON and is
@@ -298,9 +298,10 @@ mj_capture_is_pretty() {
 # Written to a temporary name in the same directory and moved into place, so a reader never
 # opens a half-written rendering and a second run cannot interleave with a first.
 mj_capture_md() { printf '%s' "${1%.json}.md"; }
+mj_capture_yml() { printf '%s' "${1%.json}.yaml"; }
 
 mj_capture_render_one() {
-  local rec="$1" md scan body tmp k v rc=0 fence
+  local rec="$1" md yml scan body tmp k v rc=0 fence
   md="$(mj_capture_md "$rec")"
   scan="$(mktemp "${TMPDIR:-/tmp}/mj.render.XXXXXX")" || return 1
   body="$scan.body"
@@ -365,9 +366,37 @@ mj_capture_render_one() {
     [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ] && printf '\n'
     printf '%s\n' "$fence"
   } > "$tmp" 2>/dev/null || rc=1
+  [ "$rc" = 0 ] || { rm -f "$tmp" "$scan" "$body"; return 1; }
+  mv "$tmp" "$md" 2>/dev/null || { rm -f "$tmp" "$scan" "$body"; return 1; }
+
+  # The third rendering: the same closed field set, plus the prompt as a literal block
+  # scalar. The Markdown is the person's copy and carries a table; this one is the machine's
+  # and carries nothing the record does not, in a form a reader with a YAML parser and no
+  # JSON parser can still take. Both are rebuilt from the record, never the other way round.
+  yml="$(mj_capture_yml "$rec")"
+  tmp="$yml.part"
+  {
+    for k in $MJ_CAPTURE_FIELDS; do
+      [ "$k" = text ] && continue
+      if [ "$k" = started_at ]; then v="$(mj_capture_raw "$scan" "$MJ_CAPTURE_STARTED")"
+      else v="$(mj_capture_raw "$scan" "$k")"; fi
+      [ -n "$v" ] || v=null
+      printf '%s: %s\n' "$k" "$(mj_capture_yaml "$v")"
+    done
+    for k in $MJ_CAPTURE_OPTIONAL; do
+      v="$(mj_capture_raw "$scan" "$k")"
+      [ -n "$v" ] && [ "$v" != null ] && printf '%s: %s\n' "$k" "$(mj_capture_yaml "$v")"
+    done
+    printf 'record: %s\n' "$(mj_capture_yaml "\"$(mj_json_esc "$(basename "$rec")")\"")"
+    # `|-` keeps every byte of the prompt and strips only the trailing newline the block
+    # form adds; two spaces of indent are outside the scalar and never reach the text.
+    printf 'text: |-\n'
+    sed 's/^/  /' "$body"
+    [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ] && printf '\n'
+  } > "$tmp" 2>/dev/null || rc=1
   rm -f "$scan" "$body"
   [ "$rc" = 0 ] || { rm -f "$tmp"; return 1; }
-  mv "$tmp" "$md" 2>/dev/null || { rm -f "$tmp"; return 1; }
+  mv "$tmp" "$yml" 2>/dev/null || { rm -f "$tmp"; return 1; }
   return 0
 }
 
@@ -412,10 +441,14 @@ mj_capture_accounted() {
 # The stem the files describing a schema share, derived from the identifier and never looked
 # up. An extension picks the projection: .schema.json for the record, .proto for the document.
 mj_capture_schema_stem() {
-  local id="${1:-$MJ_CAPTURE_SCHEMA}" ns ver
+  local id="${1:-$MJ_CAPTURE_SCHEMA}" ns ver name
   ns="${id%%/*}"; ver="${id#*/}"
   [ "$ns" != "$id" ] || return 1
-  printf '%s/%s/%s' "$MJ_CAPTURE_SCHEMA_DIR" "$(printf '%s' "$ns" | tr '.' '/')" "$ver"
+  # `<vendor>.<name>/v<n>` lives at share/schemas/<vendor>/<name>/<name>.v<n>.*, the one
+  # convention the whole layer uses: the identity fixes the path, and a schema whose
+  # declared identity and path disagree is refused rather than preferred one way or another.
+  name="${ns##*.}"
+  printf '%s/%s/%s.%s' "$MJ_CAPTURE_SCHEMA_DIR" "$(printf '%s' "$ns" | tr '.' '/')" "$name" "$ver"
 }
 
 mj_capture_schema_path() {
@@ -520,7 +553,9 @@ mj_capture_render() {
   for f in "$dir"/*.json; do
     [ -e "$f" ] || break
     md="$(mj_capture_md "$f")"
-    [ "$force" = 0 ] && [ -e "$md" ] && continue
+    # a record needs rendering when either rendering is absent, not only the Markdown:
+    # skipping on the Markdown alone would leave a missing YAML half unrepairable
+    [ "$force" = 0 ] && [ -e "$md" ] && [ -e "$(mj_capture_yml "$f")" ] && continue
     if mj_capture_render_one "$f"; then n=$((n + 1))
     else bad=$((bad + 1)); mj_err "capture render: cannot render $(basename "$f")"; fi
   done
@@ -767,13 +802,13 @@ mj_capture_failures() {
     "cat $rel/.capture.log   # then remove it once understood"
 }
 
-# Every record is written twice, under one stem: the JSON that is the record and the
-# Markdown that renders it. Neither half alone is the archive this repository claims to
-# keep — a directory of records nobody reads, or of renderings nothing can be rebuilt from
+# Every record is written three times, under one stem: the JSON that is the record, the
+# Markdown that renders it for a person and the YAML that renders it for a machine with no
+# JSON parser. No one of them alone is the archive this repository claims to keep — a directory of records nobody reads, or of renderings nothing can be rebuilt from
 # — so a stem that carries one and not the other is a finding, and `capture render` closes
 # the gap the only way it can be closed honestly, from the record.
 #
-# An .md with no .json is the opposite defect and is not repairable: nothing can reconstruct
+# An .md or .yaml with no .json is the opposite defect and is not repairable: nothing can reconstruct
 # a record from a rendering, so it is reported for a person to remove rather than fixed.
 # The identifier in every record is also the path to the file that describes it, so the
 # archive is self-describing or it is not: a record naming a schema nothing defines is a
@@ -801,7 +836,7 @@ mj_capture_pairs() {
   local dir="$1" rel="$2" f md missing="" orphan="" nm=0 no=0
   for f in "$dir"/*.json; do
     [ -e "$f" ] || break
-    [ -e "${f%.json}.md" ] && continue
+    [ -e "${f%.json}.md" ] && [ -e "${f%.json}.yaml" ] && continue
     nm=$((nm + 1)); [ "$nm" -le 3 ] && missing="$missing $(basename "$f")"
   done
   for md in "$dir"/*.md; do
@@ -811,13 +846,13 @@ mj_capture_pairs() {
   done
   if [ "$nm" != 0 ]; then
     mj_doctrine_fail capture "$rel" \
-      "$nm record(s) have no Markdown rendering:$missing" "majordomus capture render"
+      "$nm record(s) are missing a rendering:$missing" "majordomus capture render"
   elif [ "$no" != 0 ]; then
     mj_doctrine_fail capture "$rel" \
       "$no rendering(s) have no record and cannot be rebuilt from one:$orphan" \
       "ls $rel/*.md   # remove the ones with no .json beside them"
   else
-    mj_doctrine_ok capture "$rel" "every prompt is present as both a record and a rendering"
+    mj_doctrine_ok capture "$rel" "every prompt is present as all three: the record, the Markdown and the YAML"
   fi
 }
 
@@ -830,7 +865,7 @@ mj_capture_records() {
   [ "$n" -gt 0 ] || { mj_doctrine_ok capture "$rel" "no records yet; the archive is empty"; return 0; }
   out="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk '
     FNR == 1 { seen[FILENAME] = 1; ok[FILENAME] = ($0 == "{") }
-    FNR == 2 { if ($0 !~ /^  "schema": "majordomus\.prompt\/v1",$/) ok[FILENAME] = 0 }
+    FNR == 2 { if ($0 !~ /^  "schema": "majordomus\.capture\/v1",$/) ok[FILENAME] = 0 }
     { last[FILENAME] = $0 }
     /"(response|completion|transcript|messages|reply|assistant)": / { if (!m[FILENAME]++) print "MODEL " FILENAME }
     END { for (f in seen) if (!ok[f] || last[f] != "}") print "SHAPE " f }

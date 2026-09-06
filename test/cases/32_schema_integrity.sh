@@ -43,7 +43,7 @@ grep -qE 'OK +schema +share/schemas' "$T/out" \
 # The front matter of a kind without one is carried through unvalidated, silently. That is
 # the failure this half exists for, so it must be loud.
 cp "$share/kinds.yaml" "$T/kinds.keep"
-awk '/^  prompt:/ { p = 1 } p && /^    schema: prompt$/ { next } { print }' "$T/kinds.keep" > "$share/kinds.yaml"
+awk '/^  prompt:/ { p = 1 } p && /^    schema: majordomus\.prompt\/v1$/ { next } { print }' "$T/kinds.keep" > "$share/kinds.yaml"
 expect_exit 10 "$MJ" doctor
 expect_grep 'declare no schema'
 expect_grep 'prompt'

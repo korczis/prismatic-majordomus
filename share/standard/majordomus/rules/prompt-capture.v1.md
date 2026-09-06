@@ -83,7 +83,7 @@ its own directory.
 
 Every record names its schema, and that identifier **is** the location of what describes it:
 `<namespace>.<name>/<version>` lives at `share/schemas/<namespace>/<name>/<version>`, so
-`majordomus.prompt/v1` resolves to `share/schemas/majordomus/prompt/v1` with nothing in
+`majordomus.capture/v1` resolves to `share/schemas/majordomus/capture/capture.v1` with nothing in
 between — no registry, no lookup table, nothing that can fall out of step with the records it
 claims to describe. A reader holding a record holds the way to read it.
 

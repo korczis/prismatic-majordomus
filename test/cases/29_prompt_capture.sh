@@ -82,7 +82,7 @@ case "$(basename "$rec")" in
 esac
 # the record is a pretty-printed object: one member per line, in the declared order
 [ "$(sed -n '1p' "$rec")" = '{' ] || { echo "    a record does not open with {"; head -n 2 "$rec" | sed 's/^/    | /'; exit 1; }
-sed -n '2p' "$rec" | grep -qxF '  "schema": "majordomus.prompt/v1",' \
+sed -n '2p' "$rec" | grep -qxF '  "schema": "majordomus.capture/v1",' \
   || { echo "    a record does not name its schema on the second line"; sed -n '2p' "$rec" | sed 's/^/    | /'; exit 1; }
 [ "$(tail -n 1 "$rec")" = '}' ] || { echo "    a record does not close with }"; exit 1; }
 sed -n '3p' "$rec" | grep -q '^  "started_at": ' || { echo "    a record does not carry started_at"; sed -n '3p' "$rec" | sed 's/^/    | /'; exit 1; }
@@ -94,7 +94,7 @@ expect_no_grep '"(finished_at|duration_ms|model|effort|tokens|output)"' "$rec"
 # the text is the raw span from the payload: an embedded quote and an escape survive byte
 # for byte, because nothing decodes and re-encodes them
 grep -qxF '  "text": "he said \"no\"\nand left"' "$rec" || { echo "    the prompt text did not survive"; sed 's/^/    | /' "$rec"; exit 1; }
-grep -qF '"schema": "majordomus.prompt/v1"' "$rec"
+grep -qF '"schema": "majordomus.capture/v1"' "$rec"
 # the model's half of the exchange has no field to arrive in
 expect_no_grep '"(response|completion|transcript)":' "$rec"
 
@@ -104,11 +104,23 @@ expect_no_grep '"(response|completion|transcript)":' "$rec"
 # the same payload as the record above, so the decode is proved and not assumed — the raw
 # span keeps \" and \n, and the body must show a quote and a line break.
 md="${rec%.json}.md"
+yml="${rec%.json}.yaml"
 [ -f "$md" ] || { echo "    the record has no Markdown rendering beside it"; ls -1 .ai/local/prompts; exit 1; }
+[ -f "$yml" ] || { echo "    the record has no YAML rendering beside it"; ls -1 .ai/local/prompts; exit 1; }
+# the YAML rendering is the machine's copy: the same closed field set, the prompt as a
+# literal block scalar, and nothing the record does not already carry
+grep -qF "schema: 'majordomus.capture/v1'" "$yml" \
+  || { echo "    the YAML rendering does not name its schema"; sed 's/^/    | /' "$yml"; exit 1; }
+grep -qxF 'text: |-' "$yml" \
+  || { echo "    the YAML rendering does not carry the prompt as a block scalar"; sed 's/^/    | /' "$yml"; exit 1; }
+grep -qF "record: '$(basename "$rec")'" "$yml" \
+  || { echo "    the YAML rendering does not name the record it was built from"; sed 's/^/    | /' "$yml"; exit 1; }
+[ "$(find .ai/local/prompts -maxdepth 1 -name '*.yaml' | wc -l | tr -d ' ')" = 1 ] \
+  || { echo "    one prompt did not write exactly one YAML rendering"; ls -1 .ai/local/prompts; exit 1; }
 [ "$(find .ai/local/prompts -maxdepth 1 -name '*.md' | wc -l | tr -d ' ')" = 1 ] \
   || { echo "    one prompt did not write exactly one rendering"; ls -1 .ai/local/prompts; exit 1; }
 head -n 1 "$md" | grep -qx -- '---' || { echo "    the rendering does not open with front matter"; head -n 3 "$md" | sed 's/^/    | /'; exit 1; }
-grep -qF "schema: 'majordomus.prompt/v1'" "$md"
+grep -qF "schema: 'majordomus.capture/v1'" "$md"
 grep -qF "record: '$(basename "$rec")'" "$md" || { echo "    the rendering does not name the record it was built from"; sed 's/^/    | /' "$md"; exit 1; }
 grep -qF "provider: 'claude-code'" "$md"
 # the same fields again as a table, because front matter is what a tool reads and a table
@@ -136,14 +148,15 @@ fenced="$(find .ai/local/prompts -maxdepth 1 -name '*-here-is-a-block*.md')"
 grep -qx '`````' "$fenced" || { echo "    the fence was not grown past the prompt's own"; sed 's/^/    | /' "$fenced"; exit 1; }
 [ "$(grep -cx '`````' "$fenced")" = 2 ] || { echo "    the block does not open and close exactly once"; exit 1; }
 grep -qxF 'inside' "$fenced" || { echo "    the nested block did not survive"; exit 1; }
-rm -f "$fenced" "${fenced%.md}.json"
+rm -f "$fenced" "${fenced%.md}.json" "${fenced%.md}.yaml"
 
 # a rendering is rebuilt from its record, and only from its record: render writes no record,
 # leaves a rendering that is already there alone, and is the repair the doctrine names
-rm -f "$md"
+rm -f "$md" "$yml"
 expect_exit 0 "$MJ" capture render
 expect_grep '1 rendering'
-[ -f "$md" ] || { echo "    capture render did not rebuild the missing rendering"; exit 1; }
+[ -f "$md" ] || { echo "    capture render did not rebuild the missing Markdown rendering"; exit 1; }
+[ -f "$yml" ] || { echo "    capture render did not rebuild the missing YAML rendering"; exit 1; }
 [ "$(records)" = 1 ] || { echo "    capture render wrote a record"; exit 1; }
 expect_exit 0 "$MJ" capture render
 expect_grep '0 rendering'
@@ -160,7 +173,9 @@ printf '%s' "$second" | ./.claude/hooks/majordomus-capture
 [ -n "$(find .ai/local/prompts -maxdepth 1 -name '*-why-is-the-archive-empty.json')" ] \
   || { echo "    the slug does not follow the prompt text"; ls -1 .ai/local/prompts; exit 1; }
 [ -n "$(find .ai/local/prompts -maxdepth 1 -name '*-why-is-the-archive-empty.md')" ] \
-  || { echo "    the second prompt wrote no rendering"; ls -1 .ai/local/prompts; exit 1; }
+  || { echo "    the second prompt wrote no Markdown rendering"; ls -1 .ai/local/prompts; exit 1; }
+[ -n "$(find .ai/local/prompts -maxdepth 1 -name '*-why-is-the-archive-empty.yaml')" ] \
+  || { echo "    the second prompt wrote no YAML rendering"; ls -1 .ai/local/prompts; exit 1; }
 
 # ---------------------------------------------------------------- it never costs a prompt
 printf 'not json at all' | ./.claude/hooks/majordomus-capture
@@ -204,7 +219,7 @@ printf '{"prompt":"no origin declared","prompt_id":"n3"}' | ./.claude/hooks/majo
 # written the way an older version wrote them: one line, and `ts` before the field had a
 # sibling called finished_at. They must reformat rather than be reported forever.
 for d in 20010101000000 20010102000000 20010103000000; do
-  printf '{"schema":"majordomus.prompt/v1","ts":"%s","provider":"claude-code","event":"UserPromptSubmit","id":"%s","session":null,"source":null,"cwd":null,"repository":"r","branch":"b","head":"h","text":"an older prompt"}\n' \
+  printf '{"schema":"majordomus.capture/v1","ts":"%s","provider":"claude-code","event":"UserPromptSubmit","id":"%s","session":null,"source":null,"cwd":null,"repository":"r","branch":"b","head":"h","text":"an older prompt"}\n' \
     "$d" "$d" > ".ai/local/prompts/$d-old.json"
 done
 before="$(records)"
@@ -231,10 +246,10 @@ expect_no_grep '"ts":' .ai/local/prompts/20010101000000-old.json
 # both halves, each in the language that fits it: the record is JSON and gets JSON Schema,
 # the document is a shape and gets protobuf
 for ext in schema.json proto; do
-  [ -f "$ROOT/share/schemas/majordomus/prompt/v1.$ext" ] \
-    || { echo "    majordomus.prompt/v1 names no v1.$ext at the path it derives"; exit 1; }
+  [ -f "$ROOT/share/schemas/majordomus/capture/capture.v1.$ext" ] \
+    || { echo "    majordomus.capture/v1 names no capture.v1.$ext at the path it derives"; exit 1; }
 done
-grep -qF '| **Schema** | `majordomus.prompt/v1` · `share/schemas/majordomus/prompt/v1.{schema.json,proto}` |' "$md" \
+grep -qF '| **Schema** | `majordomus.capture/v1` · `share/schemas/majordomus/capture/capture.v1.{schema.json,proto}` |' "$md" \
   || { echo "    the rendering does not name the files describing its schema"; grep -i schema "$md" | sed 's/^/    | /'; exit 1; }
 "$MJ" doctor > "$T/doctor.out" 2>&1 || true
 grep -qF 'at the path the identifier derives' "$T/doctor.out" \
@@ -242,7 +257,7 @@ grep -qF 'at the path the identifier derives' "$T/doctor.out" \
 
 # a record carrying what the hook could not observe renders those rows, and only then
 full=.ai/local/prompts/20010105000000-with-a-finished-turn.json
-printf '{\n  "schema": "majordomus.prompt/v1",\n  "started_at": "2026-01-05T10:00:00Z",\n  "provider": "claude-code",\n  "event": "UserPromptSubmit",\n  "id": "pf1",\n  "session": null,\n  "source": null,\n  "cwd": null,\n  "repository": "r",\n  "branch": "b",\n  "head": "h",\n  "text": "a finished turn",\n  "finished_at": "2026-01-05T10:03:20Z",\n  "duration_ms": 200000,\n  "model": "claude-opus-5",\n  "effort": "high"\n}\n' > "$full"
+printf '{\n  "schema": "majordomus.capture/v1",\n  "started_at": "2026-01-05T10:00:00Z",\n  "provider": "claude-code",\n  "event": "UserPromptSubmit",\n  "id": "pf1",\n  "session": null,\n  "source": null,\n  "cwd": null,\n  "repository": "r",\n  "branch": "b",\n  "head": "h",\n  "text": "a finished turn",\n  "finished_at": "2026-01-05T10:03:20Z",\n  "duration_ms": 200000,\n  "model": "claude-opus-5",\n  "effort": "high"\n}\n' > "$full"
 expect_exit 0 "$MJ" capture render
 grep -qF '| **Finished** | `2026-01-05T10:03:20Z` |' "${full%.json}.md" || { echo "    an observed finish did not render"; exit 1; }
 grep -qF '| **Duration** | `3m 20s` |' "${full%.json}.md" || { echo "    a duration did not render as one"; grep -i duration "${full%.json}.md" | sed 's/^/    | /'; exit 1; }
@@ -278,14 +293,20 @@ rm -f .ai/local/prompts/.capture.log
 grep -qF 'prompt-capture' "$T/doctor.out" || { echo "    doctor never reached the declared enforcement"; sed 's/^/    | /' "$T/doctor.out"; exit 1; }
 grep -qE 'prompt-capture.*(verified|synthetic)' "$T/doctor.out" || { echo "    doctor did not verify the wiring"; grep -F prompt-capture "$T/doctor.out" | sed 's/^/    | /'; exit 1; }
 
-# a record with no rendering is half an archive, and the repair is named where it is found
+# a record missing either rendering is a partial archive, and the repair is named where the
+# gap is found. Each of the two is probed on its own: a check that only ever looked for the
+# Markdown would pass an archive whose YAML half never existed.
 rm -f .ai/local/prompts/*-he-said-no*.md
 expect_exit 10 "$MJ" doctor
-expect_grep 'no Markdown rendering'
+expect_grep 'missing a rendering'
 expect_grep 'majordomus capture render'
 expect_exit 0 "$MJ" capture render
+rm -f .ai/local/prompts/*-he-said-no*.yaml
+expect_exit 10 "$MJ" doctor
+expect_grep 'missing a rendering'
+expect_exit 0 "$MJ" capture render
 "$MJ" doctor > "$T/doctor.out" 2>&1 || true
-grep -qF 'every prompt is present as both a record and a rendering' "$T/doctor.out" \
+grep -qF 'every prompt is present as all three: the record, the Markdown and the YAML' "$T/doctor.out" \
   || { echo "    doctor does not report a complete archive as complete"; grep -i capture "$T/doctor.out" | sed 's/^/    | /'; exit 1; }
 
 # the opposite half is the unrepairable one: nothing can rebuild a record from a rendering,
@@ -312,7 +333,7 @@ expect_grep 'tracked by git'
 git rm --cached -q "$one"
 
 # and a record carrying the model's half of the exchange is a failure of the same doctrine
-printf '{\n  "schema": "majordomus.prompt/v1",\n  "started_at": "t",\n  "provider": "claude-code",\n  "event": "e",\n  "id": "p8",\n  "session": null,\n  "source": null,\n  "cwd": null,\n  "repository": "r",\n  "branch": "b",\n  "head": "h",\n  "response": "what the model said"\n}\n' \
+printf '{\n  "schema": "majordomus.capture/v1",\n  "started_at": "t",\n  "provider": "claude-code",\n  "event": "e",\n  "id": "p8",\n  "session": null,\n  "source": null,\n  "cwd": null,\n  "repository": "r",\n  "branch": "b",\n  "head": "h",\n  "response": "what the model said"\n}\n' \
   > .ai/local/prompts/20260101000000-planted.json
 expect_exit 10 "$MJ" doctor
 expect_grep "model's half"

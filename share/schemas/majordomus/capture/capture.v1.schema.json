@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "majordomus.prompt/v1",
-  "title": "majordomus.prompt/v1",
-  "description": "One captured prompt, as it is stored: the JSON record on disk. The Markdown document that renders it is a shape rather than a bag of keys, and is described beside this file in `v1.proto`. This file is reachable from the identifier alone — a schema id `<namespace>.<name>/<version>` lives at `share/schemas/<namespace>/<name>/<version>`, with `.schema.json` for the record and `.proto` for the document, so the value of the `schema` member in every record, and of `schema:` in the front matter of every rendering, resolves to this path with no lookup table in between. A reader holding a record holds the way to read it. Optional means the writer could not know it, never that it was dropped: capture runs in the provider's hook before the model is invoked, so when a record is written the turn has not happened, and everything about how it ended is absent rather than null. An absent member says 'not observed'; a null one would claim it was observed to be nothing.",
+  "$id": "majordomus.capture/v1",
+  "title": "majordomus.capture/v1",
+  "description": "One captured prompt, as it is stored: the JSON record on disk. The Markdown document that renders it is a shape rather than a bag of keys, and is described beside this file in `v1.proto`. This file is reachable from the identifier alone — a schema id `<namespace>.<name>/<version>` lives at `share/schemas/<namespace>/<name>/<name>.v<version>`, with `.schema.json` for the record and `.proto` for the document, so the value of the `schema` member in every record, and of `schema:` in the front matter of every rendering, resolves to this path with no lookup table in between. A reader holding a record holds the way to read it. Optional means the writer could not know it, never that it was dropped: capture runs in the provider's hook before the model is invoked, so when a record is written the turn has not happened, and everything about how it ended is absent rather than null. An absent member says 'not observed'; a null one would claim it was observed to be nothing.",
   "$defs": {
     "record": {
       "title": "PromptRecord",
@@ -22,7 +22,7 @@
       "properties": {
         "schema": {
           "type": "string",
-          "const": "majordomus.prompt/v1",
+          "const": "majordomus.capture/v1",
           "description": "The identifier of this schema, and therefore the path to this file."
         },
         "started_at": {

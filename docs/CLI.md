@@ -819,7 +819,7 @@ the prompt last under `## PROMPT`, decoded and fenced.
 
 ````markdown
 ---
-schema: 'majordomus.prompt/v1'
+schema: 'majordomus.capture/v1'
 ts: '2026-09-05T12:48:55Z'
 provider: 'claude-code'
 event: 'UserPromptSubmit'
@@ -845,7 +845,7 @@ record: '20260905124855-make-it-a-file-per-prompt.json'
 | **Repository** | `/Users/you/dev/your-repo` |
 | **Branch** | `feature/prompt-capture-markdown` · `a0ccbc9` |
 | **Directory** | `/Users/you/dev/your-repo` |
-| **Schema** | `majordomus.prompt/v1` · `.ai/repo/schemas/majordomus/prompt/v1.proto` |
+| **Schema** | `majordomus.capture/v1` · `share/schemas/majordomus/capture/capture.v1.proto` |
 | **Record** | `20260905124855-make-it-a-file-per-prompt.json` |
 
 ## PROMPT
@@ -861,8 +861,8 @@ one pass, so they cannot drift. A row is omitted rather than printed as `null`, 
 row reading `null` tells a person less than an absent row does.
 
 **The schema identifier is the path to the file that describes it.** `<namespace>.<name>/<version>`
-is `.ai/repo/schemas/<namespace>/<name>/<version>.proto`, so `majordomus.prompt/v1` resolves
-to `.ai/repo/schemas/majordomus/prompt/v1.proto` with no registry in between — a reader
+is `share/schemas/<vendor>/<name>/<name>.v<n>.proto`, so `majordomus.capture/v1` resolves
+to `share/schemas/majordomus/capture/capture.v1.proto` with no registry in between — a reader
 holding a record holds the way to read it, and there is nothing that can fall out of step
 with the records it claims to describe. That file is protobuf used as a schema language and
 not as a wire format: nothing serialises these messages, and it is the one place the record's
