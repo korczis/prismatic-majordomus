@@ -5,8 +5,8 @@
 //! could not read.
 
 use super::model::{
-    BenchmarkPolicy, CachePolicy, Capability, CapabilityId, CapabilityKind, Exposure, McpExposure,
-    McpResource, ModuleId, Provenance, Stability, WaiverReason,
+    Availability, BenchmarkPolicy, CachePolicy, Capability, CapabilityId, CapabilityKind, Exposure,
+    McpExposure, McpResource, ModuleId, Provenance, Stability, Visibility, WaiverReason,
 };
 use super::schema::CanonicalSchema;
 use crate::capability::builtin::ObjectView;
@@ -22,10 +22,24 @@ fn object_view_schema() -> CanonicalSchema {
 
 /// The resource capability of one object of the index.
 pub fn capability_of(object: &Object) -> Capability {
+    let kind = CapabilityKind::Resource;
+    let exposure = Exposure {
+        mcp: Some(McpExposure {
+            tool: None,
+            resource: Some(McpResource {
+                uri: object.uri.clone(),
+                name: object.identity.clone(),
+            }),
+        }),
+        http: None,
+        cli: None,
+    };
     Capability {
+        availability: Availability::classify(kind, &exposure),
+        visibility: Visibility::classify(&exposure),
         id: CapabilityId::unchecked(&format!("{}.{}", object.kind, object.identity)),
         module: ModuleId::unchecked(&object.kind),
-        kind: CapabilityKind::Resource,
+        kind,
         title: object
             .title
             .clone()
@@ -41,17 +55,7 @@ pub fn capability_of(object: &Object) -> Capability {
             media_type: object.media_type.to_string(),
             member: object.provenance.member.clone(),
         },
-        exposure: Exposure {
-            mcp: Some(McpExposure {
-                tool: None,
-                resource: Some(McpResource {
-                    uri: object.uri.clone(),
-                    name: object.identity.clone(),
-                }),
-            }),
-            http: None,
-            cli: None,
-        },
+        exposure,
         stability: Stability::Implemented,
         tags: object.tags().iter().map(|t| t.to_string()).collect(),
         benchmark: BenchmarkPolicy::Waived {
