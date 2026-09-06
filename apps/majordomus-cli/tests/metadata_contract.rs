@@ -534,7 +534,9 @@ fn a_schema_violation_names_the_field_and_the_constraint() {
         .expect("schema_violation");
     let msg = hit["message"].as_str().unwrap();
     assert!(
-        msg.contains("schema 'majordomus.rule/v1'") && msg.contains("class") && msg.contains("version"),
+        msg.contains("schema 'majordomus.rule/v1'")
+            && msg.contains("class")
+            && msg.contains("version"),
         "{msg}"
     );
     assert!(!resource_uris(&v)
