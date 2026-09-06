@@ -176,8 +176,17 @@ fn answer(router: &Router, mut request: tiny_http::Request) {
         .with_status_code(response.status)
         .with_header(
             Header::from_bytes("Content-Type", response.content_type).expect("static header"),
-        )
-        .with_header(Header::from_bytes("Cache-Control", "no-store").expect("static header"));
+        );
+    // `no-store` is right for an answer derived from a repository that a person is editing;
+    // a response that named its own caching (a Cockpit asset whose URL carries its digest)
+    // keeps what it said
+    if !response
+        .headers
+        .iter()
+        .any(|(name, _)| name.eq_ignore_ascii_case("cache-control"))
+    {
+        out.add_header(Header::from_bytes("Cache-Control", "no-store").expect("static header"));
+    }
     for (name, value) in &response.headers {
         if let Ok(h) = Header::from_bytes(name.as_bytes(), value.as_bytes()) {
             out.add_header(h);

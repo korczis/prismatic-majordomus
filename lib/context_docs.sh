@@ -143,6 +143,10 @@ mj_ctxd_scan() {
       if (first["scope"] != "explicit" && first["paths.0"] != "") fail("invalid-front-matter: paths are for scope explicit only (scope is " first["scope"] ")")
       if (first["composition"] == "replace" && first["supersedes.0"] == "") fail("invalid-front-matter: composition replace names nothing in supersedes")
       if (first["composition"] != "replace" && first["supersedes.0"] != "") fail("invalid-front-matter: supersedes is for composition replace only (composition is " first["composition"] ")")
+      if (first["children.require_contract"] != "") {
+        if (first["children.require_contract"] != "true" && first["children.require_contract"] != "false") fail("invalid-front-matter: children.require_contract \047" first["children.require_contract"] "\047 is neither true nor false")
+        if (first["scope"] != "subtree") fail("invalid-front-matter: children.require_contract states what descendants owe and is for scope subtree only (scope is " first["scope"] ")")
+      }
       for (i = 1; i <= nl; i++) {
         if (keys[i] ~ /^providers\.[0-9]+$/ && vals[i] != "*" && index(provs, " " vals[i] " ") == 0)
           fail("unknown-provider: provider \047" vals[i] "\047 is not one the policy projects (have:" provs ")")
@@ -154,6 +158,7 @@ mj_ctxd_scan() {
       print "docs." n ".path=" file >> flat
       print "docs." n ".dir=" dir >> flat
       print "docs." n ".depth=" depth >> flat
+      if (first["children.require_contract"] != "") print "docs." n ".children_require_contract=" first["children.require_contract"] >> flat
       has_aud = 0
       for (i = 1; i <= nl; i++) if (keys[i] ~ /^(paths|providers|audience|supersedes|tracks)\.[0-9]+$/) { print "docs." n "." keys[i] "=" vals[i] >> flat; if (keys[i] ~ /^audience/) has_aud = 1 }
       if (!has_aud) { print "docs." n ".audience.0=human" >> flat; print "docs." n ".audience.1=agent" >> flat }
@@ -238,7 +243,106 @@ mj_ctxd_cross_check() {
     i=$((i + 1))
   done
   mj_ctxd_cycles
+  mj_ctxd_coverage
   [ "$noglob" = 1 ] || set +f
+  return 0
+}
+
+# the index of a document whose directory is $1, or 1
+mj_ctxd_index_for_dir() {
+  local i=0
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do [ "$(mj_ctxd "$i" dir)" = "$1" ] && { printf '%s' "$i"; return 0; }; i=$((i + 1)); done
+  return 1
+}
+
+# The children.require_contract that governs directory $1: the nearest declaration at or
+# above it ($2 = strict skips a declaration in the directory itself), as "<value><TAB><path>".
+# Empty when nothing declares it, which the caller reads as the default: a contract is owed.
+mj_ctxd_require_at() {
+  local dir="$1" strict="${2:-0}" i=0 val ddir d best_depth=-1 best_val="" best_path=""
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
+    val="$(mj_ctxd "$i" children_require_contract)"
+    ddir="$(mj_ctxd "$i" dir)"
+    if [ -n "$val" ] && mj_path_contains "$ddir" "$dir" && { [ "$strict" = 0 ] || [ "$ddir" != "$dir" ]; }; then
+      d="$(mj_ctxd "$i" depth)"
+      if [ "$d" -gt "$best_depth" ]; then best_depth="$d"; best_val="$val"; best_path="$(mj_ctxd "$i" path)"; fi
+    fi
+    i=$((i + 1))
+  done
+  printf '%s\t%s' "$best_val" "$best_path"
+}
+
+# Every directory of the tree, with what it owes and what carries it, as
+#   <dir> <TAB> <document index or -> <TAB> true|false <TAB> <governing document path or ->
+# A field is never empty: a tab is IFS whitespace, so `read` would collapse two of them and
+# hand the caller the wrong column.
+#
+# One awk over the flat records and the directory list, rather than a shell loop that reads
+# every document again for every directory: this runs inside `context validate`, which runs
+# inside `doctor`, which runs in the pre-commit hook, and a check on that path is measured
+# before it is added (project.blocking-checks-cheap).
+mj_ctxd_directories() {
+  local tree local_rel vendor_rel
+  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
+  ( cd "$MJ_ROOT" && find "$tree" -type d -print 2>/dev/null ) | LC_ALL=C sort \
+  | awk -v flat="$MJ_CTXD_FLAT" -v localrel="$local_rel" -v vendorrel="$vendor_rel" '
+      BEGIN {
+        while ((getline line < flat) > 0) {
+          eq = index(line, "="); if (eq == 0) continue
+          k = substr(line, 1, eq - 1); v = substr(line, eq + 1)
+          if (k !~ /^docs\.[0-9]+\./) continue
+          split(k, a, ".") ; n = a[2] ; field = substr(k, length("docs." n ".") + 1)
+          if      (field == "dir")   { dir[n] = v; at[v] = n }
+          else if (field == "path")  path[n] = v
+          else if (field == "depth") depth[n] = v
+          else if (field == "children_require_contract") req[n] = v
+        }
+        close(flat)
+      }
+      function under(parent, child) { return child == parent || index(child, parent "/") == 1 }
+      {
+        d = $0
+        if (under(localrel, d) || under(vendorrel, d)) next
+        doc = (d in at) ? at[d] : "-"
+        best = -1; val = ""; gov = "-"
+        for (n in req) {
+          if (req[n] == "" || !under(dir[n], d)) continue
+          if (depth[n] + 0 > best) { best = depth[n] + 0; val = req[n]; gov = path[n] }
+        }
+        if (val != "false") val = "true"          # nothing declared: a document is owed
+        printf "%s\t%s\t%s\t%s\n", d, doc, val, gov
+      }'
+}
+
+# Coverage: every directory of the tree carries a context document, and no descendant
+# weakens an ancestor that says its children owe one. The exemption is declared by the
+# contract that governs the subtree (children.require_contract: false), never by a list at
+# the root: it moves with the tree it describes. ADR 0011.
+mj_ctxd_coverage() {
+  local tree local_rel vendor_rel d gov val path i
+  tree="$(mj_ctxd_tree)"; local_rel="$(mj_rel "$MJ_AI_LOCAL_DIR")"; vendor_rel="$(mj_rel "$MJ_RULES_DIR")/vendor"
+  # narrowing only: false may become true below, true may not become false
+  i=0
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
+    if [ "$(mj_ctxd "$i" children_require_contract)" = false ]; then
+      gov="$(mj_ctxd_require_at "$(mj_ctxd "$i" dir)" 1)"; val="${gov%%"$MJ_CTXD_TAB"*}"; path="${gov#*"$MJ_CTXD_TAB"}"
+      [ "$val" = true ] && mj_ctxd_problem illegal-override "$(mj_ctxd "$i" path)" \
+        "declares children.require_contract: false under $path, which requires one; a descendant may narrow an inherited constraint, never weaken it" \
+        "majordomus context explain $(mj_ctxd "$i" dir)"
+    fi
+    i=$((i + 1))
+  done
+  # every directory inside the tree, minus the local half and the vendored package, whose
+  # integrity is its manifest's business rather than a reader's
+  local doc req
+  while IFS="$MJ_CTXD_TAB" read -r d doc req path; do
+    [ -n "$d" ] || continue
+    [ "$doc" = - ] || continue
+    [ "$req" = false ] && continue
+    mj_ctxd_problem missing-contract "$d" \
+      "carries no context document$([ "$path" != - ] && printf ', and %s requires one of every directory below it' "$path"); a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)" \
+      "printf '%s\\n' '---' 'schema: context/v1' > $d/README.md"
+  done < <(mj_ctxd_directories)
   return 0
 }
 
@@ -382,9 +486,10 @@ mj_ctxd_require_valid() {
 mj_ctxd_json_doc() {
   local noglob=0; case "$-" in *f*) noglob=1 ;; esac; set -f   # list values such as "*" are words, not globs
   local i="$1" reason="$2" idx="$3" first v
-  printf '{"index":%s,"id":"%s","path":"%s","dir":"%s","depth":%s,"scope":"%s","composition":"%s","order":%s,"status":"%s","title":"%s","providers":[' \
+  printf '{"index":%s,"id":"%s","path":"%s","dir":"%s","depth":%s,"scope":"%s","composition":"%s","order":%s,"status":"%s","title":"%s","description":"%s","children_require_contract":%s,"providers":[' \
     "$idx" "$(mj_ctxd "$i" id)" "$(mj_json_esc "$(mj_ctxd "$i" path)")" "$(mj_json_esc "$(mj_ctxd "$i" dir)")" "$(mj_ctxd "$i" depth)" \
-    "$(mj_ctxd "$i" scope)" "$(mj_ctxd "$i" composition)" "$(mj_ctxd "$i" order)" "$(mj_ctxd "$i" status)" "$(mj_json_esc "$(mj_ctxd "$i" title)")"
+    "$(mj_ctxd "$i" scope)" "$(mj_ctxd "$i" composition)" "$(mj_ctxd "$i" order)" "$(mj_ctxd "$i" status)" "$(mj_json_esc "$(mj_ctxd "$i" title)")" \
+    "$(mj_json_esc "$(mj_ctxd "$i" description)")" "$(v="$(mj_ctxd "$i" children_require_contract)"; [ -n "$v" ] && printf '%s' "$v" || printf null)"
   first=1; for v in $(mj_ctxd_list "$i" providers); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$(mj_json_esc "$v")"; first=0; done
   printf '],"audience":['
   first=1; for v in $(mj_ctxd_list "$i" audience); do [ "$first" = 1 ] || printf ','; printf '"%s"' "$(mj_json_esc "$v")"; first=0; done
@@ -409,13 +514,7 @@ mj_ctxd_json_doc() {
 mj_ctxd_changes() {
   local mode="$1" base="${2:-}"
   [ "$mode" != base ] || mj_ctxd_require_ref "$base"
-  case "$mode" in
-    staged) mj_git diff --name-status -M --cached 2>/dev/null ;;
-    base)   mj_git diff --name-status -M "$base" 2>/dev/null
-            mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
-    *)      mj_git diff --name-status -M HEAD 2>/dev/null
-            mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
-  esac | awk -F'\t' '{ s = substr($1, 1, 1); if (s == "R" || s == "C") print s "\t" $2 "\t" $3; else print s "\t" $2 "\t" }' | LC_ALL=C sort -t "$MJ_CTXD_TAB" -k2,2
+  mj_change_set "$mode" "$base"
 }
 
 mj_ctxd_require_ref() {

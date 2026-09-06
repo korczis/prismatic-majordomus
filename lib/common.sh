@@ -724,6 +724,34 @@ trap mj_cleanup EXIT
 # extra front-matter lines differ.
 
 # front matter of a record (between the first --- and the next ---), empty if malformed
+# mj_change_set MODE [BASE] -> "<status> <TAB> <path> <TAB> <new path or empty>" per change,
+# sorted by path: `staged` reads the index, `base` reads <ref>..worktree, anything else the
+# working tree against HEAD. Untracked files count as additions, because a file git does not
+# know about yet is still a change somebody is about to commit. One reader, so that every
+# command that asks "what changed" gets the same answer.
+mj_change_set() {
+  local mode="$1" base="${2:-}" tab
+  tab="$(printf '\t')"
+  case "$mode" in
+    staged) mj_git diff --name-status -M --cached 2>/dev/null ;;
+    base)   mj_git diff --name-status -M "$base" 2>/dev/null
+            mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
+    *)      mj_git diff --name-status -M HEAD 2>/dev/null
+            mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
+  esac | awk -F'\t' '{ s = substr($1, 1, 1); if (s == "R" || s == "C") print s "\t" $2 "\t" $3; else print s "\t" $2 "\t" }' \
+       | LC_ALL=C sort -t "$tab" -k2,2
+}
+
+# Is this Markdown file a context document rather than an instance of the kind that lives
+# beside it? A section's README sits in the same directory as its files and declares the
+# context contract; a kind's discovery walks the directory and must not read it as one of
+# its own. Coverage made these READMEs universal (ADR 0011), so the test is shared.
+mj_is_context_doc() {
+  [ -f "$1" ] || return 1
+  [ "$(awk 'NR == 1 && $0 != "---" { exit } NR > 1 && $0 == "---" { exit }
+            NR > 1 && $0 == "kind: context" { print "yes"; exit }' "$1" 2>/dev/null)" = yes ]
+}
+
 mj_record_front() { awk 'NR==1&&$0!="---"{exit 2} NR>1&&$0=="---"{exit} NR>1' "$1"; }
 # body of a record: everything after the second ---
 mj_record_body()  { awk 'c>=2{print} /^---$/{c++}' "$1"; }

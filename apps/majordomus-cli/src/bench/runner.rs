@@ -227,7 +227,11 @@ impl Runner {
     fn http_server(&mut self) -> Result<String> {
         if self.http.is_none() {
             let bound = server::bind("127.0.0.1", 0)?;
-            let router = Router::new(Arc::clone(&self.ctx), crate::VERSION);
+            // with the Cockpit, so that the pages measured here are the pages served: the
+            // share directory is the one the runner was given, and without one the Cockpit
+            // renders unstyled markup, which is the same work
+            let router = Router::new(Arc::clone(&self.ctx), crate::VERSION)
+                .with_cockpit(self.share.as_deref());
             self.http = Some(bound.start(router));
         }
         Ok(self.http.as_ref().map(|r| r.url()).unwrap_or_default())
@@ -387,10 +391,18 @@ impl Runner {
                 }
                 Ok(Statistics::of(&samples))
             }
-            SystemTarget::HttpIndex | SystemTarget::HttpOpenApi | SystemTarget::HttpDocs => {
+            SystemTarget::HttpIndex
+            | SystemTarget::HttpOpenApi
+            | SystemTarget::HttpDocs
+            | SystemTarget::HttpCockpitOverview
+            | SystemTarget::HttpCockpitCapabilities
+            | SystemTarget::HttpCockpitGraph => {
                 let path = match target {
                     SystemTarget::HttpIndex => "/",
                     SystemTarget::HttpOpenApi => "/openapi.json",
+                    SystemTarget::HttpCockpitOverview => "/cockpit",
+                    SystemTarget::HttpCockpitCapabilities => "/cockpit/capabilities",
+                    SystemTarget::HttpCockpitGraph => "/cockpit/graphs/registry",
                     _ => "/docs",
                 };
                 self.http("GET", path, &json!({}), CacheMode::NotApplicable)

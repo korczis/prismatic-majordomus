@@ -429,7 +429,9 @@ mj_validate_prompts() {
   [ -d "$MJ_PROMPTS_DIR" ] || return 0
   [ "$MJ_DOCTRINE_CMD" = watch ] && mj_watch_prompts_empty
   for f in "$MJ_PROMPTS_DIR"/*.md; do
-    [ -f "$f" ] || continue; n=$((n + 1))
+    [ -f "$f" ] || continue
+    mj_is_context_doc "$f" && continue          # the section's own README is not an asset
+    n=$((n + 1))
     reason="$(mj_prompt_validate "$f")" || { mj_doctrine_fail prompt "$(basename "$f" .md)" "$(printf '%s' "$reason" | tr '\n' ';' | sed 's/;$//')" "majordomus prompt show $(basename "$f" .md)"; bad=1; }
   done
   [ "$n" -gt 0 ] && [ "$bad" = 0 ] && mj_doctrine_ok prompt "$n asset(s)" "front matter valid, every token known"

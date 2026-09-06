@@ -684,6 +684,19 @@
       "test_case": "69_context_documents"
     },
     {
+      "id": "context-coverage",
+      "claim": "Every directory of the layer carries a context document, the exemption is declared by the contract that governs the subtree, and a descendant may narrow that requirement but never weaken it",
+      "source": "docs/CONTEXT.md",
+      "implementation": "lib/context_docs.sh",
+      "test": "test/cases/69_context_documents.sh",
+      "status": "guaranteed",
+      "note": "A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the local half and the vendored package.",
+      "responsibility": "layer",
+      "source_route": "/docs/context/",
+      "command": null,
+      "test_case": "69_context_documents"
+    },
+    {
       "id": "context-impact",
       "claim": "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing",
       "source": "docs/CLI.md",
@@ -1549,6 +1562,19 @@
       "test": "test/cases/99_adr.sh",
       "status": "guaranteed",
       "note": "share/kinds.yaml declares the kind, share/schemas/adr.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section.",
+      "responsibility": "layer",
+      "source_route": "/docs/schemas/",
+      "command": "adr",
+      "test_case": "99_adr"
+    },
+    {
+      "id": "adr-traceability",
+      "claim": "A decision states what it put in force as typed references, each one validated, and the reverse direction — what a rule, a document, an implementation or a case was decided by — is read from the knowledge graph rather than written down a second time",
+      "source": "docs/SCHEMAS.md",
+      "implementation": "lib/adr.sh",
+      "test": "test/cases/99_adr.sh",
+      "status": "guaranteed",
+      "note": "The forward edge is `related` in the decision's front matter - rule:<id>, claim:<id>, file:<path>, test:<path>. Validation refuses a rule the effective set does not have, a claim the matrix does not have and a path the repository does not contain. The extractor turns each into a graph edge (declares, supports, references, tested_by) whose provenance is the front-matter key that stated it, so `knowledge edges` answers both directions from one authored fact.",
       "responsibility": "layer",
       "source_route": "/docs/schemas/",
       "command": "adr",

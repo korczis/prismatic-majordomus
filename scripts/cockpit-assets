@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# cockpit-assets — the Cockpit's static files, built from their sources.
+#
+# Two kinds of file live under share/cockpit/:
+#
+#   committed   cockpit.css        compiled here from share/cockpit/src/cockpit.css with the
+#                                  Tailwind CLI and Flowbite's theme; a generated artifact,
+#                                  drift-checked like every other one
+#               *.js, favicon.svg  written by hand, no build step
+#               vendor/alpine.csp.min.js
+#                                  copied verbatim from the pinned npm package; small, and
+#                                  the Cockpit's interaction needs it on a fresh clone
+#
+#   built       vendor/cytoscape.min.js, vendor/three.module.min.js + three.core.min.js,
+#               vendor/p5.min.js
+#               copied verbatim from their pinned npm packages and NOT committed. Each is
+#               loaded lazily by one page, each page is complete without it, and together
+#               they are two megabytes that nothing on the critical path needs.
+#
+#   scripts/cockpit-assets            build everything
+#   scripts/cockpit-assets --check    rebuild the compiled stylesheet into a temporary file
+#                                     and fail if the committed one differs
+#
+# Node is a build dependency and never a runtime one: the Rust executable serves these
+# files from disk and has no idea they were built.
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUT="$ROOT/share/cockpit"
+SRC="$OUT/src/cockpit.css"
+CHECK=0
+[ "${1:-}" = "--check" ] && CHECK=1
+
+[ -d "$ROOT/node_modules/tailwindcss" ] || {
+  echo "cockpit-assets: node_modules absent; run: npm ci" >&2
+  exit 12
+}
+
+build_css() { # destination
+  ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SRC" -o "$1" --minify 2>/dev/null )
+}
+
+if [ "$CHECK" = 1 ]; then
+  tmp="$(mktemp -t cockpit-css.XXXXXX)"
+  trap 'rm -f "$tmp"' EXIT
+  build_css "$tmp"
+  if ! cmp -s "$tmp" "$OUT/cockpit.css"; then
+    echo "cockpit-assets: share/cockpit/cockpit.css is stale; run: scripts/cockpit-assets" >&2
+    exit 10
+  fi
+  echo "==> cockpit-assets: the committed stylesheet matches its source"
+  exit 0
+fi
+
+echo "==> cockpit-assets: compiling share/cockpit/cockpit.css"
+build_css "$OUT/cockpit.css"
+
+echo "==> cockpit-assets: vendoring the pinned libraries"
+mkdir -p "$OUT/vendor"
+# committed: the Cockpit's interaction depends on it, and it is 55 kB
+# the ES module build, not the CDN one: the CDN build calls Alpine.start() on a microtask
+# of its own, which runs before this page's module registers Alpine.data('cockpit') and
+# leaves every x- attribute bound to an undefined variable
+cp "$ROOT/node_modules/@alpinejs/csp/dist/module.esm.min.js" "$OUT/vendor/alpine.csp.min.js"
+# not committed: lazy, optional, and large
+cp "$ROOT/node_modules/cytoscape/dist/cytoscape.min.js" "$OUT/vendor/cytoscape.min.js"
+# three ships ES modules only; the module build imports its core from beside itself, so
+# both files go in and the page imports the module rather than expecting a global
+cp "$ROOT/node_modules/three/build/three.module.min.js" "$OUT/vendor/three.module.min.js"
+cp "$ROOT/node_modules/three/build/three.core.min.js" "$OUT/vendor/three.core.min.js"
+cp "$ROOT/node_modules/p5/lib/p5.min.js" "$OUT/vendor/p5.min.js"
+
+printf '==> cockpit-assets: done\n'
+ls -l "$OUT" "$OUT/vendor" | sed 's/^/    /'

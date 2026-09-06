@@ -30,11 +30,17 @@ pub enum SystemTarget {
     HttpOpenApi,
     /// `GET /docs`.
     HttpDocs,
+    /// `GET /cockpit`: the Cockpit's landing page, rendered.
+    HttpCockpitOverview,
+    /// `GET /cockpit/capabilities`: the whole registry as a table, the widest page there is.
+    HttpCockpitCapabilities,
+    /// `GET /cockpit/graphs/registry`: a page whose content is a derived graph.
+    HttpCockpitGraph,
 }
 
 impl SystemTarget {
     /// Every system target, in a stable order.
-    pub const ALL: [SystemTarget; 9] = [
+    pub const ALL: [SystemTarget; 12] = [
         SystemTarget::McpProcessCold,
         SystemTarget::McpInitialize,
         SystemTarget::McpPing,
@@ -44,6 +50,9 @@ impl SystemTarget {
         SystemTarget::HttpIndex,
         SystemTarget::HttpOpenApi,
         SystemTarget::HttpDocs,
+        SystemTarget::HttpCockpitOverview,
+        SystemTarget::HttpCockpitCapabilities,
+        SystemTarget::HttpCockpitGraph,
     ];
 
     /// The stable key results and baselines use.
@@ -58,6 +67,9 @@ impl SystemTarget {
             SystemTarget::HttpIndex => "system.http.index",
             SystemTarget::HttpOpenApi => "system.http.openapi",
             SystemTarget::HttpDocs => "system.http.docs",
+            SystemTarget::HttpCockpitOverview => "system.http.cockpit_overview",
+            SystemTarget::HttpCockpitCapabilities => "system.http.cockpit_capabilities",
+            SystemTarget::HttpCockpitGraph => "system.http.cockpit_graph",
         }
     }
 
@@ -70,9 +82,12 @@ impl SystemTarget {
             | SystemTarget::McpToolsList
             | SystemTarget::McpResourcesList
             | SystemTarget::McpResourcesRead => super::Transport::Mcp,
-            SystemTarget::HttpIndex | SystemTarget::HttpOpenApi | SystemTarget::HttpDocs => {
-                super::Transport::Http
-            }
+            SystemTarget::HttpIndex
+            | SystemTarget::HttpOpenApi
+            | SystemTarget::HttpDocs
+            | SystemTarget::HttpCockpitOverview
+            | SystemTarget::HttpCockpitCapabilities
+            | SystemTarget::HttpCockpitGraph => super::Transport::Http,
         }
     }
 
@@ -90,6 +105,15 @@ impl SystemTarget {
             SystemTarget::HttpIndex => "GET /",
             SystemTarget::HttpOpenApi => "GET /openapi.json",
             SystemTarget::HttpDocs => "GET /docs (the Swagger UI shell)",
+            SystemTarget::HttpCockpitOverview => {
+                "GET /cockpit (the Cockpit's landing page, server-rendered)"
+            }
+            SystemTarget::HttpCockpitCapabilities => {
+                "GET /cockpit/capabilities (every capability as a table: the widest page)"
+            }
+            SystemTarget::HttpCockpitGraph => {
+                "GET /cockpit/graphs/registry (a page whose content is a derived graph)"
+            }
         }
     }
 }

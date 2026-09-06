@@ -9,6 +9,9 @@ expect_exit() {
     return 1
   fi
 }
+expect_file() {
+  [ -f "$1" ] || { printf '    expected the file %s, which the run did not produce\n' "$1"; return 1; }
+}
 expect_grep() {
   local pat="$1" src="${2:--}"
   if [ "$src" = "-" ]; then grep -qE -- "$pat" <<<"$LAST_OUT" || { printf '    expected /%s/ in output:\n%s\n' "$pat" "$LAST_OUT"; return 1; }
@@ -171,4 +174,13 @@ fixture_repo() {
     p="$(jq -r '.source' "$dst/docs/generated/cli.json")"
     if [ -f "$ROOT/$p" ] && [ ! -e "$dst/$p" ]; then mkdir -p "$dst/$(dirname "$p")"; cp "$ROOT/$p" "$dst/$p"; fi
   fi
+  # A directory of the layer owes a context document (ADR 0011). A fixture that copied a
+  # section's files through --inputs without the section's own README would be a tree the
+  # tool refuses, so every directory that arrived here brings the contract it has upstream.
+  ( cd "$dst" && find .ai -type d -not -path '.ai/local*' -print 2>/dev/null ) | LC_ALL=C sort | while IFS= read -r d; do
+    if [ ! -f "$dst/$d/README.md" ] && [ -f "$ROOT/$d/README.md" ]; then
+      cp "$ROOT/$d/README.md" "$dst/$d/README.md"
+    fi
+    :                       # the loop body never ends on a false test: `set -e` would stop it
+  done
 }

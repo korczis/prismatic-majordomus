@@ -45,6 +45,7 @@ pub fn run(args: ServeArgs) -> Result<u8> {
         args.port,
         false,
         lease,
+        Some(app.share.dir()),
     )?;
     if stdin_is_a_pipe() {
         tracing::info!(

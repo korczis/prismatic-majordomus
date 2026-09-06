@@ -34,6 +34,8 @@ pub struct Counters {
     pub openapi_builds: AtomicU64,
     /// `Router::new`.
     pub http_projection_builds: AtomicU64,
+    /// `graph::derive`: one graph derived from the registry and the index.
+    pub graph_builds: AtomicU64,
     /// `CapabilityExecutor::execute`: every call through every transport.
     pub executions: AtomicU64,
     /// Handlers actually run (an execution the cache did not answer).
@@ -76,6 +78,8 @@ pub enum Phase {
     OpenApiBuild,
     /// The MCP tool and resource listings.
     McpProjectionBuild,
+    /// `graph::derive`: deriving one graph.
+    GraphBuild,
     /// A handler running inside the executor.
     HandlerExecution,
     /// A cache lookup inside the executor, hit or miss.
@@ -84,12 +88,13 @@ pub enum Phase {
 
 impl Phase {
     /// Every phase, in declaration order.
-    pub const ALL: [Phase; 7] = [
+    pub const ALL: [Phase; 8] = [
         Phase::RepositoryDiscovery,
         Phase::IndexBuild,
         Phase::RegistryBuild,
         Phase::OpenApiBuild,
         Phase::McpProjectionBuild,
+        Phase::GraphBuild,
         Phase::HandlerExecution,
         Phase::CacheLookup,
     ];
@@ -102,6 +107,7 @@ impl Phase {
             Phase::RegistryBuild => "registry_build",
             Phase::OpenApiBuild => "open_api_build",
             Phase::McpProjectionBuild => "mcp_projection_build",
+            Phase::GraphBuild => "graph_build",
             Phase::HandlerExecution => "handler_execution",
             Phase::CacheLookup => "cache_lookup",
         }
@@ -150,12 +156,14 @@ impl Counters {
             mcp_projection_builds: AtomicU64::new(0),
             openapi_builds: AtomicU64::new(0),
             http_projection_builds: AtomicU64::new(0),
+            graph_builds: AtomicU64::new(0),
             executions: AtomicU64::new(0),
             handler_invocations: AtomicU64::new(0),
             cache_hits: AtomicU64::new(0),
             cache_misses: AtomicU64::new(0),
             cache_evictions: AtomicU64::new(0),
             phases: [
+                PhaseCell::new(),
                 PhaseCell::new(),
                 PhaseCell::new(),
                 PhaseCell::new(),
@@ -184,6 +192,7 @@ impl Counters {
             mcp_projection_builds: read(&self.mcp_projection_builds),
             openapi_builds: read(&self.openapi_builds),
             http_projection_builds: read(&self.http_projection_builds),
+            graph_builds: read(&self.graph_builds),
             executions: read(&self.executions),
             handler_invocations: read(&self.handler_invocations),
             cache_hits: read(&self.cache_hits),
@@ -233,6 +242,8 @@ pub struct CounterSnapshot {
     pub openapi_builds: u64,
     /// HTTP routers built.
     pub http_projection_builds: u64,
+    /// Graphs derived from the registry and the index.
+    pub graph_builds: u64,
     /// Calls through the executor, every transport.
     pub executions: u64,
     /// Handlers actually run.

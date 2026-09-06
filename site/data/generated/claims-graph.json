@@ -483,6 +483,15 @@
       "note": "A document is a Markdown file under .ai/ whose front matter carries schema context/v1; the file name is a convention and the id is the identity. Ordering is depth, then declared order, then path. Providers and audience filter; extend, replace and final compose; a duplicate id, a dangling reference, a superseded final document or a cycle is refused by name."
     },
     {
+      "id": "claim:context-coverage",
+      "kind": "claim",
+      "label": "Every directory of the layer carries a context document, the exemption is declared by the contract that governs the subtree, and a descendant may narrow that requirement but never weaken it",
+      "status": "guaranteed",
+      "route": "/guarantees/context-coverage/",
+      "external": false,
+      "note": "A directory inside the tree with no document is missing-contract, naming the directory and, where an ancestor made the requirement explicit, the contract that did. The exemption is children.require_contract on a subtree document; the value nearest a directory applies, absence means one is owed, and lowering an inherited true is illegal-override. The tree is the manifest's directory minus the local half and the vendored package."
+    },
+    {
       "id": "claim:context-impact",
       "kind": "claim",
       "label": "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing",
@@ -1086,6 +1095,15 @@
       "note": "share/kinds.yaml declares the kind, share/schemas/adr.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section."
     },
     {
+      "id": "claim:adr-traceability",
+      "kind": "claim",
+      "label": "A decision states what it put in force as typed references, each one validated, and the reverse direction — what a rule, a document, an implementation or a case was decided by — is read from the knowledge graph rather than written down a second time",
+      "status": "guaranteed",
+      "route": "/guarantees/adr-traceability/",
+      "external": false,
+      "note": "The forward edge is `related` in the decision's front matter - rule:<id>, claim:<id>, file:<path>, test:<path>. Validation refuses a rule the effective set does not have, a claim the matrix does not have and a path the repository does not contain. The extractor turns each into a graph edge (declares, supports, references, tested_by) whose provenance is the front-matter key that stated it, so `knowledge edges` answers both directions from one authored fact."
+    },
+    {
       "id": "claim:adr-propose",
       "kind": "claim",
       "label": "majordomus adr propose writes a decision with status proposed and refuses to write any other status, allocates its identity under a lock so concurrent workers never collide, and records what the decision was derived from",
@@ -1547,6 +1565,13 @@
       "kind": "source",
       "label": "docs/CONCEPTS.md",
       "route": "/docs/concepts/",
+      "external": false
+    },
+    {
+      "id": "source:docs/CONTEXT.md",
+      "kind": "source",
+      "label": "docs/CONTEXT.md",
+      "route": "/docs/context/",
       "external": false
     },
     {
@@ -2309,6 +2334,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:context-coverage",
+      "target": "source:docs/CONTEXT.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:context-impact",
       "target": "source:docs/CLI.md",
       "kind": "specified_by"
@@ -2644,6 +2674,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:adr-traceability",
+      "target": "source:docs/SCHEMAS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-propose",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -2905,6 +2940,11 @@
     },
     {
       "source": "claim:context-documents",
+      "target": "impl:lib/context_docs.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:context-coverage",
       "target": "impl:lib/context_docs.sh",
       "kind": "implemented_by"
     },
@@ -3204,6 +3244,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:adr-traceability",
+      "target": "impl:lib/adr.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-propose",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -3465,6 +3510,11 @@
     },
     {
       "source": "claim:context-documents",
+      "target": "test:test/cases/69_context_documents.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:context-coverage",
       "target": "test:test/cases/69_context_documents.sh",
       "kind": "proved_by"
     },
@@ -3760,6 +3810,11 @@
     },
     {
       "source": "claim:adr-catalogue",
+      "target": "test:test/cases/99_adr.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:adr-traceability",
       "target": "test:test/cases/99_adr.sh",
       "kind": "proved_by"
     },

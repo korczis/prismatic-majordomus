@@ -781,6 +781,35 @@ jq '{schema: 1,
 
 
 mj_phase_end "gen:why.json_the_moments_as" "$GEN_T0"
+# ---------------------------------------------------------------- context.json (the directory contracts)
+GEN_T0="$(mj_phase_begin "gen:context.json")"
+# The layer's directory contracts, as the tool resolves them: `context list --json` loads
+# and validates the tree once and reports every document plus the verdict coverage reached
+# for every directory (ADR 0011). Nothing is recomputed here — a second walk of the same
+# files would be a second opinion about what the tree says.
+"$ROOT/bin/majordomus" --repo "$ROOT" context list --json > "$STAGE/context.raw.json" 2> "$STAGE/context.err" || {
+  echo "generate-site-data: context list failed:" >&2; cat "$STAGE/context.err" >&2; exit 10; }
+if [ "$(jq '.problems | length' "$STAGE/context.raw.json")" != 0 ]; then
+  echo "generate-site-data: the context tree does not validate; run: majordomus context validate" >&2
+  jq -r '.problems[] | "  " + .class + " " + .subject + ": " + .message' "$STAGE/context.raw.json" >&2; exit 10
+fi
+jq '{schema: 1, tree: .tree,
+     documents: [.documents[] | {id, path, dir, depth, scope, composition, order, status, title, description,
+                                 children_require_contract, providers, audience, supersedes, tracks}],
+     directories: [.directories[] as $d | $d + {
+       depth: (($d.dir | split("/") | length) - (.tree | split("/") | length)),
+       name: ($d.dir | split("/") | last),
+       contract: ([.documents[] | select(.dir == $d.dir)] | first // null)}],
+     counts: {directories: (.directories | length),
+              documented: ([.directories[] | select(.document != null)] | length),
+              exempt: ([.directories[] | select(.requires_contract == false and .document == null)] | length)}}' \
+  "$STAGE/context.raw.json" > "$OUT/context.json"
+# the projection is only worth publishing while it is complete: a directory that owes a
+# contract and has none would render as a hole, and the tree above already refused that
+[ "$(jq '[.directories[] | select(.document == null and .requires_contract)] | length' "$OUT/context.json")" = 0 ] \
+  || { echo "generate-site-data: a directory of the layer owes a contract and has none" >&2; exit 10; }
+mj_phase_end "gen:context.json" "$GEN_T0"
+
 # ---------------------------------------------------------------- skills.json (the skills, as the one catalogue)
 GEN_T0="$(mj_phase_begin "gen:skills.json")"
 # The skills are canonical Markdown under the layer's skills section. They are not read here
@@ -1043,9 +1072,15 @@ GEN_T0="$(mj_phase_begin "gen:docs_index_from_docs_README.")"
 # here; site-check requires a route for every entry in docs.json.
 DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md" | sed -E 's/^\| \[`([^`]+)`\]\(([^)]+)\) \| ([^|]+) \| ([^|]+) \|$/\2|\3|\4/' | grep -vE '^\|' \
   | jq -Rn '[inputs | split("|") | {path: (.[0] | ltrimstr("../")), audience: (.[1]|gsub("^ +| +$";"")), summary: (.[2]|gsub("^ +| +$";""))}]')"
-# the route each document gets, computed once, here, by the rule above
+# the route each document gets, computed once, here, by the rule above. The three documents
+# this run writes into docs/ itself (below, near the end) are routed whether or not they are
+# on disk yet: their absence means this is the first run in a tree that has none, not that
+# they have no page, and deciding a route by the presence of our own output makes the first
+# pass disagree with every later one — which is exactly what --check then reports as drift.
+GENERATED_DOCS="SITE_CLAIMS.md PLAN_STATUS.md PAGES_STATUS.md"
 DOC_ROUTES="$(printf '%s' "$DOCS" | jq -r '.[].path' | grep -E '^[A-Z_]+\.md$' | while read -r p; do
-  n="${p%.md}"; [ -f "$ROOT/docs/$n.md" ] || continue
+  if [ ! -f "$ROOT/docs/$p" ]; then case " $GENERATED_DOCS " in *" $p "*) ;; *) continue ;; esac; fi
+  n="${p%.md}"
   printf '%s\t/docs/%s/\n' "$p" "$(doc_slug "$n")"
 done | jq -Rn '[inputs | split("\t") | {key: .[0], value: .[1]}] | from_entries')"
 printf '%s' "$DOCS" | jq --argjson routes "$DOC_ROUTES" '{schema:1, docs: [.[] | . + {route: ($routes[.path] // null)}]}' > "$OUT/docs.json"
@@ -1289,6 +1324,7 @@ mk_section() { # dir, title, description, section template, page template, weigh
 }
 CONTENT_ROOT="$STAGE/content"
 rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan" "$CONTENT_ROOT/skills"
+rm -rf "$CONTENT_ROOT/context"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
@@ -1307,6 +1343,7 @@ jq -r '.claims[] | [.id, .claim, .status] | @tsv' "$OUT/capabilities.json" | whi
 mk_section supervises "What Majordomus supervises" "$(jq -r '.does | length' "$OUT/readme.json") responsibilities, one layer. Each is a file under .ai/ and a subcommand that reads it." supervises-section.html responsibility.html 20
 i=0; jq -r '.does[] | [.slug, .title, .text] | @tsv' "$OUT/readme.json" | while IFS="$MJ_TAB" read -r slug title text; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$text" | sed -E 's/`([^`]*)`/\1/g' | jline)" "$i" "$(jstr "$slug")" > "$CONTENT_ROOT/supervises/$slug.md"; done
+mk_section context "Directory contracts" "Every directory of the layer says what it is for, in a README that composes with its ancestors. The tree below is the one the resolver reads, with the verdict validation reached for each directory." context.html page.html 23
 mk_section doctrines "Doctrine" "A rule is enforced when it is declared, implemented, wired, executed, failure-propagating, tested and CI-blocking. Each one below shows its whole chain." doctrines-section.html doctrine.html 22
 i=0; jq -r '.doctrines[] | [.id, .slug, .title, .summary] | @tsv' "$OUT/doctrines.json" | while IFS="$MJ_TAB" read -r id slug title summary; do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n' "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$i" "$(jstr "$id")" "$(jq -r --arg id "$id" '.doctrines[] | select(.id==$id) | .source' "$OUT/doctrines.json" | jline)" > "$CONTENT_ROOT/doctrines/$slug.md"; done

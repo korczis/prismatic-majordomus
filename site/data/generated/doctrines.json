@@ -202,8 +202,8 @@
       "title": "Context integrity",
       "class": "blocking",
       "principle": "Load minimum sufficient context",
-      "statement": "Every context document under the layer carries the context contract with a unique identity, every reference in it resolves within its ancestor chain, no final document is superseded, and the effective context for any path is computed from the tree root down in one deterministic order.",
-      "summary": "The scoped context documents under the AI layer carry the context contract, compose into one deterministic chain for every path, and a tree that does not validate resolves nothing.",
+      "statement": "Every directory of the layer carries a context document unless the contract governing it exempts its children, every document carries the contract with a unique identity, every reference resolves within its ancestor chain, no final document is superseded, no descendant weakens what an ancestor requires, and the effective context for any path is computed from the tree root down in one deterministic order.",
+      "summary": "Every directory of the AI layer carries a context document, each one carries the contract, they compose into one deterministic chain for every path, and a tree that does not validate resolves nothing.",
       "validator": "context",
       "validator_function": "mj_validate_context",
       "defined_in": "lib/context_docs.sh",
@@ -216,6 +216,7 @@
       "policy_key": "",
       "claims": [
         "context-documents",
+        "context-coverage",
         "context-impact"
       ],
       "test": "test/cases/69_context_documents.sh",
@@ -259,7 +260,7 @@
       "title": "Architecture decision integrity",
       "class": "blocking",
       "principle": "Externalise decisions and durable state",
-      "statement": "A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, and a record the tool derived is proposed rather than accepted.",
+      "statement": "A decision is canonical data under the adrs section; it is valid against the decision schema, its identity is unique and fixes its file name, supersession is reciprocal, every reference it makes resolves in both directions of the graph, and a record the tool derived is proposed rather than accepted.",
       "summary": "Every architecture decision the repository holds parses against the decision contract, claims an identity nothing else claims, and every relation and reference it makes resolves.",
       "validator": "adr",
       "validator_function": "mj_validate_adr",
@@ -273,7 +274,8 @@
       "policy_key": "",
       "claims": [
         "adr-catalogue",
-        "adr-propose"
+        "adr-propose",
+        "adr-traceability"
       ],
       "test": "test/cases/99_adr.sh",
       "depends_on": [

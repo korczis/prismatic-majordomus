@@ -6,6 +6,8 @@
 //! benchmark target and generated document follows from the descriptor.
 
 pub mod capabilities;
+pub mod graph;
+pub mod health;
 pub mod objects;
 pub mod peers;
 pub mod perf;
@@ -20,6 +22,8 @@ use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
+pub use graph::{GraphInput, GraphList, GRAPHS_URI};
+pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
     resolve, AnswerView, GetInput, ListInput, ObjectList, Resolved, ResourceView, SearchHit,
     SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
@@ -32,7 +36,15 @@ pub use views::{Empty, ObjectSummary, ObjectView};
 /// The application: its modules, in one place. A new module is one line here; a new
 /// capability in an existing module is no line here.
 pub fn modules() -> Vec<ModuleDescriptor> {
-    compose_modules![repository, objects, capabilities, peers, perf]
+    compose_modules![
+        repository,
+        objects,
+        capabilities,
+        graph,
+        health,
+        peers,
+        perf
+    ]
 }
 
 /// Every executable of every module, flattened, for a registry built without module

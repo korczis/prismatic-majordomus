@@ -244,6 +244,12 @@ jobs:
       # from the canonical sources and diffs it against what is committed, which is the only
       # thing that proves the two agree — and the build and the check then read the committed
       # data rather than each paying for a generation of their own to learn the same fact.
+      # The Cockpit's stylesheet is compiled from one source file; this is the only gate
+      # that can prove the committed one still matches it, because it needs the Node
+      # toolchain the site job already has.
+      - name: the Cockpit stylesheet in sync
+        if: needs.plan.outputs.cockpit_assets == 'true'
+        run: scripts/ci/timed cockpit-assets "cockpit-assets --check" timings.tsv scripts/cockpit-assets --check
       - name: derived site data in sync
         run: scripts/ci/timed site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
       - name: build the site
@@ -268,6 +274,33 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-site
+          path: timings.tsv
+          retention-days: 14
+
+  # ----------------------------------------------------------------- cockpit
+  # The Cockpit measured against a server this job starts: every route the server serves
+  # answered — derived from that server, never listed — then the pages and the interactions
+  # in a real browser. Its own job rather than a step of the site's, because the gate that
+  # selects it is a change to the crate or to share/cockpit/, and neither of those builds
+  # the website.
+  cockpit:
+    needs: plan
+    if: needs.plan.outputs.cockpit_probe == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: probe the Cockpit
+        run: CHROME_BIN=google-chrome scripts/ci/timed cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
+      - if: always()
+        run: scripts/ci/summary --job cockpit --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-cockpit
           path: timings.tsv
           retention-days: 14
 
@@ -316,7 +349,7 @@ jobs:
   # is never left pending by a skipped job. It also gathers the jobs' timing rows into the
   # artifact ci-performance-metrics.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, macos]
+    needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos]
     if: always()
     runs-on: ubuntu-latest
     steps:

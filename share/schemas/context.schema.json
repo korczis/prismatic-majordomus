@@ -21,6 +21,14 @@
     "providers": { "type": "array", "items": { "type": "string" } },
     "audience": { "type": "array", "items": { "type": "string" } },
     "supersedes": { "type": "array", "items": { "type": "string" } },
-    "tracks": { "type": "array", "items": { "type": "string" } }
+    "tracks": { "type": "array", "items": { "type": "string" } },
+    "children": {
+      "description": "What the directories below this one owe. Subtree documents only; the value nearest a directory applies, and a descendant may raise require_contract to true but never lower an inherited true.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "require_contract": { "type": "boolean" }
+      }
+    }
   }
 }

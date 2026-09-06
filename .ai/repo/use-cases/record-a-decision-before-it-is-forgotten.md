@@ -8,13 +8,13 @@ status: active
 target: guaranteed
 actors: [maintainer, agent]
 difficulty: basic
-commands: [adr]
+commands: [adr, knowledge]
 doctrines: [majordomus.adr-integrity]
-claims: [adr-catalogue, adr-propose]
+claims: [adr-catalogue, adr-propose, adr-traceability]
 responsibilities: [layer]
 applications: [long-running-work]
 scenario:
-  setup: adr-recorded
+  setup: adr-related
   given:
     - 'Majordomus installed, with one decision proposed and committed'
     - 'discovery is over the tracked tree, so a decision git does not hold is not yet part of the layer'
@@ -37,6 +37,24 @@ scenario:
       expect:
         exit: 0
         stdout_contains: ['every identity unique']
+    - id: what-it-put-in-force
+      run: ['adr', 'show', 'adr-0001']
+      note: 'related is the forward edge: the rule the decision declares, the file it reaches'
+      expect:
+        exit: 0
+        stdout_contains: ['related:', 'rule:majordomus.adr-integrity']
+    - id: the-graph-reads-it-backwards
+      run: ['knowledge', 'edges', '--type', 'declares']
+      note: 'the same fact as an edge, with the front-matter key that stated it as provenance; nothing wrote the reverse direction down'
+      expect:
+        exit: 0
+        stdout_contains: ['adr:adr-0001', 'rule:majordomus.adr-integrity', 'related.0']
+    - id: what-a-change-reaches
+      run: ['adr', 'affected']
+      note: 'the same edges read from a change set: which decisions this work touches. A clean tree reaches nothing, and the exit code never says a decision stopped holding'
+      expect:
+        exit: 0
+        stdout_contains: ['no decision names anything this change set touches']
     - id: not-yours-to-choose
       run: ['adr', 'propose', 'A decision that accepts itself', '--status', 'accepted']
       note: 'the refusal that matters: a tool that can write accepted turns its inference into repository truth'
@@ -50,6 +68,9 @@ scenario:
         exit: 2
         stdout_contains: ['names a path that does not exist']
   then:
+    - 'a reference a decision makes is validated where its type says the target lives'
+    - 'the reverse direction is the graph read backwards, never a second list'
+    - 'a change set names the decisions it reaches; whether they still hold is a person to read, not an exit code'
     - 'a decision is one validated file under .ai/repo/adrs/, discovered as data'
     - 'no invocation of the tool writes status accepted'
 ---

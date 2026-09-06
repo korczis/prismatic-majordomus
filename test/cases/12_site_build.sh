@@ -25,7 +25,9 @@ expect_grep "$(jq -r '.principles[0]' "$ROOT/site/data/generated/lifecycle.json"
 expect_grep 'class="mermaid' "$P/index.html"; expect_grep 'js/mermaid.min.js' "$P/index.html"
 expect_grep 'stateDiagram-v2' "$P/getting-started/index.html"
 # docs pages: typography container, syntax classes, anchors, wrapped tables, footnote, callout, fenced mermaid
-expect_grep 'class="format' "$P/docs/cli/index.html"
+# the typography container is on a rendered document; /docs/cli/ is the generated command
+# tree, and the shell CLI's own prose lives at its own slug (doc_slug, CLI_SPEC_SLUG)
+expect_grep 'class="format' "$P/docs/cli-specification/index.html"
 expect_grep 'class="z-[a-z]' "$P/render-test/index.html"   # Zola/giallo class-based highlighting
 expect_grep 'id="second-level-heading"' "$P/render-test/index.html"
 expect_grep 'overflow-x-auto' "$P/render-test/index.html"
