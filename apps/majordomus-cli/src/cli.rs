@@ -70,6 +70,27 @@ pub struct WebArgs {
 }
 
 #[derive(Debug, Subcommand)]
+/// The reports this executable can render. Each reads evidence a run already produced and
+/// writes a surface; none of them runs anything or decides what passed.
+pub enum ReportCommand {
+    /// The test run: the behavioural cases' report, and the crate's own totals
+    Tests {
+        /// The runner's TSV report (MJ_TEST_REPORT=<file> bash test/run.sh)
+        #[arg(long)]
+        suite: PathBuf,
+        /// The output of `cargo test`, for its totals
+        #[arg(long)]
+        crate_output: Option<PathBuf>,
+    },
+    /// The benchmark run: a results document, or the accepted baseline
+    Benchmarks {
+        /// A results document from `majordomus bench`, or a baseline under the layer
+        #[arg(long)]
+        from: PathBuf,
+    },
+}
+
+#[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus web`.
 pub enum WebCommand {
     /// Every discovered surface: id, kind, mount, producer
@@ -87,6 +108,12 @@ pub enum WebCommand {
     },
     /// Write the resolved topology to the generated manifest
     Manifest,
+    /// Render a generated report into its own surface under the generated web root
+    Report {
+        #[command(subcommand)]
+        /// Which report to render.
+        report: ReportCommand,
+    },
     /// Compose every published surface into one publishable tree
     Compose {
         /// Where to write it; the default is target/site
@@ -612,6 +639,31 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["web", "manifest"],
             setup: &[],
             expect: Expect::StdoutContains(&["web manifest", "surface"]),
+        }],
+    },
+    CommandExamples {
+        command: "web report tests",
+        examples: &[ExampleDoc {
+            id: "web-report-tests",
+            title: "Render the suite's own results into the /tests surface",
+            description: "The runner writes its report with `MJ_TEST_REPORT=<file> bash test/run.sh`; this renders it, keeps the machine-readable results beside the page, and declares the directory so discovery finds it. Without that file there is nothing to render and the command says so rather than publishing an empty page.",
+            argv: &["web", "report", "tests", "--suite", "target/web/run.tsv"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "web report benchmarks",
+        examples: &[ExampleDoc {
+            id: "web-report-benchmarks",
+            title: "Render a benchmark run into the /benchmarks surface",
+            description: "Reads a results document — a run's own output, or an accepted baseline under the layer's benchmarks section, which have the same shape — and renders every measured target ordered by median. It measures nothing itself: a figure on the page is a figure a run produced.",
+            argv: &[
+                "web", "report", "benchmarks",
+                "--from", ".ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json",
+            ],
+            setup: &[],
+            expect: Expect::ExitCode(13),
         }],
     },
     CommandExamples {

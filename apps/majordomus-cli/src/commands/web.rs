@@ -9,7 +9,7 @@
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::cli::{OutputFormat, WebArgs, WebCommand};
+use crate::cli::{OutputFormat, ReportCommand, WebArgs, WebCommand};
 use crate::error::{Error, Result};
 use crate::repository::Repository;
 use crate::web::compose::{self, PUBLISH_ROOT};
@@ -60,6 +60,37 @@ pub fn run(args: WebArgs) -> Result<u8> {
                 selected.surfaces.len()
             )
             .map_err(Error::Transport)?;
+            Ok(0)
+        }
+        WebCommand::Report { report } => {
+            let dir = match report {
+                ReportCommand::Tests {
+                    suite,
+                    crate_output,
+                } => {
+                    let text = std::fs::read_to_string(&suite)
+                        .map_err(|e| Error::io(suite.display().to_string(), e))?;
+                    let mut run = crate::web::report::tests::parse_cases(&text)?;
+                    if let Some(path) = crate_output {
+                        let cargo = std::fs::read_to_string(&path)
+                            .map_err(|e| Error::io(path.display().to_string(), e))?;
+                        run.crate_tests =
+                            Some(crate::web::report::tests::parse_crate_tests(&cargo));
+                    }
+                    crate::web::report::tests::render(&root, &run)?
+                }
+                ReportCommand::Benchmarks { from } => {
+                    let document = crate::web::report::benchmarks::read(&from)?;
+                    let source = from
+                        .strip_prefix(&root)
+                        .unwrap_or(&from)
+                        .to_string_lossy()
+                        .to_string();
+                    crate::web::report::benchmarks::render(&root, &document, &source)?
+                }
+            };
+            let rel = dir.strip_prefix(&root).unwrap_or(&dir);
+            writeln!(out, "web report: {}", rel.display()).map_err(Error::Transport)?;
             Ok(0)
         }
         WebCommand::Compose { destination } => {
