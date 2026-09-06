@@ -17,7 +17,7 @@ order: 100
 A use case is a task somebody performs with the tool: one Markdown file with front matter
 (the identity, the category, the commands, rules, claims, responsibilities and
 applications it names, and a scenario) and a body (`# Situation`, `# Outcome`, and what
-else the author says). The front-matter contract is `share/schemas/use-case.schema.json`.
+else the author says). The front-matter contract is `share/schemas/majordomus/use-case/use-case.v1.schema.json`.
 
 The scenario is the proof: a fresh repository prepared by a named setup script, then real
 invocations of the tool, each with its expected exit code and output. `majordomus usecase

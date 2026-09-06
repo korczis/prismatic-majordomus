@@ -1,6 +1,6 @@
 +++
 title = "A skill is one directory under the layer's skills section holding SKILL.md, discovered by the source class `skill` the shell tool and the Rust executable both read, so that adding the file is the whole registration and the catalogue, the command, doctor, MCP and the site all derive from it"
-description = "A skill is .ai/repo/skills/<id>/SKILL.md: YAML front matter satisfying share/schemas/skill.schema.json over a Markdown body that is the procedure, with optional examples/*.md beside it. Nothing registers it. The source class skill in .ai/repo/knowledge/sources.yaml says which tracked files are skills, and that one declaration is what the shell tool, the Rust executable and the site generator all read. Adding the directory and tracking it makes the skill exist for majordomus skills list, for doctor, for the website and for MCP; removing it makes it vanish from all of them."
+description = "A skill is .ai/repo/skills/<id>/SKILL.md: YAML front matter satisfying share/schemas/majordomus/skill/skill.v1.schema.json over a Markdown body that is the procedure, with optional examples/*.md beside it. Nothing registers it. The source class skill in .ai/repo/knowledge/sources.yaml says which tracked files are skills, and that one declaration is what the shell tool, the Rust executable and the site generator all read. Adding the directory and tracking it makes the skill exist for majordomus skills list, for doctor, for the website and for MCP; removing it makes it vanish from all of them."
 weight = 137
 [extra]
 claim_id = "skill-catalogue"
@@ -11,7 +11,7 @@ source = "docs/claims/skill-catalogue.md"
 
 ## What it means
 
-A skill is `.ai/repo/skills/<id>/SKILL.md`: YAML front matter satisfying `share/schemas/skill.schema.json` over a Markdown body that is the procedure, with optional `examples/*.md` beside it. Nothing registers it. The source class `skill` in `.ai/repo/knowledge/sources.yaml` says which tracked files are skills, and that one declaration is what the shell tool, the Rust executable and the site generator all read. Adding the directory and tracking it makes the skill exist for `majordomus skills list`, for `doctor`, for the website and for MCP; removing it makes it vanish from all of them.
+A skill is `.ai/repo/skills/<id>/SKILL.md`: YAML front matter satisfying `share/schemas/majordomus/skill/skill.v1.schema.json` over a Markdown body that is the procedure, with optional `examples/*.md` beside it. Nothing registers it. The source class `skill` in `.ai/repo/knowledge/sources.yaml` says which tracked files are skills, and that one declaration is what the shell tool, the Rust executable and the site generator all read. Adding the directory and tracking it makes the skill exist for `majordomus skills list`, for `doctor`, for the website and for MCP; removing it makes it vanish from all of them.
 
 ## How it works
 

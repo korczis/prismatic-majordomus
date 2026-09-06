@@ -746,7 +746,7 @@ jq -s '.' "$STAGE/sessions.bodies" > "$STAGE/sessions.bodies.json"
 jq --slurpfile bodies "$STAGE/sessions.bodies.json" '
   {schema: 1,
    source: ".ai/repo/sessions/",
-   contract: "share/schemas/session-record.schema.json",
+   contract: "share/schemas/majordomus/session-record/session-record.v1.schema.json",
    count: (.sessions | length),
    sessions: [ .sessions[] as $s
                | ($bodies[0][] | select(.session_id == $s.session_id)) as $b
@@ -809,7 +809,7 @@ EX_JSON="$(jq -r '.skills[].examples[]' "$STAGE/skills.base.json" | while IFS= r
     --rawfile b <(awk 'done { print; next } /^# / { done = 1; next } { print }' "$ROOT/$ex") '{path: $p, title: $t, body: $b}'
 done | jq -s '.')"
 jq --argjson ex "${EX_JSON:-[]}" --arg src "$AI/repo/skills/" '
-  {schema: 1, source: $src, contract: "share/schemas/skill.schema.json",
+  {schema: 1, source: $src, contract: "share/schemas/majordomus/skill/skill.v1.schema.json",
    skills: [ .skills[] | . + {route: ("/skills/" + .id + "/"),
                               examples: [ .examples[] as $p | $ex[] | select(.path == $p) ]} ],
    count: .count,
