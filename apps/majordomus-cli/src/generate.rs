@@ -52,6 +52,9 @@ pub enum Target {
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
     Site,
+    /// `docs/generated/graph.json`: the composed graph as data, and
+    /// `docs/generated/graph.schema.json`: its schema, generated from the types.
+    Graph,
 }
 
 impl Target {
@@ -65,6 +68,7 @@ impl Target {
         Target::Allow,
         Target::Providers,
         Target::Site,
+        Target::Graph,
     ];
 }
 
@@ -135,7 +139,8 @@ pub fn artifacts(
             | Target::Allow
             | Target::Documents
             | Target::Providers
-            | Target::Site => {}
+            | Target::Site
+            | Target::Graph => {}
         }
     }
     Ok(out)
@@ -207,7 +212,105 @@ pub fn context_artifacts(
             content: benchmark_matrix(ctx, version),
         });
     }
+    if targets.contains(&Target::Graph) {
+        out.push(Artifact {
+            path: format!("{OUT_DIR}/graph.json"),
+            content: graph_document(ctx, version)?,
+        });
+        out.push(Artifact {
+            path: format!("{OUT_DIR}/graph.schema.json"),
+            content: graph_schema_document(version),
+        });
+    }
     Ok(out)
+}
+
+/// The schema of `graph.json`.
+pub const GRAPH_SCHEMA: &str = "majordomus/capability-graph/v1";
+
+/// Text that must never reach a published artifact: a path belonging to the machine that
+/// generated it, and the shapes credentials are written in. The list is short on purpose —
+/// every entry is something no derivation of this repository can legitimately produce, so
+/// a hit is a defect rather than a judgement call.
+const FORBIDDEN: &[(&str, &str)] = &[
+    (
+        "/Users/",
+        "an absolute path on the machine that generated this",
+    ),
+    (
+        "/home/",
+        "an absolute path on the machine that generated this",
+    ),
+    (
+        "/root/",
+        "an absolute path on the machine that generated this",
+    ),
+    ("-----BEGIN ", "a PEM block"),
+    ("Authorization:", "an authorization header"),
+    ("Bearer ", "a bearer token"),
+    ("AKIA", "an access key id"),
+    ("ghp_", "a personal access token"),
+    ("github_pat_", "a personal access token"),
+];
+
+/// The first forbidden marker in `content`, with what it is, or `None` when the content is
+/// safe to publish.
+///
+/// ```
+/// use majordomus_cli::generate::forbidden_in;
+/// assert!(forbidden_in("nodes are repository-relative").is_none());
+/// assert_eq!(forbidden_in("source: /Users/someone/dev").map(|(m, _)| m), Some("/Users/"));
+/// ```
+pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
+    FORBIDDEN
+        .iter()
+        .find(|(marker, _)| content.contains(marker))
+        .map(|(marker, what)| (*marker, *what))
+}
+
+/// The composed graph as a published artifact: the graph itself, and the provenance JSON
+/// cannot carry as a comment recorded as fields of the document.
+///
+/// Refuses rather than writes when the rendered document carries anything from
+/// [`FORBIDDEN`]: this file is published to a website, and a leak that is generated is a
+/// leak that regenerates.
+pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
+    let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(
+        Error::Http {
+            reason: format!("no graph with the id `{}`", crate::graph::COMPOSED),
+        },
+    )?;
+    let doc = serde_json::json!({
+        "schema": GRAPH_SCHEMA,
+        "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),
+        "generator": format!("majordomus-cli {version}"),
+        "graph": graph,
+    });
+    let rendered = openapi::render(&doc);
+    if let Some((marker, what)) = forbidden_in(&rendered) {
+        return Err(Error::Http {
+            reason: format!(
+                "the composed graph carries {what} (`{marker}`) and would publish it; \
+                 a node's source is repository-relative, so find the derivation that put an \
+                 absolute path or a secret on a node before regenerating"
+            ),
+        });
+    }
+    Ok(rendered)
+}
+
+/// The schema of the composed graph, generated from the types that define it rather than
+/// written beside them.
+pub fn graph_schema_document(version: &str) -> String {
+    let schema = crate::capability::schema::CanonicalSchema::of::<crate::graph::Graph>();
+    let doc = serde_json::json!({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": GRAPH_SCHEMA,
+        "description": format!("{HEADER}; source: the Rust types of majordomus_cli::graph; regenerate with `majordomus generate`; generator majordomus-cli {version}"),
+        "definitions": { "Graph": schema.schema },
+        "$ref": "#/definitions/Graph",
+    });
+    openapi::render(&doc)
 }
 
 /// The builtin registry as data: modules, descriptors with their schemas, and the
@@ -912,5 +1015,68 @@ fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
         crate::capability::BenchmarkPolicy::Waived { reason } => {
             format!("waived ({})", enum_name(reason))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_graph_is_a_target_of_the_one_plan_and_not_a_script_of_its_own() {
+        assert!(Target::ALL.contains(&Target::Graph));
+    }
+
+    #[test]
+    fn a_published_artifact_is_refused_when_it_carries_a_machine_path_or_a_credential() {
+        // every marker is something no derivation of this repository can legitimately
+        // produce, so a hit is a defect rather than a judgement call
+        for (content, marker) in [
+            ("\"source\": \"/Users/someone/dev/x\"", "/Users/"),
+            ("\"source\": \"/home/someone/x\"", "/home/"),
+            ("-----BEGIN PRIVATE KEY-----", "-----BEGIN "),
+            ("Authorization: Bearer abc", "Authorization:"),
+            ("AKIAIOSFODNN7EXAMPLE", "AKIA"),
+            ("ghp_0123456789", "ghp_"),
+        ] {
+            assert_eq!(
+                forbidden_in(content).map(|(m, _)| m),
+                Some(marker),
+                "{content}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_graph_of_repository_relative_sources_is_publishable() {
+        let safe = r#"{"nodes":[{"id":"majordomus://rule/a","source":".ai/repo/rules/a.md"}]}"#;
+        assert!(forbidden_in(safe).is_none());
+    }
+
+    #[test]
+    fn the_schema_of_the_graph_comes_from_the_types_that_define_it() {
+        let doc = graph_schema_document("test");
+        let parsed: Value = serde_json::from_str(&doc).expect("the schema is JSON");
+        assert_eq!(parsed["$id"], Value::String(GRAPH_SCHEMA.into()));
+        // the shape is schemars' rendering of `graph::Graph`, not a hand-written copy:
+        // the fields it names are the struct's own
+        let graph = &parsed["definitions"]["Graph"]["properties"];
+        for field in [
+            "id",
+            "nodes",
+            "edges",
+            "node_kinds",
+            "edge_kinds",
+            "metadata",
+        ] {
+            assert!(graph.get(field).is_some(), "the schema names `{field}`");
+        }
+        assert!(
+            parsed["description"]
+                .as_str()
+                .unwrap_or_default()
+                .contains(HEADER),
+            "JSON carries its provenance as a field, having no comment to carry it in"
+        );
     }
 }

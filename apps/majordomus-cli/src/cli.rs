@@ -431,6 +431,8 @@ pub enum GenerateTarget {
     Providers,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
+    /// docs/generated/graph.json and its schema: the composed graph as data
+    Graph,
 }
 
 #[derive(Debug, Args)]

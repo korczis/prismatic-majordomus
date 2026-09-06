@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "majordomus/capability-graph/v1",
+  "description": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the Rust types of majordomus_cli::graph; regenerate with `majordomus generate`; generator majordomus-cli 0.1.0",
+  "definitions": {
+    "Graph": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The identity, `[a-z][a-z0-9-]*`; the last segment of its route."
+        },
+        "title": {
+          "type": "string",
+          "description": "The short name."
+        },
+        "description": {
+          "type": "string",
+          "description": "One paragraph: what a reader learns from it."
+        },
+        "source": {
+          "type": "string",
+          "description": "What it was derived from, in the repository's own words."
+        },
+        "node_kinds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Node kind to what that kind means."
+        },
+        "edge_kinds": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Edge kind to what that edge asserts."
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Node"
+          },
+          "description": "Sorted by id."
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Edge"
+          },
+          "description": "Sorted."
+        },
+        "metadata": {
+          "$ref": "#/$defs/GraphMetadata",
+          "description": "Counts and invariants."
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "source",
+        "node_kinds",
+        "edge_kinds",
+        "nodes",
+        "edges",
+        "metadata"
+      ],
+      "description": "A derived graph: what it is, where it came from, what its vocabularies mean, and the\nnodes and edges themselves.",
+      "title": "Graph",
+      "$defs": {
+        "Node": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Unique within the graph."
+            },
+            "kind": {
+              "type": "string",
+              "description": "One of the graph's declared node kinds."
+            },
+            "label": {
+              "type": "string",
+              "description": "The short label a renderer draws."
+            },
+            "summary": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One line about the thing, when the source holds one."
+            },
+            "route": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Where the Cockpit shows this thing, when it shows it."
+            },
+            "source": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The repository-relative file the node was derived from, when one file owns it."
+            },
+            "status": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A status word the graph's own vocabulary defines (`accepted`, `active`, `query`)."
+            },
+            "external": {
+              "type": "boolean",
+              "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+            },
+            "facts": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/Fact"
+              },
+              "description": "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share."
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "label"
+          ],
+          "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
+        },
+        "Fact": {
+          "anyOf": [
+            {
+              "type": "boolean",
+              "description": "A yes or a no."
+            },
+            {
+              "type": "integer",
+              "format": "int64",
+              "description": "A whole number: an order, a version, a weight."
+            },
+            {
+              "type": "string",
+              "description": "One short value."
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Several short values."
+            }
+          ],
+          "description": "One fact a node carries from its object's front matter, in the shapes a node can hold."
+        },
+        "Edge": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string",
+              "description": "The node the edge leaves."
+            },
+            "target": {
+              "type": "string",
+              "description": "The node the edge enters."
+            },
+            "kind": {
+              "type": "string",
+              "description": "One of the graph's declared edge kinds."
+            }
+          },
+          "required": [
+            "source",
+            "target",
+            "kind"
+          ],
+          "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge."
+        },
+        "GraphMetadata": {
+          "type": "object",
+          "properties": {
+            "nodes": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many nodes."
+            },
+            "edges": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many edges."
+            },
+            "acyclic": {
+              "type": "boolean",
+              "description": "Whether the edges form a directed acyclic graph. Derived, never declared: a graph\nwhose contract is a DAG and whose answer here is `false` is a defect in the data."
+            },
+            "truncated": {
+              "type": "boolean",
+              "description": "True when the derivation stopped at [`MAX_NODES`] and the graph is a prefix of\nwhat the repository holds."
+            }
+          },
+          "required": [
+            "nodes",
+            "edges",
+            "acyclic",
+            "truncated"
+          ],
+          "description": "What a reader needs to know about the graph as a whole before drawing it."
+        }
+      }
+    }
+  },
+  "$ref": "#/definitions/Graph"
+}

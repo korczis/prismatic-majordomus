@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "c34b50ed40173d9339e307043bc76363f02de6219d1b7bf06f2787ac02aada2b",
+    "fingerprint": "b1218aa616b7a779912329596084d894d2e9d4f77234845f19ccd2310ed30811",
     "summary": {
       "total": 794,
       "builtin": 16,
@@ -2116,6 +2116,13 @@
                   "external": {
                     "type": "boolean",
                     "description": "True when the node stands for something the graph names but does not hold: a\nreference that resolves to nothing in this repository."
+                  },
+                  "facts": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/$defs/Fact"
+                    },
+                    "description": "What the object's own kind declares about it, as its schema validated it: the\nfields of its front matter that are facts about the thing rather than the document\nitself. A rule carries its class and its statement, a skill its inputs and\noutputs, a decision its date — the vocabulary that makes each kind worth having,\nrather than the four fields every kind happens to share."
                   }
                 },
                 "required": [
@@ -2124,6 +2131,31 @@
                   "label"
                 ],
                 "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere."
+              },
+              "Fact": {
+                "anyOf": [
+                  {
+                    "type": "boolean",
+                    "description": "A yes or a no."
+                  },
+                  {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "A whole number: an order, a version, a weight."
+                  },
+                  {
+                    "type": "string",
+                    "description": "One short value."
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Several short values."
+                  }
+                ],
+                "description": "One fact a node carries from its object's front matter, in the shapes a node can hold."
               },
               "Edge": {
                 "type": "object",
@@ -5008,7 +5040,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c8703de26dd665376d49dc290c8ec3e31a8f5479cf19ce17111c5bd4eb961f8f",
+    "fingerprint": "c2788e44522de423c9bb8fea8db46a9d7548e9110871268753e25bf91140ea8d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -6961,7 +6993,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 34590
+        "bytes": 34558
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -9842,7 +9874,7 @@
         "path": ".ai/repo/project/issues/I1002.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2187
+        "bytes": 3307
       },
       {
         "uri": "majordomus://issue/I1003",
@@ -9853,7 +9885,7 @@
         "path": ".ai/repo/project/issues/I1003.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2156
+        "bytes": 3425
       },
       {
         "uri": "majordomus://issue/I1004",
@@ -9864,7 +9896,7 @@
         "path": ".ai/repo/project/issues/I1004.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2154
+        "bytes": 3415
       },
       {
         "uri": "majordomus://issue/I1005",
@@ -9875,7 +9907,7 @@
         "path": ".ai/repo/project/issues/I1005.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1941
+        "bytes": 1984
       },
       {
         "uri": "majordomus://issue/I1006",
@@ -14284,6 +14316,10 @@
               {
                 "name": "site",
                 "help": "site/data/registry/registry.json, the registry dataset the site renders"
+              },
+              {
+                "name": "graph",
+                "help": "docs/generated/graph.json and its schema: the composed graph as data"
               }
             ],
             "defaults": [
