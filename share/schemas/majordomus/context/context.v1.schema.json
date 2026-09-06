@@ -28,15 +28,22 @@
         "schema",
         "id",
         "kind",
-        "title"
+        "title",
+        "description",
+        "status",
+        "scope",
+        "composition",
+        "order",
+        "providers"
       ],
       "properties": {
         "schema": {
           "const": "context/v1"
         },
         "id": {
-          "description": "The identity. The file name is a convention; this is what survives a move.",
-          "type": "string"
+          "description": "The identity, a lower-case dotted name. It survives a move, so it is the id and not the path that other documents supersede and that projections cite.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$"
         },
         "kind": {
           "const": "context"
@@ -122,6 +129,13 @@
       "properties": {
         "require_contract": {
           "type": "boolean"
+        },
+        "exempt": {
+          "description": "Directories inside this document's scope that owe no contract, and nor does anything below them: a subtree this layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Repository-relative. The exemption is declared by the contract that governs the subtree, so it moves with the tree it describes instead of living in a list at the root.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

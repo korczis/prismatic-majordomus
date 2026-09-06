@@ -19,6 +19,7 @@ The session record is only as good as the discipline that opens it. A worker tha
 setup: provider-reachable
 given:
   - 'Majordomus installed, no session open, no provider hook wired'
+  - 'work about to begin, which is what the compaction and end events have to describe'
 steps:
   - id: unwired
     run: ['capture', 'status']
@@ -31,8 +32,8 @@ steps:
     note: 'one shim per event, and the entries that make the provider run them'
     expect:
       exit: 0
-      stdout_contains: ['majordomus-session-start', 'majordomus-session-end']
-      files_exist: ['.claude/hooks/majordomus-session-start', '.claude/hooks/majordomus-session-end']
+      stdout_contains: ['majordomus-session-start', 'majordomus-session-end', 'majordomus-session-compact']
+      files_exist: ['.claude/hooks/majordomus-session-start', '.claude/hooks/majordomus-session-end', '.claude/hooks/majordomus-session-compact']
   - id: proven-by-running-it
     run: ['capture', 'status']
     note: 'verified means a synthetic payload went through the end shim and reached the command, with the mutation left out'
@@ -51,6 +52,29 @@ steps:
     expect:
       exit: 0
       stdout_contains: ['^\.ai/local/session-contexts/2[0-9]+T[0-9]+Z--s-']
+  - id: work-to-describe
+    run: ['start', 'Prove the lifecycle runs itself', '--scope', 'lib']
+    note: 'a checkpoint is a progress note inside a task, so the two events below have something to be about'
+    expect:
+      exit: 0
+  - id: what-a-compaction-would-record
+    run: ['checkpoint', '--derive']
+    note: 'what the compaction event runs: a progress note composed from git and the ledger, because at that moment nobody is being asked anything'
+    expect:
+      exit: 0
+      stdout_contains: ['^\.ai/local/state/checkpoints/']
+  - id: what-an-end-would-write
+    run: ['handover', '--derive']
+    note: 'and what the end event writes when the task is still active: the sections the policy requires, derived from records that already exist, with no model called'
+    expect:
+      exit: 0
+      stdout_contains: ['^\.ai/local/state/handovers/']
+  - id: what-the-next-worker-is-handed
+    run: ['handover', '--resolve']
+    note: 'the record the start event quotes into the next episode, with the label that says how far to trust it'
+    expect:
+      exit: 0
+      stdout_contains: ['Match: same_worktree_same_branch', 'Git state: exact']
   - id: close
     run: ['session', 'close']
     note: 'the shared record; the working context learns the outcome in the same document it was opened with'
@@ -65,6 +89,8 @@ steps:
 then:
   - 'the episode boundary exists without a worker choosing to draw it'
   - 'what the worker was told at the open is evidence rather than recollection'
+  - 'the continuation record exists whether or not anybody was willing to type one'
+  - 'the next episode is handed that record, with the label that says how far to trust it'
   - 'the working context stays under the ignored half of the layer and never becomes a transcript'
 ```
 

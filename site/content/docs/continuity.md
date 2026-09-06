@@ -323,7 +323,7 @@ policy, and `session.briefing_on_start: false` restores the older silence.
 This is the one route by which anything under `local/` reaches a model's context without
 being asked for. It is narrow on purpose, and the other half of that rule is unconditional:
 nothing under `local/` is ever published by a generator or served on a public surface.
-`.ai/repo/adrs/0016-an-episode-that-opens-is-handed-what-the-last-one-left.md` records why.
+`.ai/repo/adrs/0017-an-episode-that-opens-is-handed-what-the-last-one-left.md` records why.
 
 A worker with no such provider loses none of the model and all of the automation: every
 command below is the same, and running them is again a matter of remembering.

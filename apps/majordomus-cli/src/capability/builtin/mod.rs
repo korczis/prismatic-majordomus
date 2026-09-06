@@ -7,6 +7,7 @@
 
 pub mod capabilities;
 pub mod continuity;
+pub mod directories;
 pub mod graph;
 pub mod health;
 pub mod objects;
@@ -24,6 +25,10 @@ use super::module::ModuleDescriptor;
 
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
+pub use directories::{
+    ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
+    DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,
+};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
@@ -46,7 +51,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         health,
         continuity,
         peers,
-        perf
+        perf,
+        directories
     ]
 }
 
