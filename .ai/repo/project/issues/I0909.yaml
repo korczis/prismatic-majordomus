@@ -1,0 +1,40 @@
+id: I0909
+milestone: fly-deployment
+title: The production image is a generated projection of the build specification
+slug: container-projection
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Generate a multi-stage container build and its ignore file from the deployment object's build specification: a pinned Alpine runtime holding the binary, the runtime assets and nothing else, executed by an unprivileged user."
+why: "A hand-written Dockerfile is a second description of the binary, the assets and the port. Generating it keeps one description; pinning the base by digest keeps the image reproducible; keeping the runtime stage minimal keeps the attack surface and the bill small."
+current_state: "No Dockerfile exists anywhere in the repository."
+desired_state: "The generated Dockerfile is idiomatic and reviewable, carries a header naming its source and its regeneration command, and is refused by generate --check when edited by hand."
+scope:
+  - deploy/fly
+  - apps/majordomus-cli/src/deploy/container.rs
+non_scope:
+  - Buildpacks, Nixpacks or a second container implementation
+  - Any build argument, layer or file carrying a credential
+  - A shell entrypoint, or any shell in the runtime stage
+depends_on:
+  - I0902
+  - I0904
+  - I0905
+acceptance_criteria:
+  - The base image is pinned to an explicit current stable Alpine version and, where obtainable, its digest; no floating tag appears in the production build
+  - The runtime stage contains the binary, the declared runtime assets, certificates if they are required, and nothing else — no compiler, no toolchain, no source tree, no history, no caches, no tests
+  - The process runs as a dedicated unprivileged user and a test proves its user id is not zero
+  - The entrypoint invokes the executable directly in exec form with no shell wrapper
+  - The musl and static-linking decision is made against the actual native dependency graph, and any remaining dynamic runtime dependency is named, justified, installed deliberately and tested
+  - The generated file states its source and its regeneration command without breaking the format, and generate --check fails on a manual edit
+validation:
+  - majordomus generate --check
+  - cargo test --workspace --all-features
+evidence_required:
+  - generated_dockerfile
+  - pinned_base
+  - non_root
+  - musl_decision
+risk: "Generation can make the Dockerfile unreadable, which is worse than duplication. The source describes intent, the output describes mechanics, and the output has to survive review by someone who has never seen the generator."
+created_at: 2026-09-06
+updated_at: 2026-09-06

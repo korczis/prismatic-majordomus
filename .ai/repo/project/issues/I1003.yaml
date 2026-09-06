@@ -1,0 +1,32 @@
+id: I1003
+milestone: capability-graph
+title: Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves
+slug: registries-into-the-graph
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Bring the layer's own kinds into the graph through the registries that already index them, so that a rule, a skill, a decision, a document, a use case, a benchmark and a deployment are navigable next to the capabilities they govern."
+why: "Doctrine that only exists as prose floating in a directory is unenforceable in practice and invisible in the interface. These kinds are already indexed; what is missing is their relation to the capabilities they concern."
+current_state: "Each kind is indexed and readable as an object. The site renders some of them as lists. None is related to a capability by anything a machine reads."
+desired_state: "Each kind is a node with the metadata its own registry holds, related to what it governs, documents, enforces, tests or measures."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/graph.rs
+non_scope:
+  - A second registry for any of these kinds
+  - Frontmatter conventions that conflict with the schemas those directories already define
+depends_on:
+  - I1001
+acceptance_criteria:
+  - Each kind is projected from its own registry with the metadata that registry holds, and no field is invented here
+  - A rule shows what it governs, how it is enforced and what tests it; a skill shows its purpose, scope and relations; a decision shows what it puts in force
+  - Adding a valid object under a canonical directory makes it appear in the graph with no further registration
+  - Where a relation needs declaring, the field is added to the kind's existing schema rather than to a new one
+validation:
+  - cargo test --workspace --all-features
+  - bin/majordomus doctor
+evidence_required:
+  - kinds_in_graph
+  - relations_from_registries
+risk: "Every kind has its own vocabulary, and flattening them into one node type loses what makes each useful. The node carries the kind's own metadata rather than a lowest common denominator."
+created_at: 2026-09-06
+updated_at: 2026-09-06

@@ -76,9 +76,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
-| `docs/generated/benchmarks.json` | `benchmarks` | json | 7056 | `4e6b805a367de741` |
-| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 4178 | `aee1c504a36d929c` |
-| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 5268 | `5e7afce078659350` |
+| `docs/generated/benchmarks.json` | `benchmarks` | json | 7076 | `f4e68ec2f31f2a20` |
+| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 4190 | `fa5a89b940278126` |
+| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 5285 | `0593865a8ea2282c` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 5742 | `9ebb4dd288776d4b` |
 | `docs/generated/cli.json` | `cli` | json | 115257 | `c170005ff7fcb585` |
 | `docs/generated/cli.md` | `cli` | markdown | 48743 | `22297427d7998cd8` |
@@ -93,8 +93,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/peers.md` | `modules/peers` | markdown | 1943 | `a771ebfa056901a8` |
 | `docs/generated/modules/perf.md` | `modules/perf` | markdown | 1040 | `055153aab82aeba4` |
 | `docs/generated/modules/repository.md` | `modules/repository` | markdown | 2522 | `9ea2e1c3be8311b0` |
-| `docs/generated/openapi.json` | `openapi` | json | 167729 | `a6ce458e65753710` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 129488 | `5530d01615fe1aaf` |
+| `docs/generated/openapi.json` | `openapi` | json | 167810 | `2970b57ccbeae2bf` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 129540 | `43a9934427972209` |
 | `docs/generated/registry.json` | `registry` | json | 183719 | `c02e0d3a5a660b73` |
 | `docs/generated/registry.yaml` | `registry` | yaml | 139668 | `2046db9593814f28` |
 | `share/allow/adr.txt` | `allow/adr` | text | 372 | `8c7ba29a4df6b311` |
@@ -135,4 +135,4 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/rule.txt` | `sections/rule` | text | 335 | `9810b6c9375302bc` |
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `949be69ddae1374f` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `f195f898cb3ac688` |
-| `site/data/registry/registry.json` | `site-registry` | json | 739774 | `e9593e77605db29b` |
+| `site/data/registry/registry.json` | `site-registry` | json | 778095 | `01e17ff2b66ae338` |

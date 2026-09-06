@@ -1,0 +1,35 @@
+id: I0911
+milestone: fly-deployment
+title: A source change does not rebuild the world, and the context stays small
+slug: build-cache-and-context
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the container build reuse dependency layers and caches so that a source-only change does not rebuild every dependency, and keep the build context to the inputs the deployment object declares."
+why: "A remote builder that receives the whole worktree uploads the history, the node modules and every worktree artifact, then rebuilds every crate for a one-line change. Both costs are avoidable and both are measurable."
+current_state: "No container build exists, so neither the context size nor the build duration has ever been measured."
+desired_state: "Clean and warm build durations and the context size are measured and bounded, and the ignore rules derive from the declared build inputs rather than from a second hand-kept list."
+scope:
+  - deploy/fly
+  - apps/majordomus-cli/src/deploy/build.rs
+non_scope:
+  - A build system replacing Cargo
+  - Any caching that changes what the produced binary contains
+depends_on:
+  - I0909
+acceptance_criteria:
+  - A source-only change reuses the dependency layers and the measured warm build is materially faster than the clean one
+  - A documentation-only change does not rebuild Rust dependencies where the layer order permits it
+  - The ignore rules derive from the deployment object's declared build inputs, and excluding a file the workspace or the site generator needs is caught by a build rather than in production
+  - The build context size is measured and bounded by a declared budget
+  - Any additional build tool introduced for caching is pinned, builder-only, absent from the runtime image and justified by a measured improvement
+validation:
+  - majordomus deploy doctor
+  - bash test/run.sh
+evidence_required:
+  - cache_layers
+  - warm_build_measured
+  - context_budget
+risk: "An ignore file tuned for size can silently drop a workspace member and produce a build that fails only on the remote builder, where the feedback loop is slowest."
+created_at: 2026-09-06
+updated_at: 2026-09-06
