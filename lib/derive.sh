@@ -23,8 +23,14 @@
 # own says more than this can. What derivation guarantees is that the absence of a worker
 # willing to type is no longer the same thing as the absence of a record.
 
+# Everything this file reads, it sources: a generator that works only when some other
+# command happened to have loaded its dependency is a generator that fails in a hook.
 # shellcheck source=session.sh
 . "$MJ_LIB_DIR/session.sh"
+# shellcheck source=decision.sh
+. "$MJ_LIB_DIR/decision.sh"
+# shellcheck source=question.sh
+. "$MJ_LIB_DIR/question.sh"
 
 # How many items any derived list prints before it says how many it left out. The cap is
 # the policy's, not a constant here: a derived body is read into the next worker's context
@@ -284,4 +290,88 @@ mj_derive_checkpoint_body() {
     "$(mj_derive_nlines "$MJ_DV_QUESTIONS")"
   printf '\nDerived, not authored: `majordomus checkpoint --derive`.\n'
   return 0
+}
+
+# ---------------------------------------------------------------- the opening briefing
+# What the provider's start event writes to standard output, and therefore what the worker
+# is holding before it has read anything or decided anything.
+#
+# It is deliberately not `majordomus context`. That command assembles the full briefing
+# within its own budget and is the right thing to run once there is a question; this is what
+# is true before there is one, and it is bounded by a smaller number for the same reason the
+# always-loaded projection is: text that arrives in every episode whether or not it is
+# needed is paid for in every episode.
+#
+# The three facts it carries are the three a worker cannot get wrong quietly — what episode
+# it is in, what the last one left, and what is blocking acceptance. Everything else is a
+# command away, and the last line names it.
+#
+# Absence is printed, not omitted. "No relevant handover" is a fact the next worker needs;
+# silence is indistinguishable from a briefing that failed to run.
+mj_derive_briefing() {
+  local budget out
+  budget="$(mj_pol session.briefing_budget_lines)"
+  case "$budget" in ''|*[!0-9]*) budget="$(mj_pol context.always_loaded_budget_lines)" ;; esac
+  case "$budget" in ''|*[!0-9]*) budget=60 ;; esac
+
+  out="$(mj_derive_briefing_body)"
+  printf '%s\n' "$out" | head -n "$budget"
+  local total; total="$(mj_derive_nlines "$out")"
+  [ "$total" -gt "$budget" ] && printf '... %s more line(s) withheld by session.briefing_budget_lines; run `majordomus context` for the whole briefing.\n' "$((total - budget))"
+  return 0
+}
+
+mj_derive_briefing_body() {
+  local sid task_id outcome n
+  sid="$(mj_open_session_id)"
+  printf '## Majordomus — what this repository already knows\n\n'
+  printf 'Episode %s, on %s at %s, working tree %s.\n' \
+    "${sid:-(none open)}" "$(mj_git_branch)" "$(printf '%.7s' "$(mj_git_head)")" "$(mj_git_dirty)"
+
+  # --- the task
+  if mj_load_current; then
+    task_id="$(mj_cur id)"; outcome="$(mj_cur outcome)"
+    printf '\nActive task %s (%s, profile %s): %s\n' "$task_id" "$outcome" "$(mj_cur profile)" "$(mj_cur task)"
+    printf 'Scope: %s\n' "$(mj_ylist "$MJ_CUR_FLAT" scope | tr '\n' ' ' | sed 's/ $//; s/ /, /g')"
+  else
+    printf '\nNo active task in this checkout. `majordomus start "<task>" --scope <paths>` opens one; work outside a task is permitted and records nothing that a task would.\n'
+  fi
+
+  # --- what blocks acceptance. First, because it is the only thing here that refuses a
+  # command the worker is otherwise about to run.
+  local q; q="$(mj_derive_questions)"
+  if [ -n "$q" ]; then
+    n="$(mj_derive_nlines "$q")"
+    printf '\nBLOCKED: %s open question(s) on this branch; every one refuses `majordomus finish --outcome completed`.\n\n' "$n"
+    printf '%s\n' "$q" | mj_derive_bounded 5 "question(s)"
+  fi
+
+  # --- the continuation record, with the label that says how far to trust it
+  printf '\n'
+  if mj_resolve_latest "$MJ_STATE_DIR/handovers" ""; then
+    printf 'Handover %s (%s, %s, %s).\n' "${MJ_RES_PATH#"$MJ_ROOT/"}" "$MJ_RES_MATCH" \
+      "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" \
+      "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")"
+    case "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" in
+      diverged|different_context)
+        printf 'Its commit is not in this history. Trust git over anything it says.\n' ;;
+    esac
+    # The one section a resuming worker acts on. The rest of the record is at the path
+    # above; quoting all of it here would put the whole document in every episode.
+    local next; next="$(mj_derive_section "$MJ_RES_PATH" "Next Action")"
+    if [ -n "$next" ]; then printf '\nIts Next Action:\n\n'; printf '%s\n' "$next" | mj_derive_bounded 12 "line(s)"; fi
+  else
+    printf 'No relevant handover for this worktree and branch. That is an answer, not a gap: a record from another branch is never offered, because a briefing that is quietly about somebody else is worse than none.\n'
+  fi
+
+  printf '\nRun `majordomus context` for the full briefing, `majordomus check` before claiming anything is done.\n'
+  return 0
+}
+
+# One level-one section of a record, body only. Used to quote the part of a handover a
+# resuming worker acts on without copying the document into every episode.
+mj_derive_section() {
+  awk -v want="$2" '
+    /^# / { cur = substr($0, 3); sub(/[ \t]+$/, "", cur); on = (cur == want); next }
+    on { print }' "$1" | sed -e '/./,$!d' | awk 'NF { blank = 0; hold[++n] = $0; next } { blank++ } END { for (i = 1; i <= n; i++) print hold[i] }'
 }

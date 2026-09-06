@@ -99,6 +99,26 @@
         }
       }
     },
+    "session": {
+      "type": "object",
+      "description": "What the provider's episode events do beyond drawing the boundary: how much the start event hands the worker, and whether the compaction and end events record anything.",
+      "additionalProperties": false,
+      "properties": {
+        "briefing_budget_lines": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hard cap on what the start event writes to the provider's context. Text that arrives in every episode is paid for in every episode."
+        },
+        "checkpoint_on_compact": {
+          "type": "boolean",
+          "description": "Record a derived checkpoint when the provider announces a compaction. A compaction discards the conversation while the work continues."
+        },
+        "handover_on_end": {
+          "type": "boolean",
+          "description": "Write a derived continuation record when an episode ends with its task still active."
+        }
+      }
+    },
     "ledger": {
       "type": "object",
       "additionalProperties": false,
