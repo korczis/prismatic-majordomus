@@ -201,9 +201,9 @@
       <td class="px-3 py-2 text-body">The tool distribution&#39;s share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository&#39;s own share/, then the one beside the executable <span class="text-xs text-body-subtle">(accepted by every subcommand)</span></td>
     </tr><tr class="border-t border-default align-top">
       <td class="px-3 py-2 font-mono text-heading">&lt;TARGET&gt;</td>
-      <td class="px-3 py-2 font-mono text-xs text-body">all | openapi | docs | benchmarks | registry | allow | providers | site</td>
+      <td class="px-3 py-2 font-mono text-xs text-body">all | openapi | docs | benchmarks | registry | allow | providers | site | manifest</td>
       <td class="px-3 py-2 font-mono text-xs text-body">all</td>
-      <td class="px-3 py-2 text-body">What to generate<ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><code class="font-mono">all</code> — Every target</li><li><code class="font-mono">openapi</code> — `docs/generated/openapi.json`</li><li><code class="font-mono">docs</code> — `docs/generated/capabilities.md` and `docs/generated/modules/&lt;id&gt;.md`</li><li><code class="font-mono">benchmarks</code> — `docs/generated/benchmarks.md`: every benchmark target and the coverage</li><li><code class="font-mono">registry</code> — `docs/generated/registry.json`: the builtin registry as data</li><li><code class="font-mono">allow</code> — The shell tool&#39;s allow-lists under share/allow, derived from the schemas</li><li><code class="font-mono">providers</code> — The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)</li><li><code class="font-mono">site</code> — site/data/registry/registry.json, the registry dataset the site renders</li></ul></td>
+      <td class="px-3 py-2 text-body">What to generate<ul class="mt-1 space-y-0.5 text-xs text-body-subtle"><li><code class="font-mono">all</code> — Every target</li><li><code class="font-mono">openapi</code> — `docs/generated/openapi.{json,yaml}`</li><li><code class="font-mono">docs</code> — `docs/generated/capabilities.md`, `docs/generated/modules/&lt;id&gt;.md` and `docs/generated/cli.{md,json,yaml}`</li><li><code class="font-mono">benchmarks</code> — `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage</li><li><code class="font-mono">registry</code> — `docs/generated/registry.{json,yaml}`: the builtin registry as data</li><li><code class="font-mono">allow</code> — The shell tool&#39;s allow-lists under share/allow, derived from the schemas</li><li><code class="font-mono">providers</code> — The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...)</li><li><code class="font-mono">site</code> — site/data/registry/registry.json, the registry dataset the site renders</li><li><code class="font-mono">manifest</code> — docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact</li></ul></td>
     </tr><tr class="border-t border-default align-top">
       <td class="px-3 py-2 font-mono text-heading">--check</td>
       <td class="px-3 py-2 font-mono text-xs text-body">flag</td>
@@ -265,7 +265,7 @@ $ majordomus generate --check</code></pre>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/09a1689fbd419dee6f61e88ecd69323791892a1f" class="font-mono hover:underline">09a1689</a> · inputs <span class="font-mono">09e1493df34d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d6e297778a8cf56460d68816e6bf6f0392b7a085" class="font-mono hover:underline">d6e2977</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

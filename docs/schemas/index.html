@@ -1212,6 +1212,33 @@ reports policy drift when a stamp names a policy hash that is no longer the poli
 disk, and <code>update</code> refuses to overwrite a target whose content matches neither its stamp
 nor the new output.</p>
 <hr />
+<h2 id="generated-artifact-header"><a class="zola-anchor" href="#generated-artifact-header" aria-label="Anchor link for: generated-artifact-header">Generated artifact header</a></h2>
+<p>The provider bootstraps carry the stamp above, which is <code>majordomus update</code>'s. Every other
+generated artifact — everything <code>majordomus generate</code> writes — carries a provenance header
+in the form its encoding allows, and the three lines say the same thing in every one:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="markdown"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">&lt;!--</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> GENERATED FILE — DO NOT EDIT DIRECTLY</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">     Source: &lt;what it was derived from&gt;; regenerate with `majordomus generate`</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">     Generator: majordomus-cli &lt;version&gt; </span><span class="z-l-10 z-l-i z-d-4 z-d-i">--&gt;</span></span></code></pre><pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> GENERATED FILE — DO NOT EDIT DIRECTLY</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> Source: &lt;what it was derived from&gt;; regenerate with `majordomus generate`</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> Generator: majordomus-cli &lt;version&gt;</span></span></code></pre>
+<p>A JSON document carries them as members instead, <code>schema</code> first when it has a contract:</p>
+<pre class="giallo z-l-code z-d-code" ><code data-lang="json"><span class="giallo-l"><span>{</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  &quot;</span><span class="z-l-4 z-d-1">schema</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">majordomus/capability-registry/v1</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  &quot;</span><span class="z-l-4 z-d-1">generated</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">GENERATED FILE — DO NOT EDIT DIRECTLY; source: …; regenerate with `majordomus generate`</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  &quot;</span><span class="z-l-4 z-d-1">generator</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">majordomus-cli 0.1.0</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre>
+<p>and a document whose own specification fixes its member names — the OpenAPI document is
+the only one — carries <code>x-majordomus-generated</code> and <code>x-majordomus-generator</code> instead. The
+line-oriented text artifacts (<code>share/allow/*.txt</code>) take the <code>#</code> form; every reader of one
+skips comment lines.</p>
+<p>No header carries a timestamp, an absolute path or a fingerprint that moves with an
+unrelated edit. The index of every artifact, with the document each projects, its encoding,
+its contract, its source, its size and its hash, is <code>docs/generated/artifacts.json</code> (schema
+<code>majordomus/generated-artifacts/v1</code>), and it is itself generated; the contracts of the
+generated documents are <code>share/schemas/generated/*.schema.json</code>, each pinned to its
+document by the <code>const</code> of the document's <code>schema</code> member. The rule is
+<code>project.generated-artifacts-are-typed@1</code>.</p>
+<hr />
 <h2 id="worktree-coordination"><a class="zola-anchor" href="#worktree-coordination" aria-label="Anchor link for: worktree-coordination">Worktree coordination</a></h2>
 <p>There is no sidecar registry. <code>start</code> and <code>check --overlap</code> read <code>git worktree list</code>
 and each worktree's own <code>.ai/local/state/current.yaml</code>. Git is the authority; nothing
@@ -1256,7 +1283,7 @@ the note but does not validate that block. On success the note is copied to
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/09a1689fbd419dee6f61e88ecd69323791892a1f" class="font-mono hover:underline">09a1689</a> · inputs <span class="font-mono">09e1493df34d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d6e297778a8cf56460d68816e6bf6f0392b7a085" class="font-mono hover:underline">d6e2977</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

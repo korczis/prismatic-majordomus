@@ -192,7 +192,7 @@ being maintained separately from the repository that backs it.</p>
 <tr><td>the Rust executable</td><td>every capability with its schemas, exposures, stability, provenance, benchmark and cache policy; the modules; the command line with the examples of every command</td><td><code>capability!</code> and <code>module!</code> declarations under <code>apps/majordomus-cli/src/capability/builtin/</code>, <code>apps/majordomus-cli/src/cli.rs</code> (clap for the structure, <code>cli::EXAMPLES</code> for the examples)</td><td>yes</td></tr>
 <tr><td>the executable's narrative</td><td>what the crate is, owns and refuses; discovery, transports, side effects, architecture</td><td><code>apps/majordomus-cli/README.md</code>, <code>docs/CAPABILITIES.md</code>, <code>docs/MCP.md</code></td><td>yes</td></tr>
 <tr><td>benchmark evidence</td><td>the regression policy and the accepted baselines</td><td><code>.ai/repo/benchmarks/rust/policy.yaml</code>, <code>.ai/repo/benchmarks/rust/baseline.&lt;platform&gt;.json</code></td><td>policy yes; a baseline by <code>majordomus bench baseline update</code></td></tr>
-<tr><td>registry projections</td><td>the OpenAPI document, the registry manifest, the capability, module and benchmark references, and the command line as Markdown and as data</td><td><code>docs/generated/**</code></td><td>never — <code>majordomus generate</code></td></tr>
+<tr><td>registry projections</td><td>the OpenAPI document, the registry manifest, the capability, module and benchmark references, the command line, and the manifest of the whole generated set — each document in every encoding it is committed in</td><td><code>docs/generated/**</code> (<code>artifacts.md</code> is the generated index of it)</td><td>never — <code>majordomus generate</code></td></tr>
 <tr><td>registry dataset</td><td>everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index</td><td><code>site/data/registry/registry.json</code></td><td>never — <code>majordomus generate site</code></td></tr>
 <tr><td>public narrative</td><td>what it is, why, how, what it refuses</td><td><code>README.md</code>, <code>docs/*.md</code></td><td>yes</td></tr>
 <tr><td>claims</td><td>every capability with status, source, implementation, test</td><td><code>docs/CLAIMS.yaml</code></td><td>yes</td></tr>
@@ -231,13 +231,13 @@ flowchart TB
         P[.ai/repo/project, rules, benchmarks]
     end
     subgraph stageA[stage A · majordomus generate, code only]
-        GA[docs/generated: openapi.json, registry.json, capabilities.md, cli.md, cli.json, modules/*.md · share/allow/*.txt · AGENTS.md, CLAUDE.md]
+        GA[docs/generated: openapi, registry, capabilities, cli, modules/*.md — json+yaml+md as each document is committed · share/allow/*.txt · AGENTS.md, CLAUDE.md]
     end
     subgraph stageB[stage B · scripts/generate-site-data]
         GB[site/data/generated/*.json · site/content/** · docs/SITE_CLAIMS.md, PLAN_STATUS.md]
     end
     subgraph stageC[stage C · majordomus generate, over the index]
-        GC[site/data/registry/registry.json · docs/generated/benchmarks.md]
+        GC[site/data/registry/registry.json · docs/generated/benchmarks.* · docs/generated/artifacts.*]
     end
     subgraph build[scripts/site-build]
         Z[zola + Tailwind → site/public · build.json]
@@ -256,9 +256,9 @@ flowchart TB
 </pre>
 <div class="overflow-x-auto">
 <table><thead><tr><th>stage</th><th>generator</th><th>reads</th><th>writes</th><th>checked by</th></tr></thead><tbody>
-<tr><td>A</td><td><code>majordomus generate</code></td><td>the Rust declarations, <code>share/</code>, the policy and the provider templates</td><td><code>docs/generated/{openapi.json,registry.json,capabilities.md,cli.md,modules/*.md}</code>, <code>share/allow/*.txt</code>, the provider bootstraps</td><td><code>majordomus generate --check</code></td></tr>
+<tr><td>A</td><td><code>majordomus generate</code></td><td>the Rust declarations, <code>share/</code>, the policy and the provider templates</td><td><code>docs/generated/{openapi,registry,cli}.{json,yaml}</code>, <code>docs/generated/{capabilities,cli}.md</code>, <code>docs/generated/modules/*.md</code>, <code>share/allow/*.txt</code>, the provider bootstraps</td><td><code>majordomus generate --check</code></td></tr>
 <tr><td>B</td><td><code>scripts/generate-site-data</code></td><td>every canonical file (<code>--inputs</code> lists them) and stage A's <code>registry.json</code> and <code>openapi.json</code></td><td><code>site/data/generated/*.json</code>, <code>site/content/**</code>, <code>docs/SITE_CLAIMS.md</code>, <code>docs/PLAN_STATUS.md</code></td><td><code>scripts/generate-site-data --check</code> (by input hash)</td></tr>
-<tr><td>C</td><td><code>majordomus generate</code></td><td>the Rust declarations and the index of the layer, which now holds the documents stage B wrote</td><td><code>site/data/registry/registry.json</code>, <code>docs/generated/benchmarks.md</code></td><td><code>majordomus generate --check</code></td></tr>
+<tr><td>C</td><td><code>majordomus generate</code></td><td>the Rust declarations and the index of the layer, which now holds the documents stage B wrote</td><td><code>site/data/registry/registry.json</code>, <code>docs/generated/benchmarks.{md,json,yaml}</code>, <code>docs/generated/artifacts.{json,yaml,md}</code></td><td><code>majordomus generate --check</code></td></tr>
 <tr><td>build</td><td><code>scripts/site-build</code></td><td>stages B and C, the templates, the assets</td><td><code>site/public/**</code>, <code>site/data/build.json</code>, <code>site/static/build.json</code></td><td><code>scripts/site-check</code>, <code>scripts/site-probe</code></td></tr>
 </tbody></table>
 </div>
@@ -285,6 +285,7 @@ which <code>test/cases/51_derived_artifacts_committed.sh</code> and the release 
 <tr><td><code>doctrines.json</code></td><td>the rule packages</td><td>every doctrine with its enforcement chain</td></tr>
 <tr><td><code>plan.json</code></td><td><code>.ai/repo/project/</code></td><td>milestones, issues, the dependency graph, derived status</td></tr>
 <tr><td><code>openapi.json</code></td><td><code>docs/generated/openapi.json</code></td><td>the HTTP API in the shape <code>api.html</code> renders (<code>scripts/lib/openapi-site.jq</code>)</td></tr>
+<tr><td><code>artifacts.json</code></td><td><code>docs/generated/artifacts.json</code></td><td>the generator's own manifest — declarations only, carrying <code>schema: 1</code> like every other file of that directory with the manifest's own schema id under <code>manifest_schema</code>, moved under <code>site/data/</code> so <code>registry-artifacts.html</code> can load it; nothing is added and no file is named in the template. Sizes and hashes are dropped: two of the manifest's subjects are written by stage C, so a copy carrying them could never converge with stage B</td></tr>
 <tr><td><code>executable.json</code></td><td><code>docs/generated/registry.json</code>, <code>capabilities.json</code></td><td>one route per module and per capability, the executable's pages, API anchors, sources on GitHub, the claims attached to each surface by the path of their implementation (<code>scripts/lib/executable-site.jq</code>)</td></tr>
 <tr><td><code>lifecycle.json</code></td><td><code>lib/finish.sh</code>, <code>share/skeleton/ai/repo/workflows/task-lifecycle.md</code>, <code>share/standard/majordomus/</code></td><td>outcome vocabulary, divergence labels, lifecycle steps, the ten principles (the rules tagged <code>principle</code>)</td></tr>
 <tr><td><code>diagrams.json</code></td><td>the files above</td><td>Mermaid source projected from data</td></tr>
@@ -452,6 +453,7 @@ and Open Graph metadata. The route classes and their sources:</p>
 <tr><td><code>/registry/cli/</code></td><td>the dataset's <code>cli</code> (the clap declaration)</td><td><code>registry-cli.html</code></td></tr>
 <tr><td><code>/registry/mcp/</code></td><td>the dataset's <code>mcp</code> (tools, resources, protocol)</td><td><code>registry-mcp.html</code></td></tr>
 <tr><td><code>/registry/benchmarks/</code></td><td>the dataset's <code>benchmarks</code> (targets, coverage, policy, baselines)</td><td><code>registry-benchmarks.html</code></td></tr>
+<tr><td><code>/registry/artifacts/</code></td><td><code>artifacts.json</code> (the generator's own manifest)</td><td><code>registry-artifacts.html</code></td></tr>
 <tr><td><code>/build.json</code></td><td><code>scripts/site-build</code></td><td>— (served raw)</td></tr>
 <tr><td><code>/render-test/</code></td><td><code>site/content-src/render-test.md</code>, <code>noindex</code></td><td><code>docs-page.html</code></td></tr>
 </tbody></table>
@@ -635,7 +637,7 @@ Change the canonical file; <code>just derive</code>; rebuild.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/09a1689fbd419dee6f61e88ecd69323791892a1f" class="font-mono hover:underline">09a1689</a> · inputs <span class="font-mono">09e1493df34d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d6e297778a8cf56460d68816e6bf6f0392b7a085" class="font-mono hover:underline">d6e2977</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

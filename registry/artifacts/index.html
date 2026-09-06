@@ -1,0 +1,843 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artifacts — Prismatic Majordomus</title>
+<meta name="description" content="Every file the generator writes: each document with the encodings it is committed in, the schema its content satisfies, where it came from and its hash.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/registry/artifacts/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Artifacts — Prismatic Majordomus">
+<meta property="og:description" content="Every file the generator writes: each document with the encodings it is committed in, the schema its content satisfies, where it came from and its hash.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/registry/artifacts/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.1.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="font-medium text-body hover:text-fg-brand">Registry</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Artifacts</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Artifacts</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Every file the generator writes: each document with the encodings it is committed in, the schema its content satisfies, where it came from and its hash.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/artifacts/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Artifacts</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 min-w-0">
+  <p class="break-words text-lg text-body">Every file <code class="font-mono">majordomus generate</code> writes, as the generator declares it. A <em>document</em> is one value — the capability registry, the command line, the benchmark matrix, the OpenAPI document, this manifest — and it is committed in every encoding this repository commits it in: JSON for a program, YAML beside it, Markdown where the audience is a reader. The encodings are renderings of one value, so they cannot disagree.</p>
+  <p class="mt-3 text-sm text-body-subtle">This page shows what is generated, not what the bytes hash to right now: a size and a hash are facts of a moment, and this site is built from a commit. The sizes and hashes are in <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/artifacts.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/artifacts.md</a>, and they are answered live by <code class="font-mono">majordomus generate --check</code>, which compares every one of these files byte for byte and refuses a stale tree, and by <code class="font-mono">majordomus_artifacts</code> over MCP and <code class="font-mono">GET /api/v1/artifacts</code>, which reconcile the manifest with the working tree.</p>
+
+  <h2 id="documents" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Documents</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">57 documents, 65 files. A document that names a schema satisfies the contract published for it under <code class="font-mono">share/schemas/generated/</code>, and the generator refuses to write one that does not.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">document</th><th class="px-3 py-2">encodings</th><th class="px-3 py-2">schema</th><th class="px-3 py-2">derived from</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/adr</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/adr/adr.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/application</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/application/application.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/context</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/context/context.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/current</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.current/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/document</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.document/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/issue</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.issue/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/knowledge</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/manifest</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.manifest/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/milestone</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.milestone/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/policy</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.policy/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/profile</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.profile/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/project</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.project/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/prompt</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/rule</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/rule/rule.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/scope</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.scope/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/session</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.session/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/session-context</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.session-context/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/session-record</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.session-record/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/skill</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/skill/skill.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/taxonomy</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the JSON Schema `majordomus.taxonomy/v1` of the kind it validates</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">allow/use-case</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">artifacts</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">yaml</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">majordomus/generated-artifacts/v1</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the generation plan itself, over every other target</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">benchmarks</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">yaml</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">majordomus/benchmark-matrix/v1</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the benchmark projection of the canonical capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">capabilities</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">cli</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">yaml</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">majordomus/cli/v1</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/artifacts</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `artifacts` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/capabilities</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `capabilities` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/continuity</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `continuity` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/directories</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `directories` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/graph</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `graph` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/health</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `health` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/objects</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `objects` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/peers</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `peers` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/perf</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `perf` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/repository</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `repository` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">openapi</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">yaml</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">providers/agents</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">providers/claude-code</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">registry</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">yaml</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">majordomus/capability-registry/v1</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the canonical capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.adr/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/adr/adr.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.application/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/application/application.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.capture/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/capture/capture.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.context/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/context/context.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.knowledge/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.prompt/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.rule/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/rule/rule.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.skill/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/skill/skill.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">schemas/majordomus.use-case/v1</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">sections/adr</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/adr/adr.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">sections/application</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/application/application.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">sections/context</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/context/context.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">sections/knowledge</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/knowledge/knowledge.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">sections/prompt</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/prompt/prompt.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">sections/rule</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/rule/rule.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">sections/skill</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/skill/skill.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">sections/use-case</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">text</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">site-registry</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">majordomus-site-registry/v2</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the capability registry and the index of this repository&#39;s layer</td>
+      </tr></tbody>
+    </table>
+  </div>
+
+  <h2 id="files" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Files</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Each file carries a provenance header in the form its encoding allows: members in JSON, an <code class="font-mono">x-majordomus-</code> extension where the document's own specification fixes its member names, a <code class="font-mono">#</code> comment banner in YAML and in line-oriented text, an HTML comment in Markdown. The manifest's own encodings carry no hash — a document that hashed itself would have no fixed point — and are compared byte for byte instead.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">path</th><th class="px-3 py-2">document</th><th class="px-3 py-2">format</th><th class="px-3 py-2">schema</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/AGENTS.md" class="break-all font-mono text-fg-brand hover:underline">AGENTS.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">providers/agents</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CLAUDE.md" class="break-all font-mono text-fg-brand hover:underline">CLAUDE.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">providers/claude-code</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/artifacts.json" class="break-all font-mono text-fg-brand hover:underline">docs/generated/artifacts.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">artifacts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/generated-artifacts/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/artifacts.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/artifacts.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">artifacts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/artifacts.yaml" class="break-all font-mono text-fg-brand hover:underline">docs/generated/artifacts.yaml</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">artifacts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yaml</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/generated-artifacts/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/benchmarks.json" class="break-all font-mono text-fg-brand hover:underline">docs/generated/benchmarks.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">benchmarks</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/benchmark-matrix/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/benchmarks.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/benchmarks.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">benchmarks</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/benchmarks.yaml" class="break-all font-mono text-fg-brand hover:underline">docs/generated/benchmarks.yaml</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">benchmarks</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yaml</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/benchmark-matrix/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/capabilities.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/capabilities.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">capabilities</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.json" class="break-all font-mono text-fg-brand hover:underline">docs/generated/cli.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">cli</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/cli/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/cli.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">cli</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.yaml" class="break-all font-mono text-fg-brand hover:underline">docs/generated/cli.yaml</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">cli</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yaml</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/cli/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/artifacts.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/artifacts.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/artifacts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/capabilities.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/capabilities</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/continuity.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/continuity.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/continuity</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/directories.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/directories.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/directories</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/graph.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/graph.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/graph</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/health.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/health.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/health</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/objects.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/objects.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/objects</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/peers.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/peers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/perf.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/perf.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/perf</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/repository.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/repository.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/repository</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/openapi.json" class="break-all font-mono text-fg-brand hover:underline">docs/generated/openapi.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">openapi</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/openapi.yaml" class="break-all font-mono text-fg-brand hover:underline">docs/generated/openapi.yaml</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">openapi</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yaml</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/registry.json" class="break-all font-mono text-fg-brand hover:underline">docs/generated/registry.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">registry</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/capability-registry/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/registry.yaml" class="break-all font-mono text-fg-brand hover:underline">docs/generated/registry.yaml</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">registry</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yaml</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/capability-registry/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/adr.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/adr.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/adr</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/application.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/application.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/application</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/context.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/context.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/context</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/current.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/current.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/current</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/document.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/document.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/document</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/issue.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/issue.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/issue</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/knowledge.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/knowledge.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/knowledge</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/manifest.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/manifest.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/manifest</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/milestone.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/milestone.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/milestone</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/policy.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/policy.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/policy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/profile.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/profile.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/profile</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/project.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/project.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/project</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/prompt.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/prompt.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/prompt</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/rule.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/rule.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/rule</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/scope.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/scope.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/scope</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/session-context.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/session-context.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/session-context</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/session-record.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/session-record.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/session-record</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/session.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/session.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/session</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/skill.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/skill.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/skill</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/taxonomy.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/taxonomy.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/taxonomy</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/allow/use-case.txt" class="break-all font-mono text-fg-brand hover:underline">share/allow/use-case.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">allow/use-case</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/adr/adr.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/adr/adr.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.adr/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/application/application.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/application/application.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.application/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/capture/capture.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/capture/capture.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.capture/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/context/context.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/context/context.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.context/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/knowledge/knowledge.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/knowledge/knowledge.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.knowledge/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/prompt/prompt.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/prompt/prompt.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.prompt/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/rule/rule.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/rule/rule.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.rule/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/skill/skill.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/skill/skill.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.skill/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/use-case/use-case.v1.schema.json" class="break-all font-mono text-fg-brand hover:underline">share/schemas/majordomus/use-case/use-case.v1.schema.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">schemas/majordomus.use-case/v1</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/sections/adr.txt" class="break-all font-mono text-fg-brand hover:underline">share/sections/adr.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">sections/adr</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/sections/application.txt" class="break-all font-mono text-fg-brand hover:underline">share/sections/application.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">sections/application</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/sections/context.txt" class="break-all font-mono text-fg-brand hover:underline">share/sections/context.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">sections/context</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/sections/knowledge.txt" class="break-all font-mono text-fg-brand hover:underline">share/sections/knowledge.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">sections/knowledge</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/sections/prompt.txt" class="break-all font-mono text-fg-brand hover:underline">share/sections/prompt.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">sections/prompt</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/sections/rule.txt" class="break-all font-mono text-fg-brand hover:underline">share/sections/rule.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">sections/rule</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/sections/skill.txt" class="break-all font-mono text-fg-brand hover:underline">share/sections/skill.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">sections/skill</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/sections/use-case.txt" class="break-all font-mono text-fg-brand hover:underline">share/sections/use-case.txt</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">sections/use-case</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">text</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/site/data/registry/registry.json" class="break-all font-mono text-fg-brand hover:underline">site/data/registry/registry.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">site-registry</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus-site-registry/v2</td>
+      </tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d6e297778a8cf56460d68816e6bf6f0392b7a085" class="font-mono hover:underline">d6e2977</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

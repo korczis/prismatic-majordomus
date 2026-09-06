@@ -176,7 +176,8 @@
     <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1">
       <li><a href="#about" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">About</a></li>
       <li><a href="#errors" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Errors</a></li>
-      <li><a href="#infrastructure" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Server routes</a></li><li><a href="#tag-capabilities" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">capabilities</a>
+      <li><a href="#infrastructure" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Server routes</a></li><li><a href="#tag-artifacts" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">artifacts</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-artifacts-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/artifacts</a></li></ul></li><li><a href="#tag-capabilities" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">capabilities</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-capabilities-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capabilities</a></li><li><a href="#op-capabilities-describe" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capability</a></li></ul></li><li><a href="#tag-continuity" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">continuity</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-continuity-state" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/continuity</a></li></ul></li><li><a href="#tag-directories" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">directories</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-directories-list" class="block truncate rounded px-2 py-0.5 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/directories</a></li></ul></li><li><a href="#tag-graph" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">graph</a>
@@ -218,7 +219,70 @@
       <h2 class="text-xl font-semibold tracking-tight text-heading">Server routes</h2>
       <p class="mt-2 text-sm text-body">Not capabilities: the HTTP projection's own routes, the same on every server.</p>
       <ul class="mt-3 space-y-2"><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/</code><span class="min-w-0 basis-full text-body">The index: name, version, repository root, and where the document, the reference, the capabilities, the peers and MCP are.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/openapi.json</code><span class="min-w-0 basis-full text-body">This document, rendered from the registry at every request; what Swagger UI loads.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/docs</code><span class="min-w-0 basis-full text-body">Swagger UI over /openapi.json, served by the running server; the page embeds no specification of its own.</span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/cockpit</code><span class="min-w-0 basis-full text-body"></span></li><li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft px-4 py-3 text-sm"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs font-semibold text-heading">GET</span><code class="font-mono text-heading">/mcp</code><span class="min-w-0 basis-full text-body">MCP over HTTP (Streamable HTTP) for a second client; the shared server only.</span></li></ul>
-    </section><section id="tag-capabilities" class="mt-12 scroll-mt-24">
+    </section><section id="tag-artifacts" class="mt-12 scroll-mt-24">
+      <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">artifacts</h2>
+      <p class="mt-2 max-w-3xl text-sm text-body">What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator&#39;s own manifest; nothing here keeps a list.</p><article id="op-artifacts-list" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+          <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/artifacts</code>
+          <a href="#op-artifacts-list" class="font-mono text-xs text-body-subtle hover:underline">artifacts.list</a>
+        </div>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">List the generated artifacts</h3>
+        <p class="mt-1 text-sm text-body">The manifest `majordomus generate` commits as docs/generated/artifacts.json, reconciled with the working tree: every document with the encodings it is written in, and every file with its format, schema, source, size, hash and whether the file on disk still matches. Optionally narrowed to one document or one encoding. Reads only; `majordomus generate` writes and `majordomus generate --check` is the byte-for-byte verdict.</p>
+        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=8, ttl_seconds=5)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_artifacts</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {&quot;name&quot;: &quot;artifacts&quot;, &quot;uri&quot;: &quot;majordomus://artifacts&quot;}</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[36rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">document</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">format</td>
+                <td class="px-3 py-2 font-mono text-body">ArtifactFormat | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Only the artifacts written in this encoding.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block"><span class="text-body-subtle">one-encoding:</span> &quot;yaml&quot;</span></td>
+              </tr></tbody>
+          </table>
+        </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading">curl -s &quot;http://127.0.0.1:8741/api/v1/artifacts?format=yaml&quot;</pre></div>
+
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[28rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ArtifactReport" class="text-fg-brand hover:underline">ArtifactReport</a></td>
+                <td class="px-3 py-2 text-body">List the generated artifacts: the result.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+              </tr></tbody>
+          </table>
+        </div>
+      </article></section><section id="tag-capabilities" class="mt-12 scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">capabilities</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.</p><article id="op-capabilities-list" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-center gap-2">
@@ -1218,7 +1282,156 @@ carries that schema).</td>
                 <td class="px-3 py-2 text-body">The answer as text: byte for byte what <code>resources/read</code> returns for the URI.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ResourceView" class="font-mono text-fg-brand hover:underline">ResourceView</a></p></article><article id="schema-BenchmarkPolicy" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ResourceView" class="font-mono text-fg-brand hover:underline">ResourceView</a></p></article><article id="schema-ArtifactFormat" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">ArtifactFormat</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;json&quot; | &quot;yaml&quot; | &quot;markdown&quot; | &quot;text&quot;</span>
+        </div><p class="mt-2 text-sm text-body">The encoding one generated artifact is written in.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">json</code><span class="min-w-0 text-body">A JSON document: pretty-printed, one trailing newline, provenance as members.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">yaml</code><span class="min-w-0 text-body">The same document in the layer&#39;s YAML, provenance as a comment banner.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">markdown</code><span class="min-w-0 text-body">Markdown for a reader, provenance as an HTML comment.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">text</code><span class="min-w-0 text-body">Line-oriented text another program reads: the shell tool&#39;s allow-lists,
+provenance as `#` comments.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#schema-ArtifactView" class="font-mono text-fg-brand hover:underline">ArtifactView</a> <a href="#schema-DocumentView" class="font-mono text-fg-brand hover:underline">DocumentView</a></p></article><article id="schema-ArtifactReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">ArtifactReport</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">The answer of <code>artifacts.list</code>.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">manifest</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The manifest this was read from, repository-relative.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">present</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether the manifest is committed in this repository at all. A repository that has
+never run <code>majordomus generate</code> has no generated tree, which is a fact about it and
+not a failure of this call: every list below is then empty and every tally zero.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">schema</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The schema the manifest carries, empty when there is none to read.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">documents</td>
+                <td class="px-3 py-2 font-mono text-body">array of DocumentView <span class="text-body-subtle">→</span> <a href="#schema-DocumentView" class="text-fg-brand hover:underline">DocumentView</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The documents, in the manifest's order.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">artifacts</td>
+                <td class="px-3 py-2 font-mono text-body">array of ArtifactView <span class="text-body-subtle">→</span> <a href="#schema-ArtifactView" class="text-fg-brand hover:underline">ArtifactView</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The files, in the manifest's order, after any filter.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">tallies</td>
+                <td class="px-3 py-2 font-mono text-body">ArtifactTallies <span class="text-body-subtle">→</span> <a href="#schema-ArtifactTallies" class="text-fg-brand hover:underline">ArtifactTallies</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The counts.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">regenerate</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The command that rewrites every one of them.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">verify</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The command that decides staleness byte for byte, which is stronger than the hash.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a></p></article><article id="schema-ArtifactState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">ArtifactState</h3>
+          <span class="font-mono text-xs text-body-subtle">&quot;current&quot; | &quot;stale&quot; | &quot;missing&quot; | &quot;present&quot;</span>
+        </div><p class="mt-2 text-sm text-body">Where one generated file stands against the tree it is committed in.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">current</code><span class="min-w-0 text-body">The file is there and its bytes hash to what the manifest recorded.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">stale</code><span class="min-w-0 text-body">The file is there and its bytes differ: it was edited, or the generator moved on.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">missing</code><span class="min-w-0 text-body">The manifest names it and the tree does not have it.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">present</code><span class="min-w-0 text-body">The file is there and the manifest records no hash for it: the manifest&#39;s own
+encodings, which cannot hash themselves. `generate --check` compares them.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ArtifactView" class="font-mono text-fg-brand hover:underline">ArtifactView</a></p></article><article id="schema-ArtifactTallies" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">ArtifactTallies</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">How many of each, so a caller needs no arithmetic of its own.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">documents</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Documents in the manifest.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">artifacts</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Files in the manifest, after any filter.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">current</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Hashes that match.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">stale</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Hashes that do not.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">missing</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Files the manifest names and the tree lacks.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">present</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Files the manifest records no hash for.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ArtifactReport" class="font-mono text-fg-brand hover:underline">ArtifactReport</a></p></article><article id="schema-ArtifactView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">ArtifactView</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">One generated file, as the manifest declares it and as the tree has it.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">path</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Repository-relative path.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">document</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The document it projects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">format</td>
+                <td class="px-3 py-2 font-mono text-body">ArtifactFormat <span class="text-body-subtle">→</span> <a href="#schema-ArtifactFormat" class="text-fg-brand hover:underline">ArtifactFormat</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The encoding.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">schema</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The JSON Schema its content satisfies, when it declares one.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">One line: what it was derived from.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">bytes</td>
+                <td class="px-3 py-2 font-mono text-body">integer | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The size the manifest recorded.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">sha256</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The hash the manifest recorded.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+                <td class="px-3 py-2 font-mono text-body">ArtifactState <span class="text-body-subtle">→</span> <a href="#schema-ArtifactState" class="text-fg-brand hover:underline">ArtifactState</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where the file stands against it.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ArtifactReport" class="font-mono text-fg-brand hover:underline">ArtifactReport</a></p></article><article id="schema-BenchmarkPolicy" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">BenchmarkPolicy</h3>
           <span class="font-mono text-xs text-body-subtle">one of 2 variants</span>
@@ -1984,7 +2197,36 @@ Present when the request asked for it, or when it asked about one path.</td>
           <span class="font-mono text-xs text-body-subtle">&quot;exact&quot; | &quot;advanced&quot; | &quot;diverged&quot; | &quot;different_context&quot; | &quot;unknown&quot;</span>
         </div><p class="mt-2 text-sm text-body">How far a record's recorded commit is from the commit this checkout is on.</p>
 <p>The four words are the shell tool's, deliberately. A reader that met <code>advanced</code> from one
-surface and <code>stale</code> from another would have to learn the same four facts twice.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">exact</code><span class="min-w-0 text-body">Written at this commit. Trust it.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">advanced</code><span class="min-w-0 text-body">Git has moved forward since. Trust it, and expect some of it to be done.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">diverged</code><span class="min-w-0 text-body">The recorded commit is not an ancestor: history was rewritten. Trust git, not this.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">different_context</code><span class="min-w-0 text-body">Another branch or another worktree. This record is not about your work.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">unknown</code><span class="min-w-0 text-body">Git could not answer, so this process says so rather than guessing `exact`.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Record" class="font-mono text-fg-brand hover:underline">Record</a></p></article><article id="schema-Edge" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+surface and <code>stale</code> from another would have to learn the same four facts twice.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">exact</code><span class="min-w-0 text-body">Written at this commit. Trust it.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">advanced</code><span class="min-w-0 text-body">Git has moved forward since. Trust it, and expect some of it to be done.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">diverged</code><span class="min-w-0 text-body">The recorded commit is not an ancestor: history was rewritten. Trust git, not this.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">different_context</code><span class="min-w-0 text-body">Another branch or another worktree. This record is not about your work.</span></li><li class="flex flex-wrap gap-x-3"><code class="font-mono text-heading">unknown</code><span class="min-w-0 text-body">Git could not answer, so this process says so rather than guessing `exact`.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Record" class="font-mono text-fg-brand hover:underline">Record</a></p></article><article id="schema-DocumentView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">DocumentView</h3>
+          <span class="font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">One document, and the encodings it is committed in.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
+          <table class="w-full min-w-[32rem] text-left text-sm">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The document id, shared by every encoding of it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">schema</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The schema id its structured encodings carry.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">One line: what it was derived from.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">formats</td>
+                <td class="px-3 py-2 font-mono text-body">array of ArtifactFormat <span class="text-body-subtle">→</span> <a href="#schema-ArtifactFormat" class="text-fg-brand hover:underline">ArtifactFormat</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The encodings, in the manifest's order.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ArtifactReport" class="font-mono text-fg-brand hover:underline">ArtifactReport</a></p></article><article id="schema-Edge" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Edge</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -2067,7 +2309,7 @@ resolve an end adds an external node rather than a dangling edge.</p><div class=
                 <td class="px-3 py-2 text-body">The one error.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ErrorDetail</h3>
           <span class="font-mono text-xs text-body-subtle">object</span>
@@ -3339,7 +3581,7 @@ reason for resources and is never written by hand.</p><ul class="mt-3 space-y-1 
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/09a1689fbd419dee6f61e88ecd69323791892a1f" class="font-mono hover:underline">09a1689</a> · inputs <span class="font-mono">09e1493df34d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.1.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d6e297778a8cf56460d68816e6bf6f0392b7a085" class="font-mono hover:underline">d6e2977</a> · inputs <span class="font-mono">b7e24cfb926a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
