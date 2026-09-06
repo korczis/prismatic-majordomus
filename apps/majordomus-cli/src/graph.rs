@@ -281,6 +281,7 @@ const DERIVATIONS: &[(&str, Derivation)] = &[
     ("rules", rules_graph),
     ("adrs", adrs_graph),
     ("use-cases", use_cases_graph),
+    ("composed", composed_graph),
 ];
 
 /// The ids of every graph, in the order they are listed.
@@ -739,6 +740,171 @@ fn use_cases_graph(_registry: &CapabilityRegistry, index: &Index) -> Graph {
     b.finish()
 }
 
+/// Everything, composed: the capability registry and every object of the index in one
+/// model, with the node kinds taken from what was actually indexed rather than from a
+/// list written here. Adding a kind to the layer adds it to this graph; adding a
+/// capability module adds its capabilities. Nothing in this derivation names a kind.
+///
+/// The graph holds definitions only. What is true of a running process — whether a
+/// capability answered, what the health of a surface is now — is [`RuntimeState`], laid
+/// over these nodes by a consumer that has a process to ask. Keeping the two apart is
+/// what lets the published site render this graph with no server behind it.
+///
+/// Typed relations between the composed kinds — what documents what, what enforces what,
+/// what tests what — are derived separately; this derivation carries only the structure
+/// the registries already assert: a module composes its capabilities, a capability is
+/// projected through the transports it declares, and an object is of its kind.
+fn composed_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
+    compose(registry, &index.objects)
+}
+
+/// The composition itself, over the two registries rather than over an index: the same
+/// derivation, testable without a repository on disk.
+fn compose(registry: &CapabilityRegistry, objects: &[Object]) -> Graph {
+    let mut b = Builder::new(
+        "composed",
+        "Everything, composed",
+        "The capability registry and every object of the layer in one graph: each module with the capabilities it composes, each capability with the transports it is projected through, and every indexed object under the kind that owns it. The node kinds are the kinds that were indexed, so a kind added to the layer appears here without this derivation being edited.",
+        "the capability registry and every object of the index",
+    )
+    .node_kind("module", "a capability module of this executable")
+    .node_kind("capability", "one capability, declared once and projected")
+    .node_kind(
+        "projection",
+        "a transport a capability is projected through",
+    )
+    .node_kind("kind", "one kind of object the layer indexed")
+    .edge_kind("composes", "the module composes the capability")
+    .edge_kind("projects", "the capability is projected through the transport")
+    .edge_kind("is_a", "the object is of that kind");
+
+    // the kinds are read off what was indexed; a kind named here would be a second
+    // declaration of something share/kinds.yaml already owns
+    let kinds: BTreeSet<&str> = objects.iter().map(|o| o.kind.as_str()).collect();
+    for kind in &kinds {
+        b = b.node_kind(kind, &format!("an object of kind `{kind}`"));
+    }
+
+    for kind in &kinds {
+        let id = format!("kind:{kind}");
+        if !b.node(Node {
+            id,
+            kind: "kind".into(),
+            label: (*kind).to_string(),
+            summary: Some(format!("every object of kind `{kind}`")),
+            route: None,
+            source: None,
+            status: None,
+            external: false,
+        }) {
+            break;
+        }
+    }
+
+    for projection in ["mcp", "http", "cli", "cockpit"] {
+        b.node(Node {
+            id: format!("projection:{projection}"),
+            kind: "projection".into(),
+            label: projection.into(),
+            summary: Some(format!("the {projection} projection of the registry")),
+            route: None,
+            source: None,
+            status: None,
+            external: false,
+        });
+    }
+
+    for c in registry.iter() {
+        // the objects of the layer are on this graph as themselves; the resource
+        // capabilities that read them would say the same thing a second time
+        if !matches!(c.provenance, Provenance::Builtin { .. }) {
+            continue;
+        }
+        let module = format!("module:{}", c.module);
+        if !b.has(&module)
+            && !b.node(Node {
+                id: module.clone(),
+                kind: "module".into(),
+                label: c.module.to_string(),
+                summary: None,
+                route: None,
+                source: None,
+                status: None,
+                external: false,
+            })
+        {
+            break;
+        }
+        let id = format!("capability:{}", c.id);
+        if !b.node(Node {
+            id: id.clone(),
+            kind: "capability".into(),
+            label: c.id.to_string(),
+            summary: Some(c.title.clone()),
+            route: Some(capability_route(c.id.as_str())),
+            source: Some(c.provenance.source_path()),
+            status: Some(kind_word(c.kind)),
+            external: false,
+        }) {
+            break;
+        }
+        b.edge(&module, &id, "composes");
+        if c.exposure.mcp.is_some() {
+            b.edge(&id, "projection:mcp", "projects");
+        }
+        if c.exposure.http.is_some() {
+            b.edge(&id, "projection:http", "projects");
+        }
+        if c.exposure.cli.is_some() {
+            b.edge(&id, "projection:cli", "projects");
+        }
+        b.edge(&id, "projection:cockpit", "projects");
+    }
+
+    for o in objects {
+        // the URI is the identity: it survives a retitling, which a label does not
+        if !b.node(Node {
+            id: o.uri.clone(),
+            kind: o.kind.clone(),
+            label: o.identity.clone(),
+            summary: o.title.clone().or_else(|| o.description.clone()),
+            route: Some(object_route(&o.uri)),
+            source: Some(o.provenance.path.clone()),
+            status: metadata_string(&o.metadata, "status"),
+            external: false,
+        }) {
+            break;
+        }
+        b.edge(&o.uri, &format!("kind:{}", o.kind), "is_a");
+    }
+
+    b.finish()
+}
+
+/// What is true of a node in a running process, and of nothing on a published page.
+///
+/// A graph is definitions: they are the same in a static build and in a server, and they
+/// are what [`compose`] derives. This is the overlay a consumer with a process to ask
+/// lays over them, keyed by node id. It is deliberately not a field of [`Node`]: a node
+/// that could carry runtime state would carry it into the static projection, where it
+/// would be a value nobody can refresh and a reader cannot distinguish from a current
+/// one.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct RuntimeState {
+    /// Node id to what the process says about it now.
+    pub nodes: BTreeMap<String, NodeState>,
+}
+
+/// One node's runtime state: what a process observed, never what a file declared.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct NodeState {
+    /// A status word the observing process defines.
+    pub status: String,
+    /// One line about the observation, when there is something to say.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
 /// A string field of an object's parsed front matter.
 fn metadata_string(metadata: &Value, key: &str) -> Option<String> {
     metadata
@@ -846,5 +1012,138 @@ mod tests {
         assert_eq!(metadata_strings(&v, "b"), ["z"]);
         assert!(metadata_strings(&v, "c").is_empty());
         assert!(metadata_strings(&v, "missing").is_empty());
+    }
+    fn object(kind: &str, identity: &str, title: &str) -> Object {
+        Object {
+            kind: kind.into(),
+            identity: identity.into(),
+            uri: format!("majordomus://{kind}/{identity}"),
+            title: Some(title.into()),
+            description: None,
+            metadata: serde_json::json!({}),
+            body: String::new(),
+            content: String::new(),
+            media_type: "text/markdown",
+            provenance: crate::model::Provenance {
+                path: format!(".ai/repo/{kind}s/{identity}.md"),
+                directory: format!(".ai/repo/{kind}s"),
+                source_class: kind.into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    fn registry() -> CapabilityRegistry {
+        CapabilityRegistry::builder()
+            .with_builtin(crate::capability::builtin::all())
+            .build()
+            .unwrap()
+    }
+
+    #[test]
+    fn a_kind_nobody_wrote_here_is_still_a_kind_of_the_graph() {
+        // the point of the composition: the derivation names no kind, so a kind the layer
+        // gains appears without this file being edited
+        let g = compose(&registry(), &[object("gizmo", "one", "A gizmo")]);
+        assert!(g.node_kinds.contains_key("gizmo"));
+        assert!(g.nodes.iter().any(|n| n.id == "kind:gizmo"));
+        assert!(g
+            .nodes
+            .iter()
+            .any(|n| n.id == "majordomus://gizmo/one" && n.kind == "gizmo"));
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.source == "majordomus://gizmo/one" && e.target == "kind:gizmo"));
+    }
+
+    #[test]
+    fn an_object_is_identified_by_its_uri_and_not_by_its_title() {
+        let before = compose(&registry(), &[object("rule", "one", "The old words")]);
+        let after = compose(&registry(), &[object("rule", "one", "Entirely new words")]);
+        let id = |g: &Graph| {
+            g.nodes
+                .iter()
+                .find(|n| n.kind == "rule")
+                .map(|n| n.id.clone())
+        };
+        assert_eq!(id(&before), id(&after));
+        assert_eq!(id(&before).as_deref(), Some("majordomus://rule/one"));
+    }
+
+    #[test]
+    fn many_objects_of_one_kind_share_the_one_kind_node() {
+        let g = compose(
+            &registry(),
+            &[
+                object("rule", "one", "One"),
+                object("rule", "two", "Two"),
+                object("rule", "three", "Three"),
+            ],
+        );
+        assert_eq!(g.nodes.iter().filter(|n| n.id == "kind:rule").count(), 1);
+        assert_eq!(g.nodes.iter().filter(|n| n.kind == "rule").count(), 3);
+    }
+
+    #[test]
+    fn the_composition_does_not_depend_on_the_order_it_read_things_in() {
+        let r = registry();
+        let forwards = vec![
+            object("rule", "a", "A"),
+            object("adr", "b", "B"),
+            object("skill", "c", "C"),
+        ];
+        let backwards: Vec<Object> = forwards.iter().rev().cloned().collect();
+        assert_eq!(compose(&r, &forwards), compose(&r, &backwards));
+    }
+
+    #[test]
+    fn nodes_and_edges_come_out_sorted() {
+        let g = compose(
+            &registry(),
+            &[object("rule", "z", "Z"), object("rule", "a", "A")],
+        );
+        let mut sorted = g.nodes.clone();
+        sorted.sort();
+        assert_eq!(g.nodes, sorted);
+        let mut edges = g.edges.clone();
+        edges.sort();
+        assert_eq!(g.edges, edges);
+    }
+
+    #[test]
+    fn every_capability_reaches_its_module_and_its_projections() {
+        let g = compose(&registry(), &[]);
+        let c = g
+            .nodes
+            .iter()
+            .find(|n| n.kind == "capability")
+            .expect("the registry composes capabilities");
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.target == c.id && e.kind == "composes"));
+        assert!(g
+            .edges
+            .iter()
+            .any(|e| e.source == c.id && e.target == "projection:cockpit"));
+    }
+
+    #[test]
+    fn the_graph_holds_definitions_and_the_overlay_holds_what_a_process_saw() {
+        let g = compose(&registry(), &[object("rule", "one", "One")]);
+        let json = serde_json::to_string(&g).unwrap();
+        assert!(!json.contains("\"runtime\""));
+        let mut state = RuntimeState::default();
+        state.nodes.insert(
+            "majordomus://rule/one".into(),
+            NodeState {
+                status: "ok".into(),
+                detail: None,
+            },
+        );
+        assert_eq!(state.nodes.len(), 1);
     }
 }

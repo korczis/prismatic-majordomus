@@ -5,7 +5,7 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "30eb47f118c0dbd2fdc58ad2dc2bf9626e3d502abc8f658ee9e7e5c576c21b44",
+    "fingerprint": "0bc111f94f5badb21f2b9a5ac9b9aef6076ddc309e97dbb96e89fc7374548b56",
     "summary": {
       "total": 794,
       "builtin": 16,
@@ -4921,7 +4921,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d282a45ce32b3ef9b3161afd752515b27b76c9881b40a1636354dcf48869116d",
+    "fingerprint": "672b4d12973721f6cc060cb5d23cf885f57ad89065743e323c8a5bdaef8b4046",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -9744,7 +9744,7 @@
         "path": ".ai/repo/project/issues/I1001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2574
+        "bytes": 2617
       },
       {
         "uri": "majordomus://issue/I1002",
@@ -16897,6 +16897,15 @@
         "cached": true
       },
       {
+        "key": "graph.get|direct|composed",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
+        "cached": true
+      },
+      {
         "key": "graph.get|mcp|registry",
         "kind": "capability",
         "transport": "mcp",
@@ -16947,6 +16956,16 @@
         "tool": "majordomus_graph"
       },
       {
+        "key": "graph.get|mcp|composed",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
         "key": "graph.get|http|registry",
         "kind": "capability",
         "transport": "http",
@@ -16993,6 +17012,16 @@
         "id": "graph.get",
         "module": "graph",
         "case": "use-cases",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.get|http|composed",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
         "cached": true,
         "route": "GET /api/v1/graph"
       },
@@ -17695,21 +17724,21 @@
           "module": "graph",
           "transport": "direct",
           "state": "covered",
-          "cases": 5
+          "cases": 6
         },
         {
           "subject": "graph.get",
           "module": "graph",
           "transport": "mcp",
           "state": "covered",
-          "cases": 5
+          "cases": 6
         },
         {
           "subject": "graph.get",
           "module": "graph",
           "transport": "http",
           "state": "covered",
-          "cases": 5
+          "cases": 6
         },
         {
           "subject": "graph.list",
