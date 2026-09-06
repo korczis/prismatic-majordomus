@@ -1,0 +1,31 @@
+id: I1023
+milestone: capability-graph
+title: Nothing private reaches a published page
+slug: public-metadata-safety
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Scan the published graph, the static site and everything the client receives for credential material, private environment values and machine-absolute paths, and fail on a finding without printing it."
+why: "This milestone publishes a description of everything the repository knows. That is exactly the artifact in which an accidental token or a developer's home directory would travel furthest."
+current_state: "No such scan exists for the site or the Cockpit data."
+desired_state: "One check inspects the generated data and the built site, reports findings by location and kind, and runs in CI."
+scope:
+  - test/cases
+non_scope:
+  - Printing any secret value while scanning
+  - A general secret scanner competing with the repository's existing tooling
+depends_on:
+  - I1005
+acceptance_criteria:
+  - Known credential variable names, credential-shaped values, raw authorization material and machine-absolute paths are all detected
+  - A finding names the location and the kind and never the value
+  - A negative test plants a synthetic marker and proves the check finds it
+  - The check runs in CI on every change
+validation:
+  - bash test/run.sh
+evidence_required:
+  - public_scan
+  - negative_test
+risk: "A scan tuned to be quiet finds nothing forever. The synthetic marker is what keeps it honest."
+created_at: 2026-09-06
+updated_at: 2026-09-06

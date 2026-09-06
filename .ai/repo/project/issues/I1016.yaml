@@ -1,0 +1,33 @@
+id: I1016
+milestone: capability-graph
+title: The Cockpit works on a phone and before JavaScript runs
+slug: mobile-first-and-baseline
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the Cockpit genuinely usable at narrow viewports and keep its core information present in the served HTML, with JavaScript adding filtering, the graph, live state and search rather than being required to read anything."
+why: "A control plane that only works on a wide screen is unavailable exactly when somebody needs it. And information that only exists after a script runs is invisible to anything that does not run scripts, including the tests that check the links."
+current_state: "The Cockpit is server-rendered with its own stylesheet, and its behaviour across viewports has not been established for this material."
+desired_state: "Navigation, cards, tables, details and the graph's textual equivalent are usable from a narrow phone width upward, nothing overflows horizontally, and the core content is in the HTML."
+scope:
+  - share/cockpit/src/cockpit.css
+non_scope:
+  - Hiding content below a breakpoint instead of adapting it
+  - Requiring JavaScript to discover a documentation link
+depends_on:
+  - I1009
+acceptance_criteria:
+  - Navigation, content, tables and details are usable at narrow phone widths through to a wide desktop, with no horizontal page overflow at any of them
+  - Touch targets are usable and focus is visible
+  - The markup is semantic, keyboard navigation works, and status is never conveyed by colour alone
+  - Core information is present in the served HTML before enhancement
+validation:
+  - scripts/cockpit-probe
+  - bash test/run.sh
+evidence_required:
+  - viewports_pass
+  - zero_js_baseline
+  - accessible
+risk: "Mobile behaviour is the requirement most often declared done from a resized desktop window. It is asserted at real viewport widths by a browser check."
+created_at: 2026-09-06
+updated_at: 2026-09-06

@@ -88,6 +88,12 @@ H
   local sessions_dir="${MJ_SESSIONS_DIR:-$MJ_AI_REPO_DIR/sessions}"
   mkdir -p "$sessions_dir"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$sessions_dir/README.md"
+  # The deployments section, the same way: the contract is there from the start, so a
+  # repository that later deploys something adds one file rather than a directory, a
+  # context document, a manifest entry and a source class.
+  local deployments_dir="${MJ_DEPLOYMENTS_DIR:-$MJ_AI_REPO_DIR/deployments}"
+  mkdir -p "$deployments_dir"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$deployments_dir/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.
@@ -97,7 +103,7 @@ H
   [ -f "$MJ_STATE_DIR/open-questions.md" ] || cp "$skel/templates/open-questions.md" "$MJ_STATE_DIR/open-questions.md"
   mj_init_gitignore
 
-  local rel; rel="$(cd "$MJ_BIN_DIR" && pwd)"
+  local rel; rel="${MJ_SELF:-$(cd "$MJ_BIN_DIR" && pwd)/majordomus}"
   if [ -n "$MJ_INIT_CREATED" ]; then
     printf 'created%s\n' "$MJ_INIT_CREATED" | tr ' ' '\n' | sed '1!s/^/  /'
   else printf 'nothing to add; .ai/ already carries every file the skeleton seeds\n'; fi
@@ -106,8 +112,8 @@ local state: $(mj_rel "$MJ_STATE_DIR")/ (ignored by git; this checkout's own)
 next: majordomus update      # generate the provider instruction files named in the policy
 next: majordomus doctor      # verify nothing is declared that is not wired
 hooks are not installed by init; add these two lines yourself, doctor verifies them:
-  pre-commit: $rel/majordomus doctor || exit \$?
-  pre-push:   $rel/majordomus finish --check || exit \$?
+  pre-commit: $rel doctor || exit \$?
+  pre-push:   $rel finish --check || exit \$?
 OUT
 }
 

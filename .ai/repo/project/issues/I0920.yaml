@@ -1,0 +1,36 @@
+id: I0920
+milestone: fly-deployment
+title: The image's dependencies are known and its advisories are policy
+slug: supply-chain-policy
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Record what the production image contains, obtain a dependency audit and a vulnerability verdict, and state a severity and fix-availability policy so that the gate is meaningful rather than permanently red."
+why: "An image of unknown contents cannot be reasoned about after a disclosure. A scanner wired to fail on every advisory in every database is turned off within a week, which is worse than no scanner."
+current_state: "No image, no inventory, no scan and no policy exist."
+desired_state: "The package inventory and the dependency audit are obtained by the same verification that runs everything else, and the policy states which findings block and which are recorded."
+scope:
+  - .ai/repo/policy.yaml
+  - .github/workflows/validate.yml
+non_scope:
+  - A security dashboard or a vulnerability database of our own
+  - Failing the build on advisories with no available fix and no exploitable path
+depends_on:
+  - I0909
+acceptance_criteria:
+  - The runtime package inventory of the image is obtained and recorded
+  - A dependency audit runs and its verdict is part of the gate
+  - The severity and fix-availability policy is declared as data, not as prose, and the gate reads it
+  - Where the repository's practice supports it, a bill of materials is produced alongside the image
+  - External workflow actions are pinned to immutable references according to the repository's convention
+validation:
+  - bash test/run.sh
+  - majordomus deploy doctor
+evidence_required:
+  - dependency_audit
+  - package_inventory
+  - severity_policy
+  - actions_pinned
+risk: "A policy that blocks on everything is a policy nobody keeps. The threshold has to be stated where it can be reviewed rather than buried in a workflow."
+created_at: 2026-09-06
+updated_at: 2026-09-06

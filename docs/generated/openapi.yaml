@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.1.0
+# Generator: majordomus-cli 0.2.0
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.1.0"
+  version: "0.2.0"
   summary: "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry."
   description: "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` lists the routes; `/docs` is Swagger UI over this document; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -27,8 +27,12 @@ tags:
     description: "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
   - name: continuity
     description: "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
+  - name: deploy
+    description: "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
   - name: directories
     description: "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved."
+  - name: distribution
+    description: "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own."
   - name: graph
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
   - name: health
@@ -302,6 +306,173 @@ paths:
         resource:
           uri: majordomus://continuity
           name: continuity
+  "/api/v1/deployment":
+    get:
+      operationId: deploy.get
+      summary: One deployment
+      description: "One deployment by its identity, typed, with the repository-relative file it was read from."
+      tags:
+        - deploy
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The deployment's `id`."
+          examples:
+            first-deployment:
+              value: majordomus
+      responses:
+        "200":
+          description: "One deployment: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DeploymentView"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: deploy.get
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::deploy
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_deployment
+  "/api/v1/deployments":
+    get:
+      operationId: deploy.list
+      summary: Deployments
+      description: "Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped."
+      tags:
+        - deploy
+      parameters: []
+      responses:
+        "200":
+          description: "Deployments: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DeploymentList"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: deploy.list
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::deploy
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_deployments
+        resource:
+          uri: majordomus://deployments
+          name: deployments
+  "/api/v1/deployments/check":
+    get:
+      operationId: deploy.check
+      summary: Would these deployments work
+      description: "Every refusal the declared deployments earn locally: a health route no capability registers, a package or binary the workspace does not produce, a build input that does not resolve, more machines running than exist, a hosted process that would bind loopback. Each names the file, the key, the value observed and the correction. Nothing here contacts the provider."
+      tags:
+        - deploy
+      parameters: []
+      responses:
+        "200":
+          description: "Would these deployments work: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DeploymentCheck"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: deploy.check
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::deploy
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+        ttl_seconds: 5
+      x-majordomus-mcp:
+        tool: majordomus_deploy_check
   "/api/v1/directories":
     get:
       operationId: directories.list
@@ -387,6 +558,232 @@ paths:
         resource:
           uri: majordomus://directories
           name: directories
+  "/api/v1/distribution":
+    get:
+      operationId: distribution.model
+      summary: The distribution model
+      description: "The one-line install command, where an installation goes, and every declared target with the artifact name it derives. This is what the installation page, the landing page's install block and the cockpit's install card render; none of them holds a platform list of its own."
+      tags:
+        - distribution
+      parameters: []
+      responses:
+        "200":
+          description: "The distribution model: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DistributionReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: distribution.model
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::distribution
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_distribution
+      x-majordomus-cli: distribution show
+  "/api/v1/distribution/artifact":
+    get:
+      operationId: distribution.artifact
+      summary: The artifact of a target
+      description: "The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file."
+      tags:
+        - distribution
+      parameters:
+        - name: target
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "A target's id or its Rust target triple."
+          examples:
+            first-published-target:
+              value: aarch64-apple-darwin
+        - name: tag
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in."
+          examples:
+            first-published-target:
+              value: v0.0.0
+      responses:
+        "200":
+          description: "The artifact of a target: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReleaseArtifactView"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: distribution.artifact
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::distribution
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_artifact
+      x-majordomus-cli: distribution artifact
+  "/api/v1/distribution/build":
+    get:
+      operationId: distribution.build
+      summary: This build
+      description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git."
+      tags:
+        - distribution
+      parameters: []
+      responses:
+        "200":
+          description: "This build: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/BuildReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: distribution.build
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::distribution
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_build
+      x-majordomus-cli: distribution build
+  "/api/v1/distribution/releases":
+    get:
+      operationId: distribution.releases
+      summary: Published releases
+      description: "Every release this repository recorded, newest first, and the one an unpinned installation resolves to: the highest version among the stable, unwithdrawn records. The pointer is derived here and never authored anywhere."
+      tags:
+        - distribution
+      parameters: []
+      responses:
+        "200":
+          description: "Published releases: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReleasesReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: distribution.releases
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::distribution
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_releases
+      x-majordomus-cli: distribution releases
   "/api/v1/graph":
     get:
       operationId: graph.get
@@ -404,6 +801,8 @@ paths:
           examples:
             adrs:
               value: adrs
+            composed:
+              value: composed
             layer:
               value: layer
             registry:
@@ -568,6 +967,55 @@ paths:
         resource:
           uri: majordomus://health
           name: health
+  "/api/v1/live":
+    get:
+      operationId: health.live
+      summary: Liveness
+      description: "Is this process alive: the cheapest true statement this executable can make about itself, with the version that answered. No filesystem traversal, no index build, no network — this is what a hosting platform polls, and it must cost nothing to say."
+      tags:
+        - health
+      parameters: []
+      responses:
+        "200":
+          description: "Liveness: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Liveness"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: health.live
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::health
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
   "/api/v1/object":
     get:
       operationId: objects.get
@@ -867,6 +1315,55 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_perf
+  "/api/v1/ready":
+    get:
+      operationId: health.ready
+      summary: Readiness
+      description: "Can this process serve traffic: the registry and the index it built at start-up, already resident, and how the layer read. Only local initialisation — never an external provider, a database or another service, because a readiness check that probes a dependency fails a deployment for something that is not this process."
+      tags:
+        - health
+      parameters: []
+      responses:
+        "200":
+          description: "Readiness: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Readiness"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: health.ready
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::health
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
   "/api/v1/repository":
     get:
       operationId: repository.info
@@ -1658,6 +2155,15 @@ components:
         - media_type
         - content
       description: "A URI a query projects (`majordomus://repository`), answered: the same fields a client\nreads on an [`ObjectView`] where they apply, the answer itself as data, and the text\n`resources/read` returns for the URI."
+    Arch:
+      oneOf:
+        - type: string
+          const: x86_64
+          description: "64-bit x86, detected as `x86_64` or `amd64`."
+        - type: string
+          const: aarch64
+          description: "64-bit ARM, detected as `aarch64` or `arm64`."
+      description: A processor architecture.
     AreaList:
       type: object
       properties:
@@ -1991,6 +2497,109 @@ components:
             - reason
           description: "Not timed, for the typed reason; coverage reports it as waived, never as covered."
       description: "Whether the capability is a benchmark target. `Required` is the default and the norm:\nevery executable capability is timed directly and through every transport it is\nexposed on, with the cases its input type provides."
+    Budgets:
+      type: object
+      additionalProperties: false
+      properties:
+        image_bytes:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: Largest accepted compressed image size.
+          default: null
+        binary_bytes:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: Largest accepted stripped binary size.
+          default: null
+        build_context_bytes:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: Largest accepted build context.
+          default: null
+        cold_start_ms:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: Longest accepted time from a stopped machine to a served response.
+          default: null
+        resident_memory_mb:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: Largest accepted resident set under load.
+          default: null
+        blocking_check_ms:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: Longest accepted time for one liveness or readiness check.
+          default: null
+        request_p99_ms:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: Longest accepted p99 for a served request.
+          default: null
+      description: "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence."
+    Build:
+      type: object
+      additionalProperties: false
+      properties:
+        package:
+          type: string
+          description: The Cargo package that is built.
+        binary:
+          type: string
+          description: The binary target the image runs.
+        profile:
+          type: string
+          description: The Cargo profile the image is built under.
+        inputs:
+          type: array
+          items:
+            type: string
+          description: "The repository-relative paths the build context carries, and the only ones."
+        site:
+          type:
+            - string
+            - "null"
+          description: "The directory the canonical site pipeline writes; absent means the image serves no\nsite."
+          default: null
+      required:
+        - package
+        - binary
+        - profile
+        - inputs
+      description: What is shipped and what it is built from.
+    BuildReport:
+      type: object
+      properties:
+        version:
+          type: string
+          description: The version of the crate this executable was built from.
+        target:
+          type: string
+          description: The Rust target triple it was built for; the model names a target by the same string.
+        profile:
+          type: string
+          description: The cargo profile.
+        commit:
+          type: string
+          description: "The commit, or `unknown` when it was built outside a work tree."
+        distribution_target:
+          type:
+            - string
+            - "null"
+          description: "The target of the model this build matches, when the model declares one for the triple."
+      required:
+        - version
+        - target
+        - profile
+        - commit
+      description: "What this executable is: enough to tell two builds apart without asking a repository."
     CachePolicy:
       oneOf:
         - type: object
@@ -2285,6 +2894,15 @@ components:
           description: Patterns matched against the file name alone.
           default: []
       description: "One category of `out`: pathspecs and file-name patterns."
+    Channel:
+      oneOf:
+        - type: string
+          const: stable
+          description: "Resolved by `latest`."
+        - type: string
+          const: prerelease
+          description: "Published, addressable by its exact tag, never resolved by default."
+      description: Which releases an unpinned installation may resolve to.
     Classification:
       type: object
       properties:
@@ -2352,6 +2970,20 @@ components:
         - name
         - version
       description: "What a client said about itself in `initialize`."
+    Concurrency:
+      type: object
+      additionalProperties: false
+      properties:
+        soft_limit:
+          "$ref": "#/components/schemas/Positive"
+          description: Where the edge starts preferring another machine.
+        hard_limit:
+          "$ref": "#/components/schemas/Positive"
+          description: Where it stops sending requests to this one.
+      required:
+        - soft_limit
+        - hard_limit
+      description: "When the edge considers a machine loaded, in requests."
     Continuity:
       type: object
       properties:
@@ -2610,6 +3242,15 @@ components:
         - signals
         - examples
       description: "How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down."
+    CpuKind:
+      oneOf:
+        - type: string
+          const: shared
+          description: "A fraction of a core: the cheap profile."
+        - type: string
+          const: performance
+          description: A dedicated one.
+      description: "What a machine's CPU is."
     Declaration:
       type: object
       additionalProperties: false
@@ -2632,6 +3273,153 @@ components:
         - in
         - out
       description: "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema."
+    DeploymentCheck:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: True when no deployment earned a refusal.
+        decided:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many deployments were decided.
+        refusals:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Refusal"
+          description: "Every refusal, in the order the objects and their keys appear."
+      required:
+        - ok
+        - decided
+        - refusals
+      description: "Whether the deployments this repository declares would work, decided locally: against\nthe capability registry this process built and the workspace it sits in."
+    DeploymentList:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many.
+        deployments:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DeploymentView"
+          description: "Each, in identity order."
+        unreadable:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Refusal"
+          description: "Objects of the deployment kind this executable could not read, with why. A\nmalformed object is reported here rather than hidden by being skipped."
+      required:
+        - count
+        - deployments
+      description: Every deployment the layer declares.
+    DeploymentStatus:
+      oneOf:
+        - type: string
+          const: declared
+          description: The object exists and nothing is deployed from it yet.
+        - type: string
+          const: active
+          description: It is deployed.
+        - type: string
+          const: retired
+          description: "It was, and the object is kept for the record."
+      description: "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is."
+    DeploymentView:
+      type: object
+      properties:
+        file:
+          type: string
+          description: The repository-relative file the object lives in.
+        schema:
+          type: string
+          description: The format version; a version this executable does not read is refused.
+        kind:
+          type: string
+          description: "Always `deployment`."
+        id:
+          type: string
+          description: The identity within the repository.
+        title:
+          type: string
+          description: One line naming it.
+        description:
+          type:
+            - string
+            - "null"
+          description: "One line: what it serves and to whom."
+          default: null
+        status:
+          anyOf:
+            - "$ref": "#/components/schemas/DeploymentStatus"
+            - type: "null"
+          description: Where it stands.
+          default: null
+        application:
+          type: string
+          description: "The application's name at the provider."
+        build:
+          "$ref": "#/components/schemas/Build"
+          description: What is shipped and what it is built from.
+        listen:
+          "$ref": "#/components/schemas/Listen"
+          description: The address the process listens on.
+        health:
+          "$ref": "#/components/schemas/HealthRoutes"
+          description: The routes a platform polls.
+        resources:
+          "$ref": "#/components/schemas/Resources"
+          description: What one machine is granted.
+        machines:
+          "$ref": "#/components/schemas/Machines"
+          description: How many machines run.
+        region:
+          type: string
+          description: The region they run in.
+        budgets:
+          "$ref": "#/components/schemas/Budgets"
+          description: The measured figures it is held to.
+          default:
+            image_bytes: null
+            binary_bytes: null
+            build_context_bytes: null
+            cold_start_ms: null
+            resident_memory_mb: null
+            blocking_check_ms: null
+            request_p99_ms: null
+        provider:
+          "$ref": "#/components/schemas/Provider"
+          description: The provider and its own facts.
+        created_at:
+          type:
+            - string
+            - "null"
+          description: When the object was written.
+          default: null
+        updated_at:
+          type:
+            - string
+            - "null"
+          description: When it was last changed.
+          default: null
+      required:
+        - file
+        - schema
+        - kind
+        - id
+        - title
+        - application
+        - build
+        - listen
+        - health
+        - resources
+        - machines
+        - region
+        - provider
+      description: "One deployment as this process reads it, with where it came from."
     Diagnosis:
       type: object
       properties:
@@ -2838,6 +3626,63 @@ components:
         - exempt
         - owed
       description: How many directories are in each state.
+    DistributionReport:
+      type: object
+      properties:
+        binary:
+          type: string
+          description: The command a person types after installing.
+        repository:
+          type: string
+          description: "`owner/name`, the only host release assets come from."
+        installer_url:
+          type: string
+          description: "The installer's canonical URL."
+        install_command:
+          type: string
+          description: "The one-line install command, composed from its parts."
+        install_and_init_command:
+          type: string
+          description: "The same, initialising the repository afterwards."
+        next_command:
+          type: string
+          description: What a person runs next.
+        checksum:
+          type: string
+          description: The digest algorithm the installer verifies.
+        install_dir:
+          type: string
+          description: Where the launchers go by default.
+        prefix:
+          type: string
+          description: Where the versioned trees go by default.
+        latest_url:
+          type: string
+          description: Where the stable release metadata is published.
+        supported:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many targets a release builds.
+        targets:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TargetView"
+          description: "Every declared target, in the model's order."
+      required:
+        - binary
+        - repository
+        - installer_url
+        - install_command
+        - install_and_init_command
+        - next_command
+        - checksum
+        - install_dir
+        - prefix
+        - latest_url
+        - supported
+        - targets
+      description: "The distribution, as a person or a script asks for it."
     Divergence:
       oneOf:
         - type: string
@@ -3131,6 +3976,29 @@ components:
       required:
         - max_bytes
       description: "The `fixtures` category: where fixtures live and how large one may be."
+    Fly:
+      type: object
+      additionalProperties: false
+      properties:
+        org:
+          type:
+            - string
+            - "null"
+          description: The organisation the application belongs to.
+          default: null
+        force_https:
+          type:
+            - boolean
+            - "null"
+          description: Whether the edge redirects plain HTTP to HTTPS.
+          default: null
+        concurrency:
+          anyOf:
+            - "$ref": "#/components/schemas/Concurrency"
+            - type: "null"
+          description: When the edge considers a machine loaded.
+          default: null
+      description: "Fly.io's own facts: what has no meaning for any other provider."
     GitInfo:
       type: object
       properties:
@@ -3348,6 +4216,40 @@ components:
         - detail
         - decided_by
       description: "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
+    HealthRoutes:
+      type: object
+      additionalProperties: false
+      properties:
+        liveness:
+          "$ref": "#/components/schemas/Route"
+          description: Is this process alive.
+        readiness:
+          "$ref": "#/components/schemas/Route"
+          description: Can this process serve traffic.
+        grace_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: How long the platform waits before the first check counts.
+          default: null
+        interval_seconds:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: How often the platform polls liveness.
+          default: null
+        timeout_seconds:
+          anyOf:
+            - "$ref": "#/components/schemas/Positive"
+            - type: "null"
+          description: How long one check may take before it counts as failed.
+          default: null
+      required:
+        - liveness
+        - readiness
+      description: "The routes a platform polls, and how often."
     HealthStatus:
       oneOf:
         - type: string
@@ -3385,6 +4287,75 @@ components:
           const: POST
           description: The input is bound from the JSON body. No builtin uses it yet.
       description: The HTTP methods a capability may be bound to.
+    Interface:
+      oneOf:
+        - type: string
+          const: loopback
+          description: "Reachable from this host alone: the local default, and what every local invocation\nkeeps."
+        - type: string
+          const: all
+          description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
+      description: Which interface a process listens on.
+    Libc:
+      oneOf:
+        - type: string
+          const: gnu
+          description: "GNU libc: the ordinary distributions."
+        - type: string
+          const: musl
+          description: "musl: Alpine, and any statically linked artifact."
+      description: The C library a Linux artifact is linked against.
+    Listen:
+      type: object
+      additionalProperties: false
+      properties:
+        port:
+          "$ref": "#/components/schemas/Port"
+          description: "The port, stated once for the process, the image and the provider configuration."
+        interface:
+          "$ref": "#/components/schemas/Interface"
+          description: Which interface.
+      required:
+        - port
+        - interface
+      description: The address the process listens on.
+    Liveness:
+      type: object
+      properties:
+        alive:
+          type: boolean
+          description: "Always `true`. A process that could not answer would not answer at all, which is\nthe signal."
+        version:
+          type: string
+          description: "This executable's version, so a rolling deployment can tell which build answered."
+      required:
+        - alive
+        - version
+      description: "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for."
+    Machines:
+      type: object
+      additionalProperties: false
+      properties:
+        count:
+          "$ref": "#/components/schemas/Positive"
+          description: How many machines the application has.
+        min_running:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: How many stay running when idle.
+        autostart:
+          type: boolean
+          description: Whether a request to a stopped machine starts it.
+        autostop:
+          type: boolean
+          description: Whether an idle machine is stopped.
+      required:
+        - count
+        - min_running
+        - autostart
+        - autostop
+      description: "How many machines run, and whether the platform may stop them."
     Match:
       oneOf:
         - type: string
@@ -3884,6 +4855,18 @@ components:
           const: distribution
           description: "The distribution's default, because the repository declares none."
       description: Where the declaration was read from.
+    Os:
+      oneOf:
+        - type: string
+          const: macos
+          description: "Apple's, detected as `Darwin`."
+        - type: string
+          const: linux
+          description: "Linux, detected as `Linux`, and the only one where the C library matters."
+        - type: string
+          const: windows
+          description: "Windows; representable, and not built today."
+      description: An operating system a target runs on.
     Out:
       type: object
       additionalProperties: false
@@ -4038,6 +5021,68 @@ components:
         - count
         - total_nanos
       description: "A phase's totals."
+    Port:
+      type: integer
+      format: uint16
+      minimum: 0
+      maximum: 65535
+      description: "A TCP port a deployed process may bind. Privileged ports are not among them: the\nprocess runs as a non-root user and could not bind one."
+    Positive:
+      type: integer
+      format: uint32
+      minimum: 0
+      description: "A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \"a deployment that cannot run\"."
+    Provider:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          "$ref": "#/components/schemas/ProviderName"
+          description: Which provider.
+        fly:
+          anyOf:
+            - "$ref": "#/components/schemas/Fly"
+            - type: "null"
+          description: "Fly's own block, when the provider is Fly."
+          default: null
+      required:
+        - name
+      description: The provider and the facts that belong to it alone.
+    ProviderName:
+      oneOf:
+        - type: string
+          const: fly
+          description: Fly.io.
+      description: "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
+    Readiness:
+      type: object
+      properties:
+        ready:
+          type: boolean
+          description: Whether every part below is in place.
+        version:
+          type: string
+          description: "This executable's version."
+        capabilities:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many capabilities the registry holds; zero would mean nothing to serve.
+        objects:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many objects the index holds. Read from the index this process built at\nstart-up: it is already in memory, and reading it walks nothing."
+        layer:
+          "$ref": "#/components/schemas/HealthStatus"
+          description: "Whether the layer read cleanly. A degraded layer is still served — the diagnostics\nare the point — so this reports rather than refuses."
+      required:
+        - ready
+        - version
+        - capabilities
+        - objects
+        - layer
+      description: "The answer to \"can this process serve traffic\": the local initialisation a request\nwould need, and nothing beyond this process. A readiness check that grew a dependency\nprobe fails a deployment because an unrelated service is down."
     Reason:
       oneOf:
         - type: string
@@ -4138,6 +5183,121 @@ components:
         - matched
         - divergence
       description: "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
+    Refusal:
+      type: object
+      properties:
+        file:
+          type: string
+          description: The repository-relative file the value came from.
+        key:
+          type: string
+          description: "The key path within it, as the contract names it."
+        found:
+          type: string
+          description: "The value observed, rendered as it was read."
+        problem:
+          type: string
+          description: "What is wrong with it, in one line."
+        correction:
+          type: string
+          description: What to do instead.
+      required:
+        - file
+        - key
+        - found
+        - problem
+        - correction
+      description: "Why a deployment object is refused: what was read, where, and what to do about it."
+    ReleaseArtifactView:
+      type: object
+      properties:
+        target:
+          type: string
+          description: "The target's id in the model."
+        rust_target:
+          type: string
+          description: The Rust target triple.
+        tag:
+          type: string
+          description: The tag the name was derived for.
+        name:
+          type: string
+          description: "The archive's file name."
+        root:
+          type: string
+          description: The directory the archive unpacks into.
+        url:
+          type: string
+          description: "Where a release publishes it, when the tag is a real one."
+      required:
+        - target
+        - rust_target
+        - tag
+        - name
+        - root
+        - url
+      description: "The artifact a target and a tag name, and the directory it unpacks into."
+    ReleaseView:
+      type: object
+      properties:
+        tag:
+          type: string
+          description: The git tag.
+        version:
+          type: string
+          description: The semantic version.
+        channel:
+          "$ref": "#/components/schemas/Channel"
+          description: Whether an unpinned installation may resolve it.
+        published_at:
+          type: string
+          description: "When it was published, UTC."
+        commit:
+          type: string
+          description: The commit it was built from.
+        yanked:
+          type: boolean
+          description: True when it has been withdrawn.
+        artifacts:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many artifacts it published.
+        metadata_url:
+          type: string
+          description: Where its public metadata is served.
+      required:
+        - tag
+        - version
+        - channel
+        - published_at
+        - commit
+        - yanked
+        - artifacts
+        - metadata_url
+      description: "One release, as every projection shows it."
+    ReleasesReport:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many records there are.
+        latest:
+          anyOf:
+            - "$ref": "#/components/schemas/ReleaseView"
+            - type: "null"
+          description: "The release an unpinned installation resolves to, when there is one."
+        releases:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReleaseView"
+          description: "Every record, newest first."
+      required:
+        - count
+        - releases
+      description: "The releases this repository recorded, and the one an unpinned installation resolves to."
     RepositoryInfo:
       type: object
       properties:
@@ -4248,6 +5408,27 @@ components:
             - source
           description: "A query with a resource exposure, executed and rendered as a JSON document."
       description: "The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability's provenance is."
+    Resources:
+      type: object
+      additionalProperties: false
+      properties:
+        cpu_kind:
+          "$ref": "#/components/schemas/CpuKind"
+          description: Shared or dedicated.
+        cpus:
+          "$ref": "#/components/schemas/Positive"
+          description: How many CPUs one machine has.
+        memory_mb:
+          "$ref": "#/components/schemas/Positive"
+          description: "Memory per machine, in megabytes."
+      required:
+        - cpu_kind
+        - cpus
+        - memory_mb
+      description: What one machine is granted.
+    Route:
+      type: string
+      description: "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
     ScopeReport:
       type: object
       properties:
@@ -4512,6 +5693,61 @@ components:
         - by_reason
         - out_files
       description: "Every tracked file against the scope, counted."
+    TargetStatus:
+      oneOf:
+        - type: string
+          const: supported
+          description: "Built by every release, offered by the installer, listed as supported. A release\nthat is missing this artifact is not published."
+        - type: string
+          const: experimental
+          description: "Built and offered, and documented as not yet proven."
+        - type: string
+          const: unavailable
+          description: "Documented, never built, refused by the installer with its recorded reason."
+      description: "What the project promises about a target.\n\nSee [`crate::deploy::Status`]: both are `Status` in their own module and neither is in\nthe one component namespace the schema document has."
+    TargetView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The target's id in the model."
+        title:
+          type: string
+          description: "How it is written in prose: `Linux x86_64 musl`."
+        os:
+          "$ref": "#/components/schemas/Os"
+          description: The operating system.
+        arch:
+          "$ref": "#/components/schemas/Arch"
+          description: The architecture.
+        libc:
+          anyOf:
+            - "$ref": "#/components/schemas/Libc"
+            - type: "null"
+          description: "The C library, on Linux."
+        rust_target:
+          type: string
+          description: The Rust target triple.
+        status:
+          "$ref": "#/components/schemas/TargetStatus"
+          description: What the project promises about it.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why, when it is not built."
+        artifact:
+          type: string
+          description: "The artifact name, with `{tag}` where a release's tag goes."
+      required:
+        - id
+        - title
+        - os
+        - arch
+        - rust_target
+        - status
+        - artifact
+      description: "One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen."
     Transport:
       oneOf:
         - type: string
@@ -4574,7 +5810,7 @@ components:
           description: The capability talks to something the benchmark host cannot provide.
       description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
 x-majordomus:
-  generator: majordomus-cli 0.1.0
+  generator: majordomus-cli 0.2.0
   infrastructure:
     - /
     - /openapi.json
@@ -4596,4 +5832,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.1.0
+x-majordomus-generator: majordomus-cli 0.2.0

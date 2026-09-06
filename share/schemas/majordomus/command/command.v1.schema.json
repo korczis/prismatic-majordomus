@@ -3,7 +3,7 @@
   "$id": "https://majordomus.dev/schemas/majordomus/command/command.v1.schema.json",
   "x-majordomus-schema": "majordomus.command/v1",
   "title": "Command",
-  "description": "One entry of the command registry, share/commands.yaml: a public or internal command of the shell tool, what it does to the repository, what it reads and writes, and which exit codes it can produce. The file is authority for reference semantics; bin/majordomus remains authority for what executes, and `majordomus doctor` proves the two agree.",
+  "description": "One entry of the command registry, share/commands.yaml: a command of the public surface with what it does to the repository, what it reads and writes, the exit codes it can produce, and the page and demonstration that represent it. This file is authority for reference semantics; bin/majordomus is authority for what executes, and `majordomus doctor` proves the two agree.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -22,69 +22,66 @@
     "reads",
     "writes",
     "exit_codes",
-    "demo",
     "note"
   ],
   "properties": {
     "id": {
-      "description": "The word after `majordomus`; unique, and the identity every other file refers to.",
       "type": "string",
-      "pattern": "^[a-z][a-z0-9-]*$"
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "The name the command is invoked by, and its identity."
     },
-    "title": { "type": "string", "minLength": 1 },
+    "title": { "type": "string" },
     "summary": {
-      "description": "One sentence: what the command does, in the present tense.",
       "type": "string",
-      "minLength": 1
+      "description": "One line: what the command does, as the help text says it."
     },
-    "category": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "category": {
+      "enum": ["context", "continuity", "memory", "plan", "rules", "system", "task"],
+      "description": "The part of the tool it belongs to."
+    },
     "stage": {
-      "description": "Where the command sits on the task lifecycle; one of the stages the file declares.",
-      "type": "string",
-      "pattern": "^[a-z][a-z0-9-]*$"
+      "enum": ["begin", "conclude", "inspect", "setup", "verify", "work"],
+      "description": "Where in a sitting it is reached for."
     },
     "visibility": {
-      "description": "public: listed in the help text, and owed a page, a demonstration and test coverage. internal: dispatched and absent from the help text, with the reason in `note`. There is no third state.",
-      "enum": ["public", "internal"]
+      "enum": ["public", "internal"],
+      "description": "public is listed in `majordomus --help` and is owed a page, a demonstration and test coverage; internal is dispatched but absent from the help text, with the reason in `note`. There is no third state."
     },
     "class": {
-      "description": "What the command does to the repository, which is what decides whether it may run in a check.",
-      "enum": ["read-only", "state-mutating", "generated-output-mutating"]
+      "enum": ["read-only", "state-mutating", "generated-output-mutating"],
+      "description": "What it does to the repository: nothing, durable records under .ai/local/state/, or generated artifacts outside it."
     },
     "requires_repository": { "type": "boolean" },
     "requires_installed": { "type": "boolean" },
     "requires_task": {
-      "description": "required: refuses without an active task. optional: behaves differently with and without one, and says which. none: never reads the task record.",
-      "enum": ["required", "optional", "none"]
+      "enum": ["none", "optional", "required"],
+      "description": "required refuses without an active task, optional behaves differently with and without one and says which, none never reads the task record."
     },
     "json": {
-      "description": "Whether the command answers `--json`. Read-only commands do; a mutating one does not.",
-      "type": "boolean"
+      "type": "boolean",
+      "description": "Whether it takes --json and answers with a document a program reads."
     },
-    "syntax": { "type": "string", "minLength": 1 },
+    "syntax": { "type": "string" },
     "reads": {
-      "description": "The repository-relative paths the command reads; the command page's Reads section is rendered from this.",
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string" },
+      "description": "Repository-relative paths it reads."
     },
     "writes": {
-      "description": "The repository-relative paths the command writes; empty for a read-only command.",
       "type": "array",
-      "items": { "type": "string" }
+      "items": { "type": "string" },
+      "description": "Repository-relative paths it writes. Empty for a read-only command."
     },
     "exit_codes": {
-      "description": "Every code the command can produce, reconciled against the MJ_EX_* constants its implementation references.",
       "type": "array",
+      "items": { "type": "integer", "minimum": 0 },
       "minItems": 1,
-      "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+      "description": "Every code it can exit with, 0 included."
     },
     "demo": {
-      "description": "The demonstration component that must exist for this command.",
-      "type": "string"
+      "type": "string",
+      "description": "The demonstration that represents it, by id."
     },
-    "note": {
-      "description": "What a reader has to know that the other fields do not say — including, for an internal command, why it is not public.",
-      "type": "string"
-    }
+    "note": { "type": "string" }
   }
 }

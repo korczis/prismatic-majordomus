@@ -186,3 +186,51 @@ fixture_repo() {
     :                       # the loop body never ends on a false test: `set -e` would stop it
   done
 }
+
+# A local HTTP server over a directory, for the cases that must exercise a real download
+# without reaching the network. Sets HTTP_PORT, HTTP_BASE and HTTP_PID; the caller stops it
+# with `stop_http`. Answers 1 when no server this harness knows how to start is present, so
+# a case skips rather than fails on a machine without python or node.
+start_http() {
+  local dir="$1" tries=0 port
+  HTTP_PORT=""; HTTP_BASE=""; HTTP_PID=""
+  local runner=""
+  if command -v python3 >/dev/null 2>&1; then runner=python3
+  elif command -v node >/dev/null 2>&1; then runner=node
+  else return 1; fi
+  while [ "$tries" -lt 20 ]; do
+    port=$(( 20000 + ((( $$ + tries * 977 ) * 31 ) % 20000) ))
+    case "$runner" in
+      python3) ( cd "$dir" && exec python3 -m http.server "$port" --bind 127.0.0.1 ) >/dev/null 2>&1 &
+        ;;
+      node) node -e '
+          const http=require("http"),fs=require("fs"),p=require("path");
+          const root=process.argv[1], port=Number(process.argv[2]);
+          http.createServer((q,s)=>{
+            const f=p.join(root, decodeURIComponent(q.url.split("?")[0]));
+            if(!p.resolve(f).startsWith(p.resolve(root))){s.writeHead(403);return s.end();}
+            fs.readFile(f,(e,d)=>{ if(e){s.writeHead(404);return s.end("not found");} s.writeHead(200);s.end(d); });
+          }).listen(port,"127.0.0.1");
+        ' "$dir" "$port" >/dev/null 2>&1 &
+        ;;
+    esac
+    HTTP_PID=$!
+    local waited=0
+    while [ "$waited" -lt 40 ]; do
+      code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/" 2>/dev/null || true)"
+      if [ -n "$code" ] && [ "$code" != 000 ]; then
+        HTTP_PORT="$port"; HTTP_BASE="http://127.0.0.1:$port"
+        export HTTP_PORT HTTP_BASE HTTP_PID
+        return 0
+      fi
+      kill -0 "$HTTP_PID" 2>/dev/null || break
+      sleep 0.25; waited=$((waited + 1))
+    done
+    kill "$HTTP_PID" 2>/dev/null || true
+    tries=$((tries + 1))
+  done
+  HTTP_PID=""
+  return 1
+}
+
+stop_http() { [ -n "${HTTP_PID:-}" ] && kill "$HTTP_PID" 2>/dev/null; HTTP_PID=""; return 0; }

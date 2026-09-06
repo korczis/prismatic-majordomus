@@ -1,0 +1,34 @@
+id: I0906
+milestone: fly-deployment
+title: Termination is graceful and proved against the real container
+slug: graceful-shutdown
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Handle SIGTERM and SIGINT so that a Machine that is being stopped, redeployed or autostopped finishes its in-flight responses and exits inside the platform's timeout."
+why: "A profile with autostop and zero minimum machines means the process is terminated routinely rather than exceptionally. A server that is killed mid-response makes every deploy and every idle window a source of truncated requests."
+current_state: "Stopping is cooperative for the owner's own call — workers are unblocked and joined and an in-flight response is finished — but nothing binds that to a process signal."
+desired_state: "A termination signal stops accepting new connections, finishes what is in flight, and exits within a bounded, documented timeout, proved against the production container rather than against a unit test alone."
+scope:
+  - apps/majordomus-cli/src/http/server.rs
+  - apps/majordomus-cli/src/commands/serve.rs
+non_scope:
+  - Draining application state; the served layer is read-only
+  - Configuring provider kill signals unless a measurement shows the default is wrong
+depends_on:
+  - I0904
+acceptance_criteria:
+  - SIGTERM and SIGINT both begin an orderly stop
+  - A request in flight when the signal arrives receives its complete response
+  - The process exits within the documented timeout and reports a non-error exit
+  - The behaviour is proved against the production container, not only in-process
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - sigterm_clean
+  - inflight_finished
+  - exit_within_timeout
+risk: "A signal handler that waits for an unbounded connection never exits and the platform kills it anyway. The timeout is part of the contract and must be declared."
+created_at: 2026-09-06
+updated_at: 2026-09-06

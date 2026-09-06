@@ -1151,6 +1151,90 @@ See [`CLI.md`](@/docs/cli-specification.md) for `majordomus adr`.
 
 ---
 
+## `.ai/repo/deployments/<id>.yaml`
+
+One deployment of this repository's executable, and the only authoritative statement of
+it. The container image definition, its ignore file and the provider configuration
+(`fly.toml`) are **generated** from this object; each carries a provenance header naming
+this file and the command that regenerates it, and `majordomus generate --check` fails
+when one is edited by hand. Contract:
+[`share/schemas/majordomus/deployment/deployment.v1.schema.json`](../share/schemas/majordomus/deployment/deployment.v1.schema.json)
+(`deployment/v1`); keys are closed by `share/allow/deployment.txt`, generated from it.
+
+```yaml
+schema: deployment/v1
+kind: deployment
+id: majordomus                  # identity, [a-z][a-z0-9-]*
+title: ...                      # one line, for a listing
+description: ...                # one line: what it serves and to whom
+status: declared                # declared | active | retired
+
+application: majordomus         # the application's name at the provider
+
+build:
+  package: majordomus-cli       # the Cargo package built
+  binary: majordomus            # the binary target the image runs
+  profile: release              # the Cargo profile
+  inputs: [apps/majordomus-cli, share, .ai, Cargo.toml, Cargo.lock]
+  site: site/public             # what the canonical site pipeline writes; absent = no site
+
+listen:
+  port: 8080                    # >= 1024: the process runs as a non-root user
+  interface: all                # loopback | all — `all` is stated intent, not a suppressed warning
+
+health:
+  liveness: /api/v1/live        # must be a route a capability registers
+  readiness: /api/v1/ready      # likewise
+  grace_seconds: 2
+  interval_seconds: 15
+  timeout_seconds: 2
+
+resources:
+  cpu_kind: shared              # shared | performance
+  cpus: 1
+  memory_mb: 256                # a hypothesis until a measured run under it passes
+
+machines:
+  count: 1                      # the deployed inventory is asserted against this
+  min_running: 0                # 0 with autostop: the cheap profile
+  autostart: true
+  autostop: true
+
+region: fra                     # the provider's own vocabulary
+
+budgets:                        # each written by the run that measured it; none guessed
+  image_bytes: ...
+  binary_bytes: ...
+  build_context_bytes: ...
+  cold_start_ms: ...
+  resident_memory_mb: ...
+  blocking_check_ms: ...
+  request_p99_ms: ...
+
+provider:
+  name: fly                     # provider-specific facts live here and nowhere else
+  fly:
+    org: ...
+    force_https: true
+    concurrency: { soft_limit: 20, hard_limit: 40 }
+```
+
+**The port is stated once.** The process, the image and the provider configuration all
+read this one field; a literal port anywhere else is the drift this kind exists to
+prevent. The same holds for the region, the resources, the machine count, the health
+routes and the build inputs.
+
+**No credential belongs here.** The token that authorises a deployment comes from outside
+the repository and is never written into the object, into a generated file, into an image
+layer or into a log.
+
+The schema decides shape; `majordomus deploy doctor` decides sense — a health route no
+capability registers, a package or binary the workspace does not contain, a build input
+that does not resolve, a `min_running` above `count` — and each refusal names the file, the
+key, the value found and the correction.
+
+---
+
 ## `.ai/repo/knowledge/sources.yaml`
 
 The repository's declared knowledge sources: which tracked files are knowledge, in which

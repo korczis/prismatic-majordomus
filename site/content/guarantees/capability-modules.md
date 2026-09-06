@@ -1,7 +1,7 @@
 +++
 title = "A capability of the Rust executable is declared once and composed into its module, the root composes modules, and the registry refuses a capability outside its module's namespace"
 description = "Adding an executable capability is one capability! block in the file of the module it belongs to, with its typed input and output and the input's benchmark cases. The module's module() lists its capabilities; compose_modules! at the root lists the modules and nothing else. MCP, HTTP, OpenAPI, Swagger UI, the command line, the benchmark targets, the cache behaviour, the generated reference and the registry manifest follow from the block; no other file changes. A capability whose id namespace is not its module, a module composed twice, an invalid module id, a cache policy that keeps nothing, a cached command or a benchmark policy that contradicts the kind stops the registry from building, with the id and the provenance named."
-weight = 113
+weight = 117
 [extra]
 claim_id = "capability-modules"
 status = "guaranteed"

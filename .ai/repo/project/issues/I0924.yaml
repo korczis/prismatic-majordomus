@@ -1,0 +1,31 @@
+id: I0924
+milestone: fly-deployment
+title: The decision is recorded where architecture decisions are recorded
+slug: deployment-adr
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Write the architecture decision record for deploying as a generated projection of canonical deployment metadata, with the alternatives that were genuinely considered and the consequences that follow."
+why: "The repository decides architecture in ADRs, and the ones that matter here — a hand-written Dockerfile against a generated one, Alpine against a distroless or slim base, one machine against redundancy, an account token against a scoped one — will be revisited by somebody who was not in this session."
+current_state: "Twelve ADRs cover the CLI, the registry, the shared server, performance, projections, CI, skills, use cases, prompt capture, knowledge, directory contracts, the cockpit and web surfaces. None covers deployment."
+desired_state: "One ADR states the decision, the alternatives, the tradeoffs and what would have to change to revisit them, in the repository's own ADR format."
+scope:
+  - .ai/repo/adrs
+non_scope:
+  - A second ADR format or an ADR that restates the documentation
+depends_on:
+  - I0901
+acceptance_criteria:
+  - The record follows the repository's ADR format and its frontmatter exactly
+  - It states the decision, the container strategy against buildpacks and image-based alternatives, the runtime base, the single-machine cheap profile, the autostop behaviour, the token model and the generation architecture
+  - Alternatives that were genuinely available are recorded with why they were not taken
+  - The consequences include what scaling, rollback and migration would mean under this decision
+  - It is related to the ADRs it depends on rather than restating them
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - adr_recorded
+risk: "An ADR written after everything is finished records the implementation rather than the decision. It has to be written when the choice is still visible."
+created_at: 2026-09-06
+updated_at: 2026-09-06

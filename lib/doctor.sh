@@ -42,6 +42,9 @@
 # the use-case validators: the catalogue's references and the coverage tally
 # shellcheck source=usecase.sh
 . "$MJ_LIB_DIR/usecase.sh"
+# the deployment contract: the section's own closure, read without a Rust toolchain
+# shellcheck source=deployment.sh
+. "$MJ_LIB_DIR/deployment.sh"
 
 MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {
