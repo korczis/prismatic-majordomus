@@ -34,8 +34,7 @@ contract of their own (`children.require_contract: false`): the format is stated
 Front matter is the machine side and the body is the human side. Discovery, validation,
 relations, filtering, ordering, search, the command line, the HTTP API, MCP and the
 diagnosis are all read from the front matter; nothing derives structure from the prose.
-The contracts are `share/schemas/moment.schema.json`, `audience.schema.json` and
-`area.schema.json`. A key they do not declare is an error, and a `schema:` version the tool
+The contracts are under `share/schemas/majordomus/<kind>/<kind>.v1.schema.json`. A key they do not declare is an error, and a `schema:` version the tool
 does not know is refused rather than guessed.
 
 The file name is the `id` is the slug. There is no mapping table anywhere.
