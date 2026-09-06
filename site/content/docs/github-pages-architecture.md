@@ -132,7 +132,7 @@ which `test/cases/51_derived_artifacts_committed.sh` and the release criterion r
 | `policy.json` | `share/skeleton/policy.yaml` | the policy as structure, plus the raw text |
 | `capabilities.json` | `docs/CLAIMS.yaml` | every claim; the generator fails on a missing path or an untested guaranteed claim |
 | `commands.json` | `share/commands.yaml`, `docs/CLI.md`, the test cases | every shell command with its semantics, narrative and evidence |
-| `catalogue.json` | `share/use-cases.yaml`, `share/applications.yaml` | the use cases and applications, cross-referenced |
+| `catalogue.json` | `.ai/repo/use-cases/`, `.ai/repo/applications/` | the use cases and applications, cross-referenced |
 | `doctrines.json` | the rule packages | every doctrine with its enforcement chain |
 | `plan.json` | `.ai/repo/project/` | milestones, issues, the dependency graph, derived status |
 | `openapi.json` | `docs/generated/openapi.json` | the HTTP API in the shape `api.html` renders (`scripts/lib/openapi-site.jq`) |
@@ -183,7 +183,7 @@ projection.
 | an accepted baseline | `majordomus bench baseline update` on the platform it measures | the baseline JSON by hand |
 | what the executable is, owns, refuses; discovery; transports; side effects | `apps/majordomus-cli/README.md` | `/registry/executable/` |
 | a shell command's category, stage, reads, writes, syntax, exit codes | `share/commands.yaml` (semantics) and `docs/CLI.md` (narrative) | `commands.json`, `/commands/<name>/` |
-| a use case or an application | `share/use-cases.yaml`, `share/applications.yaml` | `catalogue.json`, its route |
+| a use case or an application | `.ai/repo/use-cases/`, `.ai/repo/applications/` | `catalogue.json`, its route |
 | a claim | `docs/CLAIMS.yaml` and `docs/claims/<id>.md` | `capabilities.json`, `docs/SITE_CLAIMS.md`, `/guarantees/` |
 | a doctrine | the rule file under `.ai/repo/rules/` or the vendored package | `doctrines.json`, `/doctrines/` |
 | a milestone or an issue | `.ai/repo/project/**` | `plan.json`, `docs/PLAN_STATUS.md`, `/plan/` |

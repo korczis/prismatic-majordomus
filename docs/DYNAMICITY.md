@@ -44,7 +44,7 @@ contents:
 | CLI commands | the dispatch table |
 | tests | `test/cases/` and the metadata in each case |
 | routes | the generated content collections |
-| doctrines | `share/doctrines.yaml` |
+| doctrines | the rule files under `.ai/repo/rules/` |
 | providers | the declared projections |
 | claims | `docs/CLAIMS.yaml` |
 | counts of any of the above | the thing being counted |
@@ -61,7 +61,7 @@ file in `docs/` appears in no row.
 |---|---|---|---|
 | Policy | `.ai/repo/policy.yaml` | schema in `share/allow/policy.txt` | provider projections |
 | Profile | `.ai/repo/profiles/*.yaml` | directory glob | context, finish requirements, site |
-| Doctrine | `share/doctrines.yaml` | registry walk | `check`, `finish`, `doctor`, `watch`, site |
+| Doctrine | `.ai/repo/rules/` and the vendored packages | registry walk | `check`, `finish`, `doctor`, `watch`, site |
 | Validator | `mj_validate_*` in `lib/` | source scan, reconciled against the registry | doctrine dispatch |
 | Claim | `docs/CLAIMS.yaml` | registry walk | guarantees pages, `docs/SITE_CLAIMS.md` |
 | Responsibility | `docs/RESPONSIBILITIES.yaml` | registry walk | site, doctrine registry |
@@ -218,7 +218,7 @@ the same failure, and this repository exists because of the second one.
 
 Majordomus supervises this repository with the same registries it ships. There is no
 self-specific inventory and no test-only code path: the doctrines that run here are the
-doctrines in `share/doctrines.yaml`, and the wiring `doctor` reconciles is the wiring
+rules under `.ai/repo/rules/`, and the wiring `doctor` reconciles is the wiring
 declared in `.ai/repo/policy.yaml`.
 
 The property this is meant to produce, stated as a target: adding a command, doctrine,
@@ -231,9 +231,9 @@ so.
 
 Short by design. If a list below grows, the architecture has regressed.
 
-- **A doctrine** — add the entry to `share/doctrines.yaml` and write its
-  `mj_validate_<validator>` function. `doctor` reconciles the two and fails if either is
-  missing.
+- **A doctrine** — write the rule under `.ai/repo/rules/` with its
+  `x-majordomus.validator`, and write the `mj_validate_<validator>` function it names.
+  `doctor` reconciles the two and fails if either is missing.
 - **A claim** — add the entry to `docs/CLAIMS.yaml` and write `docs/claims/<id>.md`. The
   site generator refuses to build without the detail page, and a guaranteed claim with no
   test path is an error.

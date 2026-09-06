@@ -1606,7 +1606,7 @@ p99, maximum, mean and standard deviation; nothing is averaged away.
 - Every run is written under `.ai/local/benchmarks/` (`runs/<run-id>.json`, `latest.json`,
   one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored
   by git, never a baseline.
-- `--write-baseline` writes the run as `.ai/repo/benchmarks/baseline.json`, schema
+- `--write-baseline` writes the run as `baseline.json` under `.ai/repo/benchmarks/`, schema
   `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It
   refuses a dirty tree without `--force`, because a baseline records a commit.
 - `--check` compares the run with the baseline under `benchmark.regression`: for each target

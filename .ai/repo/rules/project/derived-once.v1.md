@@ -35,10 +35,9 @@ visible there before it is visible on a clock.
 
 # Failure behaviour
 
-No command decides this rule; a reviewer does, with the counters in front of them. Case
-`test/cases/78_flatten_once.sh`, when it exists, holds the counts of the commands the
-pre-commit hook runs to the number of distinct canonical files they read; a change that
-re-flattens inside a loop fails it.
+No command decides this rule; a reviewer does, with the counters in front of them. No case holds these counts yet. The one that does will hold the counts of the commands
+the pre-commit hook runs to the number of distinct canonical files they read, and a change
+that re-flattens inside a loop will fail it.
 
 # Verification
 

@@ -1305,7 +1305,7 @@ layer; never a baseline.
 scenario does not accept. Percentiles are nearest-rank over the sorted samples. `clock`
 names the source of the milliseconds (`epochrealtime`, `perl` or `seconds`).
 
-## `.ai/repo/benchmarks/baseline.json` — the accepted baseline
+## `baseline.json` under `.ai/repo/benchmarks/` — the accepted baseline
 
 The same document with schema `majordomus/benchmark-baseline/v1`, written only by
 `majordomus bench --write-baseline` on a clean tree (or with `--force`), tracked and
