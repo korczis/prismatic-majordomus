@@ -191,6 +191,14 @@
     background: var(--mj-bg-sunken);
     color: var(--mj-text);
   }
+  /* a surface this render cannot answer: named, so a reader knows it exists, and inert,
+     so nothing offers a destination the render cannot reach */
+  .mj-nav-link--unavailable,
+  .mj-nav-link--unavailable:hover {
+    color: var(--mj-text-muted);
+    background: transparent;
+    @apply cursor-default opacity-60;
+  }
   .mj-nav-link--current {
     background: var(--color-accent-50);
     color: var(--color-accent-900);
