@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/site-registry.schema.json",
+  "title": "Site registry dataset",
+  "description": "site/data/registry/registry.json: the dataset the website's /registry/ pages are rendered from — the capability registry, the index of the layer, the kinds, the provider projections, the command line, the MCP and HTTP surfaces and the benchmark system, in one document written by `majordomus generate site`.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "registry", "index", "kinds", "projections", "cli", "mcp", "http", "benchmarks"],
+  "properties": {
+    "schema": { "const": "majordomus-site-registry/v2" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "const": "majordomus-cli" },
+        "version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "registry": {
+      "type": "object",
+      "required": ["fingerprint", "summary", "builtin", "modules"],
+      "properties": {
+        "fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "summary": { "type": "object", "required": ["total", "builtin", "declarative", "modules"] },
+        "builtin": { "type": "array", "items": { "type": "object", "required": ["id", "module", "kind"] } },
+        "modules": { "type": "array", "items": { "type": "object", "required": ["id", "title"] } }
+      }
+    },
+    "index": {
+      "type": "object",
+      "required": ["fingerprint", "state", "layer_schema", "sections", "by_kind", "objects"],
+      "properties": {
+        "fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "state": { "enum": ["ok", "degraded"] },
+        "layer_schema": { "type": "string", "minLength": 1 }
+      }
+    },
+    "kinds": { "type": "array", "items": { "type": "object", "required": ["name", "format", "identity", "objects"] } },
+    "projections": { "type": "array", "items": { "type": "object", "required": ["provider", "target", "mode"] } },
+    "cli": { "type": "object", "required": ["path", "route"] },
+    "mcp": { "type": "object", "required": ["server_name", "tools", "resources"] },
+    "http": { "type": "object", "required": ["routes"] },
+    "benchmarks": { "type": "object", "required": ["targets", "coverage"] }
+  }
+}

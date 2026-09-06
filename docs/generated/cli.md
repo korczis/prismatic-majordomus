@@ -1,6 +1,5 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: the clap declaration of the command line and the examples declared with it (apps/majordomus-cli/src/cli.rs);
-     regenerate with `majordomus generate`
+     Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
      Generator: majordomus-cli 0.1.0 -->
 # Command line of the Rust executable
 
@@ -271,7 +270,7 @@ majordomus generate [OPTIONS] [TARGET]
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
-| `<TARGET>` | `all` \| `openapi` \| `docs` \| `benchmarks` \| `registry` \| `allow` \| `providers` \| `site` | `all` | What to generate — `all`: Every target; `openapi`: `docs/generated/openapi.json`; `docs`: `docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`; `benchmarks`: `docs/generated/benchmarks.md`: every benchmark target and the coverage; `registry`: `docs/generated/registry.json`: the builtin registry as data; `allow`: The shell tool's allow-lists under share/allow, derived from the schemas; `providers`: The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...); `site`: site/data/registry/registry.json, the registry dataset the site renders |
+| `<TARGET>` | `all` \| `openapi` \| `docs` \| `benchmarks` \| `registry` \| `allow` \| `providers` \| `site` \| `manifest` | `all` | What to generate — `all`: Every target; `openapi`: `docs/generated/openapi.{json,yaml}`; `docs`: `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`; `benchmarks`: `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage; `registry`: `docs/generated/registry.{json,yaml}`: the builtin registry as data; `allow`: The shell tool's allow-lists under share/allow, derived from the schemas; `providers`: The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...); `site`: site/data/registry/registry.json, the registry dataset the site renders; `manifest`: docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact |
 | `--check` | flag | — | Compare with what is on disk and exit 10 when stale; write nothing |
 | `--out` | `<DIR>` | — | Write under this directory instead of the repository root (docs/generated is appended) |
 

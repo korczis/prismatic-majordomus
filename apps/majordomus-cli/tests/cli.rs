@@ -279,8 +279,14 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
     let f = Fixture::new();
     // a repository that carries the distribution itself, as this one does
     let dist = common::dist_share();
+    // the kind schemas only: share/schemas/generated/ holds the contracts of the
+    // *generated documents* and is not a kind's, which is why kind discovery does not
+    // recurse into it
     for entry in std::fs::read_dir(dist.join("schemas")).unwrap() {
         let p = entry.unwrap().path();
+        if p.is_dir() {
+            continue;
+        }
         f.write(
             &format!("share/schemas/{}", p.file_name().unwrap().to_str().unwrap()),
             &std::fs::read_to_string(&p).unwrap(),

@@ -807,6 +807,15 @@
       "note": "share/kinds.yaml and share/schemas/*.schema.json are the distribution's; .ai/repo/knowledge/kinds.yaml and schemas/ are the repository's; a name declared by both is an error naming both files. The shell tool's allow-lists are generated from the same schemas."
     },
     {
+      "id": "claim:generated-artifacts-typed",
+      "kind": "claim",
+      "label": "Every generated artifact declares the document it projects, the encoding it is written in, the schema its content satisfies and its source, and a structured document is written in every encoding it is committed in from one value",
+      "status": "guaranteed",
+      "route": "/guarantees/generated-artifacts-typed/",
+      "external": false,
+      "note": "JSON, YAML and Markdown of a document are renderings of one value, so they cannot disagree; each carries a provenance header in the form its encoding allows; the index of the whole set, docs/generated/artifacts.json, is itself generated and is read back by artifacts.list."
+    },
+    {
       "id": "claim:generated-projections-checked",
       "kind": "claim",
       "label": "The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one",
@@ -1932,6 +1941,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/51_derived_artifacts_committed.sh"
     },
     {
+      "id": "test:test/cases/52_generated_artifact_typing.sh",
+      "kind": "test",
+      "label": "test/cases/52_generated_artifact_typing.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/52_generated_artifact_typing.sh"
+    },
+    {
       "id": "test:test/cases/65_tool_root_independence.sh",
       "kind": "test",
       "label": "test/cases/65_tool_root_independence.sh",
@@ -2514,6 +2530,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:generated-artifacts-typed",
+      "target": "source:docs/CAPABILITIES.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:generated-projections-checked",
       "target": "source:docs/CAPABILITIES.md",
       "kind": "specified_by"
@@ -3084,6 +3105,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:generated-artifacts-typed",
+      "target": "impl:apps/majordomus-cli/src/generate.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:generated-projections-checked",
       "target": "impl:apps/majordomus-cli/src/generate.rs",
       "kind": "implemented_by"
@@ -3651,6 +3677,11 @@
     {
       "source": "claim:schema-driven-kinds",
       "target": "test:test/cases/76_capabilities_projections.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:generated-artifacts-typed",
+      "target": "test:test/cases/52_generated_artifact_typing.sh",
       "kind": "proved_by"
     },
     {

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/cli.schema.json",
+  "title": "Command line document",
+  "description": "docs/generated/cli.{json,yaml}: the native command line as clap declares it, with the examples declared beside the declaration. The website's reference under /docs/cli/ is built from this document and never from the Rust source.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "version", "source", "route_prefix", "cli"],
+  "properties": {
+    "schema": { "const": "majordomus/cli/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "pattern": "^majordomus-cli " },
+    "version": { "type": "string", "minLength": 1 },
+    "source": { "type": "string", "minLength": 1 },
+    "route_prefix": { "type": "string", "pattern": "^/" },
+    "cli": { "$ref": "#/$defs/command" }
+  },
+  "$defs": {
+    "command": {
+      "type": "object",
+      "required": ["path", "route", "executable", "about", "args", "examples", "subcommands"],
+      "properties": {
+        "path": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "route": { "type": "string", "pattern": "^/.*/$" },
+        "executable": { "type": "boolean" },
+        "about": { "type": "string", "minLength": 1 },
+        "args": { "type": "array", "items": { "type": "object", "required": ["name"] } },
+        "examples": { "type": "array", "items": { "type": "object", "required": ["title", "argv"] } },
+        "subcommands": { "type": "array", "items": { "$ref": "#/$defs/command" } }
+      }
+    }
+  }
+}

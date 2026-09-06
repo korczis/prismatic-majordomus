@@ -20,6 +20,11 @@ pub const SCHEMAS_DIR: &str = "schemas";
 /// schemas.
 pub const ALLOW_DIR: &str = "allow";
 
+/// The subdirectory of [`SCHEMAS_DIR`] holding one JSON Schema per generated document.
+/// Schema discovery for object kinds does not recurse, so nothing here is ever read as a
+/// kind's schema.
+pub const GENERATED_SCHEMAS_DIR: &str = "generated";
+
 /// The suffix of a schema file: `<name>.schema.json`.
 pub const SCHEMA_SUFFIX: &str = ".schema.json";
 
@@ -97,6 +102,12 @@ impl Share {
     /// `<share>/allow`.
     pub fn allow_dir(&self) -> PathBuf {
         self.dir.join(ALLOW_DIR)
+    }
+
+    /// `<share>/schemas/generated`: the contracts of the generated documents, matched to a
+    /// document by the `const` of its `schema` member.
+    pub fn generated_schemas_dir(&self) -> PathBuf {
+        self.dir.join(SCHEMAS_DIR).join(GENERATED_SCHEMAS_DIR)
     }
 }
 
