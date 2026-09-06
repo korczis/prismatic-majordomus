@@ -16,6 +16,9 @@
 # the command-surface doctrines: their validators read share/, not this repository's state
 # shellcheck source=commands.sh
 . "$MJ_LIB_DIR/commands.sh"
+# the Rust command modules: this validator reads the crate, and skips where there is none
+# shellcheck source=rust_commands.sh
+. "$MJ_LIB_DIR/rust_commands.sh"
 # the continuity validators read these stores through their own commands' helpers
 # shellcheck source=question.sh
 . "$MJ_LIB_DIR/question.sh"
