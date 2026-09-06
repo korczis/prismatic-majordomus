@@ -496,16 +496,36 @@ contains the other, which is why they are two records rather than one field.
 Sessions are optional. A worker that never opens one loses the episode boundary and
 nothing else; every other record is written exactly as before.
 
-- `start [--owner <who>] [--worker <id>]` opens the episode. One open session per
-  worktree: a second `start` is refused rather than replacing the first. `--worker` is a
+- `start [--owner <who>] [--worker <id>] [--if-open refuse|keep]` opens the episode. One
+  open session per worktree: a second `start` is refused rather than replacing the first,
+  unless `--if-open keep` says to keep what is open — which is what a provider hook passes,
+  because its start event fires again on a resume and on a compaction. `--worker` is a
   free-form identity string, recorded only when supplied — an unrecorded worker stays
   unrecorded, because a guessed one is indistinguishable from a recorded one the moment it
-  is written down.
+  is written down. `--provider` and `--provider-session` record which provider's event
+  opened the episode and that provider's own session identity; only something running
+  inside that provider's hook can supply them, which is what makes `opened_by: hook` in the
+  working context a fact rather than a claim.
 - `status` prints the open session with the divergence label of the commit it opened at,
   or reports that there is none. Read-only. Absence is an answer, not a failure.
-- `close [--outcome closed|interrupted]` closes the episode into an immutable record under
-  `state/sessions/` and removes the open one. An authored summary may arrive on stdin and
-  is optional; identity fields in it are refused, as they are in a checkpoint.
+- `close [--outcome closed|interrupted] [--if-none refuse|ignore]` closes the episode into
+  an immutable record under the layer's sessions section and removes the open one. An
+  authored summary may arrive on stdin and is optional; identity fields in it are refused,
+  as they are in a checkpoint. `--if-none ignore` makes "nothing was open" the normal case
+  rather than a failure, which is what a provider's end event passes.
+- `context [<session-id>]` prints the path of an episode's working context. Read-only, and
+  it prints the path rather than the document: the document is local evidence, and a command
+  that pours it into a terminal invites it into somebody's context.
+
+**The open freezes the context it was given.** `start` writes
+`.ai/local/session-contexts/<stamp>--<session-id>.md` — the front matter of the episode, the
+context builder's output verbatim, and a `## Notes` section for the worker — and `close`
+appends a `## Close` section naming the outcome and the record. The document is appended to
+and never rewritten, so what a worker typed into it survives. The store is local: it names
+this machine and it is a snapshot of a projection, so it is never published and never loaded
+into a context on its own, and `doctor` refuses a document that carries a conversation. See
+`capture session` for the hooks that make the boundary independent of anybody remembering
+to draw it.
 
 **The closed record is an envelope of references.** It names the tasks, issues, milestones,
 checkpoints, handovers, decisions, questions and evidence of the episode, and copies the
@@ -588,7 +608,7 @@ majordomus: session s-20260904153733-fc51 is open here since 2026-09-04T15:37:33
 $ majordomus session close <<'EOF'
 The extraction boundary and the session schema landed; the compiler's discovery stage is next.
 EOF
-.ai/local/state/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
+.ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
 ```
 
 ## `majordomus checkpoint`
@@ -790,8 +810,8 @@ skills: 1 discovered, 1 valid; examples: 5; references: 5 checked; failures: 0
 
 ## `majordomus capture`
 
-Record the person's raw prompts from a provider hook, install that hook, and report what
-each provider actually does in this repository.
+Record the person's raw prompts and draw the episode boundary from the provider's own
+hooks, install those hooks, and report what each provider actually does in this repository.
 
 **Why a hook and not an instruction.** A worker cannot be asked to record its own prompts.
 It never sees the bytes the person typed, only what the provider assembled from them, and a
@@ -801,13 +821,16 @@ was busy doing what it was asked. A line in `AGENTS.md` is a request, not a mech
 no behavioural test can prove a request was honoured. So capture happens below the model,
 in the provider's own hook, where running it is the proof that it works.
 
-`capture install` writes two things and refuses to overwrite either: a shim at
-`.claude/hooks/majordomus-capture`, and the hook entry in `.claude/settings.json`. When the
-configuration exists and names something else, the command prints the entry to add and
-exits 15 rather than rewriting a file it did not write. The shim finds the repository from
-its own location: the provider substitutes its project directory into the command string
-textually, so nothing in the environment names the repository, and the working directory a
-hook runs in is not contracted.
+`capture install` writes a shim per event and the matching entries in
+`.claude/settings.json`, and refuses to overwrite any of them: `majordomus-capture` for
+`UserPromptSubmit`, `majordomus-session-start` for `SessionStart` and
+`majordomus-session-end` for `SessionEnd`. When the configuration exists and does not name
+one of them — including a configuration this tool wrote before it knew about the lifecycle
+events — the command prints the entries to add, one per missing event, and exits 15 rather
+than rewriting a file it did not write. A shim finds the repository from its own location:
+the provider substitutes its project directory into the command string textually, so nothing
+in the environment names the repository, and the working directory a hook runs in is not
+contracted.
 
 `capture prompt` reads one JSON payload on stdin and writes one record. **It never exits
 2**, because in `UserPromptSubmit` that exit code rejects the person's prompt, and a broken
@@ -885,12 +908,58 @@ Only Claude Code has an adapter today. Codex and Gemini are reported `unsupporte
 than assumed, and no other surface — the web, the desktop app, another machine — is
 observable from here at all.
 
+### `capture session` — the episode boundary
+
+**The same argument, applied to the other thing a worker cannot do for itself: say where its
+own sitting began and ended.** A model told to open a session opens one when it remembers
+to, which is never the episode that mattered — the one that ended in a crash, a compaction,
+or somebody closing the window. The provider fires an event at both edges whether or not a
+model is in a position to notice, so `SessionStart` opens the episode and `SessionEnd`
+closes it into the shared record under `.ai/repo/sessions/` (ADR 0015).
+
+**Both directions are idempotent, because the events are.** `SessionStart` fires again on a
+resume and on a compaction, so the start passes `--if-open keep` and the open episode is
+kept rather than replaced; `SessionEnd` fires whether or not anything was opened, so the
+close passes `--if-none ignore` and writes nothing when there is nothing to close. The
+event's reason decides the outcome: one the adapter lists as deliberate closes the episode
+as `closed`, and anything else — a crash, a name the table has not seen — closes it as
+`interrupted`, because calling a cut-short episode complete is the worse of the two
+mistakes.
+
+**Neither hook writes to standard output.** Claude Code adds a `SessionStart` hook's output
+to the model's context, and nothing under the local half of the layer may be loaded into a
+context implicitly. Diagnostics go to stderr, and `capture session` never exits 2, for the
+reason `capture prompt` never does.
+
+**The open freezes the context it was given.** `session start` writes
+`.ai/local/session-contexts/<stamp>--<session-id>.md`: front matter carrying
+`schema: session-context/v1`, the episode's identity, the provider and the provider's own
+session id — the same string the prompt records carry — then the context builder's output
+verbatim, then a `## Notes` section for the worker. `session close` appends a `## Close`
+section naming the outcome and the record it wrote. The document is appended to and never
+rewritten, so what a worker typed into it survives the close; `majordomus session context`
+prints its path.
+
+That store is local and stays local. It names this machine, and it is a snapshot of a
+projection — re-resolving it later gives a different document — so it is never published,
+never indexed, and never loaded into a context on its own. It is also never a transcript:
+the derived half is the builder's output, the authored half summarises the work, and a front
+matter key naming a message list, a completion or a model's reply is a blocking failure.
+
+The wiring is declared as `wired_by: provider-hook:<provider>:session` and `doctor` proves
+it the same way, with one thing left out: the synthetic payload is driven through the end
+shim with the mutation disabled, because closing somebody's open episode is not a price a
+diagnostic may charge. Everything else on the path runs exactly as it does in a real event.
+
 ```
 $ majordomus capture install
 INFO  capture  .claude/hooks/majordomus-capture  written and made executable
-INFO  capture  .claude/settings.json  written with the UserPromptSubmit hook
+INFO  capture  .claude/hooks/majordomus-session-start  written and made executable
+INFO  capture  .claude/hooks/majordomus-session-end  written and made executable
+INFO  capture  .claude/settings.json  written with the UserPromptSubmit, SessionStart, SessionEnd hook(s)
 $ majordomus capture status
-claude-code    verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record
+claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record
+claude-code:session    verified     .claude/hooks/majordomus-session-start and .claude/hooks/majordomus-session-end are wired, and a synthetic payload through the end shim reached the command
 ```
 
 
