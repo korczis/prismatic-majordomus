@@ -1095,6 +1095,33 @@
       "note": "site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds."
     },
     {
+      "id": "claim:why-catalogue-discovered",
+      "kind": "claim",
+      "label": "An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed",
+      "status": "guaranteed",
+      "route": "/guarantees/why-catalogue-discovered/",
+      "external": false,
+      "note": "Removing the file removes it from all of them, which is what a hidden registry would fail."
+    },
+    {
+      "id": "claim:why-references-resolve",
+      "kind": "claim",
+      "label": "Every reference a moment makes resolves against the thing it names, and one that does not is an error carrying the nearest candidate",
+      "status": "guaranteed",
+      "route": "/guarantees/why-references-resolve/",
+      "external": false,
+      "note": "Audiences, areas and related moments against the catalogue; commands, capabilities, claims, rules and use cases against their own registries."
+    },
+    {
+      "id": "claim:why-diagnosis-explainable",
+      "kind": "claim",
+      "label": "A diagnosis of a reader's own symptoms is deterministic counting over the catalogue's metadata, and every recommendation names the moments that produced it",
+      "status": "guaranteed",
+      "route": "/guarantees/why-diagnosis-explainable/",
+      "external": false,
+      "note": "No weighting and no percentage; the questionnaire on the website and `majordomus why diagnose` run the same arithmetic over the same data."
+    },
+    {
       "id": "claim:session-records",
       "kind": "claim",
       "label": "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered",
@@ -1269,6 +1296,13 @@
       "id": "impl:apps/majordomus-cli/src/site.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/site.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/why.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/why.rs",
       "route": null,
       "external": false
     },
@@ -1700,6 +1734,13 @@
       "external": false
     },
     {
+      "id": "source:docs/WHY.md",
+      "kind": "source",
+      "label": "docs/WHY.md",
+      "route": "/docs/why/",
+      "external": false
+    },
+    {
       "id": "source:share/skeleton/policy.yaml",
       "kind": "source",
       "label": "share/skeleton/policy.yaml",
@@ -1740,6 +1781,13 @@
       "label": "apps/majordomus-cli/tests/projections.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/projections.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/why.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/why.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/why.rs"
     },
     {
       "id": "test:test/cases/00_yaml_flatten.sh",
@@ -2125,6 +2173,13 @@
       "label": "test/cases/97_pages_fast_path.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_pages_fast_path.sh"
+    },
+    {
+      "id": "test:test/cases/98_why_catalogue.sh",
+      "kind": "test",
+      "label": "test/cases/98_why_catalogue.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/98_why_catalogue.sh"
     },
     {
       "id": "test:test/cases/99_adr.sh",
@@ -2736,6 +2791,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:why-catalogue-discovered",
+      "target": "source:docs/WHY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:why-references-resolve",
+      "target": "source:docs/WHY.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:why-diagnosis-explainable",
+      "target": "source:docs/WHY.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:session-records",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -3321,6 +3391,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:why-catalogue-discovered",
+      "target": "impl:apps/majordomus-cli/src/why.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:why-references-resolve",
+      "target": "impl:apps/majordomus-cli/src/why.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:why-diagnosis-explainable",
+      "target": "impl:apps/majordomus-cli/src/why.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:session-records",
       "target": "impl:lib/session.sh",
       "kind": "implemented_by"
@@ -3903,6 +3988,21 @@
     {
       "source": "claim:skill-site-projection",
       "target": "test:test/cases/95_skills.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:why-catalogue-discovered",
+      "target": "test:test/cases/98_why_catalogue.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:why-references-resolve",
+      "target": "test:apps/majordomus-cli/tests/why.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:why-diagnosis-explainable",
+      "target": "test:apps/majordomus-cli/tests/why.rs",
       "kind": "proved_by"
     },
     {

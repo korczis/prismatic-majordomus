@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/moment/moment.v1.schema.json",
+  "x-majordomus-schema": "majordomus.moment/v1",
+  "title": "Operational moment",
+  "description": "The front matter of a moment under .ai/repo/why/moments/: one operational failure mode a reader recognises, who recognises it, which operational areas it belongs to, the signals that identify it, the concrete situations it shows up in, and everything of this repository it names. The body carries the narrative (## The moment, ## Why it happens, ## Why a better model does not fix it, ## What it costs, ## What Majordomus does, ## Before and after, ## How to verify it, ## What it does not do). Nothing derivable is written here: the route, the counts, the backlinks and the related-by-shared-metadata list are computed from this and never authored.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "kind",
+    "title",
+    "hook",
+    "summary",
+    "status",
+    "severity",
+    "frequency",
+    "audiences",
+    "areas",
+    "signals",
+    "examples"
+  ],
+  "properties": {
+    "schema": {
+      "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+      "const": "moment/v1"
+    },
+    "id": {
+      "description": "The identity and the slug. It fixes the file name and the route /why/<id>/, and it survives a retitle.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "kind": {
+      "const": "moment"
+    },
+    "title": {
+      "description": "The moment as a heading: the situation, not the topic.",
+      "type": "string",
+      "minLength": 1
+    },
+    "short_title": {
+      "description": "Two or three words for a narrow column. Absent means the title is used.",
+      "type": "string",
+      "minLength": 1
+    },
+    "hook": {
+      "description": "The first-person line the index and the homepage show, completing \"this week, you have ...\". Lower case, no full stop.",
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "description": "One line: what is actually wrong, in operational terms rather than in feelings. Also the page description.",
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "description": "stable: complete and public, and held to the quality contract. draft: written and not yet complete; listed as a draft, never counted, exempt from the content floors. deprecated: kept because its route exists, listed nowhere.",
+      "enum": [
+        "stable",
+        "draft",
+        "deprecated"
+      ]
+    },
+    "severity": {
+      "description": "What one occurrence costs when it happens: low (minutes), medium (hours), high (a day or a wrong decision that outlives it).",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "frequency": {
+      "description": "How often a team in one of its audiences meets it: rare, occasional, common, constant.",
+      "enum": [
+        "rare",
+        "occasional",
+        "common",
+        "constant"
+      ]
+    },
+    "weight": {
+      "description": "Presentation order within a listing, lowest first. Equal weights fall back to the title.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "featured": {
+      "description": "True when the moment is one the homepage shows. The homepage takes the featured set in weight order; it names none of them.",
+      "type": "boolean"
+    },
+    "audiences": {
+      "description": "The audiences that recognise this. Each must name an audience of this catalogue; membership lives here and never in the audience's own file.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "areas": {
+      "description": "The operational areas this belongs to. Each must name an area of this catalogue.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "lifecycle": {
+      "description": "The stages of work at which it shows up.",
+      "type": "array",
+      "items": {
+        "enum": [
+          "onboarding",
+          "planning",
+          "implementation",
+          "review",
+          "handover",
+          "maintenance",
+          "operations"
+        ]
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "signals": {
+      "description": "The observable symptoms, each one a question a reader can answer about their own week. They are the questionnaire on /why/ and the input of `majordomus why diagnose`; nothing else defines those.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "examples": {
+      "description": "Concrete situations, each in one audience, with what happens today and what happens instead. A stable moment carries at least three, and the quality contract asks for more than one audience among them.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "audience",
+          "title",
+          "before",
+          "after"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "audience": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "before": {
+            "type": "string",
+            "minLength": 1
+          },
+          "after": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "commands": {
+      "description": "Commands of the shell tool that answer this moment; each must be a public command of share/commands.yaml.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "capabilities": {
+      "description": "Capability ids of the Rust executable that answer this moment; each must exist in the capability registry.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]*\\.[a-z0-9_-]+$"
+      }
+    },
+    "claims": {
+      "description": "The claims that say what is guaranteed here; each must be an id of docs/CLAIMS.yaml. A moment's responsibilities are derived from these — every claim declares the responsibility it belongs to — and are never authored here.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "doctrines": {
+      "description": "The rules of the effective set that govern this, by rule id. An enforced rule is a doctrine; the key is the one use cases and applications already use.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*\\.[a-z0-9-]+$"
+      }
+    },
+    "use_cases": {
+      "description": "The use cases that show the way out of this moment; each must be a use case of the layer. A moment is the pain, a use case is the workflow: they cross-link and never restate each other.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "related": {
+      "description": "Other moments this one is explicitly related to. The reverse edge is derived, never authored, and a moment may not relate to itself.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "aliases": {
+      "description": "Other words a reader might search for. Added to the search text; never shown as a title.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

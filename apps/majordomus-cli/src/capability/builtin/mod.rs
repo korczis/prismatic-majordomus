@@ -40,6 +40,8 @@ pub use objects::{
 pub use peers::{AnnounceInput, PeerList};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
+pub mod why;
+
 pub use views::{Empty, ObjectSummary, ObjectView};
 
 /// The application: its modules, in one place. A new module is one line here; a new
@@ -55,7 +57,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         peers,
         perf,
         directories,
-        artifacts
+        artifacts,
+        why
     ]
 }
 

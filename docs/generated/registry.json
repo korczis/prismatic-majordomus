@@ -82,6 +82,14 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 3
+    },
+    {
+      "id": "why",
+      "title": "Why",
+      "description": "The operational failure modes this tool is a response to: the moments a reader recognises, the audiences that recognise them, the areas they fall under, and what a reader's own symptoms imply. Every entry is a file under the layer's why section; nothing here holds a list, and a moment added there is answered by all of these without a registration anywhere.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 6
     }
   ],
   "capabilities": [
@@ -5056,17 +5064,1775 @@
         "policy": "disabled"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs"
+    },
+    {
+      "id": "why.areas",
+      "module": "why",
+      "kind": "query",
+      "title": "Operational areas",
+      "description": "Every operational area the catalogue declares, each with the public moments that fall under it. Membership is derived from the moments and is never listed in an area's own file.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "AreaList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many."
+            },
+            "areas": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AreaView"
+              },
+              "description": "Each, with its derived membership, in presentation order."
+            }
+          },
+          "required": [
+            "count",
+            "areas"
+          ],
+          "description": "Every area.",
+          "title": "AreaList",
+          "$defs": {
+            "AreaView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The identity, the slug and the file name."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The area."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line: what falls under it."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`stable`, `draft` or `deprecated`."
+                },
+                "weight": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Presentation order.",
+                  "default": 0
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Free tags.",
+                  "default": []
+                },
+                "route": {
+                  "type": "string",
+                  "description": "Derived: `/why/areas/<id>/`.",
+                  "default": ""
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Derived: the file it came from.",
+                  "default": ""
+                },
+                "body": {
+                  "type": "string",
+                  "description": "The Markdown body."
+                },
+                "moments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Derived: the public moments that fall under it, in presentation order."
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Derived: how many."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "summary",
+                "status",
+                "moments",
+                "count"
+              ],
+              "description": "One area, with the membership nobody authored."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::why"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_why_areas",
+          "resource": {
+            "uri": "majordomus://why/areas",
+            "name": "why-areas"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/why/areas"
+        },
+        "cli": {
+          "path": [
+            "why",
+            "areas"
+          ]
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "why",
+        "catalogue"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 4
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+    },
+    {
+      "id": "why.audiences",
+      "module": "why",
+      "kind": "query",
+      "title": "Audiences",
+      "description": "Every audience the catalogue declares, each with the public moments that name it. Membership is derived from the moments and is never listed in an audience's own file.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "AudienceList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many."
+            },
+            "audiences": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AudienceView"
+              },
+              "description": "Each, with its derived membership, in presentation order."
+            }
+          },
+          "required": [
+            "count",
+            "audiences"
+          ],
+          "description": "Every audience.",
+          "title": "AudienceList",
+          "$defs": {
+            "AudienceView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The identity, the slug and the file name."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Who they are."
+                },
+                "short_title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Two or three words for a filter chip."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line: the working situation."
+                },
+                "workflow": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "One line: how work flows for them."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`stable`, `draft` or `deprecated`."
+                },
+                "weight": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Presentation order.",
+                  "default": 0
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Free tags.",
+                  "default": []
+                },
+                "route": {
+                  "type": "string",
+                  "description": "Derived: `/why/audiences/<id>/`.",
+                  "default": ""
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Derived: the file it came from.",
+                  "default": ""
+                },
+                "body": {
+                  "type": "string",
+                  "description": "The Markdown body."
+                },
+                "moments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Derived: the public moments that name it, in presentation order."
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Derived: how many."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "summary",
+                "status",
+                "moments",
+                "count"
+              ],
+              "description": "One audience, with the membership nobody authored."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::why"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_why_audiences",
+          "resource": {
+            "uri": "majordomus://why/audiences",
+            "name": "why-audiences"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/why/audiences"
+        },
+        "cli": {
+          "path": [
+            "why",
+            "audiences"
+          ]
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "why",
+        "catalogue"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 4
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+    },
+    {
+      "id": "why.diagnose",
+      "module": "why",
+      "kind": "query",
+      "title": "Diagnose a selection",
+      "description": "What a reader's own symptoms imply: the moments the selection resolves to, the operational areas and audiences they weigh towards, and the capabilities, commands, claims, rules and use cases that answer them — each carrying the moments that produced it. Counting, not inference: there is no weighting and no percentage.",
+      "input": {
+        "name": "DiagnoseInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "signals": {
+              "type": "string",
+              "description": "Signal ids or moment ids, separated by commas. Empty selects nothing and is\nanswered with an empty diagnosis rather than an error.",
+              "default": ""
+            }
+          },
+          "description": "What a reader recognised, as a comma-separated list of names.\n\nA name is a signal id or a moment id: a person ticking symptoms and a script naming\nmoments reach the same answer, because a signal resolves to the moment that owns it.\nThe parameter is one string rather than a list because a diagnosis changes nothing and\nis therefore a `GET`, and this repository binds a `GET` input to the query string.",
+          "title": "DiagnoseInput"
+        }
+      },
+      "output": {
+        "name": "Diagnosis",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "moments": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The moments the selection resolved to, in presentation order."
+            },
+            "unresolved": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Selected names that resolved to nothing."
+            },
+            "areas": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Recommendation"
+              },
+              "description": "Operational areas by how many selected moments fall under them, heaviest first."
+            },
+            "audiences": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Recommendation"
+              },
+              "description": "Audiences by how many selected moments they recognise, heaviest first."
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Recommendation"
+              },
+              "description": "Capabilities of the executable that answer the selected moments."
+            },
+            "commands": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Recommendation"
+              },
+              "description": "Commands that answer them."
+            },
+            "claims": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Recommendation"
+              },
+              "description": "Claims that say what is guaranteed."
+            },
+            "doctrines": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Recommendation"
+              },
+              "description": "Rules of the effective set that govern them."
+            },
+            "use_cases": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Recommendation"
+              },
+              "description": "Use cases that show the way out."
+            },
+            "also_worth_reading": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Moments the selection did not include that share an area with one that it did."
+            }
+          },
+          "required": [
+            "moments",
+            "unresolved",
+            "areas",
+            "audiences",
+            "capabilities",
+            "commands",
+            "claims",
+            "doctrines",
+            "use_cases",
+            "also_worth_reading"
+          ],
+          "description": "What a reader's selection implies, computed by counting rather than by inference.\n\nThe arithmetic is the whole model and is stated so a reader can check it: a selection\nresolves to a set of moments; an area or an audience scores the number of selected\nmoments that name it; a recommendation scores the number that name it and carries\ntheir ids. There is no weighting and no percentage, because there is no model behind\none.",
+          "title": "Diagnosis",
+          "$defs": {
+            "Recommendation": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The thing recommended: a capability id, a command, a claim, a rule, a use case."
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many of the selected moments name it."
+                },
+                "matched_because": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The selected moments that named it, in presentation order."
+                }
+              },
+              "required": [
+                "id",
+                "count",
+                "matched_because"
+              ],
+              "description": "One recommendation, with the moments that produced it. A recommendation with no\n`matched_because` is a recommendation nobody can check."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::why"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_why_diagnose"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/why/diagnose"
+        },
+        "cli": {
+          "path": [
+            "why",
+            "diagnose"
+          ]
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "why",
+        "diagnostics"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 32
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+    },
+    {
+      "id": "why.list",
+      "module": "why",
+      "kind": "query",
+      "title": "The catalogue",
+      "description": "Every operational moment this repository holds, narrowed by any of the facets the catalogue itself reports, with the audiences, the areas, the derived filters and the counts. The default is the public catalogue; pass status=any for the drafts too.",
+      "input": {
+        "name": "Query",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "audience": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments this audience recognises.",
+              "default": null
+            },
+            "area": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments in this operational area.",
+              "default": null
+            },
+            "tag": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments carrying this tag.",
+              "default": null
+            },
+            "severity": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments of this severity.",
+              "default": null
+            },
+            "frequency": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments of this frequency.",
+              "default": null
+            },
+            "lifecycle": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments at this stage of work.",
+              "default": null
+            },
+            "capability": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments naming this capability of the executable.",
+              "default": null
+            },
+            "command": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments naming this command.",
+              "default": null
+            },
+            "featured": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Only moments the homepage features.",
+              "default": null
+            },
+            "status": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only moments of this status. Absent means the public ones (`stable`); pass `any`\nfor everything the catalogue holds.",
+              "default": null
+            },
+            "q": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Case-insensitive text, matched against the identity, the titles, the hook, the\nsummary, the tags, the aliases, the signals, the examples and the body.",
+              "default": null
+            }
+          },
+          "description": "What a listing is narrowed by. Every field is optional and they compose as a\nconjunction; the values a caller may pass are the facets the catalogue reports, never a\nlist written anywhere.",
+          "title": "Query"
+        }
+      },
+      "output": {
+        "name": "CatalogueView",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "[`SCHEMA`]."
+            },
+            "fingerprint": {
+              "type": "string",
+              "description": "The hash of the catalogue's own sources: stable for a tree, and independent of the\nrest of the index, so two runs over one tree agree."
+            },
+            "counts": {
+              "$ref": "#/$defs/Counts",
+              "description": "The counts."
+            },
+            "moments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MomentSummary"
+              },
+              "description": "The matching moments, in presentation order."
+            },
+            "audiences": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AudienceView"
+              },
+              "description": "Every audience, with its derived membership."
+            },
+            "areas": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AreaView"
+              },
+              "description": "Every area, with its derived membership."
+            },
+            "facets": {
+              "$ref": "#/$defs/Facets",
+              "description": "The filters, derived from the records."
+            }
+          },
+          "required": [
+            "schema",
+            "fingerprint",
+            "counts",
+            "moments",
+            "audiences",
+            "areas",
+            "facets"
+          ],
+          "description": "The whole catalogue as a client reads it.",
+          "title": "CatalogueView",
+          "$defs": {
+            "Counts": {
+              "type": "object",
+              "properties": {
+                "moments": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public moments."
+                },
+                "moments_all": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Moments of every status, drafts included."
+                },
+                "audiences": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public audiences."
+                },
+                "areas": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public areas."
+                },
+                "signals": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Signals across the public moments: the size of the questionnaire."
+                },
+                "examples": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Concrete situations across the public moments."
+                }
+              },
+              "required": [
+                "moments",
+                "moments_all",
+                "audiences",
+                "areas",
+                "signals",
+                "examples"
+              ],
+              "description": "How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down."
+            },
+            "MomentSummary": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The identity and the slug."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The moment as a heading."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "The name a narrow column shows: the short title, or the title."
+                },
+                "hook": {
+                  "type": "string",
+                  "description": "The first-person line an index shows."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line: what is actually wrong."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`stable`, `draft` or `deprecated`."
+                },
+                "severity": {
+                  "type": "string",
+                  "description": "`low`, `medium` or `high`."
+                },
+                "frequency": {
+                  "type": "string",
+                  "description": "`rare`, `occasional`, `common` or `constant`."
+                },
+                "weight": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Presentation order."
+                },
+                "featured": {
+                  "type": "boolean",
+                  "description": "Whether the homepage shows it."
+                },
+                "audiences": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The audiences that recognise it."
+                },
+                "areas": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The operational areas it falls under."
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Free tags."
+                },
+                "route": {
+                  "type": "string",
+                  "description": "Derived: `/why/<id>/`."
+                },
+                "signals": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many observable symptoms it declares."
+                },
+                "examples": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many concrete situations it carries."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "label",
+                "hook",
+                "summary",
+                "status",
+                "severity",
+                "frequency",
+                "weight",
+                "featured",
+                "audiences",
+                "areas",
+                "tags",
+                "route",
+                "signals",
+                "examples"
+              ],
+              "description": "One moment as a listing shows it: everything a card needs and nothing a page needs."
+            },
+            "AudienceView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The identity, the slug and the file name."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Who they are."
+                },
+                "short_title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Two or three words for a filter chip."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line: the working situation."
+                },
+                "workflow": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "One line: how work flows for them."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`stable`, `draft` or `deprecated`."
+                },
+                "weight": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Presentation order.",
+                  "default": 0
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Free tags.",
+                  "default": []
+                },
+                "route": {
+                  "type": "string",
+                  "description": "Derived: `/why/audiences/<id>/`.",
+                  "default": ""
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Derived: the file it came from.",
+                  "default": ""
+                },
+                "body": {
+                  "type": "string",
+                  "description": "The Markdown body."
+                },
+                "moments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Derived: the public moments that name it, in presentation order."
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Derived: how many."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "summary",
+                "status",
+                "moments",
+                "count"
+              ],
+              "description": "One audience, with the membership nobody authored."
+            },
+            "AreaView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The identity, the slug and the file name."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The area."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line: what falls under it."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`stable`, `draft` or `deprecated`."
+                },
+                "weight": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Presentation order.",
+                  "default": 0
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Free tags.",
+                  "default": []
+                },
+                "route": {
+                  "type": "string",
+                  "description": "Derived: `/why/areas/<id>/`.",
+                  "default": ""
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Derived: the file it came from.",
+                  "default": ""
+                },
+                "body": {
+                  "type": "string",
+                  "description": "The Markdown body."
+                },
+                "moments": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Derived: the public moments that fall under it, in presentation order."
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Derived: how many."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "summary",
+                "status",
+                "moments",
+                "count"
+              ],
+              "description": "One area, with the membership nobody authored."
+            },
+            "Facets": {
+              "type": "object",
+              "properties": {
+                "audiences": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/FacetValue"
+                  },
+                  "description": "By audience."
+                },
+                "areas": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/FacetValue"
+                  },
+                  "description": "By operational area."
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/FacetValue"
+                  },
+                  "description": "By tag."
+                },
+                "severities": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/FacetValue"
+                  },
+                  "description": "By severity."
+                },
+                "frequencies": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/FacetValue"
+                  },
+                  "description": "By frequency."
+                },
+                "lifecycle": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/FacetValue"
+                  },
+                  "description": "By stage of work."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/FacetValue"
+                  },
+                  "description": "By capability of the executable."
+                },
+                "commands": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/FacetValue"
+                  },
+                  "description": "By command."
+                }
+              },
+              "required": [
+                "audiences",
+                "areas",
+                "tags",
+                "severities",
+                "frequencies",
+                "lifecycle",
+                "capabilities",
+                "commands"
+              ],
+              "description": "The filters the catalogue offers, derived from the records rather than declared."
+            },
+            "FacetValue": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string",
+                  "description": "The value as a moment declares it."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "The name to show; the value itself when the taxonomy holds no title for it."
+                },
+                "count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many public moments carry it."
+                }
+              },
+              "required": [
+                "value",
+                "label",
+                "count"
+              ],
+              "description": "One selectable value of one facet, with how many public moments carry it. Every filter\na reader is offered is one of these; nothing anywhere lists the values by hand."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::why"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_why",
+          "resource": {
+            "uri": "majordomus://why",
+            "name": "why"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/why"
+        },
+        "cli": {
+          "path": [
+            "why",
+            "list"
+          ]
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "why",
+        "catalogue"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 32
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+    },
+    {
+      "id": "why.moment",
+      "module": "why",
+      "kind": "query",
+      "title": "One moment",
+      "description": "One operational moment in full: what it looks like, why it happens, what it costs, what this tool does about it, and every relation derived from its metadata — the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.",
+      "input": {
+        "name": "MomentInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The moment's id, as `why.list` gives it. This is also its slug and its route."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "description": "Which moment to read.",
+          "title": "MomentInput"
+        }
+      },
+      "output": {
+        "name": "MomentDetail",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The identity, the slug and the file name."
+            },
+            "title": {
+              "type": "string",
+              "description": "The moment as a heading."
+            },
+            "short_title": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Two or three words for a narrow column, when the record carries one."
+            },
+            "hook": {
+              "type": "string",
+              "description": "The first-person line an index shows."
+            },
+            "summary": {
+              "type": "string",
+              "description": "One line: what is actually wrong."
+            },
+            "status": {
+              "type": "string",
+              "description": "`stable`, `draft` or `deprecated`."
+            },
+            "severity": {
+              "type": "string",
+              "description": "`low`, `medium` or `high`."
+            },
+            "frequency": {
+              "type": "string",
+              "description": "`rare`, `occasional`, `common` or `constant`."
+            },
+            "weight": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0,
+              "description": "Presentation order, lowest first.",
+              "default": 0
+            },
+            "featured": {
+              "type": "boolean",
+              "description": "Whether the homepage shows it.",
+              "default": false
+            },
+            "audiences": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The audiences that recognise it."
+            },
+            "areas": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The operational areas it falls under."
+            },
+            "lifecycle": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The stages of work at which it shows up.",
+              "default": []
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Free tags.",
+              "default": []
+            },
+            "signals": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Signal"
+              },
+              "description": "The observable symptoms."
+            },
+            "examples": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Example"
+              },
+              "description": "The concrete situations."
+            },
+            "commands": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Commands of the tool that answer it.",
+              "default": []
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Capability ids of the executable that answer it.",
+              "default": []
+            },
+            "claims": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Claims that say what is guaranteed here.",
+              "default": []
+            },
+            "doctrines": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Rules of the effective set that govern it.",
+              "default": []
+            },
+            "use_cases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Use cases that show the way out.",
+              "default": []
+            },
+            "related": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Moments explicitly related to this one. The reverse is derived.",
+              "default": []
+            },
+            "aliases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Other words a reader might search for.",
+              "default": []
+            },
+            "route": {
+              "type": "string",
+              "description": "Derived: `/why/<id>/`. Never authored; the schema refuses a `route` key.",
+              "default": ""
+            },
+            "source": {
+              "type": "string",
+              "description": "Derived: the repository-relative file the record came from.",
+              "default": ""
+            },
+            "body": {
+              "type": "string",
+              "description": "The Markdown body, without its front matter."
+            },
+            "responsibilities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Derived: the responsibilities the claims it names belong to."
+            },
+            "backlinks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Derived: the moments that name this one in their `related`."
+            },
+            "similar": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Derived: moments sharing an area or an audience with this one and not already\nnamed by it, nearest first — most shared metadata, then presentation order."
+            },
+            "related_detail": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MomentSummary"
+              },
+              "description": "Derived: the explicitly related moments, summarised so a page needs one call."
+            },
+            "neighbours": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Derived: what a reader should see next, in one list and in a stated order — what\nthis moment names, then what names it, then what is nearest by shared metadata,\neach appearing once. The three lists above are the same relations kept apart for a\nreader that wants to know which is which."
+            }
+          },
+          "required": [
+            "id",
+            "title",
+            "hook",
+            "summary",
+            "status",
+            "severity",
+            "frequency",
+            "audiences",
+            "areas",
+            "signals",
+            "examples",
+            "responsibilities",
+            "backlinks",
+            "similar",
+            "related_detail",
+            "neighbours"
+          ],
+          "description": "One moment in full, with everything derived that a page shows and no file states.",
+          "title": "MomentDetail",
+          "$defs": {
+            "Signal": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique within the moment; the identity a diagnosis selects by."
+                },
+                "text": {
+                  "type": "string",
+                  "description": "The symptom, phrased so a reader can say whether it happened to them."
+                }
+              },
+              "required": [
+                "id",
+                "text"
+              ],
+              "description": "One observable symptom of a moment: a question a reader can answer about their own\nweek. The questionnaire on the site and the input of `why diagnose` are these and\nnothing else."
+            },
+            "Example": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Unique within the moment."
+                },
+                "audience": {
+                  "type": "string",
+                  "description": "The audience this situation belongs to; must name an audience of the catalogue."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "One line naming the situation."
+                },
+                "before": {
+                  "type": "string",
+                  "description": "What happens without the tool."
+                },
+                "after": {
+                  "type": "string",
+                  "description": "What happens with it."
+                }
+              },
+              "required": [
+                "id",
+                "audience",
+                "title",
+                "before",
+                "after"
+              ],
+              "description": "One concrete situation, in one audience, with what happens today and what happens\ninstead."
+            },
+            "MomentSummary": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The identity and the slug."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The moment as a heading."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "The name a narrow column shows: the short title, or the title."
+                },
+                "hook": {
+                  "type": "string",
+                  "description": "The first-person line an index shows."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line: what is actually wrong."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`stable`, `draft` or `deprecated`."
+                },
+                "severity": {
+                  "type": "string",
+                  "description": "`low`, `medium` or `high`."
+                },
+                "frequency": {
+                  "type": "string",
+                  "description": "`rare`, `occasional`, `common` or `constant`."
+                },
+                "weight": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Presentation order."
+                },
+                "featured": {
+                  "type": "boolean",
+                  "description": "Whether the homepage shows it."
+                },
+                "audiences": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The audiences that recognise it."
+                },
+                "areas": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The operational areas it falls under."
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Free tags."
+                },
+                "route": {
+                  "type": "string",
+                  "description": "Derived: `/why/<id>/`."
+                },
+                "signals": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many observable symptoms it declares."
+                },
+                "examples": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many concrete situations it carries."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "label",
+                "hook",
+                "summary",
+                "status",
+                "severity",
+                "frequency",
+                "weight",
+                "featured",
+                "audiences",
+                "areas",
+                "tags",
+                "route",
+                "signals",
+                "examples"
+              ],
+              "description": "One moment as a listing shows it: everything a card needs and nothing a page needs."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::why"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_why_moment"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/why/moment"
+        },
+        "cli": {
+          "path": [
+            "why",
+            "show"
+          ]
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "why"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 64
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+    },
+    {
+      "id": "why.validate",
+      "module": "why",
+      "kind": "query",
+      "title": "Validate the catalogue",
+      "description": "Every finding over the catalogue: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; and a public record that does not meet the floor its status promises. Errors make the catalogue invalid; warnings do not.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ValidationReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "valid": {
+              "type": "boolean",
+              "description": "True when nothing is an error. Warnings do not make it false."
+            },
+            "errors": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many findings are errors: a reference that resolves to nothing, a duplicate\nidentity, a file name that disagrees with its id."
+            },
+            "warnings": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many findings are warnings: a public record that does not meet its floor."
+            },
+            "counts": {
+              "$ref": "#/$defs/Counts",
+              "description": "The counts the catalogue reached."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Finding"
+              },
+              "description": "The findings, errors first, then by file."
+            }
+          },
+          "required": [
+            "valid",
+            "errors",
+            "warnings",
+            "counts",
+            "findings"
+          ],
+          "description": "What the catalogue's own validation found.",
+          "title": "ValidationReport",
+          "$defs": {
+            "Counts": {
+              "type": "object",
+              "properties": {
+                "moments": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public moments."
+                },
+                "moments_all": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Moments of every status, drafts included."
+                },
+                "audiences": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public audiences."
+                },
+                "areas": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public areas."
+                },
+                "signals": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Signals across the public moments: the size of the questionnaire."
+                },
+                "examples": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Concrete situations across the public moments."
+                }
+              },
+              "required": [
+                "moments",
+                "moments_all",
+                "audiences",
+                "areas",
+                "signals",
+                "examples"
+              ],
+              "description": "How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down."
+            },
+            "Finding": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "$ref": "#/$defs/Severity",
+                  "description": "`error` or `warning`."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "A short category: `unknown_reference`, `duplicate_identity`, `missing_content`, ..."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The repository-relative file the finding is in."
+                },
+                "id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The record's identity, when one record owns the finding."
+                },
+                "field": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The front-matter key the finding is about, when one key owns it."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What is wrong, in one sentence."
+                },
+                "did_you_mean": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The nearest existing name, when the value looks like a typo of one."
+                }
+              },
+              "required": [
+                "severity",
+                "code",
+                "path",
+                "message"
+              ],
+              "description": "One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching."
+            },
+            "Severity": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "info",
+                  "description": "Worth knowing; changes nothing."
+                },
+                {
+                  "type": "string",
+                  "const": "warning",
+                  "description": "Something to look at; the object is still served."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "The file is excluded and the index is degraded."
+                }
+              ],
+              "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::why"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_why_validate"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/why/validate"
+        },
+        "cli": {
+          "path": [
+            "why",
+            "validate"
+          ]
+        }
+      },
+      "stability": "behaviorally_verified",
+      "tags": [
+        "why",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 2
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
     }
   ],
   "declarative_kinds": [
     "application",
+    "area",
+    "audience",
     "claim",
+    "command",
     "context",
     "document",
     "implementation",
     "issue",
     "knowledge",
     "milestone",
+    "moment",
     "policy",
     "profile",
     "prompt",

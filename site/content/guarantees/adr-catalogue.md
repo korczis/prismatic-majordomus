@@ -1,7 +1,7 @@
 +++
 title = "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving"
 description = "A decision is data, not prose the tool happens to store. .ai/repo/adrs/<NNNN>-<slug>.md"
-weight = 137
+weight = 140
 [extra]
 claim_id = "adr-catalogue"
 status = "guaranteed"

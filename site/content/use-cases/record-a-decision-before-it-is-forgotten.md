@@ -1,7 +1,7 @@
 +++
 title = "Record a decision as data, and prove the tool cannot accept it for you"
 description = "Read the decisions a repository holds, validate the whole set in one command, and watch the tool refuse to write the one status only a person may write."
-weight = 36
+weight = 37
 [extra]
 id = "record-a-decision-before-it-is-forgotten"
 source = ".ai/repo/use-cases/record-a-decision-before-it-is-forgotten.md"

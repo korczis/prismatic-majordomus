@@ -38,6 +38,7 @@ sections:
   knowledge: repo/knowledge
   adrs: repo/adrs
   project: repo/project
+  why: repo/why
 
 context:
   documents: [README.md]
@@ -104,6 +105,24 @@ sources:
     kind: claim
     discovery: vcs
     pathspec: ':(glob)docs/CLAIMS.yaml'
+    required: false
+
+  - id: moment
+    kind: moment
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/why/moments/*.md'
+    required: false
+
+  - id: audience
+    kind: audience
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/why/audiences/*.md'
+    required: false
+
+  - id: area
+    kind: area
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/why/areas/*.md'
     required: false
 
   - id: claim_page
@@ -234,6 +253,90 @@ Because the fixture says so.
     )
 }
 
+/// The fixture's own catalogue: one audience, one area and one moment that names both.
+/// Small on purpose — the point is that the mechanism works on one file each, not that the
+/// fixture has a rich catalogue.
+pub const AUDIENCE: &str = "---
+schema: audience/v1
+id: fixture-team
+kind: audience
+title: The fixture's team
+short_title: Fixture team
+summary: 'A team that exists so the catalogue has somebody to belong to.'
+status: stable
+weight: 10
+---
+
+# The fixture's team
+
+Because the fixture says so.
+";
+
+pub const AREA: &str = "---
+schema: area/v1
+id: fixture-area
+kind: area
+title: The fixture's area
+summary: 'An operational area that exists so a moment has somewhere to fall.'
+status: stable
+weight: 10
+---
+
+# The fixture's area
+
+Because the fixture says so.
+";
+
+pub const MOMENT: &str = "---
+schema: moment/v1
+id: fixture-moment
+kind: moment
+title: 'The moment the fixture recognises'
+hook: 'recognised the moment the fixture declares'
+summary: 'A moment that exists so every projection has something to project.'
+status: stable
+severity: medium
+frequency: common
+weight: 10
+featured: true
+audiences: [fixture-team]
+areas: [fixture-area]
+tags: [fixture]
+signals:
+  - id: fixture-signal
+    text: 'The fixture recognised its own moment.'
+examples:
+  - id: one
+    audience: fixture-team
+    title: 'The first situation'
+    before: 'Nothing records it.'
+    after: 'The catalogue does.'
+  - id: two
+    audience: fixture-team
+    title: 'The second situation'
+    before: 'Nothing records it either.'
+    after: 'The catalogue does.'
+  - id: three
+    audience: fixture-team
+    title: 'The third situation'
+    before: 'Still nothing.'
+    after: 'Still the catalogue.'
+claims: [policy-parse]
+---
+
+## The moment
+
+Because the fixture says so.
+
+## Why it happens
+
+Because the fixture says so.
+
+## What it does not do
+
+Nothing the fixture does not say.
+";
+
 pub struct Fixture {
     dir: tempfile::TempDir,
 }
@@ -256,6 +359,9 @@ impl Fixture {
             &context_doc("ai.repo.workflows", "Workflows"),
         );
         f.write("docs/CLAIMS.yaml", CLAIMS);
+        f.write(".ai/repo/why/audiences/fixture-team.md", AUDIENCE);
+        f.write(".ai/repo/why/areas/fixture-area.md", AREA);
+        f.write(".ai/repo/why/moments/fixture-moment.md", MOMENT);
         f.write(
             "docs/claims/policy-parse.md",
             "# The policy is parsed

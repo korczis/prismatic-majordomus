@@ -43,6 +43,83 @@ pub enum Command {
     Scope(ScopeArgs),
     /// The repository's web surfaces: what is exposed, where it is mounted, what produced it, and whether the topology is valid
     Web(WebArgs),
+    /// The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation
+    Why(WhyArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus why`. The facets and the output shape are global, so they read the way a
+/// person writes them — `why list --audience solo-builder` — and are declared once.
+pub struct WhyArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `list`, `show`, `audiences`, `areas`, `diagnose` or `validate`; none lists.
+    pub command: Option<WhyCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only moments this audience recognises
+    #[arg(long, global = true)]
+    pub audience: Option<String>,
+    /// Only moments in this operational area
+    #[arg(long, global = true)]
+    pub area: Option<String>,
+    /// Only moments carrying this tag
+    #[arg(long, global = true)]
+    pub tag: Option<String>,
+    /// Only moments of this severity
+    #[arg(long, global = true)]
+    pub severity: Option<String>,
+    /// Only moments of this frequency
+    #[arg(long, global = true)]
+    pub frequency: Option<String>,
+    /// Only moments at this stage of work
+    #[arg(long, global = true)]
+    pub lifecycle: Option<String>,
+    /// Only moments naming this capability of the executable
+    #[arg(long, global = true)]
+    pub capability: Option<String>,
+    /// Only moments naming this command
+    #[arg(long = "names-command", global = true)]
+    pub names_command: Option<String>,
+    /// Only the moments the homepage features
+    #[arg(long, global = true)]
+    pub featured: bool,
+    /// Include drafts and deprecated moments, not only the public ones
+    #[arg(long, global = true)]
+    pub all: bool,
+    /// Case-insensitive text over identities, titles, hooks, summaries, tags, aliases, signals, examples and bodies
+    #[arg(long, short = 'q', global = true)]
+    pub query: Option<String>,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus why`.
+pub enum WhyCommand {
+    /// Every operational moment, narrowed by any facet the catalogue reports
+    List,
+    /// One moment in full, with every relation derived from its metadata
+    Show {
+        /// The moment's id, which is also its slug and its route
+        id: String,
+    },
+    /// Every audience, with the moments that name it
+    Audiences,
+    /// Every operational area, with the moments that fall under it
+    Areas,
+    /// What the symptoms you recognise imply: the areas they weigh towards and the mechanisms that answer them
+    Diagnose {
+        /// A signal id or a moment id; repeat for each one you recognise. Without any, the questionnaire is printed.
+        #[arg(long = "signal")]
+        signals: Vec<String>,
+    },
+    /// Every finding over the catalogue; exit 10 when any is an error
+    Validate,
 }
 
 #[derive(Debug, Args)]
@@ -678,6 +755,111 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["web", "compose", "--destination", "target/site"],
             setup: &[],
             expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "why",
+        examples: &[ExampleDoc {
+            id: "why-catalogue",
+            title: "The operational moments this repository holds",
+            description: "`why` with nothing after it lists, because listing is what a person wants when they ask what this section is. The count on the last line is computed from the catalogue; no number anywhere is written down.",
+            argv: &["why"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["SLUG", "moment(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "why list",
+        examples: &[
+            ExampleDoc {
+                id: "why-list",
+                title: "Every public moment, in presentation order",
+                description: "Drafts are excluded unless `--all` is given. The facets a listing may be narrowed by are the ones the catalogue itself reports, so an audience or an area added as a file is a filter without anything being registered.",
+                argv: &["why", "list"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SLUG"]),
+            },
+            ExampleDoc {
+                id: "why-list-audience",
+                title: "Only what one audience recognises",
+                description: "Membership is declared by each moment and never listed in the audience's own file, so this answer is derived. An audience the catalogue does not have is an invalid input naming the ones it does, not an empty answer.",
+                argv: &["why", "list", "--audience", "fixture-team"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SLUG"]),
+            },
+            ExampleDoc {
+                id: "why-list-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "One domain model behind every projection: this document is what `GET /api/v1/why` returns and what the `majordomus_why` tool answers, including the derived facets and the catalogue's fingerprint.",
+                argv: &["why", "list", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/counts/moments", "/facets/audiences", "/fingerprint"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "why show",
+        examples: &[ExampleDoc {
+            id: "why-show",
+            title: "One moment, with every relation derived from its metadata",
+            description: "The record as its file declares it, then what nobody authored: the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.",
+            argv: &["why", "show", "fixture-moment"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-moment", "derived"]),
+        }],
+    },
+    CommandExamples {
+        command: "why audiences",
+        examples: &[ExampleDoc {
+            id: "why-audiences",
+            title: "Who recognises what, with the counts derived",
+            description: "Each audience with how many public moments name it. The number is computed from the moments; an audience's own file never lists one.",
+            argv: &["why", "audiences"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["SLUG", "TITLE"]),
+        }],
+    },
+    CommandExamples {
+        command: "why areas",
+        examples: &[ExampleDoc {
+            id: "why-areas",
+            title: "The operational areas, with the counts derived",
+            description: "The same relation read the other way: each area with the public moments that fall under it.",
+            argv: &["why", "areas"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["SLUG", "TITLE"]),
+        }],
+    },
+    CommandExamples {
+        command: "why diagnose",
+        examples: &[
+            ExampleDoc {
+                id: "why-diagnose-questions",
+                title: "The questionnaire, assembled from the catalogue's own signals",
+                description: "With no selection there is nothing to diagnose, so the questions are printed instead of an empty answer. Every line is a signal a moment declares; nothing here is a list of questions.",
+                argv: &["why", "diagnose"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["Which of these happened to you this week?"]),
+            },
+            ExampleDoc {
+                id: "why-diagnose",
+                title: "What the symptoms you recognise imply",
+                description: "A name is a signal id or a moment id. The answer is counting, not inference: each recommendation carries the moments that produced it, and there is no percentage because there is no model behind one.",
+                argv: &["why", "diagnose", "--signal", "fixture-signal"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["moment(s) matched", "fixture-moment"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "why validate",
+        examples: &[ExampleDoc {
+            id: "why-validate",
+            title: "Check the catalogue before anything projects it",
+            description: "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a public record that does not meet the floor its status promises. Exit 10 on any error.",
+            argv: &["why", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["moment(s)", "valid"]),
         }],
     },
     CommandExamples {

@@ -19,6 +19,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
+| `why` | Why | behaviorally_verified | 6 | [`modules/why.md`](modules/why.md) |
 
 ## Executable capabilities
 
@@ -41,10 +42,16 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | — | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |
 | `repository.scope_classify` | `repository` | query | behaviorally_verified | `majordomus_scope_classify` | — | `GET /api/v1/scope/classify` | `majordomus scope classify` | — | required |
+| `why.areas` | `why` | query | behaviorally_verified | `majordomus_why_areas` | `majordomus://why/areas` | `GET /api/v1/why/areas` | `majordomus why areas` | process, 4 entries | required |
+| `why.audiences` | `why` | query | behaviorally_verified | `majordomus_why_audiences` | `majordomus://why/audiences` | `GET /api/v1/why/audiences` | `majordomus why audiences` | process, 4 entries | required |
+| `why.diagnose` | `why` | query | behaviorally_verified | `majordomus_why_diagnose` | — | `GET /api/v1/why/diagnose` | `majordomus why diagnose` | process, 32 entries | required |
+| `why.list` | `why` | query | behaviorally_verified | `majordomus_why` | `majordomus://why` | `GET /api/v1/why` | `majordomus why list` | process, 32 entries | required |
+| `why.moment` | `why` | query | behaviorally_verified | `majordomus_why_moment` | — | `GET /api/v1/why/moment` | `majordomus why show` | process, 64 entries | required |
+| `why.validate` | `why` | query | behaviorally_verified | `majordomus_why_validate` | — | `GET /api/v1/why/validate` | `majordomus why validate` | process, 2 entries | required |
 
 ## Declarative resources
 
-Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `application`, `claim`, `context`, `document`, `implementation`, `issue`, `knowledge`, `milestone`, `policy`, `profile`, `prompt`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`.
+Every object of the repository's AI layer is a capability of kind `resource` with the id `<kind>.<identity>` (`rule.majordomus.scope-integrity@1`, `prompt.continue`, `document.docs/CLI.md`), exposed as the MCP resource `majordomus://<kind>/<identity>` and read over HTTP through `objects.get`; its module is its kind. They are not listed here: they are the repository's, not the executable's, and `majordomus capabilities list --kind resource` answers for the repository at hand. Kinds present in this repository at generation: `application`, `area`, `audience`, `claim`, `command`, `context`, `document`, `implementation`, `issue`, `knowledge`, `milestone`, `moment`, `policy`, `profile`, `prompt`, `rule`, `scope`, `session`, `skill`, `taxonomy`, `test`, `use-case`.
 
 ## Infrastructure routes
 

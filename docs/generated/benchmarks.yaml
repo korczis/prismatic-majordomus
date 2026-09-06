@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.1.0
 coverage:
   - scope: direct
-    required: 17
-    covered: 17
+    required: 23
+    covered: 23
     missing: 0
     waived: 0
   - scope: http
-    required: 17
-    covered: 17
+    required: 23
+    covered: 23
     missing: 0
     waived: 0
   - scope: mcp
-    required: 17
-    covered: 17
+    required: 23
+    covered: 23
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 63
-    covered: 63
+    required: 81
+    covered: 81
     missing: 0
     waived: 0
 capabilities:
@@ -94,6 +94,7 @@ capabilities:
       - rules
       - adrs
       - use-cases
+      - why
   - id: graph.list
     module: graph
     kind: query
@@ -200,6 +201,62 @@ capabilities:
       - secret
       - undeclared
       - first-object
+  - id: why.areas
+    module: why
+    kind: query
+    cache: "process, 4 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: why.audiences
+    module: why
+    kind: query
+    cache: "process, 4 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: why.diagnose
+    module: why
+    kind: query
+    cache: "process, 32 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - three-moments
+  - id: why.list
+    module: why
+    kind: query
+    cache: "process, 32 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - by-audience
+      - search
+  - id: why.moment
+    module: why
+    kind: query
+    cache: "process, 64 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-moment
+  - id: why.validate
+    module: why
+    kind: query
+    cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
 system_targets:
   - key: system.mcp.process_cold
     transport: mcp

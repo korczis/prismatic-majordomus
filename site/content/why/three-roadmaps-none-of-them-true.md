@@ -1,14 +1,14 @@
 +++
 title = "Three roadmaps, and none of them true"
-description = "Why a plan kept in prose disagrees with itself the first time anything changes, and how a dependency graph with derived status replaces it."
-weight = 10
+description = "A plan kept in prose is a snapshot, and every copy of it drifts on its own schedule; stored status is an assertion that stays true after the world moves."
+weight = 100
 [extra]
-hook = "read three roadmaps for one project and believed none of them"
-responsibilities = ["plan"]
-commands = ["plan"]
-claims = ["project-schema", "project-status-derived", "dag-validation", "execution-waves", "evidence-gates-done", "roadmap-derived", "github-projection"]
+id = "three-roadmaps-none-of-them-true"
+status = "stable"
+source = ".ai/repo/why/moments/three-roadmaps-none-of-them-true.md"
 +++
 {% raw %}
+
 ## The moment
 
 The README has a roadmap. GitHub has milestones. A planning document has a diagram. They
@@ -23,6 +23,19 @@ not an observation, and it stays true in that field after the world has moved on
 then picked from memory rather than from a dependency order, so something starts before the
 thing it needs, and the diagrams are redrawn by hand until someone stops redrawing them.
 
+## Why a better model does not fix it
+
+A worker asked to pick the next task reads whichever copy it was pointed at. It cannot know
+that two other copies exist, and it certainly cannot know which of the three is least stale.
+Handing it all three produces a worker that has to guess, which is what the humans were
+doing.
+
+## What it costs
+
+Work started out of order, which shows up much later as a rewrite. Planning meetings spent
+reconciling documents rather than deciding anything. And the slow abandonment of all three
+copies, after which the plan lives in a few people's heads.
+
 ## What Majordomus does
 
 The plan is two kinds of canonical file, checked against an allowlist where a key nobody
@@ -36,11 +49,26 @@ field is an unknown key.
 `plan validate` refuses a cycle, a self-dependency and a dependency on an issue that does
 not exist, each by name. `plan waves` computes the execution order from the graph and
 reports issues in one wave that touch the same paths as serialised. `plan start` refuses an
-issue that is not ready, naming what it waits on; `plan evidence` refuses narrative — it
-needs a command or an artifact; `plan done` refuses while any declared evidence is
-uncovered or a dependency is not done. The roadmap on this site and the milestones on GitHub
-are projections of the same files, and a hand-edited generated region on GitHub is reported
-rather than overwritten.
+issue that is not ready, naming what it waits on; `plan done` refuses while any declared
+evidence is uncovered or a dependency is not done. The roadmap on this site and the
+milestones on GitHub are projections of the same files.
+
+## Before and after
+
+```text
+before   README roadmap | GitHub milestones | planning doc     three snapshots
+
+after    $ majordomus plan next
+         I0813  READY   session-knowledge-integration   (deps I0806, I0812 done)
+         $ majordomus plan done I0042
+         refused: evidence 'gap_reproduced' is uncovered
+```
+
+## How to verify it
+
+Add a dependency edge and run `plan next`: the ready set changes without any status being
+edited. Introduce a cycle and `plan validate` names it. Nothing anywhere carries a status
+field, because the allowlist refuses one.
 
 ## What it does not do
 
@@ -48,13 +76,4 @@ It does not estimate, schedule or prioritise; it orders by dependency and report
 ready. The model is opt-in: a repository without one is skipped by `doctor`, not failed. The
 projection runs one way — GitHub is written from the files, and nothing written on GitHub
 is ever copied back into them.
-
-## Try it
-
-```bash
-majordomus plan validate
-majordomus plan next        # the one issue a worker should take now
-majordomus plan waves
-majordomus plan done I0042  # refused while evidence is missing or a dependency is not done
-```
 {% endraw %}

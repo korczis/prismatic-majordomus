@@ -318,6 +318,108 @@
       "tests": [],
       "title": "Judge a path against the scope",
       "tool": "majordomus_scope_classify"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-areas",
+      "claims": [],
+      "cli": "majordomus why areas",
+      "id": "why.areas",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": "majordomus://why/areas",
+      "route": "/registry/capabilities/why-areas/",
+      "slug": "why-areas",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "Operational areas",
+      "tool": "majordomus_why_areas"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-audiences",
+      "claims": [],
+      "cli": "majordomus why audiences",
+      "id": "why.audiences",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": "majordomus://why/audiences",
+      "route": "/registry/capabilities/why-audiences/",
+      "slug": "why-audiences",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "Audiences",
+      "tool": "majordomus_why_audiences"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-diagnose",
+      "claims": [],
+      "cli": "majordomus why diagnose",
+      "id": "why.diagnose",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": null,
+      "route": "/registry/capabilities/why-diagnose/",
+      "slug": "why-diagnose",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "Diagnose a selection",
+      "tool": "majordomus_why_diagnose"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-list",
+      "claims": [],
+      "cli": "majordomus why list",
+      "id": "why.list",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": "majordomus://why",
+      "route": "/registry/capabilities/why-list/",
+      "slug": "why-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "The catalogue",
+      "tool": "majordomus_why"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-moment",
+      "claims": [],
+      "cli": "majordomus why show",
+      "id": "why.moment",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": null,
+      "route": "/registry/capabilities/why-moment/",
+      "slug": "why-moment",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "One moment",
+      "tool": "majordomus_why_moment"
+    },
+    {
+      "api_anchor": "/docs/api/#op-why-validate",
+      "claims": [],
+      "cli": "majordomus why validate",
+      "id": "why.validate",
+      "kind": "query",
+      "module": "why",
+      "module_route": "/registry/modules/why/",
+      "resource": null,
+      "route": "/registry/capabilities/why-validate/",
+      "slug": "why-validate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "tests": [],
+      "title": "Validate the catalogue",
+      "tool": "majordomus_why_validate"
     }
   ],
   "claims": {
@@ -422,6 +524,27 @@
         "route": "/guarantees/scope-declared/",
         "status": "guaranteed",
         "test": "test/cases/93_scope_policy.sh"
+      },
+      {
+        "id": "why-catalogue-discovered",
+        "implementation": "apps/majordomus-cli/src/why.rs",
+        "route": "/guarantees/why-catalogue-discovered/",
+        "status": "guaranteed",
+        "test": "test/cases/98_why_catalogue.sh"
+      },
+      {
+        "id": "why-references-resolve",
+        "implementation": "apps/majordomus-cli/src/why.rs",
+        "route": "/guarantees/why-references-resolve/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/why.rs"
+      },
+      {
+        "id": "why-diagnosis-explainable",
+        "implementation": "apps/majordomus-cli/src/why.rs",
+        "route": "/guarantees/why-diagnosis-explainable/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/why.rs"
       }
     ],
     "http": [
@@ -472,9 +595,9 @@
     ]
   },
   "counts": {
-    "capabilities": 17,
-    "claims": 21,
-    "modules": 10
+    "capabilities": 23,
+    "claims": 24,
+    "modules": 11
   },
   "generator": "majordomus-cli 0.1.0",
   "modules": [
@@ -680,6 +803,47 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "why.areas",
+          "route": "/registry/capabilities/why-areas/",
+          "slug": "why-areas"
+        },
+        {
+          "id": "why.audiences",
+          "route": "/registry/capabilities/why-audiences/",
+          "slug": "why-audiences"
+        },
+        {
+          "id": "why.diagnose",
+          "route": "/registry/capabilities/why-diagnose/",
+          "slug": "why-diagnose"
+        },
+        {
+          "id": "why.list",
+          "route": "/registry/capabilities/why-list/",
+          "slug": "why-list"
+        },
+        {
+          "id": "why.moment",
+          "route": "/registry/capabilities/why-moment/",
+          "slug": "why-moment"
+        },
+        {
+          "id": "why.validate",
+          "route": "/registry/capabilities/why-validate/",
+          "slug": "why-validate"
+        }
+      ],
+      "claims": [],
+      "id": "why",
+      "route": "/registry/modules/why/",
+      "slug": "why",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs",
+      "title": "Why"
     }
   ],
   "registry_schema": "majordomus/capability-registry/v1",

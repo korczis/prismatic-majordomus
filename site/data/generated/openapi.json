@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 17,
-    "schemas": 83,
-    "tags": 10
+    "operations": 23,
+    "schemas": 99,
+    "tags": 11
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -283,6 +283,128 @@
       "variants": []
     },
     {
+      "description": "Every area.",
+      "is_enum": false,
+      "name": "AreaList",
+      "properties": [
+        {
+          "description": "How many.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Each, with its derived membership, in presentation order.",
+          "name": "areas",
+          "refs": [
+            "AreaView"
+          ],
+          "required": true,
+          "type": "array of AreaView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "why.areas"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One area, with the membership nobody authored.",
+      "is_enum": false,
+      "name": "AreaView",
+      "properties": [
+        {
+          "description": "The identity, the slug and the file name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The area.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line: what falls under it.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`stable`, `draft` or `deprecated`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Presentation order.",
+          "name": "weight",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: `/why/areas/<id>/`.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the file it came from.",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The Markdown body.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the public moments that fall under it, in presentation order.",
+          "name": "moments",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: how many.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "AreaList",
+        "CatalogueView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The encoding one generated artifact is written in.",
       "is_enum": true,
       "name": "ArtifactFormat",
@@ -547,6 +669,142 @@
       "used_by": [],
       "used_by_schemas": [
         "ArtifactReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every audience.",
+      "is_enum": false,
+      "name": "AudienceList",
+      "properties": [
+        {
+          "description": "How many.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Each, with its derived membership, in presentation order.",
+          "name": "audiences",
+          "refs": [
+            "AudienceView"
+          ],
+          "required": true,
+          "type": "array of AudienceView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "why.audiences"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One audience, with the membership nobody authored.",
+      "is_enum": false,
+      "name": "AudienceView",
+      "properties": [
+        {
+          "description": "The identity, the slug and the file name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who they are.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Two or three words for a filter chip.",
+          "name": "short_title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line: the working situation.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line: how work flows for them.",
+          "name": "workflow",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`stable`, `draft` or `deprecated`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Presentation order.",
+          "name": "weight",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: `/why/audiences/<id>/`.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the file it came from.",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The Markdown body.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the public moments that name it, in presentation order.",
+          "name": "moments",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: how many.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "AudienceList",
+        "CatalogueView"
       ],
       "values": [],
       "variants": []
@@ -1089,6 +1347,79 @@
       "variants": []
     },
     {
+      "description": "The whole catalogue as a client reads it.",
+      "is_enum": false,
+      "name": "CatalogueView",
+      "properties": [
+        {
+          "description": "[`SCHEMA`].",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The hash of the catalogue's own sources: stable for a tree, and independent of the\nrest of the index, so two runs over one tree agree.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The counts.",
+          "name": "counts",
+          "refs": [
+            "Counts"
+          ],
+          "required": true,
+          "type": "Counts"
+        },
+        {
+          "description": "The matching moments, in presentation order.",
+          "name": "moments",
+          "refs": [
+            "MomentSummary"
+          ],
+          "required": true,
+          "type": "array of MomentSummary"
+        },
+        {
+          "description": "Every audience, with its derived membership.",
+          "name": "audiences",
+          "refs": [
+            "AudienceView"
+          ],
+          "required": true,
+          "type": "array of AudienceView"
+        },
+        {
+          "description": "Every area, with its derived membership.",
+          "name": "areas",
+          "refs": [
+            "AreaView"
+          ],
+          "required": true,
+          "type": "array of AreaView"
+        },
+        {
+          "description": "The filters, derived from the records.",
+          "name": "facets",
+          "refs": [
+            "Facets"
+          ],
+          "required": true,
+          "type": "Facets"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "why.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One category of `out`: pathspecs and file-name patterns.",
       "is_enum": false,
       "name": "Category",
@@ -1565,6 +1896,63 @@
       "variants": []
     },
     {
+      "description": "How much the catalogue holds. Every count anywhere — a page, a heading, a report — is\none of these, so no number is ever written down.",
+      "is_enum": false,
+      "name": "Counts",
+      "properties": [
+        {
+          "description": "Public moments.",
+          "name": "moments",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Moments of every status, drafts included.",
+          "name": "moments_all",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Public audiences.",
+          "name": "audiences",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Public areas.",
+          "name": "areas",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Signals across the public moments: the size of the questionnaire.",
+          "name": "signals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Concrete situations across the public moments.",
+          "name": "examples",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CatalogueView",
+        "ValidationReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema.",
       "is_enum": false,
       "name": "Declaration",
@@ -1598,6 +1986,104 @@
       "used_by_schemas": [
         "ScopeReport"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a reader's selection implies, computed by counting rather than by inference.\n\nThe arithmetic is the whole model and is stated so a reader can check it: a selection\nresolves to a set of moments; an area or an audience scores the number of selected\nmoments that name it; a recommendation scores the number that name it and carries\ntheir ids. There is no weighting and no percentage, because there is no model behind\none.",
+      "is_enum": false,
+      "name": "Diagnosis",
+      "properties": [
+        {
+          "description": "The moments the selection resolved to, in presentation order.",
+          "name": "moments",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Selected names that resolved to nothing.",
+          "name": "unresolved",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Operational areas by how many selected moments fall under them, heaviest first.",
+          "name": "areas",
+          "refs": [
+            "Recommendation"
+          ],
+          "required": true,
+          "type": "array of Recommendation"
+        },
+        {
+          "description": "Audiences by how many selected moments they recognise, heaviest first.",
+          "name": "audiences",
+          "refs": [
+            "Recommendation"
+          ],
+          "required": true,
+          "type": "array of Recommendation"
+        },
+        {
+          "description": "Capabilities of the executable that answer the selected moments.",
+          "name": "capabilities",
+          "refs": [
+            "Recommendation"
+          ],
+          "required": true,
+          "type": "array of Recommendation"
+        },
+        {
+          "description": "Commands that answer them.",
+          "name": "commands",
+          "refs": [
+            "Recommendation"
+          ],
+          "required": true,
+          "type": "array of Recommendation"
+        },
+        {
+          "description": "Claims that say what is guaranteed.",
+          "name": "claims",
+          "refs": [
+            "Recommendation"
+          ],
+          "required": true,
+          "type": "array of Recommendation"
+        },
+        {
+          "description": "Rules of the effective set that govern them.",
+          "name": "doctrines",
+          "refs": [
+            "Recommendation"
+          ],
+          "required": true,
+          "type": "array of Recommendation"
+        },
+        {
+          "description": "Use cases that show the way out.",
+          "name": "use_cases",
+          "refs": [
+            "Recommendation"
+          ],
+          "required": true,
+          "type": "array of Recommendation"
+        },
+        {
+          "description": "Moments the selection did not include that share an area with one that it did.",
+          "name": "also_worth_reading",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "why.diagnose"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -2060,7 +2546,13 @@
         "repository.info",
         "repository.scope",
         "repository.scope_classify",
-        "objects.search"
+        "objects.search",
+        "why.list",
+        "why.areas",
+        "why.audiences",
+        "why.diagnose",
+        "why.moment",
+        "why.validate"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -2090,6 +2582,55 @@
       "used_by": [],
       "used_by_schemas": [
         "ErrorBody"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One concrete situation, in one audience, with what happens today and what happens\ninstead.",
+      "is_enum": false,
+      "name": "Example",
+      "properties": [
+        {
+          "description": "Unique within the moment.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The audience this situation belongs to; must name an audience of the catalogue.",
+          "name": "audience",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the situation.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What happens without the tool.",
+          "name": "before",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What happens with it.",
+          "name": "after",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MomentDetail"
       ],
       "values": [],
       "variants": []
@@ -2132,6 +2673,192 @@
       "used_by_schemas": [
         "Capability",
         "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One selectable value of one facet, with how many public moments carry it. Every filter\na reader is offered is one of these; nothing anywhere lists the values by hand.",
+      "is_enum": false,
+      "name": "FacetValue",
+      "properties": [
+        {
+          "description": "The value as a moment declares it.",
+          "name": "value",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name to show; the value itself when the taxonomy holds no title for it.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many public moments carry it.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Facets"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The filters the catalogue offers, derived from the records rather than declared.",
+      "is_enum": false,
+      "name": "Facets",
+      "properties": [
+        {
+          "description": "By audience.",
+          "name": "audiences",
+          "refs": [
+            "FacetValue"
+          ],
+          "required": true,
+          "type": "array of FacetValue"
+        },
+        {
+          "description": "By operational area.",
+          "name": "areas",
+          "refs": [
+            "FacetValue"
+          ],
+          "required": true,
+          "type": "array of FacetValue"
+        },
+        {
+          "description": "By tag.",
+          "name": "tags",
+          "refs": [
+            "FacetValue"
+          ],
+          "required": true,
+          "type": "array of FacetValue"
+        },
+        {
+          "description": "By severity.",
+          "name": "severities",
+          "refs": [
+            "FacetValue"
+          ],
+          "required": true,
+          "type": "array of FacetValue"
+        },
+        {
+          "description": "By frequency.",
+          "name": "frequencies",
+          "refs": [
+            "FacetValue"
+          ],
+          "required": true,
+          "type": "array of FacetValue"
+        },
+        {
+          "description": "By stage of work.",
+          "name": "lifecycle",
+          "refs": [
+            "FacetValue"
+          ],
+          "required": true,
+          "type": "array of FacetValue"
+        },
+        {
+          "description": "By capability of the executable.",
+          "name": "capabilities",
+          "refs": [
+            "FacetValue"
+          ],
+          "required": true,
+          "type": "array of FacetValue"
+        },
+        {
+          "description": "By command.",
+          "name": "commands",
+          "refs": [
+            "FacetValue"
+          ],
+          "required": true,
+          "type": "array of FacetValue"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CatalogueView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching.",
+      "is_enum": false,
+      "name": "Finding",
+      "properties": [
+        {
+          "description": "`error` or `warning`.",
+          "name": "severity",
+          "refs": [
+            "Severity"
+          ],
+          "required": true,
+          "type": "Severity"
+        },
+        {
+          "description": "A short category: `unknown_reference`, `duplicate_identity`, `missing_content`, ...",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The repository-relative file the finding is in.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record's identity, when one record owns the finding.",
+          "name": "id",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The front-matter key the finding is about, when one key owns it.",
+          "name": "field",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What is wrong, in one sentence.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The nearest existing name, when the value looks like a typo of one.",
+          "name": "did_you_mean",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ValidationReport"
       ],
       "values": [],
       "variants": []
@@ -2734,6 +3461,370 @@
       "used_by_schemas": [
         "Capability",
         "CapabilitySummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One moment in full, with everything derived that a page shows and no file states.",
+      "is_enum": false,
+      "name": "MomentDetail",
+      "properties": [
+        {
+          "description": "The identity, the slug and the file name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The moment as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Two or three words for a narrow column, when the record carries one.",
+          "name": "short_title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The first-person line an index shows.",
+          "name": "hook",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line: what is actually wrong.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`stable`, `draft` or `deprecated`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`low`, `medium` or `high`.",
+          "name": "severity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`rare`, `occasional`, `common` or `constant`.",
+          "name": "frequency",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Presentation order, lowest first.",
+          "name": "weight",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Whether the homepage shows it.",
+          "name": "featured",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "The audiences that recognise it.",
+          "name": "audiences",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The operational areas it falls under.",
+          "name": "areas",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The stages of work at which it shows up.",
+          "name": "lifecycle",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The observable symptoms.",
+          "name": "signals",
+          "refs": [
+            "Signal"
+          ],
+          "required": true,
+          "type": "array of Signal"
+        },
+        {
+          "description": "The concrete situations.",
+          "name": "examples",
+          "refs": [
+            "Example"
+          ],
+          "required": true,
+          "type": "array of Example"
+        },
+        {
+          "description": "Commands of the tool that answer it.",
+          "name": "commands",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Capability ids of the executable that answer it.",
+          "name": "capabilities",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Claims that say what is guaranteed here.",
+          "name": "claims",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Rules of the effective set that govern it.",
+          "name": "doctrines",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Use cases that show the way out.",
+          "name": "use_cases",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Moments explicitly related to this one. The reverse is derived.",
+          "name": "related",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Other words a reader might search for.",
+          "name": "aliases",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: `/why/<id>/`. Never authored; the schema refuses a `route` key.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the repository-relative file the record came from.",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The Markdown body, without its front matter.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the responsibilities the claims it names belong to.",
+          "name": "responsibilities",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: the moments that name this one in their `related`.",
+          "name": "backlinks",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: moments sharing an area or an audience with this one and not already\nnamed by it, nearest first — most shared metadata, then presentation order.",
+          "name": "similar",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: the explicitly related moments, summarised so a page needs one call.",
+          "name": "related_detail",
+          "refs": [
+            "MomentSummary"
+          ],
+          "required": true,
+          "type": "array of MomentSummary"
+        },
+        {
+          "description": "Derived: what a reader should see next, in one list and in a stated order — what\nthis moment names, then what names it, then what is nearest by shared metadata,\neach appearing once. The three lists above are the same relations kept apart for a\nreader that wants to know which is which.",
+          "name": "neighbours",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "why.moment"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One moment as a listing shows it: everything a card needs and nothing a page needs.",
+      "is_enum": false,
+      "name": "MomentSummary",
+      "properties": [
+        {
+          "description": "The identity and the slug.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The moment as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a narrow column shows: the short title, or the title.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first-person line an index shows.",
+          "name": "hook",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line: what is actually wrong.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`stable`, `draft` or `deprecated`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`low`, `medium` or `high`.",
+          "name": "severity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`rare`, `occasional`, `common` or `constant`.",
+          "name": "frequency",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Presentation order.",
+          "name": "weight",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Whether the homepage shows it.",
+          "name": "featured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The audiences that recognise it.",
+          "name": "audiences",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The operational areas it falls under.",
+          "name": "areas",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: `/why/<id>/`.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many observable symptoms it declares.",
+          "name": "signals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many concrete situations it carries.",
+          "name": "examples",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CatalogueView",
+        "MomentDetail"
       ],
       "values": [],
       "variants": []
@@ -3491,6 +4582,41 @@
       "variants": []
     },
     {
+      "description": "One recommendation, with the moments that produced it. A recommendation with no\n`matched_because` is a recommendation nobody can check.",
+      "is_enum": false,
+      "name": "Recommendation",
+      "properties": [
+        {
+          "description": "The thing recommended: a capability id, a command, a claim, a rule, a use case.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many of the selected moments name it.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The selected moments that named it, in presentation order.",
+          "name": "matched_because",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Diagnosis"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.",
       "is_enum": false,
       "name": "Record",
@@ -3926,7 +5052,8 @@
       "type": "\"info\" | \"warning\" | \"error\"",
       "used_by": [],
       "used_by_schemas": [
-        "Diagnostic"
+        "Diagnostic",
+        "Finding"
       ],
       "values": [
         {
@@ -3942,6 +5069,34 @@
           "value": "error"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One observable symptom of a moment: a question a reader can answer about their own\nweek. The questionnaire on the site and the input of `why diagnose` are these and\nnothing else.",
+      "is_enum": false,
+      "name": "Signal",
+      "properties": [
+        {
+          "description": "Unique within the moment; the identity a diagnosis selects by.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The symptom, phrased so a reader can say whether it happened to them.",
+          "name": "text",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MomentDetail"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -4178,6 +5333,59 @@
           "value": "http"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "What the catalogue's own validation found.",
+      "is_enum": false,
+      "name": "ValidationReport",
+      "properties": [
+        {
+          "description": "True when nothing is an error. Warnings do not make it false.",
+          "name": "valid",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many findings are errors: a reference that resolves to nothing, a duplicate\nidentity, a file name that disagrees with its id.",
+          "name": "errors",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many findings are warnings: a public record that does not meet its floor.",
+          "name": "warnings",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The counts the catalogue reached.",
+          "name": "counts",
+          "refs": [
+            "Counts"
+          ],
+          "required": true,
+          "type": "Counts"
+        },
+        {
+          "description": "The findings, errors first, then by file.",
+          "name": "findings",
+          "refs": [
+            "Finding"
+          ],
+          "required": true,
+          "type": "array of Finding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "why.validate"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -4662,6 +5870,10 @@
                 {
                   "case": "use-cases",
                   "value": "\"use-cases\""
+                },
+                {
+                  "case": "why",
+                  "value": "\"why\""
                 }
               ],
               "name": "id",
@@ -5430,6 +6642,447 @@
           "result_schema": "Classification",
           "stability": "behaviorally_verified",
           "summary": "Judge a path against the scope"
+        }
+      ]
+    },
+    {
+      "description": "The operational failure modes this tool is a response to: the moments a reader recognises, the audiences that recognise them, the areas they fall under, and what a reader's own symptoms imply. Every entry is a file under the layer's why section; nothing here holds a list, and a moment added there is answered by all of these without a registration anywhere.",
+      "name": "why",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=32",
+          "cli": "why list",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/why?audience=agency&q=context\"",
+          "description": "Every operational moment this repository holds, narrowed by any of the facets the catalogue itself reports, with the audiences, the areas, the derived filters and the counts. The default is the public catalogue; pass status=any for the drafts too.",
+          "id": "why.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "why",
+            "uri": "majordomus://why"
+          },
+          "mcp_tool": "majordomus_why",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only moments this audience recognises.",
+              "examples": [
+                {
+                  "case": "by-audience",
+                  "value": "\"agency\""
+                }
+              ],
+              "name": "audience",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only moments in this operational area.",
+              "examples": [],
+              "name": "area",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only moments carrying this tag.",
+              "examples": [],
+              "name": "tag",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only moments of this severity.",
+              "examples": [],
+              "name": "severity",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only moments of this frequency.",
+              "examples": [],
+              "name": "frequency",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only moments at this stage of work.",
+              "examples": [],
+              "name": "lifecycle",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only moments naming this capability of the executable.",
+              "examples": [],
+              "name": "capability",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only moments naming this command.",
+              "examples": [],
+              "name": "command",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only moments the homepage features.",
+              "examples": [],
+              "name": "featured",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Only moments of this status. Absent means the public ones (`stable`); pass `any`\nfor everything the catalogue holds.",
+              "examples": [],
+              "name": "status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Case-insensitive text, matched against the identity, the titles, the hook, the\nsummary, the tags, the aliases, the signals, the examples and the body.",
+              "examples": [
+                {
+                  "case": "search",
+                  "value": "\"context\""
+                }
+              ],
+              "name": "q",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/why",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::why",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The catalogue: the result.",
+              "schema": "CatalogueView",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CatalogueView",
+          "stability": "behaviorally_verified",
+          "summary": "The catalogue"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4",
+          "cli": "why areas",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/why/areas\"",
+          "description": "Every operational area the catalogue declares, each with the public moments that fall under it. Membership is derived from the moments and is never listed in an area's own file.",
+          "id": "why.areas",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "why-areas",
+            "uri": "majordomus://why/areas"
+          },
+          "mcp_tool": "majordomus_why_areas",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/why/areas",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::why",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Operational areas: the result.",
+              "schema": "AreaList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "AreaList",
+          "stability": "behaviorally_verified",
+          "summary": "Operational areas"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4",
+          "cli": "why audiences",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/why/audiences\"",
+          "description": "Every audience the catalogue declares, each with the public moments that name it. Membership is derived from the moments and is never listed in an audience's own file.",
+          "id": "why.audiences",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "why-audiences",
+            "uri": "majordomus://why/audiences"
+          },
+          "mcp_tool": "majordomus_why_audiences",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/why/audiences",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::why",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Audiences: the result.",
+              "schema": "AudienceList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "AudienceList",
+          "stability": "behaviorally_verified",
+          "summary": "Audiences"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=32",
+          "cli": "why diagnose",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/why/diagnose?signals=abandoned-worktree%2Capi-changed-contract-did-not%2Ccode-without-an-issue\"",
+          "description": "What a reader's own symptoms imply: the moments the selection resolves to, the operational areas and audiences they weigh towards, and the capabilities, commands, claims, rules and use cases that answer them — each carrying the moments that produced it. Counting, not inference: there is no weighting and no percentage.",
+          "id": "why.diagnose",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_why_diagnose",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Signal ids or moment ids, separated by commas. Empty selects nothing and is\nanswered with an empty diagnosis rather than an error.",
+              "examples": [
+                {
+                  "case": "three-moments",
+                  "value": "\"abandoned-worktree,api-changed-contract-did-not,code-without-an-issue\""
+                }
+              ],
+              "name": "signals",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/why/diagnose",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::why",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Diagnose a selection: the result.",
+              "schema": "Diagnosis",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Diagnosis",
+          "stability": "behaviorally_verified",
+          "summary": "Diagnose a selection"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=64",
+          "cli": "why show",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/why/moment?id=abandoned-worktree\"",
+          "description": "One operational moment in full: what it looks like, why it happens, what it costs, what this tool does about it, and every relation derived from its metadata — the responsibilities its claims belong to, the moments that name it, and the moments nearest it by shared area, audience and tag.",
+          "id": "why.moment",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_why_moment",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The moment's id, as `why.list` gives it. This is also its slug and its route.",
+              "examples": [
+                {
+                  "case": "first-moment",
+                  "value": "\"abandoned-worktree\""
+                }
+              ],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/why/moment",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::why",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "One moment: the result.",
+              "schema": "MomentDetail",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MomentDetail",
+          "stability": "behaviorally_verified",
+          "summary": "One moment"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2",
+          "cli": "why validate",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/why/validate\"",
+          "description": "Every finding over the catalogue: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; and a public record that does not meet the floor its status promises. Errors make the catalogue invalid; warnings do not.",
+          "id": "why.validate",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_why_validate",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/why/validate",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::why",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Validate the catalogue: the result.",
+              "schema": "ValidationReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ValidationReport",
+          "stability": "behaviorally_verified",
+          "summary": "Validate the catalogue"
         }
       ]
     }

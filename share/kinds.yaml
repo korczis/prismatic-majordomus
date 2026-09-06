@@ -222,6 +222,50 @@ kinds:
       field: version
       supported: [1]
 
+  command:
+    format: yaml
+    members: commands
+    schema: majordomus.command/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: version
+      supported: [1]
+
+  moment:
+    format: markdown
+    front_matter: required
+    schema: majordomus.moment/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: schema
+      supported: [moment/v1]
+
+  audience:
+    format: markdown
+    front_matter: required
+    schema: majordomus.audience/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: schema
+      supported: [audience/v1]
+
+  area:
+    format: markdown
+    front_matter: required
+    schema: majordomus.area/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: schema
+      supported: [area/v1]
+
   implementation:
     format: text
     identity: []
