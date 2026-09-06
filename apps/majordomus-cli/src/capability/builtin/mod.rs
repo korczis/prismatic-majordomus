@@ -8,8 +8,8 @@
 pub mod artifacts;
 pub mod capabilities;
 pub mod continuity;
-pub mod directories;
 pub mod deploy;
+pub mod directories;
 pub mod distribution;
 pub mod graph;
 pub mod health;
@@ -30,11 +30,13 @@ use super::module::ModuleDescriptor;
 pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
+pub use deploy::{
+    DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI,
+};
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
     DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,
 };
-pub use deploy::{DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI};
 // A release artifact and a generated artifact are different things, and `artifacts`
 // already answers to the plain names; distribution's carry the `Release` prefix so that
 // the two never collide — in this module, and in the one schema component namespace the

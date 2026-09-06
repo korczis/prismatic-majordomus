@@ -389,7 +389,11 @@ mod tests {
         let public = tmp.path().join(crate::web::discover::SITE_PUBLIC);
         std::fs::create_dir_all(public.join("docs")).unwrap();
         std::fs::write(public.join("index.html"), "<h1>app</h1>").unwrap();
-        std::fs::write(public.join("docs/index.html"), "<h1>the app's own docs</h1>").unwrap();
+        std::fs::write(
+            public.join("docs/index.html"),
+            "<h1>the app's own docs</h1>",
+        )
+        .unwrap();
         let config = tmp.path().join(crate::web::discover::SITE_CONFIG);
         std::fs::create_dir_all(config.parent().unwrap()).unwrap();
         std::fs::write(&config, "base_url = \"https://example.invalid\"\n").unwrap();

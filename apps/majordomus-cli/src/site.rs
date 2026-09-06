@@ -703,8 +703,7 @@ pub const WHY_SOURCE: &str =
     "the operational moments, audiences and areas of this repository's layer";
 
 /// Where `why-graph.json` says it came from.
-pub const GRAPH_SOURCE: &str =
-    "the moments and what answers them, as the derived `why` graph";
+pub const GRAPH_SOURCE: &str = "the moments and what answers them, as the derived `why` graph";
 
 /// The Why catalogue and its graph, as the site's templates read them:
 /// `site/data/registry/why.json` and `site/data/registry/why-graph.json`.
