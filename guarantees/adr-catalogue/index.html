@@ -173,10 +173,10 @@
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span><span class="text-sm text-body">Deterministic and blocking. Implemented, and a behavioural test proves it.</span></p>
-    <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">share/kinds.yaml declares the kind, share/schemas/adr.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section.</p>
+    <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">share/kinds.yaml declares the kind, share/schemas/majordomus/adr/adr.v1.schema.json its contract (share/allow/adr.txt is generated from it), and the source class adr in .ai/repo/knowledge/sources.yaml says which files carry it; nothing else registers a decision. lib/adr.sh derives one catalogue from that discovery for `adr list|show|check` and for mj_validate_adr, the validator of majordomus.adr-integrity dispatched from doctor and watch. The case exercises duplicate identities, an unknown status, a schema version nothing reads, one-sided supersession, a superseded record with no replacement and a missing body section.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
 <p>A decision is data, not prose the tool happens to store. <code>.ai/repo/adrs/&lt;NNNN&gt;-&lt;slug&gt;.md</code>
-carries front matter validated against <code>share/schemas/adr.schema.json</code> — the schema
+carries front matter validated against <code>share/schemas/majordomus/adr/adr.v1.schema.json</code> — the schema
 identifier, the identity <code>adr-NNNN</code>, the kind, the title, one of four statuses, the date it
 reached that status, and optionally tags, supersession and provenance — over a body with
 non-empty <code># Context</code>, <code># Decision</code> and <code># Consequences</code>. An unknown key is an error, an
@@ -188,7 +188,7 @@ number. Supersession is reciprocal: <code>supersedes</code> on one record requir
 the other, because a chain walkable from one end only is not a chain. And every reference a
 record makes — a decision it supersedes, a file or test it was derived from — resolves.</p>
 <h2 id="how-it-works"><a class="zola-anchor" href="#how-it-works" aria-label="Anchor link for: how-it-works">How it works</a></h2>
-<p><code>share/kinds.yaml</code> declares the kind, <code>share/schemas/adr.schema.json</code> is its contract, and
+<p><code>share/kinds.yaml</code> declares the kind, <code>share/schemas/majordomus/adr/adr.v1.schema.json</code> is its contract, and
 the allow-list <code>share/allow/adr.txt</code> is generated from that schema. Discovery is the source
 class <code>adr</code> in <code>.ai/repo/knowledge/sources.yaml</code>; nothing else registers a decision, so
 adding the file is the whole registration.</p>
@@ -287,7 +287,7 @@ the layer is.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/f276e7778ce42f3b7bb8edff83c9290c6ae56f30" class="font-mono hover:underline">f276e77</a> · inputs <span class="font-mono">7b1bba5ed359</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/39e50138cceb666435ee760ecca46c63926005a4" class="font-mono hover:underline">39e5013</a> · inputs <span class="font-mono">f93f2a59e937</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -310,7 +310,7 @@ The hook line must not swallow the exit code (<code>|| true</code>, <code>|| exi
 <p>The repository scope: what a worker reads and what it never reads. Named by the
 manifest's <code>scope</code> section; a manifest naming none means the distribution's default
 applies (<code>share/skeleton/ai/repo/scope.yaml</code>). The schema is
-<code>share/schemas/scope.schema.json</code>; the shell tool's allow-list is generated from it.
+<code>share/schemas/majordomus/scope/scope.v1.schema.json</code>; the shell tool's allow-list is generated from it.
 <a href="https://korczis.github.io/prismatic-majordomus/docs/scope/"><code>SCOPE.md</code></a> explains the judgement.</p>
 <pre class="giallo z-l-code z-d-code" ><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">ersion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
 <span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">n</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> pathspecs anchored at the root; a trailing / is the directory and everything beneath</span></span>
@@ -992,7 +992,7 @@ itself, which the budget then pays for twice.</p>
 <hr />
 <h2 id="ai-repo-skills-id-skill-md"><a class="zola-anchor" href="#ai-repo-skills-id-skill-md" aria-label="Anchor link for: ai-repo-skills-id-skill-md"><code>.ai/repo/skills/&lt;id&gt;/SKILL.md</code></a></h2>
 <p>A skill: a provider-neutral procedure for one bounded kind of work. Front matter is
-authored, validated against <code>share/schemas/skill.schema.json</code> (the allow-list
+authored, validated against <code>share/schemas/majordomus/skill/skill.v1.schema.json</code> (the allow-list
 <code>share/allow/skill.txt</code> is generated from it); the body is the procedure. The skill's
 identity is the <code>id</code>, which must equal the directory name, and its MCP URI is
 <code>majordomus://skill/&lt;id&gt;</code>. Discovery is the source class <code>skill</code> in
@@ -1036,7 +1036,7 @@ heading. See <a href="https://korczis.github.io/prismatic-majordomus/docs/cli-sp
 <hr />
 <h2 id="ai-repo-adrs-nnnn-slug-md"><a class="zola-anchor" href="#ai-repo-adrs-nnnn-slug-md" aria-label="Anchor link for: ai-repo-adrs-nnnn-slug-md"><code>.ai/repo/adrs/&lt;NNNN&gt;-&lt;slug&gt;.md</code></a></h2>
 <p>An architecture decision: what was decided, why, and what it costs. Front matter is
-authored or proposed by the tool, validated against <code>share/schemas/adr.schema.json</code> (the
+authored or proposed by the tool, validated against <code>share/schemas/majordomus/adr/adr.v1.schema.json</code> (the
 allow-list <code>share/allow/adr.txt</code> is generated from it); the body is the narrative. The
 identity is <code>adr-NNNN</code>, allocated once, never reused, and it fixes the file-name prefix, so
 a retitle moves the slug and never the number. Discovery is the source class <code>adr</code> in
@@ -1358,7 +1358,7 @@ the note but does not validate that block. On success the note is copied to
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/f276e7778ce42f3b7bb8edff83c9290c6ae56f30" class="font-mono hover:underline">f276e77</a> · inputs <span class="font-mono">7b1bba5ed359</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/39e50138cceb666435ee760ecca46c63926005a4" class="font-mono hover:underline">39e5013</a> · inputs <span class="font-mono">f93f2a59e937</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
