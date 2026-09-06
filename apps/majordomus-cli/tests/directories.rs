@@ -27,7 +27,10 @@ fn layered() -> Fixture {
     let f = Fixture::new();
     f.write(".ai/repo/knowledge/sources.yaml", &sources_with_context());
     f.write(".ai/README.md", &context_doc("ai.layer", "The layer"));
-    f.write(".ai/repo/README.md", &context_doc("ai.repo", "The tracked half"));
+    f.write(
+        ".ai/repo/README.md",
+        &context_doc("ai.repo", "The tracked half"),
+    );
     f.commit("context class");
     f
 }
@@ -124,7 +127,10 @@ fn an_exemption_releases_the_subtree_it_names_and_no_other() {
 
     // with nothing declared, both owe a contract
     let plain = report(&f, json!({}));
-    assert_eq!(node(&plain, ".ai/repo/rules/zones/carried")["state"], "owed");
+    assert_eq!(
+        node(&plain, ".ai/repo/rules/zones/carried")["state"],
+        "owed"
+    );
     assert_eq!(node(&plain, ".ai/repo/rules/zones/own")["state"], "owed");
 
     // the contract that governs the subtree releases one of them by name
@@ -140,7 +146,10 @@ fn an_exemption_releases_the_subtree_it_names_and_no_other() {
     assert_eq!(carried["state"], "exempt", "{carried:#}");
     assert_eq!(carried["exempted_by"], ".ai/repo/rules/zones/README.md");
     // the exemption reaches the whole subtree, not only the directory named
-    assert_eq!(node(&r, ".ai/repo/rules/zones/carried/pkg")["state"], "exempt");
+    assert_eq!(
+        node(&r, ".ai/repo/rules/zones/carried/pkg")["state"],
+        "exempt"
+    );
     // a directory the repository does write still owes one, vendored sibling or not
     assert_eq!(node(&r, ".ai/repo/rules/zones/own")["state"], "owed");
 }
@@ -156,8 +165,10 @@ fn a_subtree_contract_that_says_its_children_owe_nothing_releases_them_all() {
         ".ai/repo/rules/zones/two/two.v1.md",
         &rule("project.two", 1, "Two"),
     );
-    let doc = context_doc("ai.repo.rules.zones", "Zones")
-        .replace("order: 100\n", "order: 100\nchildren:\n  require_contract: false\n");
+    let doc = context_doc("ai.repo.rules.zones", "Zones").replace(
+        "order: 100\n",
+        "order: 100\nchildren:\n  require_contract: false\n",
+    );
     f.write(".ai/repo/rules/zones/README.md", &doc);
     f.commit("instances of a kind, not sections of the layer");
 
@@ -173,7 +184,10 @@ fn a_subtree_contract_that_says_its_children_owe_nothing_releases_them_all() {
             .as_array()
             .unwrap()
             .iter()
-            .filter(|d| d["path"].as_str().unwrap().starts_with(".ai/repo/rules/zones/"))
+            .filter(|d| d["path"]
+                .as_str()
+                .unwrap()
+                .starts_with(".ai/repo/rules/zones/"))
             .all(|d| d["state"] == "exempt"),
         "a directory below the released subtree still owes a contract"
     );
@@ -194,11 +208,18 @@ fn the_effective_chain_is_root_first_and_says_which_document_is_local() {
 
     let r = report(&f, json!({ "path": ".ai/repo/rules/zones" }));
     assert_eq!(r["directories"].as_array().unwrap().len(), 1);
-    let chain = node(&r, ".ai/repo/rules/zones")["effective"].as_array().unwrap();
+    let chain = node(&r, ".ai/repo/rules/zones")["effective"]
+        .as_array()
+        .unwrap();
     let ids: Vec<&str> = chain.iter().map(|e| e["id"].as_str().unwrap()).collect();
     assert_eq!(
         ids,
-        vec!["ai.layer", "ai.repo", "ai.repo.rules", "ai.repo.rules.zones"]
+        vec![
+            "ai.layer",
+            "ai.repo",
+            "ai.repo.rules",
+            "ai.repo.rules.zones"
+        ]
     );
 
     // depth ascends: the least specific document applies first
@@ -277,7 +298,9 @@ fn a_path_outside_the_layer_is_refused_and_one_the_index_lacks_is_not_found() {
         .execute("directories.list", json!({ "path": ".ai/repo/absent" }))
         .expect_err("a directory the index lacks was answered");
     assert!(
-        format!("{absent:?}").to_lowercase().contains("no directory"),
+        format!("{absent:?}")
+            .to_lowercase()
+            .contains("no directory"),
         "{absent:?}"
     );
 
@@ -286,4 +309,110 @@ fn a_path_outside_the_layer_is_refused_and_one_the_index_lacks_is_not_found() {
         .execute("directories.list", json!({ "path": "../etc" }))
         .expect_err("a path leaving the repository was answered");
     assert!(format!("{escaping:?}").contains(".."), "{escaping:?}");
+}
+
+#[test]
+fn a_document_scoped_to_declared_paths_reaches_them_at_the_depth_it_names() {
+    let f = layered();
+    f.write(
+        ".ai/repo/rules/zones/README.md",
+        &context_doc("ai.repo.rules.zones", "Zones"),
+    );
+    f.write(
+        ".ai/repo/rules/zones/zone-a.v1.md",
+        &rule("project.zone-a", 1, "Zone A"),
+    );
+    // a document that sits at the root of the layer but speaks only for one subtree
+    let explicit = context_doc("ai.aside", "An aside")
+        .replace("scope: subtree", "scope: explicit")
+        .replace("order: 100", "order: 50\npaths: [.ai/repo/rules/zones]");
+    f.write(".ai/repo/aside/README.md", &explicit);
+    f.write(".ai/repo/aside/note.md", "# Note\n");
+    f.commit("a document scoped to a path it names");
+
+    let r = report(&f, json!({ "path": ".ai/repo/rules/zones" }));
+    let chain = node(&r, ".ai/repo/rules/zones")["effective"]
+        .as_array()
+        .unwrap();
+    let aside = chain
+        .iter()
+        .find(|e| e["id"] == "ai.aside")
+        .unwrap_or_else(|| {
+            panic!("the explicit document does not reach the path it names: {chain:#?}")
+        });
+    assert!(aside["reason"].as_str().unwrap().contains("explicit"));
+    // it applies as specifically as the path it names, not as its own directory
+    assert_eq!(aside["depth"], 3);
+
+    // and it reaches nothing else
+    let elsewhere = report(&f, json!({ "path": ".ai/repo/rules" }));
+    assert!(
+        node(&elsewhere, ".ai/repo/rules")["effective"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|e| e["id"] != "ai.aside"),
+        "the explicit document reached a directory it does not name"
+    );
+}
+
+#[test]
+fn a_deprecated_document_is_listed_and_never_applied() {
+    let f = layered();
+    let deprecated =
+        context_doc("ai.repo.rules.zones", "Zones").replace("status: active", "status: deprecated");
+    f.write(".ai/repo/rules/zones/README.md", &deprecated);
+    f.write(
+        ".ai/repo/rules/zones/zone-a.v1.md",
+        &rule("project.zone-a", 1, "Zone A"),
+    );
+    f.commit("a document on its way out");
+
+    let r = report(&f, json!({ "path": ".ai/repo/rules/zones" }));
+    let d = node(&r, ".ai/repo/rules/zones");
+    // the contract is still declared here, and the directory still counts as documented
+    assert_eq!(d["contract"]["status"], "deprecated");
+    assert_eq!(d["state"], "documented");
+    // but nothing resolves against it
+    assert!(
+        d["effective"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|e| e["id"] != "ai.repo.rules.zones"),
+        "a deprecated document was applied: {d:#}"
+    );
+}
+
+#[test]
+fn a_replacing_document_stands_in_for_what_it_supersedes() {
+    let f = layered();
+    let replacing = context_doc("ai.repo.rules.zones", "Zones")
+        .replace("composition: extend", "composition: replace")
+        .replace("order: 100", "order: 100\nsupersedes: [ai.repo.rules]");
+    f.write(".ai/repo/rules/zones/README.md", &replacing);
+    f.write(
+        ".ai/repo/rules/zones/zone-a.v1.md",
+        &rule("project.zone-a", 1, "Zone A"),
+    );
+    f.commit("a document that stands in for the one above it");
+
+    let r = report(&f, json!({ "path": ".ai/repo/rules/zones" }));
+    let chain = node(&r, ".ai/repo/rules/zones")["effective"]
+        .as_array()
+        .unwrap();
+    let ids: Vec<&str> = chain.iter().map(|e| e["id"].as_str().unwrap()).collect();
+    assert!(
+        ids.contains(&"ai.repo.rules.zones"),
+        "the replacing document left the chain: {ids:?}"
+    );
+    assert!(
+        !ids.contains(&"ai.repo.rules"),
+        "the superseded document is still applied: {ids:?}"
+    );
+    // what it does not supersede is untouched
+    assert!(
+        ids.contains(&"ai.layer") && ids.contains(&"ai.repo"),
+        "{ids:?}"
+    );
 }
