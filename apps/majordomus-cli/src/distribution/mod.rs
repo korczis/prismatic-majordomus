@@ -107,10 +107,14 @@ pub enum Format {
 }
 
 /// What the project promises about a target.
+///
+/// See [`crate::deploy::Status`]: both are `Status` in their own module and neither is in
+/// the one component namespace the schema document has.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "lowercase")]
+#[schemars(rename = "TargetStatus")]
 pub enum Status {
     /// Built by every release, offered by the installer, listed as supported. A release
     /// that is missing this artifact is not published.

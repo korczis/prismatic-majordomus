@@ -1,7 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://majordomus.dev/schemas/majordomus/manifest/manifest.v1.schema.json",
-  "x-majordomus-schema": "majordomus.manifest/v1",
+  "$id": "https://majordomus.dev/schemas/manifest.schema.json",
   "title": "Manifest",
   "description": "The section registry of the repository's AI layer, .ai/manifest.yaml. Discovery reads it and never walks the directory.",
   "x-majordomus-allow": "manifest",
@@ -53,40 +52,35 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "policy": {
+        "adrs": {
           "type": "string"
         },
-        "scope": {
+        "applications": {
+          "type": "string"
+        },
+        "deployments": {
+          "type": "string",
+          "description": "The deployments of this repository's executable, one canonical object each; every provider artifact is generated from one of them."
+        },
+        "knowledge": {
+          "type": "string"
+        },
+        "policy": {
           "type": "string"
         },
         "profiles": {
           "type": "string"
         },
-        "rules": {
+        "project": {
           "type": "string"
         },
         "prompts": {
           "type": "string"
         },
-        "skills": {
+        "rules": {
           "type": "string"
         },
-        "workflows": {
-          "type": "string"
-        },
-        "knowledge": {
-          "type": "string"
-        },
-        "adrs": {
-          "type": "string"
-        },
-        "project": {
-          "type": "string"
-        },
-        "use-cases": {
-          "type": "string"
-        },
-        "applications": {
+        "scope": {
           "type": "string"
         },
         "sessions": {
@@ -96,6 +90,19 @@
         "releases": {
           "type": "string",
           "description": "The releases this repository published, one record each; the public release metadata is a projection of them."
+        },
+        "skills": {
+          "type": "string"
+        },
+        "use-cases": {
+          "type": "string"
+        },
+        "why": {
+          "type": "string",
+          "description": "The operational moments this tool exists for, the audiences that recognise them and the areas they fall under (ADR 0018)."
+        },
+        "workflows": {
+          "type": "string"
         }
       }
     },

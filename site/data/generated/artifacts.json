@@ -95,15 +95,8 @@
       "document": "distribution-matrix",
       "format": "json",
       "path": "docs/generated/distribution-matrix.json",
-      "schema": "majordomus/distribution-matrix/v1",
-      "source": "share/distribution.yaml, and the release records under .ai/repo/releases/"
-    },
-    {
-      "document": "distribution-matrix",
-      "format": "yaml",
-      "path": "docs/generated/distribution-matrix.yaml",
-      "schema": "majordomus/distribution-matrix/v1",
-      "source": "share/distribution.yaml, and the release records under .ai/repo/releases/"
+      "schema": null,
+      "source": "share/distribution.yaml and the release records"
     },
     {
       "document": "modules/artifacts",
@@ -125,6 +118,13 @@
       "path": "docs/generated/modules/continuity.md",
       "schema": null,
       "source": "the `continuity` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/deploy",
+      "format": "markdown",
+      "path": "docs/generated/modules/deploy.md",
+      "schema": null,
+      "source": "the `deploy` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/directories",
@@ -183,6 +183,13 @@
       "source": "the `repository` module of the canonical Majordomus capability registry"
     },
     {
+      "document": "modules/why",
+      "format": "markdown",
+      "path": "docs/generated/modules/why.md",
+      "schema": null,
+      "source": "the `why` module of the canonical Majordomus capability registry"
+    },
+    {
       "document": "openapi",
       "format": "json",
       "path": "docs/generated/openapi.json",
@@ -237,6 +244,13 @@
       "path": "share/allow/current.txt",
       "schema": null,
       "source": "the JSON Schema `majordomus.current/v1` of the kind it validates"
+    },
+    {
+      "document": "allow/deployment",
+      "format": "text",
+      "path": "share/allow/deployment.txt",
+      "schema": null,
+      "source": "the JSON Schema `majordomus.deployment/v1` of the kind it validates"
     },
     {
       "document": "allow/distribution",
@@ -495,7 +509,7 @@
       "format": "json",
       "path": "site/data/registry/distribution.json",
       "schema": null,
-      "source": "share/distribution.yaml, and the release records under .ai/repo/releases/"
+      "source": "share/distribution.yaml and the release records"
     },
     {
       "document": "site-registry",
@@ -505,11 +519,25 @@
       "source": "the capability registry and the index of this repository's layer"
     },
     {
+      "document": "site-why-graph",
+      "format": "json",
+      "path": "site/data/registry/why-graph.json",
+      "schema": null,
+      "source": "the `why` graph of the Why catalogue"
+    },
+    {
+      "document": "site-why",
+      "format": "json",
+      "path": "site/data/registry/why.json",
+      "schema": "majordomus-site-why/v1",
+      "source": "the Why catalogue under .ai/repo/why/"
+    },
+    {
       "document": "installer",
       "format": "text",
       "path": "site/static/install.sh",
       "schema": null,
-      "source": "share/distribution.yaml, and the release records under .ai/repo/releases/"
+      "source": "share/distribution.yaml and the release records"
     }
   ],
   "documents": [
@@ -540,6 +568,13 @@
       ],
       "id": "allow/current",
       "source": "the JSON Schema `majordomus.current/v1` of the kind it validates"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "allow/deployment",
+      "source": "the JSON Schema `majordomus.deployment/v1` of the kind it validates"
     },
     {
       "formats": [
@@ -713,12 +748,10 @@
     },
     {
       "formats": [
-        "json",
-        "yaml"
+        "json"
       ],
       "id": "distribution-matrix",
-      "schema": "majordomus/distribution-matrix/v1",
-      "source": "share/distribution.yaml, and the release records under .ai/repo/releases/"
+      "source": "share/distribution.yaml and the release records"
     },
     {
       "formats": [
@@ -732,7 +765,7 @@
         "text"
       ],
       "id": "installer",
-      "source": "share/distribution.yaml, and the release records under .ai/repo/releases/"
+      "source": "share/distribution.yaml and the release records"
     },
     {
       "formats": [
@@ -754,6 +787,13 @@
       ],
       "id": "modules/continuity",
       "source": "the `continuity` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/deploy",
+      "source": "the `deploy` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -810,6 +850,13 @@
       ],
       "id": "modules/repository",
       "source": "the `repository` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/why",
+      "source": "the `why` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -966,7 +1013,7 @@
         "json"
       ],
       "id": "site-distribution",
-      "source": "share/distribution.yaml, and the release records under .ai/repo/releases/"
+      "source": "share/distribution.yaml and the release records"
     },
     {
       "formats": [
@@ -975,6 +1022,21 @@
       "id": "site-registry",
       "schema": "majordomus-site-registry/v2",
       "source": "the capability registry and the index of this repository's layer"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "site-why",
+      "schema": "majordomus-site-why/v1",
+      "source": "the Why catalogue under .ai/repo/why/"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "site-why-graph",
+      "source": "the `why` graph of the Why catalogue"
     }
   ],
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",

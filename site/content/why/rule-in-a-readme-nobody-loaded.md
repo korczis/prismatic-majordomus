@@ -1,14 +1,14 @@
 +++
 title = "The rule for that directory, in a README no session ever loaded"
-description = "Why one always-loaded file cannot carry every local rule, and how a tree of scoped documents is composed for the path a worker is about to touch."
-weight = 9
+description = "A local rule is either in the always-loaded file, where every session pays for it, or beside the code, where nothing relates it to the path being edited."
+weight = 90
 [extra]
-hook = "found the rule for that directory in a README no session ever loaded"
-responsibilities = ["layer", "policy"]
-commands = ["context", "rules"]
-claims = ["context-documents", "context-impact", "ai-layer-manifest", "context-selection-budget", "rule-resolution", "vendored-rule-package"]
+id = "rule-in-a-readme-nobody-loaded"
+status = "stable"
+source = ".ai/repo/why/moments/rule-in-a-readme-nobody-loaded.md"
 +++
 {% raw %}
+
 ## The moment
 
 The payments directory has a README that says every amount is an integer in minor units,
@@ -26,6 +26,18 @@ touches to the documents that speak for it. Providers that load nested instructi
 each do so in their own way, for their own file names, and none of them will say which
 documents were in force for a given change.
 
+## Why a better model does not fix it
+
+The worker cannot read a file it was not given and does not know exists. This is a
+retrieval problem with a deterministic answer — which documents govern this path — and
+deterministic answers should not be delegated to inference.
+
+## What it costs
+
+A defect that review has to catch, every time, for as long as the rule stays invisible. And
+a reviewer who responds by moving the rule into the always-loaded file, which fixes this
+directory and taxes every session in the repository.
+
 ## What Majordomus does
 
 Context is a tree, not a file. Under the `.ai/` layer a directory carries a context
@@ -39,12 +51,27 @@ and never replaces them.
 
 `context validate` fails the whole tree on a broken reference, a cycle, an unknown key or an
 illegal override, and an invalid tree resolves nothing. `context affected` reads a change
-set from git and reports which documents and scopes it touches — including a tracked source
-that changed, which means its document is due for review. Rules have the same shape:
-`majordomus rules list` prints the effective set, the vendored baseline plus the project's
-own rules, resolved as a dependency graph, and says of each one whether the tool enforces it
-or nobody does. The baseline is vendored with a manifest of hashes, and a hand edit to it is
-detected and refused.
+set from git and reports which documents and scopes it touches. Rules have the same shape:
+`majordomus rules list` prints the effective set, resolved as a dependency graph, and says
+of each one whether the tool enforces it or nobody does.
+
+## Before and after
+
+```text
+before   CLAUDE.md (root)                     loaded, says nothing about payments
+         lib/payments/README.md               governs the change, loaded by nobody
+
+after    $ majordomus context resolve lib/payments
+         .ai/README.md                        final,  order 10
+         .ai/repo/README.md                   extend, order 20
+         lib/payments/README.md               extend, tracked by id ai.payments
+```
+
+## How to verify it
+
+Add a context document for a directory and run `context resolve` on a path under it: the
+document appears in the chain, in order. Break a reference in it and `context validate`
+fails the whole tree rather than resolving part of it.
 
 ## What it does not do
 
@@ -53,13 +80,4 @@ instruction file tells the worker to resolve the context for a path before worki
 it, and the briefing obeys a line budget and names every section it dropped. It does not
 parse a provider's own nested-file conventions: the resolution here is what applies, and the
 provider's loading is treated as an optimisation.
-
-## Try it
-
-```bash
-majordomus context resolve lib/payments
-majordomus context explain lib/payments
-majordomus context affected --staged
-majordomus rules list
-```
 {% endraw %}

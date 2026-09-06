@@ -1,0 +1,43 @@
+id: I0932
+milestone: fly-deployment
+title: The milestone is accepted on its evidence
+slug: deployment-milestone-acceptance
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Close the milestone: every acceptance criterion carries evidence, the measured baselines are documented with the environment they were taken on, the workflow in the documentation runs as written, and the outcome is a plan record rather than a conversation."
+why: "A milestone is accepted by its evidence. The numbers, the commands and the deployed URL are what a later reader has; this session's messages are not."
+current_state: "Open."
+desired_state: "The milestone is accepted with evidence against every criterion, and the baselines and limitations are written where they will be found."
+scope:
+  - docs/PLAN_STATUS.md
+  - .ai/repo/project
+non_scope:
+  - Reporting a plan as an implementation
+  - Recording a measurement without the environment it was taken on
+depends_on:
+  - I0920
+  - I0923
+  - I0925
+  - I0926
+  - I0927
+  - I0928
+  - I0929
+  - I0931
+acceptance_criteria:
+  - Every acceptance criterion of the milestone has evidence recorded against it
+  - The measured baselines — binary, image, context, build durations, readiness, resident memory, endpoint latency — are documented with the machine and environment they were measured on
+  - The developer workflow in the documentation runs exactly as written on a clean checkout
+  - Pre-existing failures, failures introduced here and failures fixed here are distinguished explicitly
+  - Remaining limitations are stated rather than omitted
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - majordomus deploy doctor
+evidence_required:
+  - baselines_documented
+  - criteria_covered
+  - report_recorded
+risk: "The temptation at the end is to record intent as outcome. Anything not demonstrated is a limitation, and it is written as one."
+created_at: 2026-09-06
+updated_at: 2026-09-06

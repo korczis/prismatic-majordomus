@@ -5,7 +5,30 @@
 
 How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own.
 
-Stability: behaviorally_verified. Capabilities: 3.
+Stability: behaviorally_verified. Capabilities: 4.
+
+## `distribution.artifact` — The artifact of a target
+
+The archive name a target and a tag derive, the directory it unpacks into, and where a release publishes it. The one naming function answers; the release pipeline asks it rather than composing a name in a workflow file.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_artifact` |
+| HTTP | `GET /api/v1/distribution/artifact` |
+| CLI | `majordomus distribution artifact` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::distribution |
+| tags | distribution, release |
+
+| input | type | required | description |
+|---|---|---|---|
+| `target` | string | yes | A target's id or its Rust target triple. |
+| `tag` | string | yes | The tag, `v` and a version. `{tag}` asks for the name with the placeholder left in. |
+
+Output: `ReleaseArtifactView`.
 
 ## `distribution.build` — This build
 

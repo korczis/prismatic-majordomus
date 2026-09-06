@@ -18,6 +18,7 @@ pub mod capability;
 pub mod cli;
 pub mod cockpit;
 pub mod commands;
+pub mod deploy;
 pub mod discovery;
 pub mod distribution;
 pub mod error;
@@ -43,6 +44,7 @@ pub mod shared;
 pub mod site;
 pub mod synthetic;
 pub mod web;
+pub mod why;
 
 pub use error::Error;
 pub use index::Index;

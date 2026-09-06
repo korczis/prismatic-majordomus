@@ -1633,6 +1633,45 @@
       "test_case": "95_skills"
     },
     {
+      "id": "why-catalogue-discovered",
+      "claim": "An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed",
+      "source": "docs/WHY.md",
+      "implementation": "apps/majordomus-cli/src/why.rs",
+      "test": "test/cases/98_why_catalogue.sh",
+      "status": "guaranteed",
+      "note": "Removing the file removes it from all of them, which is what a hidden registry would fail.",
+      "responsibility": "layer",
+      "source_route": "/docs/why/",
+      "command": null,
+      "test_case": "98_why_catalogue"
+    },
+    {
+      "id": "why-references-resolve",
+      "claim": "Every reference a moment makes resolves against the thing it names, and one that does not is an error carrying the nearest candidate",
+      "source": "docs/WHY.md",
+      "implementation": "apps/majordomus-cli/src/why.rs",
+      "test": "apps/majordomus-cli/tests/why.rs",
+      "status": "guaranteed",
+      "note": "Audiences, areas and related moments against the catalogue; commands, capabilities, claims, rules and use cases against their own registries.",
+      "responsibility": "layer",
+      "source_route": "/docs/why/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/why.rs"
+    },
+    {
+      "id": "why-diagnosis-explainable",
+      "claim": "A diagnosis of a reader's own symptoms is deterministic counting over the catalogue's metadata, and every recommendation names the moments that produced it",
+      "source": "docs/WHY.md",
+      "implementation": "apps/majordomus-cli/src/why.rs",
+      "test": "apps/majordomus-cli/tests/why.rs",
+      "status": "guaranteed",
+      "note": "No weighting and no percentage; the questionnaire on the website and `majordomus why diagnose` run the same arithmetic over the same data.",
+      "responsibility": "layer",
+      "source_route": "/docs/why/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/why.rs"
+    },
+    {
       "id": "session-records",
       "claim": "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered",
       "source": "docs/SCHEMAS.md",

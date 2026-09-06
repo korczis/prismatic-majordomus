@@ -1,7 +1,7 @@
 +++
 title = "Keep the prompts that started the work, below the model rather than around it"
 description = "Wire the provider hook, prove it by running a payload through it, and see that a prompt the tool could not parse is reported rather than silently dropped."
-weight = 28
+weight = 29
 [extra]
 id = "capture-the-prompts-that-started-the-work"
 source = ".ai/repo/use-cases/capture-the-prompts-that-started-the-work.md"

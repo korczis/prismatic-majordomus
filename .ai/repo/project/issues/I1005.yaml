@@ -1,0 +1,36 @@
+id: I1005
+milestone: capability-graph
+title: The graph is a generated artifact with a schema and no unsafe field
+slug: capability-manifest
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Serialise the graph as a deterministic generated artifact with a schema, carrying safe metadata only, produced by the generation the repository already runs."
+why: "Both projections and every test need one file to read. Making it generated keeps it honest; giving it a schema makes it consumable; keeping it free of anything private makes it publishable."
+current_state: "No aggregate artifact exists. The site reads several derived datasets, each from its own script."
+desired_state: "One generated artifact carries the graph, with a schema, deterministic ordering, provenance and no field that must not be published."
+scope:
+  - apps/majordomus-cli/src/generate.rs
+non_scope:
+  - A hand-edited copy of the artifact
+  - Any token, key, header, environment dump or machine-absolute path in the output
+  - A timestamp inside the canonical data
+depends_on:
+  - I1002
+  - I1004
+acceptance_criteria:
+  - The artifact is produced by the existing generation target set, not by a separate script
+  - It has a schema, and the schema is generated from the types rather than written by hand
+  - Ordering is deterministic and repeated generation is byte-identical over identical inputs
+  - It contains no credential, no private environment value and no machine-absolute path, proved by a test
+  - Provenance is recorded in the artifact's own metadata where its format cannot carry a comment
+validation:
+  - majordomus generate --check
+  - cargo test --workspace --all-features
+evidence_required:
+  - artifact_generated
+  - schema_present
+  - safe_metadata
+risk: "One artifact for everything grows until it is downloaded on every page load. Its size is measured and budgeted with the other assets."
+created_at: 2026-09-06
+updated_at: 2026-09-06

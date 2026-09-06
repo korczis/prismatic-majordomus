@@ -13,8 +13,8 @@
 mod common;
 
 use majordomus_cli::generate::{
-    self, Artifact, ArtifactFormat, Document, GeneratedSchemas, HeaderStyle, Target, HEADER,
-    MANIFEST_ID, MANIFEST_SCHEMA, OUT_DIR,
+    self, opens_with_banner, Artifact, ArtifactFormat, Document, GeneratedSchemas, HeaderStyle,
+    Target, HEADER, MANIFEST_ID, MANIFEST_SCHEMA,
 };
 use serde_json::{json, Value};
 
@@ -58,32 +58,20 @@ fn every_artifact_declares_its_encoding_its_source_and_carries_a_header() {
         if a.document.starts_with("providers/") {
             continue;
         }
+        // `opens_with_banner`, not `starts_with`: an executable script opens with its `#!`
+        // line and a projected page with its own title, and both carry the banner on the
+        // line after. The rule is stated once, in the generator, and read here.
         match a.format {
-            // A generated document that is also projected into a page carries its title
-            // first and the banner under it: the site's documentation projection strips a
-            // document's own first-line heading, and a banner above it would leave the
-            // page with two. Every other Markdown artifact leads with the banner.
-            ArtifactFormat::Markdown => {
-                let banner = format!("<!-- {HEADER}");
-                let ok = a.content.starts_with(&banner)
-                    || (a.content.starts_with("# ")
-                        && a.content
-                            .split_once('\n')
-                            .is_some_and(|(_, rest)| rest.starts_with(&banner)));
-                assert!(ok, "{} carries no banner", a.path);
-            }
-            // A generated script's first line belongs to the interpreter — POSIX gives the
-            // shebang line 1 and nothing else may take it — so the banner is the line
-            // after it. Every other text artifact carries it first.
-            ArtifactFormat::Yaml | ArtifactFormat::Text => {
-                let banner = format!("# {HEADER}");
-                let ok = a.content.starts_with(&banner)
-                    || (a.content.starts_with("#!")
-                        && a.content
-                            .split_once('\n')
-                            .is_some_and(|(_, rest)| rest.starts_with(&banner)));
-                assert!(ok, "{} carries no banner", a.path);
-            }
+            ArtifactFormat::Markdown => assert!(
+                opens_with_banner(&a.content, &format!("<!-- {HEADER}")),
+                "{} carries no banner",
+                a.path
+            ),
+            ArtifactFormat::Yaml | ArtifactFormat::Text => assert!(
+                opens_with_banner(&a.content, &format!("# {HEADER}")),
+                "{} carries no banner",
+                a.path
+            ),
             ArtifactFormat::Json => {
                 let v: Value = serde_json::from_str(&a.content)
                     .unwrap_or_else(|e| panic!("{} is not JSON: {e}", a.path));
@@ -138,10 +126,19 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
     let json: Vec<&Artifact> = artifacts
         .iter()
         .filter(|a| a.format == ArtifactFormat::Json && !a.document.starts_with("providers/"))
-        // the invariant is about the documents this repository commits under docs/generated.
-        // What the website publishes — its own datasets, and the release metadata an
-        // installer downloads — is a file with a consumer, not a document with encodings.
-        .filter(|a| a.path.starts_with(OUT_DIR))
+        // Documents whose only reader is a program are committed as JSON alone: the three
+        // the website loads, the matrix the release workflow reads, and the public metadata
+        // of each release. A YAML twin of any of them would be a file nobody opens.
+        .filter(|a| {
+            !matches!(
+                a.document.as_str(),
+                "site-registry"
+                    | "site-why"
+                    | "site-why-graph"
+                    | "site-distribution"
+                    | "distribution-matrix"
+            ) && !a.document.starts_with("release/")
+        })
         // a projected JSON Schema is JSON by its own contract: `.schema.json` is what a
         // validator looks for, and a YAML sibling would be a second encoding of a file
         // whose format is named in its extension and read by nothing that wants YAML

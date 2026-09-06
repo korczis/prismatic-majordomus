@@ -1,0 +1,34 @@
+id: I0915
+milestone: fly-deployment
+title: Deployment joins the diagnostics that already exist
+slug: deploy-doctor
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Add the deployment checks to the health and doctor architecture the repository already has, so that the answer to whether a deployment can succeed comes from the same diagnostic surface as every other verdict."
+why: "A second doctor framework is the defect this repository names explicitly. The existing health module already delegates each check to the engine that decides it; deployment checks belong there for the same reason."
+current_state: "system.health aggregates index diagnostics, benchmark coverage and projection staleness. No check knows anything about a deployment."
+desired_state: "The deployment checks are readable as machine-readable output and as human output, they mutate nothing, and each one delegates to the engine that already decides it."
+scope:
+  - apps/majordomus-cli/src/deploy/doctor.rs
+non_scope:
+  - A new diagnostics framework
+  - Any check that mutates the provider, the repository or the working tree
+depends_on:
+  - I0914
+acceptance_criteria:
+  - The checks cover the canonical object's validity, projection freshness, toolchain and tool availability, credential validity, application resolution, configuration validity, container build and non-root execution, port and health and readiness responses, absence of secret material and of local paths, size and memory budgets, machine count and resource sizing against the declared profile, and the deployed revision against the expected one
+  - Every check states what it observed, what it expected and the command that repairs it
+  - The output is available in both machine-readable and human-readable form, following the existing conventions
+  - Every check is read-only and safe to run against production
+  - No check duplicates a verdict another engine already produces
+validation:
+  - majordomus deploy doctor
+  - cargo test --workspace --all-features
+evidence_required:
+  - doctor_checks
+  - machine_readable
+  - read_only
+risk: "Checks that need the provider's network will make the local doctor slow and flaky. Local checks and remote checks have to be separable so that the fast ones stay usable in a hook."
+created_at: 2026-09-06
+updated_at: 2026-09-06

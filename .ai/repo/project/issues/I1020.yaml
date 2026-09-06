@@ -1,0 +1,33 @@
+id: I1020
+milestone: capability-graph
+title: The graph's health is answered by the doctor that already answers everything else
+slug: doctor-graph-checks
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add the graph's diagnostics to the existing health and doctor surface: the graph builds, identities are unique, relations resolve, projections are synchronised, required documentation and verification are present, and nothing unsafe is exposed."
+why: "The repository has one place that answers whether what it serves is healthy, and every check there delegates to the engine that decides it. A second diagnostic surface for the graph would be a second opinion."
+current_state: "The health capability aggregates index diagnostics, benchmark coverage and projection staleness."
+desired_state: "The graph's verdicts join them, computed rather than asserted, in the same machine-readable and human-readable output."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/health.rs
+non_scope:
+  - A separate diagnostic script or command for the Cockpit
+  - A check that recomputes a verdict another engine already produces
+depends_on:
+  - I1002
+  - I1007
+acceptance_criteria:
+  - The checks cover graph validity, identity uniqueness, relation resolution, projection freshness, required documentation and verification presence, and the absence of unsafe metadata
+  - Every number reported is computed, not stated
+  - The output is machine-readable and human-readable in the existing shapes
+  - Each check delegates to the engine that already decides it
+validation:
+  - bin/majordomus doctor
+  - cargo test --workspace --all-features
+evidence_required:
+  - doctor_integrated
+  - numbers_computed
+risk: "Building the whole graph inside a blocking check makes the pre-commit hook slow enough to be bypassed, which the performance doctrine already refuses. Its cost is measured against that budget."
+created_at: 2026-09-06
+updated_at: 2026-09-06

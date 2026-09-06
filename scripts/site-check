@@ -309,8 +309,10 @@ jq -r '.coverage.rows[] | select(.class=="command") | .id' "$SITE/data/generated
   grep -q "/commands/$c/" "$PUB/use-cases/coverage/index.html" || bad catalogue "the coverage page does not link command $c"
 done
 ok catalogue "$(jq -r '.counts.use_cases' "$SITE/data/generated/catalogue.json") use case(s) in $(jq -r '.counts.categories' "$SITE/data/generated/catalogue.json") categor(y/ies) and $(jq -r '.counts.applications' "$SITE/data/generated/catalogue.json") application(s): every command, rule, category, related and cross-reference is a link that resolves, and every scenario shown was executed"
-for f in "$SITE"/content-src/why/*.md; do slug="$(basename "$f" .md)"; [ "$slug" = _index ] && continue; [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
-for r in limitations roadmap why supervises commands plan plan/dag; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
+for slug in $(jq -r '.moments[] | select(.status != "deprecated") | .id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/$slug/index.html" ] || bad tiles "no page for why/$slug"; done
+for slug in $(jq -r '.audiences[].id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/audiences/$slug/index.html" ] || bad tiles "no page for why/audiences/$slug"; done
+for slug in $(jq -r '.areas[].id' "$SITE/data/registry/why.json"); do [ -f "$PUB/why/areas/$slug/index.html" ] || bad tiles "no page for why/areas/$slug"; done
+for r in limitations roadmap why why/audiences why/areas supervises commands plan plan/dag; do [ -f "$PUB/$r/index.html" ] || bad tiles "no page for /$r/"; done
 # the plan: every milestone and every issue is a page, and the DAG the page draws is the DAG
 # the data holds. A diagram that has drifted from its own edge list is the failure this catches.
 PJ="$SITE/data/generated/plan.json"
@@ -412,23 +414,35 @@ done < "$PAGEROWS.nojs"; rm -f "$PAGEROWS.nojs"
 # claims, and every one of those pages carries a link back. A one-way link is how the section
 # drifted out of the rest of the site before — the pages knew about the tool, the tool did not
 # know about the pages.
-WJ="$SITE/data/generated/why.json"
-for slug in $(jq -r '.moments[].slug' "$WJ"); do
+WJ="$SITE/data/registry/why.json"
+for slug in $(jq -r '.moments[] | select(.status == "stable") | .id' "$WJ"); do
   page="$PUB/why/$slug/index.html"
   [ -f "$page" ] || { bad why "no page for moment $slug"; continue; }
   grep -qF "why/$slug/" "$PUB/why/index.html" || bad why "the index does not link moment $slug"
-  for id in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .claims[]' "$WJ"); do
+  for id in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .claims[]' "$WJ"); do
     grep -qF "guarantees/$id/" "$page" || bad why "moment $slug names claim $id but does not link it"
     grep -qF "why/$slug/" "$PUB/guarantees/$id/index.html" || bad why "claim $id is named by moment $slug but does not link back"
   done
-  for r in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .responsibilities[]' "$WJ"); do
-    grep -qF "why/$slug/" "$PUB/supervises/$r/index.html" || bad why "responsibility $r is named by moment $slug but does not link back"
+  for r in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .responsibilities[]' "$WJ"); do
+    grep -qF "why/$slug/" "$PUB/supervises/$r/index.html" || bad why "responsibility $r is derived for moment $slug and does not link back"
   done
-  for n in $(jq -r --arg s "$slug" '.moments[] | select(.slug==$s) | .commands[]' "$WJ"); do
+  for n in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .commands[]' "$WJ"); do
     grep -qF "commands/$n/" "$page" || bad why "moment $slug names command $n but does not link it"
   done
+  for a in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .audiences[]' "$WJ"); do
+    grep -qF "why/$slug/" "$PUB/why/audiences/$a/index.html" || bad why "audience $a is named by moment $slug and does not list it"
+  done
+  for a in $(jq -r --arg s "$slug" '.moments[] | select(.id==$s) | .areas[]' "$WJ"); do
+    grep -qF "why/$slug/" "$PUB/why/areas/$a/index.html" || bad why "area $a is named by moment $slug and does not list it"
+  done
 done
-ok why "$(jq '.moments | length' "$WJ") moments: every command, responsibility and claim is linked, and links back"
+# the derived taxonomies hold nothing nobody declared: a page listing a moment that does not
+# name it would be a membership authored somewhere other than the moment
+for a in $(jq -r '.audiences[].id' "$WJ"); do
+  n="$(jq -r --arg a "$a" '[.moments[] | select(.status == "stable") | select(.audiences | index($a))] | length' "$WJ")"
+  grep -qF ">$n moment" "$PUB/why/audiences/$a/index.html" || bad why "audience $a does not show the $n moments derived for it"
+done
+ok why "$(jq '[.moments[] | select(.status == "stable")] | length' "$WJ") moments, $(jq '.audiences | length' "$WJ") audiences, $(jq '.areas | length' "$WJ") areas: every command, claim, audience and area is linked, and links back"
 
 # 13e. the skills section is the catalogue and nothing else: every skill in skills.json has a
 # page that names its URI and its canonical file, renders every example, links every related

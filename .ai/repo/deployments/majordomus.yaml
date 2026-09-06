@@ -1,0 +1,74 @@
+# The deployment of this repository's executable. Authoritative: the container image
+# definition, its ignore file and the provider configuration are generated from this file
+# and `majordomus generate --check` fails when one of them is edited by hand.
+schema: deployment/v1
+kind: deployment
+id: majordomus
+title: The Majordomus layer, served from one machine
+description: One shared-CPU machine that stops when idle, serving this repository's AI layer over HTTP, MCP and the generated site.
+status: declared
+
+application: majordomus
+
+build:
+  package: majordomus-cli
+  binary: majordomus
+  profile: release
+  # The build context, and nothing else: the executable's own sources, the tool
+  # distribution it reads at run time, and the layer it serves.
+  inputs:
+    - apps/majordomus-cli
+    - share
+    - .ai
+  site: site/public
+
+listen:
+  # One port. The process, the image and the provider configuration all read this.
+  port: 8080
+  # A hosted process is reachable or it is nothing; `all` is the intent, not a suppressed
+  # warning. Local invocation keeps its loopback default and never reads this object.
+  interface: all
+
+health:
+  # Registered capabilities, not router entries: every capability route lives under
+  # /api/v1/, so these are the paths the registry actually serves and the platform polls
+  # what OpenAPI, the reference and the smoke suite already know about.
+  liveness: /api/v1/live
+  readiness: /api/v1/ready
+  grace_seconds: 2
+  interval_seconds: 15
+  timeout_seconds: 2
+
+resources:
+  cpu_kind: shared
+  cpus: 1
+  # A hypothesis until a measured run under it passes; I0922 decides the final number.
+  memory_mb: 256
+
+machines:
+  count: 1
+  min_running: 0
+  autostart: true
+  autostop: true
+
+region: fra
+
+# Every budget below is written by the run that measured it; a number nobody measured
+# would be a preference wearing a baseline's name. The size, cold-start and memory figures
+# are not here yet because nothing has measured them (I0921, I0922, I0923).
+budgets:
+  # `majordomus bench health.live` and `bench health.ready`, quick profile, debug build:
+  # p99 2.1 ms and 6.4 ms over HTTP. The ceiling leaves room for a loaded machine and is
+  # still an order of magnitude under any platform's check timeout.
+  blocking_check_ms: 25
+
+provider:
+  name: fly
+  fly:
+    force_https: true
+    concurrency:
+      soft_limit: 20
+      hard_limit: 40
+
+created_at: 2026-09-06
+updated_at: 2026-09-06

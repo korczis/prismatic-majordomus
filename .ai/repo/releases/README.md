@@ -15,7 +15,7 @@ order: 75
 # Published releases
 
 One file per release, `v<major>.<minor>.<patch>.yaml`, contract `release/v1`
-(`share/schemas/release.schema.json`). A record says which tag was published, which commit
+(`share/schemas/majordomus/release/release.v1.schema.json`). A record says which tag was published, which commit
 it was built from, and, for every target the distribution model declares supported, the
 artifact's name, URL, SHA-256 digest and size.
 

@@ -8,10 +8,9 @@ use serde_json::{json, Value};
 use super::release::{Channel, Releases};
 use super::{Model, Status};
 
-/// Where every artifact of this module comes from, for the provenance line the generated
-/// manifest carries. One string, because one file is the source of all of them.
-pub const SOURCE: &str =
-    "share/distribution.yaml, and the release records under .ai/repo/releases/";
+/// What every projection of the distribution model says it was derived from. One string,
+/// so a reader of any of them is pointed at the same two files.
+pub const SOURCE: &str = "share/distribution.yaml and the release records";
 
 /// The placeholder the naming function leaves for the tag a release will have. The build
 /// matrix carries names with this in them, so that the workflow substitutes a tag rather
@@ -51,6 +50,8 @@ pub fn matrix(model: &Model) -> Value {
         })
         .collect();
     json!({
+        "schema": "majordomus/distribution-matrix/v1",
+        "generated": crate::generate::json_banner(SOURCE),
         "binary": model.project.binary,
         "repository": model.project.repository,
         "checksums_file": model.archive.checksums_file,
@@ -58,16 +59,9 @@ pub fn matrix(model: &Model) -> Value {
     })
 }
 
-/// The contract the matrix satisfies.
-pub const MATRIX_SCHEMA: &str = "majordomus/distribution-matrix/v1";
-
-/// The matrix as the workflow reads it: the same document the generator commits, so that
-/// `majordomus distribution matrix` and `docs/generated/distribution-matrix.json` cannot
-/// say different things.
+/// The matrix as the workflow reads it.
 pub fn matrix_json(model: &Model) -> String {
-    let doc =
-        crate::generate::Document::new("distribution-matrix", MATRIX_SCHEMA, SOURCE, matrix(model));
-    let mut s = serde_json::to_string_pretty(&doc.stamped(crate::VERSION)).unwrap_or_default();
+    let mut s = serde_json::to_string_pretty(&matrix(model)).unwrap_or_default();
     s.push('\n');
     s
 }

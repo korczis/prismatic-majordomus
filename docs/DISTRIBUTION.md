@@ -14,7 +14,7 @@ it, what the trust path is, how a release happens, and how to add a platform.
 
 The model is [`share/distribution.yaml`](../share/distribution.yaml), contract
 `majordomus-distribution/v1`, schema
-[`share/schemas/distribution.schema.json`](../share/schemas/distribution.schema.json). It
+[`share/schemas/majordomus/distribution/distribution.v1.schema.json`](../share/schemas/majordomus/distribution/distribution.v1.schema.json). It
 declares the binary, the repository releases are published from, the installer's canonical
 URL and defaults, how an archive is named, and every target the project has an opinion
 about — supported, experimental, or unavailable with the reason.
@@ -262,8 +262,8 @@ ship an executable nothing can drive.
 | What | Where |
 |---|---|
 | the model | `share/distribution.yaml` |
-| its contract | `share/schemas/distribution.schema.json` |
-| a release record's contract | `share/schemas/release.schema.json` |
+| its contract | `share/schemas/majordomus/distribution/distribution.v1.schema.json` |
+| a release record's contract | `share/schemas/majordomus/release/release.v1.schema.json` |
 | the records | `.ai/repo/releases/`, one per published release |
 | the semantics | `apps/majordomus-cli/src/distribution/` |
 | the capability module | `apps/majordomus-cli/src/capability/builtin/distribution.rs` |

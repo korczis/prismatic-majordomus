@@ -1,6 +1,12 @@
-{%- set why = get_section(path="why/_index.md") -%}
+{#- The homepage's recognition grid: the moments that declare themselves featured, in the
+    catalogue's own order. Nothing here names one, and the homepage does not choose: a
+    moment becomes one of these by setting `featured: true` in its own front matter. -#}
+{%- set catalogue = load_data(path="data/registry/why.json") -%}
+{%- set featured = [m for m in catalogue.moments if m.status == "stable" and m.featured] -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
 <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-  {%- for p in why.pages -%}
-  <li><a href="{{ p.permalink }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary p-4 text-base text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="flex flex-col gap-2"><span>{{ p.extra.hook }}</span><span class="text-sm font-medium text-fg-brand">Why, and what to do →</span></span></a></li>
+  {%- for m in featured -%}
+  <li><a href="{{ base }}{{ m.route }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary p-4 text-base text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="flex flex-col gap-2"><span>{{ m.hook }}</span><span class="text-sm font-medium text-fg-brand">Why, and what to do →</span></span></a></li>
   {%- endfor -%}
 </ol>
+<p class="mt-4 text-sm"><a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">All {{ catalogue.counts.moments }}, by who you are and by what part of operations they fall under &rarr;</a></p>
