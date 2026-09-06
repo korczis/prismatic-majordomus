@@ -1,0 +1,32 @@
+id: I0917
+milestone: fly-deployment
+title: A bad deployment can be undone deterministically
+slug: rollback-path
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Record the deployed image reference before changing production and provide a rollback that rests on what the provider actually supports, so that a failed smoke run has an exit."
+why: "Autostop and a single machine mean a bad image is the only image. Knowing the previous reference before the change is what makes recovery a command instead of an investigation."
+current_state: "Nothing is deployed and nothing records what was deployed before."
+desired_state: "The previous image reference is captured before every deploy, a failed smoke run reports both references safely, and one documented command returns production to the previous image."
+scope:
+  - apps/majordomus-cli/src/deploy/rollback.rs
+non_scope:
+  - Inventing a provider command that does not exist
+  - Automatic rollback that has never been executed successfully in a test
+depends_on:
+  - I0914
+acceptance_criteria:
+  - The previously deployed image reference is captured before the deployment mutates anything
+  - A failed post-deployment smoke run fails the deployment clearly and reports the new and previous references without exposing a credential
+  - The rollback path rests on the provider's documented current behaviour, and is either executed automatically because it has been proved to work or offered as one deterministic command
+  - The rollback is documented where an operator under pressure will find it
+validation:
+  - majordomus deploy doctor
+  - bash test/run.sh
+evidence_required:
+  - previous_image_recorded
+  - rollback_path
+risk: "An automatic rollback that has never run is a second failure mode during the first real incident. Either it is tested or it is a documented manual command."
+created_at: 2026-09-06
+updated_at: 2026-09-06

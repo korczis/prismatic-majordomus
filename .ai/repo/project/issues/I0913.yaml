@@ -1,0 +1,40 @@
+id: I0913
+milestone: fly-deployment
+title: The provider configuration is generated, and the cheap profile is declared
+slug: fly-configuration-projection
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Generate the Fly configuration from the canonical object — application, region, port, resources, autostart and autostop, health check, concurrency — and declare the cheap cost profile as data that a reader and a check can both see."
+why: "fly.toml at the repository root is excellent for a developer and unacceptable as a second source of truth. Generating it keeps the ergonomics and removes the drift; declaring the cost profile makes an expensive change deliberate and visible in review."
+current_state: "No fly.toml exists. No region, resource envelope or cost profile is stated anywhere."
+desired_state: "fly.toml is generated, marked as generated with its source and regeneration command, validated by the provider's own validator, and every value in it traces to the canonical object."
+scope:
+  - fly.toml
+  - apps/majordomus-cli/src/deploy/fly.rs
+non_scope:
+  - A second configuration file for a high-availability profile
+  - Any volume, extra service or extra address that the deployment does not require
+  - Any secret value
+depends_on:
+  - I0902
+  - I0903
+acceptance_criteria:
+  - Every value in the generated configuration traces to the canonical object, and changing the object changes the configuration on regeneration
+  - The generated file carries a header naming its source and its regeneration command without invalidating the format
+  - The region is chosen deliberately for the intended audience and persisted in the canonical object rather than hardcoded in the projection
+  - The cheap profile — one machine, shared CPU, the declared memory, minimum running zero, autostart on, autostop enabled, one region, no volume — is declared as data and asserted by a check
+  - A service health check points at the canonical route with a startup grace period taken from the measured cold start
+  - Concurrency limits follow the measured behaviour of the server rather than an arbitrary number
+  - The provider's own configuration validator accepts the generated file
+validation:
+  - majordomus generate --check
+  - fly config validate
+evidence_required:
+  - generated_flytoml
+  - region_from_spec
+  - cheap_profile
+  - fly_config_validate
+risk: "The high-availability profile invites a second configuration file. It must be a derived override of the same base or documented prose, never a parallel file to maintain."
+created_at: 2026-09-06
+updated_at: 2026-09-06

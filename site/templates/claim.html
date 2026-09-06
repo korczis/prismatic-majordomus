@@ -1,13 +1,13 @@
 {% extends "page.html" %}
 {% block body %}
-{%- set why = load_data(path="data/generated/why.json") -%}
+{%- set catalogue = load_data(path="data/registry/why.json") -%}
 {%- set roadmap = load_data(path="data/generated/roadmap.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set c = [x for x in caps.claims if x.id == page.extra.claim_id][0] -%}
-{%- set why = get_section(path="why/_index.md") -%}
+{%- set why_base = config.base_url | trim_end(pat="/") -%}
 {%- set covers = [r for r in readme.does if c.id in r.claim_ids] -%}
-{%- set explained = [p for p in why.pages if c.id in p.extra.claims] -%}
+{%- set explained = [x for x in catalogue.moments if x.status == "stable" and c.id in x.claims] -%}
 {%- set related = [x for x in caps.claims if x.id != c.id and x.implementation and x.implementation == c.implementation] -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
@@ -36,7 +36,7 @@ bash test/run.sh {{ c.test_case }}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this claim is used</h2>
     <div class="mt-4 grid gap-6 sm:grid-cols-2">
       {% if covers | length > 0 %}<div><h3 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities it covers</h3><ul class="space-y-1 text-sm">{% for r in covers %}<li><a href="{{ get_url(path="/supervises/" ~ r.slug ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">{{ r.title }}</a></li>{% endfor %}</ul></div>{% endif %}
-      {% if explained | length > 0 %}<div><h3 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">explained in</h3><ul class="space-y-1 text-sm">{% for p in explained %}<li><a href="{{ p.permalink }}" class="font-medium text-fg-brand hover:underline">{{ p.title }}</a></li>{% endfor %}</ul></div>{% endif %}
+      {% if explained | length > 0 %}<div><h3 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">explained in</h3><ul class="space-y-1 text-sm">{% for p in explained %}<li><a href="{{ why_base }}{{ p.route }}" class="font-medium text-fg-brand hover:underline">{{ p.title }}</a></li>{% endfor %}</ul></div>{% endif %}
     </div>
     {% endif %}
 

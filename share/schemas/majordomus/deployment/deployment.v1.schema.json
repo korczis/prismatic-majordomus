@@ -1,18 +1,34 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://majordomus.dev/schemas/majordomus/deployment/deployment.v1.schema.json",
+  "x-majordomus-schema": "majordomus.deployment/v1",
   "title": "Deployment",
   "description": "A deployment of this repository's executable, under .ai/repo/deployments/: the one place the application identity, the package and binary that are shipped, the address the process listens on, the routes a platform polls, the resources and machine count it is granted, the region it runs in, the inputs its image is built from and the budgets it is held to are stated. Every provider artifact — the container image definition, its ignore file, the provider configuration — is generated from this object and none of them is authoritative. Provider-specific facts live in the named provider block, never mixed through the generic ones.",
   "x-majordomus-allow": "deployment",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "kind", "id", "title", "application", "build", "listen", "health", "resources", "machines", "region", "provider"],
+  "required": [
+    "schema",
+    "kind",
+    "id",
+    "title",
+    "application",
+    "build",
+    "listen",
+    "health",
+    "resources",
+    "machines",
+    "region",
+    "provider"
+  ],
   "properties": {
     "schema": {
       "description": "The format version of this object. A version the tool does not know is refused, never guessed.",
       "const": "deployment/v1"
     },
-    "kind": { "const": "deployment" },
+    "kind": {
+      "const": "deployment"
+    },
     "id": {
       "description": "The identity of this deployment within the repository, `[a-z][a-z0-9-]*`.",
       "type": "string",
@@ -29,34 +45,61 @@
     },
     "status": {
       "description": "declared: the object exists and nothing is deployed from it yet. active: it is deployed. retired: it was, and is kept for the record.",
-      "enum": ["declared", "active", "retired"]
+      "enum": [
+        "declared",
+        "active",
+        "retired"
+      ]
     },
     "application": {
       "description": "The application's name at the provider. One deployment, one application; the provider block never restates it.",
       "type": "string",
       "pattern": "^[a-z][a-z0-9-]*$"
     },
-    "build": { "$ref": "#/$defs/build" },
-    "listen": { "$ref": "#/$defs/listen" },
-    "health": { "$ref": "#/$defs/health" },
-    "resources": { "$ref": "#/$defs/resources" },
-    "machines": { "$ref": "#/$defs/machines" },
+    "build": {
+      "$ref": "#/$defs/build"
+    },
+    "listen": {
+      "$ref": "#/$defs/listen"
+    },
+    "health": {
+      "$ref": "#/$defs/health"
+    },
+    "resources": {
+      "$ref": "#/$defs/resources"
+    },
+    "machines": {
+      "$ref": "#/$defs/machines"
+    },
     "region": {
       "description": "The region the machines run in, in the provider's own vocabulary.",
       "type": "string",
       "minLength": 1
     },
-    "budgets": { "$ref": "#/$defs/budgets" },
-    "provider": { "$ref": "#/$defs/provider" },
-    "created_at": { "type": "string" },
-    "updated_at": { "type": "string" }
+    "budgets": {
+      "$ref": "#/$defs/budgets"
+    },
+    "provider": {
+      "$ref": "#/$defs/provider"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
   },
   "$defs": {
     "build": {
       "description": "What is shipped and what it is built from. The package and the binary are workspace facts; validation refuses a name the workspace does not contain.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["package", "binary", "profile", "inputs"],
+      "required": [
+        "package",
+        "binary",
+        "profile",
+        "inputs"
+      ],
       "properties": {
         "package": {
           "description": "The Cargo package that is built.",
@@ -77,7 +120,10 @@
           "description": "The repository-relative paths the image is built from, and the only ones the build context carries. A path that does not resolve is refused.",
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "site": {
           "description": "The directory the canonical site pipeline writes, served by the deployed process. Absent means the image serves no site.",
@@ -89,7 +135,10 @@
       "description": "The address the process listens on. The port is stated here once; the process, the image and the provider configuration all read this one.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["port", "interface"],
+      "required": [
+        "port",
+        "interface"
+      ],
       "properties": {
         "port": {
           "description": "The TCP port. Privileged ports are refused: the process runs as a non-root user.",
@@ -99,7 +148,10 @@
         },
         "interface": {
           "description": "loopback: reachable only from the same host, the local default. all: every interface, which a hosted process needs and a local one never does. Stating `all` is the intent that replaces suppressing the warning.",
-          "enum": ["loopback", "all"]
+          "enum": [
+            "loopback",
+            "all"
+          ]
         }
       }
     },
@@ -107,7 +159,10 @@
       "description": "The routes the platform polls. Each must be registered by a capability; validation refuses a route the registry does not know.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["liveness", "readiness"],
+      "required": [
+        "liveness",
+        "readiness"
+      ],
       "properties": {
         "liveness": {
           "description": "Is this process alive. Cheap: no filesystem traversal, no index build, no network.",
@@ -140,11 +195,18 @@
       "description": "What one machine is granted. A memory figure held only as long as a measured run under it passes.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["cpu_kind", "cpus", "memory_mb"],
+      "required": [
+        "cpu_kind",
+        "cpus",
+        "memory_mb"
+      ],
       "properties": {
         "cpu_kind": {
           "description": "shared: a fraction of a core, the cheap profile. performance: a dedicated one.",
-          "enum": ["shared", "performance"]
+          "enum": [
+            "shared",
+            "performance"
+          ]
         },
         "cpus": {
           "description": "How many CPUs one machine has.",
@@ -162,7 +224,12 @@
       "description": "How many machines run, and whether the platform is allowed to stop them. The inventory is asserted after a deploy against exactly this.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["count", "min_running", "autostart", "autostop"],
+      "required": [
+        "count",
+        "min_running",
+        "autostart",
+        "autostop"
+      ],
       "properties": {
         "count": {
           "description": "How many machines the application has. A deployment that would leave more is refused.",
@@ -189,26 +256,60 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "image_bytes": { "description": "Largest accepted compressed image size.", "type": "integer", "minimum": 1 },
-        "binary_bytes": { "description": "Largest accepted stripped binary size.", "type": "integer", "minimum": 1 },
-        "build_context_bytes": { "description": "Largest accepted build context.", "type": "integer", "minimum": 1 },
-        "cold_start_ms": { "description": "Longest accepted time from a stopped machine to a served response.", "type": "integer", "minimum": 1 },
-        "resident_memory_mb": { "description": "Largest accepted resident set under load.", "type": "integer", "minimum": 1 },
-        "blocking_check_ms": { "description": "Longest accepted time for one liveness or readiness check.", "type": "integer", "minimum": 1 },
-        "request_p99_ms": { "description": "Longest accepted p99 for a served request.", "type": "integer", "minimum": 1 }
+        "image_bytes": {
+          "description": "Largest accepted compressed image size.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "binary_bytes": {
+          "description": "Largest accepted stripped binary size.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "build_context_bytes": {
+          "description": "Largest accepted build context.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "cold_start_ms": {
+          "description": "Longest accepted time from a stopped machine to a served response.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "resident_memory_mb": {
+          "description": "Largest accepted resident set under load.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "blocking_check_ms": {
+          "description": "Longest accepted time for one liveness or readiness check.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "request_p99_ms": {
+          "description": "Longest accepted p99 for a served request.",
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "provider": {
       "description": "The hosting provider and the facts that belong to it alone. The generic keys above are never restated here.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "properties": {
         "name": {
           "description": "The provider this deployment targets. One provider is supported; a second one is an object of its own, not an abstraction over this one.",
-          "enum": ["fly"]
+          "enum": [
+            "fly"
+          ]
         },
-        "fly": { "$ref": "#/$defs/fly" }
+        "fly": {
+          "$ref": "#/$defs/fly"
+        }
       }
     },
     "fly": {
@@ -230,8 +331,14 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "soft_limit": { "type": "integer", "minimum": 1 },
-            "hard_limit": { "type": "integer", "minimum": 1 }
+            "soft_limit": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "hard_limit": {
+              "type": "integer",
+              "minimum": 1
+            }
           }
         }
       }

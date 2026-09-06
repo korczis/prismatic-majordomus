@@ -1,0 +1,32 @@
+id: I1010
+milestone: capability-graph
+title: The overview is what exists, counted rather than claimed
+slug: derived-overview
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Generate the Cockpit overview and its summary numbers from the graph, showing a section only when the repository actually holds that kind of thing."
+why: "A dashboard with headings for things that do not exist teaches readers to distrust it, and hand-maintained counts are wrong within a week. Both problems disappear when the overview is a query."
+current_state: "The Cockpit renders pages derived from the registry and the index. Section presence and any counts are decided in code."
+desired_state: "Sections appear because their kind has members, counts are computed, and a new kind of thing appears without the overview being rewritten."
+scope:
+  - apps/majordomus-cli/src/cockpit/pages.rs
+non_scope:
+  - A number typed by a human anywhere in the interface
+  - A heading rendered for a kind with no members
+depends_on:
+  - I1005
+acceptance_criteria:
+  - Sections are present only when the corresponding kind has members
+  - Every number shown is computed from the graph at build or request time
+  - A kind added to the layer appears in the overview with no change to the overview's own code
+  - The counts on the page match the artifact, proved by a test
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - sections_derived
+  - counts_computed
+risk: "Counts on a page are the sort of thing the repository's own rule against numbers in prose exists for. They are computed and rendered, never written."
+created_at: 2026-09-06
+updated_at: 2026-09-06

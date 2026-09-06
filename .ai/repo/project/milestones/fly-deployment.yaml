@@ -1,0 +1,75 @@
+id: fly-deployment
+title: A deployment is a projection of the repository model, and a reachable URL is its evidence
+slug: fly-deployment
+order: 70
+priority: p1
+problem: "Majordomus has no deployment at all: no container, no hosting provider, no way for anyone who is not standing in front of this checkout to see the layer it serves. The obvious repair is the wrong one. A Dockerfile and a fly.toml written by hand would be a second description of facts the repository already holds — the port the server binds, the routes it registers, the assets the site build produces, the binary the workspace names — and every one of those pairs would drift the first time one half changed. The repository already refuses that shape everywhere else: capabilities are declared once and projected into CLI, HTTP, MCP, OpenAPI, docs and the site, and generate --check fails when a projection is stale. A deployment must arrive the same way or not at all."
+outcome: "One canonical deployment object under .ai/repo/deployments/ describes the deployment; a typed Rust model parses and validates it; the container image, the Fly configuration, the smoke suite, the doctor checks, the documentation, the cockpit view and the CI jobs are all projections of that object and of the capability registry, and every one of them is checked for drift. The service runs on Fly.io on a single shared-CPU Machine that stops when idle, its health and readiness are verified from outside, the smoke suite is derived from the route registry rather than written twice, and the deployed URL answers."
+current_state: "No Dockerfile, no fly.toml, no deployment kind, no deploy capability module and no container test exist anywhere in the repository. The HTTP server binds loopback by default and warns when it does not. system.health exists as a capability; /healthz and /readyz do not. The site is built by one pipeline already and deployed to GitHub Pages by scripts/site-deploy."
+desired_state: "majordomus deploy validates the canonical object, verifies that every generated projection matches it, builds the pinned multi-stage Alpine image, deploys one Machine to the chosen region, waits for Fly's health checks, asserts the Machine inventory against the declared cost profile, runs the route-derived smoke suite against the public URL and writes a machine-readable report. Changing the region, the memory, the port or the Machine count means changing one file and regenerating."
+scope:
+  - .ai/repo/deployments
+  - .ai/repo/adrs
+  - .ai/repo/rules/project
+  - .ai/repo/policy.yaml
+  - apps/majordomus-cli/src/deploy
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/http
+  - deploy
+  - fly.toml
+  - share/kinds.yaml
+  - share/allow
+  - share/schemas
+  - docs
+  - site
+  - test/cases
+  - .github/workflows
+
+non_scope:
+  - Any dependency, in code, script, documentation, CI or default, on ~/dev/prismatic-platform
+  - A provider abstraction covering hosts other than the one this repository deploys to
+  - Kubernetes, Nomad, buildpacks, Nixpacks or a second container implementation
+  - A persistent volume, a database or any stateful service, unless a measured requirement forces one
+  - Mutating deployment operations exposed to unauthenticated HTTP or to the browser
+  - Profile-guided optimisation
+
+acceptance_criteria:
+  - One canonical deployment object is the only place the port, the region, the resources, the Machine count, the health routes, the build inputs and the budgets are stated
+  - Every provider artifact — the Dockerfile, its ignore file and fly.toml — is generated, marked as generated with its source and its regeneration command, and fails generate --check when edited by hand
+  - The deployment reads are declared once in the capability registry and appear in the CLI, the HTTP API, MCP, OpenAPI and the generated documentation without a second registration
+  - The smoke suite is derived from the route registry; no second list of endpoints exists anywhere
+  - The production image runs as a non-root user, contains no build toolchain, no repository history, no secret and no absolute developer path
+  - The deployed service answers on its public HTTPS URL, its health and readiness checks pass from outside, and the Machine inventory matches the declared cost profile
+  - Image size, binary size, build context size, cold start, resident memory and endpoint latency are measured, recorded as baselines and gated against unexplained regression
+  - No Fly credential is written to the repository, to a Docker layer, to a generated file, to the site or to a log, and CI deploys with an app-scoped token rather than an account-wide one
+  - Every rule this milestone states is enforced by a check that CI executes
+
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - cargo test --workspace --all-features
+  - cargo clippy --workspace --all-targets --all-features -- -D warnings
+  - majordomus generate --check
+  - majordomus deploy doctor
+  - fly config validate
+
+evidence_required:
+  - canonical_object
+  - typed_model
+  - generated_projections
+  - registry_derived_smoke
+  - container_minimal
+  - deployed_url
+  - budgets_measured
+  - secrets_isolated
+  - rules_enforced
+
+risks:
+  - "Generation can hide the Dockerfile from the people who must read it. The generated file has to stay idiomatic and reviewable; the source describes intent, the output describes mechanics, and a contributor who edits the output is told which file to change instead."
+  - "The route topology and the served surfaces are being rewritten on other branches under ADR 0013. A smoke suite pinned to today's paths would be stale on arrival, so it must read the route registry rather than a path list."
+  - "256 MB is a hypothesis. It is held only as long as a measured run under that limit passes; the evidence, not the preference, decides the final number."
+  - "A deployment touches money. The first deploy must not leave two Machines running, and the Machine inventory is asserted rather than assumed."
+  - "The bootstrap credential comes from outside this repository. It may be used to obtain an authenticated session and nowhere else; anything else would make Majordomus depend on Prismatic Platform, which is forbidden."
+
+created_at: 2026-09-06
+updated_at: 2026-09-06

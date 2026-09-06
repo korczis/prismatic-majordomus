@@ -28,6 +28,42 @@ statuses:
     meaning: Considered and deliberately refused, with the reason recorded.
 
 claims:
+  - id: distribution-canonical-model
+    claim: Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused
+    source: docs/DISTRIBUTION.md
+    implementation: apps/majordomus-cli/src/distribution/mod.rs
+    test: test/cases/84_distribution_model.sh
+    status: guaranteed
+    responsibility: projection
+    note: share/distribution.yaml is the model. The installer's platform table, the release build matrix, the documentation's table, the website's dataset and the public release metadata are generated from it, and `majordomus generate --check` exits 10 naming any that has fallen behind.
+
+  - id: install-command-is-derived
+    claim: The documented one-line install command is composed from the model's parts, and a document that states a different one fails the suite
+    source: docs/INSTALL.md
+    implementation: apps/majordomus-cli/src/distribution/mod.rs
+    test: test/cases/84_distribution_model.sh
+    status: guaranteed
+    responsibility: projection
+    note: The download command, the base URL, the script name and the shell are four fields; the command is their composition. README.md and the installation guide are checked against it rather than trusted.
+
+  - id: installer-verifies-before-installing
+    claim: The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working
+    source: docs/INSTALL.md
+    implementation: share/install/install.sh.in
+    test: test/cases/85_installer.sh
+    status: guaranteed
+    responsibility: doctor
+    note: A wrong digest, a truncated download, an archive that escapes its own directory or carries a link, and an executable that reports another version are each refused by name, before the launcher is replaced. There is no warn-and-continue path and sudo appears nowhere.
+
+  - id: release-is-complete-or-absent
+    claim: A release publishes an artifact for every supported target or it is not published
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/release-record
+    test: test/cases/87_release_pipeline.sh
+    status: guaranteed
+    responsibility: projection
+    note: The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported.
+
   - id: policy-parse
     claim: The canonical policy is parsed and rejected if it contains an unknown key
     source: docs/SCHEMAS.md
@@ -1098,6 +1134,33 @@ claims:
     status: guaranteed
     responsibility: none      # the site pipeline, not a supervised responsibility
     note: site/data/generated/skills.json and site/content/skills/ are written by the generator from lib/skills.sh's catalogue, the content directory replaced whole on every run; generate-site-data --check exits 10 when a skill changed or the projection was edited by hand, and CI runs that check before the site builds.
+
+  - id: why-catalogue-discovered
+    claim: An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: test/cases/98_why_catalogue.sh
+    status: guaranteed
+    responsibility: layer
+    note: Removing the file removes it from all of them, which is what a hidden registry would fail.
+
+  - id: why-references-resolve
+    claim: Every reference a moment makes resolves against the thing it names, and one that does not is an error carrying the nearest candidate
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: apps/majordomus-cli/tests/why.rs
+    status: guaranteed
+    responsibility: layer
+    note: Audiences, areas and related moments against the catalogue; commands, capabilities, claims, rules and use cases against their own registries.
+
+  - id: why-diagnosis-explainable
+    claim: A diagnosis of a reader's own symptoms is deterministic counting over the catalogue's metadata, and every recommendation names the moments that produced it
+    source: docs/WHY.md
+    implementation: apps/majordomus-cli/src/why.rs
+    test: apps/majordomus-cli/tests/why.rs
+    status: guaranteed
+    responsibility: layer
+    note: No weighting and no percentage; the questionnaire on the website and `majordomus why diagnose` run the same arithmetic over the same data.
 
   - id: session-records
     claim: A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered

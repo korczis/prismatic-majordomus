@@ -1,0 +1,36 @@
+id: I0918
+milestone: fly-deployment
+title: The bootstrap credential is used once and belongs to nothing
+slug: credential-bootstrap
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Define and implement how a deployment credential is discovered for an interactive first deployment, so that it is consumed in one process, never persisted, and leaves no trace of where it came from."
+why: "The credential that makes the first deployment possible comes from an environment outside this repository. If any part of that path reaches the source, the scripts, the documentation, the CI or a default, Majordomus acquires a dependency on another repository, which is forbidden."
+current_state: "No deployment exists and no credential handling exists. A usable credential is expected to be reachable through the operator's existing authenticated tooling."
+desired_state: "A documented discovery order finds an existing authenticated session, the token is consumed only in the current process, and no file in this repository names the external environment it came from."
+scope:
+  - docs/DEPLOYMENT-SECURITY.md
+  - apps/majordomus-cli/src/deploy/credentials.rs
+non_scope:
+  - Any reference, in code, script, documentation, CI, test, default or generated artifact, to another repository's path or environment
+  - Writing a token to any file in this repository
+  - Passing a token as a build argument or baking it into an image layer
+depends_on:
+  - I0902
+acceptance_criteria:
+  - The discovery order is documented and implemented — an existing environment variable, then an already authenticated provider CLI, and nothing that reads another repository
+  - Credential validity is confirmed with a command that returns an identity and never a secret
+  - No token value can be printed by any code path, including verbose output, error messages and traces
+  - A check proves no path belonging to another repository appears anywhere in this one
+  - Deployment credentials and application runtime secrets are treated as distinct concepts, and the distinction is documented
+validation:
+  - bash test/run.sh
+  - cargo test --workspace --all-features
+evidence_required:
+  - discovery_order
+  - no_persisted_token
+  - no_platform_dependency
+risk: "A convenience that reads the operator's other environment is exactly the dependency this issue exists to prevent. Bootstrap happens in a person's shell, not in this repository's code."
+created_at: 2026-09-06
+updated_at: 2026-09-06
