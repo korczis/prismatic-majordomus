@@ -3,7 +3,12 @@
 # Usage: bash examples/minimal/generate.sh > examples/minimal/WALKTHROUGH.md
 set -eu
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"; MJ="$ROOT/bin/majordomus"
-T="$(mktemp -d "${TMPDIR:-/tmp}/mj-example.XXXXXX")"; trap 'rm -rf "$T"' EXIT
+# Resolved, not as mktemp spelled it: on macOS the temporary directory is reached through a
+# firmlink, so mktemp says /var/folders/... while every path the tool prints comes back as
+# /private/var/folders/... . The substitutions below then miss, and the walk-through carries
+# the absolute path of a directory that no longer exists — which is how the committed one
+# came to name one.
+T="$(cd "$(mktemp -d "${TMPDIR:-/tmp}/mj-example.XXXXXX")" && pwd -P)"; trap 'rm -rf "$T"' EXIT
 cd "$T"; git init -q .; git config user.email dev@example.com; git config user.name dev
 mkdir -p lib/auth test; echo 'callback = 1' > lib/auth/oauth.rb; echo 'ok' > test/oauth_test.rb
 git add . && git commit -qm "initial" 
