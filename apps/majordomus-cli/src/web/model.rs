@@ -588,3 +588,161 @@ impl Topology {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn surface(id: &str, mount: &str, category: Category, visibility: Visibility) -> Surface {
+        Surface {
+            id: id.into(),
+            title: format!("the {id}"),
+            category,
+            visibility,
+            kind: SurfaceKind::NativeRoute,
+            mount: Mount::parse(mount).unwrap(),
+            producer: "test".into(),
+            feature: None,
+            artifact: None,
+            index: None,
+            availability: Availability::ServedOnly,
+            built_from: None,
+            provenance: BTreeMap::new(),
+        }
+    }
+
+    #[test]
+    fn every_vocabulary_word_has_exactly_one_spelling() {
+        // the words reach a listing, a JSON document and a page; a variant whose Display
+        // and whose serialisation disagree is a value that means two things
+        for (value, word) in [
+            (SurfaceKind::StaticDirectory, "static"),
+            (SurfaceKind::NativeRoute, "native"),
+            (SurfaceKind::Redirect, "redirect"),
+        ] {
+            assert_eq!(value.to_string(), word);
+        }
+        for category in Category::ALL {
+            assert_eq!(
+                serde_json::to_value(category).unwrap(),
+                serde_json::Value::String(category.to_string()),
+                "{category}"
+            );
+            assert!(!category.title().is_empty());
+        }
+        assert_eq!(Visibility::Public.to_string(), "public");
+        assert_eq!(Visibility::Internal.to_string(), "internal");
+        assert_eq!(Feature::Mcp.to_string(), "mcp");
+        assert_eq!(Feature::Cockpit.to_string(), "cockpit");
+    }
+
+    #[test]
+    fn provenance_says_where_a_value_came_from_in_words() {
+        assert_eq!(Provenance::Registry.to_string(), "capability registry");
+        assert_eq!(Provenance::Default.to_string(), "default");
+        assert_eq!(
+            Provenance::ProducerDeclaration {
+                path: "target/web/x/surface.json".into()
+            }
+            .to_string(),
+            "producer declaration target/web/x/surface.json"
+        );
+        assert_eq!(
+            Provenance::Filesystem {
+                path: "target/web/x".into()
+            }
+            .to_string(),
+            "filesystem target/web/x"
+        );
+        assert_eq!(
+            Provenance::SiteConfig {
+                path: "site/config.toml".into()
+            }
+            .to_string(),
+            "site config site/config.toml"
+        );
+    }
+
+    #[test]
+    fn a_mount_round_trips_through_its_serialised_form() {
+        let mount = Mount::parse("/docs").unwrap();
+        let text = serde_json::to_string(&mount).unwrap();
+        assert_eq!(text, "\"/docs\"");
+        assert_eq!(serde_json::from_str::<Mount>(&text).unwrap(), mount);
+        assert!(serde_json::from_str::<Mount>("\"/a/../b\"").is_err());
+        assert_eq!(String::from(mount.clone()), "/docs");
+        assert_eq!(mount.to_string(), "/docs");
+        assert_eq!(Mount::try_from("/docs/".to_string()).unwrap(), mount);
+    }
+
+    #[test]
+    fn availability_is_the_two_worlds_and_nothing_else() {
+        assert!(Availability::Both.is_served() && Availability::Both.is_published());
+        assert!(Availability::ServedOnly.is_served() && !Availability::ServedOnly.is_published());
+        assert!(
+            !Availability::PublishedOnly.is_served() && Availability::PublishedOnly.is_published()
+        );
+    }
+
+    #[test]
+    fn a_selection_narrows_by_id_and_leaves_the_order_alone() {
+        let topology = Topology::new(vec![
+            surface("home", "/", Category::Interface, Visibility::Public),
+            surface("api", "/api/v1", Category::Api, Visibility::Public),
+            surface("mcp", "/mcp", Category::Protocol, Visibility::Internal),
+        ]);
+        assert_eq!(topology.ids(), vec!["api", "mcp", "home"]);
+        assert_eq!(topology.get("mcp").map(|s| s.id.as_str()), Some("mcp"));
+        assert!(topology.get("nothing").is_none());
+
+        let only = topology.select(&["api".to_string()], &[]);
+        assert_eq!(only.ids(), vec!["api"]);
+        let without = topology.select(&[], &["api".to_string()]);
+        assert_eq!(without.ids(), vec!["mcp", "home"]);
+        // an empty selector is every surface, not none
+        assert_eq!(topology.select(&[], &[]).ids(), topology.ids());
+    }
+
+    #[test]
+    fn a_person_is_shown_the_public_surfaces_of_a_category_and_no_others() {
+        let topology = Topology::new(vec![
+            surface("home", "/", Category::Interface, Visibility::Public),
+            surface("api", "/api/v1", Category::Api, Visibility::Public),
+            surface("mcp", "/mcp", Category::Protocol, Visibility::Internal),
+        ]);
+        assert_eq!(
+            topology
+                .public_in(Category::Interface)
+                .iter()
+                .map(|s| s.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["home"]
+        );
+        assert!(
+            topology.public_in(Category::Protocol).is_empty(),
+            "an internal surface is served and not advertised"
+        );
+        assert!(topology.public_in(Category::Report).is_empty());
+    }
+
+    #[test]
+    fn the_published_world_holds_only_what_contributes_files() {
+        let mut app = surface("app", "/", Category::Documentation, Visibility::Public);
+        app.kind = SurfaceKind::StaticDirectory;
+        app.availability = Availability::PublishedOnly;
+        app.artifact = Some(PathBuf::from("site/public"));
+        let topology = Topology::new(vec![
+            app,
+            surface("home", "/", Category::Interface, Visibility::Public),
+        ]);
+        assert_eq!(topology.published().ids(), vec!["app"]);
+        assert_eq!(
+            topology.served(crate::web::discover::Runtime::full()).ids(),
+            vec!["home"]
+        );
+        // a static surface that names no directory publishes nothing, whatever it says
+        let mut nameless = topology.get("app").unwrap().clone();
+        nameless.artifact = None;
+        assert!(!nameless.publishes());
+    }
+}

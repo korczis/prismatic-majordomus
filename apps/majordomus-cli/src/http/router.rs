@@ -844,6 +844,104 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_body_is_text_or_bytes_and_says_so_the_same_way() {
+        let text = Body::from("hello".to_string());
+        assert_eq!(text.len(), 5);
+        assert!(!text.is_empty());
+        assert_eq!(text.as_bytes(), b"hello");
+        assert_eq!(text, *"hello");
+        assert_eq!(format!("{text}"), "hello");
+        assert!(matches!(text.text(), std::borrow::Cow::Borrowed(_)));
+
+        let bytes = Body::from(vec![0x89, b'P', b'N', b'G']);
+        assert_eq!(bytes.len(), 4);
+        assert_eq!(bytes.as_bytes()[0], 0x89);
+        assert_ne!(bytes, *"PNG");
+        // a file that is not UTF-8 is passed through unchanged and only repaired when a
+        // diagnostic asks for text
+        assert!(matches!(bytes.text(), std::borrow::Cow::Owned(_)));
+        assert!(Body::from(Vec::new()).is_empty());
+        assert_eq!(Body::from("a"), Body::Text("a".into()));
+    }
+
+    #[test]
+    fn a_response_carries_the_headers_it_was_given() {
+        let r = Response::new(200, "text/plain; charset=utf-8", "hi".to_string())
+            .with_header("Cache-Control", "no-cache");
+        assert_eq!(r.status, 200);
+        assert_eq!(r.body, *"hi");
+        assert!(r
+            .headers
+            .iter()
+            .any(|(k, v)| k == "Cache-Control" && v == "no-cache"));
+
+        let e = Response::error(404, "not_found", "nothing here");
+        assert_eq!(e.status, 404);
+        assert_eq!(e.content_type, "application/json");
+        let parsed: ErrorBody = serde_json::from_str(&e.body.text()).expect("errors are JSON");
+        assert_eq!(parsed.error.code, "not_found");
+        assert_eq!(parsed.error.message, "nothing here");
+    }
+
+    #[test]
+    fn the_repository_is_named_and_its_path_is_not() {
+        assert_eq!(
+            repository_name("/a/b/prismatic-majordomus"),
+            "prismatic-majordomus"
+        );
+        assert_eq!(repository_name("/a/b/repo/"), "repo");
+        assert_eq!(repository_name("/"), "repository");
+        assert_eq!(repository_name(""), "repository");
+    }
+
+    #[test]
+    fn the_swagger_shell_is_the_same_page_however_it_is_reached() {
+        let page = swagger_response();
+        assert_eq!(page.status, 200);
+        assert!(page.content_type.starts_with("text/html"));
+        assert!(page.body.text().contains("/openapi.json"));
+    }
+
+    #[test]
+    fn only_an_explicit_html_accept_asks_for_a_page() {
+        let plain = Request::parse_target("GET", "/", vec![]);
+        assert!(!prefers_html(&plain));
+        for accept in [
+            "text/html",
+            "text/html,application/xhtml+xml",
+            "application/json, text/html;q=0.9",
+        ] {
+            let r = plain
+                .clone()
+                .with_headers(vec![("Accept".into(), accept.into())]);
+            assert!(prefers_html(&r), "{accept}");
+        }
+        for accept in ["*/*", "application/json", "text/plain"] {
+            let r = plain
+                .clone()
+                .with_headers(vec![("Accept".into(), accept.into())]);
+            assert!(!prefers_html(&r), "{accept}");
+        }
+    }
+
+    #[test]
+    fn a_request_binds_the_way_the_projection_says_and_reads_back_the_same() {
+        let get = Request::bind(
+            HttpMethod::Get,
+            "/api/v1/search",
+            &json!({ "query": "a b", "limit": 2, "kind": null }),
+        );
+        assert_eq!(get.target(), "/api/v1/search?query=a%20b&limit=2");
+        let back = Request::parse_target("GET", &get.target(), vec![]);
+        assert_eq!(back.query, get.query);
+        assert_eq!(back.path, get.path);
+
+        let post = Request::bind(HttpMethod::Post, "/api/v1/x", &json!({ "a": 1 }));
+        assert_eq!(post.target(), "/api/v1/x");
+        assert_eq!(post.body, br#"{"a":1}"#);
+    }
+
+    #[test]
     fn target_parsing_and_decoding() {
         let r = Request::parse_target(
             "GET",

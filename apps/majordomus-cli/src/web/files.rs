@@ -455,6 +455,55 @@ mod tests {
     }
 
     #[test]
+    fn a_surface_serves_only_paths_it_owns() {
+        let (_tmp, files) = tree();
+        // the mount's own subtree, and nothing else
+        assert_eq!(files.respond("/docs/index.html").status, 200);
+        assert_eq!(files.respond("/elsewhere/index.html").status, 400);
+        assert_eq!(files.respond("/docsx").status, 400);
+        assert_eq!(files.surface().id, "docs");
+    }
+
+    #[test]
+    fn a_root_mount_answers_from_the_top_of_its_directory() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().join("target/web/docs");
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("index.html"), "<h1>root</h1>").unwrap();
+        let files = Files::new(&surface("/", "target/web/docs"), tmp.path());
+        assert_eq!(files.respond("/").status, 200);
+        assert!(files.respond("/").body.text().contains("root"));
+        // the root mount has no bare form to redirect to
+        assert_ne!(files.respond("/").status, 308);
+    }
+
+    #[test]
+    fn a_surface_with_no_index_answers_nothing_for_its_mount() {
+        let (tmp, _files) = tree();
+        let mut without = surface("/docs", "target/web/docs");
+        without.index = None;
+        let files = Files::new(&without, tmp.path());
+        assert_eq!(files.respond("/docs/").status, 404);
+        // a named file is still served: only the mount itself has nothing to answer with
+        assert_eq!(files.respond("/docs/style.css").status, 200);
+    }
+
+    #[test]
+    fn a_media_type_is_read_from_the_name_whatever_its_case() {
+        assert_eq!(media_type("LOGO.PNG"), Some("image/png"));
+        assert_eq!(media_type("a.b.json"), Some("application/json"));
+        assert_eq!(media_type("index.html"), media_type("INDEX.HTML"));
+        assert_eq!(media_type(".hidden"), None);
+        assert_eq!(safe_relative(&"a".repeat(2000)), None);
+        assert_eq!(
+            safe_relative("///"),
+            None,
+            "a relative path never starts at the root"
+        );
+        assert_eq!(safe_relative("a//"), Some("a/".to_string()));
+    }
+
+    #[test]
     fn a_file_is_read_once_and_answered_from_memory_afterwards() {
         let (tmp, files) = tree();
         assert_eq!(files.respond("/docs/").status, 200);
