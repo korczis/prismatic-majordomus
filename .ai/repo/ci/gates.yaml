@@ -33,6 +33,11 @@ gates:
     runs: scripts/ci/core-check
     summary: doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection, the derived site data
 
+  - id: site-basepath
+    job: structure
+    runs: scripts/site-basepath-check
+    summary: the documentation source states no origin-absolute link, so one build serves both the published site and the executable's /docs mount
+
   - id: shell-suite
     job: suite
     runs: MJ_TEST_JOBS=4 bash test/run.sh
@@ -146,8 +151,8 @@ classes:
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
-    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-probe, scripts/site-serve]
-    gates: [shell-suite, site-build, site-probe]
+    paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve]
+    gates: [shell-suite, site-basepath, site-build, site-probe]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and

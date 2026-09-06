@@ -15,15 +15,20 @@
 //! use majordomus_cli::web::{discover, model::Mount};
 //! // the executable's own routes come from the constants that already declare them
 //! let native = discover::native(discover::Runtime::full());
-//! assert!(native.iter().any(|s| s.mount == Mount::parse("/docs").unwrap()));
+//! assert!(native.iter().any(|s| s.mount == Mount::parse("/swagger").unwrap()));
 //! ```
 
 pub mod compose;
 pub mod discover;
+pub mod files;
+pub mod home;
+pub mod html;
 pub mod manifest;
 pub mod model;
 pub mod report;
 pub mod serve;
 pub mod validate;
 
-pub use model::{Availability, Mount, Provenance, Surface, SurfaceKind, Topology};
+pub use model::{
+    Availability, Category, Feature, Mount, Provenance, Surface, SurfaceKind, Topology, Visibility,
+};

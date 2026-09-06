@@ -20,7 +20,7 @@ cargo bench --manifest-path apps/majordomus-cli/Cargo.toml --bench routes       
 
 ## What it does not cover
 
-Response examples: producing one would mean executing the capability while the document is built, and the document is a projection, not a run. The committed document carries the examples of this repository's index, so a new object that sorts first under a kind changes `docs/generated/openapi.json` and `generate --check` asks for a regeneration, as it does for any other change to the registry. Swagger UI on the site: the site serves no third-party script (`scripts/site-check`, rule 8); the running server's `/docs` is Swagger UI over the same document.
+Response examples: producing one would mean executing the capability while the document is built, and the document is a projection, not a run. The committed document carries the examples of this repository's index, so a new object that sorts first under a kind changes `docs/generated/openapi.json` and `generate --check` asks for a regeneration, as it does for any other change to the registry. Swagger UI on the site: the site serves no third-party script (`scripts/site-check`, rule 8); the running server serves Swagger UI at `/swagger` over the same document, while `/docs` is the documentation site.
 
 ## Why it exists
 

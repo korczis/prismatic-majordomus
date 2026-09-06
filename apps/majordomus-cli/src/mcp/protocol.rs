@@ -319,7 +319,7 @@ impl Server {
         );
         if let Some(url) = &self.endpoint {
             text.push_str(&format!(
-                " This session belongs to the one shared server for this repository at {url}: Swagger UI {url}/docs, OpenAPI {url}/openapi.json, MCP over HTTP {url}/mcp."
+                " This session belongs to the one shared server for this repository at {url}: its home page at {url}/ lists every surface, Swagger UI is {url}/swagger, OpenAPI {url}/openapi.json, MCP over HTTP {url}/mcp."
             ));
         }
         if let Some(peer) = self.surface.peer() {

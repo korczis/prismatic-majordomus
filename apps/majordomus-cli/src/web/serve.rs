@@ -130,7 +130,7 @@ impl StaticSurfaces {
             return Some(Response::new(
                 405,
                 "application/json",
-                r#"{"error":"method_not_allowed","message":"a static surface answers GET"}"#.into(),
+                r#"{"error":"method_not_allowed","message":"a static surface answers GET"}"#,
             ));
         }
         // exactly one separator is removed: `//` is a different URL, and collapsing it here

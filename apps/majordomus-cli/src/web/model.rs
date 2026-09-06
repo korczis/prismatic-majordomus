@@ -11,6 +11,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::path::PathBuf;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// How a surface answers a request.
@@ -18,7 +19,9 @@ use serde::{Deserialize, Serialize};
 /// Only what this repository serves: a directory of generated files, a path the executable
 /// answers itself, and a redirect. A new *kind* is a new behaviour, never a new name for
 /// the same behaviour with different data.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum SurfaceKind {
     /// A generated directory, mounted under its prefix and served from disk.
@@ -39,11 +42,127 @@ impl fmt::Display for SurfaceKind {
     }
 }
 
+/// What a surface is for, which is how a reader is shown it.
+///
+/// A category is the one piece of intent that a mount cannot carry: `/openapi.json` and
+/// `/swagger` sit beside each other and are a document and a viewer for it. Grouping is
+/// derived from this field and never from a list of paths kept somewhere else.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "kebab-case")]
+// the schema component is named for what it categorises: `Category` alone already names
+// the scope's classes, and two components of one name is a document that cannot be built
+#[schemars(rename = "SurfaceCategory")]
+pub enum Category {
+    /// Something a person opens and looks at: the home page, the Cockpit.
+    Interface,
+    /// Prose and reference written for a person: the site, the Swagger UI.
+    Documentation,
+    /// A machine-readable surface of the capability registry.
+    Api,
+    /// A wire protocol another program speaks.
+    Protocol,
+    /// Generated evidence of a run: a test report, a benchmark report.
+    Report,
+}
+
+impl Category {
+    /// Every category, in the order a listing shows them.
+    pub const ALL: [Category; 5] = [
+        Category::Interface,
+        Category::Documentation,
+        Category::Api,
+        Category::Protocol,
+        Category::Report,
+    ];
+
+    /// The heading a person reads.
+    ///
+    /// ```
+    /// use majordomus_cli::web::model::Category;
+    /// assert_eq!(Category::Api.title(), "API");
+    /// ```
+    pub fn title(self) -> &'static str {
+        match self {
+            Category::Interface => "Interfaces",
+            Category::Documentation => "Documentation",
+            Category::Api => "API",
+            Category::Protocol => "Protocols",
+            Category::Report => "Reports",
+        }
+    }
+}
+
+impl fmt::Display for Category {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Category::Interface => "interface",
+            Category::Documentation => "documentation",
+            Category::Api => "api",
+            Category::Protocol => "protocol",
+            Category::Report => "report",
+        })
+    }
+}
+
+/// Who a surface is offered to.
+///
+/// Two values and no more: a surface is either offered for a person to discover, or it is
+/// part of the topology without being advertised. Both are always in the machine-readable
+/// answer — hiding a served route from introspection would only hide it from the people
+/// maintaining it.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum Visibility {
+    /// Listed for a person: it appears on the home page.
+    Public,
+    /// Served and introspectable, not advertised: a machine speaks to it, or another
+    /// surface links to it.
+    Internal,
+}
+
+impl fmt::Display for Visibility {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Visibility::Public => "public",
+            Visibility::Internal => "internal",
+        })
+    }
+}
+
+/// A capability of the running process a surface needs in order to exist.
+///
+/// The registry describes the effective process, not the maximum one: a build or an
+/// invocation that answers no MCP has no MCP surface, and the home page cannot link to
+/// one. Stating the dependency as data is what keeps that automatic.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum Feature {
+    /// This process answers MCP over HTTP.
+    Mcp,
+    /// This process serves the Cockpit.
+    Cockpit,
+}
+
+impl fmt::Display for Feature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Feature::Mcp => "mcp",
+            Feature::Cockpit => "cockpit",
+        })
+    }
+}
+
 /// Where a resolved value came from.
 ///
 /// Kept for every field a consumer can be surprised by, so that `web explain` can answer
 /// "why is this mounted here?" without anybody reading the discovery code.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "source", rename_all = "kebab-case")]
 pub enum Provenance {
     /// Read from the capability registry: the routes the executable already declares once.
@@ -93,8 +212,14 @@ impl fmt::Display for Provenance {
 /// assert!(Mount::parse("/a/../b").is_err());
 /// assert!(Mount::parse("//a").is_err());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(try_from = "String", into = "String")]
+#[schemars(
+    with = "String",
+    description = "An absolute mount path, without a trailing slash."
+)]
 pub struct Mount(String);
 
 impl Mount {
@@ -241,12 +366,13 @@ impl fmt::Display for Mount {
 
 /// Whether a surface is part of the static publication, served only while a process runs,
 /// or both.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum Availability {
     /// Served by the running executable and published as files.
     Both,
-    /// Served only while the executable runs: nothing to publish.
+    /// Answered by the running executable and never published: a route the process
+    /// computes, or a build made for this server's own mount rather than for deployment.
     ServedOnly,
     /// Published as files; the running executable serves it from the same directory.
     PublishedOnly,
@@ -266,18 +392,25 @@ impl Availability {
 
 /// One resolved surface: everything a consumer needs, with the provenance of what it could
 /// be surprised by.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Surface {
     /// Identity, unique across the topology; the selector `--only` and `--exclude` use it.
     pub id: String,
     /// One line: what a reader sees in a listing.
     pub title: String,
+    /// What it is for, which is how a listing groups it.
+    pub category: Category,
+    /// Whether a person is shown it.
+    pub visibility: Visibility,
     /// How it answers.
     pub kind: SurfaceKind,
     /// Where it answers.
     pub mount: Mount,
     /// What produced it: a command, a module, or the generator that writes the directory.
     pub producer: String,
+    /// The runtime capability it needs; absent when the process always has it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub feature: Option<Feature>,
     /// The generated directory, repository-relative, for a static surface.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub artifact: Option<PathBuf>,
@@ -286,6 +419,10 @@ pub struct Surface {
     pub index: Option<String>,
     /// Where the surface's files go and who answers for it.
     pub availability: Availability,
+    /// The revision the artifact was built from, when its producer recorded one: what
+    /// makes a stale build a finding rather than a surprise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub built_from: Option<String>,
     /// Where each interesting value came from, by field name.
     pub provenance: BTreeMap<String, Provenance>,
 }
@@ -295,13 +432,34 @@ impl Surface {
     pub fn publishes(&self) -> bool {
         self.availability.is_published() && self.artifact.is_some()
     }
+
+    /// Does a process with these runtime capabilities answer for this surface?
+    ///
+    /// ```
+    /// use majordomus_cli::web::discover::Runtime;
+    /// use majordomus_cli::web::model::Feature;
+    /// # use majordomus_cli::web::model::*;
+    /// # use std::collections::BTreeMap;
+    /// let mut s = Surface { id: "mcp".into(), title: "MCP".into(), category: Category::Protocol,
+    ///     visibility: Visibility::Internal, kind: SurfaceKind::NativeRoute,
+    ///     mount: Mount::parse("/mcp").unwrap(), producer: "t".into(), feature: Some(Feature::Mcp),
+    ///     artifact: None, index: None, availability: Availability::ServedOnly,
+    ///     built_from: None, provenance: BTreeMap::new() };
+    /// assert!(s.served_by(Runtime::full()));
+    /// assert!(!s.served_by(Runtime::default()));
+    /// s.feature = None;
+    /// assert!(s.served_by(Runtime::default()));
+    /// ```
+    pub fn served_by(&self, runtime: crate::web::discover::Runtime) -> bool {
+        self.availability.is_served() && self.feature.is_none_or(|f| runtime.has(f))
+    }
 }
 
 /// Every surface this repository exposes, resolved together.
 ///
 /// The order is by mount, most specific first, then by id: the order a router must consult
 /// them in, computed rather than left to whoever inserted a route last.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Topology {
     /// The resolved surfaces, in route-precedence order.
     pub surfaces: Vec<Surface>,
@@ -315,16 +473,22 @@ impl Topology {
     /// on discovery order, filesystem order or a hash map.
     ///
     /// ```
-    /// use majordomus_cli::web::model::{Topology, Surface, SurfaceKind, Mount, Availability};
+    /// use majordomus_cli::web::model::*;
     /// # use std::collections::BTreeMap;
     /// # fn s(id: &str, mount: &str) -> Surface {
-    /// #     Surface { id: id.into(), title: id.into(), kind: SurfaceKind::StaticDirectory,
-    /// #         mount: Mount::parse(mount).unwrap(), producer: "t".into(), artifact: None,
-    /// #         index: None, availability: Availability::Both, provenance: BTreeMap::new() }
+    /// #     Surface { id: id.into(), title: id.into(), category: Category::Report,
+    /// #         visibility: Visibility::Public, kind: SurfaceKind::StaticDirectory,
+    /// #         mount: Mount::parse(mount).unwrap(), producer: "t".into(), feature: None,
+    /// #         artifact: None, index: None, availability: Availability::Both,
+    /// #         built_from: None, provenance: BTreeMap::new() }
     /// # }
     /// let t = Topology::new(vec![s("app", "/"), s("tests", "/tests")]);
     /// assert_eq!(t.surfaces[0].id, "tests");   // the specific one is consulted first
     /// assert_eq!(t.surfaces[1].id, "app");
+    /// // the root is last whatever it is compared with: `owner()` rests on this, and the
+    /// // root's own slash must never be counted as depth
+    /// let deep = Topology::new(vec![s("api", "/api/v1"), s("root", "/"), s("docs", "/docs")]);
+    /// assert_eq!(deep.ids(), vec!["api", "docs", "root"]);
     /// ```
     pub fn new(mut surfaces: Vec<Surface>) -> Self {
         surfaces.sort_by(|a, b| {
@@ -340,12 +504,14 @@ impl Topology {
     /// The surface that owns a request path, or none when nothing does.
     ///
     /// ```
-    /// use majordomus_cli::web::model::{Topology, Surface, SurfaceKind, Mount, Availability};
+    /// use majordomus_cli::web::model::*;
     /// # use std::collections::BTreeMap;
     /// # fn s(id: &str, mount: &str) -> Surface {
-    /// #     Surface { id: id.into(), title: id.into(), kind: SurfaceKind::StaticDirectory,
-    /// #         mount: Mount::parse(mount).unwrap(), producer: "t".into(), artifact: None,
-    /// #         index: None, availability: Availability::Both, provenance: BTreeMap::new() }
+    /// #     Surface { id: id.into(), title: id.into(), category: Category::Report,
+    /// #         visibility: Visibility::Public, kind: SurfaceKind::StaticDirectory,
+    /// #         mount: Mount::parse(mount).unwrap(), producer: "t".into(), feature: None,
+    /// #         artifact: None, index: None, availability: Availability::Both,
+    /// #         built_from: None, provenance: BTreeMap::new() }
     /// # }
     /// let t = Topology::new(vec![s("app", "/"), s("tests", "/tests")]);
     /// assert_eq!(t.owner("/tests/index.html").unwrap().id, "tests");
@@ -378,5 +544,205 @@ impl Topology {
     /// The ids this topology holds, in precedence order.
     pub fn ids(&self) -> Vec<&str> {
         self.surfaces.iter().map(|s| s.id.as_str()).collect()
+    }
+
+    /// The topology as a process with these runtime capabilities serves it.
+    ///
+    /// One resolution, two worlds: a surface that is only published (the site as it is
+    /// deployed) is not served, and a surface whose feature this process does not have is
+    /// not there at all. Both narrowings are filters over the same value, so nothing can
+    /// be served that was not discovered.
+    ///
+    /// ```
+    /// use majordomus_cli::web::discover::{self, Runtime};
+    /// let all = discover::native(Runtime::full());
+    /// let none = majordomus_cli::web::Topology::new(all).served(Runtime::default());
+    /// assert!(!none.ids().contains(&"mcp"));
+    /// ```
+    pub fn served(&self, runtime: crate::web::discover::Runtime) -> Topology {
+        Topology::new(
+            self.surfaces
+                .iter()
+                .filter(|s| s.served_by(runtime))
+                .cloned()
+                .collect(),
+        )
+    }
+
+    /// The topology as a publication holds it: every surface that contributes files.
+    pub fn published(&self) -> Topology {
+        Topology::new(
+            self.surfaces
+                .iter()
+                .filter(|s| s.publishes())
+                .cloned()
+                .collect(),
+        )
+    }
+
+    /// The public surfaces of one category, in precedence order: what a person is shown.
+    pub fn public_in(&self, category: Category) -> Vec<&Surface> {
+        self.surfaces
+            .iter()
+            .filter(|s| s.visibility == Visibility::Public && s.category == category)
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn surface(id: &str, mount: &str, category: Category, visibility: Visibility) -> Surface {
+        Surface {
+            id: id.into(),
+            title: format!("the {id}"),
+            category,
+            visibility,
+            kind: SurfaceKind::NativeRoute,
+            mount: Mount::parse(mount).unwrap(),
+            producer: "test".into(),
+            feature: None,
+            artifact: None,
+            index: None,
+            availability: Availability::ServedOnly,
+            built_from: None,
+            provenance: BTreeMap::new(),
+        }
+    }
+
+    #[test]
+    fn every_vocabulary_word_has_exactly_one_spelling() {
+        // the words reach a listing, a JSON document and a page; a variant whose Display
+        // and whose serialisation disagree is a value that means two things
+        for (value, word) in [
+            (SurfaceKind::StaticDirectory, "static"),
+            (SurfaceKind::NativeRoute, "native"),
+            (SurfaceKind::Redirect, "redirect"),
+        ] {
+            assert_eq!(value.to_string(), word);
+        }
+        for category in Category::ALL {
+            assert_eq!(
+                serde_json::to_value(category).unwrap(),
+                serde_json::Value::String(category.to_string()),
+                "{category}"
+            );
+            assert!(!category.title().is_empty());
+        }
+        assert_eq!(Visibility::Public.to_string(), "public");
+        assert_eq!(Visibility::Internal.to_string(), "internal");
+        assert_eq!(Feature::Mcp.to_string(), "mcp");
+        assert_eq!(Feature::Cockpit.to_string(), "cockpit");
+    }
+
+    #[test]
+    fn provenance_says_where_a_value_came_from_in_words() {
+        assert_eq!(Provenance::Registry.to_string(), "capability registry");
+        assert_eq!(Provenance::Default.to_string(), "default");
+        assert_eq!(
+            Provenance::ProducerDeclaration {
+                path: "target/web/x/surface.json".into()
+            }
+            .to_string(),
+            "producer declaration target/web/x/surface.json"
+        );
+        assert_eq!(
+            Provenance::Filesystem {
+                path: "target/web/x".into()
+            }
+            .to_string(),
+            "filesystem target/web/x"
+        );
+        assert_eq!(
+            Provenance::SiteConfig {
+                path: "site/config.toml".into()
+            }
+            .to_string(),
+            "site config site/config.toml"
+        );
+    }
+
+    #[test]
+    fn a_mount_round_trips_through_its_serialised_form() {
+        let mount = Mount::parse("/docs").unwrap();
+        let text = serde_json::to_string(&mount).unwrap();
+        assert_eq!(text, "\"/docs\"");
+        assert_eq!(serde_json::from_str::<Mount>(&text).unwrap(), mount);
+        assert!(serde_json::from_str::<Mount>("\"/a/../b\"").is_err());
+        assert_eq!(String::from(mount.clone()), "/docs");
+        assert_eq!(mount.to_string(), "/docs");
+        assert_eq!(Mount::try_from("/docs/".to_string()).unwrap(), mount);
+    }
+
+    #[test]
+    fn availability_is_the_two_worlds_and_nothing_else() {
+        assert!(Availability::Both.is_served() && Availability::Both.is_published());
+        assert!(Availability::ServedOnly.is_served() && !Availability::ServedOnly.is_published());
+        assert!(
+            !Availability::PublishedOnly.is_served() && Availability::PublishedOnly.is_published()
+        );
+    }
+
+    #[test]
+    fn a_selection_narrows_by_id_and_leaves_the_order_alone() {
+        let topology = Topology::new(vec![
+            surface("home", "/", Category::Interface, Visibility::Public),
+            surface("api", "/api/v1", Category::Api, Visibility::Public),
+            surface("mcp", "/mcp", Category::Protocol, Visibility::Internal),
+        ]);
+        assert_eq!(topology.ids(), vec!["api", "mcp", "home"]);
+        assert_eq!(topology.get("mcp").map(|s| s.id.as_str()), Some("mcp"));
+        assert!(topology.get("nothing").is_none());
+
+        let only = topology.select(&["api".to_string()], &[]);
+        assert_eq!(only.ids(), vec!["api"]);
+        let without = topology.select(&[], &["api".to_string()]);
+        assert_eq!(without.ids(), vec!["mcp", "home"]);
+        // an empty selector is every surface, not none
+        assert_eq!(topology.select(&[], &[]).ids(), topology.ids());
+    }
+
+    #[test]
+    fn a_person_is_shown_the_public_surfaces_of_a_category_and_no_others() {
+        let topology = Topology::new(vec![
+            surface("home", "/", Category::Interface, Visibility::Public),
+            surface("api", "/api/v1", Category::Api, Visibility::Public),
+            surface("mcp", "/mcp", Category::Protocol, Visibility::Internal),
+        ]);
+        assert_eq!(
+            topology
+                .public_in(Category::Interface)
+                .iter()
+                .map(|s| s.id.as_str())
+                .collect::<Vec<_>>(),
+            vec!["home"]
+        );
+        assert!(
+            topology.public_in(Category::Protocol).is_empty(),
+            "an internal surface is served and not advertised"
+        );
+        assert!(topology.public_in(Category::Report).is_empty());
+    }
+
+    #[test]
+    fn the_published_world_holds_only_what_contributes_files() {
+        let mut app = surface("app", "/", Category::Documentation, Visibility::Public);
+        app.kind = SurfaceKind::StaticDirectory;
+        app.availability = Availability::PublishedOnly;
+        app.artifact = Some(PathBuf::from("site/public"));
+        let topology = Topology::new(vec![
+            app,
+            surface("home", "/", Category::Interface, Visibility::Public),
+        ]);
+        assert_eq!(topology.published().ids(), vec!["app"]);
+        assert_eq!(
+            topology.served(crate::web::discover::Runtime::full()).ids(),
+            vec!["home"]
+        );
+        // a static surface that names no directory publishes nothing, whatever it says
+        let mut nameless = topology.get("app").unwrap().clone();
+        nameless.artifact = None;
+        assert!(!nameless.publishes());
     }
 }

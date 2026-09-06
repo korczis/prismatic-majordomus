@@ -255,7 +255,7 @@ pub struct HttpView {
     /// The capability routes, in registry order.
     pub routes: Vec<RouteView>,
     /// The projection's own routes, not capabilities.
-    pub infrastructure: &'static [&'static str],
+    pub infrastructure: Vec<String>,
     /// Where the OpenAPI document is committed, repository-relative.
     pub openapi_path: String,
 }
@@ -517,7 +517,7 @@ pub fn dataset(
                 })
             })
             .collect(),
-        infrastructure: openapi::INFRASTRUCTURE_ROUTES,
+        infrastructure: openapi::infrastructure_routes(),
         openapi_path: format!("{}/openapi.json", crate::generate::OUT_DIR),
     };
 
@@ -699,10 +699,12 @@ pub fn render(dataset: &SiteRegistry) -> String {
 pub const WHY_SCHEMA: &str = "majordomus-site-why/v1";
 
 /// Where `why.json` says it came from.
-pub const WHY_SOURCE: &str = "the Why catalogue under .ai/repo/why/";
+pub const WHY_SOURCE: &str =
+    "the operational moments, audiences and areas of this repository's layer";
 
 /// Where `why-graph.json` says it came from.
-pub const WHY_GRAPH_SOURCE: &str = "the `why` graph of the Why catalogue";
+pub const GRAPH_SOURCE: &str =
+    "the moments and what answers them, as the derived `why` graph";
 
 /// The Why catalogue and its graph, as the site's templates read them:
 /// `site/data/registry/why.json` and `site/data/registry/why-graph.json`.
@@ -789,10 +791,6 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         }
     }
 
-    const WHY_SOURCE: &str =
-        "the operational moments, audiences and areas of this repository's layer";
-    const GRAPH_SOURCE: &str = "the moments and what answers them, as the derived `why` graph";
-
     let document = serde_json::json!({
         "schema": WHY_SCHEMA,
         "generated": crate::generate::json_banner(WHY_SOURCE),
@@ -826,44 +824,7 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         );
     }
 
-    // JSON carries its provenance as a member; the graph is serialised from a type, so
-    // the member is added to the rendered value rather than declared on the type
-    let mut graph_value = serde_json::to_value(&graph).unwrap_or_default();
-    if let Some(map) = graph_value.as_object_mut() {
-        map.insert(
-            "generated".into(),
-            serde_json::Value::String(crate::generate::json_banner(WHY_GRAPH_SOURCE)),
-        );
-    }
-
     Ok(vec![
-<<<<<<< HEAD
-        crate::generate::Artifact::verbatim(
-            format!("{}/why.json", crate::generate::SITE_DATA_DIR),
-            "site-why",
-            crate::generate::ArtifactFormat::Json,
-            Some(WHY_SCHEMA.to_string()),
-            WHY_SOURCE,
-            render_json(&document),
-        ),
-        crate::generate::Artifact::verbatim(
-            format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
-            "site-why-graph",
-            crate::generate::ArtifactFormat::Json,
-            None,
-            WHY_GRAPH_SOURCE,
-            render_json(&graph_value),
-        ),
-||||||| merged common ancestors
-        crate::generate::Artifact {
-            path: format!("{}/why.json", crate::generate::SITE_DATA_DIR),
-            content: render_json(&document),
-        },
-        crate::generate::Artifact {
-            path: format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
-            content: render_json(&serde_json::to_value(&graph).unwrap_or_default()),
-        },
-=======
         crate::generate::Artifact::verbatim(
             format!("{}/why.json", crate::generate::SITE_DATA_DIR),
             "site-why",
@@ -880,7 +841,6 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
             GRAPH_SOURCE,
             render_json(&graph_document),
         ),
->>>>>>> origin/feature/why-catalog
     ])
 }
 
