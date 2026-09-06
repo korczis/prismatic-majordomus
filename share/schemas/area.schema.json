@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/area.schema.json",
+  "title": "Operational area",
+  "description": "The front matter of an operational area under .ai/repo/why/areas/: one part of running AI-assisted work that moments are filed under, and that a diagnosis reports a reader's load in. The body carries what the area covers and what it does not. An area never lists its moments: membership is each moment's `areas`, and every list and count is derived.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "kind", "title", "summary", "status"],
+  "properties": {
+    "schema": {
+      "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+      "const": "area/v1"
+    },
+    "id": {
+      "description": "The identity and the slug. It fixes the file name and the route /why/areas/<id>/.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "kind": { "const": "area" },
+    "title": {
+      "description": "The area, named as a part of operations rather than as a feature.",
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "description": "One line: what falls under it. Also the page description.",
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": ["stable", "draft", "deprecated"]
+    },
+    "weight": {
+      "description": "Presentation order within a listing, lowest first.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    }
+  }
+}

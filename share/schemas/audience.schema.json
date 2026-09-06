@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/audience.schema.json",
+  "title": "Audience",
+  "description": "The front matter of an audience under .ai/repo/why/audiences/: who recognises a set of operational moments, and how they work. The body carries the narrative (## Who this is, ## How they work, ## What goes wrong). An audience never lists its moments: membership is declared by each moment's `audiences`, and the list, the count and the ordering are derived from that.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "kind", "title", "summary", "status"],
+  "properties": {
+    "schema": {
+      "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+      "const": "audience/v1"
+    },
+    "id": {
+      "description": "The identity and the slug. It fixes the file name and the route /why/audiences/<id>/.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "kind": { "const": "audience" },
+    "title": {
+      "description": "Who they are, in the words they would use.",
+      "type": "string",
+      "minLength": 1
+    },
+    "short_title": {
+      "description": "Two or three words for a filter chip. Absent means the title is used.",
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "description": "One line: what the working situation is. Also the page description.",
+      "type": "string",
+      "minLength": 1
+    },
+    "workflow": {
+      "description": "One line: how work actually flows for them, which is what decides which moments they meet.",
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "description": "stable: complete and public, and held to the coverage floor. draft: written and not yet complete; listed as a draft, never counted. deprecated: kept because its route exists, listed nowhere.",
+      "enum": ["stable", "draft", "deprecated"]
+    },
+    "weight": {
+      "description": "Presentation order within a listing, lowest first.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    }
+  }
+}
