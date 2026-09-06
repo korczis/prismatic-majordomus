@@ -5,25 +5,25 @@
     "version": "0.1.0"
   },
   "registry": {
-    "fingerprint": "bea30c5aefeb1e3c09c0b6a56fd15b8cce1f7137dc6eb65182ac593d6c4b45e2",
+    "fingerprint": "ed9a31a0eea17827fc6c709e3a006b5dca58e18bd001b91e51fce87f38f6ff6d",
     "summary": {
-      "total": 684,
+      "total": 686,
       "builtin": 14,
-      "declarative": 670,
+      "declarative": 672,
       "by_kind": {
         "command": 1,
         "query": 13,
-        "resource": 670
+        "resource": 672
       },
       "by_stability": {
         "behaviorally_verified": 14,
-        "implemented": 670
+        "implemented": 672
       },
       "mcp_tools": 14,
-      "mcp_resources": 674,
+      "mcp_resources": 676,
       "http_routes": 14,
       "cli_commands": 4,
-      "modules": 23,
+      "modules": 24,
       "benchmark_required": 14,
       "benchmark_waived": 0,
       "cached": 4
@@ -3953,7 +3953,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 8,
+        "capabilities": 9,
         "capability_ids": []
       },
       {
@@ -4107,6 +4107,14 @@
         "capability_ids": []
       },
       {
+        "id": "session",
+        "title": "session",
+        "description": "Declarative objects of kind 'session' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "skill",
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
@@ -4141,7 +4149,7 @@
     ]
   },
   "index": {
-    "fingerprint": "58b798937675748cceaab7ae8ee2c1a49c564d844cbc8370d06ff1dbdb2d21ae",
+    "fingerprint": "8f3df63f576a6d71d0a8c41e99b32b71d102c76227d5cae47ba868be06c38bc6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -4154,6 +4162,7 @@
       "prompts": ".ai/repo/prompts",
       "rules": ".ai/repo/rules",
       "scope": ".ai/repo/scope.yaml",
+      "sessions": ".ai/repo/sessions",
       "skills": ".ai/repo/skills",
       "use-cases": ".ai/repo/use-cases",
       "workflows": ".ai/repo/workflows"
@@ -4161,7 +4170,7 @@
     "by_kind": {
       "application": 5,
       "claim": 122,
-      "context": 8,
+      "context": 9,
       "document": 171,
       "implementation": 37,
       "issue": 90,
@@ -4171,6 +4180,7 @@
       "prompt": 4,
       "rule": 78,
       "scope": 1,
+      "session": 1,
       "skill": 3,
       "taxonomy": 10,
       "test": 89,
@@ -5489,6 +5499,17 @@
         "section": "rules",
         "source_class": "rule",
         "bytes": 1538
+      },
+      {
+        "uri": "majordomus://context/ai.repo.sessions",
+        "kind": "context",
+        "identity": "ai.repo.sessions",
+        "title": "Session records",
+        "description": "One immutable record per closed execution episode, derived from git and the ledger and shared with every surface.",
+        "path": ".ai/repo/sessions/README.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 3237
       },
       {
         "uri": "majordomus://context/ai.repo.skills",
@@ -7147,7 +7168,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 46070
+        "bytes": 47786
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -7235,7 +7256,7 @@
         "identity": "lib/knowledge.awk",
         "path": "lib/knowledge.awk",
         "source_class": "engine",
-        "bytes": 23845
+        "bytes": 23942
       },
       {
         "uri": "majordomus://implementation/lib/knowledge.sh",
@@ -7243,7 +7264,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 23745
+        "bytes": 24071
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -7331,7 +7352,7 @@
         "identity": "lib/session.sh",
         "path": "lib/session.sh",
         "source_class": "library",
-        "bytes": 25245
+        "bytes": 26280
       },
       {
         "uri": "majordomus://implementation/lib/skills.sh",
@@ -9743,6 +9764,17 @@
         "bytes": 4208
       },
       {
+        "uri": "majordomus://session/s-20260906035523-7b6c",
+        "kind": "session",
+        "identity": "s-20260906035523-7b6c",
+        "title": "Session s-20260906035523-7b6c on feature/session-records",
+        "description": "Session s-20260906035523-7b6c on feature/session-records",
+        "path": ".ai/repo/sessions/20260906T035524Z--s-20260906035523-7b6c--feature-session-records--4658856--95eae054a18c3e3e.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1241
+      },
+      {
         "uri": "majordomus://skill/deploy-site",
         "kind": "skill",
         "identity": "deploy-site",
@@ -11051,7 +11083,7 @@
       "identity": [
         "id"
       ],
-      "objects": 8
+      "objects": 9
     },
     {
       "name": "document",
@@ -11142,6 +11174,16 @@
       "front_matter": "none",
       "schema": "scope",
       "identity": [],
+      "objects": 1
+    },
+    {
+      "name": "session",
+      "format": "markdown",
+      "front_matter": "required",
+      "schema": "session-record",
+      "identity": [
+        "session_id"
+      ],
       "objects": 1
     },
     {
@@ -11428,7 +11470,7 @@
         "route": "/docs/cli/serve/",
         "executable": true,
         "usage": "majordomus serve [OPTIONS]",
-        "about": "Serve the same capabilities over HTTP on the loopback interface, with /openapi.json and /docs (read-only)",
+        "about": "Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)",
         "args": [
           {
             "name": "repo",
@@ -11524,7 +11566,7 @@
           {
             "id": "serve-ephemeral-port",
             "title": "Serve the same capabilities over HTTP on a free port",
-            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. The document at /openapi.json is the same one `majordomus generate` commits, and /docs is the Swagger UI over it.",
+            "description": "Port 0 asks the operating system for a free port; the address is logged on stderr. `/` is the home page, generated from the surfaces this process resolved; the document at /openapi.json is the same one `majordomus generate` commits; /swagger is the Swagger UI over it; /docs/ is this repository's documentation when it has been built for that mount.",
             "argv": [
               "serve",
               "--port",
@@ -13279,7 +13321,7 @@
                 ],
                 "command": "majordomus web list",
                 "setup": [],
-                "expectation": "exits 0; prints MOUNT, /api/v1, /docs"
+                "expectation": "exits 0; prints MOUNT, /api/v1, /swagger"
               }
             ],
             "subcommands": []

@@ -18,6 +18,21 @@
 
 mj_session_file() { printf '%s' "$MJ_STATE_DIR/session-current.yaml"; }
 mj_session_dir()  { printf '%s' "$MJ_STATE_DIR/sessions"; }
+# Where a closed record is written and read from: the layer's tracked sessions section when
+# the manifest names one, and the checkout-local store when it does not. A closed episode is
+# a shared object of the layer (ADR 0014); the open one never is.
+mj_session_store() {
+  if [ -n "${MJ_SESSIONS_DIR:-}" ]; then printf '%s' "$MJ_SESSIONS_DIR"; else mj_session_dir; fi
+}
+# One line naming the work, for a listing: the task's title when the episode had a task.
+mj_session_title() {
+  local task="$1" sid="$2"
+  if [ "$task" != none ] && mj_load_current && [ -n "$(mj_cur title)" ]; then
+    printf '%s' "$(mj_cur title)"
+  else
+    printf 'Session %s on %s' "$sid" "$(mj_git_branch)"
+  fi
+}
 
 # Load the open session into MJ_SES_FLAT. 0 loaded · 1 none · 2 does not parse.
 mj_load_session() {
@@ -222,12 +237,16 @@ mj_session_close() {
     # created_at, head and working_tree describe the close, so the record reads back
     # through the same resolver and the same divergence label as a handover; start_head
     # and start_working_tree describe the open.
-    printf -- '---\nschema_version: 1\ncreated_at: %s\ntask_id: %s\nprofile: %s\nowner: "%s"\n' \
-      "$closed_at" "$task" "$profile" "$(printf '%s' "$owner" | sed 's/"/\\"/g')"
-    printf 'repository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
-      "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
+    # A shared record carries what the repository can prove and nothing about this machine:
+    # the absolute worktree path is a fact about a disk, and the person who ran it is not
+    # the repository's business (ADR 0014). Both stay in the ledger, which is local.
+    printf -- '---\nschema: session/v1\nkind: session\ncreated_at: %s\ntask_id: %s\nprofile: %s\n' \
+      "$closed_at" "$task" "$profile"
+    printf 'repository_id: %s\nworktree_id: %s\nbranch: %s\nhead: %s\nworking_tree: %s\nchanged_files:\n' \
+      "$(mj_repository_id)" "$(mj_worktree_id)" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"
     mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' | sed 's/^/  - /'
     printf 'session_id: %s\nstarted_at: %s\nclosed_at: %s\noutcome: %s\n' "$sid" "$started" "$closed_at" "$outcome"
+    printf 'title: "%s"\n' "$(printf '%s' "$(mj_session_title "$task" "$sid")" | sed 's/"/\\"/g')"
     [ -n "$(mj_ses worker)" ] && printf 'worker: "%s"\n' "$(printf '%s' "$(mj_ses worker)" | sed 's/"/\\"/g')"
     printf 'start_head: %s\nstart_working_tree: %s\n' "$(mj_ses start_head)" "$(mj_ses start_working_tree)"
     mj_session_commits "$(mj_ses start_head)"
@@ -237,7 +256,7 @@ mj_session_close() {
   if [ -s "$body" ]; then printf '\n' >> "$rec"; cat "$body" >> "$rec"; fi
   rm -f "$body"
 
-  final="$(mj_publish_record "$(mj_session_dir)" "$sid" "$rec")" \
+  final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
     || { rm -f "$rec" "$win"; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
   rm -f "$rec" "$win"
 
@@ -389,7 +408,7 @@ mj_session_milestones_of() {
 # One sort key per record: "<created_at>|<ledger rank>|<path>", newest first.
 mj_session_keys() {
   local dir f fm flat created
-  dir="$(mj_session_dir)"
+  dir="$(mj_session_store)"
   [ -d "$dir" ] || return 0
   for f in "$dir"/*.md; do
     [ -f "$f" ] || continue
@@ -469,7 +488,7 @@ mj_session_latest() {
   # The shared resolver, not a second rule: same repository, same worktree, same branch,
   # then same branch, then nothing. A record from an unrelated worktree is never offered,
   # because borrowed context cannot be recognised as wrong until it has been acted on.
-  if ! mj_resolve_latest "$(mj_session_dir)" ""; then
+  if ! mj_resolve_latest "$(mj_session_store)" ""; then
     if [ "$MJ_JSON" = 1 ]; then printf '{"schema":1,"latest":null}\n'
     else printf 'No closed session for this worktree and branch.\n'; fi
     return 0
