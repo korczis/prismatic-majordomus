@@ -789,6 +789,10 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         }
     }
 
+    const WHY_SOURCE: &str =
+        "the operational moments, audiences and areas of this repository's layer";
+    const GRAPH_SOURCE: &str = "the moments and what answers them, as the derived `why` graph";
+
     let document = serde_json::json!({
         "schema": WHY_SCHEMA,
         "generated": crate::generate::json_banner(WHY_SOURCE),
@@ -808,6 +812,19 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         crate::graph::derive("why", &ctx.registry, &ctx.index).ok_or_else(|| Error::Protocol {
             reason: "this executable derives no `why` graph".into(),
         })?;
+    // the graph is a value of the domain and carries no provenance of its own; the artifact
+    // does, in the members every generated document of this repository carries
+    let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
+    if let Some(o) = graph_document.as_object_mut() {
+        o.insert(
+            "generated".into(),
+            serde_json::Value::String(crate::generate::json_banner(GRAPH_SOURCE)),
+        );
+        o.insert(
+            "generator".into(),
+            serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
+        );
+    }
 
     // JSON carries its provenance as a member; the graph is serialised from a type, so
     // the member is added to the rendered value rather than declared on the type
@@ -820,6 +837,7 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
     }
 
     Ok(vec![
+<<<<<<< HEAD
         crate::generate::Artifact::verbatim(
             format!("{}/why.json", crate::generate::SITE_DATA_DIR),
             "site-why",
@@ -836,6 +854,33 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
             WHY_GRAPH_SOURCE,
             render_json(&graph_value),
         ),
+||||||| merged common ancestors
+        crate::generate::Artifact {
+            path: format!("{}/why.json", crate::generate::SITE_DATA_DIR),
+            content: render_json(&document),
+        },
+        crate::generate::Artifact {
+            path: format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
+            content: render_json(&serde_json::to_value(&graph).unwrap_or_default()),
+        },
+=======
+        crate::generate::Artifact::verbatim(
+            format!("{}/why.json", crate::generate::SITE_DATA_DIR),
+            "site-why",
+            crate::generate::ArtifactFormat::Json,
+            Some(WHY_SCHEMA.to_string()),
+            WHY_SOURCE,
+            render_json(&document),
+        ),
+        crate::generate::Artifact::verbatim(
+            format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
+            "site-why-graph",
+            crate::generate::ArtifactFormat::Json,
+            None,
+            GRAPH_SOURCE,
+            render_json(&graph_document),
+        ),
+>>>>>>> origin/feature/why-catalog
     ])
 }
 
