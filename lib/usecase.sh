@@ -337,6 +337,14 @@ mj_uc_cmd_validate() {
 # renderings of the same field are covered: the aligned column a command prints, the
 # flattened `owner=` a record dump shows, and the JSON member.
 #
+# A derived checkpoint or handover states the commit it describes in prose — "On main at
+# 813a294", "the task opened at 813a294; git has moved to e655a41 since" — and a scenario
+# that records one therefore records a hash that is different in every checkout. The rules
+# above mask a short head where a command prints it in a column or after the word `head`;
+# these are the shapes prose puts it in. They are contextual for the same reason those are:
+# a bare seven hex digits also spells a plausible number, and masking every one of them
+# would hide counts as well as commits.
+#
 # The EPIPE diagnostic goes for the same reason. A reader that stops early closes the pipe
 # under the writer, and bash reports the failed write on stderr, which the recorder captures
 # along with everything else. Whether the race fires depends on the machine, so recording it
@@ -361,6 +369,7 @@ mj_uc_normalise() { # repo-path
     -e 's/(head +)[0-9a-f]{7}/\1<head>/g' \
     -e 's/\(head [0-9a-f]{7}\)/(head <head>)/g' \
     -e 's/(  +)[0-9a-f]{7}(  |$)/\1<head>\2/g' \
+    -e 's/( at |^At | moved to )[0-9a-f]{7}([,;. ]|$)/\1<head>\2/g' \
     -e 's/^([a-z_-]+ +(cold|warm) +[a-z]+ +[0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+/\1  <ms>  <ms>  <ms>  <ms>/' \
     -e 's/^(INFO|WARN) +budget +([a-z]+) — .*$/·    budget      \2 — <timed against the policy budget>/' \
     -e 's/(exit [0-9]+, )[0-9]+s$/\1<s>s/' \
