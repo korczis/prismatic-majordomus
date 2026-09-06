@@ -29,4 +29,19 @@ evidence_required:
   - no_template_conditions
 risk: "A default of always-available makes the model useless and the classification invisible. Absence has to be a failure."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-06T16:54:53Z
+started_at: 2026-09-06T16:22:51Z
+completed_at: 2026-09-06T16:54:53Z
+evidence:
+  - covers: availability_modelled
+    type: test
+    command: "cargo test --test availability and cargo test --lib capability::model (apps/majordomus-cli)"
+    result: "Availability draws four environments apart — always, runtime, build_time, authenticated — and Visibility three — public, developer, internal; every capability of the built registry carries both, equal to the classification of what it declares, and the registry refuses one that disagrees; the fields reach docs/generated/openapi.json, docs/generated/registry.json and site/data/registry/registry.json through generate, so a projection reads a field"
+    commit: 5e297b1a554e4359740038509d0802b405e16642
+    recorded_at: 2026-09-06T16:54:48Z
+  - covers: no_template_conditions
+    type: test
+    command: "cargo test --test availability no_projection_decides_availability_from_where_it_is_served"
+    result: "no line under apps/majordomus-cli/src or share/cockpit/src reads the serving address and compares it; the check reads lines rather than files, because its first run flagged a documentation URL in about.rs, which is a link and not a verdict"
+    commit: 5e297b1a554e4359740038509d0802b405e16642
+    recorded_at: 2026-09-06T16:54:51Z
