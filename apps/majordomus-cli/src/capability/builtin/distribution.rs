@@ -254,7 +254,10 @@ fn build(ctx: &Context, _: Empty) -> Result<BuildReport, CapabilityError> {
     })
 }
 
-fn artifact(ctx: &Context, input: ReleaseArtifactInput) -> Result<ReleaseArtifactView, CapabilityError> {
+fn artifact(
+    ctx: &Context,
+    input: ReleaseArtifactInput,
+) -> Result<ReleaseArtifactView, CapabilityError> {
     let m = model(ctx)?;
     let t = m
         .targets

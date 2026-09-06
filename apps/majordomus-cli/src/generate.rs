@@ -107,18 +107,20 @@ impl Target {
         Target::Manifest,
     ];
 
-    /// Every target but the manifest: the artifacts the manifest indexes.
-    pub const INDEXED: &'static [Target] = &[
-        Target::OpenApi,
-        Target::Docs,
-        Target::Benchmarks,
-        Target::Registry,
-        Target::Allow,
-        Target::Documents,
-        Target::Providers,
-        Target::Site,
-        Target::Distribution,
-    ];
+    /// Every target but the manifest, in generation order: the artifacts the manifest
+    /// indexes.
+    ///
+    /// Derived from [`Target::ALL`] rather than written beside it. It was a second list by
+    /// hand, and three times a target was added to `ALL` and forgotten here — each time
+    /// making that target's artifacts the only ones the index said nothing about, which no
+    /// check noticed because the manifest agreed with the plan it was given.
+    pub fn indexed() -> Vec<Target> {
+        Target::ALL
+            .iter()
+            .copied()
+            .filter(|t| *t != Target::Manifest)
+            .collect()
+    }
 
     /// The name the command line and the manifest use.
     pub fn name(self) -> &'static str {
@@ -531,7 +533,7 @@ pub fn plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     let wants_manifest = targets.contains(&Target::Manifest);
     let alone = targets == [Target::Manifest];
     let indexed: Vec<Target> = if alone {
-        Target::INDEXED.to_vec()
+        Target::indexed()
     } else {
         targets
             .iter()
@@ -2065,6 +2067,28 @@ mod tests {
         );
     }
 
+    /// The manifest indexes every target but itself, and it is generated last. Three times
+    /// a target was added to `ALL` and left out of the list beside it that said what the
+    /// manifest indexes, each time making that target's artifacts the only ones the index
+    /// said nothing about. The set is derived now; this is what holds the order.
+    #[test]
+    fn every_target_but_the_manifest_is_indexed_and_the_manifest_is_last() {
+        assert_eq!(
+            Target::ALL.last(),
+            Some(&Target::Manifest),
+            "the manifest indexes the others, so it is generated after them"
+        );
+        assert!(
+            !Target::indexed().contains(&Target::Manifest),
+            "the manifest does not index itself"
+        );
+        assert_eq!(
+            Target::indexed(),
+            Target::ALL[..Target::ALL.len() - 1].to_vec(),
+            "the indexed targets are ALL up to the manifest, in generation order"
+        );
+    }
+
     /// Every target has a name and every name is distinct: the manifest and the command
     /// line both address a target by it.
     #[test]
@@ -2076,8 +2100,7 @@ mod tests {
         assert_eq!(names.len(), unique.len(), "{names:?}");
         assert!(names.iter().all(|n| !n.is_empty()));
         assert_eq!(Target::Manifest.name(), "manifest");
-        assert_eq!(Target::INDEXED.len(), Target::ALL.len() - 1);
-        assert!(!Target::INDEXED.contains(&Target::Manifest));
+        assert_eq!(Target::indexed().len(), Target::ALL.len() - 1);
     }
 
     /// The encoding is read from the suffix, and anything the generator does not encode
