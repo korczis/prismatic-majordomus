@@ -2,7 +2,7 @@
   "schema": 1,
   "command": "adr",
   "title": "Decisions the tool proposes and only a person accepts",
-  "intro": "An architecture decision is a file under the repository's adrs section: front matter that satisfies the decision schema over a body carrying the context, the decision and its consequences. Nothing registers it — the source class `adr` in the knowledge sources discovers it over the tracked tree, and list, show, check, the doctrine and MCP all read that one catalogue. What the tool writes is always `proposed`, because acceptance is the person's act.",
+  "intro": "An architecture decision is a file under the repository's adrs section: front matter that satisfies the decision schema over a body carrying the context, the decision and its consequences. Nothing registers it \u2014 the source class `adr` in the knowledge sources discovers it over the tracked tree, and list, show, check, the doctrine and MCP all read that one catalogue. What the tool writes is always `proposed`, because acceptance is the person's act.",
   "scenarios": [
     {
       "id": "lists",
@@ -86,6 +86,25 @@
         ]
       },
       "explain": "Exit 12 is MISSING_ARTIFACT, and the message names the command that lists what does exist."
+    },
+    {
+      "id": "affected",
+      "title": "Which decisions a change set reaches",
+      "given": {
+        "decision naming a file": true
+      },
+      "setup": "adr-related",
+      "run": [
+        "adr",
+        "affected"
+      ],
+      "expect": {
+        "exit": 0,
+        "stdout_contains": [
+          "no decision names anything this change set touches"
+        ]
+      },
+      "explain": "Read from what the decisions themselves name: a clean tree reaches nothing, and a change to a named path names the decision behind it. Review notes only \u2014 whether a decision still holds after the code it governs moved is not the tool's judgement, so the exit code stays 0."
     }
   ]
 }

@@ -49,6 +49,12 @@ scenario:
       expect:
         exit: 0
         stdout_contains: ['adr:adr-0001', 'rule:majordomus.adr-integrity', 'related.0']
+    - id: what-a-change-reaches
+      run: ['adr', 'affected']
+      note: 'the same edges read from a change set: which decisions this work touches. A clean tree reaches nothing, and the exit code never says a decision stopped holding'
+      expect:
+        exit: 0
+        stdout_contains: ['no decision names anything this change set touches']
     - id: not-yours-to-choose
       run: ['adr', 'propose', 'A decision that accepts itself', '--status', 'accepted']
       note: 'the refusal that matters: a tool that can write accepted turns its inference into repository truth'
@@ -64,6 +70,7 @@ scenario:
   then:
     - 'a reference a decision makes is validated where its type says the target lives'
     - 'the reverse direction is the graph read backwards, never a second list'
+    - 'a change set names the decisions it reaches; whether they still hold is a person to read, not an exit code'
     - 'a decision is one validated file under .ai/repo/adrs/, discovered as data'
     - 'no invocation of the tool writes status accepted'
 ---

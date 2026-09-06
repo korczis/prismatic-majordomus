@@ -220,6 +220,41 @@ expect_grep 'unknown front-matter key|has an unknown type "session"'
 cp "$T/keep1.md" "$adr1"; rm -f docs/CLAIMS.yaml; git add -A >/dev/null
 expect_exit 0 "$MJ" adr check
 
+# ---------------------------------------------------------------- what a change set reaches
+# The forward edge read in the direction a reviewer needs: this file has a decision behind
+# it. Review notes only — the exit code never says a decision stopped holding.
+cp "$adr1" "$T/keep1.md"
+mkdir -p docs test/cases
+printf '# a case this repository has\n' > test/cases/99_probe.sh
+printf 'x\n' > docs/governed.md
+git add . >/dev/null; git commit -qm "the file a decision will name"
+sed -i.bak 's|^status: proposed$|status: proposed\
+related:\
+  - file:docs/governed.md\
+  - test:test/cases/99_probe.sh|' "$adr1" && rm -f "$adr1.bak"
+git add . >/dev/null; git commit -qm "the decision names it"
+# a clean tree reaches nothing
+expect_exit 0 "$MJ" adr affected
+expect_grep 'no decision names anything this change set touches'
+# touching a named file names the decision, and says why
+printf 'more\n' >> docs/governed.md
+expect_exit 0 "$MJ" adr affected
+expect_grep 'WARN adr adr-0001 .*names docs/governed\.md'
+expect_grep 'decision\(s\) to read'
+# a path no decision names reaches nothing
+git checkout -- docs/governed.md
+printf 'y\n' > docs/unrelated.md
+expect_exit 0 "$MJ" adr affected
+expect_grep 'no decision names anything'
+rm -f docs/unrelated.md
+# the record's own file changing is its own reason
+printf '\nmore prose\n' >> "$adr1"
+expect_exit 0 "$MJ" adr affected
+expect_grep 'the record itself changed'
+"$MJ" adr affected --json | grep -q '"reason":"record"'
+cp "$T/keep1.md" "$adr1"; rm -rf docs/governed.md test/cases/99_probe.sh; git add -A >/dev/null
+expect_exit 0 "$MJ" adr check
+
 # ---------------------------------------------------------------- the tree is sound again
 expect_exit 0 "$MJ" adr check
 expect_grep 'every identity unique'

@@ -1245,6 +1245,7 @@ majordomus adr show <id> [--json]                     the path, then the file as
 majordomus adr propose "<title>" [--from <ref>]...    write a new decision, status proposed
                        [--tag <tag>]... [--supersedes <id>]
 majordomus adr check [--json]                         validate every decision and every reference
+majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisions a change set touches
 ```
 
 - `list` prints one line per discovered decision, invalid ones included; `--status`
@@ -1274,8 +1275,18 @@ majordomus adr check [--json]                         validate every decision an
   a `superseded` record with no `superseded_by`, one-sided supersession, and a reference
   that resolves to nothing. It exits `10` on any failure.
 
+- `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
+  for the index, `--base <ref>` for `<ref>..HEAD` plus the working tree — and names every
+  decision whose own file changed, or whose `related` names a path the change touches (a
+  reference to a directory covers everything below it). Every item is a `WARN` review note
+  and the exit code stays `0`: whether a decision still holds after the code it governs
+  moved is the judgement a tool may not make. It is the reverse question the graph answers
+  — what decided this file? — asked from the change set instead of from a record.
+
 `doctor` and `watch` run the same examination through the doctrine
-`majordomus.adr-integrity`.
+`majordomus.adr-integrity`. The threshold for recording a decision at all is the rule
+`majordomus.decision-threshold`, which a reviewer decides: the tool validates records and
+reports what a change reaches, and never claims to know that a diff embodied a decision.
 
 ```
 $ majordomus adr propose "The registry is the one canonical declaration" --from file:docs/CAPABILITIES.md

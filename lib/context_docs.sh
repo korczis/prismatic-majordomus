@@ -491,13 +491,7 @@ mj_ctxd_json_doc() {
 mj_ctxd_changes() {
   local mode="$1" base="${2:-}"
   [ "$mode" != base ] || mj_ctxd_require_ref "$base"
-  case "$mode" in
-    staged) mj_git diff --name-status -M --cached 2>/dev/null ;;
-    base)   mj_git diff --name-status -M "$base" 2>/dev/null
-            mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
-    *)      mj_git diff --name-status -M HEAD 2>/dev/null
-            mj_git ls-files --others --exclude-standard 2>/dev/null | sed 's/^/A\t/' ;;
-  esac | awk -F'\t' '{ s = substr($1, 1, 1); if (s == "R" || s == "C") print s "\t" $2 "\t" $3; else print s "\t" $2 "\t" }' | LC_ALL=C sort -t "$MJ_CTXD_TAB" -k2,2
+  mj_change_set "$mode" "$base"
 }
 
 mj_ctxd_require_ref() {
