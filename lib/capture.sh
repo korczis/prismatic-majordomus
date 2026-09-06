@@ -429,7 +429,7 @@ mj_capture_render_one() {
     printf '\n## PROMPT\n\n%s\n' "$fence"
     cat "$body"
     # a prompt that does not end in a newline must not put the closing fence on its line
-    [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ] && printf '\n'
+    if [ -s "$body" ] && [ -n "$(tail -c 1 "$body")" ]; then printf '\n'; fi
     printf '%s\n' "$fence"
   } > "$tmp" 2>/dev/null || rc=1
   [ "$rc" = 0 ] || { rm -f "$tmp" "$scan" "$body"; return 1; }

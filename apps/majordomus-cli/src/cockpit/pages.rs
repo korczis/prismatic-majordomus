@@ -11,7 +11,7 @@ use serde_json::{json, Value};
 
 use crate::capability::builtin::{
     ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
-    ObjectList, Record, RepositoryReport,
+    ObjectList, ObjectSummary, Record, RepositoryReport,
 };
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
@@ -21,8 +21,8 @@ use crate::http::router::percent_encode;
 use super::html::{el, empty, El, Node};
 use super::nav::Area;
 use super::view::{
-    alert, badge, card, card_with, cell, details, facts, kind_badge, link, mono, nothing, pre, row,
-    statistic, table, tag, text_cell,
+    alert, badge, card, card_with, cell, chips, details, facts, id_cell, kind_badge, link, mono,
+    nothing, pagination, pre, row, statistic, table, tag, text_cell, Window, PER_PAGE,
 };
 
 /// What a page hands back: the area it belongs to, its title and subtitle, its trail, and
@@ -304,6 +304,42 @@ fn health_badge(status: HealthStatus) -> El {
 
 // --------------------------------------------------------------- capabilities
 
+/// The listing's own URL with some parameters replaced: what a filter chip, a page link
+/// and a cleared filter all are. Paging must never drop a filter and filtering must
+/// never keep a page number, so both go through here rather than through a format
+/// string at each call site.
+fn href_with(base: &str, query: &[(String, String)], set: &[(&str, Option<&str>)]) -> String {
+    let overridden = |key: &str| set.iter().any(|(k, _)| *k == key);
+    let pairs: Vec<(String, String)> = query
+        .iter()
+        .filter(|(k, v)| !v.is_empty() && !overridden(k))
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .chain(
+            set.iter()
+                .filter_map(|(k, v)| v.map(|v| ((*k).to_string(), v.to_string()))),
+        )
+        .collect();
+    if pairs.is_empty() {
+        return base.to_string();
+    }
+    let query = pairs
+        .iter()
+        .map(|(k, v)| format!("{}={}", percent_encode(k), percent_encode(v)))
+        .collect::<Vec<_>>()
+        .join("&");
+    format!("{base}?{query}")
+}
+
+/// The page a listing was asked for. Anything that is not a page number is page one.
+fn asked_page(query: &[(String, String)]) -> usize {
+    query
+        .iter()
+        .find(|(k, _)| k == "page")
+        .and_then(|(_, v)| v.parse().ok())
+        .unwrap_or(1)
+}
+
+
 /// The capability explorer, filtered by whatever the query string says.
 pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
     let get = |name: &str| {
@@ -338,17 +374,14 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
         })
         .collect();
 
-    let rows: Vec<El> = matching
+    let window = Window::new(asked_page(query), PER_PAGE, matching.len());
+    let rows: Vec<El> = matching[window.range()]
         .iter()
-        .take(500)
         .map(|c| {
             row(vec![
-                cell(
-                    link(
-                        format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
-                        c.id.as_str(),
-                    )
-                    .class("mj-link mj-mono"),
+                id_cell(
+                    format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
+                    c.id.as_str(),
                 ),
                 cell(kind_badge(c.kind)),
                 text_cell(&c.title),
@@ -358,6 +391,52 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
             ])
         })
         .collect();
+
+    // the modules of what matches, as the way into it: nine hundred rows are entered by
+    // their module rather than scrolled. The counts are of the other filters in force,
+    // which is what makes them a fact about this listing and not about the registry.
+    let mut per_module: std::collections::BTreeMap<&str, usize> = Default::default();
+    for c in ctx
+        .registry
+        .iter()
+        .filter(|c| kind.is_none_or(|k| kind_word(c.kind) == k))
+        .filter(|c| {
+            source.is_none_or(|s| match &c.provenance {
+                Provenance::Builtin { .. } => s == "builtin",
+                Provenance::Declarative { .. } => s == "declarative",
+            })
+        })
+        .filter(|c| {
+            needle.as_deref().is_none_or(|n| {
+                c.id.as_str().to_lowercase().contains(n)
+                    || c.title.to_lowercase().contains(n)
+                    || c.description.to_lowercase().contains(n)
+            })
+        })
+    {
+        *per_module.entry(c.module.as_str()).or_default() += 1;
+    }
+    let browse = chips(
+        std::iter::once((
+            "All modules".to_string(),
+            href_with("/cockpit/capabilities", query, &[("module", None), ("page", None)]),
+            per_module.values().sum::<usize>(),
+            module.is_none(),
+        ))
+        .chain(per_module.iter().map(|(m, n)| {
+            (
+                (*m).to_string(),
+                href_with(
+                    "/cockpit/capabilities",
+                    query,
+                    &[("module", Some(m)), ("page", None)],
+                ),
+                *n,
+                module == Some(*m),
+            )
+        }))
+        .collect(),
+    );
 
     let filters = el("form")
         .class("mj-filters")
@@ -412,7 +491,6 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
         )
         .child(link("/cockpit/capabilities", "Clear").class("mj-link mj-clear"));
 
-    let truncated = matching.len() > 500;
     let body = if rows.is_empty() {
         nothing("No capability matches these filters.")
     } else {
@@ -421,21 +499,19 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
                 &["Id", "Kind", "Title", "Module", "Projections", "Provenance"],
                 rows,
             ))
-            .when(truncated, |d| {
-                d.child(alert(
-                    "info",
-                    format!(
-                        "{} capabilities match; the first 500 are shown. Narrow the filters to see the rest.",
-                        matching.len()
-                    ),
-                ))
-            })
+            .child(pagination(window, |n| {
+                href_with(
+                    "/cockpit/capabilities",
+                    query,
+                    &[("page", Some(&n.to_string()))],
+                )
+            }))
     };
 
     Page::new(
         Area::Capabilities,
         "Capabilities",
-        el("div").child(filters).child(body),
+        el("div").child(filters).child(browse).child(body),
     )
     .subtitle(format!(
         "{} of {} capabilities. Every one is a canonical declaration; the projections beside it are derived from it.",
@@ -991,11 +1067,10 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
         .map(|(_, v)| v.to_lowercase())
         .filter(|v| !v.is_empty());
 
-    let input = match &kind {
-        Some(k) => json!({ "kind": k }),
-        None => json!({}),
-    };
-    let list: ObjectList = match ask(ctx, "objects.list", input) {
+    // the whole listing, narrowed here rather than in the request: the kinds beside it
+    // carry how many objects each holds under the filter in force, and a count nobody can
+    // see the rest of is not a way in
+    let list: ObjectList = match ask(ctx, "objects.list", json!({})) {
         Ok(l) => l,
         Err(e) => {
             return Page::new(
@@ -1009,33 +1084,32 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
         }
     };
 
+    let found = |o: &ObjectSummary| {
+        needle.as_deref().is_none_or(|n| {
+            o.identity.to_lowercase().contains(n)
+                || o.title
+                    .as_deref()
+                    .unwrap_or_default()
+                    .to_lowercase()
+                    .contains(n)
+                || o.path.to_lowercase().contains(n)
+        })
+    };
     let matching: Vec<_> = list
         .objects
         .iter()
-        .filter(|o| {
-            needle.as_deref().is_none_or(|n| {
-                o.identity.to_lowercase().contains(n)
-                    || o.title
-                        .as_deref()
-                        .unwrap_or_default()
-                        .to_lowercase()
-                        .contains(n)
-                    || o.path.to_lowercase().contains(n)
-            })
-        })
+        .filter(|o| found(o))
+        .filter(|o| kind.as_deref().is_none_or(|k| o.kind == k))
         .collect();
 
-    let rows: Vec<El> = matching
+    let window = Window::new(asked_page(query), PER_PAGE, matching.len());
+    let rows: Vec<El> = matching[window.range()]
         .iter()
-        .take(1000)
         .map(|o| {
             row(vec![
-                cell(
-                    link(
-                        format!("/cockpit/object?uri={}", percent_encode(&o.uri)),
-                        &o.identity,
-                    )
-                    .class("mj-link mj-mono"),
+                id_cell(
+                    format!("/cockpit/object?uri={}", percent_encode(&o.uri)),
+                    &o.identity,
                 ),
                 cell(mono(&o.kind)),
                 text_cell(o.title.clone().unwrap_or_default()),
@@ -1043,6 +1117,32 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
             ])
         })
         .collect();
+
+    let mut per_kind: std::collections::BTreeMap<&str, usize> = Default::default();
+    for o in list.objects.iter().filter(|o| found(o)) {
+        *per_kind.entry(o.kind.as_str()).or_default() += 1;
+    }
+    let browse = chips(
+        std::iter::once((
+            "All kinds".to_string(),
+            href_with("/cockpit/objects", query, &[("kind", None), ("page", None)]),
+            per_kind.values().sum::<usize>(),
+            kind.is_none(),
+        ))
+        .chain(per_kind.iter().map(|(k, n)| {
+            (
+                (*k).to_string(),
+                href_with(
+                    "/cockpit/objects",
+                    query,
+                    &[("kind", Some(k)), ("page", None)],
+                ),
+                *n,
+                kind.as_deref() == Some(*k),
+            )
+        }))
+        .collect(),
+    );
 
     let filters = el("form")
         .class("mj-filters")
@@ -1084,10 +1184,14 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
     Page::new(
         Area::Objects,
         "Objects",
-        el("div").child(filters).child(if rows.is_empty() {
+        el("div").child(filters).child(browse).child(if rows.is_empty() {
             nothing("No object matches.")
         } else {
-            table(&["Identity", "Kind", "Title", "Path"], rows)
+            el("div")
+                .child(table(&["Identity", "Kind", "Title", "Path"], rows))
+                .child(pagination(window, |n| {
+                    href_with("/cockpit/objects", query, &[("page", Some(&n.to_string()))])
+                }))
         }),
     )
     .subtitle(format!(
@@ -1228,7 +1332,7 @@ pub fn graphs(ctx: &Context) -> Page {
         .iter()
         .map(|g| {
             row(vec![
-                cell(link(format!("/cockpit/graphs/{}", g.id), &g.id).class("mj-link mj-mono")),
+                id_cell(format!("/cockpit/graphs/{}", g.id), &g.id),
                 text_cell(&g.title),
                 text_cell(&g.description),
                 text_cell(&g.source),
@@ -1330,6 +1434,8 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
                 .text("The drawing is an enhancement. Everything it shows is in the lists below, which is what a reader without JavaScript, a crawler and a screen reader get."),
         );
 
+    // both tables list everything: the drawing is an enhancement, and what a reader
+    // without JavaScript, a crawler and a screen reader get is these lists whole
     let node_rows = g
         .nodes
         .iter()
@@ -1950,6 +2056,8 @@ pub fn artifacts(ctx: &Context) -> Page {
             .collect(),
     );
 
+    // every file, on one page: this is the manifest as it stands, and a reader checking
+    // whether a path is in it must be able to find it with the browser's own search
     let files = table(
         &["path", "document", "format", "bytes", "state"],
         report
@@ -2029,12 +2137,9 @@ pub fn api(ctx: &Context) -> Page {
             row(vec![
                 cell(mono(h.method.as_str())),
                 cell(mono(&h.path)),
-                cell(
-                    link(
-                        format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
-                        c.id.as_str(),
-                    )
-                    .class("mj-link mj-mono"),
+                id_cell(
+                    format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
+                    c.id.as_str(),
                 ),
                 text_cell(&c.title),
                 cell(kind_badge(c.kind)),
@@ -2139,12 +2244,9 @@ pub fn search(ctx: &Context, query: &[(String, String)]) -> Page {
         .take(50)
         .map(|c| {
             row(vec![
-                cell(
-                    link(
-                        format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
-                        c.id.as_str(),
-                    )
-                    .class("mj-link mj-mono"),
+                id_cell(
+                    format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
+                    c.id.as_str(),
                 ),
                 text_cell(&c.title),
                 cell(kind_badge(c.kind)),
@@ -2164,12 +2266,9 @@ pub fn search(ctx: &Context, query: &[(String, String)]) -> Page {
                 .map(|h| {
                     let uri = h.get("uri").and_then(Value::as_str).unwrap_or_default();
                     row(vec![
-                        cell(
-                            link(
-                                format!("/cockpit/object?uri={}", percent_encode(uri)),
-                                h.get("identity").and_then(Value::as_str).unwrap_or(uri),
-                            )
-                            .class("mj-link mj-mono"),
+                        id_cell(
+                            format!("/cockpit/object?uri={}", percent_encode(uri)),
+                            h.get("identity").and_then(Value::as_str).unwrap_or(uri),
                         ),
                         cell(mono(h.get("kind").and_then(Value::as_str).unwrap_or(""))),
                         text_cell(h.get("title").and_then(Value::as_str).unwrap_or("")),

@@ -19,7 +19,11 @@ function install(list, field) {
   let entries = [];
   let shown = [];
   let active = 0;
-  let loaded = false;
+  // two flags, not one: `started` keeps the fetch from running twice, `ready` says the
+  // answers are in. One flag doing both told a reader who typed while the registry was
+  // still being read that nothing matched.
+  let started = false;
+  let ready = false;
 
   // the navigation the server rendered is the source for the Cockpit's own pages: it is
   // already derived from the registry, and reading it back beats listing the pages twice
@@ -33,8 +37,8 @@ function install(list, field) {
   );
 
   async function load() {
-    if (loaded) return;
-    loaded = true;
+    if (started) return;
+    started = true;
     entries = pages.slice();
     render();
     const [capabilities, graphs, objects] = await Promise.all([
@@ -72,6 +76,7 @@ function install(list, field) {
         });
       }
     }
+    ready = true;
     render();
   }
 
@@ -95,6 +100,7 @@ function install(list, field) {
       .map((r) => r.entry);
     if (active >= shown.length) active = 0;
 
+    list.dataset.state = ready ? 'ready' : started ? 'loading' : 'idle';
     list.textContent = '';
     for (let i = 0; i < shown.length; i += 1) {
       const entry = shown[i];
@@ -120,7 +126,7 @@ function install(list, field) {
     if (!shown.length) {
       const item = document.createElement('li');
       item.className = 'mj-palette-detail';
-      item.textContent = loaded ? 'Nothing matches.' : 'Loading…';
+      item.textContent = ready ? 'Nothing matches.' : 'Reading the registry…';
       list.appendChild(item);
     }
   }
