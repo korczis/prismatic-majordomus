@@ -494,13 +494,14 @@ pub enum GenerateTarget {
     #[default]
     /// Every target.
     All,
-    /// `docs/generated/openapi.json`.
+    /// `docs/generated/openapi.{json,yaml}`.
     Openapi,
-    /// `docs/generated/capabilities.md` and `docs/generated/modules/<id>.md`.
+    /// `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and
+    /// `docs/generated/cli.{md,json,yaml}`.
     Docs,
-    /// `docs/generated/benchmarks.md`: every benchmark target and the coverage
+    /// `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage
     Benchmarks,
-    /// `docs/generated/registry.json`: the builtin registry as data
+    /// `docs/generated/registry.{json,yaml}`: the builtin registry as data
     Registry,
     /// The shell tool's allow-lists under share/allow, derived from the schemas
     Allow,
@@ -508,6 +509,8 @@ pub enum GenerateTarget {
     Providers,
     /// site/data/registry/registry.json, the registry dataset the site renders
     Site,
+    /// docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact
+    Manifest,
 }
 
 #[derive(Debug, Args)]

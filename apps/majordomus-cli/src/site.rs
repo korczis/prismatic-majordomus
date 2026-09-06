@@ -36,6 +36,9 @@ pub const SCHEMA: &str = "majordomus-site-registry/v2";
 pub struct SiteRegistry {
     /// [`SCHEMA`].
     pub schema: &'static str,
+    /// That it is generated, in the words every other generated document uses: this file
+    /// is a cache of the registry and the index, and editing it is editing a cache.
+    pub generated: String,
     /// Who wrote it.
     pub generator: Generator,
     /// The capability registry, fingerprinted and counted, with the builtin entries in full.
@@ -579,6 +582,9 @@ pub fn dataset(
 
     Ok(SiteRegistry {
         schema: SCHEMA,
+        generated: crate::generate::json_banner(
+            "the capability registry and the index of this repository's layer",
+        ),
         generator: Generator {
             id: "majordomus-cli",
             version: crate::VERSION,
@@ -777,8 +783,13 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         }
     }
 
+    const WHY_SOURCE: &str =
+        "the operational moments, audiences and areas of this repository's layer";
+    const GRAPH_SOURCE: &str = "the moments and what answers them, as the derived `why` graph";
+
     let document = serde_json::json!({
         "schema": WHY_SCHEMA,
+        "generated": crate::generate::json_banner(WHY_SOURCE),
         "generator": { "id": "majordomus-cli", "version": crate::VERSION },
         "fingerprint": catalogue["fingerprint"],
         "route": crate::why::ROUTE,
@@ -795,16 +806,37 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         crate::graph::derive("why", &ctx.registry, &ctx.index).ok_or_else(|| Error::Protocol {
             reason: "this executable derives no `why` graph".into(),
         })?;
+    // the graph is a value of the domain and carries no provenance of its own; the artifact
+    // does, in the members every generated document of this repository carries
+    let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
+    if let Some(o) = graph_document.as_object_mut() {
+        o.insert(
+            "generated".into(),
+            serde_json::Value::String(crate::generate::json_banner(GRAPH_SOURCE)),
+        );
+        o.insert(
+            "generator".into(),
+            serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
+        );
+    }
 
     Ok(vec![
-        crate::generate::Artifact {
-            path: format!("{}/why.json", crate::generate::SITE_DATA_DIR),
-            content: render_json(&document),
-        },
-        crate::generate::Artifact {
-            path: format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
-            content: render_json(&serde_json::to_value(&graph).unwrap_or_default()),
-        },
+        crate::generate::Artifact::verbatim(
+            format!("{}/why.json", crate::generate::SITE_DATA_DIR),
+            "site-why",
+            crate::generate::ArtifactFormat::Json,
+            Some(WHY_SCHEMA.to_string()),
+            WHY_SOURCE,
+            render_json(&document),
+        ),
+        crate::generate::Artifact::verbatim(
+            format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
+            "site-why-graph",
+            crate::generate::ArtifactFormat::Json,
+            None,
+            GRAPH_SOURCE,
+            render_json(&graph_document),
+        ),
     ])
 }
 

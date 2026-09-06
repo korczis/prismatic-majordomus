@@ -9,6 +9,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 | module | title | stability | capabilities | reference |
 |---|---|---|---|---|
+| `artifacts` | Generated artifacts | behaviorally_verified | 1 | [`modules/artifacts.md`](modules/artifacts.md) |
 | `capabilities` | Capabilities | behaviorally_verified | 2 | [`modules/capabilities.md`](modules/capabilities.md) |
 | `continuity` | Continuity | behaviorally_verified | 1 | [`modules/continuity.md`](modules/continuity.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
@@ -24,6 +25,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 
 | id | module | kind | stability | MCP tool | MCP resource | HTTP | CLI | cache | benchmark |
 |---|---|---|---|---|---|---|---|---|---|
+| `artifacts.list` | `artifacts` | query | behaviorally_verified | `majordomus_artifacts` | `majordomus://artifacts` | `GET /api/v1/artifacts` | — | process, 8 entries, 5s | required |
 | `capabilities.describe` | `capabilities` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | — | required |
 | `capabilities.list` | `capabilities` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | process, 16 entries | required |
 | `continuity.state` | `continuity` | query | behaviorally_verified | `majordomus_continuity` | `majordomus://continuity` | `GET /api/v1/continuity` | — | process, 2 entries, 2s | required |

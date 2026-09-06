@@ -28,7 +28,7 @@ being maintained separately from the repository that backs it.
 | the Rust executable | every capability with its schemas, exposures, stability, provenance, benchmark and cache policy; the modules; the command line with the examples of every command | `capability!` and `module!` declarations under `apps/majordomus-cli/src/capability/builtin/`, `apps/majordomus-cli/src/cli.rs` (clap for the structure, `cli::EXAMPLES` for the examples) | yes |
 | the executable's narrative | what the crate is, owns and refuses; discovery, transports, side effects, architecture | `apps/majordomus-cli/README.md`, `docs/CAPABILITIES.md`, `docs/MCP.md` | yes |
 | benchmark evidence | the regression policy and the accepted baselines | `.ai/repo/benchmarks/rust/policy.yaml`, `.ai/repo/benchmarks/rust/baseline.<platform>.json` | policy yes; a baseline by `majordomus bench baseline update` |
-| registry projections | the OpenAPI document, the registry manifest, the capability, module and benchmark references, and the command line as Markdown and as data | `docs/generated/**` | never — `majordomus generate` |
+| registry projections | the OpenAPI document, the registry manifest, the capability, module and benchmark references, the command line, and the manifest of the whole generated set — each document in every encoding it is committed in | `docs/generated/**` (`artifacts.md` is the generated index of it) | never — `majordomus generate` |
 | registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
@@ -71,13 +71,13 @@ flowchart TB
         P[.ai/repo/project, rules, benchmarks]
     end
     subgraph stageA[stage A · majordomus generate, code only]
-        GA[docs/generated: openapi.json, registry.json, capabilities.md, cli.md, cli.json, modules/*.md · share/allow/*.txt · AGENTS.md, CLAUDE.md]
+        GA[docs/generated: openapi, registry, capabilities, cli, modules/*.md — json+yaml+md as each document is committed · share/allow/*.txt · AGENTS.md, CLAUDE.md]
     end
     subgraph stageB[stage B · scripts/generate-site-data]
         GB[site/data/generated/*.json · site/content/** · docs/SITE_CLAIMS.md, PLAN_STATUS.md]
     end
     subgraph stageC[stage C · majordomus generate, over the index]
-        GC[site/data/registry/registry.json · docs/generated/benchmarks.md]
+        GC[site/data/registry/registry.json · docs/generated/benchmarks.* · docs/generated/artifacts.*]
     end
     subgraph build[scripts/site-build]
         Z[zola + Tailwind → site/public · build.json]
@@ -100,9 +100,9 @@ flowchart TB
 
 | stage | generator | reads | writes | checked by |
 |---|---|---|---|---|
-| A | `majordomus generate` | the Rust declarations, `share/`, the policy and the provider templates | `docs/generated/{openapi.json,registry.json,capabilities.md,cli.md,modules/*.md}`, `share/allow/*.txt`, the provider bootstraps | `majordomus generate --check` |
+| A | `majordomus generate` | the Rust declarations, `share/`, the policy and the provider templates | `docs/generated/{openapi,registry,cli}.{json,yaml}`, `docs/generated/{capabilities,cli}.md`, `docs/generated/modules/*.md`, `share/allow/*.txt`, the provider bootstraps | `majordomus generate --check` |
 | B | `scripts/generate-site-data` | every canonical file (`--inputs` lists them) and stage A's `registry.json` and `openapi.json` | `site/data/generated/*.json`, `site/content/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | `scripts/generate-site-data --check` (by input hash) |
-| C | `majordomus generate` | the Rust declarations and the index of the layer, which now holds the documents stage B wrote | `site/data/registry/registry.json`, `docs/generated/benchmarks.md` | `majordomus generate --check` |
+| C | `majordomus generate` | the Rust declarations and the index of the layer, which now holds the documents stage B wrote | `site/data/registry/registry.json`, `docs/generated/benchmarks.{md,json,yaml}`, `docs/generated/artifacts.{json,yaml,md}` | `majordomus generate --check` |
 | build | `scripts/site-build` | stages B and C, the templates, the assets | `site/public/**`, `site/data/build.json`, `site/static/build.json` | `scripts/site-check`, `scripts/site-probe` |
 
 </div>
@@ -136,6 +136,7 @@ which `test/cases/51_derived_artifacts_committed.sh` and the release criterion r
 | `doctrines.json` | the rule packages | every doctrine with its enforcement chain |
 | `plan.json` | `.ai/repo/project/` | milestones, issues, the dependency graph, derived status |
 | `openapi.json` | `docs/generated/openapi.json` | the HTTP API in the shape `api.html` renders (`scripts/lib/openapi-site.jq`) |
+| `artifacts.json` | `docs/generated/artifacts.json` | the generator's own manifest — declarations only, carrying `schema: 1` like every other file of that directory with the manifest's own schema id under `manifest_schema`, moved under `site/data/` so `registry-artifacts.html` can load it; nothing is added and no file is named in the template. Sizes and hashes are dropped: two of the manifest's subjects are written by stage C, so a copy carrying them could never converge with stage B |
 | `executable.json` | `docs/generated/registry.json`, `capabilities.json` | one route per module and per capability, the executable's pages, API anchors, sources on GitHub, the claims attached to each surface by the path of their implementation (`scripts/lib/executable-site.jq`) |
 | `lifecycle.json` | `lib/finish.sh`, `share/skeleton/ai/repo/workflows/task-lifecycle.md`, `share/standard/majordomus/` | outcome vocabulary, divergence labels, lifecycle steps, the ten principles (the rules tagged `principle`) |
 | `diagrams.json` | the files above | Mermaid source projected from data |
@@ -343,6 +344,7 @@ and Open Graph metadata. The route classes and their sources:
 | `/registry/cli/` | the dataset's `cli` (the clap declaration) | `registry-cli.html` |
 | `/registry/mcp/` | the dataset's `mcp` (tools, resources, protocol) | `registry-mcp.html` |
 | `/registry/benchmarks/` | the dataset's `benchmarks` (targets, coverage, policy, baselines) | `registry-benchmarks.html` |
+| `/registry/artifacts/` | `artifacts.json` (the generator's own manifest) | `registry-artifacts.html` |
 | `/build.json` | `scripts/site-build` | — (served raw) |
 | `/render-test/` | `site/content-src/render-test.md`, `noindex` | `docs-page.html` |
 

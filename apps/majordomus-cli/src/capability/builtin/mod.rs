@@ -5,6 +5,7 @@
 //! capability to an existing module touches that module's file alone; every projection,
 //! benchmark target and generated document follows from the descriptor.
 
+pub mod artifacts;
 pub mod capabilities;
 pub mod continuity;
 pub mod directories;
@@ -23,6 +24,7 @@ use super::handler::Executable;
 use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
+pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use directories::{
@@ -55,6 +57,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         peers,
         perf,
         directories,
+        artifacts,
         why
     ]
 }

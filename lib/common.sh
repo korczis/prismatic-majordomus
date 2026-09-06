@@ -497,8 +497,10 @@ mj_yaml_unknown_keys() {
   # one grep per file, not one per key: the keys are cut out in one pass and the ones no
   # allow-list pattern matches are the unknown ones. On a plan of a hundred records the
   # per-key shape ran thousands of grep processes and was most of plan validate.
+  # the allow-list carries a generated-file banner as `#` comments; every reader of one
+  # strips them, so a comment can never be read as a pattern
   local flat="$1" allow="$2" out
-  out="$(cut -d= -f1 "$flat" | grep -vE -f "$allow" || true)"
+  out="$(cut -d= -f1 "$flat" | grep -vE -f <(grep -v '^#' "$allow") || true)"
   [ -n "$out" ] || return 0
   printf '%s\n' "$out"
   return 1

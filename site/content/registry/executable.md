@@ -54,7 +54,7 @@ $B capabilities list              # every capability with its projections
 $B capabilities describe objects.get
 $B capabilities schema objects.search --side input
 $B capabilities validate          # the registry's invariants, every projection and the benchmark coverage; exit 10 with the list
-$B generate                       # docs/generated/ (openapi.json, capabilities.md, modules/*.md, benchmarks.md, registry.json) and share/allow/*.txt
+$B generate                       # docs/generated/ (each document in every encoding it is committed in; artifacts.md indexes them) and share/allow/*.txt
 $B generate --check               # exit 10 naming every stale file; writes nothing
 $B bench coverage                 # every required benchmark target and whether it is covered; the denominator is the registry's
 $B bench --profile quick          # time every operation: directly, over MCP (a real child), over HTTP (a real socket); slowest first
@@ -126,11 +126,15 @@ The command line is declared once, in `src/cli.rs`: clap for the structure, and 
 Rust metadata beside it (`EXAMPLES`) for the examples clap cannot carry. Every reference is
 generated from that one declaration and never written by hand — `majordomus --help` at a
 terminal, [`docs/generated/cli.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md) for a reader on GitHub,
-[`docs/generated/cli.json`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.json) for the website's generator, the
+[`docs/generated/cli.json`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.json) and its YAML sibling for the website's generator and for a reader of configuration, the
 site's [reference under `/docs/cli/`](https://korczis.github.io/prismatic-majordomus/docs/cli/)
 with one page per command, and the [command line page](https://korczis.github.io/prismatic-majordomus/registry/cli/)
 of the registry. `majordomus generate` writes the files and `majordomus generate --check`
-refuses a stale one in CI. Every command starts from the same options (`--repo`,
+refuses a stale one in CI. Every artifact it writes declares the document it projects, its
+encoding, the schema its content satisfies and its source, and a structured document is
+written in every encoding it is committed in from one value;
+[`docs/generated/artifacts.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/artifacts.md) is the generated index
+of the whole set, and `artifacts.list` reads it back reconciled with the working tree. Every command starts from the same options (`--repo`,
 `--discovery`, `--strict`, `--share`); the reference lists them on each command that
 accepts them.
 
