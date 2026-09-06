@@ -1,7 +1,7 @@
 +++
 title = "Installing Majordomus"
 description = "installing the tool: the one-line installer, pinning a version, choosing where it goes, the supported platforms, upgrading, uninstalling, CI use, the security model and troubleshooting"
-weight = 20
+weight = 21
 [extra]
 source = "docs/INSTALL.md"
 +++

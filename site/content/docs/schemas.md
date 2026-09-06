@@ -1,7 +1,7 @@
 +++
 title = "File schemas"
 description = "every file: schema, a concrete example, which command reads and writes it"
-weight = 11
+weight = 12
 [extra]
 source = "docs/SCHEMAS.md"
 +++

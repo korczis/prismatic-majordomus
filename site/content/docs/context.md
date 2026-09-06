@@ -1,7 +1,7 @@
 +++
 title = "Scoped context"
 description = "scoped context: what a context document is, how the effective context for a path is composed and ordered, what wins in a conflict, how a change is traced to the documents it affects, and the sync check"
-weight = 13
+weight = 14
 [extra]
 source = "docs/CONTEXT.md"
 +++
