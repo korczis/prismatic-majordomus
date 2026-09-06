@@ -171,7 +171,7 @@ list, no Rust and no schema change.
 
 | concern | source | enforcement |
 |---|---|---|
-| front matter shape | `share/schemas/{moment,audience,area}.schema.json` | the index validates every object at build; an unknown key, an unknown enum value or an unsupported `schema:` version excludes the file and degrades the index |
+| front matter shape | `share/schemas/majordomus/{moment,audience,area}/*.v1.schema.json` | the index validates every object at build; an unknown key, an unknown enum value or an unsupported `schema:` version excludes the file and degrades the index |
 | the file name is the id | the record's `id` | `why validate` — `filename_mismatch`, naming the file it should be |
 | a moment does not claim a route the section owns | `why::RESERVED` | `why validate` — `reserved_identity` |
 | one identity per file | the index | two claimants are both excluded; the catalogue adopts the diagnostic rather than reporting itself valid |

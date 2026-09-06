@@ -518,7 +518,10 @@ fn packages(root: &Path) -> Vec<(String, Vec<String>)> {
                 };
                 continue;
             }
-            let Some(value) = line.strip_prefix("name").and_then(|r| r.trim().strip_prefix('=')) else {
+            let Some(value) = line
+                .strip_prefix("name")
+                .and_then(|r| r.trim().strip_prefix('='))
+            else {
                 continue;
             };
             let value = value.trim().trim_matches('"').to_string();
@@ -558,7 +561,9 @@ impl Deployment {
                 &file,
                 "schema",
                 &parsed.schema,
-                &format!("a format version this executable does not read; it reads {SCHEMA_VERSION}"),
+                &format!(
+                    "a format version this executable does not read; it reads {SCHEMA_VERSION}"
+                ),
                 "write the version this executable reads, or upgrade the executable",
             ));
         }
@@ -759,7 +764,9 @@ mod tests {
     fn a_health_route_that_is_a_url_cannot_be_constructed() {
         let mut v = object_text();
         v["health"]["liveness"] = serde_json::json!("https://example.invalid/live");
-        assert!(parse(v).unwrap_err().contains("not a path beginning with /"));
+        assert!(parse(v)
+            .unwrap_err()
+            .contains("not a path beginning with /"));
     }
 
     /// One indexed object carrying `metadata`, which is all `parse` reads of it.
@@ -830,10 +837,7 @@ mod tests {
                     .into_iter()
                     .map(String::from)
                     .collect::<BTreeSet<_>>(),
-                packages: vec![(
-                    "majordomus-cli".to_string(),
-                    vec!["majordomus".to_string()],
-                )],
+                packages: vec![("majordomus-cli".to_string(), vec!["majordomus".to_string()])],
             }
         }
 
@@ -929,7 +933,8 @@ mod tests {
         fn a_soft_limit_above_the_hard_one_is_refused() {
             let d = tree();
             let mut v = super::object_text();
-            v["provider"]["fly"] = serde_json::json!({ "concurrency": { "soft_limit": 50, "hard_limit": 10 } });
+            v["provider"]["fly"] =
+                serde_json::json!({ "concurrency": { "soft_limit": 50, "hard_limit": 10 } });
             let out = deployment(v).check("x.yaml", &workspace(d.path()));
             assert!(out[0].key.ends_with("soft_limit"));
         }
@@ -949,7 +954,10 @@ mod tests {
                 assert!(!r.key.is_empty(), "a refusal with no key: {r}");
                 assert!(!r.found.is_empty(), "a refusal with no value: {r}");
                 assert!(!r.problem.is_empty(), "a refusal with no problem: {r}");
-                assert!(!r.correction.is_empty(), "a refusal with no correction: {r}");
+                assert!(
+                    !r.correction.is_empty(),
+                    "a refusal with no correction: {r}"
+                );
             }
         }
     }
@@ -1008,13 +1016,19 @@ mod tests {
             let mut v = super::object_text();
             v["machines"]["min_running"] = serde_json::json!(4);
             let dep: Deployment = serde_json::from_value(v).expect("parses");
-            let out = dep.check("the-file.yaml", &Workspace::read(d.path(), Default::default()));
+            let out = dep.check(
+                "the-file.yaml",
+                &Workspace::read(d.path(), Default::default()),
+            );
             let line = out
                 .iter()
                 .find(|r| r.key == "machines.min_running")
                 .expect("the refusal")
                 .to_string();
-            assert!(line.starts_with("the-file.yaml: machines.min_running is 4:"), "{line}");
+            assert!(
+                line.starts_with("the-file.yaml: machines.min_running is 4:"),
+                "{line}"
+            );
             assert!(line.contains("lower min_running"), "{line}");
         }
     }
