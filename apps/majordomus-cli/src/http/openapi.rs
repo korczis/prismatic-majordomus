@@ -26,7 +26,22 @@ pub const OPENAPI_VERSION: &str = "3.1.0";
 pub const OAS_DIALECT: &str = "https://spec.openapis.org/oas/3.1/dialect/base";
 
 /// The routes that are the projection's own, not capabilities.
-pub const INFRASTRUCTURE_ROUTES: &[&str] = &["/", "/openapi.json", "/docs", "/cockpit", "/mcp"];
+/// The projection's own routes, resolved from the surfaces that declare them rather than
+/// listed here: what answers, where, and whether a publication can carry it.
+///
+/// A reader of this document is often a published page with no server behind it, so the
+/// availability travels with the route.
+///
+/// ```
+/// use majordomus_cli::http::openapi::infrastructure_routes;
+/// let routes = infrastructure_routes();
+/// let swagger = routes.iter().find(|r| r.path == "/docs").unwrap();
+/// assert_eq!(swagger.availability, majordomus_cli::web::Availability::ServedOnly);
+/// assert!(routes.iter().all(|r| !r.what.is_empty()));
+/// ```
+pub fn infrastructure_routes() -> Vec<crate::web::ProjectionRoute> {
+    crate::web::projection_routes()
+}
 
 /// The error statuses the router answers, by code, with the reason each one is given.
 /// `refused` is a command's alone: a query has nothing to refuse.
@@ -165,7 +180,7 @@ pub fn document(
         "components": { "schemas": components },
         "x-majordomus": {
             "generator": format!("majordomus-cli {version}"),
-            "infrastructure": INFRASTRUCTURE_ROUTES,
+            "infrastructure": infrastructure_routes(),
             "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
             "errors": ERROR_STATUSES.iter().map(|(status, code, reason)| json!({ "status": status, "code": code, "reason": reason })).collect::<Vec<_>>()
         }

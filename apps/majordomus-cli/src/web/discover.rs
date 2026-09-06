@@ -138,7 +138,10 @@ pub fn native(runtime: Runtime) -> Vec<Surface> {
             producer: "capability registry".into(),
             artifact: None,
             index: None,
-            availability: Availability::ServedOnly,
+            // the running server renders it per request and `scripts/site-build` copies the
+            // committed document into the publication at the same mount, so a published
+            // page may link it — the one native route of which that is true
+            availability: Availability::Both,
             provenance: provenance([("mount", Provenance::Registry)]),
         },
         Surface {

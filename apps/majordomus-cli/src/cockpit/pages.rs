@@ -1926,28 +1926,24 @@ pub fn api(ctx: &Context) -> Page {
         .collect();
     rows.sort_by_key(|r| r.render());
 
+    // the projection's own routes, and where each one answers: the same resolved surfaces
+    // the OpenAPI document and the published site read, so a description written once here
+    // cannot disagree with the one written there
     let infrastructure = table(
-        &["Path", "What it is"],
-        openapi::INFRASTRUCTURE_ROUTES
-            .iter()
-            .map(|path| {
+        &["Path", "What it is", "Answered by"],
+        openapi::infrastructure_routes()
+            .into_iter()
+            .map(|r| {
                 row(vec![
-                    cell(mono(*path)),
-                    text_cell(match *path {
-                        "/" => "the index: what this server is and where its surfaces are",
-                        "/openapi.json" => {
-                            "the OpenAPI document, built from the registry per process"
-                        }
-                        "/docs" => "Swagger UI over that document",
-                        "/mcp" => "MCP over HTTP, when this process serves a shared server",
-                        _ => "a route of the projection itself",
+                    cell(mono(&r.path)),
+                    text_cell(&r.what),
+                    text_cell(if r.linkable() {
+                        "a running server, and a publication"
+                    } else {
+                        "a running server"
                     }),
                 ])
             })
-            .chain(std::iter::once(row(vec![
-                cell(mono("/cockpit")),
-                text_cell("this Cockpit: server-rendered pages over the same registry"),
-            ])))
             .collect(),
     );
 

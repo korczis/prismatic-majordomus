@@ -632,9 +632,9 @@ fn reference(registry: &CapabilityRegistry, version: &str) -> String {
     s.push_str(".\n\n## Infrastructure routes\n\n");
     s.push_str("The HTTP projection's own routes, not capabilities: ");
     s.push_str(
-        &openapi::INFRASTRUCTURE_ROUTES
+        &openapi::infrastructure_routes()
             .iter()
-            .map(|r| format!("`{r}`"))
+            .map(|r| format!("`{}`", r.path))
             .collect::<Vec<_>>()
             .join(", "),
     );
