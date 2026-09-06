@@ -66,3 +66,18 @@ git -C "$T" checkout -q -- share
 printf '\nmj_validate_unclaimed() { return 0; }\n' >> "$T/lib/check.sh"
 expect_exit 10 "$T/scripts/generate-site-data"
 expect_grep 'mj_validate_unclaimed, which no doctrine declares'
+
+# ---------------------------------------------------------------- nothing reader-relative
+# `session list` labels every record by its divergence from *this* worktree and branch, so
+# the same record labels itself `diverged` here and `different_context` on a CI checkout.
+# A published projection may only carry what the record says about itself: baked in, the
+# label makes the dataset a fact about the machine that generated it, and --check then
+# fails on every other one. This is the defect, from the artifact the repository ships.
+S="$ROOT/site/data/generated/sessions.json"
+if [ "$(jq -r '.count' "$S")" -gt 0 ]; then
+  "$ROOT/bin/majordomus" --repo "$ROOT" session list --all --json \
+    | jq -e '.sessions | length > 0 and all(has("label"))' >/dev/null \
+    || { echo "    session list no longer labels its records; this assertion needs rewriting"; exit 1; }
+  jq -e '.sessions | all(has("label") | not)' "$S" >/dev/null \
+    || { echo "    the published sessions dataset carries the reader-relative label"; exit 1; }
+fi

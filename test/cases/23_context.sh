@@ -126,9 +126,14 @@ expect_exit 2 "$MJ" context --for nosuch
 expect_grep 'no provider .nosuch.'
 expect_grep 'have:.*claude-code'
 
-# deterministic: the same state produces the same body, timestamp line aside
-a=$("$MJ" context | grep -v '^# Majordomus context'); b=$("$MJ" context | grep -v '^# Majordomus context')
-[ "$a" = "$b" ] || { echo "    context is not deterministic"; exit 1; }
+# Deterministic: the same state produces the same body, the timestamp line and the relative
+# ages aside. The ages are excluded for the same reason the header line is — they are a
+# reading of the clock at the moment of printing, not a fact about the state. Comparing them
+# asserted that no minute passed between two runs of a command that takes most of one, which
+# failed whenever the pair happened to straddle a boundary.
+ages() { grep -v '^# Majordomus context' | sed -E 's/[0-9]+[mhd] ago/<age>/g'; }
+a=$("$MJ" context | ages); b=$("$MJ" context | ages)
+[ "$a" = "$b" ] || { echo "    context is not deterministic"; diff <(printf '%s\n' "$a") <(printf '%s\n' "$b") | head -20; exit 1; }
 
 # --json describes the same selection as the text form
 if command -v jq >/dev/null; then

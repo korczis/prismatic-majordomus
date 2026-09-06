@@ -6,6 +6,7 @@
 //! benchmark target and generated document follows from the descriptor.
 
 pub mod capabilities;
+pub mod continuity;
 pub mod directories;
 pub mod graph;
 pub mod health;
@@ -23,6 +24,7 @@ use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
+pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use directories::{
     ContractView, DirectoriesInput, DirectoryNode, DirectoryReport, DirectoryState,
     DirectoryTallies, EffectiveEntry, DIRECTORIES_URI,
@@ -47,6 +49,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         capabilities,
         graph,
         health,
+        continuity,
         peers,
         perf,
         directories
