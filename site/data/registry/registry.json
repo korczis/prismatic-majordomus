@@ -6,7 +6,7 @@
     "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "7f9587ef286943286d328afd050691188bd4c33b0de241804eebf441eea41cec",
+    "fingerprint": "115c30ea482c2dc73430314a5a12ecb741f6b150bc3fcbe09b90513c13181dad",
     "summary": {
       "total": 932,
       "builtin": 32,
@@ -9245,7 +9245,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4fa991b9fc23fa4f6661250810aa24821bc3020fd0b71f6a84fbd10d814a29ff",
+    "fingerprint": "494d5ecf7bc01c1d590ebead6ed2cd0c8b626ed383e90c9eefaafb6399163fc1",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -11909,7 +11909,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 34350
+        "bytes": 34700
       },
       {
         "uri": "majordomus://document/docs/README.md",
@@ -14593,7 +14593,7 @@
         "path": ".ai/repo/project/issues/I0908.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2360
+        "bytes": 2368
       },
       {
         "uri": "majordomus://issue/I0909",
@@ -14868,7 +14868,7 @@
         "path": ".ai/repo/project/issues/I1001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2574
+        "bytes": 3552
       },
       {
         "uri": "majordomus://issue/I1002",
@@ -14879,7 +14879,7 @@
         "path": ".ai/repo/project/issues/I1002.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2144
+        "bytes": 3307
       },
       {
         "uri": "majordomus://issue/I1003",
@@ -26307,6 +26307,15 @@
         "cached": true
       },
       {
+        "key": "graph.get|direct|composed",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
+        "cached": true
+      },
+      {
         "key": "graph.get|mcp|registry",
         "kind": "capability",
         "transport": "mcp",
@@ -26367,6 +26376,16 @@
         "tool": "majordomus_graph"
       },
       {
+        "key": "graph.get|mcp|composed",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
+        "cached": true,
+        "tool": "majordomus_graph"
+      },
+      {
         "key": "graph.get|http|registry",
         "kind": "capability",
         "transport": "http",
@@ -26423,6 +26442,16 @@
         "id": "graph.get",
         "module": "graph",
         "case": "why",
+        "cached": true,
+        "route": "GET /api/v1/graph"
+      },
+      {
+        "key": "graph.get|http|composed",
+        "kind": "capability",
+        "transport": "http",
+        "id": "graph.get",
+        "module": "graph",
+        "case": "composed",
         "cached": true,
         "route": "GET /api/v1/graph"
       },
@@ -27563,21 +27592,21 @@
           "module": "graph",
           "transport": "direct",
           "state": "covered",
-          "cases": 6
+          "cases": 7
         },
         {
           "subject": "graph.get",
           "module": "graph",
           "transport": "mcp",
           "state": "covered",
-          "cases": 6
+          "cases": 7
         },
         {
           "subject": "graph.get",
           "module": "graph",
           "transport": "http",
           "state": "covered",
-          "cases": 6
+          "cases": 7
         },
         {
           "subject": "graph.list",
