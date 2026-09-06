@@ -849,8 +849,8 @@ event: 'UserPromptSubmit'
 id: 'bb6f8c96'
 session: '5b13785c-728f'
 source: 'user'
-cwd: '/Users/you/dev/your-repo'
-repository: '/Users/you/dev/your-repo'
+cwd: '~/src/your-repo'
+repository: '~/src/your-repo'
 branch: 'feature/prompt-capture-markdown'
 head: 'a0ccbc9e25d6ec7f6bb754f3515affb9b1cc4014'
 record: '20260905124855-make-it-a-file-per-prompt.json'
@@ -865,9 +865,9 @@ record: '20260905124855-make-it-a-file-per-prompt.json'
 | **Session** | `5b13785c-728f` |
 | **Prompt** | `bb6f8c96` |
 | **Source** | `user` |
-| **Repository** | `/Users/you/dev/your-repo` |
+| **Repository** | `~/src/your-repo` |
 | **Branch** | `feature/prompt-capture-markdown` · `a0ccbc9` |
-| **Directory** | `/Users/you/dev/your-repo` |
+| **Directory** | `~/src/your-repo` |
 | **Schema** | `majordomus.capture/v1` · `share/schemas/majordomus/capture/capture.v1.proto` |
 | **Record** | `20260905124855-make-it-a-file-per-prompt.json` |
 

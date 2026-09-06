@@ -46,7 +46,7 @@ so the first use case of a repository is one file.
 
 ## The use-case object
 
-```yaml
+````yaml
 ---
 id: prove-a-rule-is-enforced          # the file name, stable, the URL slug
 kind: use-case
@@ -87,7 +87,7 @@ then:
 
 # Outcome
 ...
-```
+````
 
 What the object does not carry, because it is derived: a command's description or
 syntax, a rule's text, a claim's wording, an application's summary, captured output, the
