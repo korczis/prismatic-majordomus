@@ -189,3 +189,25 @@ printf '{"schema":"majordomus.prompt/v1","ts":"t","provider":"claude-code","even
   > .ai/local/prompts/20260101000000-planted.json
 expect_exit 10 "$MJ" doctor
 expect_grep "model's half"
+rm -f .ai/local/prompts/20260101000000-planted.json
+
+# and a record whose keys drift from the closed set is the same doctrine's failure. The set
+# is declared once, in MJ_CAPTURE_FIELDS, and this is what makes that declaration load-
+# bearing rather than a comment: an adapter that starts emitting a different shape is
+# reported here instead of quietly changing what a record means.
+printf '{"schema":"majordomus.prompt/v1","ts":"t","provider":"claude-code","event":"e","id":"p9","session":null,"source":null,"cwd":null,"repository":"r","head":"h","text":"the branch field is gone"}\n' \
+  > .ai/local/prompts/20260101000001-dropped-field.json
+expect_exit 10 "$MJ" doctor
+expect_grep 'closed field set'
+rm -f .ai/local/prompts/20260101000001-dropped-field.json
+
+# the same set, in the wrong order: a reader relying on the order is relying on something
+printf '{"schema":"majordomus.prompt/v1","ts":"t","provider":"claude-code","event":"e","id":"pa","session":null,"source":null,"cwd":null,"branch":"b","repository":"r","head":"h","text":"repository and branch swapped"}\n' \
+  > .ai/local/prompts/20260101000002-reordered.json
+expect_exit 10 "$MJ" doctor
+expect_grep 'closed field set'
+rm -f .ai/local/prompts/20260101000002-reordered.json
+
+# and the well-formed record the capture itself wrote is still accepted, so the check is a
+# check and not a refusal of everything
+expect_exit 0 "$MJ" doctor

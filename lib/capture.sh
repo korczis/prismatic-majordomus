@@ -42,8 +42,12 @@
 # retrieves from it, and it lives under the ignored half of the AI layer.
 
 MJ_CAPTURE_SCHEMA="majordomus.prompt/v1"
-# the closed set of fields a record carries, in order; a reader may rely on it, and a field
-# outside it is a defect the prompt_capture doctrine reports
+# The closed set of fields a record carries, in the order it carries them. A reader may rely
+# on it, and `mj_capture_records` holds every record to it: the keys must appear in this
+# order, so a provider whose adapter starts emitting something else is a doctrine failure
+# rather than a silent change of shape. `text` is last and free-form, so a key after it
+# cannot be told from the prompt's own content; that is the one gap and it is deliberate,
+# because the alternative is parsing arbitrary JSON in awk.
 MJ_CAPTURE_FIELDS="schema ts provider event id session source cwd repository branch head text"
 
 # ---------------------------------------------------------------- provider adapters
@@ -424,7 +428,8 @@ mj_validate_prompt_capture() {
 # clears by being deleted, deliberately, once a person has read it: it is a diagnostic, and
 # unlike a record, nothing is lost by removing it.
 mj_capture_failures() {
-  local dir="$1" rel="$2" log="$dir/.capture.log" n
+  local dir="$1" rel="$2" n
+  local log="$dir/.capture.log"
   [ -s "$log" ] || return 0
   n="$(grep -c . "$log" 2>/dev/null || true)"
   mj_doctrine_fail capture "$rel/.capture.log" \
@@ -439,15 +444,28 @@ mj_capture_records() {
   local dir="$1" rel="$2" n out model shape
   n="$(find "$dir" -maxdepth 1 -name '*.json' 2>/dev/null | wc -l | tr -d ' ')"
   [ "$n" -gt 0 ] || { mj_doctrine_ok capture "$rel" "no records yet; the archive is empty"; return 0; }
-  out="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk '
+  out="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk -v fields="$MJ_CAPTURE_FIELDS" '
     FNR == 1 { if ($0 !~ /^\{"schema":"majordomus\.prompt\/v1",/ || $0 !~ /\}$/) print "SHAPE " FILENAME }
     FNR > 1  { if (!s[FILENAME]++) print "SHAPE " FILENAME }
+    # every declared field, in the declared order: a record whose keys drift from the closed
+    # set is reported rather than accepted, which is what the set is for
+    FNR == 1 {
+      n = split(fields, f, " "); at = 0
+      for (i = 1; i <= n; i++) {
+        p = index(substr($0, at + 1), "\"" f[i] "\":")
+        if (p == 0) { if (!k[FILENAME]++) print "FIELDS " FILENAME; break }
+        at += p
+      }
+    }
     /"(response|completion|transcript|messages|reply|assistant)":/ { if (!m[FILENAME]++) print "MODEL " FILENAME }
   ' {} + 2>/dev/null)"
   model="$(printf '%s' "$out" | grep -c '^MODEL ' || true)"
   shape="$(printf '%s' "$out" | grep -c '^SHAPE ' || true)"
+  fields="$(printf '%s' "$out" | grep -c '^FIELDS ' || true)"
   if [ "$model" != 0 ]; then
     mj_doctrine_fail capture "$rel" "$model record(s) carry the model's half of the exchange: $(printf '%s' "$out" | sed -n 's/^MODEL .*\///p' | head -n 3 | tr '\n' ' ')" "grep -lE '\"(response|completion|transcript|messages|reply|assistant)\":' $rel/*.json"
+  elif [ "$fields" != 0 ]; then
+    mj_doctrine_fail capture "$rel" "$fields record(s) do not carry the closed field set in order ($MJ_CAPTURE_FIELDS): $(printf '%s' "$out" | sed -n 's/^FIELDS .*\///p' | head -n 3 | tr '\n' ' ')" "head -n 1 $rel/*.json"
   elif [ "$shape" != 0 ]; then
     mj_doctrine_fail capture "$rel" "$shape record(s) are not one line of $MJ_CAPTURE_SCHEMA: $(printf '%s' "$out" | sed -n 's/^SHAPE .*\///p' | head -n 3 | tr '\n' ' ')" "head -n 2 $rel/*.json"
   else
