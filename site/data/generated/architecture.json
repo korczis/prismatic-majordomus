@@ -530,6 +530,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/deployments/README.md",
+      "kind": "artifact",
+      "label": "repo/deployments/README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/project/README.md",
       "kind": "artifact",
       "label": "repo/project/README.md",
@@ -1339,6 +1349,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/applications",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/deployments/README.md",
       "kind": "uses"
     },
     {

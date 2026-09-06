@@ -33,13 +33,18 @@ impl SharedServer {
         host: &str,
         port: u16,
         fallback: bool,
+        declared_by: Option<&str>,
         lease: Lease,
         share_dir: Option<&std::path::Path>,
     ) -> Result<Self> {
-        let bound = if fallback {
-            server::bind_or_fallback(host, port)?
-        } else {
-            server::bind(host, port)?
+        // Three ways to arrive at a socket, and they are not interchangeable: a canonical
+        // object declared this address (bind it, say which object said so), the port is a
+        // convenience (take a free one when it is taken), or the port is what was asked
+        // for (bind it or fail).
+        let bound = match declared_by {
+            Some(source) => server::bind_declared(host, port, source)?,
+            None if fallback => server::bind_or_fallback(host, port)?,
+            None => server::bind(host, port)?,
         };
         let url = bound.url();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&ctx), version, url.clone()));

@@ -81,6 +81,11 @@ H
   # in this same pass, and a second run would then report a file the first should have made.
   mkdir -p "$MJ_AI_REPO_DIR/sessions"
   mj_init_file "$MJ_SKELETON_DIR/ai/repo/sessions/README.md" "$MJ_AI_REPO_DIR/sessions/README.md"
+  # The deployments section, the same way: the contract is there from the start, so a
+  # repository that later deploys something adds one file rather than a directory, a
+  # context document, a manifest entry and a source class.
+  mkdir -p "$MJ_AI_REPO_DIR/deployments"
+  mj_init_file "$MJ_SKELETON_DIR/ai/repo/deployments/README.md" "$MJ_AI_REPO_DIR/deployments/README.md"
   mj_init_file "$skel/ai/repo/project/README.md" "$MJ_PROJECT_DIR/README.md"
   # the checkout-local half: the state directories the durable commands write into, and
   # the two hand-editable stores, seeded from the tool's templates. Never tracked.

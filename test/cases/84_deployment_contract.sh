@@ -1,10 +1,11 @@
 # majordomus-covers: doctor
 # A deployment is described once, in the layer, against a closed contract.
 #
-# The section is optional: a repository that deploys nothing declares none and owes
-# nothing. Declaring it is what activates the contract — and from that moment an object in
-# it is read, closed and refused by name, with no registration anywhere: the source class
-# and the kind are data, and the index, the listing and the graph follow them.
+# `init` seeds the section with its contract and nothing in it, so a repository that later
+# deploys something adds one file rather than a directory, a context document, a manifest
+# entry and a source class. An object in it is read, closed and refused by name with no
+# registration anywhere: the source class and the kind are data, and the index, the
+# listing and the graph follow them.
 #
 # What this case exists to prove is the refusals. A deployment that cannot work must cost a
 # test failure rather than a failed rollout, and a credential must never reach the layer.
@@ -12,37 +13,18 @@
 "$MJ" init >/dev/null
 "$MJ" update >/dev/null
 
-# ---------------------------------------------------------------- the section is optional
+# ---------------------------------------------------------------- an empty section
+# `init` seeds the section with its contract and no objects, so a repository that later
+# deploys something adds one file. An empty section is not a finding: there is nothing
+# that could be wrong.
 git add -A >/dev/null; git commit -qm base
-"$MJ" doctor 2>&1 | grep -qE '^(OK|FAIL|WARN|INFO) +deployment ' \
-  && { echo "    a layer with no deployments section reported one"; exit 1; }
+[ -f .ai/repo/deployments/README.md ] || { echo "    init did not seed the section's contract"; exit 1; }
+"$MJ" doctor 2>&1 | grep -qE '^FAIL +deployment ' \
+  && { echo "    an empty deployments section was reported as a failure"; exit 1; }
+"$MJ" doctor 2>&1 | grep -q 'deployment(s)' \
+  && { echo "    an empty section counted something"; exit 1; }
 
-# ---------------------------------------------------------------- declaring it
-sed -i.bak 's|^  applications: repo/applications$|&\n  deployments: repo/deployments|' .ai/manifest.yaml
-rm -f .ai/manifest.yaml.bak
-grep -q '^  deployments: repo/deployments$' .ai/manifest.yaml || { echo "    the section was not declared"; exit 1; }
-mkdir -p .ai/repo/deployments
-cat > .ai/repo/deployments/README.md <<'MD'
----
-schema: context/v1
-id: ai.repo.deployments
-kind: context
-title: Deployments
-description: One canonical object per deployment; every provider artifact is generated from it.
-status: active
-scope: subtree
-providers: ["*"]
-audience: [human, agent]
-composition: extend
-order: 100
----
-
-# Deployments
-
-Authoritative: the `*.yaml` files here. Generated from them: the container image
-definition, its ignore file and the provider configuration. Regenerate with
-`majordomus generate`.
-MD
+# ---------------------------------------------------------------- one deployment
 cat > .ai/repo/deployments/example.yaml <<'MD'
 schema: deployment/v1
 kind: deployment
