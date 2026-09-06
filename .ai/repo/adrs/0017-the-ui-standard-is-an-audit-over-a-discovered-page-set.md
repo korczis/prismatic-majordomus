@@ -20,7 +20,9 @@ provenance:
   origin: authored
 ---
 
-# Context
+# 17. The UI standard is an audit over a discovered page set, and its failures are fixed at their shared source
+
+## Context
 
 The repository had a UI standard in the sense that a person had opinions about it. There was
 a mobile-first case that measured horizontal overflow on every route in a headless browser,
@@ -45,7 +47,7 @@ Not one of the large classes is a page's mistake. Each is a decision made once, 
 everywhere, and never measured. A reviewer cannot find them, because finding them means
 visiting 1683 page-and-width combinations and computing contrast ratios.
 
-# Decision
+## Decision
 
 The UI standard is an executable audit over a page set and a width set that are **discovered**,
 and its findings are fixed at the source they share.
@@ -81,7 +83,7 @@ validator now asks the application's output whether it has pages under a native 
 and warns with the count. It warns rather than refuses because which of the two should move is
 intent, and a person decides that.
 
-# Consequences
+## Consequences
 
 A page added to the site is audited the day it renders, and a breakpoint added to the theme is
 visited the day it compiles. Neither costs an edit anywhere.
@@ -101,7 +103,7 @@ The `/docs` shadowing is now reported by `web validate` with the page count, rat
 discovered by an audit. What to do about it — rename the route or move the section — stays a
 person's decision, and the warning is what that decision now has to look at.
 
-# Alternatives rejected
+## Alternatives rejected
 
 **A list of pages to audit, with a rule that it be kept current.** The same defect as the
 per-surface registration this repository already refuses: a list is right on the day it is
