@@ -1,7 +1,7 @@
 +++
 title = "majordomus adr propose writes a decision with status proposed and refuses to write any other status, allocates its identity under a lock so concurrent workers never collide, and records what the decision was derived from"
 description = "propose writes a record with status: proposed and has no flag that says otherwise."
-weight = 146
+weight = 147
 [extra]
 claim_id = "adr-propose"
 status = "guaranteed"

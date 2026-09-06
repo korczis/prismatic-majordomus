@@ -28,6 +28,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `allow/rule` | `text` | — | the document schema `majordomus/rule/rule.v1.proto` |
 | `allow/scope` | `text` | — | the JSON Schema `majordomus.scope/v1` of the kind it validates |
 | `allow/session` | `text` | — | the JSON Schema `majordomus.session/v1` of the kind it validates |
+| `allow/session-context` | `text` | — | the JSON Schema `majordomus.session-context/v1` of the kind it validates |
 | `allow/session-record` | `text` | — | the JSON Schema `majordomus.session-record/v1` of the kind it validates |
 | `allow/skill` | `text` | — | the document schema `majordomus/skill/skill.v1.proto` |
 | `allow/taxonomy` | `text` | — | the JSON Schema `majordomus.taxonomy/v1` of the kind it validates |
@@ -82,8 +83,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
-| `AGENTS.md` | `providers/agents` | markdown | 3030 | `a4b5df2fd073bafa` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 2319 | `4cc0cacedf6055dc` |
+| `AGENTS.md` | `providers/agents` | markdown | 3030 | `6bfd3493dcd0c4f9` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 2319 | `c44a300ba3ceafc8` |
 | `docs/INSTALL.md` | `install-guide` | markdown | 9477 | `884d10a29b661232` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
@@ -131,20 +132,21 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/release.txt` | `allow/release` | text | 403 | `4e966d3af30873ff` |
 | `share/allow/rule.txt` | `allow/rule` | text | 502 | `76f683bd6db60ca2` |
 | `share/allow/scope.txt` | `allow/scope` | text | 824 | `edd4faf5b513226a` |
+| `share/allow/session-context.txt` | `allow/session-context` | text | 326 | `ad251e2e939f6c4c` |
 | `share/allow/session-record.txt` | `allow/session-record` | text | 650 | `f37d07265e23f64a` |
 | `share/allow/session.txt` | `allow/session` | text | 303 | `8bd4563bfd72c656` |
 | `share/allow/skill.txt` | `allow/skill` | text | 314 | `8f6829f06a153ae3` |
 | `share/allow/taxonomy.txt` | `allow/taxonomy` | text | 312 | `5a5cdcc40f771720` |
 | `share/allow/use-case.txt` | `allow/use-case` | text | 532 | `d1db9fa292d70d29` |
-| `share/schemas/majordomus/adr/adr.v1.schema.json` | `schemas/majordomus.adr/v1` | json | 6040 | `2a411185c51b9bfd` |
-| `share/schemas/majordomus/application/application.v1.schema.json` | `schemas/majordomus.application/v1` | json | 3894 | `6fa5aab493896b76` |
-| `share/schemas/majordomus/capture/capture.v1.schema.json` | `schemas/majordomus.capture/v1` | json | 4627 | `5f0a277fc8bf2c88` |
-| `share/schemas/majordomus/context/context.v1.schema.json` | `schemas/majordomus.context/v1` | json | 6475 | `dd5392126c75bedb` |
-| `share/schemas/majordomus/knowledge/knowledge.v1.schema.json` | `schemas/majordomus.knowledge/v1` | json | 5656 | `f0ddde986c2c0752` |
-| `share/schemas/majordomus/prompt/prompt.v1.schema.json` | `schemas/majordomus.prompt/v1` | json | 2344 | `d016b7ac2acdc4ce` |
-| `share/schemas/majordomus/rule/rule.v1.schema.json` | `schemas/majordomus.rule/v1` | json | 5053 | `a86e338643d2a029` |
-| `share/schemas/majordomus/skill/skill.v1.schema.json` | `schemas/majordomus.skill/v1` | json | 4023 | `6d1c6678df0b5536` |
-| `share/schemas/majordomus/use-case/use-case.v1.schema.json` | `schemas/majordomus.use-case/v1` | json | 9344 | `1ecff781d13dfb1e` |
+| `share/schemas/majordomus/adr/adr.v1.schema.json` | `schemas/majordomus.adr/v1` | json | 6092 | `1b3807c6398d4f72` |
+| `share/schemas/majordomus/application/application.v1.schema.json` | `schemas/majordomus.application/v1` | json | 3946 | `beff5f0d4981ba46` |
+| `share/schemas/majordomus/capture/capture.v1.schema.json` | `schemas/majordomus.capture/v1` | json | 4679 | `4a4c97f41c3705fa` |
+| `share/schemas/majordomus/context/context.v1.schema.json` | `schemas/majordomus.context/v1` | json | 6569 | `f2958f66a869ab98` |
+| `share/schemas/majordomus/knowledge/knowledge.v1.schema.json` | `schemas/majordomus.knowledge/v1` | json | 5708 | `6e1f35990d3cd5fb` |
+| `share/schemas/majordomus/prompt/prompt.v1.schema.json` | `schemas/majordomus.prompt/v1` | json | 2396 | `56daef4fa4cca21d` |
+| `share/schemas/majordomus/rule/rule.v1.schema.json` | `schemas/majordomus.rule/v1` | json | 5105 | `fb9180ce83f44288` |
+| `share/schemas/majordomus/skill/skill.v1.schema.json` | `schemas/majordomus.skill/v1` | json | 4075 | `6d7ac7278a2374c0` |
+| `share/schemas/majordomus/use-case/use-case.v1.schema.json` | `schemas/majordomus.use-case/v1` | json | 9396 | `56ccb9ffd8420458` |
 | `share/sections/adr.txt` | `sections/adr` | text | 305 | `f1fac4ad51839d3b` |
 | `share/sections/application.txt` | `sections/application` | text | 220 | `bb4ee612683b73f9` |
 | `share/sections/context.txt` | `sections/context` | text | 283 | `30d796346d072308` |
@@ -154,7 +156,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 267 | `8e98209953ebdb6a` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 275 | `6177a7908fac0561` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 2842 | `2ac359554068d8fd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1114730 | `0c498724008debf4` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1118442 | `b36fdcd9d5c6d982` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 178498 | `2c7bfd06da2e83a8` |
 | `site/data/registry/why.json` | `site-why` | json | 349487 | `edcfe8157476745f` |
 | `site/static/install.sh` | `installer` | text | 28286 | `30e8f6d7c9317caa` |

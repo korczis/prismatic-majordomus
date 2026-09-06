@@ -592,7 +592,15 @@
         "test": "test/cases/91_canonical_architecture.sh"
       }
     ],
-    "cli": [],
+    "cli": [
+      {
+        "id": "cli-documentation-executable",
+        "implementation": "apps/majordomus-cli/src/cli.rs",
+        "route": "/guarantees/cli-documentation-executable/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/cli_docs.rs"
+      }
+    ],
     "executable": [
       {
         "id": "distribution-canonical-model",
@@ -763,7 +771,7 @@
   },
   "counts": {
     "capabilities": 32,
-    "claims": 26,
+    "claims": 27,
     "modules": 13
   },
   "generator": "majordomus-cli 0.2.0",

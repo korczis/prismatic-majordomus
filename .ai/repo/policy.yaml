@@ -90,6 +90,10 @@ enforcement:
     path: bin/majordomus
     args: [capture, session]
     wired_by: provider-hook:claude-code:session
+  - name: derived-current
+    path: scripts/pages
+    args: [current]
+    wired_by: git-hook:pre-commit
 
 projections:
   - provider: agents

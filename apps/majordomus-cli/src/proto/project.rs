@@ -25,11 +25,6 @@ pub const SCHEMA_EXTENSION: &str = "x-majordomus-schema";
 /// it is not to be edited; the file it names is.
 pub const DERIVED_EXTENSION: &str = "x-majordomus-derived-from";
 
-/// The member a projected schema says it is generated with. JSON carries its provenance as
-/// a member rather than as a comment banner, and `generate` holds every artifact to having
-/// one (`project.generated-artifacts-are-typed@1`).
-pub const GENERATED_EXTENSION: &str = "x-majordomus-generated";
-
 /// The extension carrying the body contract, for a reader of the JSON Schema alone.
 pub const SECTIONS_EXTENSION: &str = "x-majordomus-sections";
 
@@ -94,16 +89,6 @@ pub fn to_json_schema(file: &ProtoFile) -> crate::error::Result<Value> {
     root.insert(
         DERIVED_EXTENSION.into(),
         json!(ProtoFile::expected_path(&file.schema_id)?),
-    );
-    // the provenance member every generated artifact carries; in JSON it is a member
-    // rather than a banner, and this is the one a projected schema answers with
-    root.insert(
-        GENERATED_EXTENSION.into(),
-        json!(format!(
-            "{}; source: the document schema `{}`; regenerate with `majordomus generate`",
-            crate::generate::HEADER,
-            ProtoFile::expected_path(&file.schema_id)?
-        )),
     );
     if let Some(allow) = &file.allow_list {
         root.insert(crate::generate::ALLOW_EXTENSION.into(), json!(allow));

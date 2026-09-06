@@ -140,8 +140,9 @@ is its own manifest's business. A directory this repository does write still owe
 contract, vendored sibling or not.
 
 Exempt a subtree with `require_contract: false` when the directories below it are
-instances of a kind rather than sections of the layer: a skill is `SKILL.md` and its examples, and a contract in every
-instance directory would repeat the format the section states once. Everywhere else, a new
+instances of a kind rather than sections of the layer: a skill is `SKILL.md` and its
+examples, and a contract in every instance directory would repeat the format the section
+states once. Everywhere else, a new
 directory says what it is for before the branch that adds it can be committed —
 `context validate` runs in the pre-commit hook through `doctor`. The decision is
 `.ai/repo/adrs/0011-every-directory-in-the-layer-carries-a-contract.md`.

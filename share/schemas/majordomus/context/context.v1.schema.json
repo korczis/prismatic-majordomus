@@ -3,7 +3,6 @@
   "$id": "https://majordomus.dev/schemas/majordomus/context/context.v1.schema.json",
   "x-majordomus-schema": "majordomus.context/v1",
   "x-majordomus-derived-from": "majordomus/context/context.v1.proto",
-  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `majordomus/context/context.v1.proto`; regenerate with `majordomus generate`",
   "x-majordomus-allow": "context",
   "description": "The whole document: the contract that makes it resolvable, then the prose a person reads.",
   "title": "context",
@@ -42,7 +41,7 @@
           "const": "context/v1"
         },
         "id": {
-          "description": "The identity, a lower-case dotted name. It survives a move, so it is the id and not the path that other documents supersede and that projections cite.",
+          "description": "The identity. The file name is a convention; this is what survives a move.",
           "type": "string",
           "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$"
         },
@@ -92,6 +91,7 @@
         "providers": {
           "description": "The providers it is rendered for; [\"*\"] is every one.",
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -132,7 +132,7 @@
           "type": "boolean"
         },
         "exempt": {
-          "description": "Directories inside this document's scope that owe no contract, and nor does anything below them: a subtree this layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Repository-relative. The exemption is declared by the contract that governs the subtree, so it moves with the tree it describes instead of living in a list at the root.",
+          "description": "Directories inside this document's scope that owe no contract, and nor does anything below them: a subtree the layer carries but does not author, such as an installed package whose integrity is its own manifest's business. Repository-relative. The exemption is declared by the contract that governs the subtree, so it travels with the tree it describes instead of living in a list inside the tool; naming a directory outside this document's own scope, or its own directory, is refused.",
           "type": "array",
           "items": {
             "type": "string"
@@ -195,5 +195,7 @@
         }
       ]
     }
-  }
+  },
+  "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `majordomus/context/context.v1.proto`; regenerate with `majordomus generate`",
+  "x-majordomus-generator": "majordomus-cli 0.2.0"
 }

@@ -30,9 +30,11 @@ message Header {
 
   string schema = 1 [(majordomus.required) = true, (majordomus.const) = "context/v1"];
 
-  // The identity, a lower-case dotted name. It survives a move, so it is the id and not
-  // the path that other documents supersede and that projections cite.
-  string id = 2 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$"];
+  // The identity. The file name is a convention; this is what survives a move.
+  string id = 2 [
+    (majordomus.required) = true,
+    (majordomus.pattern) = "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$"
+  ];
 
   string kind = 3 [(majordomus.required) = true, (majordomus.const) = "context"];
 
@@ -58,7 +60,7 @@ message Header {
   repeated string paths = 10;
 
   // The providers it is rendered for; ["*"] is every one.
-  repeated string providers = 11 [(majordomus.required) = true];
+  repeated string providers = 11 [(majordomus.required) = true, (majordomus.min_items) = 1];
 
   // Who it is written for: human, agent.
   repeated string audience = 12;
@@ -83,10 +85,11 @@ message Children {
   bool require_contract = 1;
 
   // Directories inside this document's scope that owe no contract, and nor does anything
-  // below them: a subtree this layer carries but does not author, such as an installed
+  // below them: a subtree the layer carries but does not author, such as an installed
   // package whose integrity is its own manifest's business. Repository-relative. The
-  // exemption is declared by the contract that governs the subtree, so it moves with the
-  // tree it describes instead of living in a list at the root.
+  // exemption is declared by the contract that governs the subtree, so it travels with the
+  // tree it describes instead of living in a list inside the tool; naming a directory
+  // outside this document's own scope, or its own directory, is refused.
   repeated string exempt = 2;
 }
 

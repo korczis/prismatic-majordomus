@@ -106,10 +106,15 @@ mj_validate_policy() {
 }
 
 mj_validate_wiring() {
-  local i=0 name path wired kind target hookdir hookfile arg0
+  local i=0 name path wired kind target hookdir hookfile arg0 prog
   while [ -n "$(mj_pol "enforcement.$i.name")" ]; do
     name="$(mj_pol "enforcement.$i.name")"; path="$(mj_pol "enforcement.$i.path")"; wired="$(mj_pol "enforcement.$i.wired_by")"
     arg0="$(mj_pol "enforcement.$i.args.0")"; [ -z "$arg0" ] && arg0="$(mj_pol "enforcement.$i.args" | sed 's/\[\]//')"
+    # The program the entry names, not an assumption that it is this tool. A repository has
+    # gates of its own — a fingerprint check, a linter — and the point of declaring one here
+    # is that doctor proves it is wired; a verifier that only recognises `majordomus` would
+    # report every one of them as unwired and teach people to stop declaring them.
+    prog="$(basename "$path")"
     # path may be repo-relative, absolute, or a command name; the hook line may also carry its own path
     local resolved=""
     case "$path" in
@@ -130,24 +135,24 @@ mj_validate_wiring() {
           local wirefile="" cand rel
           if [ -f "$hookfile" ]; then
             for cand in $(mj_hook_candidates "$hookfile"); do
-              if grep -qE "majordomus[[:space:]]+$arg0([[:space:]]|$)" "$cand"; then wirefile="$cand"; break; fi
+              if grep -qE "${prog}[[:space:]]+$arg0([[:space:]]|$)" "$cand"; then wirefile="$cand"; break; fi
             done
           fi
           rel="${wirefile#"$MJ_ROOT"/}"
           if [ ! -f "$hookfile" ]; then mj_doctrine_fail wiring "$name" "hook $hookdir/$target does not exist" "ls -l $hookdir/$target"
           elif [ ! -x "$hookfile" ]; then mj_doctrine_fail wiring "$name" "hook $hookdir/$target is not executable" "chmod +x $hookdir/$target"
           elif [ -z "$wirefile" ]; then
-            mj_doctrine_fail wiring "$name" "$(basename "$path") $arg0 is not invoked by $hookdir/$target or anything in $hookdir/$target.d/" "grep -rn 'majordomus $arg0' $hookdir/$target $hookdir/$target.d 2>/dev/null"
+            mj_doctrine_fail wiring "$name" "$prog $arg0 is not invoked by $hookdir/$target or anything in $hookdir/$target.d/" "grep -rn '$prog $arg0' $hookdir/$target $hookdir/$target.d 2>/dev/null"
           elif [ ! -x "$wirefile" ]; then
             mj_doctrine_fail wiring "$name" "$rel invokes it but is not executable, so the dispatcher skips it" "chmod +x $rel"
-          elif [ -z "$resolved" ] && ! mj_hook_binary_ok "$wirefile" "$arg0"; then
-            mj_doctrine_fail wiring "$name" "'$path' is not on PATH and $rel does not name an executable majordomus" "grep -n 'majordomus $arg0' $rel"
-          elif grep -E "majordomus[[:space:]]+$arg0" "$wirefile" | grep -qE '\|\|[[:space:]]*(true|exit[[:space:]]+0)'; then
-            mj_doctrine_fail wiring "$name" "$rel invokes it but swallows the exit code (|| true)" "grep -n 'majordomus $arg0' $rel"
+          elif [ -z "$resolved" ] && ! mj_hook_binary_ok "$wirefile" "$arg0" "$prog"; then
+            mj_doctrine_fail wiring "$name" "'$path' is not on PATH and $rel does not name an executable $prog" "grep -n '$prog $arg0' $rel"
+          elif grep -E "${prog}[[:space:]]+$arg0" "$wirefile" | grep -qE '\|\|[[:space:]]*(true|exit[[:space:]]+0)'; then
+            mj_doctrine_fail wiring "$name" "$rel invokes it but swallows the exit code (|| true)" "grep -n '$prog $arg0' $rel"
           else mj_doctrine_ok wiring "$name" "wired via $rel"; fi ;;
         ci)
           if [ ! -f "$MJ_ROOT/$target" ]; then mj_doctrine_fail wiring "$name" "ci file $target does not exist"
-          elif ! grep -qE "majordomus[[:space:]]+$arg0" "$MJ_ROOT/$target"; then mj_doctrine_fail wiring "$name" "$target does not invoke majordomus $arg0" "grep -n majordomus $target"
+          elif ! grep -qE "${prog}[[:space:]]+$arg0" "$MJ_ROOT/$target"; then mj_doctrine_fail wiring "$name" "$target does not invoke $prog $arg0" "grep -n $prog $target"
           else mj_doctrine_ok wiring "$name" "invoked from $target"; fi ;;
         provider-hook)
           # A hook that exists is not a hook that captures. The state comes from driving a
@@ -309,14 +314,14 @@ mj_hook_candidates() {
   if [ -d "$1.d" ]; then find "$1.d" -type f 2>/dev/null | sort; fi
   return 0
 }
-# does the hook line that invokes "majordomus <arg0>" name an executable binary?
+# does the hook line that invokes "<prog> <arg0>" name an executable binary?
 mj_hook_binary_ok() {
-  local hookfile="$1" arg0="$2" tok
-  for tok in $(grep -E "majordomus[[:space:]]+$arg0" "$hookfile" | grep -oE '[^[:space:]"'"'"']*majordomus'); do
+  local hookfile="$1" arg0="$2" prog="${3:-majordomus}" tok
+  for tok in $(grep -E "${prog}[[:space:]]+$arg0" "$hookfile" | grep -oE "[^[:space:]\"']*$prog"); do
     case "$tok" in
       /*) [ -x "$tok" ] && return 0 ;;
       */*) [ -x "$MJ_ROOT/$tok" ] && return 0 ;;
-      majordomus) mj_has majordomus && return 0 ;;
+      "$prog") mj_has "$prog" && return 0 ;;
     esac
   done
   return 1

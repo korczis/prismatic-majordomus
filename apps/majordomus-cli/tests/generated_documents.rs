@@ -104,19 +104,23 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
     let json: Vec<&Artifact> = artifacts
         .iter()
         .filter(|a| a.format == ArtifactFormat::Json && !a.document.starts_with("providers/"))
-        // Documents whose only reader is a program are committed as JSON alone: the two the
-        // website loads, the matrix the release workflow reads, and the public metadata of
-        // each release. A YAML twin of any of them would be a file nobody opens.
+        // Documents whose only reader is a program are committed as JSON alone: the three
+        // the website loads, the matrix the release workflow reads, and the public metadata
+        // of each release. A YAML twin of any of them would be a file nobody opens.
         .filter(|a| {
             !matches!(
                 a.document.as_str(),
-                "site-registry" | "site-why" | "site-why-graph" | "site-distribution"
+                "site-registry"
+                    | "site-why"
+                    | "site-why-graph"
+                    | "site-distribution"
                     | "distribution-matrix"
             ) && !a.document.starts_with("release/")
-            // a kind's contract is a JSON Schema, which is a JSON format; the "same
-            // document in YAML" is not a thing a JSON Schema has
-            && !a.document.starts_with("schemas/")
         })
+        // a projected JSON Schema is JSON by its own contract: `.schema.json` is what a
+        // validator looks for, and a YAML sibling would be a second encoding of a file
+        // whose format is named in its extension and read by nothing that wants YAML
+        .filter(|a| !a.document.starts_with("schemas/"))
         .collect();
     assert!(json.len() >= 4, "{} JSON documents", json.len());
     for a in json {

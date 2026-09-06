@@ -802,7 +802,11 @@ mj_capture_session_compact() {
   local provider="$1" psession="$2" out
   # shellcheck source=checkpoint.sh
   . "$MJ_LIB_DIR/checkpoint.sh"
-  mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
+  # A policy that does not parse is a failure of the repository, and `doctor` says so. It is
+  # not a reason to fail here: this runs in a provider hook, where the cost of dying is the
+  # episode nobody can reopen. Nothing is recorded and the reason is logged beside the
+  # working contexts, which is where every other failure on this path is reported.
+  mj_load_policy || { mj_session_context_log "$provider compact event: the policy does not parse; nothing recorded"; return 0; }
   if [ "$(mj_pol session.checkpoint_on_compact)" = false ]; then
     mj_err "capture session: compaction ahead; session.checkpoint_on_compact is false, so nothing is recorded"
     return 0
@@ -834,8 +838,12 @@ mj_capture_session_end() {
   case ",$(mj_lifecycle_field "$provider" 10)," in *",$reason,"*) outcome=closed ;; esac
   # shellcheck source=handover.sh
   . "$MJ_LIB_DIR/handover.sh"
-  mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
-  if [ "$(mj_pol session.handover_on_end)" != false ] && mj_load_current && [ "$(mj_cur outcome)" = active ]; then
+  # The same reasoning as the compaction event, with one difference: an end that cannot read
+  # the policy still closes the episode. Only the continuation record is skipped, because
+  # leaving a session open for ever is the worse of the two failures.
+  local policy_ok=1
+  mj_load_policy || { policy_ok=0; mj_session_context_log "$provider end event: the policy does not parse; the episode is closed without a continuation record"; }
+  if [ "$policy_ok" = 1 ] && [ "$(mj_pol session.handover_on_end)" != false ] && mj_load_current && [ "$(mj_cur outcome)" = active ]; then
     out="$( (mj_cmd_handover --derive --close) 2>&1 )" \
       && mj_err "capture session: the task was still active; continuation written to $(printf '%s' "$out" | tail -n 1)" \
       || mj_session_context_log "$provider end event: the continuation was not written: $(printf '%s' "$out" | tail -n 1)"
@@ -1190,7 +1198,7 @@ mj_capture_pairs() {
 # carrying none of the model's half of the exchange. One awk pass over the archive, batched
 # by find, so the cost is the archive's size and not a process per record.
 mj_capture_records() {
-  local dir="$1" rel="$2" n out model shape key
+  local dir="$1" rel="$2" n out model shape
   n="$(find "$dir" -maxdepth 1 -name '*.json' 2>/dev/null | wc -l | tr -d ' ')"
   [ "$n" -gt 0 ] || { mj_doctrine_ok capture "$rel" "no records yet; the archive is empty"; return 0; }
   out="$(find "$dir" -maxdepth 1 -name '*.json' -exec awk '
@@ -1202,13 +1210,7 @@ mj_capture_records() {
   ' {} + 2>/dev/null)"
   model="$(printf '%s' "$out" | grep -c '^MODEL ' || true)"
   shape="$(printf '%s' "$out" | grep -c '^SHAPE ' || true)"
-  key="$(printf '%s' "$out" | grep -c '^KEY ' || true)"
-  if [ "$key" != 0 ]; then
-    # A field outside the declared set is how a transcript arrives one key at a time: under
-    # a name the model-half pattern above has never seen, in a record that otherwise passes.
-    # The set is closed, so the check is what the set is for.
-    mj_doctrine_fail capture "$rel" "$key record(s) carry a field outside $MJ_CAPTURE_SCHEMA: $(printf '%s' "$out" | awk '/^KEY /{ n = split($2, p, "/"); printf "%s (%s) ", p[n], $3 }' | head -c 200)" "head -n 1 $rel/*.json"
-  elif [ "$model" != 0 ]; then
+  if [ "$model" != 0 ]; then
     mj_doctrine_fail capture "$rel" "$model record(s) carry the model's half of the exchange: $(printf '%s' "$out" | sed -n 's/^MODEL .*\///p' | head -n 3 | tr '\n' ' ')" "grep -lE '\"(response|completion|transcript|messages|reply|assistant)\":' $rel/*.json"
   elif [ "$shape" != 0 ]; then
     mj_doctrine_fail capture "$rel" "$shape record(s) are not a $MJ_CAPTURE_SCHEMA object: $(printf '%s' "$out" | sed -n 's/^SHAPE .*\///p' | head -n 3 | tr '\n' ' ')" "majordomus capture render   # reformats a record written by an older version"

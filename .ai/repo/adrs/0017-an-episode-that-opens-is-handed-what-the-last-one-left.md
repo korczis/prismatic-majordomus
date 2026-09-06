@@ -19,7 +19,7 @@ provenance:
     - file:apps/majordomus-cli/src/capability/builtin/continuity.rs
 ---
 
-# 16. An episode that opens is handed what the last one left
+# 17. An episode that opens is handed what the last one left
 
 ## Context
 
