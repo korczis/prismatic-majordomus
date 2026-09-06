@@ -4,8 +4,8 @@
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
 //!
-//! What *is* written here is the six areas: Overview, Capabilities, Objects, Graphs,
-//! Health, API. Those are concepts rather than entities, they change when the Cockpit's
+//! What *is* written here is the seven areas: Overview, Capabilities, Objects,
+//! Directories, Graphs, Health, API. Those are concepts rather than entities, they change when the Cockpit's
 //! own shape changes, and deriving them from anything would be deriving them from a list
 //! of exactly themselves.
 
@@ -24,6 +24,8 @@ pub enum Area {
     Capabilities,
     /// The declarative objects of the layer.
     Objects,
+    /// The layer's directory contracts and their hierarchy.
+    Directories,
     /// The derived graphs.
     Graphs,
     /// The health report.
@@ -92,6 +94,13 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 "/cockpit/objects",
                 Area::Objects,
                 Some(ctx.index.objects.len()),
+                here,
+            ),
+            item(
+                "Directories",
+                "/cockpit/directories",
+                Area::Directories,
+                None,
                 here,
             ),
             item(
