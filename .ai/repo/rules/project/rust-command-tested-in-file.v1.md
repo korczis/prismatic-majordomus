@@ -35,9 +35,13 @@ describing a command that no longer behaves that way, which is the failure mode 
 tests do not.
 
 Granularity is what makes both affordable. One capability per declaration, one module per
-subject, means a test names one behaviour and a reader looking for it opens one file. A
-module that grows into several unrelated commands makes every test in it ambiguous about
-what it protects.
+subject, means a test names one behaviour and a reader looking for it opens one file. Most
+of that is already enforced and this rule does not restate it: the registry refuses a
+capability declared outside its own module's namespace, and refuses a duplicate identity —
+`capability-modules`, proved by case 91. Repeating a check that already exists would be the
+second registry this repository spends its time removing. What the registry cannot see is a
+module composed into the application that declares no command at all, and that is the one
+granularity finding this rule adds.
 
 The coverage floor is part of the same argument, and there is a case for it from this
 repository rather than from principle. A branch that added a model, a static file server and
@@ -76,8 +80,11 @@ command is reached. Adding a command to an existing module adds no line anywhere
 adding a module adds exactly one, in the composition.
 
 The crate is held to a declared coverage floor, which lives in a file rather than in a
-habit, and the coverage gate reads it. Coverage is a floor and not a target: it says which
-changes may not land, not how much testing is enough.
+habit, and the coverage gate reads it. The floor is a number and it is high: this rule reads
+`scripts/rust-coverage-threshold` and refuses a floor below ninety, so that lowering the bar
+is a visible act rather than a quiet edit that leaves every other check still passing.
+Coverage is a floor and not a target: it says which changes may not land, not how much
+testing is enough.
 
 # Failure behaviour
 
@@ -99,7 +106,8 @@ repositories that carry no executable, and a doctrine that cannot apply is not a
 
 `bash test/run.sh 88_rust_command_tested`, which builds a fixture holding a composed module
 with a test, one with only a doc example, one with neither, and one declared but composed by
-nobody, and asserts that the validator reports exactly the last two — so that either form of
+nobody, and asserts that the validator reports exactly the last two; a composed module
+declaring no command, and a floor lowered to sixty, are each required to be reported — so that either form of
 assertion is proved to satisfy the rule rather than only claimed to. It also asserts the skip
 in a repository with no crate, that a composed module with no file is reported, that the
 coverage floor must be declared, and that the module list follows a change to the composition

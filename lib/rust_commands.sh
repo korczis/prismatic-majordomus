@@ -20,6 +20,10 @@
 # Skipped, not failed, where there is no Rust crate: the layer installs into repositories
 # that carry no executable, and a doctrine that cannot apply is not a violation.
 
+# What this rule calls high coverage. Stated once, here, because the rule's prose and the
+# check must not be able to disagree about it.
+MJ_RUSTCMD_MIN_FLOOR=90
+
 # The composed command modules, one per line, from the composition itself.
 mj_rustcmd_modules() {
   awk '
@@ -71,6 +75,16 @@ mj_validate_rust_command_tested() {
     # both doc forms are executed by `cargo test --doc`: `//!` on the module and `///`
     # on an item, so both count as the module documenting itself by example
     docs="$(grep -cE '^[[:space:]]*//[/!] *```' "$f" 2>/dev/null || true)"
+    # A composed module that declares no capability is not a command module. The registry
+    # enforces that a capability sits in its own module's namespace (project rule
+    # capability-modules, case 91); what it cannot see is a module composed into the
+    # application that declares nothing at all.
+    if ! grep -qE '^[[:space:]]*capability!' "$f" 2>/dev/null; then
+      bad=$((bad + 1))
+      mj_doctrine_fail rust-command "$m" \
+        "is composed into the application and declares no capability; it is not a command module" \
+        "grep -n 'capability!' apps/majordomus-cli/src/capability/builtin/$m.rs"
+    fi
     # One finding, not two. What the rule wants is evidence beside the declaration that
     # the declaration is what it claims; requiring a particular *form* of it only invites a
     # token #[test] beside a doc example that already asserts the same thing. A doc example
@@ -97,12 +111,23 @@ mj_validate_rust_command_tested() {
   done
 
   # the floor the crate is held to is declared, not assumed
-  local floor="$MJ_ROOT/scripts/rust-coverage-threshold"
+  # "High coverage" is a number or it is an opinion. The floor must exist, be a number, and
+  # be at least MJ_RUSTCMD_MIN_FLOOR — so that lowering the bar is a visible act rather than
+  # a quiet edit that leaves every other check still passing.
+  local floor="$MJ_ROOT/scripts/rust-coverage-threshold" value=""
   if [ ! -f "$floor" ] || ! grep -qE '^[0-9]+$' "$floor" 2>/dev/null; then
     bad=$((bad + 1))
     mj_doctrine_fail rust-command coverage \
       "no coverage floor is declared, so 'high coverage' is an opinion rather than a gate" \
       "cat scripts/rust-coverage-threshold"
+  else
+    value="$(grep -m1 -oE '^[0-9]+$' "$floor")"
+    if [ "$value" -lt "$MJ_RUSTCMD_MIN_FLOOR" ]; then
+      bad=$((bad + 1))
+      mj_doctrine_fail rust-command coverage \
+        "the coverage floor is ${value}%, below the ${MJ_RUSTCMD_MIN_FLOOR}% this rule calls high" \
+        "cat scripts/rust-coverage-threshold"
+    fi
   fi
 
   [ "$bad" = 0 ] && mj_ok rust-command "-" \

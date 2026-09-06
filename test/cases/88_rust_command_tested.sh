@@ -11,8 +11,8 @@
 # it; either accepted form of assertion — an in-file #[test] or a doc example cargo runs —
 # satisfies the rule on its own; a module with neither is reported exactly once, because
 # demanding a particular form would buy a token test beside a real example; a module declared
-# and composed by nobody is reported; a composed module with no file is reported; the coverage
-# floor must be declared; and a repository with no crate is skipped rather than failed,
+# and composed by nobody is reported; a composed module with no file, and one that declares no
+# command at all, are reported; the coverage floor must be declared and must be high; and a repository with no crate is skipped rather than failed,
 # because the layer installs where there is no executable.
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
@@ -126,12 +126,29 @@ grep -q 'rust-command missing .*has no module file' doctor.txt \
   || { echo "    a composed module with no file was not reported"; grep -i rust-command doctor.txt; exit 1; }
 compose tested documented bare
 
+# --- a composed module that declares no command is not a command module
+printf 'module!(empty);\n' > "$B/empty.rs"
+compose tested documented bare empty
+doctor_out
+grep -q 'rust-command empty .*declares no capability' doctor.txt \
+  || { echo "    a composed module declaring nothing was not reported"; grep -i rust-command doctor.txt; exit 1; }
+rm -f "$B/empty.rs"; compose tested documented bare
+
 # --- the coverage floor is declared, not assumed
 rm -f scripts/rust-coverage-threshold
 doctor_out
 grep -q 'rust-command coverage .*no coverage floor is declared' doctor.txt \
   || { echo "    a missing coverage floor was not reported"; grep -i rust-command doctor.txt; exit 1; }
+
+# --- and it is high: lowering the bar is a visible act, not a quiet edit
+printf '60\n' > scripts/rust-coverage-threshold
+doctor_out
+grep -q 'rust-command coverage .*is 60%, below the 90%' doctor.txt \
+  || { echo "    a floor below the rule's minimum was not reported"; grep -i rust-command doctor.txt; exit 1; }
 printf '90\n' > scripts/rust-coverage-threshold
+doctor_out
+grep -q 'rust-command coverage' doctor.txt \
+  && { echo "    a floor at the rule's minimum was still reported"; grep -i rust-command doctor.txt; exit 1; }
 
 # --- a tree where every composed module satisfies the rule reports it once, and passes
 good_module bare
