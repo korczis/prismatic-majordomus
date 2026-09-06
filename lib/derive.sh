@@ -376,8 +376,12 @@ mj_derive_briefing_body() {
 
 # One level-one section of a record, body only. Used to quote the part of a handover a
 # resuming worker acts on without copying the document into every episode.
+# Blank lines inside the section are kept and blank lines around it are not. The first
+# version dropped every blank line, which ran a section's paragraphs together into one block
+# — in the one part of a record a resuming worker is told to act on.
 mj_derive_section() {
   awk -v want="$2" '
     /^# / { cur = substr($0, 3); sub(/[ \t]+$/, "", cur); on = (cur == want); next }
-    on { print }' "$1" | sed -e '/./,$!d' | awk 'NF { blank = 0; hold[++n] = $0; next } { blank++ } END { for (i = 1; i <= n; i++) print hold[i] }'
+    on { hold[++n] = $0; if (NF) last = n; if (NF && !first) first = n }
+    END { for (i = first; i && i <= last; i++) print hold[i] }' "$1"
 }

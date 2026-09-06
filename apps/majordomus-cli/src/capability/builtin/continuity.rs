@@ -521,9 +521,7 @@ fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
             .unwrap_or(0),
     );
 
-    let present = task.is_some()
-        || session.is_some()
-        || tallies.values().any(|n| *n > 0);
+    let present = task.is_some() || session.is_some() || tallies.values().any(|n| *n > 0);
 
     Ok(Continuity {
         present,
@@ -546,11 +544,7 @@ fn state(ctx: &Context, _: Empty) -> Result<Continuity, CapabilityError> {
 fn read_task(path: &Path) -> Option<ActiveTask> {
     let text = std::fs::read_to_string(path).ok()?;
     let map = yaml::parse_mapping(&text).ok()?;
-    let s = |k: &str| {
-        map.get(k)
-            .and_then(yaml::scalar_string)
-            .unwrap_or_default()
-    };
+    let s = |k: &str| map.get(k).and_then(yaml::scalar_string).unwrap_or_default();
     let id = s("id");
     if id.is_empty() {
         return None;

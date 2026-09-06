@@ -230,3 +230,27 @@ out="$(printf '{"session_id":"cc-10","source":"startup"}' | ./.claude/hooks/majo
 printf '%s\n' "$out" | grep -qF 'Handover' || { echo "    the next episode was not handed the record:"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1; }
 printf '%s\n' "$out" | grep -qE 'exact|advanced|diverged' || { echo "    the record arrived without a divergence label"; exit 1; }
 printf '%s\n' "$out" | grep -qF 'Next Action' || { echo "    the section a resuming worker acts on did not travel"; exit 1; }
+
+# The section arrives with its shape: blank lines inside it are what separate one paragraph
+# from the next, and a lifter that drops them runs the whole thing together in the one part
+# of the record the next worker is told to act on.
+cat > "$T/two-paragraphs.md" <<'MD'
+# Objective
+
+Prove the section lifter keeps a paragraph break.
+
+# Current State
+
+Two paragraphs below.
+
+# Next Action
+
+The first thing to do.
+
+The second thing to do.
+MD
+"$MJ" handover --no-task < "$T/two-paragraphs.md" >/dev/null
+out="$(printf '{"session_id":"cc-11","source":"startup"}' | ./.claude/hooks/majordomus-session-start 2>/dev/null)"
+printf '%s\n' "$out" | grep -qF 'The first thing to do.' || { echo "    the quoted section lost its first paragraph"; exit 1; }
+printf '%s\n' "$out" | awk '/^The first thing to do\.$/ { got = 1; next } got && !NF { blank = 1 } got && /^The second thing to do\.$/ { exit blank ? 0 : 1 } END { if (!got) exit 1 }' \
+  || { echo "    the paragraph break inside the quoted section was dropped"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1; }

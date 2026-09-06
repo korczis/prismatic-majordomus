@@ -19,7 +19,14 @@ use serde_json::Value;
 
 /// A record of the local half: the front matter the resolver reads, over a body with the
 /// section a resuming worker acts on.
-fn record(created: &str, task: &str, branch: &str, head: &str, worktree: &str, next: &str) -> String {
+fn record(
+    created: &str,
+    task: &str,
+    branch: &str,
+    head: &str,
+    worktree: &str,
+    next: &str,
+) -> String {
     format!(
         "---\n\
          schema_version: 1\n\
@@ -62,7 +69,10 @@ fn a_record_from_another_branch_is_never_offered_however_new_it_is() {
     let root = f.root();
     let root_s = root.to_string_lossy().to_string();
     let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
-    let branch = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
 
     // The older record is this branch's. The newer one is another branch's, in the same
     // worktree, and is the one a "latest file wins" resolver would return.
@@ -109,7 +119,10 @@ fn a_record_written_on_a_commit_this_history_no_longer_has_is_labelled_diverged(
     let f = Fixture::new();
     let root = f.root();
     let root_s = root.to_string_lossy().to_string();
-    let branch = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
 
     // A commit id of the right shape that this repository has never seen. The resolver must
     // ask git rather than compare strings, and git must answer "not an ancestor".
@@ -145,12 +158,22 @@ fn a_record_written_at_this_commit_is_exact_and_one_behind_it_is_advanced() {
     let f = Fixture::new();
     let root = f.root();
     let root_s = root.to_string_lossy().to_string();
-    let branch = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
     let first = f.git(&["rev-parse", "HEAD"]).trim().to_string();
 
     f.write(
         ".ai/local/state/handovers/a.md",
-        &record("2026-01-01T00:00:00Z", "t", &branch, &first, &root_s, "Go on."),
+        &record(
+            "2026-01-01T00:00:00Z",
+            "t",
+            &branch,
+            &first,
+            &root_s,
+            "Go on.",
+        ),
     );
 
     let mut s = Served::start(&root, &[]);
@@ -177,9 +200,15 @@ fn a_malformed_record_degrades_the_answer_and_never_fails_the_call() {
     let root = f.root();
     let root_s = root.to_string_lossy().to_string();
     let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
-    let branch = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
 
-    f.write(".ai/local/state/handovers/broken.md", "no front matter here\n");
+    f.write(
+        ".ai/local/state/handovers/broken.md",
+        "no front matter here\n",
+    );
     f.write(
         ".ai/local/state/handovers/unsupported.md",
         "---\nschema_version: 99\ncreated_at: 2026-01-01T00:00:00Z\nhead: abc\n---\n",
@@ -201,7 +230,9 @@ fn a_malformed_record_degrades_the_answer_and_never_fails_the_call() {
     assert_eq!(c["handover"]["task_id"], "t-good");
     let findings = c["findings"].as_array().unwrap();
     assert!(
-        findings.iter().any(|f| f.as_str().unwrap().contains("could not be read as records")),
+        findings
+            .iter()
+            .any(|f| f.as_str().unwrap().contains("could not be read as records")),
         "skipping is reported, never silent: {findings:?}"
     );
     s.stop();
@@ -213,7 +244,10 @@ fn a_future_schema_version_is_refused_rather_than_read_as_this_one() {
     let root = f.root();
     let root_s = root.to_string_lossy().to_string();
     let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
-    let branch = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
 
     // Everything about this record is readable except the number that says what its fields
     // mean. Reading it anyway is how a field that changed meaning is quietly misread.
@@ -229,7 +263,14 @@ fn a_future_schema_version_is_refused_rather_than_read_as_this_one() {
     f.write(".ai/local/state/handovers/future.md", &newer);
     f.write(
         ".ai/local/state/handovers/present.md",
-        &record("2026-01-01T00:00:00Z", "t-now", &branch, &head, &root_s, "From this one."),
+        &record(
+            "2026-01-01T00:00:00Z",
+            "t-now",
+            &branch,
+            &head,
+            &root_s,
+            "From this one.",
+        ),
     );
 
     let mut s = Served::start(&root, &[]);
@@ -375,7 +416,10 @@ fn the_local_half_is_served_here_and_projected_nowhere() {
     let root = f.root();
     let root_s = root.to_string_lossy().to_string();
     let head = f.git(&["rev-parse", "HEAD"]).trim().to_string();
-    let branch = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    let branch = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
     f.write(
         ".ai/local/state/handovers/a.md",
         &record(
