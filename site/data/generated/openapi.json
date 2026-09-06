@@ -69,69 +69,6 @@
   "schema": 1,
   "schemas": [
     {
-      "description": "The active task of this checkout, when there is one.",
-      "is_enum": false,
-      "name": "ActiveTask",
-      "properties": [
-        {
-          "description": "The task id.",
-          "name": "id",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "What is being worked on.",
-          "name": "task",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The execution profile it runs under.",
-          "name": "profile",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Its typed outcome so far: `active`, `handed_over`, or a finished one.",
-          "name": "outcome",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The paths it claims.",
-          "name": "scope",
-          "refs": [],
-          "required": false,
-          "type": "array of string"
-        },
-        {
-          "description": "When it started.",
-          "name": "started_at",
-          "refs": [],
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "The commit it started at.",
-          "name": "head",
-          "refs": [],
-          "required": false,
-          "type": "string"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Continuity"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "The input of `peers.announce`: what the calling peer is working on.",
       "is_enum": false,
       "name": "AnnounceInput",
@@ -971,108 +908,107 @@
       "variants": []
     },
     {
-      "description": "What the lifecycle of this checkout is holding.",
+      "description": "A directory contract as the document declares it, before anything is inherited.",
       "is_enum": false,
-      "name": "Continuity",
+      "name": "ContractView",
       "properties": [
         {
-          "description": "Whether this checkout's lifecycle has ever run: a ledger line, a task, an episode or\na record. False in a fresh clone, which is not a fault.\n\nIt is not \"the directory exists\". Several things create that directory before\nanything has been recorded in it, so a reader that took its presence for evidence\nwould be told the lifecycle had run in a checkout where it never had.",
-          "name": "present",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "The worktree this answer is about. Every selection below is scoped to it.",
-          "name": "worktree",
+          "description": "The document's identity; it survives a move, the file name does not.",
+          "name": "id",
           "refs": [],
           "required": true,
           "type": "string"
         },
         {
-          "description": "The branch, or `DETACHED`.",
-          "name": "branch",
+          "description": "The document's path, repository-relative.",
+          "name": "path",
           "refs": [],
           "required": true,
           "type": "string"
         },
         {
-          "description": "The commit this checkout is on.",
-          "name": "head",
+          "description": "One line naming the directory.",
+          "name": "title",
           "refs": [],
           "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "One line saying what the directory is for.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`active` or `deprecated`; a deprecated document is listed and never applied.",
+          "name": "status",
+          "refs": [],
+          "required": true,
           "type": "string"
         },
         {
-          "description": "`clean` or `dirty`.",
-          "name": "working_tree",
+          "description": "`directory`, `subtree` or `explicit`: how far the document reaches.",
+          "name": "scope",
           "refs": [],
-          "required": false,
+          "required": true,
           "type": "string"
         },
         {
-          "description": "The open episode, or `None`.",
-          "name": "session",
-          "refs": [
-            "OpenSession"
-          ],
-          "required": false,
-          "type": "OpenSession | null"
+          "description": "`extend`, `replace` or `final`: how it composes with what is above it.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
         },
         {
-          "description": "The active task, or `None`.",
-          "name": "task",
-          "refs": [
-            "ActiveTask"
-          ],
-          "required": false,
-          "type": "ActiveTask | null"
+          "description": "Ties within one depth are broken by this, then by path.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
         },
         {
-          "description": "The record the next worker would resume from, or `None` when nothing resolves here.",
-          "name": "handover",
-          "refs": [
-            "Record"
-          ],
-          "required": false,
-          "type": "Record | null"
+          "description": "`*`, or the providers the document is written for.",
+          "name": "providers",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
         },
         {
-          "description": "The newest progress note for this worktree and branch, or `None`.",
-          "name": "checkpoint",
-          "refs": [
-            "Record"
-          ],
-          "required": false,
-          "type": "Record | null"
+          "description": "Who it addresses; both when it says nothing.",
+          "name": "audience",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
         },
         {
-          "description": "Unresolved questions on this branch. Every one refuses `finish --outcome completed`,\nwhichever task opened it.",
-          "name": "blockers",
+          "description": "Pathspecs whose change names this document for review.",
+          "name": "tracks",
           "refs": [],
           "required": false,
           "type": "array of string"
         },
         {
-          "description": "How many records of each kind this checkout holds, against the policy's caps.",
-          "name": "tallies",
+          "description": "Whether the directories below owe a contract, when this document says.",
+          "name": "children_require_contract",
           "refs": [],
-          "required": true,
-          "type": "map of integer (uint)"
+          "required": false,
+          "type": "boolean | null"
         },
         {
-          "description": "What a reader should know before trusting any of the above: a diverged record, a\nforeign open session, a malformed file that was skipped. Empty is the good case.",
-          "name": "findings",
+          "description": "Subtrees below this one that owe nothing: carried, not authored here.",
+          "name": "children_exempt",
           "refs": [],
           "required": false,
           "type": "array of string"
         }
       ],
       "type": "object",
-      "used_by": [
-        "continuity.state"
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
       ],
-      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -1272,37 +1208,209 @@
       "variants": []
     },
     {
-      "description": "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice.",
-      "is_enum": true,
-      "name": "Divergence",
-      "properties": [],
-      "type": "\"exact\" | \"advanced\" | \"diverged\" | \"different_context\" | \"unknown\"",
+      "description": "One directory of the layer, what it owes, and what applies to it.",
+      "is_enum": false,
+      "name": "DirectoryNode",
+      "properties": [
+        {
+          "description": "Repository-relative, forward slashes.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Segments below the layer root; the root itself is 0.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The directory above, when it is inside the layer.",
+          "name": "parent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The directories immediately below, sorted.",
+          "name": "children",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it carries the contract it owes.",
+          "name": "state",
+          "refs": [
+            "DirectoryState"
+          ],
+          "required": true,
+          "type": "DirectoryState"
+        },
+        {
+          "description": "Whether a contract is owed here at all.",
+          "name": "requires_contract",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The contract that made the requirement explicit, when one did.",
+          "name": "governed_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The contract that released this subtree, when one did.",
+          "name": "exempted_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many objects of any kind the index holds directly in this directory.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The contract this directory declares, before inheritance.",
+          "name": "contract",
+          "refs": [
+            "ContractView"
+          ],
+          "required": false,
+          "type": "ContractView | null"
+        },
+        {
+          "description": "The contracts that apply here once inheritance is resolved, least specific first.\nPresent when the request asked for it, or when it asked about one path.",
+          "name": "effective",
+          "refs": [
+            "EffectiveEntry"
+          ],
+          "required": false,
+          "type": "array of EffectiveEntry"
+        }
+      ],
+      "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "Record"
+        "DirectoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The layer's directories, what each owes, and the contracts that apply.",
+      "is_enum": false,
+      "name": "DirectoryReport",
+      "properties": [
+        {
+          "description": "The layer root the tree is rooted at.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The directories in each state.",
+          "name": "tallies",
+          "refs": [
+            "DirectoryTallies"
+          ],
+          "required": true,
+          "type": "DirectoryTallies"
+        },
+        {
+          "description": "Every directory asked for, sorted by path.",
+          "name": "directories",
+          "refs": [
+            "DirectoryNode"
+          ],
+          "required": true,
+          "type": "array of DirectoryNode"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a directory of the layer carries the contract it owes.",
+      "is_enum": true,
+      "name": "DirectoryState",
+      "properties": [],
+      "type": "\"documented\" | \"exempt\" | \"owed\"",
+      "used_by": [
+        "directories.list"
+      ],
+      "used_by_schemas": [
+        "DirectoryNode"
       ],
       "values": [
         {
-          "description": "Written at this commit. Trust it.",
-          "value": "exact"
+          "description": "It carries a context document of its own.",
+          "value": "documented"
         },
         {
-          "description": "Git has moved forward since. Trust it, and expect some of it to be done.",
-          "value": "advanced"
+          "description": "It owes none, because a contract above it says so.",
+          "value": "exempt"
         },
         {
-          "description": "The recorded commit is not an ancestor: history was rewritten. Trust git, not this.",
-          "value": "diverged"
-        },
-        {
-          "description": "Another branch or another worktree. This record is not about your work.",
-          "value": "different_context"
-        },
-        {
-          "description": "Git could not answer, so this process says so rather than guessing `exact`.",
-          "value": "unknown"
+          "description": "It owes one and has none.",
+          "value": "owed"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "How many directories are in each state.",
+      "is_enum": false,
+      "name": "DirectoryTallies",
+      "properties": [
+        {
+          "description": "Every directory of the layer the index knows.",
+          "name": "directories",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Carrying a contract of their own.",
+          "name": "documented",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Released by a contract above them.",
+          "name": "exempt",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Owing a contract and carrying none.",
+          "name": "owed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -1341,6 +1449,69 @@
       "variants": []
     },
     {
+      "description": "One contract in a directory's effective chain, in the order it is applied.",
+      "is_enum": false,
+      "name": "EffectiveEntry",
+      "properties": [
+        {
+          "description": "The document's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The document's path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Depth below the layer root; less is less specific and applies first.",
+          "name": "depth",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The declared order, the second sort key.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`extend`, `replace` or `final`.",
+          "name": "composition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it applies to this directory, in words.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True for the directory's own document, false for one it inherits.",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DirectoryNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -1359,7 +1530,7 @@
       "used_by": [
         "capabilities.list",
         "capabilities.describe",
-        "continuity.state",
+        "directories.list",
         "graph.get",
         "graph.list",
         "health.report",
@@ -1956,28 +2127,6 @@
       "variants": []
     },
     {
-      "description": "Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered.",
-      "is_enum": true,
-      "name": "Match",
-      "properties": [],
-      "type": "\"same_worktree_same_branch\" | \"same_branch\"",
-      "used_by": [],
-      "used_by_schemas": [
-        "Record"
-      ],
-      "values": [
-        {
-          "description": "Same repository, same worktree, same branch.",
-          "value": "same_worktree_same_branch"
-        },
-        {
-          "description": "Same repository, same branch, another worktree of it.",
-          "value": "same_branch"
-        }
-      ],
-      "variants": []
-    },
-    {
       "description": "How, if at all, a capability appears to an MCP client.",
       "is_enum": false,
       "name": "McpExposure",
@@ -2350,76 +2499,6 @@
       "used_by": [],
       "used_by_schemas": [
         "ResourceView"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "The open episode of this worktree, when there is one.",
-      "is_enum": false,
-      "name": "OpenSession",
-      "properties": [
-        {
-          "description": "The episode's id.",
-          "name": "session_id",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "When it opened.",
-          "name": "started_at",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Who opened it.",
-          "name": "owner",
-          "refs": [],
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "The worker identity, when one was supplied. Never inferred.",
-          "name": "worker",
-          "refs": [],
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "The provider whose event opened it, when one did.",
-          "name": "provider",
-          "refs": [],
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "The branch it opened on.",
-          "name": "branch",
-          "refs": [],
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "The commit it opened at.",
-          "name": "start_head",
-          "refs": [],
-          "required": false,
-          "type": "string"
-        },
-        {
-          "description": "True when the open record here belongs to another checkout. Such a record is\nreported and never treated as this checkout's episode.",
-          "name": "foreign",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Continuity"
       ],
       "values": [],
       "variants": []
@@ -2799,87 +2878,6 @@
           "value": "binary"
         }
       ],
-      "variants": []
-    },
-    {
-      "description": "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file.",
-      "is_enum": false,
-      "name": "Record",
-      "properties": [
-        {
-          "description": "Repository-relative path. The body is at the path; it is not copied here.",
-          "name": "path",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "When the record says it was written.",
-          "name": "created_at",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The task it belongs to, or `none`.",
-          "name": "task_id",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The branch it was written on.",
-          "name": "branch",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The commit it was written at.",
-          "name": "head",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Whether the working tree was clean or dirty then.",
-          "name": "working_tree",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Which tier of the resolution rule matched.",
-          "name": "matched",
-          "refs": [
-            "Match"
-          ],
-          "required": true,
-          "type": "Match"
-        },
-        {
-          "description": "How far its commit is from this one.",
-          "name": "divergence",
-          "refs": [
-            "Divergence"
-          ],
-          "required": true,
-          "type": "Divergence"
-        },
-        {
-          "description": "The section a resuming worker acts on, when the record has one. A handover's `Next\nAction`; empty for a record that carries no sections.",
-          "name": "next_action",
-          "refs": [],
-          "required": false,
-          "type": "string"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Continuity"
-      ],
-      "values": [],
       "variants": []
     },
     {
@@ -3692,8 +3690,8 @@
       ]
     },
     {
-      "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes.",
-      "name": "continuity",
+      "description": "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved.",
+      "name": "directories",
       "operations": [
         {
           "benchmark": "required",
@@ -3701,28 +3699,65 @@
           "body_examples": [],
           "body_schema": "",
           "cache": "process",
-          "cache_detail": "max_entries=2, ttl_seconds=2",
+          "cache_detail": "max_entries=8, ttl_seconds=5",
           "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/continuity\"",
-          "description": "The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence.",
-          "id": "continuity.state",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/directories?path=.ai%2Frepo%2Frules&effective=true&state=owed\"",
+          "description": "Every directory of the layer the index knows, with the contract it declares, whether it owes one and which contract decided, and — for a named path, or when asked for everywhere — the effective chain composed from the root down, least specific first.",
+          "id": "directories.list",
           "kind": "query",
           "mcp_resource": {
-            "name": "continuity",
-            "uri": "majordomus://continuity"
+            "name": "directories",
+            "uri": "majordomus://directories"
           },
-          "mcp_tool": "majordomus_continuity",
+          "mcp_tool": "majordomus_directories",
           "method": "GET",
-          "parameters": [],
-          "path": "/api/v1/continuity",
+          "parameters": [
+            {
+              "description": "One directory, repository-relative and inside the layer. Its effective chain is\nalways resolved. Absent means every directory of the layer.",
+              "examples": [
+                {
+                  "case": "one-directory",
+                  "value": "\".ai/repo/rules\""
+                }
+              ],
+              "name": "path",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Resolve the effective chain for every directory, not only for a named one.",
+              "examples": [
+                {
+                  "case": "effective-everywhere",
+                  "value": "true"
+                }
+              ],
+              "name": "effective",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Only directories in this state: `documented`, `exempt` or `owed`.",
+              "examples": [
+                {
+                  "case": "owed",
+                  "value": "\"owed\""
+                }
+              ],
+              "name": "state",
+              "required": false,
+              "type": "DirectoryState | null"
+            }
+          ],
+          "path": "/api/v1/directories",
           "provenance": {
-            "module": "majordomus_cli::capability::builtin::continuity",
+            "module": "majordomus_cli::capability::builtin::directories",
             "source": "builtin"
           },
           "responses": [
             {
-              "description": "What the lifecycle is holding: the result.",
-              "schema": "Continuity",
+              "description": "The layer's directory contracts: the result.",
+              "schema": "DirectoryReport",
               "status": "200"
             },
             {
@@ -3746,9 +3781,9 @@
               "status": "default"
             }
           ],
-          "result_schema": "Continuity",
+          "result_schema": "DirectoryReport",
           "stability": "behaviorally_verified",
-          "summary": "What the lifecycle is holding"
+          "summary": "The layer's directory contracts"
         }
       ]
     },

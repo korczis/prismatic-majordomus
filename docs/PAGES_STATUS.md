@@ -5,7 +5,13 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md).
 
-Generated from canonical inputs `dd5ebfe44b8e`.
+<<<<<<< HEAD
+Generated from canonical inputs `4896c24baabb`.
+||||||| parent of c73c52fc (fix(ci): satisfy the gates the branch had not been run through)
+Generated from canonical inputs `8f956d66b449`.
+=======
+Generated from canonical inputs `026987245fb4`.
+>>>>>>> c73c52fc (fix(ci): satisfy the gates the branch had not been run through)
 
 ## Controlled budget
 

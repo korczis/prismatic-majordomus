@@ -35,21 +35,21 @@
       "tool": "majordomus_capabilities"
     },
     {
-      "api_anchor": "/docs/api/#op-continuity-state",
+      "api_anchor": "/docs/api/#op-directories-list",
       "claims": [],
       "cli": null,
-      "id": "continuity.state",
+      "id": "directories.list",
       "kind": "query",
-      "module": "continuity",
-      "module_route": "/registry/modules/continuity/",
-      "resource": "majordomus://continuity",
-      "route": "/registry/capabilities/continuity-state/",
-      "slug": "continuity-state",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "module": "directories",
+      "module_route": "/registry/modules/directories/",
+      "resource": "majordomus://directories",
+      "route": "/registry/capabilities/directories-list/",
+      "slug": "directories-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
       "tests": [],
-      "title": "What the lifecycle is holding",
-      "tool": "majordomus_continuity"
+      "title": "The layer's directory contracts",
+      "tool": "majordomus_directories"
     },
     {
       "api_anchor": "/docs/api/#op-graph-get",
@@ -303,15 +303,7 @@
         "test": "test/cases/91_canonical_architecture.sh"
       }
     ],
-    "cli": [
-      {
-        "id": "cli-documentation-executable",
-        "implementation": "apps/majordomus-cli/src/cli.rs",
-        "route": "/guarantees/cli-documentation-executable/",
-        "status": "guaranteed",
-        "test": "apps/majordomus-cli/tests/cli_docs.rs"
-      }
-    ],
+    "cli": [],
     "executable": [
       {
         "id": "mcp-data-driven",
@@ -440,7 +432,7 @@
   },
   "counts": {
     "capabilities": 15,
-    "claims": 21,
+    "claims": 20,
     "modules": 8
   },
   "generator": "majordomus-cli 0.1.0",
@@ -469,18 +461,18 @@
     {
       "capabilities": [
         {
-          "id": "continuity.state",
-          "route": "/registry/capabilities/continuity-state/",
-          "slug": "continuity-state"
+          "id": "directories.list",
+          "route": "/registry/capabilities/directories-list/",
+          "slug": "directories-list"
         }
       ],
       "claims": [],
-      "id": "continuity",
-      "route": "/registry/modules/continuity/",
-      "slug": "continuity",
-      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
-      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
-      "title": "Continuity"
+      "id": "directories",
+      "route": "/registry/modules/directories/",
+      "slug": "directories",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/directories.rs",
+      "title": "Directory contracts"
     },
     {
       "capabilities": [

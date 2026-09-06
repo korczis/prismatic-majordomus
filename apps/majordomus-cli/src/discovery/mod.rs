@@ -264,9 +264,7 @@ pub fn discover(
         .find(|c| c.kind == CONTEXT_KIND)
         .map(|c| c.id.clone());
     let context_names: Vec<&str> = match (&context_class, repo.manifest().context.as_ref()) {
-        (Some(_), Some(conventions)) => {
-            conventions.documents.iter().map(String::as_str).collect()
-        }
+        (Some(_), Some(conventions)) => conventions.documents.iter().map(String::as_str).collect(),
         _ => Vec::new(),
     };
     let is_context_document = |rel: &str| -> bool {
@@ -274,7 +272,7 @@ pub fn discover(
             return false;
         }
         let name = rel.rsplit('/').next().unwrap_or(rel);
-        context_names.iter().any(|d| *d == name)
+        context_names.contains(&name)
     };
     for class in &sources.sources {
         let mut paths = source.enumerate(repo.root(), &class.pathspec)?;
