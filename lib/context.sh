@@ -238,10 +238,13 @@ mj_context_sections() {
   # 8. relevant files: what is already touched inside the claimed scope
   if [ "$have_task" = 1 ] && [ -n "$profile" ]; then
     if [ "$(mj_pro context.relevant_files)" = true ]; then
-      local f s inside n=0 tmpf; tmpf="$MJ_CTX_TMP/files.tmp"; : > "$tmpf"
+      local f s inside n=0 tmpf scope_list; tmpf="$MJ_CTX_TMP/files.tmp"; : > "$tmpf"
+      # the scope is read once: reading it again for every touched file was one awk per
+      # file, thousands of them in a tree with a long diff
+      scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope)"
       for f in $(mj_git_touched "$(mj_cur head)"); do
         mj_is_ai_path "$f" && continue
-        inside=0; for s in $(mj_ylist "$MJ_CUR_FLAT" scope); do mj_path_contains "$s" "$f" && { inside=1; break; }; done
+        inside=0; for s in $scope_list; do mj_path_contains "$s" "$f" && { inside=1; break; }; done
         [ "$inside" = 1 ] && { printf '%s\n' "$f" >> "$tmpf"; n=$((n + 1)); }
       done
       if [ "$n" -gt 0 ]; then
