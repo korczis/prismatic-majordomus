@@ -54,7 +54,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus distribution releases`](#majordomus-distribution-releases) | `/docs/cli/distribution/releases/` | Every recorded release, newest first, and the one an unpinned installation resolves to |
 | [`majordomus distribution metadata`](#majordomus-distribution-metadata) | `/docs/cli/distribution/metadata/` | The public metadata one release record publishes, rendered from the record alone |
 | [`majordomus distribution build`](#majordomus-distribution-build) | `/docs/cli/distribution/build/` | What this executable is: version, target triple, profile, commit |
-| [`majordomus worktree`](#majordomus-worktree) | `/docs/cli/worktree/` | The branch-to-worktree topology: where every linked worktree belongs (<repo>-wt/<branch>), where each one is, and the lifecycle — create, migrate, repair, guard |
+| [`majordomus worktree`](#majordomus-worktree) | `/docs/cli/worktree/` | The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard |
 | [`majordomus worktree status`](#majordomus-worktree-status) | `/docs/cli/worktree/status/` | Where this call is — branch, worktree, canonical or not, uncommitted work — and how many errors the whole topology carries; exit 10 when this worktree is out of place |
 | [`majordomus worktree list`](#majordomus-worktree-list) | `/docs/cli/worktree/list/` | Every registered worktree with its standing, one line each; exit 10 when the topology has an error |
 | [`majordomus worktree topology`](#majordomus-worktree-topology) | `/docs/cli/worktree/topology/` | The whole topology: repository, container, trunk, every worktree, every branch without a worktree, every diagnostic; exit 10 when it has an error |
@@ -150,7 +150,7 @@ majordomus serve [OPTIONS]
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--host` | `<HOST>` | `127.0.0.1` | Interface to bind; loopback unless you say otherwise |
 | `--port` | `<PORT>` | `8741` | Port to bind; 0 picks a free one and the address is logged on stderr |
-| `--deployment` | `<ID>` | — | Bind the address this deployment object declares (.ai/repo/deployments/<ID>.yaml) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's |
+| `--deployment` | `<ID>` | — | Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's |
 
 Examples:
 
@@ -1334,7 +1334,7 @@ Examples:
 <a id="majordomus-worktree"></a>
 ## `majordomus worktree`
 
-The branch-to-worktree topology: where every linked worktree belongs (<repo>-wt/<branch>), where each one is, and the lifecycle — create, migrate, repair, guard
+The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
 
 Subcommands: [`majordomus worktree status`](#majordomus-worktree-status), [`majordomus worktree list`](#majordomus-worktree-list), [`majordomus worktree topology`](#majordomus-worktree-topology), [`majordomus worktree root`](#majordomus-worktree-root), [`majordomus worktree path`](#majordomus-worktree-path), [`majordomus worktree inspect`](#majordomus-worktree-inspect), [`majordomus worktree create`](#majordomus-worktree-create), [`majordomus worktree ensure`](#majordomus-worktree-ensure), [`majordomus worktree migrate`](#majordomus-worktree-migrate), [`majordomus worktree validate`](#majordomus-worktree-validate), [`majordomus worktree doctor`](#majordomus-worktree-doctor), [`majordomus worktree guard`](#majordomus-worktree-guard), [`majordomus worktree repair`](#majordomus-worktree-repair), [`majordomus worktree remove`](#majordomus-worktree-remove), [`majordomus worktree cleanup`](#majordomus-worktree-cleanup), [`majordomus worktree branches`](#majordomus-worktree-branches).
 
