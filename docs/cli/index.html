@@ -169,16 +169,16 @@
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">56</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">57</p>
       <p class="mt-1 text-sm text-body-subtle">commands</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">52</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">53</p>
       <p class="mt-1 text-sm text-body-subtle">of them you can run</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">417</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">425</p>
       <p class="mt-1 text-sm text-body-subtle">documented arguments</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">62</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">63</p>
       <p class="mt-1 text-sm text-body-subtle">executed examples</p>
     </div></div>
 
@@ -269,6 +269,10 @@ The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool b
     </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/web/report/benchmarks/" class="flex flex-col gap-1 px-4 py-3 sm:pl-14 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus web report benchmarks</span>
       <span class="break-words text-sm text-body sm:flex-1">The benchmark run: a results document, or the accepted baseline</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/web/report/ui/" class="flex flex-col gap-1 px-4 py-3 sm:pl-14 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus web report ui</span>
+      <span class="break-words text-sm text-body sm:flex-1">The UI conformance audit, rendered as a section of the test surface (/tests/ui)</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/web/compose/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus web compose</span>
@@ -409,8 +413,8 @@ The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool b
     </a></li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What makes this true</h2>
-  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.json" class="break-all font-mono text-fg-brand hover:underline">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
-  <p class="mt-3 max-w-3xl text-sm text-body">The whole command line on one page: <a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="text-fg-brand hover:underline">the registry's command-line page</a>. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">check</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) belongs to the <em>shell</em> tool <code class="font-mono">bin/majordomus</code>, a different program: see <a href="https://korczis.github.io/prismatic-majordomus/commands/" class="text-fg-brand hover:underline">Commands</a> and its <a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="text-fg-brand hover:underline">specification</a>.</p>
+  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
+  <p class="mt-3 max-w-3xl text-sm text-body">The whole command line on one page: <a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="text-fg-brand underline">the registry's command-line page</a>. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">check</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) belongs to the <em>shell</em> tool <code class="font-mono">bin/majordomus</code>, a different program: see <a href="https://korczis.github.io/prismatic-majordomus/commands/" class="text-fg-brand underline">Commands</a> and its <a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="text-fg-brand underline">specification</a>.</p>
 </div>
 
 </main>
@@ -427,7 +431,7 @@ The task lifecycle (init, start, check, finish, doctor, ...) is the shell tool b
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

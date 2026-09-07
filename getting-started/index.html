@@ -172,7 +172,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
   <div class="min-w-0">
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>Majordomus is a directory in your repository plus a portable-shell CLI. There is no server to run and no account to create. The steps below are the ones the tool's own tests exercise.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>Majordomus is a directory in your repository plus a portable-shell CLI. There is no server to run and no account to create. The steps below are the ones the tool's own tests exercise.</p>
 </article>
     <ol class="mt-8 space-y-6">
       <li class="min-w-0"><h2 class="mb-2 text-lg font-semibold text-heading"><span class="font-mono text-fg-brand">1</span> Install the CLI</h2>
@@ -183,8 +183,7 @@
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
       <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
     </button>
-  </figcaption>
-  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh</code></pre></div>
+  </figcaption><div class="overflow-hidden"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading whitespace-pre-wrap break-all" x-ref="src" tabindex="0"><code class="language-bash">curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh</code></pre></div>
 </figure>
 <p class="mt-2 text-sm text-body">One archive for your machine, its digest verified before anything is unpacked, into <code class="font-mono text-heading">$HOME/.local/bin</code>. <a href="https://korczis.github.io/prismatic-majordomus/docs/install/" class="font-medium text-fg-brand hover:underline">Pinning a version, choosing where it goes, and the security model &rarr;</a></p></li>
       <li class="min-w-0"><h2 class="mb-2 text-lg font-semibold text-heading"><span class="font-mono text-fg-brand">2</span> Add it to a repository</h2>
@@ -195,8 +194,7 @@
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
       <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
     </button>
-  </figcaption>
-  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">majordomus init
+  </figcaption><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src" tabindex="0"><code class="language-bash">majordomus init
 majordomus update
 majordomus doctor</code></pre></div>
 </figure>
@@ -209,8 +207,7 @@ majordomus doctor</code></pre></div>
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
       <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
     </button>
-  </figcaption>
-  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">majordomus start &quot;fix OAuth callback&quot; --scope lib/auth --profile debugging</code></pre></div>
+  </figcaption><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src" tabindex="0"><code class="language-bash">majordomus start &quot;fix OAuth callback&quot; --scope lib/auth --profile debugging</code></pre></div>
 </figure>
 <p class="mt-2 text-sm text-body">Scope is the set of paths the worker may touch. Profile defaults to <code class="font-mono text-heading">implementation</code>. Identity fields are computed from git; a worker never writes them.</p></li>
       <li class="min-w-0"><h2 class="mb-2 text-lg font-semibold text-heading"><span class="font-mono text-fg-brand">4</span> Work, checkpoint, check</h2>
@@ -221,8 +218,7 @@ majordomus doctor</code></pre></div>
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
       <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
     </button>
-  </figcaption>
-  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">majordomus check --checkpoint
+  </figcaption><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src" tabindex="0"><code class="language-bash">majordomus check --checkpoint
 majordomus check --explain   # the effective policy and profile</code></pre></div>
 </figure>
 <p class="mt-2 text-sm text-body">A file outside the scope is a failure, not a warning. A stale checkpoint is a warning and never blocks.</p></li>
@@ -234,8 +230,7 @@ majordomus check --explain   # the effective policy and profile</code></pre></di
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
       <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
     </button>
-  </figcaption>
-  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">printf &#39;# Objective\
+  </figcaption><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src" tabindex="0"><code class="language-bash">printf &#39;# Objective\
 …\
 # Current State\
 …\
@@ -249,7 +244,7 @@ majordomus finish --outcome completed --verify-command &quot;make test&quot;</co
     </ol>
     <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">Task lifecycle</span><span class="font-mono text-xs text-body-subtle">from lib/finish.sh outcome vocabulary</span></figcaption>
-  <div class="overflow-x-auto p-4"><pre class="mermaid m-0 min-w-[20rem] bg-transparent font-mono text-xs text-heading [&_svg]:mx-auto [&_svg]:block">stateDiagram-v2
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 min-w-[20rem] bg-transparent font-mono text-xs text-heading [&_svg]:mx-auto [&_svg]:block" tabindex="0">stateDiagram-v2
     [*] --&gt; active: start
     active --&gt; active: check --checkpoint
     active --&gt; handed_over: handover --close
@@ -289,7 +284,7 @@ majordomus finish --outcome completed --verify-command &quot;make test&quot;</co
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

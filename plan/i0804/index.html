@@ -172,7 +172,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span><span class="text-sm text-body">wave 2 · p1 · deep-work profile · runs alone</span></p>
-  <p class="mt-3 text-sm text-body">Part of <a href="https://korczis.github.io/prismatic-majordomus/plan/m003/" class="text-fg-brand hover:underline">M003 — A session is a durable envelope, and knowledge is compiled from what is already canonical</a>.</p>
+  <p class="mt-3 text-sm text-body">Part of <a href="https://korczis.github.io/prismatic-majordomus/plan/m003/" class="text-fg-brand underline">M003 — A session is a durable envelope, and knowledge is compiled from what is already canonical</a>.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Implement `session close`: read the active record, derive the episode&#39;s references from the ledger between its start and now, write an immutable closed record with computed end-state git facts and an optional authored summary body, remove the active record, and append the close event to the ledger.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">This is the mechanism that makes the session an envelope rather than a narrative. Nothing accumulates references during the episode, so no command outside session pays for them; and because the ledger is append-only and machine-written, the envelope is a derivation of existing evidence rather than a second account of it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">The ledger records task, checkpoint, handover, finish, decision, question, plan and maintenance events, each with a timestamp, a branch and a head. Nothing reads a time range out of it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">A closed record under .majordomus/state/sessions/ carries the computed identity, started_at and closed_at, start and end head and working tree, the outcome, and reference lists of task ids, issue ids, milestone ids, checkpoint paths, handover paths, decision entries and question ids observed in the ledger window. It copies no body. An authored summary on stdin is optional and is stored as the record body, subject to the identity-field refusal every other record uses.</p>
@@ -202,8 +202,8 @@
 <ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">session_closes</li><li class="font-mono text-heading break-words">envelope_is_references</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <div class="mt-4 overflow-x-auto rounded-base border border-default">
-    <table class="w-full min-w-[34rem] text-left text-sm">
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
       <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">session_closes</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">test/run.sh 61_session_envelope</td><td class="px-4 py-2 text-body">1 passed. Closing writes an immutable record, removes the open one and appends exactly one session.closed event; closing with nothing open exits 12; a summary carrying an identity field exits 10 and leaves the open record in place; a second close writes a new file and leaves the earlier record byte-identical; every record is mode 0600</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">7ca51d2</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">envelope_is_references</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">test/run.sh 61_session_envelope</td><td class="px-4 py-2 text-body">1 passed, and the mutation back to a time window fails it. The case proves the record names checkpoint, handover and decision references and carries none of their bodies, that every referenced state path resolves, that an episode across two tasks names both while a task across two sessions is named by both, and that an event stamped by another session or by none is excluded. The first live run of the time-window implementation collected the other worker&#39;s records into my envelope; selection is now by the session stamp each ledger line carries</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">7ca51d2</td></tr></tbody>
     </table>
@@ -217,7 +217,7 @@
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/project/issues/I0804.yaml" class="break-all font-mono text-fg-brand hover:underline">.ai/repo/project/issues/I0804.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0804</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/project/issues/I0804.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0804.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0804</code>.</p>
 </div>
 
 </div>
@@ -236,7 +236,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -174,17 +174,17 @@
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3"><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span><span class="text-sm text-body">Projected into the worker&#39;s instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.</span></p>
     
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
 <p>A profile may declare <code>effort_escalation</code>: after a stated number of blocked attempts, effort rises to a stated level. Escalation is a declared, visible rule in the profile — not a habit of running everything at maximum — and it appears in the profile table every worker reads.</p>
 <h2 id="how-it-works"><a class="zola-anchor" href="#how-it-works" aria-label="Anchor link for: how-it-works">How it works</a></h2>
 <p><code>effort_escalation.after_blocked_attempts</code> and <code>effort_escalation.to</code> are validated profile fields; <code>debugging</code> escalates to <code>xhigh</code> after two blocked attempts, <code>deep-work</code> after one. The projection renders them next to the base effort.</p>
 <h2 id="how-to-see-it"><a class="zola-anchor" href="#how-to-see-it" aria-label="Anchor link for: how-to-see-it">How to see it</a></h2>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">grep</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">A2</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">^effort_escalation</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8"> .ai/repo/profiles/debugging.yaml</span></span></code></pre><h2 id="what-it-does-not-cover"><a class="zola-anchor" href="#what-it-does-not-cover" aria-label="Anchor link for: what-it-does-not-cover">What it does not cover</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">grep</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">A2</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">^effort_escalation</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8"> .ai/repo/profiles/debugging.yaml</span></span></code></pre><h2 id="what-it-does-not-cover"><a class="zola-anchor" href="#what-it-does-not-cover" aria-label="Anchor link for: what-it-does-not-cover">What it does not cover</a></h2>
 <p><strong>Advisory.</strong> v0.1 records the rule; it does not count attempts or observe the worker's effort. Making escalation an observed event needs telemetry that does not exist yet.</p>
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
 <p>Maximum effort as the default was one of the named cost sources; the source environment's routing guidance said effort should be "set only where it differs from the session default", which is the sparse, deliberate form this field keeps.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/claims/effort-escalation.md" class="font-mono hover:underline">docs/claims/effort-escalation.md</a>.</p>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/claims/effort-escalation.md" class="font-mono underline">docs/claims/effort-escalation.md</a>.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
     <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
@@ -205,8 +205,7 @@
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
       <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
     </button>
-  </figcaption>
-  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">bash test/run.sh 03_update</code></pre></div>
+  </figcaption><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src" tabindex="0"><code class="language-bash">bash test/run.sh 03_update</code></pre></div>
 </figure>
 </div>
     
@@ -239,8 +238,8 @@
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5">
     <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">advisory claims</h2>
     <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/decision-attribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">A decision record without a task, a head and a reason is reported, and does not block</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/profile-axes/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capability class, reasoning effort, output verbosity, context and verification are five independent axes</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/capability-class/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">A profile names a capability class rather than a vendor model</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/minimum-context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">A profile declares which context a worker should load and no more</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/effort-escalation/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-interval/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">A profile sets how often a worker should checkpoint, and a stale task is reported</a></li></ul>
-    <p class="mt-4 text-xs"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="text-fg-brand hover:underline">The full matrix →</a></p>
-    <p class="mt-1 text-xs"><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="text-fg-brand hover:underline">This claim in the evidence graph →</a></p>
+    <p class="mt-4 text-xs"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="text-fg-brand underline">The full matrix →</a></p>
+    <p class="mt-1 text-xs"><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="text-fg-brand underline">This claim in the evidence graph →</a></p>
   </div></aside>
 </div>
 
@@ -260,7 +259,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

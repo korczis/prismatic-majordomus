@@ -193,7 +193,7 @@ names the line, and tells you the command that reproduces the failure.</p>
             <span class="font-mono text-xs text-body-subtle" x-text="off.includes('scope') ? 'unmet' : 'met'">met</span>
           </label>
         </div>
-        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body">OK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope</p>
+        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body" tabindex="0">OK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope</p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -206,7 +206,7 @@ names the line, and tells you the command that reproduces the failure.</p>
             <span class="font-mono text-xs text-body-subtle" x-text="off.includes('verification') ? 'unmet' : 'met'">met</span>
           </label>
         </div>
-        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body">OK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s</p>
+        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body" tabindex="0">OK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s</p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -219,7 +219,7 @@ names the line, and tells you the command that reproduces the failure.</p>
             <span class="font-mono text-xs text-body-subtle" x-text="off.includes('state') ? 'unmet' : 'met'">met</span>
           </label>
         </div>
-        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body">OK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)</p>
+        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body" tabindex="0">OK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)</p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -232,7 +232,7 @@ names the line, and tells you the command that reproduces the failure.</p>
             <span class="font-mono text-xs text-body-subtle" x-text="off.includes('blockers') ? 'unmet' : 'met'">met</span>
           </label>
         </div>
-        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body">FAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n &#39;unresolved&#39; .ai/local/state/open-questions.md]</p>
+        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body" tabindex="0">FAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n &#39;unresolved&#39; .ai/local/state/open-questions.md]</p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <div class="flex flex-wrap items-start justify-between gap-3">
@@ -245,7 +245,7 @@ names the line, and tells you the command that reproduces the failure.</p>
             <span class="font-mono text-xs text-body-subtle" x-text="off.includes('note') ? 'unmet' : 'met'">met</span>
           </label>
         </div>
-        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body">OK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md</p>
+        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body" tabindex="0">OK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md</p>
       </li>
     </ul>
 
@@ -286,7 +286,7 @@ names the line, and tells you the command that reproduces the failure.</p>
   <h2 class="text-2xl font-bold tracking-tight text-heading">What the transcript actually looks like</h2>
   <figure class="mt-4 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
     <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">real output, from README.md</figcaption>
-    <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>$ majordomus finish --outcome completed --verify-command &quot;make test&quot;
+    <div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm" tabindex="0"><code>$ majordomus finish --outcome completed --verify-command &quot;make test&quot;
 OK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope
 OK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s
 OK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)
@@ -300,19 +300,19 @@ finish: refused, 1 unmet</code></pre></div>
   <ul class="mt-4 space-y-3">
     <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
       <p class="flex flex-wrap items-start gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
-        <a href="https://korczis.github.io/prismatic-majordomus/guarantees/finish-contract/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">finish evaluates the finish contract line by line and refuses when any line is unmet</a></p><p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/06_finish.sh">test/cases/06_finish.sh</a></p>
+        <a href="https://korczis.github.io/prismatic-majordomus/guarantees/finish-contract/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">finish evaluates the finish contract line by line and refuses when any line is unmet</a></p><p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/06_finish.sh">test/cases/06_finish.sh</a></p>
     </li>
     <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
       <p class="flex flex-wrap items-start gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
-        <a href="https://korczis.github.io/prismatic-majordomus/guarantees/typed-outcome/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">An outcome is a value from a closed vocabulary, not free text</a></p><p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/06_finish.sh">test/cases/06_finish.sh</a></p>
+        <a href="https://korczis.github.io/prismatic-majordomus/guarantees/typed-outcome/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">An outcome is a value from a closed vocabulary, not free text</a></p><p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/06_finish.sh">test/cases/06_finish.sh</a></p>
     </li>
     <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
       <p class="flex flex-wrap items-start gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
-        <a href="https://korczis.github.io/prismatic-majordomus/guarantees/open-question-gate/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass</a></p><p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/21_decision_question.sh">test/cases/21_decision_question.sh</a></p>
+        <a href="https://korczis.github.io/prismatic-majordomus/guarantees/open-question-gate/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass</a></p><p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/21_decision_question.sh">test/cases/21_decision_question.sh</a></p>
     </li>
     <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
       <p class="flex flex-wrap items-start gap-2"><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
-        <a href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-survives-handover/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">A blocking question keeps blocking after the work is handed to a new task</a></p><p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/50_blocker_across_handover.sh">test/cases/50_blocker_across_handover.sh</a></p>
+        <a href="https://korczis.github.io/prismatic-majordomus/guarantees/blocker-survives-handover/" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">A blocking question keeps blocking after the work is handed to a new task</a></p><p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/50_blocker_across_handover.sh">test/cases/50_blocker_across_handover.sh</a></p>
     </li>
   </ul>
 </section>
@@ -333,7 +333,7 @@ finish: refused, 1 unmet</code></pre></div>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

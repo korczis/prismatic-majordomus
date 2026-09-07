@@ -192,12 +192,12 @@
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
     <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default">
-      <table class="w-full min-w-[24rem] text-left text-sm">
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/#op-health-live" class="break-all text-fg-brand hover:underline">GET /api/v1/live</a> <span class="text-xs text-body-subtle">operationId health.live</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/#op-health-live" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/live</a> <span class="text-xs text-body-subtle">operationId health.live</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
         </tbody>
       </table>
@@ -208,7 +208,7 @@
     <div class="mt-4 grid gap-6"><div class="min-w-0">
   <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><p class="mt-1 text-sm text-body">No input.</p><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
-    <div class="overflow-x-auto border-t border-default"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading">{
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;No input.&quot;,
   &quot;title&quot;: &quot;Empty&quot;,
@@ -219,8 +219,8 @@
 <div class="min-w-0">
   <h3 class="font-mono text-sm font-semibold text-heading">output · Liveness</h3><p class="mt-1 text-sm text-body">The answer to &quot;is this process alive&quot;: the cheapest true thing this executable can
 say about itself. Deliberately not a summary of anything — a probe that grew an
-opinion would stop reporting the one fact the platform polls it for.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
-    <table class="w-full min-w-[28rem] text-left text-sm">
+opinion would stop reporting the one fact the platform polls it for.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">alive</td>
@@ -237,7 +237,7 @@ the signal.</td>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
-    <div class="overflow-x-auto border-t border-default"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading">{
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;description&quot;: &quot;The answer to \&quot;is this process alive\&quot;: the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for.&quot;,
   &quot;properties&quot;: {
     &quot;alive&quot;: {
@@ -267,11 +267,11 @@ the signal.</td>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
     </dl>
 
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="text-fg-brand hover:underline">benchmarks page</a>.</p>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default">
-      <table class="w-full min-w-[28rem] text-left text-sm">
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
-        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-health-live-direct-default" class="break-all text-fg-brand hover:underline">default</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-health-live-http-default" class="break-all text-fg-brand hover:underline">default</a><br></td></tr></tbody>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-health-live-direct-default" class="break-all text-fg-brand hover:underline inline-block py-1">default</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-health-live-http-default" class="break-all text-fg-brand hover:underline inline-block py-1">default</a><br></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -281,11 +281,11 @@ the signal.</td>
       <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
       <dl class="space-y-2">
         <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">health.live</dd></div>
-        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs" class="break-all font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/capability/builtin/health.rs</a></dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/health.rs</a></dd></div>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::health</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Liveness</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/health.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/health.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">56e7379a8e326782eff742d13c86bdc8d7895b0c5df42b1dc1abcee7a80c2c17</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/health.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/health.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6283363d308d2108148a503511e4a54eb8b79fae3f89b4dc429984067ee25e10</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.2.0</dd></div>
       </dl>
     </div>
@@ -310,7 +310,7 @@ the signal.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

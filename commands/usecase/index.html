@@ -174,8 +174,8 @@
   <div class="min-w-0"><p class="text-lg text-body">The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.</p>
     <ul class="mt-4 flex flex-wrap gap-2 text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">state-mutating</span></li>
-      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">rules</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 border-l-2 border-default pl-4 text-sm text-body">A use case is a Markdown object with a scenario; run executes it in a disposable repository against bin/majordomus and records normalised evidence under the local half. scaffold writes drafts only, never a guarantee; coverage and impact read, they never write.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">majordomus usecase &lt;list|show &lt;id&gt;|validate|run [&lt;id&gt;...]|coverage|impact|scaffold&gt; [--json]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">rules</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">A use case is a Markdown object with a scenario; run executes it in a disposable repository against bin/majordomus and records normalised evidence under the local half. scaffold writes drafts only, never a guarantee; coverage and impact read, they never write.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" tabindex="0">majordomus usecase &lt;list|show &lt;id&gt;|validate|run [&lt;id&gt;...]|coverage|impact|scaffold&gt; [--json]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
     <ol class="mt-3 flex flex-wrap gap-2 text-sm"><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Set up</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Begin</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Work</li><li class="rounded-base border px-3 py-1.5 border-brand-subtle bg-brand-softer font-medium text-fg-brand-strong" aria-current="step">Verify</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Conclude</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Inspect</li></ol>
     <p class="mt-3 text-sm text-body-subtle">Other commands at this stage:<a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="font-mono text-fg-brand hover:underline">check</a>.</p><div class="mt-10 grid gap-6 sm:grid-cols-2">
       <div class="min-w-0">
@@ -183,7 +183,7 @@
       <div class="min-w-0">
         <h2 class="text-xl font-semibold tracking-tight text-heading">Writes</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/local/evidence/use-cases/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
     </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exit codes</h2>
-    <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="https://korczis.github.io/prismatic-majordomus/commands/" class="text-fg-brand hover:underline">commands index</a>.</p>
+    <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="https://korczis.github.io/prismatic-majordomus/commands/" class="text-fg-brand underline">commands index</a>.</p>
     <ul class="mt-3 space-y-1 text-sm"><li><code class="font-mono font-semibold text-heading">0</code> <span class="text-body">ok</span></li><li><code class="font-mono font-semibold text-heading">2</code> <span class="text-body">usage</span></li><li><code class="font-mono font-semibold text-heading">10</code> <span class="text-body">contract unmet</span></li><li><code class="font-mono font-semibold text-heading">12</code> <span class="text-body">missing artifact</span></li><li><code class="font-mono font-semibold text-heading">13</code> <span class="text-body">internal error</span></li></ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The executable use cases: listed, tallied, refused</h2>
     <p class="mt-2 text-sm text-body">usecase reads the use cases under the manifest&#39;s use-cases section, one Markdown file each with a scenario; it lists them, tallies every public command against them, and refuses a subcommand it does not know.</p>
     <div class="mt-4" x-data="{ s: 'lists-none' }">
@@ -201,14 +201,14 @@
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># A repository with Majordomus installed and projections generated, and one commit of work.
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># A repository with Majordomus installed and projections generated, and one commit of work.
 &quot;$MJ&quot; init &gt;/dev/null
 &quot;$MJ&quot; update &gt;/dev/null
 mkdir -p lib docs
 echo a &gt; lib/a
 echo d &gt; docs/d
 git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus usecase list</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus usecase list</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^use cases: 0 in \.ai/repo/use-cases$</li></ul>
@@ -225,14 +225,14 @@ git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono tex
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># A repository with Majordomus installed and projections generated, and one commit of work.
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># A repository with Majordomus installed and projections generated, and one commit of work.
 &quot;$MJ&quot; init &gt;/dev/null
 &quot;$MJ&quot; update &gt;/dev/null
 mkdir -p lib docs
 echo a &gt; lib/a
 echo d &gt; docs/d
 git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus usecase coverage</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus usecase coverage</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^command +doctor +0 +0 +0 +gap +advisory$</li><li class="break-all font-mono text-sm text-body">required gap\(s\)</li></ul>
@@ -249,14 +249,14 @@ git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono tex
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># A repository with Majordomus installed and projections generated, and one commit of work.
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># A repository with Majordomus installed and projections generated, and one commit of work.
 &quot;$MJ&quot; init &gt;/dev/null
 &quot;$MJ&quot; update &gt;/dev/null
 mkdir -p lib docs
 echo a &gt; lib/a
 echo d &gt; docs/d
 git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus usecase explain</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus usecase explain</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">unknown subcommand &#39;explain&#39;</li></ul>
@@ -266,11 +266,11 @@ git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono tex
         </p>
         <p class="mt-4 text-sm text-body">The subcommands are list, show, validate, run, coverage, impact and scaffold; anything else is refused with the usage, never guessed.</p>
       </div></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"><p>The executable use cases of the repository: the Markdown objects under the manifest's
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0"><p>The executable use cases of the repository: the Markdown objects under the manifest's
 <code>use-cases</code> section, each a task somebody performs with the tool, the commands, rules,
 claims, responsibilities and applications it names, and a scenario that proves it against
 <code>bin/majordomus</code>. <code>docs/USE_CASES.md</code> is the contract; this section is the command.</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus usecase list [--json]</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus usecase list [--json]</span></span>
 <span class="giallo-l"><span>majordomus usecase show &lt;id&gt;</span></span>
 <span class="giallo-l"><span>majordomus usecase validate [--json]</span></span>
 <span class="giallo-l"><span>majordomus usecase run [&lt;id&gt;...] [--json] [--out &lt;dir&gt;] [--keep]</span></span>
@@ -311,23 +311,23 @@ repository cannot be created.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_use_cases.sh" class="break-all font-mono text-fg-brand hover:underline">94_use_cases</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_use_cases.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">94_use_cases</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_use_cases.sh" class="break-all font-mono text-fg-brand hover:underline">94_use_cases</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/94_use_cases.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">94_use_cases</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementation</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline">bin/majordomus</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/lib/usecase.sh" class="break-all font-mono text-fg-brand hover:underline">lib/usecase.sh</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline">share/commands.yaml</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">bin/majordomus</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/lib/usecase.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">lib/usecase.sh</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">share/commands.yaml</a></li>
         </ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Demonstration</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/fixtures/commands/usecase.json" class="break-all font-mono text-fg-brand hover:underline">fixtures/usecase.json</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline">34_command_fixtures</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/fixtures/commands/usecase.json" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">fixtures/usecase.json</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">34_command_fixtures</a></li>
         </ul>
       </div>
     </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees this command carries</h2>
@@ -339,7 +339,7 @@ repository cannot be created.</p>
         <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/context/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/checkpoint/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">checkpoint</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/decision/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">decision</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/question/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">question</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/prompt/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">prompt</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/skills/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/capture/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">capture</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Verify</p>
         <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">check</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/usecase/" class="block rounded px-2 py-1 font-mono bg-brand-softer text-fg-brand-strong" aria-current="page">usecase</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Conclude</p>
         <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/handover/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">handover</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/finish/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">finish</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/adr/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">adr</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Inspect</p>
-        <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctor</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/watch/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">watch</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">history</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/search/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">search</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctrine/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/version/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">version</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/knowledge/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">knowledge</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">rules</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/bench/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">bench</a></li></ul><p class="mt-4 text-xs text-body-subtle"><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="hover:underline">Full shell CLI specification →</a></p>
+        <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctor</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/watch/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">watch</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">history</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/search/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">search</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctrine/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/version/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">version</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/knowledge/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">knowledge</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">rules</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/bench/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">bench</a></li></ul><p class="mt-4 text-xs text-body-subtle"><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="underline">Full shell CLI specification →</a></p>
     </div>
   </aside>
 </div>
@@ -360,7 +360,7 @@ repository cannot be created.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

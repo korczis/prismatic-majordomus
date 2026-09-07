@@ -170,37 +170,37 @@
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
-  <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p><code>.majordomus/policy.yaml</code> is the source of truth for how AI workers operate in a repository. It names the always-loaded budget, the default profile, the finish contract, the handover sections, the retention caps, the enforcement that <code>doctor</code> reconciles, and the instruction files <code>update</code> generates. Everything below is read from the skeleton that <code>majordomus init</code> installs.</p>
+  <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p><code>.majordomus/policy.yaml</code> is the source of truth for how AI workers operate in a repository. It names the always-loaded budget, the default profile, the finish contract, the handover sections, the retention caps, the enforcement that <code>doctor</code> reconciles, and the instruction files <code>update</code> generates. Everything below is read from the skeleton that <code>majordomus init</code> installs.</p>
 </article>
 <div class="mt-10 grid gap-4 md:grid-cols-2">
   
-<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">context</span><h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Always-loaded budget: 150 lines</h3>
+<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">context</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Always-loaded budget: 150 lines</h2>
   <p class="text-sm leading-relaxed text-body">Strategy <code>minimum-sufficient</code>. Transcript is state: <code>false</code>. The generated instruction file marked always-loaded fails <code>doctor</code> and <code>update</code> when over budget.</p>
 </div>
 
   
-<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">profiles</span><h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Default profile: implementation</h3>
+<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">profiles</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Default profile: implementation</h2>
   <p class="text-sm leading-relaxed text-body">Checkpoint interval default <code>15m</code>; each profile may override it.</p>
 </div>
 
   
-<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">verification</span><h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Finish contract</h3>
+<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">verification</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Finish contract</h2>
   <p class="text-sm leading-relaxed text-body">Required for changes: <code>true</code>. Lines evaluated by <code>finish</code>: <code>scope_respected</code>, <code>verification_ran</code>, <code>state_updated</code>, <code>no_open_blockers</code>, <code>note_present</code>.</p>
 </div>
 
   
-<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">handover</span><h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Required sections</h3>
+<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">handover</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Required sections</h2>
   <p class="text-sm leading-relaxed text-body"><code># Objective</code>, <code># Current State</code>, <code># Next Action</code>; refused at write time if any is empty. Retention cap 200 files.</p>
 </div>
 
   
-<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">ledger</span><h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">Append-only, capped at 5000 lines</h3>
+<div class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs"><span class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">ledger</span><h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Append-only, capped at 5000 lines</h2>
   <p class="text-sm leading-relaxed text-body">Written only by Majordomus. <code>doctor</code> reports when the cap is exceeded; nothing is deleted.</p>
 </div>
 
   <div class="rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
     <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">enforcement</span>
-    <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">What doctor reconciles</h3>
+    <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">What doctor reconciles</h2>
     <ul class="space-y-2 text-sm text-body"><li><code class="font-mono text-heading">doctor-on-commit</code> — <code class="font-mono">majordomus doctor</code> wired by <code class="font-mono">git-hook:pre-commit</code></li><li><code class="font-mono text-heading">finish-on-push</code> — <code class="font-mono">majordomus finish --check</code> wired by <code class="font-mono">git-hook:pre-push</code></li></ul>
   </div>
 </div>
@@ -210,7 +210,7 @@
 </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Claims defined by this policy</h2>
 <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-budget/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The always-loaded instruction file has a line budget with a failing check</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/retention-caps/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The append-only ledger and handover store have retention caps that are checked</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-interval/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span></span><span class="text-sm text-heading">A profile sets how often a worker should checkpoint, and a stale task is reported</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/context-selection-budget/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The assembled context obeys a line budget, and every section it drops is named with its reason</span></a></li></ul><details id="raw" class="mt-8 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <summary class="flex cursor-pointer items-center justify-between px-5 py-4 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"><span>The policy file as installed by <code class="font-mono">majordomus init</code></span></summary>
-  <div class="border-t border-default"><div class="overflow-x-auto"><pre class="m-0 p-5 font-mono text-xs leading-relaxed text-heading"><code class="language-yaml"># Majordomus canonical policy. Provider-neutral. Edit this file, then run
+  <div class="border-t border-default"><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-5 font-mono text-xs leading-relaxed text-heading" tabindex="0"><code class="language-yaml"># Majordomus canonical policy. Provider-neutral. Edit this file, then run
 # `majordomus update` to regenerate the provider instruction files.
 version: 1
 
@@ -324,7 +324,7 @@ projections:
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

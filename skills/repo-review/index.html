@@ -186,7 +186,7 @@
         <h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">the procedure leaves</h2>
         <ul class="list-disc space-y-1 pl-5 text-sm text-body"><li>findings, each with severity, evidence, location, the smallest correct fix and the evidence that would prove it</li><li>the list of what was checked, including the areas where nothing was found</li></ul>
       </div>
-    </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto"><h2 id="purpose"><a class="zola-anchor" href="#purpose" aria-label="Anchor link for: purpose">Purpose</a></h2>
+    </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto" tabindex="0"><h2 id="purpose"><a class="zola-anchor" href="#purpose" aria-label="Anchor link for: purpose">Purpose</a></h2>
 <p>Establish what is true about the repository before changing it. A worker that has not
 looked starts "helping" by adding a layer nobody asked for; this procedure makes the
 looking explicit, bounded and reportable. It reviews reality, not style: whether the code
@@ -270,8 +270,8 @@ status is honest, and that nothing on a roadmap is described as an existing capa
 <p><strong>Scope reviewed.</strong> What was read, which commands were run, and what was deliberately
 not covered.</p>
 <p><strong>Findings</strong>, most severe first. Each one carries:</p>
-<div class="overflow-x-auto">
-<table><thead><tr><th>field</th><th>content</th></tr></thead><tbody>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>field</th><th>content</th></tr></thead><tbody>
 <tr><td>severity</td><td><code>FAIL</code> — must be fixed before the work is accepted; <code>WARN</code> — should be fixed, does not block; <code>INFO</code> — an observation with no required action</td></tr>
 <tr><td>title</td><td>one line</td></tr>
 <tr><td>evidence</td><td>what was observed, quoted or measured, with <code>path:line</code></td></tr>
@@ -295,36 +295,36 @@ change look ready.</p>
       <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="text-base font-semibold text-heading">Review a subsystem</h3>
         <p class="mt-1 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/repo-review/examples/review-a-subsystem.md</p>
-        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><p>Review one directory and the documents that describe it, whether or not anything in it
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><p>Review one directory and the documents that describe it, whether or not anything in it
 changed recently. Scope is the directory; the report names the documents it was checked
 against.</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to lib/knowledge.sh, lib/knowledge.awk and docs/CLI.md&#39;s</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to lib/knowledge.sh, lib/knowledge.awk and docs/CLI.md&#39;s</span></span>
 <span class="giallo-l"><span>knowledge section. Question: does the documented behaviour match the implementation,</span></span>
 <span class="giallo-l"><span>and is every documented behaviour covered by a case under test/cases/?</span></span></code></pre></div>
       </section>
       <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="text-base font-semibold text-heading">Review an implementation against its issue</h3>
         <p class="mt-1 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/repo-review/examples/review-against-an-issue.md</p>
-        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><p>Review a branch against the issue it claims to complete: the acceptance criteria, the
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><p>Review a branch against the issue it claims to complete: the acceptance criteria, the
 declared paths, and the evidence the issue requires.</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to branch feature/x against issue I0042</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to branch feature/x against issue I0042</span></span>
 <span class="giallo-l"><span>(majordomus plan show I0042). For each acceptance criterion, name the test that proves it</span></span>
 <span class="giallo-l"><span>or report that none does. Report any file the branch touched outside the issue&#39;s paths.</span></span></code></pre></div>
       </section>
       <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="text-base font-semibold text-heading">Review the current diff</h3>
         <p class="mt-1 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/repo-review/examples/review-current-diff.md</p>
-        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><p>Review the working tree and the staged changes against the base branch before they are
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><p>Review the working tree and the staged changes against the base branch before they are
 committed. Scope is the diff; everything else is read for context and not reviewed.</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to the current diff against master.</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to the current diff against master.</span></span>
 <span class="giallo-l"><span>Scope: the files changed in the worktree. Report FAIL findings first.</span></span></code></pre></div>
       </section>
       <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="text-base font-semibold text-heading">Review generated files and documents for drift</h3>
         <p class="mt-1 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/repo-review/examples/review-generated-synchronisation.md</p>
-        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><p>Review whether every generated surface matches its canonical source right now, by
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><p>Review whether every generated surface matches its canonical source right now, by
 running the repository's own drift checks and reading what they do not cover.</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to the generated surfaces: run scripts/generate-site-data</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to the generated surfaces: run scripts/generate-site-data</span></span>
 <span class="giallo-l"><span>--check and majordomus generate --check, then read the documents under docs/ that</span></span>
 <span class="giallo-l"><span>describe behaviour and compare them with the commands they describe. Report every</span></span>
 <span class="giallo-l"><span>claim a document makes that no check or test would catch if it became false.</span></span></code></pre></div>
@@ -332,9 +332,9 @@ running the repository's own drift checks and reading what they do not cover.</p
       <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="text-base font-semibold text-heading">Review the whole repository&#39;s architecture</h3>
         <p class="mt-1 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/repo-review/examples/review-repository-architecture.md</p>
-        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full"><p>Review the repository against the boundaries it declares: canonical sources, generated
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><p>Review the repository against the boundaries it declares: canonical sources, generated
 projections, provider neutrality, and the rules that are enforced by a reviewer only.</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to the whole repository. Concentrate on sections 3 and 5 of</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>Apply the repo-review skill to the whole repository. Concentrate on sections 3 and 5 of</span></span>
 <span class="giallo-l"><span>the procedure: every generated artifact and the check that fails when it is stale, and</span></span>
 <span class="giallo-l"><span>every declared boundary and the code that keeps it. List the rules that are not</span></span>
 <span class="giallo-l"><span>machine-enforced and say for each whether the tree honours it today.</span></span></code></pre></div>
@@ -343,14 +343,14 @@ projections, provider neutrality, and the rules that are enforced by a reviewer 
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/skills/repo-review/SKILL.md">.ai/repo/skills/repo-review/SKILL.md</a></dd>
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/skills/repo-review/SKILL.md">.ai/repo/skills/repo-review/SKILL.md</a></dd>
       <dt class="text-body-subtle">content hash</dt><dd class="min-w-0 break-all font-mono text-heading">6300cad27089e2bb72860d7db2c692199e849ddaaf7b3b522bd80a2ad614e5db</dd>
-      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline" href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
+      <dt class="text-body-subtle">contract</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/skill/skill.v1.schema.json">share/schemas/majordomus/skill/skill.v1.schema.json</a></dd>
       <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 font-mono text-heading">MCP resource <code>majordomus://skill/repo-review</code> · <code>majordomus skills show repo-review</code></dd>
     </dl>
     <p class="mt-3 text-sm text-body">This page is generated from the file above by <code class="font-mono text-heading">scripts/generate-site-data</code>; editing the page changes nothing, editing the file changes every surface.</p>
   </div>
-  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the 3 skills</h2><ol class="space-y-2 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/skills/deploy-site/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading"><code class="font-mono text-xs">deploy-site</code><span class="block text-xs text-body-subtle">Deploy the site by hand</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/implement/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading"><code class="font-mono text-xs">implement</code><span class="block text-xs text-body-subtle">Implement a change</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/repo-review/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page"><code class="font-mono text-xs">repo-review</code><span class="block text-xs text-body-subtle">Repository review</span></a></li></ol></div></aside>
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the 3 skills</h2><ol class="space-y-2 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/skills/deploy-site/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading"><code class="font-mono text-xs">deploy-site</code><span class="block text-xs text-body-subtle">Deploy the site by hand</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/implement/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading"><code class="font-mono text-xs">implement</code><span class="block text-xs text-body-subtle">Implement a change</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/repo-review/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page"><code class="font-mono text-xs">repo-review</code><span class="block text-xs text-fg-brand-strong">Repository review</span></a></li></ol></div></aside>
 </div>
 
 </div>
@@ -369,7 +369,7 @@ projections, provider neutrality, and the rules that are enforced by a reviewer 
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

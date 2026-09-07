@@ -174,20 +174,20 @@
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3"><span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span><span class="text-sm text-body">Projected into the worker&#39;s instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.</span></p>
     <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">decisions.md is hand-editable by design, so an unattributable entry is a warning. finish still refuses when a profile requires a record it cannot find.</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
 <p><code>.ai/local/state/decisions.md</code> is where a worker externalises a decision so the next one does not reopen it. An entry that does not say which task made it, at which commit, and why, cannot be found by the worker who needs it. That is reported as a warning; it does not stop a command.</p>
 <h2 id="how-it-works"><a class="zola-anchor" href="#how-it-works" aria-label="Anchor link for: how-it-works">How it works</a></h2>
 <p><code>mj_decision_malformed</code> in <code>lib/decision.sh</code> returns the line numbers of entries missing <code>Task</code>, <code>Head</code> or <code>Why</code>. <code>mj_validate_decisions</code> reports them. The doctrine <code>majordomus.decision-records</code> is declared <strong>advisory</strong>, which is what makes the finding a <code>WARN</code> and leaves the exit code at 0 — the class is read by <code>mj_doctrine_fail</code> at dispatch time, so the level is not a choice made inside the validator.</p>
 <p>The file is deliberately hand-editable: <code>majordomus decision</code> writes well-formed entries, and a person editing it directly is a supported way to work. <code>finish</code> is where it stops being advisory — a profile that requires a decision record refuses completion when it cannot find one for the task.</p>
 <h2 id="how-to-see-it"><a class="zola-anchor" href="#how-to-see-it" aria-label="Anchor link for: how-to-see-it">How to see it</a></h2>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-15 z-d-14">printf</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">\n## 2026-01-01 — hand written, no fields\n</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-16 z-d-16"> &gt;&gt;</span><span class="z-l-8 z-d-8"> .ai/local/state/decisions.md</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-15 z-d-14">printf</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">\n## 2026-01-01 — hand written, no fields\n</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-16 z-d-16"> &gt;&gt;</span><span class="z-l-8 z-d-8"> .ai/local/state/decisions.md</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> WARN records decisions.md — entry at line(s) 12 lacks Task, Head or Why</span></span>
 <span class="giallo-l"><span class="z-l-15 z-d-14">echo</span><span class="z-l-4 z-l-i z-d-1 z-d-i"> $</span><span class="z-l-4 z-l-i z-d-1 z-d-i">?</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> 0</span></span></code></pre><h2 id="what-it-does-not-cover"><a class="zola-anchor" href="#what-it-does-not-cover" aria-label="Anchor link for: what-it-does-not-cover">What it does not cover</a></h2>
 <p>The check reads structure, not judgement. An entry carrying all three fields and a reason of "because" passes. Nothing verifies that the rejected alternatives were real, or that the decision was followed.</p>
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
 <p>The advisory class exists for exactly this shape of rule: the cost of a malformed entry is paid later and by someone else, and blocking a commit over the formatting of a note somebody wrote by hand would teach people to stop writing them.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/claims/decision-attribution.md" class="font-mono hover:underline">docs/claims/decision-attribution.md</a>.</p>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/claims/decision-attribution.md" class="font-mono underline">docs/claims/decision-attribution.md</a>.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
     <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
@@ -208,8 +208,7 @@
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
       <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
     </button>
-  </figcaption>
-  <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-bash">bash test/run.sh 21_decision_question</code></pre></div>
+  </figcaption><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src" tabindex="0"><code class="language-bash">bash test/run.sh 21_decision_question</code></pre></div>
 </figure>
 </div>
     
@@ -250,8 +249,8 @@
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5">
     <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">advisory claims</h2>
     <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/decision-attribution/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">A decision record without a task, a head and a reason is reported, and does not block</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/profile-axes/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capability class, reasoning effort, output verbosity, context and verification are five independent axes</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/capability-class/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">A profile names a capability class rather than a vendor model</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/minimum-context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">A profile declares which context a worker should load and no more</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/effort-escalation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/checkpoint-interval/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">A profile sets how often a worker should checkpoint, and a stale task is reported</a></li></ul>
-    <p class="mt-4 text-xs"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="text-fg-brand hover:underline">The full matrix →</a></p>
-    <p class="mt-1 text-xs"><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="text-fg-brand hover:underline">This claim in the evidence graph →</a></p>
+    <p class="mt-4 text-xs"><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="text-fg-brand underline">The full matrix →</a></p>
+    <p class="mt-1 text-xs"><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="text-fg-brand underline">This claim in the evidence graph →</a></p>
   </div></aside>
 </div>
 
@@ -271,7 +270,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

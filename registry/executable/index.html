@@ -184,8 +184,8 @@
 
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/README.md" class="font-mono hover:underline">apps/majordomus-cli/README.md</a> — the same Markdown GitHub shows. The command line, the capabilities, the MCP and HTTP surfaces and the benchmarks are not written there: they are generated from the registry, and their pages are the row of links above.</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full"><p>The Rust executable of Majordomus. It builds a binary named <code>majordomus</code> that reads the
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/README.md" class="font-mono underline">apps/majordomus-cli/README.md</a> — the same Markdown GitHub shows. The command line, the capabilities, the MCP and HTTP surfaces and the benchmarks are not written there: they are generated from the registry, and their pages are the row of links above.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>The Rust executable of Majordomus. It builds a binary named <code>majordomus</code> that reads the
 repository's provider-neutral AI layer under <code>.ai/</code>, composes one capability registry from
 its own executable capabilities and the layer's objects, and serves that registry through
 several interfaces, all read-only: MCP over stdio (<code>mcp</code>), which also starts, or attaches
@@ -210,7 +210,7 @@ policy into provider files, hooks, a daemon, authentication, a database, model i
 or anything Prismatic. The binary depends on no service and no other repository; it needs
 the tool distribution's <code>share/</code> directory at run time and <code>git</code> for the default discovery.</p>
 <h2 id="build-run-test"><a class="zola-anchor" href="#build-run-test" aria-label="Anchor link for: build-run-test">Build, run, test</a></h2>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> build</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-manifest-path</span><span class="z-l-8 z-d-8"> apps/majordomus-cli/Cargo.toml</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> build</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-manifest-path</span><span class="z-l-8 z-d-8"> apps/majordomus-cli/Cargo.toml</span></span>
 <span class="giallo-l"><span>B</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">p</span><span class="z-l-8 z-d-8">p</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">j</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">u</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">-</span><span class="z-l-8 z-d-8">c</span><span class="z-l-8 z-d-8">l</span><span class="z-l-8 z-d-8">i</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">g</span><span class="z-l-8 z-d-8">e</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">e</span><span class="z-l-8 z-d-8">b</span><span class="z-l-8 z-d-8">u</span><span class="z-l-8 z-d-8">g</span><span class="z-l-8 z-d-8">/</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">a</span><span class="z-l-8 z-d-8">j</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">m</span><span class="z-l-8 z-d-8">u</span><span class="z-l-8 z-d-8">s</span></span>
 <span class="giallo-l"><span>$</span><span>B</span><span> --help</span></span>
 <span class="giallo-l"><span>$</span><span>B</span><span> --version</span></span>
@@ -236,7 +236,7 @@ the tool distribution's <code>share/</code> directory at run time and <code>git<
 <span class="giallo-l"><span>$</span><span>B</span><span> bench baseline update</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> record this platform&#39;s baseline (a tracked, reviewable file); refuses a dirty tree</span></span></code></pre>
 <p>Rust 1.85 or newer, <code>git</code> on <code>PATH</code> for the default discovery, and a share directory
 (below). From <code>apps/majordomus-cli/</code>:</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> fmt</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-check</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> fmt</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-check</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> clippy</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-all-targets</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-all-features</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">D</span><span class="z-l-8 z-d-8"> warnings</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> missing_docs is an error here</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> test</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> unit, integration, doctests</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> doc</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-no-deps</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> RUSTDOCFLAGS=&quot;-D warnings&quot; in CI</span></span>
@@ -260,11 +260,11 @@ this repository ships those files: <a rel="external" href="https://github.com/ko
 <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/bin/majordomus-mcp"><code>bin/majordomus-mcp</code></a>, which builds this crate when the
 executable is missing or older than its sources, sets <code>MAJORDOMUS_SHARE</code>, and <code>exec</code>s
 <code>majordomus mcp</code>. To name the executable directly:</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="json"><span class="giallo-l"><span>{</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">mcpServers</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">majordomus</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">command</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">/path/to/apps/majordomus-cli/target/debug/majordomus</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">args</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">mcp</span><span class="z-l-8 z-d-8">&quot;</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">env</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">MAJORDOMUS_SHARE</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">/path/to/prismatic-majordomus/share</span><span class="z-l-8 z-d-8">&quot;</span><span> }</span><span> }</span><span> }</span><span> }</span></span></code></pre><h2 id="the-share-directory-kinds-and-schemas-at-run-time"><a class="zola-anchor" href="#the-share-directory-kinds-and-schemas-at-run-time" aria-label="Anchor link for: the-share-directory-kinds-and-schemas-at-run-time">The share directory: kinds and schemas at run time</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="json"><span class="giallo-l"><span>{</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">mcpServers</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">majordomus</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">command</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">/path/to/apps/majordomus-cli/target/debug/majordomus</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">args</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">mcp</span><span class="z-l-8 z-d-8">&quot;</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">env</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">MAJORDOMUS_SHARE</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">/path/to/prismatic-majordomus/share</span><span class="z-l-8 z-d-8">&quot;</span><span> }</span><span> }</span><span> }</span><span> }</span></span></code></pre><h2 id="the-share-directory-kinds-and-schemas-at-run-time"><a class="zola-anchor" href="#the-share-directory-kinds-and-schemas-at-run-time" aria-label="Anchor link for: the-share-directory-kinds-and-schemas-at-run-time">The share directory: kinds and schemas at run time</a></h2>
 <p>Nothing about kinds or keys is compiled in. On every start the executable locates a share
 directory and reads <code>kinds.yaml</code> and <code>schemas/&lt;name&gt;.schema.json</code> from it, in this order:</p>
-<div class="overflow-x-auto">
-<table><thead><tr><th>source</th><th>when</th></tr></thead><tbody>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>source</th><th>when</th></tr></thead><tbody>
 <tr><td><code>--share &lt;DIR&gt;</code></td><td>always wins; a directory without <code>kinds.yaml</code> is an error</td></tr>
 <tr><td><code>MAJORDOMUS_SHARE</code></td><td>same</td></tr>
 <tr><td><code>&lt;repository root&gt;/share</code></td><td>when it holds <code>kinds.yaml</code>: this repository supervising itself</td></tr>
@@ -299,8 +299,8 @@ working is a failing test rather than a stale page. Adding a command therefore m
 declare it in clap, declare at least one example beside it, implement it, <code>just derive</code>.</p>
 <h3 id="exit-codes"><a class="zola-anchor" href="#exit-codes" aria-label="Anchor link for: exit-codes">Exit codes</a></h3>
 <p>The same contract as <code>docs/CLI.md</code>:</p>
-<div class="overflow-x-auto">
-<table><thead><tr><th>code</th><th>meaning</th><th>examples</th></tr></thead><tbody>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>code</th><th>meaning</th><th>examples</th></tr></thead><tbody>
 <tr><td><code>0</code></td><td>ok</td><td>served until EOF; <code>--inspect</code> or <code>validate</code> with nothing wrong</td></tr>
 <tr><td><code>2</code></td><td>usage</td><td>unknown command or option (clap)</td></tr>
 <tr><td><code>10</code></td><td>contract unmet</td><td>manifest, <code>sources.yaml</code>, kinds or a schema invalid; the registry does not build; <code>--strict</code> with errors; <code>--inspect</code> with errors; stale artifacts under <code>--check</code></td></tr>
@@ -309,8 +309,8 @@ declare it in clap, declare at least one example beside it, implement it, <code>
 </tbody></table>
 </div>
 <h3 id="side-effect-table"><a class="zola-anchor" href="#side-effect-table" aria-label="Anchor link for: side-effect-table">Side-effect table</a></h3>
-<div class="overflow-x-auto">
-<table><thead><tr><th>command</th><th>filesystem mutation</th><th>git mutation</th><th>network</th><th>stdout</th></tr></thead><tbody>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>command</th><th>filesystem mutation</th><th>git mutation</th><th>network</th><th>stdout</th></tr></thead><tbody>
 <tr><td><code>--help</code>, <code>--version</code>, <code>capabilities …</code>, <code>mcp --inspect</code>, <code>generate --check</code>, <code>bench coverage</code></td><td>no</td><td>no</td><td>no</td><td>text or JSON</td></tr>
 <tr><td><code>bench</code></td><td><code>.ai/local/benchmarks/&lt;run&gt;.json</code> (the local half, not tracked) unless <code>--no-write</code>; <code>baseline update</code> writes <code>.ai/repo/benchmarks/rust/baseline.&lt;platform&gt;.json</code></td><td>no</td><td>a loopback socket and a <code>majordomus mcp</code> child of its own</td><td>text or JSON</td></tr>
 <tr><td><code>mcp</code></td><td>the lease under <code>.ai/local/state/mcp/</code> (not tracked), removed on exit; none with <code>--standalone</code></td><td>no</td><td>listens on loopback (the server) or connects to it (a bridge); the browser fetches Swagger UI assets</td><td>MCP protocol</td></tr>
@@ -323,7 +323,7 @@ declare it in clap, declare at least one example beside it, implement it, <code>
 and <code>test/cases/90_mcp_shared_server.sh</code> compare <code>git status</code> and every tracked blob before
 and after a session; <code>tests/mcp_shared.rs</code> checks that the lease is gone after the server.</p>
 <h2 id="architecture"><a class="zola-anchor" href="#architecture" aria-label="Anchor link for: architecture">Architecture</a></h2>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>main.rs               parse, init stderr logging, run, map the error to an exit code</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>main.rs               parse, init stderr logging, run, map the error to an exit code</span></span>
 <span class="giallo-l"><span>cli.rs                clap declarations; RepoArgs shared by every command</span></span>
 <span class="giallo-l"><span>app.rs                the one composition point: repository -&gt; share -&gt; kinds and schemas -&gt; index -&gt; registry</span></span>
 <span class="giallo-l"><span>commands/             mcp, serve, capabilities, generate, bench: each a function from its arguments to an exit code;</span></span>
@@ -403,8 +403,8 @@ the pre-<code>.ai</code> layout and refused by name, pointing at <code>majordomu
 layer itself documents, <code>.ai/manifest.yaml</code> and <code>sources.yaml</code> under the manifest's
 <code>knowledge</code> section, and the file names of the distribution (<code>kinds.yaml</code>,
 <code>schemas/*.schema.json</code>). Everything else is read from data at run time:</p>
-<div class="overflow-x-auto">
-<table><thead><tr><th>decides</th><th>read from</th><th>owner</th></tr></thead><tbody>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>decides</th><th>read from</th><th>owner</th></tr></thead><tbody>
 <tr><td>where the layer is</td><td><code>.ai/manifest.yaml</code> exists</td><td>repository</td></tr>
 <tr><td>which sections exist</td><td><code>sections:</code> in the manifest</td><td>repository</td></tr>
 <tr><td>which file names must carry the context contract</td><td><code>context.documents:</code> in the manifest</td><td>repository</td></tr>
@@ -442,8 +442,8 @@ defended against: a hostile <code>sources.yaml</code> naming a huge tree (the wa
 repository, not by a budget), and memory, since every object's content is held for the
 session.</p>
 <h2 id="stability"><a class="zola-anchor" href="#stability" aria-label="Anchor link for: stability">Stability</a></h2>
-<div class="overflow-x-auto">
-<table><thead><tr><th></th><th>status</th></tr></thead><tbody>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th></th><th>status</th></tr></thead><tbody>
 <tr><td><code>--help</code>, <code>--version</code>, <code>mcp --help</code>, exit codes, the new commands' help and codes</td><td>behaviourally verified (<code>tests/cli.rs</code>)</td></tr>
 <tr><td>root discovery, nearest-wins, legacy refusal, <code>--repo</code></td><td>behaviourally verified (<code>tests/repository_discovery.rs</code>)</td></tr>
 <tr><td>the kind schema, run-time schemas, every diagnostic code, repository-defined kinds</td><td>behaviourally verified (<code>tests/metadata_contract.rs</code>, <code>tests/external_extension.rs</code>)</td></tr>
@@ -479,10 +479,10 @@ memory; the task record and scope of the shell tool are the durable form).</p>
       <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">at a glance</span>
       <dl class="space-y-2">
         <div><dt class="text-body-subtle">version</dt><dd class="font-mono text-heading">majordomus-cli 0.2.0</dd></div>
-        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">37 builtin in 15 modules, 948 declarative</dd></div>
+        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">37 builtin in 15 modules, 951 declarative</dd></div>
         <div><dt class="text-body-subtle">surfaces</dt><dd class="text-heading">35 MCP tools · 37 HTTP routes · 10 commands</dd></div>
-        <div><dt class="text-body-subtle">crate</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli" class="break-all font-mono text-fg-brand hover:underline">apps/majordomus-cli</a></dd></div>
-        <div><dt class="text-body-subtle">generated reference</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/docs/generated" class="break-all font-mono text-fg-brand hover:underline">docs/generated/</a></dd></div>
+        <div><dt class="text-body-subtle">crate</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli</a></dd></div>
+        <div><dt class="text-body-subtle">generated reference</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/docs/generated" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/</a></dd></div>
       </dl>
     </div>
   </aside>
@@ -504,7 +504,7 @@ memory; the task record and scope of the shell tool are the durable form).</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

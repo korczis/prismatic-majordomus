@@ -174,8 +174,8 @@
   <div class="min-w-0"><p class="text-lg text-body">The repository&#39;s architecture decisions as objects: list, show, propose one with provenance, and validate the whole set.</p>
     <ul class="mt-4 flex flex-wrap gap-2 text-xs">
       <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">state-mutating</span></li>
-      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">memory</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 border-l-2 border-default pl-4 text-sm text-body">propose writes status &#39;proposed&#39; and refuses --status: accepting a decision is a person editing the field. The identity is allocated under a lock over the section directory, so two worktrees proposing at once get two identities; check refuses duplicate identities, a superseded record with no replacement, and one-sided supersession.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading">majordomus adr &lt;list|show &lt;id&gt;|propose &quot;&lt;title&gt;&quot;|check&gt; [--json]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">memory</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">propose writes status &#39;proposed&#39; and refuses --status: accepting a decision is a person editing the field. The identity is allocated under a lock over the section directory, so two worktrees proposing at once get two identities; check refuses duplicate identities, a superseded record with no replacement, and one-sided supersession.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" tabindex="0">majordomus adr &lt;list|show &lt;id&gt;|propose &quot;&lt;title&gt;&quot;|check&gt; [--json]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
     <ol class="mt-3 flex flex-wrap gap-2 text-sm"><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Set up</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Begin</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Work</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Verify</li><li class="rounded-base border px-3 py-1.5 border-brand-subtle bg-brand-softer font-medium text-fg-brand-strong" aria-current="step">Conclude</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Inspect</li></ol>
     <p class="mt-3 text-sm text-body-subtle">Other commands at this stage:<a href="https://korczis.github.io/prismatic-majordomus/commands/handover/" class="font-mono text-fg-brand hover:underline">handover</a>, <a href="https://korczis.github.io/prismatic-majordomus/commands/finish/" class="font-mono text-fg-brand hover:underline">finish</a>.</p><div class="mt-10 grid gap-6 sm:grid-cols-2">
       <div class="min-w-0">
@@ -183,7 +183,7 @@
       <div class="min-w-0">
         <h2 class="text-xl font-semibold tracking-tight text-heading">Writes</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/repo/adrs/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
     </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exit codes</h2>
-    <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="https://korczis.github.io/prismatic-majordomus/commands/" class="text-fg-brand hover:underline">commands index</a>.</p>
+    <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="https://korczis.github.io/prismatic-majordomus/commands/" class="text-fg-brand underline">commands index</a>.</p>
     <ul class="mt-3 space-y-1 text-sm"><li><code class="font-mono font-semibold text-heading">0</code> <span class="text-body">ok</span></li><li><code class="font-mono font-semibold text-heading">2</code> <span class="text-body">usage</span></li><li><code class="font-mono font-semibold text-heading">10</code> <span class="text-body">contract unmet</span></li><li><code class="font-mono font-semibold text-heading">12</code> <span class="text-body">missing artifact</span></li><li><code class="font-mono font-semibold text-heading">13</code> <span class="text-body">internal error</span></li><li><code class="font-mono font-semibold text-heading">15</code> <span class="text-body">refused</span></li></ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Decisions the tool proposes and only a person accepts</h2>
     <p class="mt-2 text-sm text-body">An architecture decision is a file under the repository&#39;s adrs section: front matter that satisfies the decision schema over a body carrying the context, the decision and its consequences. Nothing registers it — the source class `adr` in the knowledge sources discovers it over the tracked tree, and list, show, check, the doctrine and MCP all read that one catalogue. What the tool writes is always `proposed`, because acceptance is the person&#39;s act.</p>
     <div class="mt-4" x-data="{ s: 'lists' }">
@@ -205,13 +205,13 @@
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># Installed, with one decision proposed and committed. Discovery is over the tracked tree,
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># Installed, with one decision proposed and committed. Discovery is over the tracked tree,
 # so a decision the working copy holds and git does not is not yet part of the layer: the
 # commit is what makes the record discoverable, exactly as it is for every other kind.
 . &quot;$FIXTURE_SETUP/installed.sh&quot;
 &quot;$MJ&quot; adr propose &quot;The registry is the one canonical declaration&quot; --from file:docs/d --tag architecture &gt;/dev/null
 git add . &amp;&amp; git commit -qm &quot;adr: the registry is the one canonical declaration&quot;</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus adr list</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus adr list</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">adr-0001</li><li class="break-all font-mono text-sm text-body">proposed</li></ul>
@@ -228,13 +228,13 @@ git add . &amp;&amp; git commit -qm &quot;adr: the registry is the one canonical
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># Installed, with one decision proposed and committed. Discovery is over the tracked tree,
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># Installed, with one decision proposed and committed. Discovery is over the tracked tree,
 # so a decision the working copy holds and git does not is not yet part of the layer: the
 # commit is what makes the record discoverable, exactly as it is for every other kind.
 . &quot;$FIXTURE_SETUP/installed.sh&quot;
 &quot;$MJ&quot; adr propose &quot;The registry is the one canonical declaration&quot; --from file:docs/d --tag architecture &gt;/dev/null
 git add . &amp;&amp; git commit -qm &quot;adr: the registry is the one canonical declaration&quot;</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus adr check</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus adr check</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">examined 1 decision\(s\)</li><li class="break-all font-mono text-sm text-body">every identity unique</li></ul>
@@ -251,13 +251,13 @@ git add . &amp;&amp; git commit -qm &quot;adr: the registry is the one canonical
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># Installed, with one decision proposed and committed. Discovery is over the tracked tree,
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># Installed, with one decision proposed and committed. Discovery is over the tracked tree,
 # so a decision the working copy holds and git does not is not yet part of the layer: the
 # commit is what makes the record discoverable, exactly as it is for every other kind.
 . &quot;$FIXTURE_SETUP/installed.sh&quot;
 &quot;$MJ&quot; adr propose &quot;The registry is the one canonical declaration&quot; --from file:docs/d --tag architecture &gt;/dev/null
 git add . &amp;&amp; git commit -qm &quot;adr: the registry is the one canonical declaration&quot;</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus adr propose A decision that accepts itself --status accepted</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus adr propose A decision that accepts itself --status accepted</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">not yours to choose</li><li class="break-all font-mono text-sm text-body">a person editing the record</li></ul>
@@ -274,14 +274,14 @@ git add . &amp;&amp; git commit -qm &quot;adr: the registry is the one canonical
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># A repository with Majordomus installed and projections generated, and one commit of work.
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># A repository with Majordomus installed and projections generated, and one commit of work.
 &quot;$MJ&quot; init &gt;/dev/null
 &quot;$MJ&quot; update &gt;/dev/null
 mkdir -p lib docs
 echo a &gt; lib/a
 echo d &gt; docs/d
 git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus adr show adr-9999</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus adr show adr-9999</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">adr list</li></ul>
@@ -298,7 +298,7 @@ git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono tex
           </div></dl>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body"># One decision, committed, that names what it put in force. `propose` writes provenance —
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># One decision, committed, that names what it put in force. `propose` writes provenance —
 # where the record came from — and never `related`, which is the other direction and a
 # person&#39;s statement: this rule, this file, are what the decision did.
 . &quot;$FIXTURE_SETUP/adr-recorded.sh&quot;
@@ -308,7 +308,7 @@ related:\
   - rule:majordomus.adr-integrity\
   - file:docs/d|&#39; &quot;$adr&quot; &amp;&amp; rm -f &quot;$adr.bak&quot;
 git add . &amp;&amp; git commit -qm &quot;adr: name the rule and the file the decision put in force&quot;</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium"><pre class="m-0 p-3 font-mono text-sm text-heading">$ majordomus adr affected</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus adr affected</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">no decision names anything this change set touches</li></ul>
@@ -318,14 +318,14 @@ git add . &amp;&amp; git commit -qm &quot;adr: name the rule and the file the de
         </p>
         <p class="mt-4 text-sm text-body">Read from what the decisions themselves name: a clean tree reaches nothing, and a change to a named path names the decision behind it. Review notes only — whether a decision still holds after the code it governs moved is not the tool&#39;s judgement, so the exit code stays 0.</p>
       </div></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto"><p>The repository's architecture decisions as objects: what was decided, why, what it cost,
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0"><p>The repository's architecture decisions as objects: what was decided, why, what it cost,
 and where the record came from. Under the layer's <code>adrs</code> section.</p>
 <p>A decision is a file <code>.ai/repo/adrs/&lt;NNNN&gt;-&lt;slug&gt;.md</code> — YAML front matter satisfying
 <code>share/schemas/majordomus/adr/adr.v1.schema.json</code> over a body carrying <code># Context</code>, <code># Decision</code> and
 <code># Consequences</code>. Nothing registers it: the source class <code>adr</code> in
 <code>.ai/repo/knowledge/sources.yaml</code> discovers it over the tracked tree, which is the same
 declaration the Rust executable indexes. See <a href="https://korczis.github.io/prismatic-majordomus/commands/adr/SCHEMAS.md"><code>SCHEMAS.md</code></a> for the contract.</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>majordomus adr list [--status &lt;status&gt;] [--json]      every decision: id, status, date, title</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus adr list [--status &lt;status&gt;] [--json]      every decision: id, status, date, title</span></span>
 <span class="giallo-l"><span>majordomus adr show &lt;id&gt; [--json]                     the path, then the file as written</span></span>
 <span class="giallo-l"><span>majordomus adr propose &quot;&lt;title&gt;&quot; [--from &lt;ref&gt;]...    write a new decision, status proposed</span></span>
 <span class="giallo-l"><span>                       [--tag &lt;tag&gt;]... [--supersedes &lt;id&gt;]</span></span>
@@ -382,7 +382,7 @@ moved is the judgement a tool may not make. It is the reverse question the graph
 <code>majordomus.adr-integrity</code>. The threshold for recording a decision at all is the rule
 <code>majordomus.decision-threshold</code>, which a reviewer decides: the tool validates records and
 reports what a change reaches, and never claims to know that a diff embodied a decision.</p>
-<pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus adr propose &quot;The registry is the one canonical declaration&quot; --from file:docs/CAPABILITIES.md</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>$ majordomus adr propose &quot;The registry is the one canonical declaration&quot; --from file:docs/CAPABILITIES.md</span></span>
 <span class="giallo-l"><span>proposed: adr-0011  The registry is the one canonical declaration</span></span>
 <span class="giallo-l"><span>.ai/repo/adrs/0011-the-registry-is-the-one-canonical-declaration.md</span></span>
 <span class="giallo-l"><span>status is &quot;proposed&quot;; accepting it is a person editing that field.</span></span>
@@ -394,23 +394,23 @@ reports what a change reaches, and never claims to know that a diff embodied a d
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/99_adr.sh" class="break-all font-mono text-fg-brand hover:underline">99_adr</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/99_adr.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">99_adr</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/99_adr.sh" class="break-all font-mono text-fg-brand hover:underline">99_adr</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/99_adr.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">99_adr</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementation</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline">bin/majordomus</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/lib/adr.sh" class="break-all font-mono text-fg-brand hover:underline">lib/adr.sh</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline">share/commands.yaml</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/bin/majordomus" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">bin/majordomus</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/lib/adr.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">lib/adr.sh</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/share/commands.yaml" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">share/commands.yaml</a></li>
         </ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Demonstration</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/fixtures/commands/adr.json" class="break-all font-mono text-fg-brand hover:underline">fixtures/adr.json</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline">34_command_fixtures</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/fixtures/commands/adr.json" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">fixtures/adr.json</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">34_command_fixtures</a></li>
         </ul>
       </div>
     </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees this command carries</h2>
@@ -422,7 +422,7 @@ reports what a change reaches, and never claims to know that a diff embodied a d
         <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/context/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/checkpoint/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">checkpoint</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/decision/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">decision</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/question/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">question</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/prompt/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">prompt</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/skills/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/capture/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">capture</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Verify</p>
         <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/check/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">check</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/usecase/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">usecase</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Conclude</p>
         <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/handover/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">handover</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/finish/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">finish</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/adr/" class="block rounded px-2 py-1 font-mono bg-brand-softer text-fg-brand-strong" aria-current="page">adr</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Inspect</p>
-        <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctor</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/watch/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">watch</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">history</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/search/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">search</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctrine/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/version/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">version</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/knowledge/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">knowledge</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">rules</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/bench/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">bench</a></li></ul><p class="mt-4 text-xs text-body-subtle"><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="hover:underline">Full shell CLI specification →</a></p>
+        <ul class="space-y-1 text-sm"><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctor/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctor</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/watch/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">watch</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/history/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">history</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/search/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">search</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/doctrine/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/version/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">version</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/knowledge/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">knowledge</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/rules/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">rules</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/bench/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">bench</a></li></ul><p class="mt-4 text-xs text-body-subtle"><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="underline">Full shell CLI specification →</a></p>
     </div>
   </aside>
 </div>
@@ -443,7 +443,7 @@ reports what a change reaches, and never claims to know that a diff embodied a d
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

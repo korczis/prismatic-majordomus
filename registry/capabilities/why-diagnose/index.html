@@ -192,12 +192,12 @@
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
     <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default">
-      <table class="w-full min-w-[24rem] text-left text-sm">
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_why_diagnose</span></td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/#op-why-diagnose" class="break-all text-fg-brand hover:underline">GET /api/v1/why/diagnose</a> <span class="text-xs text-body-subtle">operationId why.diagnose</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/#op-why-diagnose" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/why/diagnose</a> <span class="text-xs text-body-subtle">operationId why.diagnose</span></td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus why diagnose</td></tr>
         </tbody>
       </table>
@@ -211,8 +211,8 @@
 A name is a signal id or a moment id: a person ticking symptoms and a script naming
 moments reach the same answer, because a signal resolves to the moment that owns it.
 The parameter is one string rather than a list because a diagnosis changes nothing and
-is therefore a `GET`, and this repository binds a `GET` input to the query string.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
-    <table class="w-full min-w-[28rem] text-left text-sm">
+is therefore a `GET`, and this repository binds a `GET` input to the query string.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">signals</td>
@@ -224,7 +224,7 @@ answered with an empty diagnosis rather than an error. <span class="font-mono te
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
-    <div class="overflow-x-auto border-t border-default"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading">{
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;additionalProperties&quot;: false,
   &quot;description&quot;: &quot;What a reader recognised, as a comma-separated list of names.\n\nA name is a signal id or a moment id: a person ticking symptoms and a script naming\nmoments reach the same answer, because a signal resolves to the moment that owns it.\nThe parameter is one string rather than a list because a diagnosis changes nothing and\nis therefore a `GET`, and this repository binds a `GET` input to the query string.&quot;,
   &quot;properties&quot;: {
@@ -246,8 +246,8 @@ The arithmetic is the whole model and is stated so a reader can check it: a sele
 resolves to a set of moments; an area or an audience scores the number of selected
 moments that name it; a recommendation scores the number that name it and carries
 their ids. There is no weighting and no percentage, because there is no model behind
-one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
-    <table class="w-full min-w-[28rem] text-left text-sm">
+one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">also_worth_reading</td>
@@ -303,7 +303,7 @@ one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
-    <div class="overflow-x-auto border-t border-default"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading">{
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
     &quot;Recommendation&quot;: {
       &quot;description&quot;: &quot;One recommendation, with the moments that produced it. A recommendation with no\n`matched_because` is a recommendation nobody can check.&quot;,
@@ -433,11 +433,11 @@ one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">process</span> — up to 32 entries in the process, scoped by the registry fingerprint</dd></div>
     </dl>
 
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="text-fg-brand hover:underline">benchmarks page</a>.</p>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default">
-      <table class="w-full min-w-[28rem] text-left text-sm">
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
-        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-why-diagnose-direct-three-moments" class="break-all text-fg-brand hover:underline">three-moments</a> <span class="text-body-subtle">cold+warm</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-why-diagnose-mcp-three-moments" class="break-all text-fg-brand hover:underline">three-moments</a> <span class="text-body-subtle">cold+warm</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-why-diagnose-http-three-moments" class="break-all text-fg-brand hover:underline">three-moments</a> <span class="text-body-subtle">cold+warm</span><br></td></tr></tbody>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-why-diagnose-direct-three-moments" class="break-all text-fg-brand hover:underline inline-block py-1">three-moments</a> <span class="text-body-subtle">cold+warm</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-why-diagnose-mcp-three-moments" class="break-all text-fg-brand hover:underline inline-block py-1">three-moments</a> <span class="text-body-subtle">cold+warm</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-why-diagnose-http-three-moments" class="break-all text-fg-brand hover:underline inline-block py-1">three-moments</a> <span class="text-body-subtle">cold+warm</span><br></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -447,11 +447,11 @@ one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
       <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
       <dl class="space-y-2">
         <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">why.diagnose</dd></div>
-        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs" class="break-all font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/capability/builtin/why.rs</a></dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/why.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/why.rs</a></dd></div>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::why</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DiagnoseInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Diagnosis</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/why.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/why.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">56e7379a8e326782eff742d13c86bdc8d7895b0c5df42b1dc1abcee7a80c2c17</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/why.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/why.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">6283363d308d2108148a503511e4a54eb8b79fae3f89b4dc429984067ee25e10</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.2.0</dd></div>
       </dl>
     </div>
@@ -476,7 +476,7 @@ one.</p><div class="mt-3 overflow-x-auto rounded-base border border-default">
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/829cff55922265bc3dd2cd52583b063602b763d9" class="font-mono underline">829cff5</a> · inputs <span class="font-mono">f8fbec58010c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
