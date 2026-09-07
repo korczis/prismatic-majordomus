@@ -48,11 +48,16 @@ rm -rf "$G"; cp -R "$T/before" "$G"
 expect_exit 10 "$T/scripts/generate-site-data" --check
 expect_grep 'STALE'
 
-# --- 2. a capability leaves the manifest: its page goes with it, no orphan stays
-jq 'del(.capabilities[] | select(.id=="objects.grep" or .id=="objects.search")) | .modules |= map(if .id == "objects" then .capabilities -= 2 else . end)' "$REG" > "$REG.new" && mv "$REG.new" "$REG"
+# --- 2. a capability leaves the manifest: its page goes with it, no orphan stays.
+#        The real one removed here is web.surfaces rather than objects.search: the generator
+#        validates this repository's use cases against the manifest, and a use case names
+#        majordomus_search, so removing that one would make the fixture describe a tool the
+#        catalogue requires. Nothing names majordomus_web_surfaces, which is what makes it
+#        removable without contradicting anything.
+jq 'del(.capabilities[] | select(.id=="objects.grep" or .id=="web.surfaces")) | .modules |= map(if .id == "objects" then .capabilities -= 1 elif .id == "web" then .capabilities -= 1 else . end)' "$REG" > "$REG.new" && mv "$REG.new" "$REG"
 expect_exit 0 "$T/scripts/generate-site-data"
-[ ! -e "$C/capabilities/objects-grep.md" ] && [ ! -e "$C/capabilities/objects-search.md" ] || { echo "    a removed capability kept its stub"; exit 1; }
-jq -e '[.capabilities[].id] | index("objects.search") | not' "$G/executable.json" >/dev/null || { echo "    executable.json still lists the removed capability"; exit 1; }
+[ ! -e "$C/capabilities/objects-grep.md" ] && [ ! -e "$C/capabilities/web-surfaces.md" ] || { echo "    a removed capability kept its stub"; exit 1; }
+jq -e '[.capabilities[].id] | index("web.surfaces") | not' "$G/executable.json" >/dev/null || { echo "    executable.json still lists the removed capability"; exit 1; }
 [ "$(jq '.counts.capabilities' "$G/executable.json")" = "$((n - 1))" ]
 
 # --- 3. a broken reference is refused, loudly, and nothing is published
