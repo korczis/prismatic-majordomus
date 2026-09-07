@@ -902,7 +902,7 @@ pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
 /// cannot carry as a comment recorded as fields of the document.
 ///
 /// Refuses rather than writes when the rendered document carries anything from
-/// [`FORBIDDEN`]: this file is published to a website, and a leak that is generated is a
+/// `FORBIDDEN`: this file is published to a website, and a leak that is generated is a
 /// leak that regenerates.
 pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
     let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(

@@ -1438,7 +1438,7 @@ fn external_node(kind: &str, name: &str, path: Option<&str>) -> Node {
 /// What is true of a node in a running process, and of nothing on a published page.
 ///
 /// A graph is definitions: they are the same in a static build and in a server, and they
-/// are what [`compose`] derives. This is the overlay a consumer with a process to ask
+/// are what `compose` derives. This is the overlay a consumer with a process to ask
 /// lays over them, keyed by node id. It is deliberately not a field of [`Node`]: a node
 /// that could carry runtime state would carry it into the static projection, where it
 /// would be a value nobody can refresh and a reader cannot distinguish from a current
