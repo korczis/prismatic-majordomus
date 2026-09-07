@@ -168,7 +168,7 @@ where nothing is enforced.
 
 ## 5. Classification
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Category | What is in it today |
 |---|---|

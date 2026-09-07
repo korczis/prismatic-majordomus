@@ -1,5 +1,5 @@
-//! The two reports this repository generates as web surfaces: the test run and the
-//! benchmark run.
+//! The reports this repository generates as web surfaces: the test run, the benchmark run,
+//! and the UI conformance audit that is a section of the first.
 //!
 //! A report is a *rendering* of evidence somebody else produced. The suite writes its
 //! results, the benchmark run writes its own, and this module turns either into a directory
@@ -17,6 +17,7 @@ pub mod benchmarks;
 /// home page renders through it too; this re-export keeps the reports' own path to it.
 pub use super::html;
 pub mod tests;
+pub mod ui;
 
 use std::path::{Path, PathBuf};
 
@@ -55,6 +56,19 @@ pub fn declare(root: &Path, id: &str, title: &str, producer: &str) -> Result<Pat
     body.push('\n');
     std::fs::write(&path, body).map_err(|e| Error::io(path.display().to_string(), e))?;
     Ok(dir)
+}
+
+/// Declare a surface only when nothing has declared it yet.
+///
+/// A report that is a *section* of another's surface still needs that surface to exist —
+/// an unreachable section is not a report — but it must never restate the enclosing
+/// producer's identity over the top of it. So: create when absent, leave alone when there.
+pub fn declare_if_absent(root: &Path, id: &str, title: &str, producer: &str) -> Result<PathBuf> {
+    let dir = directory(root, id);
+    if dir.join(DECLARATION_FILE).is_file() {
+        return Ok(dir);
+    }
+    declare(root, id, title, producer)
 }
 
 /// Where a report's directory is, absolute.

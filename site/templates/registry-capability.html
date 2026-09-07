@@ -25,12 +25,12 @@
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
     <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
       <table class="w-full min-w-[24rem] text-left text-sm">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
         <tbody>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="{{ get_url(path=ex.routes.mcp, trailing_slash=true) }}" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">{% if c.exposure.mcp and c.exposure.mcp.tool %}tool <span class="break-all">{{ c.exposure.mcp.tool }}</span>{% endif %}{% if c.exposure.mcp and c.exposure.mcp.resource %}{% if c.exposure.mcp.tool %}<br>{% endif %}resource <span class="break-all">{{ c.exposure.mcp.resource.uri }}</span>{% endif %}{% if not c.exposure.mcp %}<span class="text-body-subtle">—</span>{% endif %}</td></tr>
-          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="{{ get_url(path=ex.routes.http, trailing_slash=true) }}" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading">{% if c.exposure.http %}<a href="{{ get_url(path=link.api_anchor, trailing_slash=false) }}" class="break-all text-fg-brand hover:underline">{{ c.exposure.http.method }} {{ c.exposure.http.path }}</a> <span class="text-xs text-body-subtle">operationId {{ c.id }}</span>{% else %}<span class="text-body-subtle">—</span>{% endif %}</td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="{{ get_url(path=ex.routes.http, trailing_slash=true) }}" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading">{% if c.exposure.http %}<a href="{{ get_url(path=link.api_anchor, trailing_slash=false) }}" class="break-all text-fg-brand hover:underline inline-block py-1">{{ c.exposure.http.method }} {{ c.exposure.http.path }}</a> <span class="text-xs text-body-subtle">operationId {{ c.id }}</span>{% else %}<span class="text-body-subtle">—</span>{% endif %}</td></tr>
           <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="{{ get_url(path=ex.routes.cli, trailing_slash=true) }}" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">{% if c.exposure.cli %}majordomus {{ c.exposure.cli.path | join(sep=" ") }}{% else %}<span class="text-body-subtle">—</span>{% endif %}</td></tr>
         </tbody>
       </table>
@@ -51,13 +51,13 @@
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2>
     {%- if coverage | length > 0 -%}
-    <p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="{{ get_url(path=ex.routes.benchmarks, trailing_slash=true) }}" class="text-fg-brand hover:underline">benchmarks page</a>.</p>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default">
+    <p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="{{ get_url(path=ex.routes.benchmarks, trailing_slash=true) }}" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
       <table class="w-full min-w-[28rem] text-left text-sm">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
         <tbody>
         {%- for l in coverage -%}
-        <tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">{{ l.transport }}</td><td class="px-3 py-2 font-mono text-xs {% if l.state == 'missing' %}text-fg-danger-strong{% else %}text-body{% endif %}">{{ l.state }}{% if l.reason %} ({{ l.reason }}){% endif %}</td><td class="px-3 py-2 font-mono text-xs text-body">{{ l.cases }}</td><td class="px-3 py-2 font-mono text-xs text-body">{% for t in targets %}{% if t.transport == l.transport %}<a href="{{ get_url(path=ex.routes.benchmarks, trailing_slash=true) }}#target-{{ t.key | slugify }}" class="break-all text-fg-brand hover:underline">{{ t.case }}</a>{% if t.cached %} <span class="text-body-subtle">cold+warm</span>{% endif %}<br>{% endif %}{% endfor %}</td></tr>
+        <tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">{{ l.transport }}</td><td class="px-3 py-2 font-mono text-xs {% if l.state == 'missing' %}text-fg-danger-strong{% else %}text-body{% endif %}">{{ l.state }}{% if l.reason %} ({{ l.reason }}){% endif %}</td><td class="px-3 py-2 font-mono text-xs text-body">{{ l.cases }}</td><td class="px-3 py-2 font-mono text-xs text-body">{% for t in targets %}{% if t.transport == l.transport %}<a href="{{ get_url(path=ex.routes.benchmarks, trailing_slash=true) }}#target-{{ t.key | slugify }}" class="break-all text-fg-brand hover:underline inline-block py-1">{{ t.case }}</a>{% if t.cached %} <span class="text-body-subtle">cold+warm</span>{% endif %}<br>{% endif %}{% endfor %}</td></tr>
         {%- endfor -%}
         </tbody>
       </table>
@@ -74,12 +74,12 @@
       <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
       <dl class="space-y-2">
         <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">{{ c.id }}</dd></div>
-        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="{{ link.source_url }}" class="break-all font-mono text-fg-brand hover:underline">{{ link.source_path }}</a></dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="{{ link.source_url }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ link.source_path }}</a></dd></div>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">{{ c.provenance.module }}</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">{{ c.input.name | default(value="object") }}</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">{{ c.output.name | default(value="object") }}</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="{{ project.repository_url }}/blob/master/docs/generated/modules/{{ c.module }}.md" class="break-all font-mono text-fg-brand hover:underline">docs/generated/modules/{{ c.module }}.md</a></dd></div>
-        {%- if link.tests | length > 0 -%}<div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1">{% for t in link.tests %}<a href="{{ project.repository_url }}/blob/master/{{ t }}" class="block break-all font-mono text-xs text-fg-brand hover:underline">{{ t }}</a>{% endfor %}</dd></div>{%- endif -%}
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="{{ project.repository_url }}/blob/master/docs/generated/modules/{{ c.module }}.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/{{ c.module }}.md</a></dd></div>
+        {%- if link.tests | length > 0 -%}<div><dt class="text-body-subtle">tests</dt><dd class="min-w-0 space-y-1">{% for t in link.tests %}<a href="{{ project.repository_url }}/blob/master/{{ t }}" class="block break-all font-mono text-xs text-fg-brand hover:underline py-1">{{ t }}</a>{% endfor %}</dd></div>{%- endif -%}
         <div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">{{ reg.registry.fingerprint }}</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">{{ reg.generator.id }} {{ reg.generator.version }}</dd></div>
       </dl>

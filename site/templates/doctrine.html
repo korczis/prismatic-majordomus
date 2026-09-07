@@ -10,7 +10,7 @@
     <p class="flex flex-wrap items-center gap-3">{{ <doctrine_class class={d.class} /> }}<span class="text-sm text-body">{% if d.class == "blocking" %}A violation stops the command with exit {{ d.exit_code }}.{% else %}A violation is reported and the command still succeeds.{% endif %}</span></p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The chain</h2>
-    <p class="mt-2 text-sm text-body">A rule is enforced only when every link below holds. <a href="{{ get_url(path="/docs/doctrine/", trailing_slash=true) }}" class="text-fg-brand hover:underline">majordomus doctor</a> resolves each one from the source on every run; this page shows what it resolved.</p>
+    <p class="mt-2 text-sm text-body">A rule is enforced only when every link below holds. <a href="{{ get_url(path="/docs/doctrine/", trailing_slash=true) }}" class="text-fg-brand underline">majordomus doctor</a> resolves each one from the source on every run; this page shows what it resolved.</p>
     <ol class="mt-4 list-none rounded-base border border-default bg-neutral-primary-soft px-5 py-2">
       {{ <chain_link step="1" label="Declared" detail={d.id} href={repo ~ d.source} /> }}
       {{ <chain_link step="2" label="Validator" detail={d.validator_function} href={repo ~ d.defined_in} /> }}

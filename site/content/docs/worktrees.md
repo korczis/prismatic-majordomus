@@ -105,7 +105,7 @@ contract the shared MCP server rests on, and the Cockpit names the exact command
 
 Every registered worktree has one standing:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | standing | meaning |
 |---|---|
@@ -121,7 +121,7 @@ Every registered worktree has one standing:
 
 and every condition has a stable code, the same on every surface, each with a remedy:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | code | severity | what it means |
 |---|---|---|
@@ -162,7 +162,7 @@ majordomus worktree migrate                    # move, verify, report
 majordomus worktree cleanup                    # what is merged and clean; deletes nothing
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | command | what it does | exit 10 when |
 |---|---|---|
@@ -228,7 +228,7 @@ ephemeral and the branch is not.
 
 Layered, and honest about what each layer can do:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | layer | what it does |
 |---|---|
@@ -286,7 +286,7 @@ says where to `cd`.
 
 ## Failure modes and recovery
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | situation | what you see | what to do |
 |---|---|---|
@@ -315,7 +315,7 @@ topology changes outside the process.
 
 ## Where things are
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | | |
 |---|---|

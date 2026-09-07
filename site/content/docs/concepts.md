@@ -11,7 +11,7 @@ source = "docs/CONCEPTS.md"
 The vocabulary, in ordinary engineering language. Everything Majordomus prints, and
 every file it writes, uses these words and no others.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Term | Meaning | Where it lives |
 |---|---|---|

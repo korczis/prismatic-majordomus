@@ -13,6 +13,18 @@ use serde::{Deserialize, Serialize};
 use super::{html, Origin};
 use crate::error::{Error, Result};
 
+/// The identity of the surface this report owns.
+///
+/// Named here rather than at each call site because the UI conformance report is a section
+/// of this same surface (`/tests/ui`) and has to name the surface it writes into. Two
+/// spellings of one identity is how a directory ends up declared twice, differently.
+pub const SURFACE_ID: &str = "tests";
+/// The surface's title, in a listing.
+pub const SURFACE_TITLE: &str = "Test results";
+/// What produces it, for a reader who has to rebuild it.
+pub const SURFACE_PRODUCER: &str =
+    "bash test/run.sh + cargo test, rendered by majordomus web report tests";
+
 /// One behavioural case, as the runner recorded it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Case {
@@ -157,12 +169,7 @@ pub fn parse_crate_tests(text: &str) -> CrateTests {
 ///
 /// Returns the directory written.
 pub fn render(root: &Path, run: &Run) -> Result<std::path::PathBuf> {
-    let dir = super::declare(
-        root,
-        "tests",
-        "Test results",
-        "bash test/run.sh + cargo test, rendered by majordomus web report tests",
-    )?;
+    let dir = super::declare(root, SURFACE_ID, SURFACE_TITLE, SURFACE_PRODUCER)?;
     let origin = Origin::read(root);
     super::write_json(&dir, "results.json", run)?;
 
@@ -204,10 +211,22 @@ pub fn render(root: &Path, run: &Run) -> Result<std::path::PathBuf> {
     } else {
         "The run has failures; each is named below."
     };
+    // the UI conformance audit writes its own section of this surface; link it when it is
+    // there, and say nothing when it is not, rather than linking a page that answers 404
+    let ui = if dir.join(super::ui::SECTION).join("index.html").is_file() {
+        format!(
+            "<h2>UI conformance</h2><p><a href=\"{}/\">What a browser found on every page of \
+             the built site</a>.</p>",
+            super::ui::SECTION
+        )
+    } else {
+        String::new()
+    };
     let body = format!(
-        "{}<h2>Behavioural cases</h2>{}{}",
+        "{}<h2>Behavioural cases</h2>{}{}{}",
         html::summary(&summary_items),
         html::table(&["case", "result", "seconds", "phase"], &rows),
+        ui,
         html::origin(&origin, &[("results.json", "results.json")])
     );
     let page = html::page("Test results", verdict, &body);

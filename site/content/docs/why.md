@@ -77,7 +77,7 @@ hash of its own sources and of nothing else, so the two `generate` passes of
 The distinction is the whole design, and the schemas enforce it: a derived key is a key the
 contract does not have.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | authored in the file | derived, and refused in a source file |
 |---|---|
@@ -96,7 +96,7 @@ contract does not have.
 Every reference is typed and resolves against the thing it names. An unresolved name is an
 error with the nearest candidate offered, never a link to a page that does not exist.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | key | resolves against |
 |---|---|
@@ -167,7 +167,7 @@ list, no Rust and no schema change.
 
 ## What enforces what
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | concern | source | enforcement |
 |---|---|---|

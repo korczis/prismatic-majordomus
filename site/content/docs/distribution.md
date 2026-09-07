@@ -267,7 +267,7 @@ ship an executable nothing can drive.
 
 ## Where things are
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | What | Where |
 |---|---|

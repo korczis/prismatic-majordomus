@@ -70,7 +70,7 @@ context:
 {"ts":"2026-09-03T19:30:12Z","event":"task.started","task_id":"t-20260903193012-a4f1"}
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | command | answers | writes | exit |
 |---|---|---|---|

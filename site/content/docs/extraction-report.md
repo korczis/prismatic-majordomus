@@ -46,7 +46,7 @@ rest of the design is downstream of it.
 Independent instances found in the source material, each verified by reading the wiring
 rather than the documentation:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | # | Declared | Actual |
 |---|---|---|
@@ -85,7 +85,7 @@ Columns: **Proven** means observed to work in production, not merely designed.
 **Generalizable** means usable by an ordinary team with git and a shell, no other
 runtime. **Complexity** is an estimate for a portable-shell implementation.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Pattern | Problem it addresses | Evidence | Proven | Generalizable | Complexity | Include |
 |---|---|---|---|---|---|---|
@@ -131,7 +131,7 @@ runtime. **Complexity** is an estimate for a portable-shell implementation.
 
 Rejected outright, with the failure that justifies rejection:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Rejected | Why |
 |---|---|
@@ -217,7 +217,7 @@ sourced modules). Nothing was kept because the prompt proposed it.
 
 Ordinary engineering vocabulary. No court.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Term | Meaning |
 |---|---|
@@ -273,7 +273,7 @@ Performed on this repository's contents before each push.
 
 ## 9. Risks
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Risk | Mitigation in design |
 |---|---|
@@ -337,7 +337,7 @@ carries a comment naming the failure it prevents.
 
 ### What the evidence says
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Observation | Magnitude | Consequence for this design |
 |---|---|---|
@@ -362,7 +362,7 @@ carries a comment naming the failure it prevents.
 Each of these is an idea, re-implemented from scratch in portable shell and awk against
 Majordomus's own records. No code, no schema and no vocabulary was carried across.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Idea | What it becomes here |
 |---|---|
@@ -389,7 +389,7 @@ Majordomus's own records. No code, no schema and no vocabulary was carried acros
 
 ### Refused
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Refused | Why |
 |---|---|

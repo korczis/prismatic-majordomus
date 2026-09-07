@@ -68,7 +68,7 @@ tr:last-child td {{ border-bottom: 0; }}
 .fail {{ color: var(--bad); font-weight: 600; }}
 code, .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em; }}
 footer {{ margin-top: 2.5rem; color: var(--muted); font-size: .8rem; border-top: 1px solid var(--line); padding-top: .75rem; }}
-a {{ color: inherit; }}
+a {{ color: inherit; text-decoration: underline; }}
 </style>
 </head>
 <body>
@@ -85,7 +85,9 @@ a {{ color: inherit; }}
 
 /// A table inside its own scrolling box: wide evidence never pushes the page sideways.
 pub fn table(headers: &[&str], rows: &[Vec<String>]) -> String {
-    let mut out = String::from("<div class=\"scroll\"><table><thead><tr>");
+    // the box scrolls, so it is reachable from the keyboard: a scrollable region that only
+    // a pointer can reach is the accessibility defect the site audit refuses (WCAG 2.1.1)
+    let mut out = String::from("<div class=\"scroll\" tabindex=\"0\"><table><thead><tr>");
     for header in headers {
         out.push_str(&format!("<th>{}</th>", escape(header)));
     }
@@ -165,7 +167,10 @@ mod tests {
     #[test]
     fn a_table_scrolls_inside_its_own_box() {
         let html = table(&["a"], &[vec!["1".into()]]);
-        assert!(html.starts_with("<div class=\"scroll\">"));
+        assert!(
+            html.starts_with("<div class=\"scroll\" tabindex=\"0\">"),
+            "{html}"
+        );
     }
 
     #[test]

@@ -1,7 +1,7 @@
 +++
 title = "majordomus worktree root"
 description = "Print the container every linked worktree belongs under, and nothing else: `cd \"$(majordomus worktree root)\"`"
-weight = 44
+weight = 45
 [extra]
 route = "/docs/cli/worktree/root/"
 command = "majordomus worktree root"

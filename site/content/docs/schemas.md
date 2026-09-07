@@ -230,7 +230,7 @@ output_contract:              # fields a completion note must carry for this pro
 
 The four shipped profiles:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | | `routine` | `implementation` | `debugging` | `deep-work` |
 |---|---|---|---|---|
@@ -291,7 +291,7 @@ x-majordomus:                         # present only on a rule the tool enforces
 ...
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | field | required | meaning |
 |---|---|---|
@@ -346,7 +346,7 @@ children:                         # subtree only: what the directories below owe
 ---
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | field | required | meaning |
 |---|---|---|
@@ -416,7 +416,7 @@ evidence: []
 The body: a summary of the work, given on standard input at close.
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Key | Required | Meaning |
 |---|---|---|
@@ -920,7 +920,7 @@ longer connects.
 
 The reference lists carry the identity each kind actually has, and nothing invents one:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Field | Identity used | Why that one |
 |---|---|---|
@@ -989,7 +989,7 @@ Open questions that block acceptance:
 {{OPEN_QUESTIONS}}
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Key | Required | Meaning |
 |---|---|---|
@@ -1050,7 +1050,7 @@ outputs:
 ...
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Key | Required | Meaning |
 |---|---|---|
@@ -1112,7 +1112,7 @@ provenance:
 ...
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Key | Required | Meaning |
 |---|---|---|
@@ -1291,7 +1291,7 @@ error.
 
 Events and their extra fields:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | event | extra fields |
 |---|---|

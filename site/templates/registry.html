@@ -33,10 +33,10 @@
 </div>
 
 <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  {{ <linkcard href={get_url(path=ex.routes.capabilities, trailing_slash=true)} kicker="capabilities" title={r.summary.total ~ " in the registry"} text={r.summary.builtin ~ " builtin (composed in Rust), " ~ r.summary.declarative ~ " declarative (one resource per object of the layer), in " ~ r.summary.modules ~ " modules."} /> }}
-  {{ <linkcard href={get_url(path=ex.routes.mcp, trailing_slash=true)} kicker="mcp" title={r.summary.mcp_tools ~ " tools · " ~ r.summary.mcp_resources ~ " resources"} text={"Every tool is a capability with an <code>mcp.tool</code> exposure; every object of the layer is a resource at <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>."} /> }}
-  {{ <linkcard href={get_url(path=ex.routes.http, trailing_slash=true)} kicker="http" title={r.summary.http_routes ~ " routes"} text={"The same capabilities as HTTP, and the OpenAPI 3.1 document under <code>/openapi.json</code>; " ~ r.summary.cli_commands ~ " are also command-line subcommands."} /> }}
-  {{ <linkcard href={get_url(path=ex.routes.benchmarks, trailing_slash=true)} kicker="benchmarks" title={r.summary.benchmark_required ~ " required · " ~ r.summary.benchmark_waived ~ " waived"} text={"Every executable capability is a benchmark target through every transport; a case is a compile-time obligation of its input type. " ~ r.summary.cached ~ " are cached by the executor."} /> }}
+  {{ <linkcard level="2" href={get_url(path=ex.routes.capabilities, trailing_slash=true)} kicker="capabilities" title={r.summary.total ~ " in the registry"} text={r.summary.builtin ~ " builtin (composed in Rust), " ~ r.summary.declarative ~ " declarative (one resource per object of the layer), in " ~ r.summary.modules ~ " modules."} /> }}
+  {{ <linkcard level="2" href={get_url(path=ex.routes.mcp, trailing_slash=true)} kicker="mcp" title={r.summary.mcp_tools ~ " tools · " ~ r.summary.mcp_resources ~ " resources"} text={"Every tool is a capability with an <code>mcp.tool</code> exposure; every object of the layer is a resource at <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>."} /> }}
+  {{ <linkcard level="2" href={get_url(path=ex.routes.http, trailing_slash=true)} kicker="http" title={r.summary.http_routes ~ " routes"} text={"The same capabilities as HTTP, and the OpenAPI 3.1 document under <code>/openapi.json</code>; " ~ r.summary.cli_commands ~ " are also command-line subcommands."} /> }}
+  {{ <linkcard level="2" href={get_url(path=ex.routes.benchmarks, trailing_slash=true)} kicker="benchmarks" title={r.summary.benchmark_required ~ " required · " ~ r.summary.benchmark_waived ~ " waived"} text={"Every executable capability is a benchmark target through every transport; a case is a compile-time obligation of its input type. " ~ r.summary.cached ~ " are cached by the executor."} /> }}
 </div>
 
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Modules</h2>
@@ -50,14 +50,14 @@
 
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Executable capabilities</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">Composed in Rust, each exposed as the table says. The id is the <code>operationId</code> of the OpenAPI document and the <code>_meta.majordomus.id</code> of the MCP tool; each links to its own page with schemas, policies, provenance and claims.</p>
-<div class="mt-4 overflow-x-auto rounded-base border border-default">
+<div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
 <table class="w-full text-left text-sm">
   <thead class="bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">id</th><th class="px-3 py-2">kind</th><th class="px-3 py-2">MCP tool</th><th class="px-3 py-2">HTTP</th><th class="px-3 py-2">CLI</th><th class="px-3 py-2">stability</th><th class="px-3 py-2">benchmark</th><th class="px-3 py-2">cache</th></tr></thead>
   <tbody class="divide-y divide-default">
   {%- for c in r.builtin %}
   {%- set link = [x for x in ex.capabilities if x.id == c.id][0] -%}
   <tr class="align-top">
-    <td class="px-3 py-2"><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="break-all font-mono text-fg-brand hover:underline">{{ c.id }}</a><p class="mt-1 max-w-md break-words text-xs text-body">{{ c.description }}</p></td>
+    <td class="px-3 py-2"><a href="{{ get_url(path=link.route, trailing_slash=true) }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ c.id }}</a><p class="mt-1 max-w-md break-words text-xs text-body">{{ c.description }}</p></td>
     <td class="px-3 py-2 font-mono text-xs">{{ c.kind }}</td>
     <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.mcp and c.exposure.mcp.tool %}{{ c.exposure.mcp.tool }}{% elif c.exposure.mcp and c.exposure.mcp.resource %}{{ c.exposure.mcp.resource.uri }}{% else %}—{% endif %}</td>
     <td class="px-3 py-2 font-mono text-xs">{% if c.exposure.http %}{{ c.exposure.http.method }} {{ c.exposure.http.path }}{% else %}—{% endif %}</td>
@@ -73,7 +73,7 @@
 
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Kinds</h2>
 <p class="mt-2 max-w-3xl text-sm text-body">What the executable reads, from <code>share/kinds.yaml</code> and the repository's own additions: how a file of the kind is read, the JSON Schema its metadata must satisfy, and how many objects of it the index holds.</p>
-<div class="mt-4 overflow-x-auto rounded-base border border-default">
+<div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
 <table class="w-full text-left text-sm">
   <thead class="bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">kind</th><th class="px-3 py-2">format</th><th class="px-3 py-2">front matter</th><th class="px-3 py-2">schema</th><th class="px-3 py-2">identity</th><th class="px-3 py-2 text-right">objects</th></tr></thead>
   <tbody class="divide-y divide-default">

@@ -53,7 +53,7 @@ Neither record has a `status` field. Writing one is an unknown key and fails val
 An issue records what happened to it — `started_at`, `verified_at`, `completed_at`,
 `cancelled`, and its `evidence` — and the status follows:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | status | when |
 |---|---|
@@ -69,7 +69,7 @@ An issue records what happened to it — `started_at`, `verified_at`, `completed
 
 A milestone's status follows from its issues and its own evidence:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | status | when |
 |---|---|
@@ -136,7 +136,7 @@ The canonical files are the only source. Everything else is generated from them 
 engine — `lib/project.awk`, loaded by `lib/project.sh` — so no two surfaces can hold
 different opinions about what is ready:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | surface | how |
 |---|---|

@@ -33,7 +33,7 @@ indirection while missing the real drift.
 **A contract stays literal.** These are decisions, not discoverable facts, and writing
 them down is how they become a contract:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Kind | Example here |
 |---|---|
@@ -51,7 +51,7 @@ them down is how they become a contract:
 **A mirror is a defect.** A list is a mirror when something else already knows its
 contents:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Mirror of | Where the truth is |
 |---|---|
@@ -75,7 +75,7 @@ file in `docs/` appears in no row.
 
 ## Canonical owners
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Entity | Canonical owner | Discovery | Derived surfaces |
 |---|---|---|---|
