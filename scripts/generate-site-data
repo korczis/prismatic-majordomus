@@ -61,6 +61,8 @@ docs/generated/openapi.json
 docs/generated/registry.json
 site/data/registry/why.json
 site/data/registry/why-graph.json
+site/data/registry/product.json
+site/data/registry/product-graph.json
 docs/generated/cli.json
 docs/generated/web.json
 apps/majordomus-cli/README.md
@@ -722,6 +724,21 @@ WHY_DATA="$ROOT/site/data/registry/why.json"
 [ "$(jq -r '.schema' "$WHY_DATA")" = "majordomus-site-why/v1" ] || { echo "generate-site-data: site/data/registry/why.json is not a majordomus-site-why/v1 dataset (regenerate: majordomus generate site)" >&2; exit 10; }
 [ "$(jq -r '.valid' "$WHY_DATA")" = "true" ] || { echo "generate-site-data: the Why catalogue does not validate; the site may not render it (reproduce: majordomus why validate)" >&2; exit 10; }
 [ "$(jq '.moments | length' "$WHY_DATA")" -ge 3 ] || { echo "generate-site-data: .ai/repo/why/moments/ produced almost no moments" >&2; exit 10; }
+# The product model, on the same contract: `majordomus generate site` writes
+# site/data/registry/product.json and product-graph.json from the features of the layer,
+# the capability registry, the command registry, the Why catalogue and the web topology
+# (ADR 22). This script reads them and renders them; it derives nothing about the product
+# itself, and it names no feature.
+PRODUCT_DATA="$ROOT/site/data/registry/product.json"
+[ "$(jq -r '.schema' "$PRODUCT_DATA")" = "majordomus-site-product/v1" ] || { echo "generate-site-data: site/data/registry/product.json is not a majordomus-site-product/v1 dataset (regenerate: majordomus generate site)" >&2; exit 10; }
+[ "$(jq -r '.valid' "$PRODUCT_DATA")" = "true" ] || { echo "generate-site-data: the product model does not validate; the site may not render it (reproduce: majordomus product validate)" >&2; exit 10; }
+[ "$(jq '[.features[] | select(.status != "draft")] | length' "$PRODUCT_DATA")" -ge 3 ] || { echo "generate-site-data: .ai/repo/features/ produced almost no features" >&2; exit 10; }
+[ "$(jq '[.features[] | select(.featured and .status != "draft")] | length' "$PRODUCT_DATA")" -ge 3 ] || { echo "generate-site-data: no feature declares itself featured; the homepage would have no chapters" >&2; exit 10; }
+# A public dataset that carried a feature's body, an absolute path or a key nobody allowed
+# would be a projection boundary that leaked; the executable copies field by field and its
+# test asserts it, and this refuses the artifact rather than publishing it.
+jq -e '[.features[] | has("body")] | any | not' "$PRODUCT_DATA" >/dev/null || { echo "generate-site-data: site/data/registry/product.json carries a feature body; the public projection is field-allow-listed and must not (apps/majordomus-cli/src/site.rs)" >&2; exit 10; }
+grep -qE '"(/Users|/home|/root|/tmp)/' "$PRODUCT_DATA" && { echo "generate-site-data: site/data/registry/product.json carries a machine path; nothing local may reach a published page" >&2; exit 10; }
 mj_phase_end "gen:why_catalogue" "$GEN_T0"
 # ---------------------------------------------------------------- sessions.json (the layer's own memory)
 GEN_T0="$(mj_phase_begin "gen:sessions.json")"
@@ -1368,6 +1385,7 @@ mk_section() { # dir, title, description, section template, page template, weigh
 CONTENT_ROOT="$STAGE/content"
 rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan" "$CONTENT_ROOT/skills"
 rm -rf "$CONTENT_ROOT/context" "$CONTENT_ROOT/sessions"
+rm -rf "$CONTENT_ROOT/features"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
@@ -1462,6 +1480,22 @@ for tx in audiences areas; do
         | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
       printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/why/$tx/$id.md"; done
 done
+# The product's routes: the section, one page per feature, and the matrix. Nothing here
+# names a feature: adding .ai/repo/features/<id>.md and regenerating is what puts
+# /features/<id>/ on the site, in the homepage's chapters when it declares itself featured,
+# in the matrix, in the graph and in the search. The body is the feature's own file, read
+# from the `source` the dataset names; everything else on the page is derived (ADR 22).
+mk_section features "Features" "Every capability of the product as one object of the layer: what it is made of, the interfaces it is exposed through, the rules that hold it and the guarantees behind it. Each card is a file; every mark beside it is derived." features-section.html feature.html 4
+jq -r '.features[] | select(.status != "draft") | [.id, .title, .summary, .source, .status, (.weight|tostring)] | @tsv' "$PRODUCT_DATA" \
+  | while IFS="$MJ_TAB" read -r id title summary source status weight; do
+  { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nstatus = %s\nsource = %s\n+++\n{%% raw %%}\n' \
+      "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$status")" "$(jstr "$source")"
+    # the page template renders the title as the one h1, so the feature's own level-two
+    # sections keep their level and its prose never competes with the heading above it
+    mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
+    printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/features/$id.md"; done
+printf -- '+++\ntitle = "Every feature against every interface"\ndescription = "The matrix both ways: each feature against the command line, the HTTP API, MCP, the Cockpit and the documentation, and each capability module, public command and object kind against the features that name it. Every mark is derived; a gap is shown."\nweight = 1000\ntemplate = "features-matrix.html"\n[extra]\nsource = "majordomus product matrix"\n+++\n' > "$CONTENT_ROOT/features/matrix.md"
+
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jline)" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
@@ -1742,6 +1776,34 @@ for d in $GENERATED_DOCS; do
   project_doc "$n" "$STAGE/$n.md"
 done
 mj_phase_end "gen:generated_docs_as_pages" "$GEN_T0"
+
+# ---------------------------------------------------------------- routes that moved
+# A route that changed address is declared once, in site/data/nav.toml, beside the routes
+# that did not: `[[redirects]] from = ... to = ...`. Each becomes a Zola alias on the page
+# it points at, so the old address answers with a redirect instead of a 404. Nothing here
+# names a route, and a redirect whose target this run did not generate is an error rather
+# than a link into nothing.
+: > "$STAGE/redirects.tsv"
+# the navigation is hand-written site data; a fixture repository that renders no navigation
+# has none, and then there is no route that moved either
+if [ -f "$ROOT/site/data/nav.toml" ]; then
+awk '
+  /^from *= *"/ { f = $0; sub(/^from *= *"/, "", f); sub(/".*$/, "", f); next }
+  /^to *= *"/   { t = $0; sub(/^to *= *"/, "", t);   sub(/".*$/, "", t);
+                  if (f != "") { print f "\t" t; f = "" } }
+' "$ROOT/site/data/nav.toml" | LC_ALL=C sort > "$STAGE/redirects.tsv"
+fi
+for to in $(cut -f2 "$STAGE/redirects.tsv" | LC_ALL=C sort -u); do
+  rel="${to#/}"; rel="${rel%/}"
+  target=""
+  for cand in "$STAGE/content/$rel/_index.md" "$STAGE/content/$rel.md"; do
+    [ -f "$cand" ] && { target="$cand"; break; }
+  done
+  [ -n "$target" ] || { echo "generate-site-data: site/data/nav.toml redirects to $to, which this run does not generate" >&2; exit 10; }
+  list="$(awk -F"$MJ_TAB" -v t="$to" '$2 == t { printf "%s\"%s\"", (n++ ? ", " : ""), $1 }' "$STAGE/redirects.tsv")"
+  awk -v a="aliases = [$list]" 'NR == 1 && $0 == "+++" { print; print a; next } { print }' "$target" > "$target.aliased"
+  mv "$target.aliased" "$target"
+done
 
 # ---------------------------------------------------------------- staged output complete
 GEN_T0="$(mj_phase_begin "gen:staged_output_complete")"

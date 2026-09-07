@@ -1,59 +1,57 @@
-# The only hand-written prose on the site. No capability claims (those come from
-# docs/CLAIMS.yaml via capabilities.json), no numbers (the generator computes them).
-# Budget: scripts/site-check fails when this file exceeds 60 lines.
+# The only hand-written prose on the site: positioning sentences and button labels. No
+# capability claims (those are features under .ai/repo/features/ and claims in
+# docs/CLAIMS.yaml, both derived onto the page) and no numbers (the generator computes
+# every count). Budget: scripts/site-check fails when this file exceeds 60 lines.
 
 [hero]
-# three business outcomes, one complete message each; the first is the page's h1 and the default
-eyebrow = "AI-assisted development without the repeated setup."
-cta_primary = "See how it works"
-cta_secondary = "Get started"
-cta_more = "How? Tell me more"
-propositions = [
-  { slug = "faster-onboarding", label = "Faster onboarding", headline = "Make every developer and AI agent productive faster.", body = "Majordomus carries project context, decisions and working practices forward, so less time and money is spent explaining the same things again.", outcome = "Faster onboarding. Less rework. Lower AI spend." },
-  { slug = "lower-cost", label = "Lower cost", headline = "Make AI development cost less and move faster.", body = "With Majordomus, developers and AI agents keep the project context, decisions and ways of working across sessions and tools.", outcome = "Less work gets repeated, onboarding is faster, and less AI spend is wasted rebuilding what your team already knows." },
-  { slug = "less-wasted-time", label = "Less wasted time", headline = "Spend less time and money getting AI up to speed.", body = "Majordomus keeps what your project already knows, so developers and AI agents can continue where the last one stopped.", outcome = "Less repetition. Faster onboarding. Lower AI cost." },
-]
+eyebrow = "Prismatic Majordomus"
+title = "The control plane for AI-native repositories."
+mantra = ["One repository.", "Many agents.", "One source of truth."]
+lead = "Majordomus turns a git repository into a typed, inspectable, agent-operable system: one policy every tool reads, one registry every interface is derived from, and typed records of sessions, worktrees, decisions and rules that outlive the conversation that produced them."
+cta_primary = "Install"
+cta_secondary = "Every feature against every interface"
+console_caption = "Real output. The rows are the features this repository declares and the marks are derived from what each one names; the same answer is on the command line, over HTTP and over MCP."
 
-[contract]
-caption = "Real output from the repository's own README, not a mockup. One line per check, each naming what it proved. A failing line carries the command that reproduces it, so the next thing to do is never a guess. Nothing is warned about and continued past: the run is refused, and the task stays open."
+[install]
+lead = "No git, no Rust, no Node, no root: one archive for your machine, its digest verified before anything is unpacked. Then one command in the repository you want supervised."
+layer = "What init creates is the layer this site is generated from: one directory, tracked, readable without the tool. The sections below are this repository's own."
 
 [recognise]
-# the items are the pages under site/content-src/why/; each carries its own hook
 title = "You need this if, this week, you have…"
 closing = "None of these are model problems. They are operations problems, and operations is what Majordomus does."
 
-[compare]
-title = "The same team, before and after one directory"
-before_title = "Without"
-before = [
-  "developer A: own prompts, own workflow, own habits",
-  "developer B: a different model, a different session discipline",
-  "developer C: everything on max, always",
-  "state lives in chat transcripts; the next session starts from zero",
-  "\"done\" is a sentence",
-]
-after_title = "With Majordomus"
-after = [
-  "one policy, projected into every tool's instruction file",
-  "named profiles instead of vibes: effort, verbosity, context, verification",
-  "one active task per checkout, scope declared before the first edit",
-  "durable state and handovers the next session can trust against git",
-  "\"done\" is a contract, evaluated line by line, refused when unmet",
-]
+[chapters]
+kicker = "what it does"
+lead = "Each chapter is one feature file under the layer. The interfaces, the counts, the mechanisms and the moments beside it are derived from what that file names; the words are the only thing a person wrote."
 
-[leads]
-problem = "An AI session is the only witness to its own work. Nothing outside the conversation states what it was allowed to do or checks what it did."
-boundary = "Majordomus does not stop a worker from touching a file while it runs. It declares the scope up front, detects a file outside it at check and at finish, and refuses to accept the work as completed — nothing is written to the record until every line of the contract passes. Refused acceptance, not runtime prevention, is the contract."
-narrow = "The narrowness is the point: a supervisor that also ran the workers, stored their memory or chose their models would be one more thing nobody supervises."
-model = "Majordomus does not replace a worker and never invokes a model. It decides what a worker is told, what it may touch, and whether its claim of being done can be believed."
-install = "One directory in your repository holds the policy, the profiles, and the durable state. Nothing is compiled, served, or running in the background."
-supervises = "Every responsibility is a file in one directory and a subcommand that reads it."
-profiles = "Rendered from the profile files a fresh install writes. Change the YAML; this page changes."
-capabilities = "A supervisory tool that overstates itself is the thing it was built to prevent. Every row names its source, implementation and test, and the build fails if a path does not exist."
-architecture = "The website is a projection of the repository, built the way the tool asks projects to build their own instructions: one canonical source, generated outputs, a check that fails on drift."
-final = "One directory. One pointer in your AI instructions. Stop rebuilding your AI workflow in every new session."
+[write_once]
+title = "Write once. Surface everywhere."
+lead = "A rule, a skill, a decision, a use case, an operational moment, a feature: each is one file under the layer with a schema. Discovery finds it, the schema validates it, the index holds it, and every interface reads the index. Nothing registers anything."
 
-[audiences]
-developer = "Copy one directory, run one command, and every AI tool you open reads the same rules. Handovers carry state, not transcripts."
-lead = "One policy for every tool the team runs, a finish contract before anything is called done, and a matrix that says what is guaranteed and what is only advisory."
-organisation = "The ledger already records sessions, handovers, workers and verification per task. When token telemetry lands, cost per accepted outcome is one query away — measured, not estimated."
+[providers]
+title = "Provider-neutral by construction"
+lead = "The policy is one file and every tool's instruction file is generated from it. A worker's context, its worktree, its handovers and the repository's decisions belong to the repository, not to the vendor whose session happened to produce them."
+boundary = "Majordomus never invokes a model; it decides what a worker is told, what it may touch, and whether its claim of being done can be believed."
+
+[surfaces]
+title = "One registry, every interface"
+lead = "A capability is declared once. The command line, the HTTP API, the OpenAPI document and the Swagger UI over it, the MCP tools and resources, the Cockpit and this site are projections of that declaration; a projection that disagrees with it fails the build."
+
+[matrix]
+lead = "Every mark is derived. A feature is on an interface because a module, command or kind it names is projected there, never because a page says so; a gap is shown rather than hidden."
+
+[graph]
+lead = "The same model as a graph: features, what each is made of, and the interfaces that follow. Select a node to see what it touches; the list under it is the graph without a script."
+
+[principles]
+title = "Rules a machine decides, not suggestions a model may follow"
+lead = "A rule is a portable file with a class; a rule the tool enforces names the validator that decides it, the commands that run it and the tests that prove it, and doctor walks that chain from the source."
+
+[contract]
+caption = "Real output from the repository's own README, not a mockup. One line per check, each naming what it proved; a failing line carries the command that reproduces it, and nothing is written until every line passes."
+
+[architecture]
+lead = "This page is a projection of the repository it describes. Every feature, count, provider, interface and moment on it came out of the same executable that answers agents, and a stale page fails the build before it can be deployed."
+
+[final]
+title = "One directory in your repository. One source of truth for every agent that opens it."

@@ -1,0 +1,15 @@
+{#- The interfaces one feature is exposed through. The caller sets `f` (a feature of
+    data/registry/product.json) and `surfaces` (the dataset's surface list). Nothing here
+    names an interface: the list is the dataset's, and the mark is the feature's derived
+    `surfaces` map, which the executable computed from what the feature's references
+    project onto. A page cannot claim a surface the registry does not have. -#}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+<ul class="flex flex-wrap gap-1.5" aria-label="Interfaces this is exposed through">
+  {%- for s in surfaces %}
+  {%- if f.surfaces[s.id] %}
+  <li><a href="{{ base }}{{ s.route }}" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>{{ s.id }}</a></li>
+  {%- else %}
+  <li><span class="inline-flex items-center gap-1.5 rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-xs text-body-subtle" title="No module, command or kind this feature names is projected onto {{ s.title }}."><span aria-hidden="true">·</span>{{ s.id }}</span></li>
+  {%- endif %}
+  {%- endfor %}
+</ul>

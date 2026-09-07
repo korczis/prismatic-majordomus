@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/feature/feature.v1.schema.json",
+  "x-majordomus-schema": "majordomus.feature/v1",
+  "title": "Product feature",
+  "description": "The front matter of a feature under .ai/repo/features/: one thing the product does for a person, stated once, and the things of this repository it is made of \u2014 capability modules, shell commands, object kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces \u2014 each a typed reference validated against the registry that owns it. Everything a surface says about the feature is derived from those references: which interfaces expose it (command line, HTTP, MCP, the Cockpit, the documentation), how many capabilities, tools, routes and objects stand behind it, which operational moments it answers, what is guaranteed and what is only advisory. The body carries the narrative (## What it does, ## What it does not do). Nothing derivable is written here: the route, the surfaces, the counts, the moments and the evidence are computed and never authored.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "kind",
+    "title",
+    "headline",
+    "summary",
+    "status"
+  ],
+  "properties": {
+    "schema": {
+      "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+      "const": "feature/v1"
+    },
+    "id": {
+      "description": "The identity and the slug. It fixes the file name and the route /features/<id>/, and it survives a retitle.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "kind": {
+      "const": "feature"
+    },
+    "title": {
+      "description": "The feature as a heading: what it does, not what it is called internally.",
+      "type": "string",
+      "minLength": 1
+    },
+    "short_title": {
+      "description": "Two or three words for a card, a navigation entry or a matrix row. Absent means the title is used.",
+      "type": "string",
+      "minLength": 1
+    },
+    "headline": {
+      "description": "One sentence a visitor reads first: the product promise of this feature, in plain words, with no number in it.",
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "description": "One line: what the feature does, in operational terms. Also the page description.",
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "description": "stable: complete and public, and held to the content floors. draft: written and not yet complete; listed as a draft, never counted, never featured. deprecated: kept because its route exists, listed nowhere.",
+      "enum": [
+        "stable",
+        "draft",
+        "deprecated"
+      ]
+    },
+    "weight": {
+      "description": "Presentation order within a listing, lowest first. Equal weights fall back to the id.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "featured": {
+      "description": "True when the homepage shows the feature as one of its chapters. The homepage takes the featured set in weight order; it names none of them. Editorial: this is the one decision nothing can derive.",
+      "type": "boolean"
+    },
+    "areas": {
+      "description": "The operational areas of the why catalogue this feature serves, when it serves one. Each must name an area under the why section; the taxonomy is that catalogue's and is not declared a second time here. A feature about the tool itself rather than about operations names none.",
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "audiences": {
+      "description": "The audiences of the why catalogue this feature is written for, when it is not for everyone. Editorial. Each must name an audience under the why section.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "modules": {
+      "description": "Capability modules of the Rust executable this feature is made of, by module id. Every capability the module composes, every MCP tool and resource, HTTP route, command-line path and Cockpit page of those capabilities is attributed to the feature from the registry; nothing of that is written here.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]*$"
+      }
+    },
+    "commands": {
+      "description": "Public commands of the shell tool this feature is made of; each must be a public command of share/commands.yaml.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "kinds": {
+      "description": "Object kinds of the layer this feature is made of, by the kind's name in share/kinds.yaml. The objects, their count, their MCP resources and their pages are attributed from the index.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "rules": {
+      "description": "Rules of the effective set that govern this feature, by id without the version (project.worktree-topology, majordomus.session-lifecycle). Each must resolve to a rule of the index; its class and its enforcement are read from the rule.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$"
+      }
+    },
+    "docs": {
+      "description": "The documents that explain this feature, by repository-relative path (docs/WORKTREES.md). Each must be a document the index holds; the site route is derived from it.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_./-]+\\.md$"
+      }
+    },
+    "adrs": {
+      "description": "The architecture decisions behind this feature, by the id each declares (adr-0021).",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^adr-[0-9]{4}$"
+      }
+    },
+    "claims": {
+      "description": "Claims of docs/CLAIMS.yaml that say what is guaranteed here. The status of each is read from the matrix, never restated.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "use_cases": {
+      "description": "Use cases that show the feature in use; each must be a use case of the layer. The evidence of its executed scenario is attributed from the catalogue.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "cockpit": {
+      "description": "Areas of the Cockpit that show this feature, by the area's id as the Cockpit declares it (worktrees, continuity, health, ...). Validated against the Cockpit's own navigation; the route is read from it.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "web": {
+      "description": "Web surfaces of the resolved topology this feature is offered through, by surface id (swagger, openapi, mcp, cockpit, docs). Validated against the topology; the mount is read from it.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "related": {
+      "description": "Features explicitly related to this one. The reverse is derived.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    }
+  }
+}

@@ -130,7 +130,7 @@ gate had seen.
 
 `site/data/generated` is only half of what the generator produces. The other half is the
 derived *content* — `site/content/{docs,guarantees,commands,doctrines,plan,use-cases,
-applications,skills,registry,profiles,supervises,why,outcomes}/` and the projections of
+applications,skills,registry,profiles,supervises,why,features}/` and the projections of
 `site/content-src/*.md` — and Zola renders that, not the JSON. So it is committed too. A
 fresh clone has no other way to obtain it: `site-build --no-data` does not run the generator,
 which is the whole of why the build fits its budget, and generating the content instead would
