@@ -15,7 +15,7 @@
       {%- if c.json_output %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li>{% endif -%}
       {%- if not c.requires_installed %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">runs before init</span></li>{% endif -%}
     </ul>
-    {%- if c.note %}<p class="mt-4 border-l-2 border-default pl-4 text-sm text-body">{{ c.note }}</p>{% endif -%}
+    {%- if c.note %}<p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">{{ c.note }}</p>{% endif -%}
 
     {#- C. Syntax -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
