@@ -20,11 +20,11 @@
   {%- endif %}
   {%- if rec.commits | length > 0 %}
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Commits</h2>
-  <ul class="mt-2 space-y-1" role="list">{% for c in rec.commits %}<li class="font-mono text-xs text-body">{{ c }}</li>{% endfor %}</ul>
+  <ul class="mt-2 space-y-1" role="list">{% for c in rec.commits %}<li class="break-all font-mono text-xs text-body">{{ c }}</li>{% endfor %}</ul>
   {%- endif %}
   {%- if rec.changed_files | length > 0 %}
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Paths the working tree held changed</h2>
-  <ul class="mt-2 space-y-1" role="list">{% for f in rec.changed_files %}<li class="font-mono text-xs text-body">{{ f }}</li>{% endfor %}</ul>
+  <ul class="mt-2 space-y-1" role="list">{% for f in rec.changed_files %}<li class="break-all font-mono text-xs text-body">{{ f }}</li>{% endfor %}</ul>
   {%- endif %}
   <p class="mt-10 text-xs text-body-subtle">Written by <code class="font-mono">majordomus session close</code> into <code class="font-mono">{{ sx.source }}</code>, against <code class="font-mono">{{ sx.contract }}</code>.</p>
   {%- else %}
