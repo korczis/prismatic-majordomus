@@ -584,3 +584,332 @@ pub fn migrate_by_copy(service: &WorktreeService, from: &Path, to: &Path) -> Res
     }
     Ok(differences)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A repository with a primary checkout and whatever linked worktrees a test asks for.
+    ///
+    /// The fixture lives under the temporary directory on purpose: `ephemeral_root_of`
+    /// disables the temporary roots for a repository that is itself inside one, so a
+    /// worktree placed outside the container is `Misplaced` rather than `Ephemeral`, and
+    /// `.claude/worktrees/` remains the one rule that makes a checkout ephemeral. Without
+    /// that, every worktree here would be a session's scratch and there would be nothing
+    /// to plan.
+    struct Repo {
+        _home: tempfile::TempDir,
+        primary: PathBuf,
+    }
+
+    impl Repo {
+        fn new() -> Self {
+            let home = tempfile::tempdir().expect("tempdir");
+            let primary = home.path().join("dev/repo");
+            std::fs::create_dir_all(&primary).expect("mkdir");
+            let r = Repo {
+                _home: home,
+                primary,
+            };
+            r.git(&["init", "-q", "-b", "master", "."]);
+            r.git(&["config", "user.email", "t@example.com"]);
+            r.git(&["config", "user.name", "t"]);
+            r.git(&["commit", "-q", "--allow-empty", "-m", "root"]);
+            r
+        }
+
+        fn git(&self, args: &[&str]) {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&self.primary)
+                .args(args)
+                .output()
+                .expect("git runs")
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        }
+
+        /// A linked worktree for `branch`, at `at`.
+        fn worktree(&self, branch: &str, at: &Path) {
+            if let Some(parent) = at.parent() {
+                std::fs::create_dir_all(parent).expect("mkdir");
+            }
+            self.git(&["worktree", "add", "-q", "-b", branch, &at.to_string_lossy()]);
+        }
+
+        fn service(&self) -> WorktreeService {
+            WorktreeService::open(&self.primary).expect("a service over the fixture")
+        }
+
+        /// Where the worktree of `branch` belongs.
+        fn canonical(&self, branch: &str) -> PathBuf {
+            self.service()
+                .expected_path_of(branch)
+                .expect("a canonical path")
+        }
+    }
+
+    #[test]
+    fn a_worktree_already_home_is_neither_a_step_nor_an_exception() {
+        let repo = Repo::new();
+        repo.worktree("feature/done", &repo.canonical("feature/done"));
+        let plan = plan(&repo.service()).expect("a plan");
+        assert!(plan.steps.is_empty(), "{:?}", plan.steps);
+        assert_eq!(plan.movable, 0);
+        assert_eq!(plan.blocked, 0);
+    }
+
+    #[test]
+    fn a_misplaced_worktree_is_a_step_that_moves_it_home() {
+        let repo = Repo::new();
+        let away = repo.primary.parent().unwrap().join("elsewhere");
+        repo.worktree("feature/away", &away);
+
+        let plan = plan(&repo.service()).expect("a plan");
+        assert_eq!(plan.steps.len(), 1, "{:?}", plan.steps);
+        let step = &plan.steps[0];
+        assert_eq!(step.branch, "feature/away");
+        assert_eq!(step.action, MigrationAction::Move);
+        assert_eq!(step.outcome, StepOutcome::Planned);
+        assert_eq!(step.to, display(&repo.canonical("feature/away")));
+        assert_eq!(plan.movable, 1);
+        assert_eq!(plan.blocked, 0);
+        // a plan changes nothing: the worktree is still where it was
+        assert!(away.is_dir(), "the plan moved something");
+    }
+
+    #[test]
+    fn a_session_scratch_checkout_is_reported_and_left_alone_unless_it_is_asked_for() {
+        // The guard this exists for: a worktree under the primary's .claude/worktrees/ is
+        // a harness's own, and migration reports it rather than moving it out from under
+        // whoever is working in it.
+        let repo = Repo::new();
+        let scratch = repo.primary.join(".claude/worktrees/scratch");
+        repo.worktree("feature/scratch", &scratch);
+
+        let default = plan(&repo.service()).expect("a plan");
+        assert!(
+            default.steps.is_empty(),
+            "an ephemeral checkout is not a step: {:?}",
+            default.steps
+        );
+        assert_eq!(default.movable, 0);
+
+        // and it is not silently dropped either — it is reported as an exception
+        assert!(
+            !default.exceptions.is_empty(),
+            "an ephemeral checkout is reported"
+        );
+
+        // asked for explicitly, it becomes a step like any other
+        let asked = plan_with(&repo.service(), true).expect("a plan");
+        assert_eq!(asked.steps.len(), 1, "{:?}", asked.steps);
+        assert_eq!(asked.steps[0].branch, "feature/scratch");
+        assert!(scratch.is_dir(), "neither plan moved anything");
+    }
+
+    #[test]
+    fn a_worktree_with_no_branch_has_nowhere_to_go_and_is_an_exception() {
+        let repo = Repo::new();
+        let away = repo.primary.parent().unwrap().join("detached");
+        std::fs::create_dir_all(away.parent().unwrap()).expect("mkdir");
+        repo.git(&["worktree", "add", "-q", "--detach", &away.to_string_lossy()]);
+
+        let plan = plan(&repo.service()).expect("a plan");
+        assert!(
+            plan.steps.is_empty(),
+            "a detached worktree has no canonical path: {:?}",
+            plan.steps
+        );
+    }
+
+    #[test]
+    fn the_containers_occupant_moves_first_and_blocks_the_rest_when_it_cannot() {
+        // A worktree that *is* the container is the one shape that needs two moves, and
+        // every other destination is inside it. The plan puts it first; and when it is
+        // blocked, nothing else may proceed, because their destinations would be created
+        // inside a directory that is about to move.
+        let repo = Repo::new();
+        let container = repo.service().container().path.clone();
+        repo.worktree("feature/occupant", &container);
+        let away = repo.primary.parent().unwrap().join("elsewhere");
+        repo.worktree("feature/away", &away);
+
+        let plan = plan(&repo.service()).expect("a plan");
+        assert_eq!(plan.steps.len(), 2, "{:?}", plan.steps);
+        assert_eq!(
+            plan.steps[0].branch, "feature/occupant",
+            "the occupant is planned first"
+        );
+        assert_eq!(plan.steps[0].action, MigrationAction::MoveViaStaging);
+    }
+
+    #[test]
+    fn a_plan_over_a_repository_with_nothing_to_move_is_empty_and_valid() {
+        let repo = Repo::new();
+        let plan = plan(&repo.service()).expect("a plan");
+        assert!(plan.steps.is_empty());
+        assert!(!plan.applied);
+        assert_eq!(plan.moved, 0);
+        assert_eq!(plan.failed, 0);
+        assert_eq!(plan.schema, SCHEMA);
+        assert_eq!(plan.container, display(&repo.service().container().path));
+    }
+
+    #[test]
+    fn applying_moves_the_worktree_home_and_keeps_every_file_including_the_dirty_ones() {
+        // The transactional guarantee: a fingerprint before, git moves the directory, a
+        // fingerprint after, and the step is a success only if the two agree. A dirty
+        // worktree is the case this exists for — modified, staged and untracked files all
+        // travel with one rename, and nothing is reset, stashed or checked out.
+        let repo = Repo::new();
+        let away = repo.primary.parent().unwrap().join("elsewhere");
+        repo.worktree("feature/dirty", &away);
+
+        // leave work of all three kinds in it
+        std::fs::write(away.join("tracked.txt"), "committed\n").expect("write");
+        let add = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&away)
+            .args(["add", "tracked.txt"])
+            .output()
+            .expect("git runs");
+        assert!(add.status.success());
+        let commit = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&away)
+            .args([
+                "-c",
+                "user.email=t@e.com",
+                "-c",
+                "user.name=t",
+                "commit",
+                "-q",
+                "-m",
+                "w",
+            ])
+            .output()
+            .expect("git runs");
+        assert!(commit.status.success());
+        std::fs::write(away.join("tracked.txt"), "modified\n").expect("write");
+        std::fs::write(away.join("untracked.txt"), "never added\n").expect("write");
+        let staged = away.join("staged.txt");
+        std::fs::write(&staged, "staged\n").expect("write");
+        let add = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&away)
+            .args(["add", "staged.txt"])
+            .output()
+            .expect("git runs");
+        assert!(add.status.success());
+
+        let svc = repo.service();
+        let home = svc.expected_path_of("feature/dirty").expect("a path");
+        let applied = apply(&svc, &MigrationOptions::default()).expect("the plan applies");
+
+        assert!(applied.applied, "the plan says it ran");
+        assert_eq!(applied.moved, 1, "{:?}", applied.steps);
+        assert_eq!(applied.failed, 0, "{:?}", applied.steps);
+        assert_eq!(applied.steps[0].outcome, StepOutcome::Moved);
+
+        // the worktree is home, and the old path is gone
+        assert!(home.is_dir(), "the worktree did not arrive");
+        assert!(!away.exists(), "the worktree did not leave");
+
+        // every file travelled, dirty ones included
+        assert_eq!(
+            std::fs::read_to_string(home.join("tracked.txt")).expect("tracked"),
+            "modified\n",
+            "an unstaged modification was reset"
+        );
+        assert_eq!(
+            std::fs::read_to_string(home.join("untracked.txt")).expect("untracked"),
+            "never added\n",
+            "an untracked file was cleaned"
+        );
+        assert_eq!(
+            std::fs::read_to_string(home.join("staged.txt")).expect("staged"),
+            "staged\n"
+        );
+
+        // and git agrees the worktree is at its new path
+        let listed = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo.primary)
+            .args(["worktree", "list"])
+            .output()
+            .expect("git runs");
+        let listed = String::from_utf8_lossy(&listed.stdout);
+        assert!(
+            listed.contains(&display(&home)),
+            "git still points elsewhere: {listed}"
+        );
+    }
+
+    #[test]
+    fn only_the_selected_branch_moves_and_the_rest_say_why_not() {
+        let repo = Repo::new();
+        let parent = repo.primary.parent().unwrap().to_path_buf();
+        repo.worktree("feature/one", &parent.join("one"));
+        repo.worktree("feature/two", &parent.join("two"));
+
+        let svc = repo.service();
+        let options = MigrationOptions {
+            only: vec!["feature/one".into()],
+            ..MigrationOptions::default()
+        };
+        let applied = apply(&svc, &options).expect("the plan applies");
+
+        assert_eq!(applied.moved, 1, "{:?}", applied.steps);
+        let two = applied
+            .steps
+            .iter()
+            .find(|s| s.branch == "feature/two")
+            .expect("the unselected step is still reported");
+        assert_eq!(two.outcome, StepOutcome::Blocked);
+        assert_eq!(two.message.as_deref(), Some("not selected"));
+        assert!(parent.join("two").is_dir(), "the unselected worktree moved");
+    }
+
+    #[test]
+    fn a_session_scratch_checkout_is_not_moved_by_an_ordinary_apply() {
+        // The guard, at the point where it matters: applying a migration must not relocate
+        // a harness's own checkout out from under whoever is working in it.
+        let repo = Repo::new();
+        let scratch = repo.primary.join(".claude/worktrees/scratch");
+        repo.worktree("feature/scratch", &scratch);
+
+        let applied = apply(&repo.service(), &MigrationOptions::default()).expect("applies");
+        assert_eq!(applied.moved, 0, "{:?}", applied.steps);
+        assert!(scratch.is_dir(), "an ephemeral checkout was moved");
+    }
+
+    #[test]
+    fn the_staging_path_sits_beside_the_container_and_names_the_process() {
+        let staging = staging_path(Path::new("/dev/repo-wt"));
+        assert_eq!(staging.parent(), Some(Path::new("/dev")));
+        let name = staging.file_name().unwrap().to_string_lossy().to_string();
+        assert!(name.starts_with("repo-wt.migrating-"), "{name}");
+        assert!(
+            name.ends_with(&std::process::id().to_string()),
+            "two migrations at once do not share a staging path: {name}"
+        );
+    }
+
+    #[test]
+    fn a_cross_device_rename_is_recognised_from_what_git_said() {
+        let exdev = WorktreeError::GitCommandFailed {
+            command: "worktree move".into(),
+            status: "exit status: 128".into(),
+            stderr: "fatal: failed to rename: Invalid cross-device link".into(),
+        };
+        assert!(is_cross_device(&exdev));
+        let other = WorktreeError::GitCommandFailed {
+            command: "worktree move".into(),
+            status: "exit status: 128".into(),
+            stderr: "fatal: something else entirely".into(),
+        };
+        assert!(!is_cross_device(&other));
+    }
+}
