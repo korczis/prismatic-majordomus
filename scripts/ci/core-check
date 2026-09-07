@@ -19,6 +19,15 @@ step() {
   fi
   printf '==> %s\n' "$*"; last="$*"; t_step="$now"
 }
+# The policy declares the derived merge driver as an enforcement entry and doctor proves it
+# is wired; a fresh clone (CI's, or a person's first) has not declared it yet, and the
+# declaration is this clone's own configuration, not a tracked file. Declare it here, once,
+# the way `just derive-merge-driver` does, so the gate judges the repository and not the
+# clone's age. Idempotent: an existing declaration is left alone.
+if [ -z "$(git config --get merge.derived.driver 2>/dev/null || true)" ]; then
+  git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
+  git config merge.derived.driver "$ROOT/scripts/merge-derived %O %A %B %P"
+fi
 step "self-supervision: doctor and watch"
 git config core.hooksPath .githooks
 bin/majordomus doctor

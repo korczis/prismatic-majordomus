@@ -325,7 +325,7 @@ fn diagnosis_text(v: &Value) -> String {
         if items.is_empty() {
             return Vec::new();
         }
-        let mut lines = vec![String::new(), format!("{label}")];
+        let mut lines = vec![String::new(), label.to_string()];
         for r in items {
             lines.push(format!(
                 "  {:<34}{:>3}   {}",

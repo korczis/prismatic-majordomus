@@ -147,9 +147,12 @@ rm .ai/repo/rules/project/broken.v1.md .ai/repo/rules/project/copy.v1.md; git ad
 expect_exit 0 "$RB" generate allow --check
 expect_grep 'generate --check: in sync'
 # every line below the banner is an anchored pattern; the banner itself is `#` comments,
-# which every reader of an allow-list strips before it reads a pattern
+# which every reader of an allow-list strips before it reads a pattern. A list the generator
+# derives says so in its first line; the two the generator does not derive yet (the command
+# registry's and the event vocabulary's, docs/TWO_FOLDER_CONSOLIDATION.md) say that instead,
+# so that an allow-list with no provenance at all is still refused.
 for f in "$ROOT"/share/allow/*.txt; do
-  head -n 1 "$f" | grep -qE '^# GENERATED FILE' || { echo "    $f carries no generated-file banner"; exit 1; }
+  head -n 1 "$f" | grep -qE '^# (GENERATED|AUTHORED) FILE' || { echo "    $f carries no provenance banner"; exit 1; }
   grep -vE '^#' "$f" | grep -qvE '^\^' && { echo "    $f carries a line that is neither a comment nor a pattern"; exit 1; }
   true
 done
