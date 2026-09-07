@@ -65,14 +65,17 @@ trap 'rm -rf "$stage"' EXIT INT TERM HUP
 tree="$stage/$rootdir"
 
 mkdir -p "$tree/bin" "$tree/lib" "$tree/libexec" "$tree/share"
-cp "$ROOT/bin/majordomus" "$ROOT/bin/majordomus-mcp" "$tree/bin/"
+# majordomus-cli is the launcher the other two go through — `majordomus-mcp` execs it, and
+# it is what finds libexec/majordomus-cli in an installed tree — so the archive carries all
+# three or the installed MCP launcher execs a path that only exists in a checkout
+cp "$ROOT/bin/majordomus" "$ROOT/bin/majordomus-mcp" "$ROOT/bin/majordomus-cli" "$tree/bin/"
 cp "$ROOT"/lib/* "$tree/lib/"
 cp "$binary" "$tree/libexec/majordomus-cli"
 # the tool's data directory, whole: kinds, schemas, allow-lists, providers, skeleton,
 # the rule package, the cockpit assets and the distribution model itself
 cp -R "$ROOT/share/." "$tree/share/"
 cp "$ROOT/LICENSE" "$tree/LICENSE"
-chmod 0755 "$tree/bin/majordomus" "$tree/bin/majordomus-mcp" "$tree/libexec/majordomus-cli"
+chmod 0755 "$tree/bin/majordomus" "$tree/bin/majordomus-mcp" "$tree/bin/majordomus-cli" "$tree/libexec/majordomus-cli"
 find "$tree/lib" "$tree/share" -type f -exec chmod 0644 {} +
 find "$tree/share" -type d -exec chmod 0755 {} +
 chmod 0644 "$tree/LICENSE"
