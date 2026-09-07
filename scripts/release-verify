@@ -92,6 +92,7 @@ ok "$entries entries, all under $expected_root/"
 for required in \
   "$expected_root/bin/majordomus" \
   "$expected_root/bin/majordomus-mcp" \
+  "$expected_root/bin/majordomus-cli" \
   "$expected_root/libexec/majordomus-cli" \
   "$expected_root/lib/common.sh" \
   "$expected_root/share/kinds.yaml" \
@@ -103,7 +104,7 @@ do
 done
 ok "every required member is present"
 
-for executable in "$expected_root/bin/majordomus" "$expected_root/bin/majordomus-mcp" "$expected_root/libexec/majordomus-cli"; do
+for executable in "$expected_root/bin/majordomus" "$expected_root/bin/majordomus-mcp" "$expected_root/bin/majordomus-cli" "$expected_root/libexec/majordomus-cli"; do
   mode="$(grep " $executable\$" "$listing" | sed -n '1s/^\(.\{10\}\).*/\1/p')"
   case "$mode" in
     *x*) ;;
