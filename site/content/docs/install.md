@@ -61,7 +61,7 @@ writable the installer says which one and stops.
 
 ## Supported platforms
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Platform | Architecture | libc | Rust target | Status |
 |---|---|---|---|---|

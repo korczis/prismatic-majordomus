@@ -2988,6 +2988,158 @@
                   }
                 ],
                 "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "web",
+                  "report",
+                  "ui"
+                ],
+                "route": "/docs/cli/web/report/ui/",
+                "executable": true,
+                "usage": "majordomus web report ui [OPTIONS]",
+                "about": "The UI conformance audit, rendered as a section of the test surface (/tests/ui)",
+                "args": [
+                  {
+                    "name": "from",
+                    "long": "from",
+                    "positional": false,
+                    "help": "A results document from `scripts/ui audit`",
+                    "value_name": "FROM",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract)"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  },
+                  {
+                    "name": "only",
+                    "long": "only",
+                    "positional": false,
+                    "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+                    "value_name": "ONLY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "exclude",
+                    "long": "exclude",
+                    "positional": false,
+                    "help": "Every surface except these, by discovered id",
+                    "value_name": "EXCLUDE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "web-report-ui",
+                    "title": "Render the UI conformance audit into /tests/ui",
+                    "description": "`scripts/ui audit` drives a browser over every page of the built site at every width the compiled stylesheet's breakpoints imply, and writes one results document; this renders it. The rendering is a section of the test surface rather than a surface of its own, because a conformance run is a test run and the topology refuses a surface mounted inside another's subtree. Without that document there is nothing to render and the command says so.",
+                    "argv": [
+                      "web",
+                      "report",
+                      "ui",
+                      "--from",
+                      "target/web/run-ui.json"
+                    ],
+                    "command": "majordomus web report ui --from target/web/run-ui.json",
+                    "setup": [],
+                    "expectation": "exits 13"
+                  }
+                ],
+                "subcommands": []
               }
             ]
           },

@@ -22,13 +22,13 @@
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ [i for i in issues if i.status == st] | length }}</dd></div>
     {%- endfor %}
   </dl>
-  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/project" class="text-fg-brand hover:underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How that works</a>.</p>
+  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/project" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">How that works</a>.</p>
 
   {%- if plan.next_ready %}
   {%- set nx = [i for i in issues if i.id == plan.next_ready] -%}
   <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5">
     <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">next ready issue</p>
-    <p class="mt-2 text-lg font-semibold text-heading"><a href="{{ get_url(path="/plan/" ~ (plan.next_ready | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ plan.next_ready }}</a> — {{ nx[0].title }}</p>
+    <p class="mt-2 text-lg font-semibold text-heading"><a href="{{ get_url(path="/plan/" ~ (plan.next_ready | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand underline">{{ plan.next_ready }}</a> — {{ nx[0].title }}</p>
     <p class="mt-2 text-sm text-body">{{ nx[0].objective }}</p>
     <p class="mt-3 font-mono text-xs text-body-subtle">majordomus plan next</p>
   </div>
@@ -69,12 +69,12 @@
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">The graph</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Generated from the same edges the command reads, by <code class="font-mono text-heading">majordomus plan graph</code>. No diagram on this site is drawn by hand.</p>
   {{ <plan_graph mermaid={plan.mermaid} caption="Every issue, every dependency" /> }}
-  <p class="mt-2 text-sm text-body"><a href="{{ get_url(path="/plan/dag/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The graph on its own page</a>, with the edge list.</p>
+  <p class="mt-2 text-sm text-body"><a href="{{ get_url(path="/plan/dag/", trailing_slash=true) }}" class="text-fg-brand underline">The graph on its own page</a>, with the edge list.</p>
 
   {%- if plan.findings | length > 0 %}
   <h2 class="mt-12 text-2xl font-bold tracking-tight text-heading">Findings</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">What validation says about the model as published. A failure would have stopped this build; anything below is a warning the model reports and does not block.</p>
-  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm">
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">level</th><th scope="col" class="px-4 py-2">code</th><th scope="col" class="px-4 py-2">subject</th><th scope="col" class="px-4 py-2">message</th></tr></thead>
       <tbody>{%- for f in plan.findings %}<tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">{{ f.level }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ f.code }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ f.subject }}</td><td class="px-4 py-2 text-body">{{ f.message }}</td></tr>{%- endfor %}</tbody>
@@ -92,7 +92,7 @@
 {% endif %}{% endfor %}
 {% </code> %}
   </div>
-  <p class="mt-4 max-w-3xl text-sm text-body">Read <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the planning model</a> for what the terms mean, and <a href="{{ get_url(path="/docs/dogfooding/", trailing_slash=true) }}" class="text-fg-brand hover:underline">dogfooding</a> for why this repository holds itself to it. The release roadmap — what each version adds — is <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand hover:underline">a separate page</a>.</p>
+  <p class="mt-4 max-w-3xl text-sm text-body">Read <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">the planning model</a> for what the terms mean, and <a href="{{ get_url(path="/docs/dogfooding/", trailing_slash=true) }}" class="text-fg-brand underline">dogfooding</a> for why this repository holds itself to it. The release roadmap — what each version adds — is <a href="{{ get_url(path="/roadmap/", trailing_slash=true) }}" class="text-fg-brand underline">a separate page</a>.</p>
 </div>
 {% endblock content %}
 {% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}

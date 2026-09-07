@@ -21,7 +21,7 @@ Exit codes are part of the interface. A caller, including a git hook, must propa
 them. A hook that receives any non-zero code and continues is a contract violation, and
 `doctor` scans hook scripts for `|| true` and `|| exit 0` around Majordomus invocations.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Code | Name | Meaning |
 |---|---|---|
@@ -280,7 +280,7 @@ check: 4 finding(s), 1 failing
 What has drifted? Read-only. Never used to block; exit `11` when findings exist so that
 scripts can tell "drift" from "healthy" without confusing it with a contract failure.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Drift | Detected how |
 |---|---|
@@ -399,7 +399,7 @@ be stale; then the task and the profile that constrains it; then blockers, which
 what may be accepted; then authored records; then event history last, because it is the
 weakest evidence about the present.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Section | Source | Included when |
 |---|---|---|
@@ -1003,7 +1003,7 @@ discovering that the hook meant to keep their prompts had been discarding them.
 
 **`capture status` reports five distinct states, and never a generic pass:**
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | state | what is true |
 |---|---|
@@ -1136,7 +1136,7 @@ it is a guess the person best placed to notice it is wrong will never see.
 explicitly, in fields somebody maintains, and those are both free and correct. The edge
 types are a closed set; an undeclared one is an error rather than a new vocabulary word:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | type | from → to | stated in |
 |---|---|---|
@@ -1211,7 +1211,7 @@ sources in its AI layer, `.ai/repo/knowledge/sources.yaml`, and the tool ships t
 operational classes, the records it writes itself, in `share/knowledge-sources.yaml`. The
 scope of a class is decided by which file declared it; neither file names the other:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | scope | meaning |
 |---|---|
@@ -1292,7 +1292,7 @@ with its hash. A file whose hash no longer matches, a listed file that is absent
 present beside the manifest that it does not list, is reported by `vendor status` and
 refused by `vendor update` until `--force`.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | exit | meaning |
 |---|---|

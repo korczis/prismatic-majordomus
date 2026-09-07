@@ -10,7 +10,7 @@
   <li id="example-{{ e.id }}" class="scroll-mt-24">
     <p class="text-sm font-medium text-heading">{{ e.title }}</p>
     <p class="mt-1 text-sm text-body">{{ e.description }}</p>
-    <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium">
+    <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0">
       <pre class="px-3 py-2 text-xs leading-relaxed text-body"><code>{% for st in e.setup %}$ {{ st.command }}
 {% endfor %}$ {{ e.command }}</code></pre>
     </div>

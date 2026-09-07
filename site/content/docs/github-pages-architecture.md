@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages architecture"
 description = "how the website is derived from the repository and checked for drift"
-weight = 36
+weight = 37
 [extra]
 source = "docs/GITHUB_PAGES_ARCHITECTURE.md"
 +++
@@ -20,7 +20,7 @@ being maintained separately from the repository that backs it.
 
 ## Canonical sources
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | layer | owns | lives in | edited by hand |
 |---|---|---|---|
@@ -96,7 +96,7 @@ flowchart TB
 </pre>
 
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | stage | generator | reads | writes | checked by |
 |---|---|---|---|---|
@@ -123,7 +123,7 @@ which `test/cases/51_derived_artifacts_committed.sh` and the release criterion r
 
 `scripts/generate-site-data` reads every canonical input, normalises it once, and writes:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | file | from | what |
 |---|---|---|
@@ -156,7 +156,7 @@ projection.
 
 ## Derived files, classified
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | class | what | examples | rule |
 |---|---|---|---|
@@ -170,7 +170,7 @@ projection.
 
 ## Where do I edit this?
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | I want to change | edit | never edit |
 |---|---|---|
@@ -207,7 +207,7 @@ Canonical Markdown must stay readable on GitHub, so the site uses only syntax Gi
 natively. `scripts/lib/project-markdown.awk` projects three GitHub-native constructs into site
 components, on the derived copy only:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | in the canonical file | on the site |
 |---|---|
@@ -315,7 +315,7 @@ installed `flowbite` is 4.0.2, matching the documented token vocabulary.
 Every tile on the homepage is a link to a page with its own title, description, canonical URL
 and Open Graph metadata. The route classes and their sources:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | route | source | template |
 |---|---|---|

@@ -34,7 +34,7 @@
   {%- if ms.evidence | length > 0 %}
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">A milestone is never done because its issues are; the last step is its own acceptance, and it is gated on the rows below.</p>
-  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[34rem] text-left text-sm">
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th></tr></thead>
       <tbody>{%- for e in ms.evidence %}<tr class="border-t border-default"><td class="px-4 py-2 font-mono text-xs text-heading">{{ e.covers }}</td><td class="px-4 py-2 font-mono text-xs text-body">{{ e.type }}</td><td class="px-4 py-2 font-mono text-xs text-body break-words">{{ e.command }}</td><td class="px-4 py-2 text-body">{{ e.result }}</td></tr>{%- endfor %}</tbody>
@@ -44,7 +44,7 @@
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Issues</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each one is an execution contract with its own acceptance criteria, validation command and required evidence. The wave column is the layer of the dependency graph it sits in.</p>
-  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[38rem] text-left text-sm">
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">issue</th><th scope="col" class="px-4 py-2">status</th><th scope="col" class="px-4 py-2">wave</th><th scope="col" class="px-4 py-2">depends on</th><th scope="col" class="px-4 py-2">title</th></tr></thead>
       <tbody>
@@ -64,7 +64,7 @@
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The graph</h2>
   {{ <plan_graph mermaid={ms.mermaid} caption={ms.id ~ " dependency graph"} /> }}
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="{{ repo }}.ai/repo/project/milestones/{{ ms.id }}.yaml" class="break-all font-mono text-fg-brand hover:underline">.ai/repo/project/milestones/{{ ms.id }}.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show {{ ms.id }}</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="{{ repo }}.ai/repo/project/milestones/{{ ms.id }}.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/{{ ms.id }}.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show {{ ms.id }}</code>.</p>
 </div>
 {% endblock body %}
 {% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}

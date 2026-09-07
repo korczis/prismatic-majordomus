@@ -1,7 +1,7 @@
 +++
 title = "majordomus why areas"
 description = "Every operational area, with the moments that fall under it"
-weight = 28
+weight = 29
 [extra]
 route = "/docs/cli/why/areas/"
 command = "majordomus why areas"

@@ -880,6 +880,7 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure) -> El {
                     el("code")
                         .class("mj-mono mj-preview")
                         .attr("data-mj-preview", "")
+                        .attr("tabindex", "0")
                         .text(format!("{} {}", http.method.as_str(), http.path)),
                 ),
         )
@@ -2179,7 +2180,7 @@ pub fn api(ctx: &Context) -> Page {
                 "Swagger UI",
                 link(crate::http::swagger::SWAGGER_PATH, "Open"),
                 el("p").class("mj-prose").text(
-                    "Swagger UI is served from this process and reads /openapi.json, which is generated from the registry at first request. Nothing about an operation is written twice: the descriptions, the schemas and the examples are the capability's own.",
+                    format!("Swagger UI is served from this process and reads {}, which is generated from the registry at first request. Nothing about an operation is written twice: the descriptions, the schemas and the examples are the capability's own.", crate::http::swagger::SPEC_PATH),
                 ),
             ))
             .child(card(

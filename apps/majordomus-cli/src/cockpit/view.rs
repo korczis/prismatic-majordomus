@@ -219,7 +219,7 @@ fn footer(shell: &Shell<'_>) -> El {
         .child(el("span").text("·"))
         .child(link("/openapi.json", "openapi.json"))
         .child(el("span").text("·"))
-        .child(link("/docs", "Swagger UI"))
+        .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger UI"))
         .child(el("span").text("·"))
         .child(link("/cockpit/health", "health"))
 }
@@ -332,12 +332,17 @@ pub fn table(headers: &[&str], rows: Vec<El>) -> El {
     let head = headers.iter().fold(el("tr"), |r, h| {
         r.child(el("th").attr("scope", "col").text(*h))
     });
-    el("div").class("mj-table-wrap").child(
-        el("table")
-            .class("mj-table")
-            .child(el("thead").child(head))
-            .child(el("tbody").children(rows)),
-    )
+    // the wrapper scrolls, so it is in the tab order: a scrolling region only a pointer can
+    // reach is the accessibility defect the UI conformance check refuses (WCAG 2.1.1)
+    el("div")
+        .class("mj-table-wrap")
+        .attr("tabindex", "0")
+        .child(
+            el("table")
+                .class("mj-table")
+                .child(el("thead").child(head))
+                .child(el("tbody").children(rows)),
+        )
 }
 
 /// A row of cells.

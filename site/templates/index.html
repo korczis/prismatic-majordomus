@@ -45,7 +45,7 @@
           {%- endif %}
           <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body sm:text-xl">{{ p.body }}</p>
           <p class="mt-5 max-w-2xl text-lg font-semibold leading-snug text-heading sm:text-xl">{{ p.outcome }}</p>
-          <p class="mt-3 lg:hidden"><a href="{{ get_url(path="/outcomes/" ~ p.slug ~ "/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand hover:underline">{{ m.hero.cta_more }} &rarr;</a></p>
+          <p class="mt-3 lg:hidden"><a href="{{ get_url(path="/outcomes/" ~ p.slug ~ "/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand underline">{{ m.hero.cta_more }} &rarr;</a></p>
         </div>
         {%- endfor %}
       </div>
@@ -112,7 +112,7 @@
     <div class="max-w-3xl">
       <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">What &ldquo;done&rdquo; looks like when it has to be earned</h2>
       <p class="mt-4 text-body">{{ m.contract.caption }}</p>
-      <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The full contract, argument by argument &rarr;</a></p>
+      <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The full contract, argument by argument &rarr;</a></p>
     </div>
     <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
       <div class="min-w-0">
@@ -131,11 +131,11 @@
             {%- endfor %}
           </ol>
         </figure>
-        <p class="mt-3 text-sm text-body-subtle">Work arrives from every session. It leaves as <span class="font-medium text-heading">completed</span> only when all {{ readme.finish_checks | length }} lines pass. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/map/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">See the program these checks run in &rarr;</a></p>
+        <p class="mt-3 text-sm text-body-subtle">Work arrives from every session. It leaves as <span class="font-medium text-heading">completed</span> only when all {{ readme.finish_checks | length }} lines pass. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/map/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">See the program these checks run in &rarr;</a></p>
       </div>
       <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
         <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
-        <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+        <div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
       </figure>
     </div>
   </div>
@@ -211,7 +211,7 @@ majordomus finish --outcome completed --verify-command "make test"
       </a></li>
       {%- endfor -%}
     </ol>
-    <p class="mt-6 text-sm text-body">{{ readme.does | length }} responsibilities sit behind the {{ lifecycle.steps | length }} commands of that lifecycle — <a href="{{ get_url(path="/supervises/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">what Majordomus supervises →</a>. Outcomes are a closed vocabulary: {% for o in lifecycle.outcomes %}<code class="font-mono text-heading">{{ o }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. State read back is labelled {% for l in lifecycle.divergence_labels %}<code class="font-mono text-heading">{{ l }}</code>{% if not loop.last %}, {% endif %}{% endfor %} against git.</p>
+    <p class="mt-6 text-sm text-body">{{ readme.does | length }} responsibilities sit behind the {{ lifecycle.steps | length }} commands of that lifecycle — <a href="{{ get_url(path="/supervises/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">what Majordomus supervises →</a>. Outcomes are a closed vocabulary: {% for o in lifecycle.outcomes %}<code class="font-mono text-heading">{{ o }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. State read back is labelled {% for l in lifecycle.divergence_labels %}<code class="font-mono text-heading">{{ l }}</code>{% if not loop.last %}, {% endif %}{% endfor %} against git.</p>
   </div>
 </section>
 
@@ -226,13 +226,13 @@ majordomus finish --outcome completed --verify-command "make test"
         <div class="mb-3 flex items-center justify-between"><a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="hover:underline">{{ <badge status={status} /> }}</a><span class="font-mono text-sm text-body-subtle">{{ rows | length }}</span></div>
         <p class="mb-4 text-sm text-body">{{ caps.statuses[status] }}</p>
         <ul class="space-y-2 text-sm text-heading">
-          {%- for c in rows[:4] -%}<li class="flex gap-2"><span aria-hidden="true" class="text-body-subtle">·</span><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>{%- endfor -%}
+          {%- for c in rows[:4] -%}<li class="flex gap-2"><span aria-hidden="true" class="text-body-subtle">·</span><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="py-0.5 hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>{%- endfor -%}
         </ul>
         <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="mt-auto inline-block pt-4 text-sm font-medium text-fg-brand hover:underline">All {{ status }} claims →</a>
       </div>
       {%- endfor -%}
     </div>
-    <p class="mt-6"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand hover:underline">The full matrix with source, implementation and test for every row →</a></p>
+    <p class="mt-6"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand underline">The full matrix with source, implementation and test for every row →</a></p>
   </div>
 </section>
 
@@ -240,7 +240,7 @@ majordomus finish --outcome completed --verify-command "make test"
 <section class="border-b border-default bg-neutral-primary-soft">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="07" kicker="what it is not" title="Not another runtime" /> }}
-    <div class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ readme.not_md | markdown | safe }}</div>
+    <div class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ readme.not_md | markdown | safe }}</div>
   </div>
 </section>
 

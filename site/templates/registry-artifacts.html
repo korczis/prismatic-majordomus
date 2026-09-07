@@ -12,7 +12,7 @@
 
   <h2 id="documents" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Documents</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">{{ man.documents | length }} documents, {{ man.artifacts | length }} files. A document that names a schema satisfies the contract published for it under <code class="font-mono">share/schemas/generated/</code>, and the generator refuses to write one that does not.</p>
-  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[36rem] text-left text-sm">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">document</th><th class="px-3 py-2">encodings</th><th class="px-3 py-2">schema</th><th class="px-3 py-2">derived from</th></tr></thead>
       <tbody>
@@ -30,7 +30,7 @@
 
   <h2 id="files" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Files</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each file carries a provenance header in the form its encoding allows: members in JSON, an <code class="font-mono">x-majordomus-</code> extension where the document's own specification fixes its member names, a <code class="font-mono">#</code> comment banner in YAML and in line-oriented text, an HTML comment in Markdown. The manifest's own encodings carry no hash — a document that hashed itself would have no fixed point — and are compared byte for byte instead.</p>
-  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[36rem] text-left text-sm">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">path</th><th class="px-3 py-2">document</th><th class="px-3 py-2">format</th><th class="px-3 py-2">schema</th></tr></thead>
       <tbody>

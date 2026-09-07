@@ -44,7 +44,7 @@
             card until this was tightened. -#}
         {%- set shown = [l for l in lines if (" " ~ name ~ " ") in l] %}
         {%- for l in shown %}
-        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body">{{ l }}</p>
+        <p class="mt-3 min-w-0 overflow-x-auto whitespace-pre font-mono text-xs text-body" tabindex="0">{{ l }}</p>
         {%- endfor %}
       </li>
       {%- endfor %}
@@ -90,7 +90,7 @@
   <h2 class="text-2xl font-bold tracking-tight text-heading">What the transcript actually looks like</h2>
   <figure class="mt-4 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
     <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">real output, from README.md</figcaption>
-    <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+    <div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
   </figure>
 </section>
 
@@ -103,7 +103,7 @@
     <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
       <p class="flex flex-wrap items-start gap-2">{{ <badge status={c.status} /> }}
         <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a></p>
-      {%- if c.test %}<p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.test }}">{{ c.test }}</a></p>{% endif %}
+      {%- if c.test %}<p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand underline inline-block py-1" href="{{ project.repository_url }}/blob/master/{{ c.test }}">{{ c.test }}</a></p>{% endif %}
     </li>
     {%- endfor %}
   </ul>

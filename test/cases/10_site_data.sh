@@ -23,7 +23,9 @@ jq -e '.diagrams.lifecycle.mermaid | contains("no_match")' "$T/site/data/generat
 # specification cannot also live there (doc_slug, CLI_SPEC_SLUG in the generator)
 expect_file "$T/site/content/docs/cli-specification.md"
 expect_grep '^source = "docs/CLI.md"' "$T/site/content/docs/cli-specification.md"
-expect_grep '<div class="overflow-x-auto">' "$T/site/content/docs/cli-specification.md"
+# the table wrapper scrolls, so it is in the tab order: a scrolling region only a pointer can
+# reach is what project.ui-conformance refuses (WCAG 2.1.1)
+expect_grep '<div class="overflow-x-auto" tabindex="0">' "$T/site/content/docs/cli-specification.md"
 # --check passes when in sync, fails after a canonical edit
 expect_exit 0 "$T/scripts/generate-site-data" --check
 sed -i.bak 's/^effort: high$/effort: xhigh/' "$T/share/skeleton/profiles/debugging.yaml"; rm -f "$T/share/skeleton/profiles/debugging.yaml.bak"

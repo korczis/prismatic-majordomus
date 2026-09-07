@@ -91,7 +91,7 @@ capability, a kind, a route or a graph.
 
 A **capability** is a descriptor with:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | field | meaning |
 |---|---|
@@ -259,7 +259,7 @@ written by hand.
 
 ## Projections
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | projection | derived from | where |
 |---|---|---|
@@ -412,7 +412,7 @@ Cockpit's Artifacts page and the site's `/registry/artifacts/` all show.
 
 ## When something fails
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | message | meaning | remedy |
 |---|---|---|
@@ -437,7 +437,7 @@ Cockpit's Artifacts page and the site's `/registry/artifacts/` all show.
 
 ## Stability
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | | status |
 |---|---|

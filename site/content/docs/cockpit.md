@@ -48,7 +48,7 @@ pages still render, say so, and remain fully usable.
 
 ## What is on it
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Route | What it shows | Derived from |
 |---|---|---|
@@ -130,7 +130,7 @@ and an edge-kind vocabulary that say what each shape means, sorted nodes and edg
 metadata a reader needs before drawing — counts, whether the result is acyclic, and whether
 the derivation stopped at its node limit.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Graph | What it shows | Derived from |
 |---|---|---|
@@ -162,7 +162,7 @@ rebuild no semantics.
 **what reproduces it**, because a health report that decides things itself is a fourth
 opinion:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Check | Decided by |
 |---|---|
@@ -191,7 +191,7 @@ Progressive enhancement in the strict sense. Every page is complete HTML before 
 runs; the graph pages carry every node and edge as tables, and the optional views say where
 the same facts are as text.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | File | What it adds | Needs |
 |---|---|---|
@@ -257,7 +257,7 @@ scripts/cockpit-assets            # compile the stylesheet, vendor the pinned li
 scripts/cockpit-assets --check    # fail if the committed stylesheet differs from its source
 ```
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | File | Committed? | Why |
 |---|---|---|
@@ -380,7 +380,7 @@ COCKPIT_PROBE_URL=http://127.0.0.1:8741 scripts/cockpit-probe    # a server that
 
 Two sweeps, because they answer different questions at different prices:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Sweep | Over | Asserts |
 |---|---|---|

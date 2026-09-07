@@ -202,7 +202,7 @@ changed.
 
 The implementation record, kept concise, with these sections in this order:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | section | content |
 |---|---|
