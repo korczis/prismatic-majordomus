@@ -261,7 +261,18 @@ impl BenchmarkCases for MomentInput {
                     },
                 )]
             })
-            .unwrap_or_default()
+            // a repository without a catalogue still answers the route, with the refusal:
+            // the case times that answer, and the required parameter keeps an example in
+            // the OpenAPI document, as `deploy.get` does for a repository without a
+            // deployment
+            .unwrap_or_else(|| {
+                vec![NamedCase::new(
+                    "absent",
+                    MomentInput {
+                        id: "absent".into(),
+                    },
+                )]
+            })
     }
 }
 
@@ -303,7 +314,14 @@ impl BenchmarkCases for DiagnoseInput {
             .map(|o| o.identity.clone())
             .collect();
         if ids.is_empty() {
-            return Vec::new();
+            // a repository without a catalogue: the empty selection the input documents,
+            // answered with an empty diagnosis, so that the parameter keeps an example
+            return vec![NamedCase::new(
+                "nothing",
+                DiagnoseInput {
+                    signals: String::new(),
+                },
+            )];
         }
         vec![NamedCase::new(
             "three-moments",
@@ -622,5 +640,64 @@ pub fn module() -> ModuleDescriptor {
                 handler: why_validate,
             },
         ],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The declaration is the only place these names exist, and every projection — the MCP
+    /// tool, the HTTP route, the OpenAPI operation, the benchmark target — is derived from
+    /// it. A refactor that dropped an exposure or renamed a route would still compile, and
+    /// the suites that exercise the behaviour behind it would still pass. This is the
+    /// assertion that would not.
+    #[test]
+    fn the_declaration_yields_the_projections_it_claims() {
+        let m = module();
+        assert_eq!(m.id.as_str(), "why");
+        let expected: &[(&str, &str, &str)] = &[
+            ("why.list", "majordomus_why", "/api/v1/why"),
+            ("why.moment", "majordomus_why_moment", "/api/v1/why/moment"),
+            (
+                "why.audiences",
+                "majordomus_why_audiences",
+                "/api/v1/why/audiences",
+            ),
+            ("why.areas", "majordomus_why_areas", "/api/v1/why/areas"),
+            (
+                "why.diagnose",
+                "majordomus_why_diagnose",
+                "/api/v1/why/diagnose",
+            ),
+            (
+                "why.validate",
+                "majordomus_why_validate",
+                "/api/v1/why/validate",
+            ),
+        ];
+        let ids: Vec<&str> = m
+            .capabilities
+            .iter()
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        let want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        assert_eq!(
+            ids, want,
+            "the module declares a different set of capabilities"
+        );
+        for (executable, (id, tool, path)) in m.capabilities.iter().zip(expected) {
+            let exposure = &executable.capability.exposure;
+            assert_eq!(
+                exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+                Some(*tool),
+                "{id} lost or renamed its MCP tool"
+            );
+            assert_eq!(
+                exposure.http.as_ref().map(|h| h.path.as_str()),
+                Some(*path),
+                "{id} lost or renamed its HTTP route"
+            );
+        }
     }
 }

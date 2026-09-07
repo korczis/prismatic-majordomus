@@ -38,6 +38,7 @@ cargo build
 capabilities validate
 generate --check
 bench coverage --check
+web validate
 bench --profile ci --check
 cargo llvm-cov --fail-under-lines $threshold
 artifact $ARTIFACT'
