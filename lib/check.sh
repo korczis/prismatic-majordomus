@@ -142,14 +142,17 @@ mj_validate_state() {
 mj_validate_scope() {
   mj_task_gate scope || return 0
   mj_finish_gate scope || return 0
-  local id f inside n_out=0 n_in=0 s allow_gen
+  local id f inside n_out=0 n_in=0 s allow_gen scope_list scope_words
   id="$(mj_cur id)"; allow_gen="$(mj_projection_targets | tr '\n' ' ')"
+  # the scope is read once, not once per touched file: that was one awk per file, and a
+  # tree with a long diff paid thousands of them for a list that does not change
+  scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope)"; scope_words="$(printf '%s\n' "$scope_list" | paste -sd, -)"
   for f in $(mj_git_touched "$(mj_cur head)"); do
     mj_is_ai_path "$f" && continue
     case " $allow_gen " in *" $f "*) continue ;; esac
     inside=0
-    for s in $(mj_ylist "$MJ_CUR_FLAT" scope); do mj_path_contains "$s" "$f" && { inside=1; break; }; done
-    if [ "$inside" = 1 ]; then n_in=$((n_in+1)); else n_out=$((n_out+1)); mj_doctrine_fail scope "$f" "outside claimed scope ($(mj_ylist "$MJ_CUR_FLAT" scope | paste -sd, -))" "git status --porcelain; git diff --name-only $(mj_cur head) HEAD"; fi
+    for s in $scope_list; do mj_path_contains "$s" "$f" && { inside=1; break; }; done
+    if [ "$inside" = 1 ]; then n_in=$((n_in+1)); else n_out=$((n_out+1)); mj_doctrine_fail scope "$f" "outside claimed scope ($scope_words)" "git status --porcelain; git diff --name-only $(mj_cur head) HEAD"; fi
   done
   [ "$n_out" = 0 ] && mj_doctrine_ok scope "$id" "$n_in touched file(s), all within scope"
   MJ_TOUCHED_IN="$n_in"
