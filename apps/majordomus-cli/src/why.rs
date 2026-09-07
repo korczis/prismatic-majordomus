@@ -753,7 +753,7 @@ impl Catalogue {
             h.update(source.as_bytes());
             h.update([0]);
             h.update(body.as_bytes());
-            h.update(*b"\n");
+            h.update(b"\n");
         }
         format!("{:x}", h.finalize())
     }

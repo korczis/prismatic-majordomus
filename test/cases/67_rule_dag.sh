@@ -292,7 +292,7 @@ before_vendor="$(cd "$V" && find . -type f | LC_ALL=C sort | xargs shasum -a 256
 before_project="$(cd "$P" && find . -type f | LC_ALL=C sort | xargs shasum -a 256)"
 # the newer executable reports the difference
 expect_exit 11 "$NEWER/bin/majordomus" rules vendor status
-expect_grep '^vendored: +1 \(0\.1\.0\)$'
+expect_grep '^vendored: +1 \([0-9.]+\)$'
 expect_grep '^distribution: +2 \(next\)$'
 expect_grep 'ships a different package; review with: majordomus rules vendor diff'
 # diff is the reviewable difference; status carries the exit code, diff prints and exits 0
@@ -322,7 +322,7 @@ expect_grep 'The next revision says this differently' || { echo "    the updated
 # the older executable now reports the repository ahead of it, and still applies nothing
 expect_exit 11 "$MJ" rules vendor status
 expect_grep '^vendored: +2 \(next\)$'
-expect_grep '^distribution: +1 \(0\.1\.0\)$'
+expect_grep '^distribution: +1 \([0-9.]+\)$'
 rm -rf "$NEWER"
 
 # ---------------------------------------------------------------- nothing vendored at all

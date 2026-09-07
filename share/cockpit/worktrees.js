@@ -10,13 +10,15 @@
 
 import { api } from './cockpit.js';
 
+/** How often the topology is asked for, while the page is visible. Declared before the
+ * first call below: a `const` is not hoisted, and a module that used it before this line
+ * would throw at load. */
+const INTERVAL_MS = 4000;
+
 const frame = document.querySelector('[data-mj-worktrees]');
 if (frame) {
   watch(frame);
 }
-
-/** How often the topology is asked for, while the page is visible. */
-const INTERVAL_MS = 4000;
 
 function digest(topology) {
   const worktrees = (topology.worktrees || []).map((w) => [

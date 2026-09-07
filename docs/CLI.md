@@ -1224,8 +1224,7 @@ project.english-only                       v1  blocking  project          no val
 - `list [--json]` prints the effective set in resolved order: identity, class, provenance
   (`vendor:<name>` or `project`), and whether the tool enforces it. A rule without an
   `x-majordomus` block is normative for whoever reads it and enforced by nobody, and the
-  listing says `no validator; see the rule` rather than hiding it; whether a gate the policy
-  declares enforces it is what `doctor` proves.
+  listing says `no validator; see the rule` rather than hiding it: the rule is normative for whoever reads it, and nothing checks it by machine.
 - `show <id>` prints one rule, front matter and body, with the repository-relative path it
   was read from as the first line. An id outside the effective set exits 12.
 - `vendor status` compares the vendored baseline with the package the running executable
@@ -1564,7 +1563,7 @@ p99, maximum, mean and standard deviation; nothing is averaged away.
 - Every run is written under `.ai/local/benchmarks/` (`runs/<run-id>.json`, `latest.json`,
   one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored
   by git, never a baseline.
-- `--write-baseline` writes the run as `baseline.json` under `.ai/repo/benchmarks/`, schema
+- `--write-baseline` writes the run as `.ai/repo/benchmarks/baseline.json`, schema
   `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It
   refuses a dirty tree without `--force`, because a baseline records a commit.
 - `--check` compares the run with the baseline under `benchmark.regression`: for each target
