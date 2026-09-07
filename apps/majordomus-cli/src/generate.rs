@@ -881,10 +881,15 @@ const FORBIDDEN: &[(&str, &str)] = &[
 /// The first forbidden marker in `content`, with what it is, or `None` when the content is
 /// safe to publish.
 ///
+/// The example joins the marker and a name at run time: this file is committed, and a
+/// committed file that named a home directory would fail the very gate the marker exists
+/// to keep the artifacts through.
+///
 /// ```
 /// use majordomus_cli::generate::forbidden_in;
 /// assert!(forbidden_in("nodes are repository-relative").is_none());
-/// assert_eq!(forbidden_in("source: /Users/someone/dev").map(|(m, _)| m), Some("/Users/"));
+/// let machine_path = format!("source: {}someone/dev", "/Users/");
+/// assert_eq!(forbidden_in(&machine_path).map(|(m, _)| m), Some("/Users/"));
 /// ```
 pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
     FORBIDDEN
@@ -2420,17 +2425,21 @@ mod tests {
     #[test]
     fn a_published_artifact_is_refused_when_it_carries_a_machine_path_or_a_credential() {
         // every marker is something no derivation of this repository can legitimately
-        // produce, so a hit is a defect rather than a judgement call
+        // produce, so a hit is a defect rather than a judgement call; the home directory
+        // is joined at run time because this file is committed and the gate reads it too
         for (content, marker) in [
-            ("\"source\": \"/Users/someone/dev/x\"", "/Users/"),
-            ("\"source\": \"/home/someone/x\"", "/home/"),
-            ("-----BEGIN PRIVATE KEY-----", "-----BEGIN "),
-            ("Authorization: Bearer abc", "Authorization:"),
-            ("AKIAIOSFODNN7EXAMPLE", "AKIA"),
-            ("ghp_0123456789", "ghp_"),
+            (
+                format!("\"source\": \"{}someone/dev/x\"", "/Users/"),
+                "/Users/",
+            ),
+            ("\"source\": \"/home/someone/x\"".to_string(), "/home/"),
+            ("-----BEGIN PRIVATE KEY-----".to_string(), "-----BEGIN "),
+            ("Authorization: Bearer abc".to_string(), "Authorization:"),
+            ("AKIAIOSFODNN7EXAMPLE".to_string(), "AKIA"),
+            ("ghp_0123456789".to_string(), "ghp_"),
         ] {
             assert_eq!(
-                forbidden_in(content).map(|(m, _)| m),
+                forbidden_in(&content).map(|(m, _)| m),
                 Some(marker),
                 "{content}"
             );
