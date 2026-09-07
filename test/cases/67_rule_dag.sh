@@ -48,7 +48,7 @@ red() {
 # the vendored baseline alone resolves, and its enforcement status is shown, not hidden
 green "after init"
 expect_grep '^majordomus\.scope-integrity +v1 +blocking +vendor:majordomus +enforced by '
-expect_grep '^majordomus\.sessions-are-workers +v1 +advisory +vendor:majordomus +not machine-enforced'
+expect_grep '^majordomus\.sessions-are-workers +v1 +advisory +vendor:majordomus +no validator; see the rule'
 baseline="$LAST_OUT"
 # a project rule joins the set; one without x-majordomus is normative and enforced by nobody,
 # one with x-majordomus is enforced by the commands it names, and the order respects the edge
@@ -79,7 +79,7 @@ x-majordomus:
 A fixture.
 Y
 green "with two project rules"
-expect_grep '^project\.base +v1 +advisory +project +not machine-enforced'
+expect_grep '^project\.base +v1 +advisory +project +no validator; see the rule'
 expect_grep '^project\.enforced +v1 +blocking +project +enforced by check$'
 first="$LAST_OUT"
 # show reads the file the resolver chose, and names it
