@@ -557,11 +557,17 @@ impl WorktreeService {
                 let worktree_path = b.worktree.as_deref().map(display);
                 let holder = worktree_path.as_deref().and_then(|p| by_path.get(p));
                 let merged_into_trunk = merged.as_ref().map(|m| m.contains(&b.name));
+                // A session's scratch checkout is never cleanup-eligible however merged and
+                // clean: the harness that made it removes it, and a listing that offered it
+                // would offer another session's floor.
                 let cleanup_eligible = !is_trunk
                     && merged_into_trunk == Some(true)
                     && match holder {
                         None => true,
-                        Some(h) => h.dirty.as_ref().is_some_and(|d| d.clean),
+                        Some(h) => {
+                            h.standing != Standing::Ephemeral
+                                && h.dirty.as_ref().is_some_and(|d| d.clean)
+                        }
                     };
                 BranchState {
                     name: b.name.clone(),
