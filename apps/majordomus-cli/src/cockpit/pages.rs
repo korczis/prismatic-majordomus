@@ -11,18 +11,22 @@ use serde_json::{json, Value};
 
 use crate::capability::builtin::{
     ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
-    ObjectList, Record, RepositoryReport,
+    ObjectList, ObjectSummary, Record, RepositoryReport,
 };
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
+use crate::worktree::{
+    BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
+    WorktreeState,
+};
 
 use super::html::{el, empty, El, Node};
 use super::nav::Area;
 use super::view::{
-    alert, badge, card, card_with, cell, details, facts, kind_badge, link, mono, nothing, pre, row,
-    statistic, table, tag, text_cell,
+    alert, badge, card, card_with, cell, chips, details, facts, id_cell, kind_badge, link, mono,
+    nothing, pagination, pre, row, statistic, table, tag, text_cell, Window, PER_PAGE,
 };
 
 /// What a page hands back: the area it belongs to, its title and subtitle, its trail, and
@@ -304,6 +308,41 @@ fn health_badge(status: HealthStatus) -> El {
 
 // --------------------------------------------------------------- capabilities
 
+/// The listing's own URL with some parameters replaced: what a filter chip, a page link
+/// and a cleared filter all are. Paging must never drop a filter and filtering must
+/// never keep a page number, so both go through here rather than through a format
+/// string at each call site.
+fn href_with(base: &str, query: &[(String, String)], set: &[(&str, Option<&str>)]) -> String {
+    let overridden = |key: &str| set.iter().any(|(k, _)| *k == key);
+    let pairs: Vec<(String, String)> = query
+        .iter()
+        .filter(|(k, v)| !v.is_empty() && !overridden(k))
+        .map(|(k, v)| (k.clone(), v.clone()))
+        .chain(
+            set.iter()
+                .filter_map(|(k, v)| v.map(|v| ((*k).to_string(), v.to_string()))),
+        )
+        .collect();
+    if pairs.is_empty() {
+        return base.to_string();
+    }
+    let query = pairs
+        .iter()
+        .map(|(k, v)| format!("{}={}", percent_encode(k), percent_encode(v)))
+        .collect::<Vec<_>>()
+        .join("&");
+    format!("{base}?{query}")
+}
+
+/// The page a listing was asked for. Anything that is not a page number is page one.
+fn asked_page(query: &[(String, String)]) -> usize {
+    query
+        .iter()
+        .find(|(k, _)| k == "page")
+        .and_then(|(_, v)| v.parse().ok())
+        .unwrap_or(1)
+}
+
 /// The capability explorer, filtered by whatever the query string says.
 pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
     let get = |name: &str| {
@@ -338,17 +377,14 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
         })
         .collect();
 
-    let rows: Vec<El> = matching
+    let window = Window::new(asked_page(query), PER_PAGE, matching.len());
+    let rows: Vec<El> = matching[window.range()]
         .iter()
-        .take(500)
         .map(|c| {
             row(vec![
-                cell(
-                    link(
-                        format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
-                        c.id.as_str(),
-                    )
-                    .class("mj-link mj-mono"),
+                id_cell(
+                    format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
+                    c.id.as_str(),
                 ),
                 cell(kind_badge(c.kind)),
                 text_cell(&c.title),
@@ -358,6 +394,56 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
             ])
         })
         .collect();
+
+    // the modules of what matches, as the way into it: nine hundred rows are entered by
+    // their module rather than scrolled. The counts are of the other filters in force,
+    // which is what makes them a fact about this listing and not about the registry.
+    let mut per_module: std::collections::BTreeMap<&str, usize> = Default::default();
+    for c in ctx
+        .registry
+        .iter()
+        .filter(|c| kind.is_none_or(|k| kind_word(c.kind) == k))
+        .filter(|c| {
+            source.is_none_or(|s| match &c.provenance {
+                Provenance::Builtin { .. } => s == "builtin",
+                Provenance::Declarative { .. } => s == "declarative",
+            })
+        })
+        .filter(|c| {
+            needle.as_deref().is_none_or(|n| {
+                c.id.as_str().to_lowercase().contains(n)
+                    || c.title.to_lowercase().contains(n)
+                    || c.description.to_lowercase().contains(n)
+            })
+        })
+    {
+        *per_module.entry(c.module.as_str()).or_default() += 1;
+    }
+    let browse = chips(
+        std::iter::once((
+            "All modules".to_string(),
+            href_with(
+                "/cockpit/capabilities",
+                query,
+                &[("module", None), ("page", None)],
+            ),
+            per_module.values().sum::<usize>(),
+            module.is_none(),
+        ))
+        .chain(per_module.iter().map(|(m, n)| {
+            (
+                (*m).to_string(),
+                href_with(
+                    "/cockpit/capabilities",
+                    query,
+                    &[("module", Some(m)), ("page", None)],
+                ),
+                *n,
+                module == Some(*m),
+            )
+        }))
+        .collect(),
+    );
 
     let filters = el("form")
         .class("mj-filters")
@@ -412,7 +498,6 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
         )
         .child(link("/cockpit/capabilities", "Clear").class("mj-link mj-clear"));
 
-    let truncated = matching.len() > 500;
     let body = if rows.is_empty() {
         nothing("No capability matches these filters.")
     } else {
@@ -421,21 +506,19 @@ pub fn capabilities(ctx: &Context, query: &[(String, String)]) -> Page {
                 &["Id", "Kind", "Title", "Module", "Projections", "Provenance"],
                 rows,
             ))
-            .when(truncated, |d| {
-                d.child(alert(
-                    "info",
-                    format!(
-                        "{} capabilities match; the first 500 are shown. Narrow the filters to see the rest.",
-                        matching.len()
-                    ),
-                ))
-            })
+            .child(pagination(window, |n| {
+                href_with(
+                    "/cockpit/capabilities",
+                    query,
+                    &[("page", Some(&n.to_string()))],
+                )
+            }))
     };
 
     Page::new(
         Area::Capabilities,
         "Capabilities",
-        el("div").child(filters).child(body),
+        el("div").child(filters).child(browse).child(body),
     )
     .subtitle(format!(
         "{} of {} capabilities. Every one is a canonical declaration; the projections beside it are derived from it.",
@@ -992,11 +1075,10 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
         .map(|(_, v)| v.to_lowercase())
         .filter(|v| !v.is_empty());
 
-    let input = match &kind {
-        Some(k) => json!({ "kind": k }),
-        None => json!({}),
-    };
-    let list: ObjectList = match ask(ctx, "objects.list", input) {
+    // the whole listing, narrowed here rather than in the request: the kinds beside it
+    // carry how many objects each holds under the filter in force, and a count nobody can
+    // see the rest of is not a way in
+    let list: ObjectList = match ask(ctx, "objects.list", json!({})) {
         Ok(l) => l,
         Err(e) => {
             return Page::new(
@@ -1010,33 +1092,32 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
         }
     };
 
+    let found = |o: &ObjectSummary| {
+        needle.as_deref().is_none_or(|n| {
+            o.identity.to_lowercase().contains(n)
+                || o.title
+                    .as_deref()
+                    .unwrap_or_default()
+                    .to_lowercase()
+                    .contains(n)
+                || o.path.to_lowercase().contains(n)
+        })
+    };
     let matching: Vec<_> = list
         .objects
         .iter()
-        .filter(|o| {
-            needle.as_deref().is_none_or(|n| {
-                o.identity.to_lowercase().contains(n)
-                    || o.title
-                        .as_deref()
-                        .unwrap_or_default()
-                        .to_lowercase()
-                        .contains(n)
-                    || o.path.to_lowercase().contains(n)
-            })
-        })
+        .filter(|o| found(o))
+        .filter(|o| kind.as_deref().is_none_or(|k| o.kind == k))
         .collect();
 
-    let rows: Vec<El> = matching
+    let window = Window::new(asked_page(query), PER_PAGE, matching.len());
+    let rows: Vec<El> = matching[window.range()]
         .iter()
-        .take(1000)
         .map(|o| {
             row(vec![
-                cell(
-                    link(
-                        format!("/cockpit/object?uri={}", percent_encode(&o.uri)),
-                        &o.identity,
-                    )
-                    .class("mj-link mj-mono"),
+                id_cell(
+                    format!("/cockpit/object?uri={}", percent_encode(&o.uri)),
+                    &o.identity,
                 ),
                 cell(mono(&o.kind)),
                 text_cell(o.title.clone().unwrap_or_default()),
@@ -1044,6 +1125,32 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
             ])
         })
         .collect();
+
+    let mut per_kind: std::collections::BTreeMap<&str, usize> = Default::default();
+    for o in list.objects.iter().filter(|o| found(o)) {
+        *per_kind.entry(o.kind.as_str()).or_default() += 1;
+    }
+    let browse = chips(
+        std::iter::once((
+            "All kinds".to_string(),
+            href_with("/cockpit/objects", query, &[("kind", None), ("page", None)]),
+            per_kind.values().sum::<usize>(),
+            kind.is_none(),
+        ))
+        .chain(per_kind.iter().map(|(k, n)| {
+            (
+                (*k).to_string(),
+                href_with(
+                    "/cockpit/objects",
+                    query,
+                    &[("kind", Some(k)), ("page", None)],
+                ),
+                *n,
+                kind.as_deref() == Some(*k),
+            )
+        }))
+        .collect(),
+    );
 
     let filters = el("form")
         .class("mj-filters")
@@ -1085,10 +1192,14 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
     Page::new(
         Area::Objects,
         "Objects",
-        el("div").child(filters).child(if rows.is_empty() {
+        el("div").child(filters).child(browse).child(if rows.is_empty() {
             nothing("No object matches.")
         } else {
-            table(&["Identity", "Kind", "Title", "Path"], rows)
+            el("div")
+                .child(table(&["Identity", "Kind", "Title", "Path"], rows))
+                .child(pagination(window, |n| {
+                    href_with("/cockpit/objects", query, &[("page", Some(&n.to_string()))])
+                }))
         }),
     )
     .subtitle(format!(
@@ -1229,7 +1340,7 @@ pub fn graphs(ctx: &Context) -> Page {
         .iter()
         .map(|g| {
             row(vec![
-                cell(link(format!("/cockpit/graphs/{}", g.id), &g.id).class("mj-link mj-mono")),
+                id_cell(format!("/cockpit/graphs/{}", g.id), &g.id),
                 text_cell(&g.title),
                 text_cell(&g.description),
                 text_cell(&g.source),
@@ -1331,6 +1442,8 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
                 .text("The drawing is an enhancement. Everything it shows is in the lists below, which is what a reader without JavaScript, a crawler and a screen reader get."),
         );
 
+    // both tables list everything: the drawing is an enhancement, and what a reader
+    // without JavaScript, a crawler and a screen reader get is these lists whole
     let node_rows = g
         .nodes
         .iter()
@@ -1951,6 +2064,8 @@ pub fn artifacts(ctx: &Context) -> Page {
             .collect(),
     );
 
+    // every file, on one page: this is the manifest as it stands, and a reader checking
+    // whether a path is in it must be able to find it with the browser's own search
     let files = table(
         &["path", "document", "format", "bytes", "state"],
         report
@@ -2030,12 +2145,9 @@ pub fn api(ctx: &Context) -> Page {
             row(vec![
                 cell(mono(h.method.as_str())),
                 cell(mono(&h.path)),
-                cell(
-                    link(
-                        format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
-                        c.id.as_str(),
-                    )
-                    .class("mj-link mj-mono"),
+                id_cell(
+                    format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
+                    c.id.as_str(),
                 ),
                 text_cell(&c.title),
                 cell(kind_badge(c.kind)),
@@ -2140,12 +2252,9 @@ pub fn search(ctx: &Context, query: &[(String, String)]) -> Page {
         .take(50)
         .map(|c| {
             row(vec![
-                cell(
-                    link(
-                        format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
-                        c.id.as_str(),
-                    )
-                    .class("mj-link mj-mono"),
+                id_cell(
+                    format!("/cockpit/capabilities/{}", percent_encode(c.id.as_str())),
+                    c.id.as_str(),
                 ),
                 text_cell(&c.title),
                 cell(kind_badge(c.kind)),
@@ -2165,12 +2274,9 @@ pub fn search(ctx: &Context, query: &[(String, String)]) -> Page {
                 .map(|h| {
                     let uri = h.get("uri").and_then(Value::as_str).unwrap_or_default();
                     row(vec![
-                        cell(
-                            link(
-                                format!("/cockpit/object?uri={}", percent_encode(uri)),
-                                h.get("identity").and_then(Value::as_str).unwrap_or(uri),
-                            )
-                            .class("mj-link mj-mono"),
+                        id_cell(
+                            format!("/cockpit/object?uri={}", percent_encode(uri)),
+                            h.get("identity").and_then(Value::as_str).unwrap_or(uri),
                         ),
                         cell(mono(h.get("kind").and_then(Value::as_str).unwrap_or(""))),
                         text_cell(h.get("title").and_then(Value::as_str).unwrap_or("")),
@@ -2338,6 +2444,382 @@ pub fn activity(ctx: &Context) -> Page {
     .subtitle("Measured by this process, not written down anywhere.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Activity", None)])
     .script("activity.js")
+}
+
+// ------------------------------------------------------------------ worktrees
+
+/// The word a standing is coloured by. Shown as well as coloured, never colour alone.
+fn standing_status(standing: Standing) -> &'static str {
+    match standing {
+        Standing::Primary | Standing::Canonical => "ok",
+        Standing::Misplaced | Standing::Missing => "fail",
+        Standing::Ephemeral => "warn",
+        Standing::Detached => "info",
+    }
+}
+
+fn severity_status(severity: crate::model::Severity) -> &'static str {
+    match severity {
+        crate::model::Severity::Error => "fail",
+        crate::model::Severity::Warning => "warn",
+        crate::model::Severity::Info => "info",
+    }
+}
+
+fn short_head(head: &Option<String>) -> String {
+    head.as_deref()
+        .map(|h| h[..12.min(h.len())].to_string())
+        .unwrap_or_else(|| "-".into())
+}
+
+fn dirty_cell(w: &WorktreeState) -> El {
+    match &w.dirty {
+        None => text_cell("-"),
+        Some(d) if d.clean => cell(badge("ok", "clean")),
+        Some(d) => cell(el("span").child(badge("warn", "dirty")).text(format!(
+                    " {} staged · {} unstaged · {} untracked{}",
+                    d.staged,
+                    d.unstaged,
+                    d.untracked,
+                    d.in_progress
+                        .as_deref()
+                        .map(|op| format!(" · {op} in progress"))
+                        .unwrap_or_default()
+                ))),
+    }
+}
+
+fn upstream_cell(w: &WorktreeState) -> El {
+    match &w.upstream {
+        None => text_cell("-"),
+        Some(u) if u.gone => cell(el("span").child(mono(&u.name)).text(" (gone)")),
+        Some(u) => text_cell(format!(
+            "{} +{} −{}",
+            u.name,
+            u.ahead.unwrap_or(0),
+            u.behind.unwrap_or(0)
+        )),
+    }
+}
+
+fn diagnostics_table(diagnostics: &[TopologyDiagnostic]) -> El {
+    table(
+        &["Severity", "Code", "Where", "What", "Remedy"],
+        diagnostics
+            .iter()
+            .map(|d| {
+                row(vec![
+                    cell(badge(severity_status(d.severity), d.severity.as_str())),
+                    cell(mono(d.code.as_str())),
+                    cell(
+                        el("span")
+                            .child(mono(d.path.clone().unwrap_or_else(|| "-".into())))
+                            .when(d.expected.is_some(), |e| {
+                                e.child(el("br"))
+                                    .text("belongs at ")
+                                    .child(mono(d.expected.clone().unwrap_or_default()))
+                            }),
+                    ),
+                    text_cell(&d.message),
+                    cell(mono(&d.remedy)),
+                ])
+            })
+            .collect(),
+    )
+}
+
+/// The branch-to-worktree topology: every worktree with its standing, every branch without
+/// one, every diagnostic with its remedy, and the migration plan with the command that
+/// applies it. Rendered from `worktree.topology` and `worktree.migration_plan`; the page
+/// reloads itself when the topology changes.
+pub fn worktrees(ctx: &Context) -> Page {
+    let t: RepositoryTopology = match ask(ctx, "worktree.topology", json!({})) {
+        Ok(t) => t,
+        Err(e) => return failed(Area::Worktrees, "Worktrees", e),
+    };
+    let plan: Option<MigrationPlan> = ask(ctx, "worktree.migration_plan", json!({})).ok();
+
+    let identity = card(
+        "This repository",
+        facts(vec![
+            ("Primary checkout", Node::Element(mono(&t.repository.primary_worktree))),
+            (
+                "Container",
+                Node::Element(
+                    el("span")
+                        .child(mono(&t.container.path))
+                        .text(if t.container.exists { "" } else { " (not created yet)" }),
+                ),
+            ),
+            (
+                "Trunk",
+                Node::Element(
+                    el("span")
+                        .child(mono(t.trunk.branch.clone().unwrap_or_else(|| "(unknown)".into())))
+                        .text(format!(" — decided by {}", word(&t.trunk.source).replace('_', " "))),
+                ),
+            ),
+            ("Rule", Node::Element(el("span").text("<repo>").child(mono(&t.container.suffix)).text("/<branch>: the branch name is the path, hierarchy kept, derived from git and registered nowhere"))),
+            (
+                "Topology",
+                Node::Element(if t.valid {
+                    badge("ok", "valid")
+                } else {
+                    badge("fail", format!("{} error(s)", t.tallies.errors))
+                }),
+            ),
+        ]),
+    );
+
+    let ta = &t.tallies;
+    let statistics = el("div")
+        .class("mj-stats")
+        .child(statistic(
+            ta.worktrees.to_string(),
+            "worktrees",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.canonical.to_string(),
+            "canonical",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.misplaced.to_string(),
+            "misplaced",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.ephemeral.to_string(),
+            "ephemeral",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.detached.to_string(),
+            "detached",
+            "worktree.topology",
+        ))
+        .child(statistic(
+            ta.dirty.to_string(),
+            "with uncommitted work",
+            "git status, one per worktree",
+        ))
+        .child(statistic(
+            ta.branches_without_worktree.to_string(),
+            "branches without a worktree",
+            "for-each-ref",
+        ))
+        .child(statistic(
+            ta.cleanup_eligible.to_string(),
+            "cleanup-eligible branches",
+            "merged into the trunk, clean or absent",
+        ));
+
+    let worktree_rows: Vec<El> = t
+        .worktrees
+        .iter()
+        .map(|w| {
+            row(vec![
+                cell(badge(standing_status(w.standing), w.standing.as_str())),
+                cell(
+                    el("span")
+                        .child(mono(&w.label))
+                        .when(w.current, |e| e.text(" ").child(tag("here")))
+                        .when(w.issue.is_some(), |e| {
+                            e.text(" ").child(tag(w.issue.clone().unwrap_or_default()))
+                        }),
+                ),
+                cell(
+                    el("span")
+                        .child(mono(&w.path))
+                        .when(
+                            w.expected_path.is_some() && !matches!(w.standing, Standing::Canonical),
+                            |e| {
+                                e.child(el("br"))
+                                    .text("belongs at ")
+                                    .child(mono(w.expected_path.clone().unwrap_or_default()))
+                            },
+                        )
+                        .when(w.locked.is_some(), |e| e.text(" ").child(tag("locked"))),
+                ),
+                cell(mono(short_head(&w.head))),
+                dirty_cell(w),
+                upstream_cell(w),
+            ])
+        })
+        .collect();
+    let worktrees_card = card_with(
+        "Worktrees",
+        link(
+            "/cockpit/capabilities/worktree.topology",
+            "worktree.topology",
+        ),
+        table(
+            &[
+                "Standing",
+                "Branch",
+                "Path",
+                "HEAD",
+                "Uncommitted work",
+                "Upstream",
+            ],
+            worktree_rows,
+        ),
+    );
+
+    let without: Vec<&BranchState> = t.branches.iter().filter(|b| b.worktree.is_none()).collect();
+    let branches_card = if without.is_empty() {
+        card(
+            "Branches without a worktree",
+            nothing("Every local branch is checked out somewhere."),
+        )
+    } else {
+        card(
+            "Branches without a worktree",
+            table(
+                &[
+                    "Branch",
+                    "HEAD",
+                    "Merged into the trunk",
+                    "Would go to",
+                    "Start",
+                ],
+                without
+                    .iter()
+                    .map(|b| {
+                        row(vec![
+                            cell(
+                                el("span")
+                                    .child(mono(&b.name))
+                                    .when(b.issue.is_some(), |e| {
+                                        e.text(" ").child(tag(b.issue.clone().unwrap_or_default()))
+                                    }),
+                            ),
+                            cell(mono(short_head(&Some(b.head.clone())))),
+                            cell(match b.merged_into_trunk {
+                                Some(true) if b.cleanup_eligible => {
+                                    badge("ok", "merged, cleanup-eligible")
+                                }
+                                Some(true) => badge("ok", "merged"),
+                                Some(false) => badge("info", "unmerged"),
+                                None => badge("unknown", "trunk unknown"),
+                            }),
+                            cell(mono(b.expected_path.clone().unwrap_or_else(|| "-".into()))),
+                            cell(mono(format!("majordomus worktree create {}", b.name))),
+                        ])
+                    })
+                    .collect(),
+            ),
+        )
+    };
+
+    let diagnostics_card = if t.diagnostics.is_empty() {
+        card(
+            "Diagnostics",
+            nothing("Every worktree is where it belongs. Nothing to report."),
+        )
+    } else {
+        card_with(
+            "Diagnostics",
+            badge(
+                if t.valid { "ok" } else { "fail" },
+                format!("{} error(s), {} warning(s)", ta.errors, ta.warnings),
+            ),
+            diagnostics_table(&t.diagnostics),
+        )
+    };
+
+    let migration_card = match &plan {
+        None => card("Migration", nothing("The migration plan could not be computed.")),
+        Some(p) if p.steps.is_empty() => card_with(
+            "Migration",
+            link("/cockpit/capabilities/worktree.migration_plan", "worktree.migration_plan"),
+            el("div")
+                .child(nothing("Nothing to migrate: every worktree with a branch is at its canonical path."))
+                .when(!p.exceptions.is_empty(), |d| {
+                    d.child(el("p").class("mj-note").text(format!(
+                        "{} worktree(s) are not migrated by design — detached, ephemeral, or the primary checkout — and are listed under diagnostics.",
+                        p.exceptions.len()
+                    )))
+                }),
+        ),
+        Some(p) => card_with(
+            "Migration",
+            badge("warn", format!("{} movable, {} blocked", p.movable, p.blocked)),
+            el("div")
+                .child(el("p").class("mj-prose").text(
+                    "Each step moves one worktree with git, uncommitted work included, fingerprinted before and after; a step is reported as moved only when the two fingerprints are equal. Nothing here changes anything: the commands below do, from a terminal.",
+                ))
+                .child(table(
+                    &["Branch", "From", "To", "Uncommitted work", "Action", "Blocked by"],
+                    p.steps
+                        .iter()
+                        .map(|s| {
+                            row(vec![
+                                cell(mono(&s.branch)),
+                                cell(mono(&s.from)),
+                                cell(mono(&s.to)),
+                                text_cell(s.dirty.summary()),
+                                cell(match s.outcome {
+                                    StepOutcome::Planned => badge("ok", word(&s.action).replace('_', " ")),
+                                    StepOutcome::Blocked => badge("fail", "blocked"),
+                                    StepOutcome::Moved => badge("ok", "moved"),
+                                    StepOutcome::Failed => badge("fail", "failed"),
+                                }),
+                                cell(el("span").children(
+                                    s.blockers
+                                        .iter()
+                                        .map(|b| el("div").child(mono(b.code.as_str())).text(format!(" {}", b.message)))
+                                        .collect::<Vec<_>>(),
+                                )),
+                            ])
+                        })
+                        .collect(),
+                ))
+                .child(pre(format!(
+                    "majordomus worktree migrate --plan   # the same plan, from a terminal\nmajordomus worktree migrate          # apply the {} movable step(s), verified\n{}",
+                    p.movable,
+                    if p.blocked > 0 { "# blocked steps say what to do; nothing is overwritten or forced\n" } else { "" }
+                ))),
+        ),
+    };
+
+    let actions = card(
+        "Commands",
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "The Cockpit reads; the command line changes things. Every command below is the same service this page renders, and none of them takes a path — the path is derived.",
+            ))
+            .child(pre(
+                "majordomus worktree                          # where am I, and is that where I belong\nmajordomus worktree create <branch>          # start work: the branch from the trunk, the worktree at its path\ncd \"$(majordomus worktree path <branch>)\"\nmajordomus worktree migrate --plan           # what would move; nothing changes\nmajordomus worktree migrate                  # move, verify, report\nmajordomus worktree repair                   # drop stale registrations; deletes no directory\nmajordomus worktree cleanup                  # merged and clean: what could go, and how; deletes nothing\nmajordomus worktree remove <branch>          # one linked worktree; never dirty work unforced, never a branch",
+            )),
+    );
+
+    let live = el("section")
+        .class("mj-card")
+        .attr("data-mj-worktrees", "/api/v1/worktrees")
+        .child(el("h2").class("mj-card-title").text("Live"))
+        .child(el("p").class("mj-note").attr("data-mj-worktrees-note", "").text(
+            "While this page is visible it asks /api/v1/worktrees every few seconds and reloads when a worktree is created, moved or removed, so what you see is what git holds now.",
+        ));
+
+    Page::new(
+        Area::Worktrees,
+        "Worktrees",
+        el("div")
+            .class("mj-grid")
+            .child(statistics)
+            .child(identity)
+            .child(worktrees_card)
+            .child(diagnostics_card)
+            .child(migration_card)
+            .child(branches_card)
+            .child(actions)
+            .child(live),
+    )
+    .subtitle("Where every branch's worktree belongs and where each one is: <repo>-wt/<branch>, derived from git and registered nowhere.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Worktrees", None)])
+    .script("worktrees.js")
 }
 
 // ------------------------------------------------------------------ not found

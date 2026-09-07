@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# majordomus-cli — run the Rust executable for the repository you are in, building it first
+# when it is missing or older than its sources. The one launcher every caller that needs the
+# executable shares: bin/majordomus-mcp starts the MCP server through it, the git hooks ask
+# the worktree guard through it, .envrc prints the worktree banner through it, and a person
+# types `bin/majordomus-cli worktree status`. Every argument is passed through.
+#
+# stdout belongs to the command: nothing here writes to it. Build output goes to stderr.
+#
+#   MAJORDOMUS_BIN            use this executable and never build
+#   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
+#   MAJORDOMUS_NO_BUILD=1     refuse to build; exit 12 when the executable is missing
+#
+# Exit codes are the executable's; 12 when it is missing and cannot be built.
+set -eu
+
+here="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$here/.." && pwd)"
+crate="$root/apps/majordomus-cli"
+profile="${MAJORDOMUS_BUILD_PROFILE:-debug}"
+
+# An installed release carries the built executable beside this script, under libexec/;
+# there is no crate to build there and nothing to be stale against. A checkout has no
+# libexec/ and falls back to the crate's target directory, which is what a contributor has.
+shipped="$root/libexec/majordomus-cli"
+if [ -z "${MAJORDOMUS_BIN:-}" ] && [ -x "$shipped" ]; then
+  MAJORDOMUS_BIN="$shipped"; export MAJORDOMUS_BIN
+fi
+bin="${MAJORDOMUS_BIN:-$crate/target/$profile/majordomus}"
+
+# The kinds and schemas the executable reads at run time ship beside this script.
+if [ -z "${MAJORDOMUS_SHARE:-}" ] && [ -f "$root/share/kinds.yaml" ]; then
+  MAJORDOMUS_SHARE="$root/share"; export MAJORDOMUS_SHARE
+fi
+
+# Is the executable missing, or older than any source, manifest or lock file?
+stale=0
+if [ ! -x "$bin" ]; then
+  stale=1
+elif [ -z "${MAJORDOMUS_BIN:-}" ]; then
+  newer="$(find "$crate/src" "$crate/Cargo.toml" "$crate/Cargo.lock" -type f -newer "$bin" 2>/dev/null | head -n 1)"
+  [ -n "$newer" ] && stale=1
+fi
+
+if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
+  if [ "${MAJORDOMUS_NO_BUILD:-0}" = 1 ]; then
+    printf 'majordomus-cli: %s is missing or stale and MAJORDOMUS_NO_BUILD is set; run: cargo build --manifest-path %s/Cargo.toml\n' "$bin" "$crate" >&2
+    exit 12
+  fi
+  if ! command -v cargo >/dev/null 2>&1; then
+    printf 'majordomus-cli: %s is missing or stale and cargo is not installed; install a Rust toolchain (rustup) or set MAJORDOMUS_BIN\n' "$bin" >&2
+    exit 12
+  fi
+  printf 'majordomus-cli: building the executable (%s profile) ...\n' "$profile" >&2
+  flags=""
+  [ "$profile" = release ] && flags="--release"
+  # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
+  # shellcheck disable=SC2086
+  if ! RUSTFLAGS='' cargo build --quiet --locked --manifest-path "$crate/Cargo.toml" $flags 1>&2; then
+    printf 'majordomus-cli: the build failed; see above\n' >&2
+    exit 12
+  fi
+fi
+
+[ -x "$bin" ] || { printf 'majordomus-cli: %s is not an executable\n' "$bin" >&2; exit 12; }
+exec "$bin" "$@"

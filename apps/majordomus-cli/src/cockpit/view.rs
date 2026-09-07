@@ -177,15 +177,40 @@ fn sidebar(shell: &Shell<'_>) -> El {
                 ),
             );
         }
-        nav = nav.child(
+        // a catalogue long enough to bury the sections under it folds away, and unfolds
+        // itself when what the reader is looking at is inside it
+        let holds_current = section
+            .items
+            .iter()
+            .any(|i| i.area == shell.area && i.current);
+        nav = nav.child(if section.items.len() > FOLD_ABOVE {
+            el("details")
+                .class("mj-nav-section mj-nav-section--foldable")
+                .when(holds_current, |d| d.flag("open"))
+                .child(
+                    el("summary")
+                        .class("mj-nav-heading mj-nav-summary")
+                        .child(el("span").text(&section.title))
+                        .child(
+                            el("span")
+                                .class("mj-nav-count")
+                                .text(section.items.len().to_string()),
+                        ),
+                )
+                .child(list)
+        } else {
             el("div")
                 .class("mj-nav-section")
                 .child(el("h2").class("mj-nav-heading").text(&section.title))
-                .child(list),
-        );
+                .child(list)
+        });
     }
     nav
 }
+
+/// How many entries a sidebar catalogue may have before it is folded. Nine areas and a
+/// dozen modules are a menu; thirty object kinds under them are a wall.
+const FOLD_ABOVE: usize = 12;
 
 fn footer(shell: &Shell<'_>) -> El {
     el("footer")
@@ -405,6 +430,192 @@ pub fn nothing(message: impl Into<String>) -> El {
     el("p").class("mj-empty").text(message)
 }
 
+// ------------------------------------------------------------------- listings
+
+/// How many rows a listing shows at once before it is paged. A control plane is read a
+/// screenful at a time; a page that renders every one of nine hundred rows is a file
+/// dump with a header on it.
+pub const PER_PAGE: usize = 50;
+
+/// The window a listing is showing of its result set. The page number is a view
+/// parameter and lives in the URL, so a window is a deep link like every other state
+/// the Cockpit holds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Window {
+    /// The page being shown, 1-based and never past the last one.
+    pub page: usize,
+    /// How many rows a page holds.
+    pub per_page: usize,
+    /// How many rows matched, before the window was taken.
+    pub total: usize,
+}
+
+impl Window {
+    /// The window a request asks for, clamped to what the result set has: page 0 and page
+    /// 900 of a 3-page listing are both a page that exists.
+    pub fn new(page: usize, per_page: usize, total: usize) -> Self {
+        let per_page = per_page.max(1);
+        let pages = total.div_ceil(per_page).max(1);
+        Self {
+            page: page.clamp(1, pages),
+            per_page,
+            total,
+        }
+    }
+
+    /// How many pages the result set has; never zero, because an empty listing still has
+    /// a page to show its empty state on.
+    pub fn pages(&self) -> usize {
+        self.total.div_ceil(self.per_page).max(1)
+    }
+
+    /// The half-open range of rows this window covers, for slicing the matches.
+    pub fn range(&self) -> std::ops::Range<usize> {
+        let start = (self.page - 1) * self.per_page;
+        start..(start + self.per_page).min(self.total)
+    }
+}
+
+/// The page numbers a pagination control offers: the first, the last, the neighbours of
+/// the current one, and a gap marker for what is skipped. Nine hundred pages must not
+/// render nine hundred links.
+fn page_numbers(current: usize, pages: usize) -> Vec<Option<usize>> {
+    let mut wanted: Vec<usize> = [1, pages]
+        .into_iter()
+        .chain(current.saturating_sub(1).max(1)..=(current + 1).min(pages))
+        .filter(|n| *n >= 1 && *n <= pages)
+        .collect();
+    wanted.sort_unstable();
+    wanted.dedup();
+
+    let mut out = Vec::with_capacity(wanted.len() + 2);
+    let mut previous = 0usize;
+    for n in wanted {
+        if previous != 0 && n > previous + 1 {
+            out.push(None);
+        }
+        out.push(Some(n));
+        previous = n;
+    }
+    out
+}
+
+/// Pagination over a listing: what is being shown, and the way to the rest of it.
+///
+/// `href` builds the URL of one page — the caller owns the listing's filters and puts
+/// them back into every link, so paging never drops a filter and a link can be sent to
+/// somebody as it is.
+pub fn pagination(w: Window, href: impl Fn(usize) -> String) -> El {
+    if w.total == 0 {
+        return el("div").class("mj-hidden");
+    }
+    let range = w.range();
+    let summary = el("p").class("mj-pagination-summary").text(format!(
+        "{}–{} of {}",
+        range.start + 1,
+        range.end,
+        w.total
+    ));
+    if w.pages() == 1 {
+        return el("nav").class("mj-pagination").child(summary);
+    }
+
+    let step = |label: &str, to: Option<usize>| {
+        let li = el("li");
+        match to {
+            Some(n) => li.child(
+                el("a")
+                    .class("mj-page-link")
+                    .attr("href", href(n))
+                    .attr("rel", if n < w.page { "prev" } else { "next" })
+                    .text(label),
+            ),
+            None => li.child(
+                el("span")
+                    .class("mj-page-link mj-page-link--disabled")
+                    .attr("aria-disabled", "true")
+                    .text(label),
+            ),
+        }
+    };
+
+    let mut list = el("ul")
+        .class("mj-pagination-list")
+        .child(step("Previous", (w.page > 1).then(|| w.page - 1)));
+    for slot in page_numbers(w.page, w.pages()) {
+        list = list.child(match slot {
+            Some(n) if n == w.page => el("li").child(
+                el("span")
+                    .class("mj-page-link mj-page-link--current")
+                    .attr("aria-current", "page")
+                    .text(n.to_string()),
+            ),
+            Some(n) => el("li").child(
+                el("a")
+                    .class("mj-page-link")
+                    .attr("href", href(n))
+                    .attr("aria-label", format!("Page {n}"))
+                    .text(n.to_string()),
+            ),
+            None => el("li").child(
+                el("span")
+                    .class("mj-page-gap")
+                    .attr("aria-hidden", "true")
+                    .text("…"),
+            ),
+        });
+    }
+    list = list.child(step("Next", (w.page < w.pages()).then(|| w.page + 1)));
+
+    el("nav")
+        .class("mj-pagination")
+        .attr("aria-label", "Pagination")
+        .child(summary)
+        .child(list)
+}
+
+/// A row of filters a reader browses by: a label, where it goes, how many are behind it,
+/// and whether it is the one in force. It is the same catalogue the sidebar shows, put
+/// where the listing is, so a set of nine hundred rows is entered by its parts rather
+/// than scrolled.
+pub fn chips(items: Vec<(String, String, usize, bool)>) -> El {
+    if items.is_empty() {
+        return el("div").class("mj-hidden");
+    }
+    let mut list = el("ul").class("mj-chips");
+    for (label, href, count, current) in items {
+        list = list.child(
+            el("li").child(
+                el("a")
+                    .class(if current {
+                        "mj-chip mj-chip--current"
+                    } else {
+                        "mj-chip"
+                    })
+                    .attr("href", href)
+                    .attr_if("aria-current", current.then_some("true"))
+                    .child(el("span").class("mj-chip-label").text(label))
+                    .child(el("span").class("mj-chip-count").text(count.to_string())),
+            ),
+        );
+    }
+    list
+}
+
+/// A cell holding an identifier: monospaced, on one line, and truncated with the whole
+/// of it in the tooltip. An identifier broken across three lines mid-word is what makes
+/// a table of them unreadable.
+pub fn id_cell(href: impl Into<String>, id: impl Into<String>) -> El {
+    let id = id.into();
+    el("td").class("mj-cell-id").child(
+        el("a")
+            .class("mj-link mj-mono mj-id")
+            .attr("href", href)
+            .attr("title", id.clone())
+            .text(id),
+    )
+}
+
 /// A class-safe form of a status word: lowercase ASCII letters, digits and dashes, so a
 /// word from data can never build a class name that is not one.
 fn css_word(word: &str) -> String {
@@ -442,6 +653,39 @@ mod tests {
         let rendered = badge("fail", "fail").render();
         assert!(rendered.contains("mj-badge--fail"), "{rendered}");
         assert!(rendered.contains(">fail<"), "{rendered}");
+    }
+
+    #[test]
+    fn a_window_is_clamped_to_the_pages_that_exist() {
+        // page 0 and page 900 of a three-page listing are both a page there is
+        assert_eq!(Window::new(0, 50, 120).page, 1);
+        assert_eq!(Window::new(900, 50, 120).page, 3);
+        assert_eq!(Window::new(2, 50, 120).range(), 50..100);
+        // the last page is short, and its range stops at what there is
+        assert_eq!(Window::new(3, 50, 120).range(), 100..120);
+        // an empty listing still has a page, and slicing it takes nothing
+        let empty = Window::new(1, 50, 0);
+        assert_eq!(empty.pages(), 1);
+        assert_eq!(empty.range(), 0..0);
+    }
+
+    #[test]
+    fn a_thousand_pages_do_not_render_a_thousand_links() {
+        // the first, the last, the neighbours, and a gap for what is skipped
+        assert_eq!(
+            page_numbers(7, 19),
+            vec![Some(1), None, Some(6), Some(7), Some(8), None, Some(19)]
+        );
+        // no gap marker where nothing is skipped
+        assert_eq!(page_numbers(2, 3), vec![Some(1), Some(2), Some(3)]);
+        assert_eq!(page_numbers(1, 1), vec![Some(1)]);
+    }
+
+    #[test]
+    fn a_listing_of_one_page_offers_no_page_links() {
+        let rendered = pagination(Window::new(1, 50, 12), |n| format!("?page={n}")).render();
+        assert!(rendered.contains("1–12 of 12"), "{rendered}");
+        assert!(!rendered.contains("mj-page-link"), "{rendered}");
     }
 
     #[test]

@@ -21,6 +21,16 @@ Before working under a path, run `majordomus context resolve <path>` (or read th
 ancestors and the nearest one does not replace them. A provider's own nested-file
 loading is an optimisation; the Majordomus resolution is what applies.
 
+Linked git worktrees of this repository live at `<repository>-wt/<branch>` — the primary
+checkout's sibling named with `-wt`, then the branch name with its hierarchy kept — derived
+from git and never chosen or registered; the primary checkout hosts the trunk. Before
+implementing, run `majordomus worktree` to see which branch and worktree you are in and
+whether that is where the branch belongs; start new work with `majordomus worktree create
+<branch>` and continue in the path it prints; bring a misplaced worktree home with
+`majordomus worktree migrate` rather than continuing where you are. The pre-commit hook
+refuses a feature branch committed from anywhere but its canonical worktree. The rule is
+`project.worktree-topology`; the mechanism is `docs/WORKTREES.md`.
+
 A `.majordomus/` directory, if one exists, is an optional installation of the tool and not
 repository context. Do not duplicate shared rules into this file: it is generated, and a
 rule that exists here and nowhere else is a bug.

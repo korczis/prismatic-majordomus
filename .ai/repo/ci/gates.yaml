@@ -85,6 +85,11 @@ gates:
     runs: scripts/cockpit-assets --check
     summary: the committed Cockpit stylesheet matches the source it is compiled from
 
+  - id: worktree-topology
+    job: structure
+    runs: scripts/ci/worktree-check
+    summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
+
   - id: cockpit-probe
     job: cockpit
     runs: scripts/cockpit-probe
@@ -121,7 +126,7 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, rust-coverage, rust-bench, shell-suite, macos, cockpit-probe]
+    gates: [rust-check, rust-command, rust-coverage, rust-bench, shell-suite, macos, cockpit-probe, worktree-topology]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
@@ -143,23 +148,23 @@ classes:
   # the site generator
   - id: share
     paths: [share/**]
-    gates: [rust-check, rust-coverage, rust-bench, shell-suite, site-build, site-probe, macos, ui-audit]
+    gates: [rust-check, rust-coverage, rust-bench, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit]
 
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
-    paths: [bin/**, lib/**, test/**, .githooks/**, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, macos, ui-audit]
+    paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
+    gates: [shell-suite, rust-integration, site-build, site-probe, macos, worktree-topology, ui-audit]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
   - id: layer
     paths: [.ai/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, ui-audit]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
     paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, ui-audit]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit]
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site

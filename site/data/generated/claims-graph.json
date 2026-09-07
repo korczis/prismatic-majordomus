@@ -1239,6 +1239,24 @@
       "note": "The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there."
     },
     {
+      "id": "claim:worktree-topology-derived",
+      "kind": "claim",
+      "label": "A branch's worktree path is derived from git identity and the branch name alone — the primary checkout's sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured",
+      "status": "guaranteed",
+      "route": "/guarantees/worktree-topology-derived/",
+      "external": false,
+      "note": "The identity is the common git directory and the main worktree git lists first, never the current directory, so a linked worktree does not derive a container inside itself. The branch name is validated by git's reference rules and the derived path is proved on every call to stay below the container. Every registered worktree gets a standing and every condition a stable code with a remedy; the four worktree.* capabilities project the same typed topology to MCP, HTTP, OpenAPI, the Swagger UI and the Cockpit, and the pre-commit hook asks the guard."
+    },
+    {
+      "id": "claim:worktree-migration-lossless",
+      "kind": "claim",
+      "label": "A misplaced worktree is brought to its canonical path with its modified, staged, unstaged and untracked work intact, verified by a fingerprint taken before and after the move, and a step is reported as moved only when the two are equal",
+      "status": "guaranteed",
+      "route": "/guarantees/worktree-migration-lossless/",
+      "external": false,
+      "note": "The plan changes nothing and is recomputed under the repository lock before it is applied. Git moves the directory in one rename; the container's occupant goes out to a staging path and then in; a move across filesystems is refused unless a copy is permitted, and then verified against a manifest of every entry before the original is removed. Nothing is reset, stashed, cleaned, checked out or overwritten: a destination that exists is a named conflict, a locked worktree waits, a detached one is never moved, and a session's scratch checkout is reported and moved only on request."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -1403,6 +1421,20 @@
       "id": "impl:apps/majordomus-cli/src/why.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/why.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/worktree/migrate.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/worktree/migrate.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/worktree/path.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/worktree/path.rs",
       "route": null,
       "external": false
     },
@@ -1890,6 +1922,13 @@
       "external": false
     },
     {
+      "id": "source:docs/WORKTREES.md",
+      "kind": "source",
+      "label": "docs/WORKTREES.md",
+      "route": "/docs/worktrees/",
+      "external": false
+    },
+    {
       "id": "source:share/skeleton/policy.yaml",
       "kind": "source",
       "label": "share/skeleton/policy.yaml",
@@ -2357,6 +2396,13 @@
       "label": "test/cases/96_site_deploy.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_site_deploy.sh"
+    },
+    {
+      "id": "test:test/cases/96_worktree_topology.sh",
+      "kind": "test",
+      "label": "test/cases/96_worktree_topology.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_worktree_topology.sh"
     },
     {
       "id": "test:test/cases/97_pages_fast_path.sh",
@@ -3062,6 +3108,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:worktree-topology-derived",
+      "target": "source:docs/WORKTREES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:worktree-migration-lossless",
+      "target": "source:docs/WORKTREES.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -3702,6 +3758,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:worktree-topology-derived",
+      "target": "impl:apps/majordomus-cli/src/worktree/path.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:worktree-migration-lossless",
+      "target": "impl:apps/majordomus-cli/src/worktree/migrate.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -4339,6 +4405,16 @@
     {
       "source": "claim:web-namespaces-reserved",
       "target": "test:test/cases/89_web_surface.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:worktree-topology-derived",
+      "target": "test:test/cases/96_worktree_topology.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:worktree-migration-lossless",
+      "target": "test:test/cases/96_worktree_topology.sh",
       "kind": "proved_by"
     }
   ]

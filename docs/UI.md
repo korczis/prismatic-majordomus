@@ -4,7 +4,7 @@ How every page this repository serves is held to one standard, and why the stand
 audit rather than a checklist. Behaviour as implemented and tested; where implementation
 and this document disagree, the document is wrong and changes in the same commit as the
 fix. The rule is `project.ui-conformance@1`; the decision and what it rejected are
-[ADR 0021](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0021-the-ui-standard-is-an-audit-over-a-discovered-page-set.md).
+[ADR 0022](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0022-the-ui-standard-is-an-audit-over-a-discovered-page-set.md).
 
 ## The problem this solves
 

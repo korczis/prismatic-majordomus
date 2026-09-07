@@ -58,6 +58,12 @@
           "command": "majordomus distribution",
           "name": "distribution",
           "route": "/docs/cli/distribution/"
+        },
+        {
+          "about": "The branch-to-worktree topology: where every linked worktree belongs (<repo>-wt/<branch>), where each one is, and the lifecycle — create, migrate, repair, guard",
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
         }
       ],
       "command": "majordomus",
@@ -7029,13 +7035,2550 @@
       ],
       "route": "/docs/cli/distribution/build/",
       "usage": "majordomus distribution build [OPTIONS]"
+    },
+    {
+      "about": "The branch-to-worktree topology: where every linked worktree belongs (<repo>-wt/<branch>), where each one is, and the lifecycle — create, migrate, repair, guard",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Where this call is — branch, worktree, canonical or not, uncommitted work — and how many errors the whole topology carries; exit 10 when this worktree is out of place",
+          "command": "majordomus worktree status",
+          "name": "status",
+          "route": "/docs/cli/worktree/status/"
+        },
+        {
+          "about": "Every registered worktree with its standing, one line each; exit 10 when the topology has an error",
+          "command": "majordomus worktree list",
+          "name": "list",
+          "route": "/docs/cli/worktree/list/"
+        },
+        {
+          "about": "The whole topology: repository, container, trunk, every worktree, every branch without a worktree, every diagnostic; exit 10 when it has an error",
+          "command": "majordomus worktree topology",
+          "name": "topology",
+          "route": "/docs/cli/worktree/topology/"
+        },
+        {
+          "about": "Print the container every linked worktree belongs under, and nothing else: `cd \"$(majordomus worktree root)\"`",
+          "command": "majordomus worktree root",
+          "name": "root",
+          "route": "/docs/cli/worktree/root/"
+        },
+        {
+          "about": "Print the canonical path of a branch, and nothing else: `cd \"$(majordomus worktree path feature/x)\"`. Derived from the name; the branch need not exist",
+          "command": "majordomus worktree path",
+          "name": "path",
+          "route": "/docs/cli/worktree/path/"
+        },
+        {
+          "about": "One branch: its canonical path, whether it exists, what occupies the path, the worktree holding it, and what stands in the way",
+          "command": "majordomus worktree inspect",
+          "name": "inspect",
+          "route": "/docs/cli/worktree/inspect/"
+        },
+        {
+          "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+          "command": "majordomus worktree create",
+          "name": "create",
+          "route": "/docs/cli/worktree/create/"
+        },
+        {
+          "about": "The canonical worktree of a branch: created when absent, answered when present, refused when the branch is checked out somewhere else",
+          "command": "majordomus worktree ensure",
+          "name": "ensure",
+          "route": "/docs/cli/worktree/ensure/"
+        },
+        {
+          "about": "Bring every misplaced worktree to its canonical path, dirty state included, with a fingerprint taken before and after each move; --plan shows the steps and changes nothing",
+          "command": "majordomus worktree migrate",
+          "name": "migrate",
+          "route": "/docs/cli/worktree/migrate/"
+        },
+        {
+          "about": "Every error of the topology, and nothing else; exit 10 when there is one",
+          "command": "majordomus worktree validate",
+          "name": "validate",
+          "route": "/docs/cli/worktree/validate/"
+        },
+        {
+          "about": "Every diagnostic of the topology, errors, warnings and facts, each with its code and remedy; exit 10 when there is an error",
+          "command": "majordomus worktree doctor",
+          "name": "doctor",
+          "route": "/docs/cli/worktree/doctor/"
+        },
+        {
+          "about": "May a mutation proceed from here? Exit 0 in a canonical worktree, in the primary checkout on the trunk, or detached; exit 10 with the reason otherwise. What the pre-commit hook asks",
+          "command": "majordomus worktree guard",
+          "name": "guard",
+          "route": "/docs/cli/worktree/guard/"
+        },
+        {
+          "about": "Drop git's registrations of worktrees whose directories are gone, and repair the administrative links of the ones that exist. Deletes no directory",
+          "command": "majordomus worktree repair",
+          "name": "repair",
+          "route": "/docs/cli/worktree/repair/"
+        },
+        {
+          "about": "Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force",
+          "command": "majordomus worktree remove",
+          "name": "remove",
+          "route": "/docs/cli/worktree/remove/"
+        },
+        {
+          "about": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing",
+          "command": "majordomus worktree cleanup",
+          "name": "cleanup",
+          "route": "/docs/cli/worktree/cleanup/"
+        },
+        {
+          "about": "Every local branch, one per line, for a shell completion that wants the live set",
+          "command": "majordomus worktree branches",
+          "name": "branches",
+          "route": "/docs/cli/worktree/branches/"
+        }
+      ],
+      "command": "majordomus worktree",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "worktree"
+          ],
+          "command": "majordomus worktree",
+          "description": "`worktree` with nothing after it answers the question a worker asks before starting: which branch this is, whether this directory is that branch's canonical worktree (or the primary checkout on the trunk), what is uncommitted here, and how many errors the whole topology carries. The same answer from the primary checkout and from four directories deep inside a linked worktree.",
+          "expectation": "exits 0; prints branch, worktree, container",
+          "id": "worktree-default-status",
+          "setup": [],
+          "title": "Where am I, and is that where I belong?"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "worktree",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "worktree"
+      ],
+      "route": "/docs/cli/worktree/",
+      "usage": "majordomus worktree [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Where this call is — branch, worktree, canonical or not, uncommitted work — and how many errors the whole topology carries; exit 10 when this worktree is out of place",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree status",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "status",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus worktree status --format json",
+          "description": "The same answer as JSON: the repository, the container, the trunk and how it was decided, this worktree with its standing and diagnostics, and whether it is where it belongs. This is what the MCP tool `majordomus_worktree_status` and `GET /api/v1/worktrees/status` answer.",
+          "expectation": "exits 0; prints one JSON document carrying /worktree/standing, /container/path, /trunk/source, /canonical",
+          "id": "worktree-status-json",
+          "setup": [],
+          "title": "The current worktree as one document"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "status"
+      ],
+      "route": "/docs/cli/worktree/status/",
+      "usage": "majordomus worktree status [OPTIONS]"
+    },
+    {
+      "about": "Every registered worktree with its standing, one line each; exit 10 when the topology has an error",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree list",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "list"
+          ],
+          "command": "majordomus worktree list",
+          "description": "The primary checkout first, then every linked worktree with its standing, its branch, where it belongs when it is somewhere else, and its uncommitted work. The primary checkout is exempt from the path rule and held to the trunk rule instead.",
+          "expectation": "exits 0; prints PRIMARY, CANONICAL, -wt/feature/example",
+          "id": "worktree-list-text",
+          "setup": [
+            {
+              "argv": [
+                "worktree",
+                "create",
+                "feature/example"
+              ],
+              "command": "majordomus worktree create feature/example"
+            }
+          ],
+          "title": "Every worktree, the misplaced ones obvious"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "list",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "list"
+      ],
+      "route": "/docs/cli/worktree/list/",
+      "usage": "majordomus worktree list [OPTIONS]"
+    },
+    {
+      "about": "The whole topology: repository, container, trunk, every worktree, every branch without a worktree, every diagnostic; exit 10 when it has an error",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree topology",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "topology",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus worktree topology --format json",
+          "description": "The repository, the container, the trunk, every worktree, every branch with or without a worktree, every diagnostic with its code and remedy, and the tallies. This is what the MCP resource `majordomus://worktrees`, the tool `majordomus_worktrees`, `GET /api/v1/worktrees` and the Cockpit all render.",
+          "expectation": "exits 0; prints one JSON document carrying /container/path, /trunk/branch, /worktrees/0/standing, /branches/0/name, /tallies/worktrees, /valid",
+          "id": "worktree-topology-json",
+          "setup": [],
+          "title": "The whole topology as one document"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "topology",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "topology"
+      ],
+      "route": "/docs/cli/worktree/topology/",
+      "usage": "majordomus worktree topology [OPTIONS]"
+    },
+    {
+      "about": "Print the container every linked worktree belongs under, and nothing else: `cd \"$(majordomus worktree root)\"`",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree root",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "root"
+          ],
+          "command": "majordomus worktree root",
+          "description": "Prints the container and nothing else, so a shell can use it: `cd \"$(majordomus worktree root)\"`. It is the primary checkout's sibling named with `-wt`, derived from git's own identity and never from the current directory — which is why running this inside a linked worktree does not answer a container inside that worktree.",
+          "expectation": "exits 0; prints -wt",
+          "id": "worktree-root-path",
+          "setup": [],
+          "title": "The container, for the shell"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "root",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "root"
+      ],
+      "route": "/docs/cli/worktree/root/",
+      "usage": "majordomus worktree root [OPTIONS]"
+    },
+    {
+      "about": "Print the canonical path of a branch, and nothing else: `cd \"$(majordomus worktree path feature/x)\"`. Derived from the name; the branch need not exist",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The branch, full name",
+          "name": "branch",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "BRANCH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree path",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "path",
+            "feature/providers/streaming"
+          ],
+          "command": "majordomus worktree path feature/providers/streaming",
+          "description": "A child process cannot change its parent shell's directory, so nothing here pretends to: this prints one path and the shell does the rest — `cd \"$(majordomus worktree path feature/x)\"`. The path is the branch name under the container, hierarchy kept; the branch need not exist yet.",
+          "expectation": "exits 0; prints -wt/feature/providers/streaming",
+          "id": "worktree-path-branch",
+          "setup": [],
+          "title": "The canonical path of a branch, for the shell"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "path",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "path"
+      ],
+      "route": "/docs/cli/worktree/path/",
+      "usage": "majordomus worktree path [OPTIONS] <BRANCH>"
+    },
+    {
+      "about": "One branch: its canonical path, whether it exists, what occupies the path, the worktree holding it, and what stands in the way",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The branch, full name",
+          "name": "branch",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "BRANCH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree inspect",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "inspect",
+            "feature/new-dashboard"
+          ],
+          "command": "majordomus worktree inspect feature/new-dashboard",
+          "description": "Where the branch's worktree belongs, whether the branch exists, whether anything occupies the path, and what would stand in the way. For a branch that does not exist yet, the answer is the path `worktree create` would use and the command to run.",
+          "expectation": "exits 0; prints -wt/feature/new-dashboard, does not exist yet",
+          "id": "worktree-inspect-branch",
+          "setup": [],
+          "title": "One branch, before creating its worktree"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "inspect",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "inspect"
+      ],
+      "route": "/docs/cli/worktree/inspect/",
+      "usage": "majordomus worktree inspect [OPTIONS] <BRANCH>"
+    },
+    {
+      "about": "Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The branch, full name (`feature/improve-cli`)",
+          "name": "branch",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BRANCH"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Start a new branch from this ref. Never fetched: it must resolve locally",
+          "long": "base",
+          "name": "base",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Name the branch after this issue of .ai/repo/project/issues: `feature/<id>-<slug>`, the form the topology reads the issue back from",
+          "long": "issue",
+          "name": "issue",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree create",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "create",
+            "feature/improve-cli"
+          ],
+          "command": "majordomus worktree create feature/improve-cli",
+          "description": "Creates the branch `feature/improve-cli` from the trunk and checks it out in a new worktree at `<repository>-wt/feature/improve-cli`. No path is given and none may be: the destination follows from the repository's identity and the branch name, so the same command in the same repository always produces the same path — from the primary checkout, and from inside another worktree.",
+          "expectation": "exits 0; prints -wt/feature/improve-cli, feature/improve-cli (new",
+          "id": "worktree-create-branch",
+          "setup": [],
+          "title": "Start work on a branch without deciding where it goes"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "create",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "create"
+      ],
+      "route": "/docs/cli/worktree/create/",
+      "usage": "majordomus worktree create [OPTIONS] [BRANCH]"
+    },
+    {
+      "about": "The canonical worktree of a branch: created when absent, answered when present, refused when the branch is checked out somewhere else",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The branch, full name",
+          "name": "branch",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "BRANCH"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Start a new branch from this ref (default: the trunk)",
+          "long": "base",
+          "name": "base",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree ensure",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "ensure",
+            "feature/improve-cli"
+          ],
+          "command": "majordomus worktree ensure feature/improve-cli",
+          "description": "`ensure` is `create` for a caller that does not care whether the worktree is already there: it creates it when it is absent and answers the existing one when it is present. What a script or an agent runs before starting on a branch.",
+          "expectation": "exits 0; prints exists, -wt/feature/improve-cli",
+          "id": "worktree-ensure-existing",
+          "setup": [
+            {
+              "argv": [
+                "worktree",
+                "create",
+                "feature/improve-cli"
+              ],
+              "command": "majordomus worktree create feature/improve-cli"
+            }
+          ],
+          "title": "The canonical worktree, whether or not it exists yet"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "ensure",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "ensure"
+      ],
+      "route": "/docs/cli/worktree/ensure/",
+      "usage": "majordomus worktree ensure [OPTIONS] <BRANCH>"
+    },
+    {
+      "about": "Bring every misplaced worktree to its canonical path, dirty state included, with a fingerprint taken before and after each move; --plan shows the steps and changes nothing",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Show the plan and change nothing",
+          "long": "plan",
+          "name": "plan",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "PLAN"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "The same as --plan",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "When a move crosses filesystems, copy the tree, repair git's link, verify the copy against a manifest of every entry, and only then remove the original",
+          "long": "allow-copy",
+          "name": "allow_copy",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALLOW_COPY"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only these branches",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "BRANCH"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Also move the scratch checkouts of sessions (under the temporary directory or .claude/worktrees), which are otherwise reported and left alone",
+          "long": "include-ephemeral",
+          "name": "include_ephemeral",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "INCLUDE_EPHEMERAL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree migrate",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "migrate",
+            "--plan"
+          ],
+          "command": "majordomus worktree migrate --plan",
+          "description": "`--plan` shows each misplaced worktree with where it belongs, how it would move, the uncommitted work that moves with it, and what blocks it, and changes nothing. Without `--plan` the movable steps are carried out: each worktree is fingerprinted, moved with `git worktree move`, fingerprinted again at its new path, and reported as moved only when the two are equal.",
+          "expectation": "exits 0; prints nothing to migrate",
+          "id": "worktree-migrate-plan",
+          "setup": [],
+          "title": "What it would take to bring every worktree home"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "migrate",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "migrate"
+      ],
+      "route": "/docs/cli/worktree/migrate/",
+      "usage": "majordomus worktree migrate [OPTIONS]"
+    },
+    {
+      "about": "Every error of the topology, and nothing else; exit 10 when there is one",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree validate",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "validate"
+          ],
+          "command": "majordomus worktree validate",
+          "description": "Every error-level diagnostic and nothing else, then the verdict; exit 10 when there is an error. What a script gates on.",
+          "expectation": "exits 0; prints worktree topology: valid",
+          "id": "worktree-validate-clean",
+          "setup": [],
+          "title": "Is the topology valid?"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "validate",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "validate"
+      ],
+      "route": "/docs/cli/worktree/validate/",
+      "usage": "majordomus worktree validate [OPTIONS]"
+    },
+    {
+      "about": "Every diagnostic of the topology, errors, warnings and facts, each with its code and remedy; exit 10 when there is an error",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree doctor",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "doctor"
+          ],
+          "command": "majordomus worktree doctor",
+          "description": "Errors, warnings and facts — a misplaced worktree, a stale registration, a detached HEAD, the primary checkout off the trunk, an unknown trunk — each under a stable code the API and the Cockpit carry too, each with the command that addresses it.",
+          "expectation": "exits 0; prints worktree topology: valid",
+          "id": "worktree-doctor-clean",
+          "setup": [],
+          "title": "Every diagnostic, with its code and its remedy"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "doctor",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "doctor"
+      ],
+      "route": "/docs/cli/worktree/doctor/",
+      "usage": "majordomus worktree doctor [OPTIONS]"
+    },
+    {
+      "about": "May a mutation proceed from here? Exit 0 in a canonical worktree, in the primary checkout on the trunk, or detached; exit 10 with the reason otherwise. What the pre-commit hook asks",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print nothing on success",
+          "long": "quiet",
+          "name": "quiet",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": false,
+          "value_name": "QUIET"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree guard",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "guard"
+          ],
+          "command": "majordomus worktree guard",
+          "description": "The pre-commit hook's question. Exit 0 in a branch's canonical worktree, in the primary checkout on the trunk, or on a detached HEAD; exit 10 with the diagnostic and the remedy when a feature branch is being worked on somewhere it does not belong. The hook stays one line; this is the logic.",
+          "expectation": "exits 0; prints worktree guard: ok",
+          "id": "worktree-guard-ok",
+          "setup": [],
+          "title": "May a commit proceed from here?"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "guard",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "guard"
+      ],
+      "route": "/docs/cli/worktree/guard/",
+      "usage": "majordomus worktree guard [OPTIONS]"
+    },
+    {
+      "about": "Drop git's registrations of worktrees whose directories are gone, and repair the administrative links of the ones that exist. Deletes no directory",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Report what would be dropped and change nothing",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree repair",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "repair",
+            "--dry-run"
+          ],
+          "command": "majordomus worktree repair --dry-run",
+          "description": "`repair` drops git's registrations of worktrees whose directories no longer exist and lets git repair the administrative links of the ones that do. It deletes no directory and touches no branch; `--dry-run` reports what it would drop and changes nothing.",
+          "expectation": "exits 0; prints nothing to prune",
+          "id": "worktree-repair-dry-run",
+          "setup": [],
+          "title": "What git would forget"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "repair",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "repair"
+      ],
+      "route": "/docs/cli/worktree/repair/",
+      "usage": "majordomus worktree repair [OPTIONS]"
+    },
+    {
+      "about": "Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "An exact branch name or an exact path",
+          "name": "selector",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SELECTOR"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Remove it even though it holds uncommitted work or is locked",
+          "long": "force",
+          "name": "force",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FORCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree remove",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "remove",
+            "feature/improve-cli"
+          ],
+          "command": "majordomus worktree remove feature/improve-cli",
+          "description": "Removes the worktree and nothing else. The branch it held still exists: worktree lifecycle and branch lifecycle are separate, and deleting a branch is a git command a person types deliberately. A worktree with uncommitted work is refused rather than removed.",
+          "expectation": "exits 0; prints removed, feature/improve-cli still exists",
+          "id": "worktree-remove-clean",
+          "setup": [
+            {
+              "argv": [
+                "worktree",
+                "create",
+                "feature/improve-cli"
+              ],
+              "command": "majordomus worktree create feature/improve-cli"
+            }
+          ],
+          "title": "Remove a worktree, and keep its branch"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "remove",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "remove"
+      ],
+      "route": "/docs/cli/worktree/remove/",
+      "usage": "majordomus worktree remove [OPTIONS] <SELECTOR>"
+    },
+    {
+      "about": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree cleanup",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "cleanup"
+          ],
+          "command": "majordomus worktree cleanup",
+          "description": "Every branch merged into the trunk whose worktree is clean or absent, with the two commands that would remove the worktree and then the branch. Derived state only: nothing is deleted here, and a dirty or unmerged worktree is never listed.",
+          "expectation": "exits 0; prints cleanup-eligible",
+          "id": "worktree-cleanup-nothing",
+          "setup": [],
+          "title": "What could go, and what it would take"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "cleanup",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "cleanup"
+      ],
+      "route": "/docs/cli/worktree/cleanup/",
+      "usage": "majordomus worktree cleanup [OPTIONS]"
+    },
+    {
+      "about": "Every local branch, one per line, for a shell completion that wants the live set",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus worktree",
+          "name": "worktree",
+          "route": "/docs/cli/worktree/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only branches with no worktree",
+          "long": "without-worktree",
+          "name": "without_worktree",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "WITHOUT_WORKTREE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus worktree branches",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "worktree",
+            "branches"
+          ],
+          "command": "majordomus worktree branches",
+          "description": "Every local branch, one per line, nothing else. A shell completion for `worktree path`, `create` or `remove` reads this rather than a list kept anywhere, so a branch created a second ago completes.",
+          "expectation": "exits 0",
+          "id": "worktree-branches-list",
+          "setup": [],
+          "title": "The live branch set, for completion"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "branches",
+      "parent_route": "/docs/cli/worktree/",
+      "path": [
+        "majordomus",
+        "worktree",
+        "branches"
+      ],
+      "route": "/docs/cli/worktree/branches/",
+      "usage": "majordomus worktree branches [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 323,
-    "commands": 40,
-    "examples": 46,
-    "runnable": 36
+    "arguments": 425,
+    "commands": 57,
+    "examples": 63,
+    "runnable": 53
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.2.0",

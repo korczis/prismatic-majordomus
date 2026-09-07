@@ -49,6 +49,9 @@
 
 @layer base {
   :root {
+    /* The topbar's height: the sidebar and a listing's sticky header both sit under it,
+       and one value keeps them from disagreeing. */
+    --mj-topbar-h: 2.75rem;
     --mj-bg: var(--color-white);
     --mj-bg-raised: var(--color-white);
     --mj-bg-sunken: var(--color-gray-50);
@@ -207,6 +210,26 @@
     @apply shrink-0 font-mono text-[10px];
     color: var(--mj-text-muted);
   }
+  /* A catalogue too long to sit open folds. The marker is the summary's own, turned to
+     face the way the section will move. */
+  .mj-nav-section--foldable > .mj-nav-summary {
+    @apply flex cursor-pointer list-none items-center justify-between gap-2 rounded px-2 py-1;
+  }
+  .mj-nav-section--foldable > .mj-nav-summary::-webkit-details-marker {
+    display: none;
+  }
+  .mj-nav-section--foldable > .mj-nav-summary::after {
+    content: "+";
+    @apply shrink-0 font-mono text-[11px] leading-none;
+    color: var(--mj-text-muted);
+  }
+  .mj-nav-section--foldable[open] > .mj-nav-summary::after {
+    content: "−";
+  }
+  .mj-nav-section--foldable > .mj-nav-summary:hover {
+    background: var(--mj-bg-sunken);
+    color: var(--mj-text);
+  }
 
   .mj-main {
     @apply min-w-0 flex-1 py-6;
@@ -331,11 +354,116 @@
     @apply px-2 py-1.5 align-top;
     border-bottom: 1px solid var(--mj-border);
   }
+  .mj-table tbody tr:nth-child(even) td {
+    background: color-mix(in oklab, var(--mj-bg-sunken) 55%, transparent);
+  }
   .mj-table tbody tr:hover td {
     background: var(--mj-bg-sunken);
   }
   .mj-table tbody tr:last-child td {
     border-bottom: 0;
+  }
+  /* The header does not stick. `.mj-table-wrap` scrolls sideways, which makes it a scroll
+     container, and a sticky header inside one sticks to the container rather than to the
+     viewport: it lands part-way down the table and sits on the first rows. A page of
+     fifty rows is read without it. */
+
+  /* An identifier is one word, and a table of identifiers broken across three lines each
+     is a wall. It stays on its line, truncates, and carries the whole of itself in its
+     tooltip. */
+  .mj-cell-id {
+    @apply max-w-[22rem];
+  }
+  .mj-cell-id .mj-id {
+    @apply block truncate;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  /* ---------------------------------------------------------------- pagination */
+
+  /* Flowbite's pagination: a summary of the window, then Previous, the page numbers
+     worth showing, and Next, as one joined group. */
+  .mj-pagination {
+    @apply flex flex-wrap items-center justify-between gap-3 pt-3;
+    border-top: 1px solid var(--mj-border);
+  }
+  .mj-pagination-summary {
+    @apply font-mono text-[12px];
+    color: var(--mj-text-muted);
+  }
+  .mj-pagination-list {
+    @apply inline-flex items-center -space-x-px;
+  }
+  .mj-page-link {
+    @apply flex h-8 items-center justify-center px-3 text-[12px] leading-tight no-underline;
+    background: var(--mj-bg-raised);
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text-muted);
+  }
+  .mj-pagination-list li:first-child .mj-page-link {
+    @apply rounded-l-lg;
+  }
+  .mj-pagination-list li:last-child .mj-page-link {
+    @apply rounded-r-lg;
+  }
+  a.mj-page-link:hover {
+    background: var(--mj-bg-sunken);
+    color: var(--mj-text);
+  }
+  .mj-page-link--current {
+    background: var(--color-accent-50);
+    border-color: var(--color-accent-200);
+    color: var(--color-accent-900);
+    @apply font-semibold;
+  }
+  :where(.dark) .mj-page-link--current {
+    background: color-mix(in oklab, var(--color-accent-500) 22%, transparent);
+    border-color: var(--color-accent-500);
+    color: var(--color-accent-200);
+  }
+  .mj-page-link--disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+  .mj-page-gap {
+    @apply flex h-8 items-center justify-center px-2 text-[12px];
+    background: var(--mj-bg-raised);
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text-muted);
+  }
+
+  /* --------------------------------------------------------------------- chips */
+
+  /* The way into a long listing: its own parts, each with how many it holds. */
+  .mj-chips {
+    @apply flex flex-wrap items-center gap-1.5;
+  }
+  .mj-chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] no-underline;
+    background: var(--mj-bg-raised);
+    border: 1px solid var(--mj-border);
+    color: var(--mj-text);
+  }
+  .mj-chip:hover {
+    background: var(--mj-bg-sunken);
+  }
+  .mj-chip--current {
+    background: var(--color-accent-50);
+    border-color: var(--color-accent-200);
+    color: var(--color-accent-900);
+    @apply font-semibold;
+  }
+  :where(.dark) .mj-chip--current {
+    background: color-mix(in oklab, var(--color-accent-500) 22%, transparent);
+    border-color: var(--color-accent-500);
+    color: var(--color-accent-200);
+  }
+  .mj-chip-count {
+    @apply font-mono text-[10px];
+    color: var(--mj-text-muted);
+  }
+  .mj-chip--current .mj-chip-count {
+    color: inherit;
   }
 
   .mj-facts {

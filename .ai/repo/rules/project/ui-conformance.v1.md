@@ -78,4 +78,4 @@ box without keyboard access is refused; a page added to the site appears in the 
 set without a list changing; a breakpoint added to the theme appears in the visited widths;
 a palette below the threshold is raised, and raising it twice changes nothing. The unit tests
 of `scripts/lib/ui-*.mjs` hold the discovery, the scanner, the normaliser and the contrast
-arithmetic. ADR 0021 records the decision and what it rejected.
+arithmetic. ADR 0022 records the decision and what it rejected.

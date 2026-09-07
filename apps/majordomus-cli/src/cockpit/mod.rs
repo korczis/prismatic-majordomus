@@ -40,10 +40,16 @@ pub const PREFIX: &str = "/cockpit";
 /// The stylesheet the shell links.
 pub const STYLESHEET: &str = "cockpit.css";
 
-/// The script modules every page loads: the shell's own behaviour, then the palette.
-/// A page adds its own module to this list, which is what keeps a graph library
-/// off the overview.
-pub const SHELL_SCRIPTS: &[&str] = &["cockpit.js", "palette.js"];
+/// The script modules every page loads. `cockpit.js` is not among them and must not be:
+/// every other module imports it by its bare relative URL, and a `<script src=...?v=>`
+/// tag beside that is a *second* URL for the same file — the browser loads the module
+/// twice, runs its top level twice, and starts Alpine twice. The palette imports it, so
+/// it is in the graph of every page anyway, and it is answered `no-cache` rather than
+/// immutable, which is right for the one URL that carries no digest.
+///
+/// A page adds its own module to this list, which is what keeps a graph library off the
+/// overview.
+pub const SHELL_SCRIPTS: &[&str] = &["palette.js"];
 
 /// The Cockpit over one context. Cheap to clone into every worker thread: the assets are
 /// shared and the context is an `Arc`.
@@ -160,6 +166,7 @@ impl Cockpit {
             "/cockpit/graphs" => pages::graphs(&self.ctx),
             "/cockpit/graphs/topology" => pages::topology(&self.ctx),
             "/cockpit/continuity" => pages::continuity(&self.ctx),
+            "/cockpit/worktrees" => pages::worktrees(&self.ctx),
             "/cockpit/directories" => pages::directories(&self.ctx, query),
             "/cockpit/health" => pages::health(&self.ctx),
             "/cockpit/artifacts" => pages::artifacts(&self.ctx),

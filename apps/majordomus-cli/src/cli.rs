@@ -47,6 +47,9 @@ pub enum Command {
     Why(WhyArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
+    /// The branch-to-worktree topology: where every linked worktree belongs (<repo>-wt/<branch>), where each one is, and the lifecycle — create, migrate, repair, guard
+    #[command(alias = "wt")]
+    Worktree(WorktreeArgs),
 }
 
 #[derive(Debug, Args)]
@@ -435,6 +438,124 @@ pub struct RepoArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus worktree` (alias `wt`). The output shape is global, so it reads the way a
+/// person writes it — `worktree list --format json` — and is declared once.
+pub struct WorktreeArgs {
+    #[command(flatten)]
+    /// Where the repository is found. The index is not built: nothing about the topology is in it.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `status`.
+    pub command: Option<WorktreeCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus worktree`.
+pub enum WorktreeCommand {
+    /// Where this call is — branch, worktree, canonical or not, uncommitted work — and how many errors the whole topology carries; exit 10 when this worktree is out of place
+    Status,
+    /// Every registered worktree with its standing, one line each; exit 10 when the topology has an error
+    List,
+    /// The whole topology: repository, container, trunk, every worktree, every branch without a worktree, every diagnostic; exit 10 when it has an error
+    Topology,
+    /// Print the container every linked worktree belongs under, and nothing else: `cd "$(majordomus worktree root)"`
+    Root,
+    /// Print the canonical path of a branch, and nothing else: `cd "$(majordomus worktree path feature/x)"`. Derived from the name; the branch need not exist
+    Path {
+        /// The branch, full name
+        branch: String,
+    },
+    /// One branch: its canonical path, whether it exists, what occupies the path, the worktree holding it, and what stands in the way
+    Inspect {
+        /// The branch, full name
+        branch: String,
+    },
+    /// Create the canonical worktree of a branch, creating the branch from --base (default: the trunk) when it does not exist. The path is derived; none may be given
+    Create {
+        /// The branch, full name (`feature/improve-cli`)
+        #[arg(value_name = "BRANCH", required_unless_present = "issue")]
+        branch: Option<String>,
+
+        /// Start a new branch from this ref. Never fetched: it must resolve locally
+        #[arg(long, value_name = "REF")]
+        base: Option<String>,
+
+        /// Name the branch after this issue of .ai/repo/project/issues: `feature/<id>-<slug>`, the form the topology reads the issue back from
+        #[arg(long, value_name = "ID", conflicts_with = "branch")]
+        issue: Option<String>,
+    },
+    /// The canonical worktree of a branch: created when absent, answered when present, refused when the branch is checked out somewhere else
+    Ensure {
+        /// The branch, full name
+        branch: String,
+
+        /// Start a new branch from this ref (default: the trunk)
+        #[arg(long, value_name = "REF")]
+        base: Option<String>,
+    },
+    /// Bring every misplaced worktree to its canonical path, dirty state included, with a fingerprint taken before and after each move; --plan shows the steps and changes nothing
+    Migrate {
+        /// Show the plan and change nothing
+        #[arg(long)]
+        plan: bool,
+
+        /// The same as --plan
+        #[arg(long)]
+        dry_run: bool,
+
+        /// When a move crosses filesystems, copy the tree, repair git's link, verify the copy against a manifest of every entry, and only then remove the original
+        #[arg(long)]
+        allow_copy: bool,
+
+        /// Only these branches
+        #[arg(long, value_name = "BRANCH")]
+        only: Vec<String>,
+
+        /// Also move the scratch checkouts of sessions (under the temporary directory or .claude/worktrees), which are otherwise reported and left alone
+        #[arg(long)]
+        include_ephemeral: bool,
+    },
+    /// Every error of the topology, and nothing else; exit 10 when there is one
+    Validate,
+    /// Every diagnostic of the topology, errors, warnings and facts, each with its code and remedy; exit 10 when there is an error
+    Doctor,
+    /// May a mutation proceed from here? Exit 0 in a canonical worktree, in the primary checkout on the trunk, or detached; exit 10 with the reason otherwise. What the pre-commit hook asks
+    Guard {
+        /// Print nothing on success
+        #[arg(long, short)]
+        quiet: bool,
+    },
+    /// Drop git's registrations of worktrees whose directories are gone, and repair the administrative links of the ones that exist. Deletes no directory
+    Repair {
+        /// Report what would be dropped and change nothing
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force
+    Remove {
+        /// An exact branch name or an exact path
+        selector: String,
+
+        /// Remove it even though it holds uncommitted work or is locked
+        #[arg(long)]
+        force: bool,
+    },
+    /// The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing
+    Cleanup,
+    /// Every local branch, one per line, for a shell completion that wants the live set
+    Branches {
+        /// Only branches with no worktree
+        #[arg(long)]
+        without_worktree: bool,
+    },
+}
+
+#[derive(Debug, Args)]
 /// `majordomus mcp`.
 pub struct McpArgs {
     #[command(flatten)]
@@ -704,6 +825,193 @@ pub struct CommandExamples {
 /// disposable repository. Adding a command without adding its example does not pass
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
+    CommandExamples {
+        command: "worktree",
+        examples: &[ExampleDoc {
+            id: "worktree-default-status",
+            title: "Where am I, and is that where I belong?",
+            description: "`worktree` with nothing after it answers the question a worker asks before starting: which branch this is, whether this directory is that branch's canonical worktree (or the primary checkout on the trunk), what is uncommitted here, and how many errors the whole topology carries. The same answer from the primary checkout and from four directories deep inside a linked worktree.",
+            argv: &["worktree"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["branch", "worktree", "container"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree status",
+        examples: &[ExampleDoc {
+            id: "worktree-status-json",
+            title: "The current worktree as one document",
+            description: "The same answer as JSON: the repository, the container, the trunk and how it was decided, this worktree with its standing and diagnostics, and whether it is where it belongs. This is what the MCP tool `majordomus_worktree_status` and `GET /api/v1/worktrees/status` answer.",
+            argv: &["worktree", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/worktree/standing", "/container/path", "/trunk/source", "/canonical"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree list",
+        examples: &[ExampleDoc {
+            id: "worktree-list-text",
+            title: "Every worktree, the misplaced ones obvious",
+            description: "The primary checkout first, then every linked worktree with its standing, its branch, where it belongs when it is somewhere else, and its uncommitted work. The primary checkout is exempt from the path rule and held to the trunk rule instead.",
+            argv: &["worktree", "list"],
+            setup: &[&["worktree", "create", "feature/example"]],
+            expect: Expect::StdoutContains(&["PRIMARY", "CANONICAL", "-wt/feature/example"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree topology",
+        examples: &[ExampleDoc {
+            id: "worktree-topology-json",
+            title: "The whole topology as one document",
+            description: "The repository, the container, the trunk, every worktree, every branch with or without a worktree, every diagnostic with its code and remedy, and the tallies. This is what the MCP resource `majordomus://worktrees`, the tool `majordomus_worktrees`, `GET /api/v1/worktrees` and the Cockpit all render.",
+            argv: &["worktree", "topology", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/container/path", "/trunk/branch", "/worktrees/0/standing", "/branches/0/name", "/tallies/worktrees", "/valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree root",
+        examples: &[ExampleDoc {
+            id: "worktree-root-path",
+            title: "The container, for the shell",
+            description: "Prints the container and nothing else, so a shell can use it: `cd \"$(majordomus worktree root)\"`. It is the primary checkout's sibling named with `-wt`, derived from git's own identity and never from the current directory — which is why running this inside a linked worktree does not answer a container inside that worktree.",
+            argv: &["worktree", "root"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["-wt"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree path",
+        examples: &[ExampleDoc {
+            id: "worktree-path-branch",
+            title: "The canonical path of a branch, for the shell",
+            description: "A child process cannot change its parent shell's directory, so nothing here pretends to: this prints one path and the shell does the rest — `cd \"$(majordomus worktree path feature/x)\"`. The path is the branch name under the container, hierarchy kept; the branch need not exist yet.",
+            argv: &["worktree", "path", "feature/providers/streaming"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["-wt/feature/providers/streaming"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree inspect",
+        examples: &[ExampleDoc {
+            id: "worktree-inspect-branch",
+            title: "One branch, before creating its worktree",
+            description: "Where the branch's worktree belongs, whether the branch exists, whether anything occupies the path, and what would stand in the way. For a branch that does not exist yet, the answer is the path `worktree create` would use and the command to run.",
+            argv: &["worktree", "inspect", "feature/new-dashboard"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["-wt/feature/new-dashboard", "does not exist yet"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree create",
+        examples: &[ExampleDoc {
+            id: "worktree-create-branch",
+            title: "Start work on a branch without deciding where it goes",
+            description: "Creates the branch `feature/improve-cli` from the trunk and checks it out in a new worktree at `<repository>-wt/feature/improve-cli`. No path is given and none may be: the destination follows from the repository's identity and the branch name, so the same command in the same repository always produces the same path — from the primary checkout, and from inside another worktree.",
+            argv: &["worktree", "create", "feature/improve-cli"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["-wt/feature/improve-cli", "feature/improve-cli (new"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree ensure",
+        examples: &[ExampleDoc {
+            id: "worktree-ensure-existing",
+            title: "The canonical worktree, whether or not it exists yet",
+            description: "`ensure` is `create` for a caller that does not care whether the worktree is already there: it creates it when it is absent and answers the existing one when it is present. What a script or an agent runs before starting on a branch.",
+            argv: &["worktree", "ensure", "feature/improve-cli"],
+            setup: &[&["worktree", "create", "feature/improve-cli"]],
+            expect: Expect::StdoutContains(&["exists", "-wt/feature/improve-cli"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree migrate",
+        examples: &[ExampleDoc {
+            id: "worktree-migrate-plan",
+            title: "What it would take to bring every worktree home",
+            description: "`--plan` shows each misplaced worktree with where it belongs, how it would move, the uncommitted work that moves with it, and what blocks it, and changes nothing. Without `--plan` the movable steps are carried out: each worktree is fingerprinted, moved with `git worktree move`, fingerprinted again at its new path, and reported as moved only when the two are equal.",
+            argv: &["worktree", "migrate", "--plan"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["nothing to migrate"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree validate",
+        examples: &[ExampleDoc {
+            id: "worktree-validate-clean",
+            title: "Is the topology valid?",
+            description: "Every error-level diagnostic and nothing else, then the verdict; exit 10 when there is an error. What a script gates on.",
+            argv: &["worktree", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["worktree topology: valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree doctor",
+        examples: &[ExampleDoc {
+            id: "worktree-doctor-clean",
+            title: "Every diagnostic, with its code and its remedy",
+            description: "Errors, warnings and facts — a misplaced worktree, a stale registration, a detached HEAD, the primary checkout off the trunk, an unknown trunk — each under a stable code the API and the Cockpit carry too, each with the command that addresses it.",
+            argv: &["worktree", "doctor"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["worktree topology: valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree guard",
+        examples: &[ExampleDoc {
+            id: "worktree-guard-ok",
+            title: "May a commit proceed from here?",
+            description: "The pre-commit hook's question. Exit 0 in a branch's canonical worktree, in the primary checkout on the trunk, or on a detached HEAD; exit 10 with the diagnostic and the remedy when a feature branch is being worked on somewhere it does not belong. The hook stays one line; this is the logic.",
+            argv: &["worktree", "guard"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["worktree guard: ok"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree repair",
+        examples: &[ExampleDoc {
+            id: "worktree-repair-dry-run",
+            title: "What git would forget",
+            description: "`repair` drops git's registrations of worktrees whose directories no longer exist and lets git repair the administrative links of the ones that do. It deletes no directory and touches no branch; `--dry-run` reports what it would drop and changes nothing.",
+            argv: &["worktree", "repair", "--dry-run"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["nothing to prune"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree remove",
+        examples: &[ExampleDoc {
+            id: "worktree-remove-clean",
+            title: "Remove a worktree, and keep its branch",
+            description: "Removes the worktree and nothing else. The branch it held still exists: worktree lifecycle and branch lifecycle are separate, and deleting a branch is a git command a person types deliberately. A worktree with uncommitted work is refused rather than removed.",
+            argv: &["worktree", "remove", "feature/improve-cli"],
+            setup: &[&["worktree", "create", "feature/improve-cli"]],
+            expect: Expect::StdoutContains(&["removed", "feature/improve-cli still exists"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree cleanup",
+        examples: &[ExampleDoc {
+            id: "worktree-cleanup-nothing",
+            title: "What could go, and what it would take",
+            description: "Every branch merged into the trunk whose worktree is clean or absent, with the two commands that would remove the worktree and then the branch. Derived state only: nothing is deleted here, and a dirty or unmerged worktree is never listed.",
+            argv: &["worktree", "cleanup"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cleanup-eligible"]),
+        }],
+    },
+    CommandExamples {
+        command: "worktree branches",
+        examples: &[ExampleDoc {
+            id: "worktree-branches-list",
+            title: "The live branch set, for completion",
+            description: "Every local branch, one per line, nothing else. A shell completion for `worktree path`, `create` or `remove` reads this rather than a list kept anywhere, so a branch created a second ago completes.",
+            argv: &["worktree", "branches"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
     CommandExamples {
         command: "distribution",
         examples: &[ExampleDoc {
