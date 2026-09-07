@@ -12,14 +12,10 @@
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ e.count }} moment{% if e.count != 1 %}s{% endif %}</h2>
     <p class="mt-2 text-body">Every moment that names this one. Derived from the moments; this page keeps no list.</p>
-    <ol class="mt-4 grid gap-4">
+    {#- The same card as the catalogue's index, so a moment reads the same wherever it is listed. -#}
+    <ol class="mt-4 grid gap-4 sm:grid-cols-2">
       {%- for id in e.moments %}{% set m = [x for x in catalogue.moments if x.id == id][0] %}
-      <li class="min-w-0">
-        <a href="{{ base }}{{ m.route }}" class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
-          <span class="flex gap-3 text-sm font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0 break-words">{{ m.hook }}</span></span>
-          <span class="mt-2 min-w-0 break-words text-sm text-body">{{ m.summary }}</span>
-        </a>
-      </li>
+      <li class="min-w-0">{{ <moment_card m={m} base={base} /> }}</li>
       {%- endfor %}
     </ol>
   </div>

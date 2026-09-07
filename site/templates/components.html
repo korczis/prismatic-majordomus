@@ -10,7 +10,7 @@
 {% endcomponent badge %}
 
 {#- A snippet with an Alpine copy button. Progressive: without JS the code is there and the button hidden (x-cloak). -#}
-{% component code(label, lang="bash") %}
+{% component code(label, lang="bash", wrap=false) %}
 <figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
   <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
     <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ label }}</span>
@@ -19,9 +19,70 @@
       <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
     </button>
   </figcaption>
-  <div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src"><code class="language-{{ lang }}">{{ body | trim }}</code></pre></div>
+  {#- `wrap` folds a long single command instead of scrolling it sideways: a one-line install
+      command on a phone is read whole, never dragged. Multi-line listings keep the scroll,
+      where folding would break the alignment that carries the meaning. The scrolling variant
+      is focusable so a keyboard can reach it; the folded one has nothing to scroll. -#}
+  <div class="{% if wrap %}overflow-hidden{% else %}overflow-x-auto{% endif %}"{% if not wrap %} tabindex="0"{% endif %}><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading{% if wrap %} whitespace-pre-wrap break-all{% endif %}" x-ref="src"><code class="language-{{ lang }}">{{ body | trim }}</code></pre></div>
 </figure>
 {% endcomponent code %}
+
+{#- The install block: one command, sold as one command. The command is the largest text in
+    the block and folds rather than scrolls; the copy button is the shared clipboard
+    implementation; the two steps that follow are numbered so a reader knows there are two
+    and no more. Every value comes from the distribution model the executable generates. -#}
+{% component install(command, next, binary, install_dir="", docs_href="") %}
+<div class="not-format rounded-base border border-brand-subtle bg-neutral-primary shadow-xs">
+  <div class="border-b border-default px-5 py-5 sm:px-8 sm:py-7">
+    <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">install · one command</p>
+    <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-heading sm:text-4xl">Install {{ binary }} in one command</h2>
+    <p class="mt-3 max-w-2xl text-base leading-relaxed text-body sm:text-lg">No git, no Rust, no Node, no root. One archive for your machine, its digest verified before anything is unpacked{% if install_dir %}, into <code class="font-mono text-heading">{{ install_dir }}</code>{% endif %}.</p>
+    <div class="mt-5 rounded-base border border-brand bg-neutral-primary-soft" x-data="{ copied: false }">
+      <div class="flex items-center justify-between gap-3 border-b border-brand-subtle px-4 py-2">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">1 · paste into a terminal</span>
+        <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium" :aria-label="copied ? 'Copied' : 'Copy the install command'">
+          <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
+          <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+        </button>
+      </div>
+      <pre class="m-0 whitespace-pre-wrap break-all px-4 py-4 font-mono text-base font-semibold leading-relaxed text-heading sm:px-5 sm:text-lg" x-ref="src"><code class="language-bash">{{ command }}</code></pre>
+    </div>
+  </div>
+  <div class="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-8 sm:py-6">
+    <div class="min-w-0">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">2 · in the repository you want supervised</p>
+      <pre class="mt-2 whitespace-pre-wrap break-all rounded-base border border-default bg-neutral-primary-soft px-4 py-3 font-mono text-base font-semibold text-heading"><code class="language-bash">{{ next }}</code></pre>
+      <p class="mt-2 text-sm text-body">Writes <code class="font-mono text-heading">.ai/</code> — the policy, the profiles, the rules, the prompts, the workflows — and nothing else.</p>
+    </div>
+    <div class="min-w-0">
+      <p class="font-mono text-xs uppercase tracking-wide text-body-subtle">3 · point your agents at it</p>
+      <pre class="mt-2 whitespace-pre-wrap break-all rounded-base border border-default bg-neutral-primary-soft px-4 py-3 font-mono text-base font-semibold text-heading"><code class="language-bash">majordomus update</code></pre>
+      <p class="mt-2 text-sm text-body">Generates <code class="font-mono text-heading">CLAUDE.md</code>, <code class="font-mono text-heading">AGENTS.md</code> and the other bootstraps from the policy; every worker reads the same contract.{% if docs_href %} <a href="{{ docs_href }}" class="font-medium text-fg-brand hover:underline">Platforms, pinning a version, the security model &rarr;</a>{% endif %}</p>
+    </div>
+  </div>
+</div>
+{% endcomponent install %}
+
+{#- The cost and the frequency of a moment, as words with a colour that repeats the word and
+    never replaces it. The vocabularies are the catalogue's; nothing here is a list. -#}
+{% component moment_marks(severity, frequency) %}
+<span class="inline-flex flex-wrap items-center gap-1.5 text-xs font-mono">
+  {%- if severity == "high" -%}<span class="rounded border border-danger-subtle bg-danger-soft px-1.5 py-0.5 text-fg-danger-strong">cost: high</span>
+  {%- elif severity == "medium" -%}<span class="rounded border border-warning-subtle bg-warning-soft px-1.5 py-0.5 text-fg-warning">cost: medium</span>
+  {%- else -%}<span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">cost: {{ severity }}</span>{%- endif -%}
+  <span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">{{ frequency }}</span>
+</span>
+{% endcomponent moment_marks %}
+
+{#- One moment as a card: the hook a reader recognises, the summary, the marks, and the link.
+    Used by every listing of the Why catalogue so that a moment reads the same everywhere. -#}
+{% component moment_card(m, base, compact=false) %}
+<a href="{{ base }}{{ m.route }}" class="group flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium sm:p-5">
+  <span class="flex gap-3 {% if compact %}text-base{% else %}text-lg{% endif %} font-semibold leading-snug text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0 break-words group-hover:underline">{{ m.hook }}</span></span>
+  {%- if not compact %}<span class="mt-2 min-w-0 break-words text-sm leading-relaxed text-body">{{ m.summary }}</span>{% endif %}
+  <span class="mt-3 flex flex-wrap items-center justify-between gap-2">{{ <moment_marks severity={m.severity} frequency={m.frequency} /> }}<span class="text-sm font-medium text-fg-brand">Why, and what to do &rarr;</span></span>
+</a>
+{% endcomponent moment_card %}
 
 {#- Flowbite card (flowbite.com/docs/components/card/), non-link variant. body is trusted HTML from our own data. -#}
 {% component card(title, text, kicker="", level="3") %}

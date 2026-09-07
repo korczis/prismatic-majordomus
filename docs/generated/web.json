@@ -30,32 +30,6 @@
       }
     },
     {
-      "id": "benchmarks",
-      "title": "Benchmark results",
-      "category": "report",
-      "visibility": "public",
-      "kind": "static-directory",
-      "mount": "/benchmarks",
-      "producer": "majordomus bench, rendered by majordomus web report benchmarks",
-      "artifact": "target/web/benchmarks",
-      "index": "index.html",
-      "availability": "both",
-      "provenance": {
-        "artifact": {
-          "source": "filesystem",
-          "path": "target/web/benchmarks/surface.json"
-        },
-        "kind": {
-          "source": "filesystem",
-          "path": "target/web/benchmarks/surface.json"
-        },
-        "mount": {
-          "source": "producer-declaration",
-          "path": "target/web/benchmarks/surface.json"
-        }
-      }
-    },
-    {
       "id": "cockpit",
       "title": "The registry, rendered for a person",
       "category": "interface",
@@ -139,32 +113,6 @@
       "provenance": {
         "mount": {
           "source": "registry"
-        }
-      }
-    },
-    {
-      "id": "tests",
-      "title": "Test results",
-      "category": "report",
-      "visibility": "public",
-      "kind": "static-directory",
-      "mount": "/tests",
-      "producer": "bash test/run.sh + cargo test, rendered by majordomus web report tests",
-      "artifact": "target/web/tests",
-      "index": "index.html",
-      "availability": "both",
-      "provenance": {
-        "artifact": {
-          "source": "filesystem",
-          "path": "target/web/tests/surface.json"
-        },
-        "kind": {
-          "source": "filesystem",
-          "path": "target/web/tests/surface.json"
-        },
-        "mount": {
-          "source": "producer-declaration",
-          "path": "target/web/tests/surface.json"
         }
       }
     },

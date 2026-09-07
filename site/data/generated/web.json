@@ -31,32 +31,6 @@
       }
     },
     {
-      "id": "benchmarks",
-      "title": "Benchmark results",
-      "mount": "/benchmarks",
-      "category": "report",
-      "visibility": "public",
-      "kind": "static-directory",
-      "producer": "majordomus bench, rendered by majordomus web report benchmarks",
-      "availability": "both",
-      "artifact": "target/web/benchmarks",
-      "feature": null,
-      "provenance": {
-        "artifact": {
-          "source": "filesystem",
-          "path": "target/web/benchmarks/surface.json"
-        },
-        "kind": {
-          "source": "filesystem",
-          "path": "target/web/benchmarks/surface.json"
-        },
-        "mount": {
-          "source": "producer-declaration",
-          "path": "target/web/benchmarks/surface.json"
-        }
-      }
-    },
-    {
       "id": "cockpit",
       "title": "The registry, rendered for a person",
       "mount": "/cockpit",
@@ -150,32 +124,6 @@
       }
     },
     {
-      "id": "tests",
-      "title": "Test results",
-      "mount": "/tests",
-      "category": "report",
-      "visibility": "public",
-      "kind": "static-directory",
-      "producer": "bash test/run.sh + cargo test, rendered by majordomus web report tests",
-      "availability": "both",
-      "artifact": "target/web/tests",
-      "feature": null,
-      "provenance": {
-        "artifact": {
-          "source": "filesystem",
-          "path": "target/web/tests/surface.json"
-        },
-        "kind": {
-          "source": "filesystem",
-          "path": "target/web/tests/surface.json"
-        },
-        "mount": {
-          "source": "producer-declaration",
-          "path": "target/web/tests/surface.json"
-        }
-      }
-    },
-    {
       "id": "app",
       "title": "The site as it is deployed",
       "mount": "/",
@@ -222,13 +170,12 @@
     "api",
     "documentation",
     "interface",
-    "protocol",
-    "report"
+    "protocol"
   ],
   "counts": {
-    "surfaces": 10,
-    "public": 9,
-    "served": 9,
-    "published": 3
+    "surfaces": 8,
+    "public": 7,
+    "served": 7,
+    "published": 1
   }
 }

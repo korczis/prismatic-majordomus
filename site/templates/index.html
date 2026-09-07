@@ -62,18 +62,8 @@
    selectable and correct without JavaScript, and the copy button is the shared `code`
    component's, so the site has one clipboard implementation and not two. #}
 <section id="install" class="scroll-mt-20 border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
-    <div class="grid gap-6 lg:grid-cols-2">
-      <div class="min-w-0">
-        <h2 class="text-2xl font-bold tracking-tight text-heading">Install {{ dist.binary }}</h2>
-        <div class="mt-4">{% <code label="one command"> %}{{ dist.install_command }}{% </code> %}</div>
-      </div>
-      <div class="min-w-0">
-        <p class="text-sm text-body">Then, in the repository you want supervised:</p>
-        <div class="mt-3">{% <code label="then"> %}{{ dist.next_command }}{% </code> %}</div>
-        <p class="mt-4 text-sm text-body">No git, no Rust, no Node, no root: one archive for your machine, its digest verified before anything is unpacked. <a href="{{ get_url(path="/docs/install/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">Supported platforms, pinning a version, and the security model &rarr;</a></p>
-      </div>
-    </div>
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+    {{ <install command={dist.install_command} next={dist.next_command} binary={dist.binary} install_dir={dist.install_dir} docs_href={get_url(path="/docs/install/", trailing_slash=true)} /> }}
   </div>
 </section>
 
@@ -180,7 +170,7 @@
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     {{ <section_head number="04" kicker="drop-in" title="One directory, one pointer" lead={m.leads.install} /> }}
     <div class="grid gap-6 lg:grid-cols-2">
-      <div class="min-w-0">{% <code label="install once"> %}{{ dist.install_command }}
+      <div class="min-w-0">{% <code label="install once" wrap={true}> %}{{ dist.install_command }}
 
 cd your-project
 majordomus init      # .ai/ with the policy, profiles, rules, prompts and workflows
