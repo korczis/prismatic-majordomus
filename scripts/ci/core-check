@@ -27,7 +27,7 @@ git config core.hooksPath .githooks
 # merges nothing), but the policy declares it and doctor checks what the policy declares;
 # wiring it is how this checkout answers that check truthfully rather than by exemption.
 git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
-git config merge.derived.driver "$ROOT/scripts/merge-derived %O %A %B %P"
+git config merge.derived.driver "scripts/merge-derived %O %A %B %P"
 bin/majordomus doctor
 bin/majordomus watch
 # The scoped context documents: the tree validates, every projection matches its stamp, and
