@@ -227,7 +227,20 @@ async function interactions(context) {
     await page
       .waitForSelector('.mj-palette-results[data-state="ready"]', { timeout: 15000 })
       .catch(() => {});
-    await page.waitForTimeout(100);
+    // and the filtering is rendered on the query event the component dispatches after the
+    // input, not on the input itself: when the registry was in before the fill, the ready
+    // render still shows every page, and the filtered render lands a beat later. Wait for
+    // the list to reflect the query rather than for a fixed number of milliseconds.
+    await page
+      .waitForFunction(
+        () => {
+          const first = document.querySelector('.mj-palette-results li[data-href]');
+          return !first || first.dataset.href.includes('objects.search');
+        },
+        null,
+        { timeout: 5000 },
+      )
+      .catch(() => {});
     const first = await page.evaluate(
       () => document.querySelector('.mj-palette-results li[data-href]')?.dataset.href || '',
     );
