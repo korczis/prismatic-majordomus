@@ -290,7 +290,9 @@ result per target and mode.</li>
 <li>Every run is written under <code>.ai/local/benchmarks/</code> (<code>runs/&lt;run-id&gt;.json</code>, <code>latest.json</code>,
 one line per run in <code>history.jsonl</code>) unless <code>--no-save</code>. That is local evidence: ignored
 by git, never a baseline.</li>
-<li><code>--write-baseline</code> writes the run as <code>.ai/repo/benchmarks/baseline.json</code>, schema
+<li><code>--write-baseline</code> writes the run under <code>.ai/repo/benchmarks/rust/</code>, as
+<code>baseline.&lt;platform&gt;.json</code> — one baseline per platform, since a duration compared
+across machines compares the machines — with schema
 <code>majordomus/benchmark-baseline/v1</code>, and prints the old and new p50/p95/p99 per target. It
 refuses a dirty tree without <code>--force</code>, because a baseline records a commit.</li>
 <li><code>--check</code> compares the run with the baseline under <code>benchmark.regression</code>: for each target
@@ -374,7 +376,7 @@ code it produced), <code>10</code>, <code>12</code> and <code>15</code> from <co
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/227377773f92fed491d5efebf86aca3bd580ad0b" class="font-mono hover:underline">2273777</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -244,7 +244,7 @@ that gate, is needed by <code>ci</code>, and <code>ci</code> always runs.</p>
 <p>The list, with the command each one runs, is the model: <code>scripts/ci-plan --full x --format text</code> prints it, and <code>.ai/repo/ci/gates.yaml</code> explains each. The commands are the ones a
 person runs:</p>
 <pre class="giallo z-l-code z-d-code" ><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/shell-lint</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> syntax and shellcheck over the tool, the scripts, the cases</span></span>
-<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/core-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> doctor, watch, context, continuity, plan validate, github-sync, site data</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/core-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> doctor, watch, context, continuity, plan validate, github-sync, references, site data</span></span>
 <span class="giallo-l"><span>MJ_TEST_JOBS</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">4</span><span class="z-l-1 z-d-3"> bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-10 z-l-i z-d-4 z-d-i">        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the behavioural suite, four cases at a time</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-ci</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every Rust gate but coverage, plus the benchmark check</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-integration</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the executable built and the registry checks only</span></span>
@@ -374,7 +374,7 @@ fixtures.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/227377773f92fed491d5efebf86aca3bd580ad0b" class="font-mono hover:underline">2273777</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -216,7 +216,7 @@ contents:</p>
 <tr><td>CLI commands</td><td>the dispatch table</td></tr>
 <tr><td>tests</td><td><code>test/cases/</code> and the metadata in each case</td></tr>
 <tr><td>routes</td><td>the generated content collections</td></tr>
-<tr><td>doctrines</td><td><code>share/doctrines.yaml</code></td></tr>
+<tr><td>doctrines</td><td>the rule files under <code>.ai/repo/rules/</code></td></tr>
 <tr><td>providers</td><td>the declared projections</td></tr>
 <tr><td>claims</td><td><code>docs/CLAIMS.yaml</code></td></tr>
 <tr><td>counts of any of the above</td><td>the thing being counted</td></tr>
@@ -232,7 +232,7 @@ file in <code>docs/</code> appears in no row.</p>
 <table><thead><tr><th>Entity</th><th>Canonical owner</th><th>Discovery</th><th>Derived surfaces</th></tr></thead><tbody>
 <tr><td>Policy</td><td><code>.ai/repo/policy.yaml</code></td><td>schema in <code>share/allow/policy.txt</code></td><td>provider projections</td></tr>
 <tr><td>Profile</td><td><code>.ai/repo/profiles/*.yaml</code></td><td>directory glob</td><td>context, finish requirements, site</td></tr>
-<tr><td>Doctrine</td><td><code>share/doctrines.yaml</code></td><td>registry walk</td><td><code>check</code>, <code>finish</code>, <code>doctor</code>, <code>watch</code>, site</td></tr>
+<tr><td>Doctrine</td><td><code>.ai/repo/rules/</code> and the vendored packages</td><td>registry walk</td><td><code>check</code>, <code>finish</code>, <code>doctor</code>, <code>watch</code>, site</td></tr>
 <tr><td>Validator</td><td><code>mj_validate_*</code> in <code>lib/</code></td><td>source scan, reconciled against the registry</td><td>doctrine dispatch</td></tr>
 <tr><td>Claim</td><td><code>docs/CLAIMS.yaml</code></td><td>registry walk</td><td>guarantees pages, <code>docs/SITE_CLAIMS.md</code></td></tr>
 <tr><td>Responsibility</td><td><code>docs/RESPONSIBILITIES.yaml</code></td><td>registry walk</td><td>site, doctrine registry</td></tr>
@@ -363,7 +363,7 @@ the same failure, and this repository exists because of the second one.</p>
 <h2 id="self-governance"><a class="zola-anchor" href="#self-governance" aria-label="Anchor link for: self-governance">Self-governance</a></h2>
 <p>Majordomus supervises this repository with the same registries it ships. There is no
 self-specific inventory and no test-only code path: the doctrines that run here are the
-doctrines in <code>share/doctrines.yaml</code>, and the wiring <code>doctor</code> reconciles is the wiring
+rules under <code>.ai/repo/rules/</code>, and the wiring <code>doctor</code> reconciles is the wiring
 declared in <code>.ai/repo/policy.yaml</code>.</p>
 <p>The property this is meant to produce, stated as a target: adding a command, doctrine,
 provider, event type, projection or claim requires defining the entity, implementing the
@@ -373,9 +373,9 @@ so.</p>
 <h2 id="how-to-add-one-of-each"><a class="zola-anchor" href="#how-to-add-one-of-each" aria-label="Anchor link for: how-to-add-one-of-each">How to add one of each</a></h2>
 <p>Short by design. If a list below grows, the architecture has regressed.</p>
 <ul>
-<li><strong>A doctrine</strong> — add the entry to <code>share/doctrines.yaml</code> and write its
-<code>mj_validate_&lt;validator&gt;</code> function. <code>doctor</code> reconciles the two and fails if either is
-missing.</li>
+<li><strong>A doctrine</strong> — write the rule under <code>.ai/repo/rules/</code> with its
+<code>x-majordomus.validator</code>, and write the <code>mj_validate_&lt;validator&gt;</code> function it names.
+<code>doctor</code> reconciles the two and fails if either is missing.</li>
 <li><strong>A claim</strong> — add the entry to <code>docs/CLAIMS.yaml</code> and write <code>docs/claims/&lt;id&gt;.md</code>. The
 site generator refuses to build without the detail page, and a guaranteed claim with no
 test path is an error.</li>
@@ -407,7 +407,7 @@ are the ledger's priority 1 and 2 rows.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/227377773f92fed491d5efebf86aca3bd580ad0b" class="font-mono hover:underline">2273777</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

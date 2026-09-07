@@ -281,7 +281,7 @@ which <code>test/cases/51_derived_artifacts_committed.sh</code> and the release 
 <tr><td><code>policy.json</code></td><td><code>share/skeleton/policy.yaml</code></td><td>the policy as structure, plus the raw text</td></tr>
 <tr><td><code>capabilities.json</code></td><td><code>docs/CLAIMS.yaml</code></td><td>every claim; the generator fails on a missing path or an untested guaranteed claim</td></tr>
 <tr><td><code>commands.json</code></td><td><code>share/commands.yaml</code>, <code>docs/CLI.md</code>, the test cases</td><td>every shell command with its semantics, narrative and evidence</td></tr>
-<tr><td><code>catalogue.json</code></td><td><code>share/use-cases.yaml</code>, <code>share/applications.yaml</code></td><td>the use cases and applications, cross-referenced</td></tr>
+<tr><td><code>catalogue.json</code></td><td><code>.ai/repo/use-cases/</code>, <code>.ai/repo/applications/</code></td><td>the use cases and applications, cross-referenced</td></tr>
 <tr><td><code>doctrines.json</code></td><td>the rule packages</td><td>every doctrine with its enforcement chain</td></tr>
 <tr><td><code>plan.json</code></td><td><code>.ai/repo/project/</code></td><td>milestones, issues, the dependency graph, derived status</td></tr>
 <tr><td><code>openapi.json</code></td><td><code>docs/generated/openapi.json</code></td><td>the HTTP API in the shape <code>api.html</code> renders (<code>scripts/lib/openapi-site.jq</code>)</td></tr>
@@ -321,7 +321,7 @@ projection.</p>
 <tr><td>an accepted baseline</td><td><code>majordomus bench baseline update</code> on the platform it measures</td><td>the baseline JSON by hand</td></tr>
 <tr><td>what the executable is, owns, refuses; discovery; transports; side effects</td><td><code>apps/majordomus-cli/README.md</code></td><td><code>/registry/executable/</code></td></tr>
 <tr><td>a shell command's category, stage, reads, writes, syntax, exit codes</td><td><code>share/commands.yaml</code> (semantics) and <code>docs/CLI.md</code> (narrative)</td><td><code>commands.json</code>, <code>/commands/&lt;name&gt;/</code></td></tr>
-<tr><td>a use case or an application</td><td><code>share/use-cases.yaml</code>, <code>share/applications.yaml</code></td><td><code>catalogue.json</code>, its route</td></tr>
+<tr><td>a use case or an application</td><td><code>.ai/repo/use-cases/</code>, <code>.ai/repo/applications/</code></td><td><code>catalogue.json</code>, its route</td></tr>
 <tr><td>a claim</td><td><code>docs/CLAIMS.yaml</code> and <code>docs/claims/&lt;id&gt;.md</code></td><td><code>capabilities.json</code>, <code>docs/SITE_CLAIMS.md</code>, <code>/guarantees/</code></td></tr>
 <tr><td>a doctrine</td><td>the rule file under <code>.ai/repo/rules/</code> or the vendored package</td><td><code>doctrines.json</code>, <code>/doctrines/</code></td></tr>
 <tr><td>a milestone or an issue</td><td><code>.ai/repo/project/**</code></td><td><code>plan.json</code>, <code>docs/PLAN_STATUS.md</code>, <code>/plan/</code></td></tr>
@@ -637,7 +637,7 @@ Change the canonical file; <code>just derive</code>; rebuild.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/227377773f92fed491d5efebf86aca3bd580ad0b" class="font-mono hover:underline">2273777</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

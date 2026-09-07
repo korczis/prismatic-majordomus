@@ -200,7 +200,7 @@
 <p>Nor does it cover everything the event delivers. Claude Code fires <code>UserPromptSubmit</code> for messages it injects into the turn as well, and those are filtered out by declared origin and by the markers they open with — deliberately, since they are not the person's prompts, but it does mean the archive is what the filter let through and not a transcript of the event.</p>
 <p>Nor is the archive knowledge. Nothing loads it into a context, no command retrieves from it, and no command summarises it. It is evidence a person can read, and the tool's only claims about it are that it is real, complete for what it covers, and never committed.</p>
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
-<p>The directory was declared by the <code>.ai</code> protocol and stayed empty, which reads as a feature that does not work. The obvious repair — a line in <code>AGENTS.md</code> telling the worker to record its prompts — cannot be one: the model never sees the bytes the person typed, the write depends on it choosing to make a tool call, no behavioural test can prove it happened, and the instruction is loaded only after the session's first prompt has already been submitted. <code>.ai/repo/adrs/0007-prompt-capture-happens-below-the-model.md</code> records the decision that followed.</p>
+<p>The directory was declared by the <code>.ai</code> protocol and stayed empty, which reads as a feature that does not work. The obvious repair — a line in <code>AGENTS.md</code> telling the worker to record its prompts — cannot be one: the model never sees the bytes the person typed, the write depends on it choosing to make a tool call, no behavioural test can prove it happened, and the instruction is loaded only after the session's first prompt has already been submitted. <code>.ai/repo/adrs/0009-prompt-capture-happens-below-the-model.md</code> records the decision that followed.</p>
 </article>
     <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/claims/prompt-capture.md" class="font-mono hover:underline">docs/claims/prompt-capture.md</a>.</p>
 
@@ -264,7 +264,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/227377773f92fed491d5efebf86aca3bd580ad0b" class="font-mono hover:underline">2273777</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

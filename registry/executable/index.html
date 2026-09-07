@@ -271,8 +271,8 @@ directory and reads <code>kinds.yaml</code> and <code>schemas/&lt;name&gt;.schem
 <tr><td><code>&lt;directory of the executable&gt;/../share</code></td><td>an installation laid out as <code>bin/</code> beside <code>share/</code></td></tr>
 </tbody></table>
 </div>
-<p>None found: exit 12, every directory tried named. A repository adds kinds under
-<code>.ai/repo/knowledge/kinds.yaml</code> and schemas under <code>.ai/repo/knowledge/schemas/</code>; a name the
+<p>None found: exit 12, every directory tried named. A repository adds kinds in its own
+<code>kinds.yaml</code> under <code>.ai/repo/knowledge/</code> and schemas under <code>.ai/repo/knowledge/schemas/</code>; a name the
 distribution already declares is an error naming both files.</p>
 <h2 id="command-reference"><a class="zola-anchor" href="#command-reference" aria-label="Anchor link for: command-reference">Command reference</a></h2>
 <p>The command line is declared once, in <code>src/cli.rs</code>: clap for the structure, and typed
@@ -409,7 +409,7 @@ layer itself documents, <code>.ai/manifest.yaml</code> and <code>sources.yaml</c
 <tr><td>which sections exist</td><td><code>sections:</code> in the manifest</td><td>repository</td></tr>
 <tr><td>which file names must carry the context contract</td><td><code>context.documents:</code> in the manifest</td><td>repository</td></tr>
 <tr><td>which files carry which kind</td><td><code>.ai/repo/knowledge/sources.yaml</code></td><td>repository</td></tr>
-<tr><td>how a kind is read</td><td><code>share/kinds.yaml</code>, plus <code>.ai/repo/knowledge/kinds.yaml</code></td><td>distribution, repository</td></tr>
+<tr><td>how a kind is read</td><td><code>share/kinds.yaml</code>, plus a <code>kinds.yaml</code> under <code>.ai/repo/knowledge/</code></td><td>distribution, repository</td></tr>
 <tr><td>which keys and values a kind may carry</td><td><code>share/schemas/&lt;kind&gt;.schema.json</code>, plus <code>.ai/repo/knowledge/schemas/</code></td><td>distribution, repository</td></tr>
 </tbody></table>
 </div>
@@ -479,7 +479,7 @@ memory; the task record and scope of the shell tool are the durable form).</p>
       <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">at a glance</span>
       <dl class="space-y-2">
         <div><dt class="text-body-subtle">version</dt><dd class="font-mono text-heading">majordomus-cli 0.2.0</dd></div>
-        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">37 builtin in 15 modules, 922 declarative</dd></div>
+        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">37 builtin in 15 modules, 948 declarative</dd></div>
         <div><dt class="text-body-subtle">surfaces</dt><dd class="text-heading">35 MCP tools · 37 HTTP routes · 10 commands</dd></div>
         <div><dt class="text-body-subtle">crate</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli" class="break-all font-mono text-fg-brand hover:underline">apps/majordomus-cli</a></dd></div>
         <div><dt class="text-body-subtle">generated reference</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/master/docs/generated" class="break-all font-mono text-fg-brand hover:underline">docs/generated/</a></dd></div>
@@ -504,7 +504,7 @@ memory; the task record and scope of the shell tool are the durable form).</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/227377773f92fed491d5efebf86aca3bd580ad0b" class="font-mono hover:underline">2273777</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

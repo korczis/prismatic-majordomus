@@ -220,8 +220,7 @@ replaces a <code>cut</code>, and the generator's JSON strings and arrays are bui
 <code>jarr</code> and <code>jline</code> instead of a jq per value.</li>
 </ul>
 <p>The measured deltas of each step are in the commit messages (<code>git log --grep perf</code>), the
-accepted state is <a href="../.ai/repo/benchmarks/baseline.json"><code>.ai/repo/benchmarks/baseline.json</code></a>
-once one is written, and the history of local runs is under <code>.ai/local/benchmarks/</code>. This
+accepted state is <code>baseline.json</code> under <code>.ai/repo/benchmarks/</code> once one is written, and the history of local runs is under <code>.ai/local/benchmarks/</code>. This
 document carries no numbers on purpose: they go stale, and the files above do not.</p>
 <h2 id="benchmarking-majordomus-bench"><a class="zola-anchor" href="#benchmarking-majordomus-bench" aria-label="Anchor link for: benchmarking-majordomus-bench">Benchmarking: <code>majordomus bench</code></a></h2>
 <p><code>bench</code> times every public command of <a href="../share/commands.yaml"><code>share/commands.yaml</code></a> in a
@@ -250,7 +249,7 @@ are in <a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/"><c
 one line per run in <code>history.jsonl</code>. It records the commit, whether the tree was dirty,
 the platform and the profile. It is ignored by git and proves nothing about another
 machine.</li>
-<li><strong>The baseline</strong> is the accepted state: <code>.ai/repo/benchmarks/baseline.json</code>, tracked,
+<li><strong>The baseline</strong> is the accepted state: <code>baseline.json</code> under <code>.ai/repo/benchmarks/</code>, tracked,
 written only by <code>majordomus bench --write-baseline</code> on a clean tree (or with <code>--force</code>),
 in its own commit with the reason. It is reviewed like any other change.</li>
 <li><strong>The check</strong> is <code>majordomus bench --check</code>: a fresh run compared with the baseline, per
@@ -312,7 +311,7 @@ dashboard.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/227377773f92fed491d5efebf86aca3bd580ad0b" class="font-mono hover:underline">2273777</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -274,13 +274,13 @@ and <code>version</code>, never the file name. <code>docs/DOCTRINE.md</code> des
 <code>x-majordomus</code> block that binds a rule to a validator, and what is authoritative today.</p>
 <pre class="giallo z-l-code z-d-code" ><code data-lang="plain"><span class="giallo-l"><span>$ majordomus rules list</span></span>
 <span class="giallo-l"><span>majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch</span></span>
-<span class="giallo-l"><span>majordomus.sessions-are-workers            v1  advisory  vendor:majordomus not machine-enforced</span></span>
-<span class="giallo-l"><span>project.english-only                       v1  blocking  project          not machine-enforced</span></span></code></pre>
+<span class="giallo-l"><span>majordomus.sessions-are-workers            v1  advisory  vendor:majordomus no validator; see the rule</span></span>
+<span class="giallo-l"><span>project.english-only                       v1  blocking  project          no validator; see the rule</span></span></code></pre>
 <ul>
 <li><code>list [--json]</code> prints the effective set in resolved order: identity, class, provenance
 (<code>vendor:&lt;name&gt;</code> or <code>project</code>), and whether the tool enforces it. A rule without an
 <code>x-majordomus</code> block is normative for whoever reads it and enforced by nobody, and the
-listing says <code>not machine-enforced</code> rather than hiding it.</li>
+listing says <code>no validator; see the rule</code> rather than hiding it: the rule is normative for whoever reads it, and nothing checks it by machine.</li>
 <li><code>show &lt;id&gt;</code> prints one rule, front matter and body, with the repository-relative path it
 was read from as the first line. An id outside the effective set exits 12.</li>
 <li><code>vendor status</code> compares the vendored baseline with the package the running executable
@@ -374,7 +374,7 @@ runs.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/227377773f92fed491d5efebf86aca3bd580ad0b" class="font-mono hover:underline">2273777</a> · inputs <span class="font-mono">a42f88c071e0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d3a36fd25d3378bcf6c0c0e596209d845ca6a288" class="font-mono hover:underline">d3a36fd</a> · inputs <span class="font-mono">a39b97f2c16b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
