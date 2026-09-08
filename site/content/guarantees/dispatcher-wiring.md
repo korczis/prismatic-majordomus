@@ -1,7 +1,7 @@
 +++
 title = "Wiring is found in a hook or in any subhook of the directory that hook dispatches to"
 description = "A repository whose pre-commit is a dispatcher that runs everything in .githooks/pre-commit.d/ still has real enforcement. doctor looks in the hook itself and in every file of <hook>.d/, and reports the file that actually carries the invocation — not the dispatcher that happened to be searched first."
-weight = 26
+weight = 27
 [extra]
 claim_id = "dispatcher-wiring"
 status = "guaranteed"

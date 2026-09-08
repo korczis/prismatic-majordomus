@@ -60,6 +60,19 @@
       "test_case": "87_release_pipeline"
     },
     {
+      "id": "advertised-install-command-works",
+      "claim": "The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool",
+      "source": "docs/DISTRIBUTION.md",
+      "implementation": "scripts/ci/install-check",
+      "test": "test/cases/97_install_gate.sh",
+      "status": "guaranteed",
+      "note": "The line is run as it is written, pipe included, on Linux and macOS, into a home directory of the run's own. It proves the metadata resolves, the tool reports the version that was resolved, the MCP launcher runs with no toolchain, and a repository can be initialised. A release proves the same thing once at publication; this keeps proving it afterwards.",
+      "responsibility": "projection",
+      "source_route": "/docs/distribution/",
+      "command": null,
+      "test_case": "97_install_gate"
+    },
+    {
       "id": "policy-parse",
       "claim": "The canonical policy is parsed and rejected if it contains an unknown key",
       "source": "docs/SCHEMAS.md",

@@ -1,7 +1,7 @@
 +++
 title = "The ledger's event vocabulary is closed, on the way in and on the way out"
 description = "share/events.yaml declares every event name the ledger accepts, the command that writes"
-weight = 84
+weight = 85
 [extra]
 claim_id = "event-vocabulary"
 status = "guaranteed"

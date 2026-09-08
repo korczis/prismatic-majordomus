@@ -1,7 +1,7 @@
 +++
 title = "A repository-local prompt renders against a closed set of state tokens, and an unknown token is an error"
 description = ".ai/repo/prompts/<name>.md holds a small reusable framing — how to frame a defect so the fix is proven, how to write a continuation record, how to review a diff against its claimed scope. They are versioned with the repository, provider-neutral, and rendered against the current task's state."
-weight = 67
+weight = 68
 [extra]
 claim_id = "prompt-asset"
 status = "guaranteed"
