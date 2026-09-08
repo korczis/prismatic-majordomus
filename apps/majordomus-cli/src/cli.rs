@@ -741,6 +741,8 @@ pub use docs::{
 };
 pub use validate::{parse, validate, Violation};
 
+use crate::control::effect::{EffectClass, Semantics};
+
 /// What an example's run must show for the example to be true. Small on purpose: enough to
 /// prove that the command line printed in the documentation does what the documentation
 /// says, and no more. A new variant is a new kind of evidence, not a new test framework.
@@ -813,6 +815,15 @@ pub struct ExampleDoc {
 pub struct CommandExamples {
     /// `bench baseline update`; the empty string is the root.
     pub command: &'static str,
+    /// What running this command changes, and how it occupies the caller.
+    ///
+    /// The one thing about a command that cannot be read off its declaration: clap sees
+    /// `worktree list` and `worktree remove` as the same shape. It is declared here, once,
+    /// beside the command's own examples, and every surface derives its consequences from
+    /// it — whether the command is bridged into `just`, whether a machine may invoke it at
+    /// all, whether a caller must confirm it, and what the documentation warns about.
+    /// Being a field rather than a table, it cannot be forgotten for a new command.
+    pub semantics: Semantics,
     /// Its examples, in the order the reference prints them.
     pub examples: &'static [ExampleDoc],
 }
@@ -827,6 +838,7 @@ pub struct CommandExamples {
 pub const EXAMPLES: &[CommandExamples] = &[
     CommandExamples {
         command: "worktree",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-default-status",
             title: "Where am I, and is that where I belong?",
@@ -838,6 +850,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree status",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-status-json",
             title: "The current worktree as one document",
@@ -849,6 +862,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree list",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-list-text",
             title: "Every worktree, the misplaced ones obvious",
@@ -860,6 +874,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree topology",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-topology-json",
             title: "The whole topology as one document",
@@ -871,6 +886,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree root",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-root-path",
             title: "The container, for the shell",
@@ -882,6 +898,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree path",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-path-branch",
             title: "The canonical path of a branch, for the shell",
@@ -893,6 +910,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree inspect",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-inspect-branch",
             title: "One branch, before creating its worktree",
@@ -904,6 +922,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree create",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-create-branch",
             title: "Start work on a branch without deciding where it goes",
@@ -915,6 +934,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree ensure",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-ensure-existing",
             title: "The canonical worktree, whether or not it exists yet",
@@ -926,6 +946,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree migrate",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-migrate-plan",
             title: "What it would take to bring every worktree home",
@@ -937,6 +958,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree validate",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-validate-clean",
             title: "Is the topology valid?",
@@ -948,6 +970,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree doctor",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-doctor-clean",
             title: "Every diagnostic, with its code and its remedy",
@@ -959,6 +982,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree guard",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-guard-ok",
             title: "May a commit proceed from here?",
@@ -970,6 +994,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree repair",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-repair-dry-run",
             title: "What git would forget",
@@ -981,6 +1006,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree remove",
+        semantics: Semantics::of(EffectClass::Destructive),
         examples: &[ExampleDoc {
             id: "worktree-remove-clean",
             title: "Remove a worktree, and keep its branch",
@@ -992,6 +1018,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree cleanup",
+        semantics: Semantics::of(EffectClass::Destructive),
         examples: &[ExampleDoc {
             id: "worktree-cleanup-nothing",
             title: "What could go, and what it would take",
@@ -1003,6 +1030,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree branches",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-branches-list",
             title: "The live branch set, for completion",
@@ -1014,6 +1042,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-show-default",
             title: "How this project is installed",
@@ -1025,6 +1054,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution show",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-show-json",
             title: "The distribution model as one JSON document",
@@ -1036,6 +1066,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution targets",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-targets",
             title: "Every platform, and whether a release builds it",
@@ -1047,6 +1078,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution validate",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-validate",
             title: "Every invariant of the model and of the release records",
@@ -1058,6 +1090,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution matrix",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-matrix",
             title: "The release build matrix the workflow runs",
@@ -1069,6 +1102,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution artifact",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-artifact",
             title: "What one target and one tag are called",
@@ -1080,6 +1114,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution releases",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-releases",
             title: "What has been published, and what an unpinned install resolves to",
@@ -1091,6 +1126,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution metadata",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-metadata",
             title: "What one release record publishes",
@@ -1102,6 +1138,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution build",
+        semantics: Semantics::of(EffectClass::LocalMutation),
         examples: &[ExampleDoc {
             id: "distribution-build",
             title: "What this executable is",
@@ -1113,6 +1150,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "mcp",
+        semantics: Semantics::of(EffectClass::LocalMutation).long_running(),
         examples: &[
             ExampleDoc {
                 id: "mcp-inspect",
@@ -1142,6 +1180,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web list",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-list",
             title: "Every web surface this repository exposes",
@@ -1153,6 +1192,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-topology",
             title: "The topology, from the command with no subcommand",
@@ -1164,6 +1204,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web explain",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-explain",
             title: "Why a surface exists and where each of its values came from",
@@ -1175,6 +1216,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web validate",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-validate",
             title: "Check the topology before anything serves or publishes it",
@@ -1186,6 +1228,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web manifest",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-manifest",
             title: "Write the resolved topology down for another tool to read",
@@ -1197,6 +1240,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report tests",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-tests",
             title: "Render the suite's own results into the /tests surface",
@@ -1208,6 +1252,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report benchmarks",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-benchmarks",
             title: "Render a benchmark run into the /benchmarks surface",
@@ -1222,6 +1267,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report ui",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-ui",
             title: "Render the UI conformance audit into /tests/ui",
@@ -1233,6 +1279,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web compose",
+        semantics: Semantics::of(EffectClass::LocalMutation),
         examples: &[ExampleDoc {
             id: "web-compose",
             title: "Compose every published surface into one publishable tree",
@@ -1244,6 +1291,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-catalogue",
             title: "The operational moments this repository holds",
@@ -1255,6 +1303,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why list",
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "why-list",
@@ -1284,6 +1333,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why show",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-show",
             title: "One moment, with every relation derived from its metadata",
@@ -1295,6 +1345,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why audiences",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-audiences",
             title: "Who recognises what, with the counts derived",
@@ -1306,6 +1357,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why areas",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-areas",
             title: "The operational areas, with the counts derived",
@@ -1317,6 +1369,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why diagnose",
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "why-diagnose-questions",
@@ -1338,6 +1391,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why validate",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-validate",
             title: "Check the catalogue before anything projects it",
@@ -1349,6 +1403,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "serve",
+        semantics: Semantics::of(EffectClass::LocalMutation).long_running(),
         examples: &[ExampleDoc {
             id: "serve-ephemeral-port",
             title: "Serve the same capabilities over HTTP on a free port",
@@ -1360,6 +1415,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities list",
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "capabilities-list-cli",
@@ -1381,6 +1437,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities describe",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-describe-objects-get",
             title: "One capability in full, by its canonical id",
@@ -1392,6 +1449,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities schema",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-schema-output",
             title: "The canonical output schema of a capability",
@@ -1403,6 +1461,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities validate",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-validate",
             title: "Prove the registry and every projection of it",
@@ -1414,6 +1473,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "generate",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[
             ExampleDoc {
                 id: "generate-all",
@@ -1443,6 +1503,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench",
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "bench-direct-quick",
             title: "Time the capabilities in process",
@@ -1463,6 +1524,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench coverage",
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "bench-coverage-json",
@@ -1484,6 +1546,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench baseline update",
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "bench-baseline-update-quick",
             title: "Record this platform's accepted baseline",
@@ -1502,6 +1565,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "scope",
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "scope-declaration",
