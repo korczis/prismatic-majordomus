@@ -732,6 +732,7 @@ pub struct GenerateArgs {
 // complete, and the example tests execute exactly the argv shown below.
 
 mod docs;
+pub mod local;
 mod validate;
 
 pub use docs::tree;
