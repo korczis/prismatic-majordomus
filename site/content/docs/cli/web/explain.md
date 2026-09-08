@@ -1,7 +1,7 @@
 +++
 title = "majordomus web explain"
 description = "Why each surface exists and where each of its values came from"
-weight = 17
+weight = 18
 [extra]
 route = "/docs/cli/web/explain/"
 command = "majordomus web explain"

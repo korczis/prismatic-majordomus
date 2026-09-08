@@ -726,6 +726,18 @@ pub enum CapabilitiesCommand {
         /// Input or output.
         side: SchemaSide,
     },
+    /// Where each capability is projected, and every claim its surface does not answer
+    Projections {
+        /// Only capabilities composed in this module
+        #[arg(long)]
+        module: Option<String>,
+        /// Only the capabilities whose declared exposures are not all answered
+        #[arg(long)]
+        unmet: bool,
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        /// Output shape.
+        format: OutputFormat,
+    },
     /// Build the registry and every projection; exit 10 with every violation named
     Validate,
 }
@@ -1535,6 +1547,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::Json(&["/title"]),
         }],
+    },
+    CommandExamples {
+        command: "capabilities projections",
+        examples: &[
+            ExampleDoc {
+                id: "capabilities-projections-unmet",
+                title: "Every exposure a capability claims that its surface does not answer",
+                description: "`rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written.",
+                argv: &["capabilities", "projections", "--unmet"],
+                setup: &[],
+                expect: Expect::Success,
+            },
+            ExampleDoc {
+                id: "capabilities-projections-module",
+                title: "Where one module's capabilities appear",
+                description: "A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one.",
+                argv: &["capabilities", "projections", "--module", "worktree"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["worktree.topology", "majordomus worktree topology"]),
+            },
+        ],
     },
     CommandExamples {
         command: "capabilities validate",

@@ -1,7 +1,7 @@
 +++
 title = "majordomus distribution targets"
 description = "Every declared target, one line each, with the artifact name it derives"
-weight = 35
+weight = 36
 [extra]
 route = "/docs/cli/distribution/targets/"
 command = "majordomus distribution targets"

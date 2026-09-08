@@ -10,6 +10,7 @@
 
 pub mod benchmark;
 pub mod builtin;
+pub mod closure;
 pub mod declarative;
 pub mod executor;
 pub mod handler;
@@ -19,6 +20,7 @@ pub mod registry;
 pub mod schema;
 
 pub use benchmark::{BenchmarkCases, CaseContext, CaseProvider, NamedCase};
+pub use closure::{Finding, Matrix as ProjectionMatrix, Projection, Row as ProjectionRow};
 pub use executor::CapabilityExecutor;
 pub use handler::{CapabilityError, Context, Executable, Handler};
 pub use model::{
