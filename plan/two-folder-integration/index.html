@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>two-folder-integration — A repository that adopts Majordomus gains two directories and two lines, and can give them back — Prismatic Majordomus</title>
+<meta name="description" content="Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/plan/two-folder-integration/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="two-folder-integration — A repository that adopts Majordomus gains two directories and two lines, and can give them back — Prismatic Majordomus">
+<meta property="og:description" content="Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/plan/two-folder-integration/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="font-medium text-body hover:text-fg-brand">The plan</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">two-folder-integration — A repository that adopts Majordomus gains two directories and two lines, and can give them back</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">two-folder-integration — A repository that adopts Majordomus gains two directories and two lines, and can give them back</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="min-w-0">
+  <p class="flex flex-wrap items-center gap-3"><span class="bg-neutral-primary-soft text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">PLANNED</span><span class="text-sm text-body">0 of 23 issues done</span></p>
+
+  <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">22</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">done</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cancelled</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+  </dl>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problem</h2>
+  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">What Majordomus leaves in a repository it adopts is not decided anywhere; it is the sum of what each subsystem happened to write. Provider files at the root, scripts, configuration beside configuration, generated registries that became inputs, and no record of which of them Majordomus put there. The costs compound in three directions at once. A person cannot tell what is theirs and what is the tool&#39;s, so nothing can be safely removed. A second provider means a second copy of the same instructions rather than a second adapter. And every subsystem rediscovers the repository for itself — the CLI, the environment entry, the documentation, the server — so the same facts are read four ways and disagree on the fourth.</p>
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Outcome</h2>
+  <p class="mt-2 max-w-3xl text-base leading-relaxed text-body">Adoption is a reconciliation, not a template copy. One typed repository model is discovered once and every consumer reads it. A desired integration is computed from that model, diffed against what the repository actually holds, and applied as the smallest mutation that closes the gap — with everything Majordomus owns living under `.ai/` and `.majordomus/`, and anything outside those two namespaces reduced to a small managed bridge whose ownership is recorded. Running the reconciliation twice changes nothing the second time, and uninstalling gives back exactly what was taken and nothing a person authored.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">`.ai/` and `.majordomus/` both exist and carry real material, and directory contracts are already enforced under `.ai/` (ADR 0011). Against that: provider bootstraps are generated to the root, the environment entry and the CLI each discover the repository their own way, `init` writes what it was written to write rather than what the repository lacks, no ledger records what was placed outside the two namespaces, and nothing can undo an adoption.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl text-base leading-relaxed text-body">`majordomus init` on a foreign repository adds `.ai/`, `.majordomus/`, a managed block in `AGENTS.md` and — when direnv is wanted — one stable line in `.envrc`. A second run reports no change. `majordomus uninstall` removes what the ledger records and leaves authored knowledge alone. Adding a valid artifact under a discoverable namespace registers it everywhere, and no list anywhere enumerates what discovery already finds.</p>
+
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Scope</h2>
+<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">apps/majordomus-cli/src</li><li class="font-mono text-heading break-words">.ai/repo/rules/project</li><li class="font-mono text-heading break-words">.ai/repo/adrs</li><li class="font-mono text-heading break-words">.majordomus</li><li class="font-mono text-heading break-words">share/schemas</li><li class="font-mono text-heading break-words">share/skeleton</li><li class="font-mono text-heading break-words">docs</li><li class="font-mono text-heading break-words">test/cases</li><li class="font-mono text-heading break-words">.github/workflows</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Out of scope</h2>
+<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li>A configuration format that restates what the repository can be inspected for</li><li>Rewriting a working subsystem for symmetry rather than for a defect</li><li>Deleting user-authored content on any path, under any flag, without an explicit and separate instruction</li><li>A second worktree convention, a second handover format or a second doctor</li><li>Provider-specific semantics anywhere but an adapter</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Acceptance criteria</h2>
+<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li>Everything Majordomus persists in an adopted repository lives under `.ai/` or `.majordomus/`, and every exception outside them is a bridge recorded in the ownership ledger</li><li>One typed repository model is discovered once per process and every consumer — CLI, environment, API, MCP, Cockpit, documentation, providers, completion — reads that model rather than the filesystem</li><li>The desired integration is a value, the plan is a diff against what is there, and the apply is the smallest mutation that closes it</li><li>A second `init` on a conforming repository produces no change, proved by a test rather than by observation</li><li>`uninstall` reverses every recorded mutation, refuses to touch a bridge a person has edited, and leaves `.ai/` authored content in place by default</li><li>Every generated artifact declares its provenance, its generator and the inputs it derives from, and no generated artifact is read back as canonical input</li><li>No hand-maintained list enumerates artifacts that discovery finds, and adding a valid artifact registers it in every consumer with no second edit</li><li>Environment entry stays local and bounded, with no network and no build, and its cost is measured against a declared budget</li><li>Every invariant above is a project rule with a check that CI executes, each proved by a negative test</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validation</h2>
+<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">cargo test --workspace --all-features</li><li class="font-mono text-heading break-words">bash test/run.sh</li><li class="font-mono text-heading break-words">bin/majordomus doctor</li><li class="font-mono text-heading break-words">majordomus generate --check</li><li class="font-mono text-heading break-words">majordomus init --dry-run</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence required</h2>
+<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li class="font-mono text-heading break-words">footprint_bounded</li><li class="font-mono text-heading break-words">one_model</li><li class="font-mono text-heading break-words">desired_state_diff</li><li class="font-mono text-heading break-words">init_idempotent</li><li class="font-mono text-heading break-words">uninstall_reverses</li><li class="font-mono text-heading break-words">provenance_declared</li><li class="font-mono text-heading break-words">no_manual_registry</li><li class="font-mono text-heading break-words">entry_budget</li><li class="font-mono text-heading break-words">rules_enforced</li></ul>
+  
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risks</h2>
+<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body"><li>A reconciler that computes a desired state can also impose one. Everything it would change outside the two namespaces has to be visible in a dry run before it is applied, and a bridge a person edited is a conflict rather than an overwrite.</li><li>One repository model is a bottleneck as well as a spine: every consumer that reads it pays its discovery cost. The cost has to be measured against the environment-entry budget before the model becomes mandatory, not after.</li><li>Migrating this repository&#39;s own footprint is the most dangerous phase, because the tool is being changed by the thing it is changing. The migration runs through the reconciler with a dry run first, never through a move script.</li><li>An ownership ledger that drifts from the filesystem is worse than none: it authorises deletions it cannot justify. Every recorded mutation carries the hash it was written with, and a mismatch stops the removal.</li><li>Provider adapters invite provider semantics to leak into the model. The test is whether a new provider is an implementation of one trait, or an edit in six places.</li></ul>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Issues</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Each one is an execution contract with its own acceptance criteria, validation command and required evidence. The wave column is the layer of the dependency graph it sits in.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[38rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">issue</th><th scope="col" class="px-4 py-2">status</th><th scope="col" class="px-4 py-2">wave</th><th scope="col" class="px-4 py-2">depends on</th><th scope="col" class="px-4 py-2">title</th></tr></thead>
+      <tbody>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1101/" class="text-fg-brand hover:underline">I1101</a></td>
+          <td class="px-4 py-2"><span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">What this tool leaves behind, established by inspection rather than by memory</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1102/" class="text-fg-brand hover:underline">I1102</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">1</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1101/" class="text-fg-brand hover:underline">I1101</a></td>
+          <td class="px-4 py-2 text-heading">The two namespaces are a typed contract, not a habit</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1103/" class="text-fg-brand hover:underline">I1103</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">2</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1102/" class="text-fg-brand hover:underline">I1102</a></td>
+          <td class="px-4 py-2 text-heading">Whether a file is authored or derived is a field, not a naming convention</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1104/" class="text-fg-brand hover:underline">I1104</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">2</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1102/" class="text-fg-brand hover:underline">I1102</a></td>
+          <td class="px-4 py-2 text-heading">Both namespaces carry their contracts, all the way down</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1105/" class="text-fg-brand hover:underline">I1105</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">1</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1101/" class="text-fg-brand hover:underline">I1101</a></td>
+          <td class="px-4 py-2 text-heading">The repository is discovered once, into one model</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1106/" class="text-fg-brand hover:underline">I1106</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">2</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1105/" class="text-fg-brand hover:underline">I1105</a></td>
+          <td class="px-4 py-2 text-heading">The registries are views of the model, not separate discoveries</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1107/" class="text-fg-brand hover:underline">I1107</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">3</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1106/" class="text-fg-brand hover:underline">I1106</a></td>
+          <td class="px-4 py-2 text-heading">Discovery is deterministic, cached, and its cost is known</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1108/" class="text-fg-brand hover:underline">I1108</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">3</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1106/" class="text-fg-brand hover:underline">I1106</a></td>
+          <td class="px-4 py-2 text-heading">The desired integration is a value, and the plan is a diff</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1109/" class="text-fg-brand hover:underline">I1109</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">4</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1108/" class="text-fg-brand hover:underline">I1108</a></td>
+          <td class="px-4 py-2 text-heading">Everything placed outside the two namespaces is recorded, with what it was</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1110/" class="text-fg-brand hover:underline">I1110</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">5</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1109/" class="text-fg-brand hover:underline">I1109</a></td>
+          <td class="px-4 py-2 text-heading">The second run changes nothing, and a test says so</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1111/" class="text-fg-brand hover:underline">I1111</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">5</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1109/" class="text-fg-brand hover:underline">I1109</a></td>
+          <td class="px-4 py-2 text-heading">Uninstall gives back exactly what was taken</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1112/" class="text-fg-brand hover:underline">I1112</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">5</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1109/" class="text-fg-brand hover:underline">I1109</a></td>
+          <td class="px-4 py-2 text-heading">What touches the root is two small blocks, and they never change again</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1113/" class="text-fg-brand hover:underline">I1113</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">6</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1112/" class="text-fg-brand hover:underline">I1112</a></td>
+          <td class="px-4 py-2 text-heading">Entering a directory is local, bounded and silent about the network</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1114/" class="text-fg-brand hover:underline">I1114</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">6</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1112/" class="text-fg-brand hover:underline">I1112</a></td>
+          <td class="px-4 py-2 text-heading">A provider is an adapter over the model, and adding one is an implementation</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1115/" class="text-fg-brand hover:underline">I1115</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">7</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1114/" class="text-fg-brand hover:underline">I1114</a></td>
+          <td class="px-4 py-2 text-heading">Completion comes from the command model, not from a second list</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1116/" class="text-fg-brand hover:underline">I1116</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">6</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1110/" class="text-fg-brand hover:underline">I1110</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1112/" class="text-fg-brand hover:underline">I1112</a></td>
+          <td class="px-4 py-2 text-heading">This repository&#39;s own footprint moves, through the reconciler</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1117/" class="text-fg-brand hover:underline">I1117</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">3</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1106/" class="text-fg-brand hover:underline">I1106</a></td>
+          <td class="px-4 py-2 text-heading">The hand-maintained lists are removed, not left running beside the derivation</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1118/" class="text-fg-brand hover:underline">I1118</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">7</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1110/" class="text-fg-brand hover:underline">I1110</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1116/" class="text-fg-brand hover:underline">I1116</a></td>
+          <td class="px-4 py-2 text-heading">Every invariant of this milestone is a rule with a check that runs</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1119/" class="text-fg-brand hover:underline">I1119</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">7</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1113/" class="text-fg-brand hover:underline">I1113</a></td>
+          <td class="px-4 py-2 text-heading">The budgets are measured, and a regression fails rather than being noticed</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1120/" class="text-fg-brand hover:underline">I1120</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">4</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1108/" class="text-fg-brand hover:underline">I1108</a></td>
+          <td class="px-4 py-2 text-heading">A refusal says what to do about it</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1121/" class="text-fg-brand hover:underline">I1121</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">6</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1112/" class="text-fg-brand hover:underline">I1112</a></td>
+          <td class="px-4 py-2 text-heading">Every surface shows the integration from the one model</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1122/" class="text-fg-brand hover:underline">I1122</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">7</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1110/" class="text-fg-brand hover:underline">I1110</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1111/" class="text-fg-brand hover:underline">I1111</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1116/" class="text-fg-brand hover:underline">I1116</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1121/" class="text-fg-brand hover:underline">I1121</a></td>
+          <td class="px-4 py-2 text-heading">A foreign repository, adopted, upgraded and given back</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1123/" class="text-fg-brand hover:underline">I1123</a></td>
+          <td class="px-4 py-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span></td>
+          <td class="px-4 py-2 font-mono text-xs text-body">8</td>
+          <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/plan/i1104/" class="text-fg-brand hover:underline">I1104</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1107/" class="text-fg-brand hover:underline">I1107</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1115/" class="text-fg-brand hover:underline">I1115</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1117/" class="text-fg-brand hover:underline">I1117</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1118/" class="text-fg-brand hover:underline">I1118</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1119/" class="text-fg-brand hover:underline">I1119</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1120/" class="text-fg-brand hover:underline">I1120</a>, <a href="https://korczis.github.io/prismatic-majordomus/plan/i1122/" class="text-fg-brand hover:underline">I1122</a></td>
+          <td class="px-4 py-2 text-heading">The milestone is accepted on its evidence</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The graph</h2>
+  
+<figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
+  <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">two-folder-integration dependency graph</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0">flowchart LR
+    I1101[&quot;I1101&lt;br/&gt;What this tool leaves behind, established by inspection rather than by memory&quot;]:::ready
+    I1102[&quot;I1102&lt;br/&gt;The two namespaces are a typed contract, not a habit&quot;]:::blocked
+    I1103[&quot;I1103&lt;br/&gt;Whether a file is authored or derived is a field, not a naming convention&quot;]:::blocked
+    I1104[&quot;I1104&lt;br/&gt;Both namespaces carry their contracts, all the way down&quot;]:::blocked
+    I1105[&quot;I1105&lt;br/&gt;The repository is discovered once, into one model&quot;]:::blocked
+    I1106[&quot;I1106&lt;br/&gt;The registries are views of the model, not separate discoveries&quot;]:::blocked
+    I1107[&quot;I1107&lt;br/&gt;Discovery is deterministic, cached, and its cost is known&quot;]:::blocked
+    I1108[&quot;I1108&lt;br/&gt;The desired integration is a value, and the plan is a diff&quot;]:::blocked
+    I1109[&quot;I1109&lt;br/&gt;Everything placed outside the two namespaces is recorded, with what it was&quot;]:::blocked
+    I1110[&quot;I1110&lt;br/&gt;The second run changes nothing, and a test says so&quot;]:::blocked
+    I1111[&quot;I1111&lt;br/&gt;Uninstall gives back exactly what was taken&quot;]:::blocked
+    I1112[&quot;I1112&lt;br/&gt;What touches the root is two small blocks, and they never change again&quot;]:::blocked
+    I1113[&quot;I1113&lt;br/&gt;Entering a directory is local, bounded and silent about the network&quot;]:::blocked
+    I1114[&quot;I1114&lt;br/&gt;A provider is an adapter over the model, and adding one is an implementation&quot;]:::blocked
+    I1115[&quot;I1115&lt;br/&gt;Completion comes from the command model, not from a second list&quot;]:::blocked
+    I1116[&quot;I1116&lt;br/&gt;This repository&#39;s own footprint moves, through the reconciler&quot;]:::blocked
+    I1117[&quot;I1117&lt;br/&gt;The hand-maintained lists are removed, not left running beside the derivation&quot;]:::blocked
+    I1118[&quot;I1118&lt;br/&gt;Every invariant of this milestone is a rule with a check that runs&quot;]:::blocked
+    I1119[&quot;I1119&lt;br/&gt;The budgets are measured, and a regression fails rather than being noticed&quot;]:::blocked
+    I1120[&quot;I1120&lt;br/&gt;A refusal says what to do about it&quot;]:::blocked
+    I1121[&quot;I1121&lt;br/&gt;Every surface shows the integration from the one model&quot;]:::blocked
+    I1122[&quot;I1122&lt;br/&gt;A foreign repository, adopted, upgraded and given back&quot;]:::blocked
+    I1123[&quot;I1123&lt;br/&gt;The milestone is accepted on its evidence&quot;]:::blocked
+    I1101 --&gt; I1102
+    I1101 --&gt; I1105
+    I1102 --&gt; I1103
+    I1102 --&gt; I1104
+    I1104 --&gt; I1123
+    I1105 --&gt; I1106
+    I1106 --&gt; I1107
+    I1106 --&gt; I1108
+    I1106 --&gt; I1117
+    I1107 --&gt; I1123
+    I1108 --&gt; I1109
+    I1108 --&gt; I1120
+    I1109 --&gt; I1110
+    I1109 --&gt; I1111
+    I1109 --&gt; I1112
+    I1110 --&gt; I1116
+    I1110 --&gt; I1118
+    I1110 --&gt; I1122
+    I1111 --&gt; I1122
+    I1112 --&gt; I1113
+    I1112 --&gt; I1114
+    I1112 --&gt; I1116
+    I1112 --&gt; I1121
+    I1113 --&gt; I1119
+    I1114 --&gt; I1115
+    I1115 --&gt; I1123
+    I1116 --&gt; I1118
+    I1116 --&gt; I1122
+    I1117 --&gt; I1123
+    I1118 --&gt; I1123
+    I1119 --&gt; I1123
+    I1120 --&gt; I1123
+    I1121 --&gt; I1122
+    I1122 --&gt; I1123
+    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px
+    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px
+    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px
+    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px
+    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px
+    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px</pre></div>
+</figure>
+
+
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/project/milestones/two-folder-integration.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/two-folder-integration.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show two-folder-integration</code>.</p>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51a39caccd3004fd81d99ab9912f9be4aecf8d50" class="font-mono underline">51a39ca</a> · inputs <span class="font-mono">1f0ee07f0cc8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>
