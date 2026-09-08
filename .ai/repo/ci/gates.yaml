@@ -122,7 +122,7 @@ gates:
   # regressed and every tree-level gate stayed green.
   - id: installer-live
     job: install
-    runs: scripts/ci/install-check
+    runs: scripts/ci/install-check --wait 300
     summary: the install command the project advertises, fetched and run from the published site, installing the published release on this runner
 
   - id: macos
