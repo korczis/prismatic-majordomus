@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.2.0</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.3.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -317,6 +317,13 @@ matrix:</p>
 <span class="giallo-l"><span>smoke    the published installer, from its published URL, installing the release that was</span></span>
 <span class="giallo-l"><span>         just published, on every runner whose target it was built for</span></span></code></pre>
 <p>Only <code>publish</code> has <code>contents: write</code>. Nothing else in the run can write anything.</p>
+<p>A run that fails in <code>build</code> publishes nothing, which is the intended behaviour and also the
+one that is easy to walk away from: the tag still exists, pointing at the commit the build
+failed on, and no release is behind it. Fixing the cause on the default branch does not fix
+the tag. Finish the release — a new version, bumped and tagged, is the ordinary way; moving
+a tag that has no release behind it is the other, and only before anyone can have pinned it.
+Until one of those happens the advertised install command is broken for everyone, and
+<code>installer-live</code> below is what says so.</p>
 <h3 id="testing-it-without-publishing"><a class="zola-anchor" href="#testing-it-without-publishing" aria-label="Anchor link for: testing-it-without-publishing">Testing it without publishing</a></h3>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/release-fixture</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-out</span><span class="z-l-8 z-d-8"> /tmp/rel</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-base-url</span><span class="z-l-8 z-d-8"> http://127.0.0.1:8099</span></span>
 <span class="giallo-l"><span>(</span><span class="z-l-15 z-d-14">cd</span><span class="z-l-8 z-d-8"> /tmp/rel</span><span class="z-l-6 z-d-9"> &amp;&amp;</span><span class="z-l-1 z-d-3"> python3</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">m</span><span class="z-l-8 z-d-8"> http.server</span><span class="z-l-9 z-d-11"> 8099</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-bind</span><span class="z-l-9 z-d-11"> 127.0.0.1</span><span>)</span><span class="z-l-6 z-d-9"> &amp;</span></span>
@@ -325,7 +332,36 @@ matrix:</p>
 <p>That is what <code>test/cases/85_installer.sh</code> does, and it is the whole stack: a real archive
 built from the tree you are in, real metadata rendered by the renderer the site publishes,
 a real HTTP download, a real digest check, a real atomic install.</p>
-<h3 id="recovering-from-a-bad-release"><a class="zola-anchor" href="#recovering-from-a-bad-release" aria-label="Anchor link for: recovering-from-a-bad-release">Recovering from a bad release</a></h3>
+<h3 id="proving-the-advertised-command-still-works"><a class="zola-anchor" href="#proving-the-advertised-command-still-works" aria-label="Anchor link for: proving-the-advertised-command-still-works">Proving the advertised command still works</a></h3>
+<p>A release pipeline proves the advertised command works <em>once</em>, in its smoke phase, at the
+moment of publication. That is not the same promise as the one the front page makes, which
+is in the present tense, and the difference has been real: a build that failed on one
+platform publishes nothing, the tag stays where it is, the fix lands on the default branch
+and is never tagged again — and the URL every document points at keeps serving an installer
+that resolves no release. Every gate over the tree stayed green throughout, because none of
+them can see the published site.</p>
+<p><code>scripts/ci/install-check</code> is the gate that can. It reads the addresses from
+<code>site/data/registry/distribution.json</code> — states none of its own — and then, from the
+published site:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>1  the metadata the installer resolves is served, and names a release</span></span>
+<span class="giallo-l"><span>2  the installer is served, and this machine&#39;s /bin/sh parses it</span></span>
+<span class="giallo-l"><span>3  the advertised line, run as it is written, pipe included, into a home of its own</span></span>
+<span class="giallo-l"><span>4  the installed tool reports the version the metadata resolved</span></span>
+<span class="giallo-l"><span>5  the installed MCP launcher runs with MAJORDOMUS_NO_BUILD=1 — an archive that left a</span></span>
+<span class="giallo-l"><span>   launcher out passes every check that only reads the archive&#39;s file list, and fails here</span></span>
+<span class="giallo-l"><span>6  the installed tool initialises a repository that has none</span></span></code></pre>
+<p>Nothing outside its temporary tree is written: the install goes to a <code>HOME</code> of the run's
+own, so the prefix, the launchers and the PATH hint all land inside it.</p>
+<p>It is the gate <code>installer-live</code> in <a href="../.ai/repo/ci/gates.yaml"><code>.ai/repo/ci/gates.yaml</code></a>,
+job <code>install</code>, on Linux and macOS. No path class selects it, deliberately: no change to a
+tree can make it true or false — only a deployment can. It runs in the full plan, which is
+every push to the default branch, the weekly schedule, a dispatch, and a pull request
+labelled <code>ci:full</code>. So the default branch goes red while the advertised command is broken,
+which is the only condition under which anyone was going to find out.</p>
+<p>Against a local fixture rather than the published site:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/release-fixture</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-out</span><span class="z-l-8 z-d-8"> /tmp/rel</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-base-url</span><span class="z-l-8 z-d-8"> http://127.0.0.1:8099</span></span>
+<span class="giallo-l"><span>(</span><span class="z-l-15 z-d-14">cd</span><span class="z-l-8 z-d-8"> /tmp/rel</span><span class="z-l-6 z-d-9"> &amp;&amp;</span><span class="z-l-1 z-d-3"> python3</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">m</span><span class="z-l-8 z-d-8"> http.server</span><span class="z-l-9 z-d-11"> 8099</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-bind</span><span class="z-l-9 z-d-11"> 127.0.0.1</span><span>)</span><span class="z-l-6 z-d-9"> &amp;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/install-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-base</span><span class="z-l-8 z-d-8"> http://127.0.0.1:8099</span></span></code></pre><h3 id="recovering-from-a-bad-release"><a class="zola-anchor" href="#recovering-from-a-bad-release" aria-label="Anchor link for: recovering-from-a-bad-release">Recovering from a bad release</a></h3>
 <p>A published release is immutable: its artifacts and its versioned metadata stay exactly as
 they were, because someone may have pinned them. Withdrawing one is an edit to its record:</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="yaml"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> .ai/repo/releases/v0.3.0.yaml</span></span>
@@ -391,7 +427,7 @@ ship an executable nothing can drive.</p>
 </div>
 </article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
     <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/distribution-canonical-model/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/release-is-complete-or-absent/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A release publishes an artifact for every supported target or it is not published</span></a></li></ul></div>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/distribution-canonical-model/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/release-is-complete-or-absent/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A release publishes an artifact for every supported target or it is not published</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/advertised-install-command-works/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool</span></a></li></ul></div>
 </div>
 
 </div>
@@ -410,7 +446,7 @@ ship an executable nothing can drive.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.2.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51a39caccd3004fd81d99ab9912f9be4aecf8d50" class="font-mono underline">51a39ca</a> · inputs <span class="font-mono">1f0ee07f0cc8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c4f135dede30815972387b12075b6dd5fd7e927f" class="font-mono underline">c4f135d</a> · inputs <span class="font-mono">5d556ae81b2a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
