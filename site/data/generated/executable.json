@@ -422,6 +422,23 @@
       "tool": "majordomus_perf"
     },
     {
+      "api_anchor": "/docs/api/#op-quality-report",
+      "claims": [],
+      "cli": "majordomus quality report",
+      "id": "quality.report",
+      "kind": "query",
+      "module": "quality",
+      "module_route": "/registry/modules/quality/",
+      "resource": "majordomus://quality",
+      "route": "/registry/capabilities/quality-report/",
+      "slug": "quality-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/quality.rs",
+      "tests": [],
+      "title": "Public API quality report",
+      "tool": "majordomus_quality"
+    },
+    {
       "api_anchor": "/docs/api/#op-repository-info",
       "claims": [],
       "cli": null,
@@ -883,9 +900,9 @@
     ]
   },
   "counts": {
-    "capabilities": 37,
+    "capabilities": 38,
     "claims": 31,
-    "modules": 15
+    "modules": 16
   },
   "generator": "majordomus-cli 0.3.1",
   "modules": [
@@ -1132,6 +1149,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/perf.rs",
       "title": "Performance"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "quality.report",
+          "route": "/registry/capabilities/quality-report/",
+          "slug": "quality-report"
+        }
+      ],
+      "claims": [],
+      "id": "quality",
+      "route": "/registry/modules/quality/",
+      "slug": "quality",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/quality.rs",
+      "title": "Public API quality"
     },
     {
       "capabilities": [
