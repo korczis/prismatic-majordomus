@@ -73,6 +73,20 @@ if [ -f "$PD" ]; then
   want="$(jq '[.matrix.rows[] | select(.status != "draft") | .exposed | length] | add' "$PD")"
   got="$(grep -o '✓' "$PUB/features/matrix/index.html" | wc -l | tr -d ' ')"
   [ "$want" = "$got" ] || { bad product "/features/matrix/ shows $got marks, the model derived $want"; prod_bad=1; }
+  # Every claim a feature names is a link on that feature's page. The homepage used to carry
+  # a grid of claim pages and an assertion that counted it; the product projection replaced
+  # that grid with the per-feature "What is guaranteed" sections, so this is where the
+  # reachability of a claim from a landing surface is now proved. Per feature and derived,
+  # rather than a floor of twelve on one page.
+  for id in $(jq -r '.features[] | select(.status != "draft" and (.claim_refs | length > 0)) | .id' "$PD"); do
+    page="$PUB/features/$id/index.html"
+    want="$(jq -r --arg i "$id" '.features[] | select(.id == $i) | .claim_refs | length' "$PD")"
+    got=0
+    for c in $(jq -r --arg i "$id" '.features[] | select(.id == $i) | .claim_refs[].id' "$PD"); do
+      grep -qF "/guarantees/$c/" "$page" && got=$((got + 1))
+    done
+    [ "$want" = "$got" ] || { bad product "/features/$id/ links $got of the $want claim(s) the model gives it"; prod_bad=1; }
+  done
   # the telemetry the homepage prints is the dataset's, never a number in a template
   for k in capabilities mcp_tools http_routes objects; do
     n="$(jq -r --arg k "$k" '.telemetry[$k]' "$PD")"
