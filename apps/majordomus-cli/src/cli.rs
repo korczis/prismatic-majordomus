@@ -941,6 +941,8 @@ pub enum CompletionShell {
     Zsh,
     /// bash
     Bash,
+    /// fish
+    Fish,
 }
 
 // ------------------------------------------------------------------ the command line as data

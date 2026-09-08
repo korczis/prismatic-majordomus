@@ -192,7 +192,7 @@ follows. There is no second completion implementation to disagree.
 Install it once, for every repository:
 
 ```sh
-# ~/.zshrc
+# ~/.zshrc                                    # or --shell bash, --shell fish
 eval "$(majordomus completion init --shell zsh)"
 ```
 
@@ -368,12 +368,25 @@ because they are what produce it.
 | `test/cases/100_environment.sh` | the shell entry point is an adapter, and the check can fail |
 | `test/cases/101_command_graph.sh` | the graph, the bridge, the completion, the secret sentinels, one repository at a time |
 | `test/cases/102_completion_shell.sh` | the generated adapter, loaded into a real zsh, offering real candidates |
+| `apps/majordomus-cli/benches/commands.rs` | the cost of composing, projecting and completing, measured rather than claimed |
 | `apps/majordomus-cli/src/command_graph/` | the unit half: no adapter names a command, no mutation reaches a machine surface, no workflow is bridged back into a workflow, the fingerprint is stable |
 
 </div>
 
 
-Measured on this machine, debug build, macOS arm64:
+Measured on this machine, macOS arm64. Two scales, because they answer different questions.
+
+**In process, release build** (`cargo bench --bench commands`) — what the engine costs:
+
+```text
+compose the graph, command line only        1.16 ms
+compose it with the capability join         1.18 ms
+compose it with the shell tool's registry   1.76 ms
+render the whole workflow bridge              71 µs
+answer one completion                  114 ns – 4.4 µs
+```
+
+**End to end, debug build** — what a person waits for:
 
 ```text
 majordomus --help                      8.5 ms
@@ -383,6 +396,11 @@ commands graph, in full                128 ms   (two `just` subprocesses)
 repository entry, warm                 113 ms
 the bridge's overhead over a direct call 33 ms
 ```
+
+The gap between the two is the point. A completion answers in microseconds and arrives in
+fourteen milliseconds, so essentially all of it is process start and finding the repository —
+which is why the fast load builds no index and spawns nothing, and why making the engine
+cleverer would buy nothing at all.
 
 ## Related
 

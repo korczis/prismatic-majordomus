@@ -133,15 +133,24 @@ mod tests {
 
     #[test]
     fn a_port_nothing_listens_on_is_not_running_rather_than_unknown() {
-        // Bind and drop, so the port is one the kernel just had free.
-        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a port");
-        let port = listener.local_addr().expect("an address").port();
-        drop(listener);
-        let url = format!("http://127.0.0.1:{port}");
-        assert_eq!(
-            reachable(&url, Duration::from_millis(200)),
-            ServiceAvailability::NotRunning
-        );
+        // Bind and drop, so the port is one the kernel just had free. Between the drop and
+        // the probe another process on a busy machine can take that very port, and then the
+        // probe is right and the assertion is wrong — which is a race in the test, not a
+        // defect in `reachable`. So the attempt is repeated: one clean answer proves the
+        // property, and every attempt racing is what a failure would have to mean.
+        let mut last = None;
+        for _ in 0..8 {
+            let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a port");
+            let port = listener.local_addr().expect("an address").port();
+            drop(listener);
+            let url = format!("http://127.0.0.1:{port}");
+            let answer = reachable(&url, Duration::from_millis(200));
+            if answer == ServiceAvailability::NotRunning {
+                return;
+            }
+            last = Some(answer);
+        }
+        panic!("every attempt found something listening on a port just freed: {last:?}");
     }
 
     #[test]

@@ -79,6 +79,14 @@ section workflow-arg > "$T/arg.txt"
 grep -q '\-\-repo:' "$T/arg.txt" || {
   echo "    a recipe did not offer the flags of the command it bridges:"; cat "$T/arg.txt"; exit 1; }
 
+# every adapter this executable can print is syntactically loadable by its own shell, and
+# fish's protocol is the same value-tab-description the engine already prints
+if command -v fish >/dev/null 2>&1; then
+  "$RB" completion init --shell fish > "$T/adapter.fish"
+  fish -n "$T/adapter.fish" || { echo "    the fish adapter does not parse"; exit 1; }
+fi
+bash -n <("$RB" completion init --shell bash) || { echo "    the bash adapter does not parse"; exit 1; }
+
 # no adapter carries a command of its own: the same script, with the executable removed,
 # offers nothing rather than a stale list
 MAJORDOMUS_COMPLETION_BIN="$T/nonesuch" TMP="$T" zsh "$T/smoke.zsh" > "$T/none.txt" 2>/dev/null || true

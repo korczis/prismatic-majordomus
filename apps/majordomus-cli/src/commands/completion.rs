@@ -34,6 +34,7 @@ fn init(args: &CompletionInitArgs) -> Result<u8> {
     let script = match args.shell {
         CompletionShell::Zsh => shell::ZSH,
         CompletionShell::Bash => shell::BASH,
+        CompletionShell::Fish => shell::FISH,
     };
     write!(out, "{script}").map_err(Error::Transport)?;
     Ok(0)
