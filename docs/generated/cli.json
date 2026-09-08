@@ -838,6 +838,159 @@
             "path": [
               "majordomus",
               "capabilities",
+              "projections"
+            ],
+            "route": "/docs/cli/capabilities/projections/",
+            "executable": true,
+            "usage": "majordomus capabilities projections [OPTIONS]",
+            "about": "Where each capability is projected, and every claim its surface does not answer",
+            "args": [
+              {
+                "name": "module",
+                "long": "module",
+                "positional": false,
+                "help": "Only capabilities composed in this module",
+                "value_name": "MODULE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "unmet",
+                "long": "unmet",
+                "positional": false,
+                "help": "Only the capabilities whose declared exposures are not all answered",
+                "value_name": "UNMET",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "capabilities-projections-unmet",
+                "title": "Every exposure a capability claims that its surface does not answer",
+                "description": "`rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written.",
+                "argv": [
+                  "capabilities",
+                  "projections",
+                  "--unmet"
+                ],
+                "command": "majordomus capabilities projections --unmet",
+                "setup": [],
+                "expectation": "exits 0"
+              },
+              {
+                "id": "capabilities-projections-module",
+                "title": "Where one module's capabilities appear",
+                "description": "A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one.",
+                "argv": [
+                  "capabilities",
+                  "projections",
+                  "--module",
+                  "worktree"
+                ],
+                "command": "majordomus capabilities projections --module worktree",
+                "setup": [],
+                "expectation": "exits 0; prints worktree.topology, majordomus worktree topology"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "capabilities",
               "validate"
             ],
             "route": "/docs/cli/capabilities/validate/",

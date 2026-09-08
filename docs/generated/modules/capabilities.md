@@ -74,5 +74,5 @@ A row per capability with the command line, HTTP route, MCP tool and MCP resourc
 | `unmet` | boolean | no | Only the capabilities whose declared exposures are not all answered by their
 surface. Empty is the closure the rule asks for. |
 
-Output: `Matrix`.
+Output: `ClosureMatrix`.
 

@@ -16,7 +16,7 @@ modules:
     description: "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 2
+    capabilities: 3
   - id: continuity
     title: Continuity
     description: "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
@@ -1172,6 +1172,124 @@ capabilities:
     cache:
       policy: process
       max_entries: 16
+    source_path: apps/majordomus-cli/src/capability/builtin/capabilities.rs
+  - id: capabilities.projections
+    module: capabilities
+    kind: query
+    title: Where each capability is projected
+    description: "A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down."
+    input:
+      name: ProjectionsInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          module:
+            type:
+              - string
+              - "null"
+            description: Only capabilities composed in this module.
+            default: null
+          unmet:
+            type: boolean
+            description: "Only the capabilities whose declared exposures are not all answered by their\nsurface. Empty is the closure the rule asks for."
+            default: false
+        description: "The input of `capabilities.projections`: which rows, and whether only the unmet claims."
+        title: ProjectionsInput
+    output:
+      name: ClosureMatrix
+      schema:
+        type: object
+        properties:
+          rows:
+            type: array
+            items:
+              "$ref": "#/$defs/Row"
+            description: "One row per capability, in id order."
+          unbacked:
+            type: array
+            items:
+              type: string
+            description: "Runnable commands of the command line that no capability claims, in command order."
+        required:
+          - rows
+          - unbacked
+        description: "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\"."
+        title: ClosureMatrix
+        "$defs":
+          Row:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The canonical id.
+              module:
+                type: string
+                description: The module that composes it.
+              kind:
+                type: string
+                description: "Query, command or resource."
+              stability:
+                type: string
+                description: Where it stands.
+              cli:
+                type:
+                  - string
+                  - "null"
+                description: "The command line, when it declares one and clap has it."
+              http:
+                type:
+                  - string
+                  - "null"
+                description: "The HTTP route, when it declares one."
+              mcp_tool:
+                type:
+                  - string
+                  - "null"
+                description: "The MCP tool name, when it declares one."
+              mcp_resource:
+                type:
+                  - string
+                  - "null"
+                description: "The MCP resource URI, when it declares one."
+              closed:
+                type: boolean
+                description: Whether every exposure this row declares is answered by its surface.
+              source:
+                type: string
+                description: Where the capability is declared; repository-relative.
+            required:
+              - id
+              - module
+              - kind
+              - stability
+              - closed
+              - source
+            description: "Where one capability is projected, and where it is not.\n\nThis is the coverage matrix of the rule: a row per capability, a column per interface.\nIt is derived, never written down — a capability that reaches nothing shows as a row of\n`false`, which is exactly the \"exists but is invisible\" case worth seeing."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::capabilities
+    exposure:
+      mcp:
+        tool: majordomus_projections
+      http:
+        method: GET
+        path: /api/v1/capabilities/projections
+      cli:
+        path:
+          - capabilities
+          - projections
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - introspection
+      - projections
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 8
     source_path: apps/majordomus-cli/src/capability/builtin/capabilities.rs
   - id: continuity.state
     module: continuity
@@ -6738,10 +6856,6 @@ capabilities:
       http:
         method: GET
         path: /api/v1/scope/classify
-      cli:
-        path:
-          - scope
-          - classify
     availability: runtime
     visibility: public
     stability: behaviorally_verified

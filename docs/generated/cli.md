@@ -21,6 +21,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus capabilities list`](#majordomus-capabilities-list) | `/docs/cli/capabilities/list/` | Every capability, one line each, with its projections |
 | [`majordomus capabilities describe`](#majordomus-capabilities-describe) | `/docs/cli/capabilities/describe/` | One capability by canonical id: schemas, provenance, every projection |
 | [`majordomus capabilities schema`](#majordomus-capabilities-schema) | `/docs/cli/capabilities/schema/` | The canonical input or output JSON Schema of one capability |
+| [`majordomus capabilities projections`](#majordomus-capabilities-projections) | `/docs/cli/capabilities/projections/` | Where each capability is projected, and every claim its surface does not answer |
 | [`majordomus capabilities validate`](#majordomus-capabilities-validate) | `/docs/cli/capabilities/validate/` | Build the registry and every projection; exit 10 with every violation named |
 | [`majordomus generate`](#majordomus-generate) | `/docs/cli/generate/` | Write the committed projections of the registry (docs/generated), or check that they are current |
 | [`majordomus bench`](#majordomus-bench) | `/docs/cli/bench/` | Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations), report coverage, compare with the accepted baseline |
@@ -173,7 +174,7 @@ Examples:
 
 Introspect the capability registry: what exists, where it came from, how it is exposed
 
-Subcommands: [`majordomus capabilities list`](#majordomus-capabilities-list), [`majordomus capabilities describe`](#majordomus-capabilities-describe), [`majordomus capabilities schema`](#majordomus-capabilities-schema), [`majordomus capabilities validate`](#majordomus-capabilities-validate).
+Subcommands: [`majordomus capabilities list`](#majordomus-capabilities-list), [`majordomus capabilities describe`](#majordomus-capabilities-describe), [`majordomus capabilities schema`](#majordomus-capabilities-schema), [`majordomus capabilities projections`](#majordomus-capabilities-projections), [`majordomus capabilities validate`](#majordomus-capabilities-validate).
 
 ```text
 majordomus capabilities [OPTIONS] <COMMAND>
@@ -278,6 +279,43 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /title.
+
+<a id="majordomus-capabilities-projections"></a>
+## `majordomus capabilities projections`
+
+Where each capability is projected, and every claim its surface does not answer
+
+```text
+majordomus capabilities projections [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--module` | `<MODULE>` | — | Only capabilities composed in this module |
+| `--unmet` | flag | — | Only the capabilities whose declared exposures are not all answered |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **Every exposure a capability claims that its surface does not answer** — `rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written.
+
+  ```console
+  $ majordomus capabilities projections --unmet
+  ```
+
+  Verified: exits 0.
+
+- **Where one module's capabilities appear** — A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one.
+
+  ```console
+  $ majordomus capabilities projections --module worktree
+  ```
+
+  Verified: exits 0; prints worktree.topology, majordomus worktree topology.
 
 <a id="majordomus-capabilities-validate"></a>
 ## `majordomus capabilities validate`

@@ -6,28 +6,28 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "0ad4196c6c0b6f1a211e5ade7a0682d5f78f84e56391728e5d2139f72eb70bc6",
+    "fingerprint": "7268d6475d6ae3d12c3784d92b80fc03c27034117dbba42c6b7b191578539674",
     "summary": {
-      "total": 1054,
-      "builtin": 42,
-      "declarative": 1012,
+      "total": 1056,
+      "builtin": 43,
+      "declarative": 1013,
       "by_kind": {
         "command": 1,
-        "query": 41,
-        "resource": 1012
+        "query": 42,
+        "resource": 1013
       },
       "by_stability": {
-        "behaviorally_verified": 42,
-        "implemented": 1012
+        "behaviorally_verified": 43,
+        "implemented": 1013
       },
-      "mcp_tools": 40,
-      "mcp_resources": 1028,
-      "http_routes": 42,
+      "mcp_tools": 41,
+      "mcp_resources": 1029,
+      "http_routes": 43,
       "cli_commands": 23,
       "modules": 43,
-      "benchmark_required": 42,
+      "benchmark_required": 43,
       "benchmark_waived": 0,
-      "cached": 20
+      "cached": 21
     },
     "builtin": [
       {
@@ -1578,6 +1578,167 @@
         "cache": {
           "policy": "process",
           "max_entries": 16
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
+      },
+      {
+        "id": "capabilities.projections",
+        "module": "capabilities",
+        "kind": "query",
+        "title": "Where each capability is projected",
+        "description": "A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down.",
+        "input": {
+          "name": "ProjectionsInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "module": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only capabilities composed in this module.",
+                "default": null
+              },
+              "unmet": {
+                "type": "boolean",
+                "description": "Only the capabilities whose declared exposures are not all answered by their\nsurface. Empty is the closure the rule asks for.",
+                "default": false
+              }
+            },
+            "description": "The input of `capabilities.projections`: which rows, and whether only the unmet claims.",
+            "title": "ProjectionsInput"
+          }
+        },
+        "output": {
+          "name": "ClosureMatrix",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Row"
+                },
+                "description": "One row per capability, in id order."
+              },
+              "unbacked": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Runnable commands of the command line that no capability claims, in command order."
+              }
+            },
+            "required": [
+              "rows",
+              "unbacked"
+            ],
+            "description": "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\".",
+            "title": "ClosureMatrix",
+            "$defs": {
+              "Row": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The canonical id."
+                  },
+                  "module": {
+                    "type": "string",
+                    "description": "The module that composes it."
+                  },
+                  "kind": {
+                    "type": "string",
+                    "description": "Query, command or resource."
+                  },
+                  "stability": {
+                    "type": "string",
+                    "description": "Where it stands."
+                  },
+                  "cli": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The command line, when it declares one and clap has it."
+                  },
+                  "http": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The HTTP route, when it declares one."
+                  },
+                  "mcp_tool": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The MCP tool name, when it declares one."
+                  },
+                  "mcp_resource": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The MCP resource URI, when it declares one."
+                  },
+                  "closed": {
+                    "type": "boolean",
+                    "description": "Whether every exposure this row declares is answered by its surface."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Where the capability is declared; repository-relative."
+                  }
+                },
+                "required": [
+                  "id",
+                  "module",
+                  "kind",
+                  "stability",
+                  "closed",
+                  "source"
+                ],
+                "description": "Where one capability is projected, and where it is not.\n\nThis is the coverage matrix of the rule: a row per capability, a column per interface.\nIt is derived, never written down — a capability that reaches nothing shows as a row of\n`false`, which is exactly the \"exists but is invisible\" case worth seeing."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::capabilities"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_projections"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/capabilities/projections"
+          },
+          "cli": {
+            "path": [
+              "capabilities",
+              "projections"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "introspection",
+          "projections"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 8
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
       },
@@ -9279,12 +9440,6 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/scope/classify"
-          },
-          "cli": {
-            "path": [
-              "scope",
-              "classify"
-            ]
           }
         },
         "availability": "runtime",
@@ -14065,10 +14220,11 @@
         "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
           "capabilities.describe",
-          "capabilities.list"
+          "capabilities.list",
+          "capabilities.projections"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
       },
@@ -14170,7 +14326,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 200,
+        "capabilities": 201,
         "capability_ids": []
       },
       {
@@ -14452,7 +14608,7 @@
     ]
   },
   "index": {
-    "fingerprint": "17d6651e4164cca0e89c82ce5b4cc0879ffc49a1b248de2a00d3503632729fea",
+    "fingerprint": "abab87fa8d61814315e9cf68b99d4fb067622d5b79e23829e9e2b5472c4d17e0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14484,7 +14640,7 @@
       "context": 26,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 200,
+      "document": 201,
       "feature": 20,
       "implementation": 42,
       "issue": 176,
@@ -17388,7 +17544,16 @@
         "title": "Adoption",
         "path": "docs/ADOPTION.md",
         "source_class": "document",
-        "bytes": 5016
+        "bytes": 5522
+      },
+      {
+        "uri": "majordomus://document/docs/ADOPTION_FIRST_RUN.md",
+        "kind": "document",
+        "identity": "docs/ADOPTION_FIRST_RUN.md",
+        "title": "First run in a foreign repository — forensic finding",
+        "path": "docs/ADOPTION_FIRST_RUN.md",
+        "source_class": "document",
+        "bytes": 7733
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -17397,7 +17562,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 34585
+        "bytes": 37372
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -17613,7 +17778,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 11494
+        "bytes": 11727
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -23450,7 +23615,7 @@
         "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 2798,
+        "bytes": 3734,
         "tags": [
           "architecture",
           "capabilities",
@@ -23680,7 +23845,7 @@
         "path": ".ai/repo/rules/project/rust-canonical-declaration.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 2738,
+        "bytes": 2957,
         "tags": [
           "rust",
           "architecture",
@@ -24246,7 +24411,7 @@
         "identity": "test/cases/11_site_derivation.sh",
         "path": "test/cases/11_site_derivation.sh",
         "source_class": "case",
-        "bytes": 2698
+        "bytes": 3077
       },
       {
         "uri": "majordomus://test/test/cases/12_site_build.sh",
@@ -24254,7 +24419,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 7860
+        "bytes": 8216
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -24270,7 +24435,7 @@
         "identity": "test/cases/12c_graph_data.sh",
         "path": "test/cases/12c_graph_data.sh",
         "source_class": "case",
-        "bytes": 5447
+        "bytes": 4544
       },
       {
         "uri": "majordomus://test/test/cases/13_region_projection.sh",
@@ -24590,7 +24755,7 @@
         "identity": "test/cases/52_generated_artifact_typing.sh",
         "path": "test/cases/52_generated_artifact_typing.sh",
         "source_class": "case",
-        "bytes": 6377
+        "bytes": 7284
       },
       {
         "uri": "majordomus://test/test/cases/53_status_vocabulary.sh",
@@ -24782,7 +24947,7 @@
         "identity": "test/cases/76_capabilities_projections.sh",
         "path": "test/cases/76_capabilities_projections.sh",
         "source_class": "case",
-        "bytes": 7099
+        "bytes": 8648
       },
       {
         "uri": "majordomus://test/test/cases/77_rust_evidence.sh",
@@ -25585,7 +25750,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 200
+      "objects": 201
     },
     {
       "name": "feature",
@@ -26606,6 +26771,159 @@
                 "command": "majordomus capabilities schema objects.get --side output",
                 "setup": [],
                 "expectation": "exits 0; prints one JSON document carrying /title"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "capabilities",
+              "projections"
+            ],
+            "route": "/docs/cli/capabilities/projections/",
+            "executable": true,
+            "usage": "majordomus capabilities projections [OPTIONS]",
+            "about": "Where each capability is projected, and every claim its surface does not answer",
+            "args": [
+              {
+                "name": "module",
+                "long": "module",
+                "positional": false,
+                "help": "Only capabilities composed in this module",
+                "value_name": "MODULE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "unmet",
+                "long": "unmet",
+                "positional": false,
+                "help": "Only the capabilities whose declared exposures are not all answered",
+                "value_name": "UNMET",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "capabilities-projections-unmet",
+                "title": "Every exposure a capability claims that its surface does not answer",
+                "description": "`rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written.",
+                "argv": [
+                  "capabilities",
+                  "projections",
+                  "--unmet"
+                ],
+                "command": "majordomus capabilities projections --unmet",
+                "setup": [],
+                "expectation": "exits 0"
+              },
+              {
+                "id": "capabilities-projections-module",
+                "title": "Where one module's capabilities appear",
+                "description": "A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one.",
+                "argv": [
+                  "capabilities",
+                  "projections",
+                  "--module",
+                  "worktree"
+                ],
+                "command": "majordomus capabilities projections --module worktree",
+                "setup": [],
+                "expectation": "exits 0; prints worktree.topology, majordomus worktree topology"
               }
             ],
             "subcommands": []
@@ -35361,6 +35679,16 @@
         "output": "CapabilityList"
       },
       {
+        "name": "majordomus_projections",
+        "id": "capabilities.projections",
+        "title": "Where each capability is projected",
+        "description": "A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down.",
+        "kind": "query",
+        "read_only": true,
+        "input": "ProjectionsInput",
+        "output": "ClosureMatrix"
+      },
+      {
         "name": "majordomus_continuity",
         "id": "continuity.state",
         "title": "What the lifecycle is holding",
@@ -35869,6 +36197,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/capabilities/projections",
+        "id": "capabilities.projections",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/continuity",
         "id": "continuity.state",
         "kind": "query"
@@ -36257,6 +36591,64 @@
         "case": "queries",
         "cached": true,
         "route": "GET /api/v1/capabilities"
+      },
+      {
+        "key": "capabilities.projections|direct|all",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "capabilities.projections",
+        "module": "capabilities",
+        "case": "all",
+        "cached": true
+      },
+      {
+        "key": "capabilities.projections|direct|unmet",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "capabilities.projections",
+        "module": "capabilities",
+        "case": "unmet",
+        "cached": true
+      },
+      {
+        "key": "capabilities.projections|mcp|all",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "capabilities.projections",
+        "module": "capabilities",
+        "case": "all",
+        "cached": true,
+        "tool": "majordomus_projections"
+      },
+      {
+        "key": "capabilities.projections|mcp|unmet",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "capabilities.projections",
+        "module": "capabilities",
+        "case": "unmet",
+        "cached": true,
+        "tool": "majordomus_projections"
+      },
+      {
+        "key": "capabilities.projections|http|all",
+        "kind": "capability",
+        "transport": "http",
+        "id": "capabilities.projections",
+        "module": "capabilities",
+        "case": "all",
+        "cached": true,
+        "route": "GET /api/v1/capabilities/projections"
+      },
+      {
+        "key": "capabilities.projections|http|unmet",
+        "kind": "capability",
+        "transport": "http",
+        "id": "capabilities.projections",
+        "module": "capabilities",
+        "case": "unmet",
+        "cached": true,
+        "route": "GET /api/v1/capabilities/projections"
       },
       {
         "key": "continuity.state|direct|default",
@@ -38166,6 +38558,27 @@
           "cases": 2
         },
         {
+          "subject": "capabilities.projections",
+          "module": "capabilities",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "capabilities.projections",
+          "module": "capabilities",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "capabilities.projections",
+          "module": "capabilities",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "continuity.state",
           "module": "continuity",
           "transport": "direct",
@@ -39064,20 +39477,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 42,
-          "covered": 42,
+          "required": 43,
+          "covered": 43,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 42,
-          "covered": 42,
+          "required": 43,
+          "covered": 43,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 40,
-          "covered": 40,
+          "required": 41,
+          "covered": 41,
           "missing": 0,
           "waived": 0
         },
@@ -39088,8 +39501,8 @@
           "waived": 0
         },
         "total": {
-          "required": 137,
-          "covered": 137,
+          "required": 140,
+          "covered": 140,
           "missing": 0,
           "waived": 0
         }

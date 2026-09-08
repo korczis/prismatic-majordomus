@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.3.1"
   },
-  "fingerprint": "1985e9ddb366f77df5cc95ecc723ef8e7c93af9b279dcf5dec20b699859164fa",
+  "fingerprint": "88c575f266df592ac35d66b8e5cb59bd0db203b6720a511e65b729878edebd98",
   "route": "/features/",
   "counts": {
     "features": 19,
@@ -161,6 +161,15 @@
               "tool": "majordomus_capabilities",
               "route": "GET /api/v1/capabilities",
               "cli": "majordomus capabilities list"
+            },
+            {
+              "id": "capabilities.projections",
+              "title": "Where each capability is projected",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_projections",
+              "route": "GET /api/v1/capabilities/projections",
+              "cli": "majordomus capabilities projections"
             }
           ]
         },
@@ -525,11 +534,11 @@
         "why"
       ],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 8,
+        "capabilities": 9,
+        "mcp_tools": 9,
         "mcp_resources": 196,
-        "http_routes": 8,
-        "cli_paths": 7,
+        "http_routes": 9,
+        "cli_paths": 8,
         "commands": 2,
         "objects": 192,
         "rules": 5,
@@ -667,8 +676,7 @@
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_scope_classify",
-              "route": "GET /api/v1/scope/classify",
-              "cli": "majordomus scope classify"
+              "route": "GET /api/v1/scope/classify"
             }
           ]
         },
@@ -1104,7 +1112,7 @@
         "mcp_tools": 7,
         "mcp_resources": 3,
         "http_routes": 7,
-        "cli_paths": 2,
+        "cli_paths": 1,
         "commands": 0,
         "objects": 0,
         "rules": 4,
@@ -2431,7 +2439,7 @@
         },
         {
           "name": "document",
-          "objects": 200
+          "objects": 201
         }
       ],
       "rule_refs": [
@@ -2680,11 +2688,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 225,
+        "mcp_resources": 226,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 224,
+        "objects": 225,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -5298,8 +5306,7 @@
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_scope_classify",
-              "route": "GET /api/v1/scope/classify",
-              "cli": "majordomus scope classify"
+              "route": "GET /api/v1/scope/classify"
             }
           ]
         }
@@ -5597,7 +5604,7 @@
         "mcp_tools": 4,
         "mcp_resources": 30,
         "http_routes": 4,
-        "cli_paths": 2,
+        "cli_paths": 1,
         "commands": 1,
         "objects": 27,
         "rules": 6,
@@ -8460,17 +8467,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1054,
-    "builtin": 42,
-    "declarative": 1012,
+    "capabilities": 1056,
+    "builtin": 43,
+    "declarative": 1013,
     "modules": 16,
-    "mcp_tools": 40,
-    "mcp_resources": 1028,
-    "http_routes": 42,
-    "cli_commands": 59,
+    "mcp_tools": 41,
+    "mcp_resources": 1029,
+    "http_routes": 43,
+    "cli_commands": 60,
     "shell_commands": 27,
     "kinds": 27,
-    "objects": 1012,
+    "objects": 1013,
     "by_kind": {
       "adr": 23,
       "application": 5,
@@ -8481,7 +8488,7 @@
       "context": 26,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 200,
+      "document": 201,
       "feature": 20,
       "implementation": 42,
       "issue": 176,
