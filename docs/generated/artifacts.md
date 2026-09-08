@@ -163,7 +163,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `749013b70d76faf7` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `30e71338d0ec96d6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 2842 | `2ac359554068d8fd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1392248 | `99128d1f9e31f73f` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1392248 | `5b058e865c923751` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `2bb68783b4195c7e` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `07c4fd6a938169b8` |
 | `site/static/install.sh` | `installer` | text | 28286 | `30e8f6d7c9317caa` |
