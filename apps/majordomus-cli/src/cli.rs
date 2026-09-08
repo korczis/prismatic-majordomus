@@ -50,6 +50,122 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// Every command this repository can be asked to run, what running each one changes, and the surfaces it appears on
+    Commands(CommandsArgs),
+    /// Answer a shell's completion request, and print the generic adapter that asks
+    Completion(CompletionArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus commands`. The canonical graph, read.
+pub struct CommandsArgs {
+    #[command(subcommand)]
+    /// `list`, `explain`, `graph` or `projection`; none lists.
+    pub command: Option<CommandsCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    #[arg(long, global = true)]
+    /// Also discover the workflows `just` holds outside the executable
+    pub workflows: bool,
+}
+
+#[derive(Debug, Subcommand)]
+/// The readings of the canonical command graph.
+pub enum CommandsCommand {
+    /// Every command with its effect and the surfaces it appears on
+    List,
+    /// One command: where it is declared, what running it changes, and every spelling of it
+    Explain {
+        /// The canonical id, `worktree.create`
+        #[arg(value_name = "COMMAND")]
+        id: String,
+    },
+    /// The whole graph as one document
+    Graph,
+    /// The graph as one surface spells it
+    Projection {
+        /// Which surface
+        #[arg(value_enum)]
+        surface: ProjectionSurface,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// A surface the graph can be rendered for.
+pub enum ProjectionSurface {
+    /// The `just` bridge: one recipe per canonical command, forwarding its arguments
+    Just,
+    /// The command line
+    Cli,
+    /// MCP tool names
+    Mcp,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus completion`.
+pub struct CompletionArgs {
+    #[command(subcommand)]
+    /// `query` or `script`.
+    pub command: CompletionCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// What a shell adapter asks for.
+pub enum CompletionCommand {
+    /// Answer one completion request: the words typed so far, and which one the cursor is in
+    Query {
+        /// Which command line is being completed
+        #[arg(long, value_enum, default_value_t = CompletionSurface::Cli)]
+        surface: CompletionSurface,
+
+        /// The index, in the words after `--`, of the word being completed
+        #[arg(long, default_value_t = 0)]
+        cursor: usize,
+
+        /// Output shape
+        #[arg(long, value_enum, default_value_t = CompletionFormat::Shell)]
+        format: CompletionFormat,
+
+        /// The words typed so far, without the program's own name
+        #[arg(last = true, value_name = "WORD", allow_hyphen_values = true)]
+        words: Vec<String>,
+    },
+    /// Print the generic adapter for one shell: it carries no command, and never needs regenerating
+    Script {
+        /// Which shell
+        #[arg(value_enum)]
+        shell: CompletionShell,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// The command line a completion request is about.
+pub enum CompletionSurface {
+    /// The executable's own command line
+    Cli,
+    /// The `just` bridge, whose recipes resolve to the same canonical commands
+    Just,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// How candidates are printed.
+pub enum CompletionFormat {
+    /// One candidate per line, value and description separated by a tab
+    Shell,
+    /// The typed answer, with the graph fingerprint it was computed from
+    Json,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// A shell an adapter exists for.
+pub enum CompletionShell {
+    /// zsh
+    Zsh,
+    /// bash
+    Bash,
 }
 
 #[derive(Debug, Args)]
@@ -836,6 +952,90 @@ pub struct CommandExamples {
 /// disposable repository. Adding a command without adding its example does not pass
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
+    CommandExamples {
+        command: "commands",
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-default-list",
+            title: "Everything this repository can be asked to run",
+            description: "`commands` with nothing after it lists every canonical command: its identity, what running it changes, the surfaces it appears on, and its own one-line description. The list is the graph, so a command added to the declaration is in it without anything here being edited.",
+            argv: &["commands"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["capabilities.list", "read-only", "just"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands list",
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-list-json",
+            title: "The commands as one document",
+            description: "The same list as JSON: every node with its arguments, where its values come from, what running it changes and every spelling of it. This is what the Cockpit's palette and a shell adapter read.",
+            argv: &["commands", "list", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/0/id", "/0/projections/docs"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands explain",
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-explain-destructive",
+            title: "Why a command is not offered to a machine",
+            description: "One command, with where it is declared, what running it changes, and every surface it appears on — including the ones it does not, with the reason. A destructive command is on the command line and in the bridge, and is not an MCP tool, because its classification says so.",
+            argv: &["commands", "explain", "worktree.remove"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["destructive", "just worktree-remove", "none —"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands graph",
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-graph-json",
+            title: "The whole graph, with its fingerprint",
+            description: "The graph as one document: its schema, the version of the executable that produced it, the fingerprint of its own content, every command and every diagnostic. The fingerprint is a function of the graph and not of the clock, so a cache keyed on it is safe.",
+            argv: &["commands", "graph"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/fingerprint", "/commands/0/id"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands projection",
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-projection-just",
+            title: "The `just` bridge, generated",
+            description: "The bridge as it is materialised: one recipe per canonical command, its description the command's own, its group its namespace, its arguments forwarded, and a confirmation on anything that changes the repository. Nothing in it is written by hand, and nothing in it calls `just`.",
+            argv: &["commands", "projection", "just"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["GENERATED FILE", "capabilities-list *args:", "[confirm("]),
+        }],
+    },
+    CommandExamples {
+        command: "completion query",
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "completion-query-subcommands",
+            title: "What may be typed next",
+            description: "The words typed so far and the index of the one being completed; the answer is what may follow, from the canonical graph. The same request against the `just` surface resolves the recipe to the same command and answers identically, which is why the two can never drift.",
+            argv: &["completion", "query", "--surface", "cli", "--cursor", "1", "--", "worktree", ""],
+            setup: &[],
+            expect: Expect::StdoutContains(&["create", "list"]),
+        }],
+    },
+    CommandExamples {
+        command: "completion script",
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "completion-script-zsh",
+            title: "The adapter a shell installs once",
+            description: "The generic adapter: it reports what has been typed and renders what comes back, and carries no command, no flag and no value of any repository. It is installed once and never regenerated, whatever is added to the executable afterwards.",
+            argv: &["completion", "script", "zsh"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["#compdef", "completion query"]),
+        }],
+    },
     CommandExamples {
         command: "worktree",
         semantics: Semantics::read_only(),

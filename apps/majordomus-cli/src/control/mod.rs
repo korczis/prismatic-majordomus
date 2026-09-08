@@ -24,8 +24,10 @@
 //! The distinction from [`crate::commands`] is worth stating once: that module *implements*
 //! the executable's own commands; this one *describes* every command there is.
 
+pub mod completion;
 pub mod effect;
 pub mod graph;
+pub mod just;
 pub mod projection;
 pub mod workflow;
 

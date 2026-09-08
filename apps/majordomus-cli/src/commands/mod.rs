@@ -3,6 +3,7 @@
 
 pub mod bench;
 pub mod capabilities;
+pub mod control;
 pub mod distribution;
 pub mod generate;
 pub mod mcp;
@@ -28,5 +29,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Why(args) => why::run(args),
         Command::Distribution(args) => distribution::run(args),
         Command::Worktree(args) => worktree::run(args),
+        Command::Commands(args) => control::run(args),
+        Command::Completion(args) => control::completion(args),
     }
 }

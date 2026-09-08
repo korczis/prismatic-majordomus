@@ -166,7 +166,7 @@ impl Semantics {
             ));
         }
         if !self.effect.machine_callable() {
-            return Some(format!("it is {}", self.effect.describe()));
+            return Some(format!("it {}", self.effect.describe()));
         }
         None
     }
