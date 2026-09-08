@@ -194,7 +194,7 @@
       <li><a href="#errors" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Errors</a></li>
       <li><a href="#infrastructure" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Server routes</a></li><li><a href="#tag-artifacts" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">artifacts</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-artifacts-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/artifacts</a></li></ul></li><li><a href="#tag-capabilities" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">capabilities</a>
-        <ul class="ml-3 hidden lg:block"><li><a href="#op-capabilities-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capabilities</a></li><li><a href="#op-capabilities-describe" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capability</a></li></ul></li><li><a href="#tag-continuity" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">continuity</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-capabilities-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capabilities</a></li><li><a href="#op-capabilities-projections" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capabilities/projections</a></li><li><a href="#op-capabilities-describe" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/capability</a></li></ul></li><li><a href="#tag-continuity" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">continuity</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-continuity-state" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/continuity</a></li></ul></li><li><a href="#tag-deploy" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">deploy</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-deploy-get" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/deployment</a></li><li><a href="#op-deploy-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/deployments</a></li><li><a href="#op-deploy-check" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/deployments/check</a></li></ul></li><li><a href="#tag-directories" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">directories</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-directories-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/directories</a></li></ul></li><li><a href="#tag-distribution" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">distribution</a>
@@ -348,6 +348,68 @@
                 <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-CapabilityList" class="text-fg-brand hover:underline">CapabilityList</a></td>
                 <td class="px-3 py-2 text-body">List capabilities: the result.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+              </tr></tbody>
+          </table>
+        </div>
+      </article><article id="op-capabilities-projections" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+          <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/capabilities/projections</code>
+          <a href="#op-capabilities-projections" class="font-mono text-xs text-body-subtle hover:underline">capabilities.projections</a>
+        </div>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Where each capability is projected</h3>
+        <p class="mt-1 text-sm text-body">A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down.</p>
+        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=8)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_projections</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ capabilities projections</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">module</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Only capabilities composed in this module.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"></td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">unmet</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Only the capabilities whose declared exposures are not all answered by their
+surface. Empty is the closure the rule asks for.</td>
+                <td class="px-3 py-2 font-mono text-xs text-body"><span class="block break-all"><span class="text-body-subtle">all:</span> false</span><span class="block break-all"><span class="text-body-subtle">unmet:</span> true</span></td>
+              </tr></tbody>
+          </table>
+        </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/capabilities/projections?unmet=false&quot;</pre></div>
+
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ClosureMatrix" class="text-fg-brand hover:underline">ClosureMatrix</a></td>
+                <td class="px-3 py-2 text-body">Where each capability is projected: the result.</td>
               </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
@@ -1851,7 +1913,7 @@ summary, the tags and the body.</td>
           <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
           <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
-          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_scope_classify</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ scope classify</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_scope_classify</span></li></ul><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Query parameters</h4>
         <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
           <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
             <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">name</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th><th class="px-3 py-2">examples</th></tr></thead>
@@ -3702,7 +3764,27 @@ either holds, does not, or could not be made from what this process can see.</p>
                 <td class="px-3 py-2 text-body"><code>clientInfo.title</code>, when the client sends one.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Peer" class="font-mono text-fg-brand underline">Peer</a></p></article><article id="schema-CockpitAreaRef" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-Peer" class="font-mono text-fg-brand underline">Peer</a></p></article><article id="schema-ClosureMatrix" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">ClosureMatrix</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">The whole matrix, with the findings and the debt beside it: one value that answers
+"where does each capability appear, and is any claim unmet".</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">rows</td>
+                <td class="px-3 py-2 font-mono text-body">array of Row <span class="text-body-subtle">→</span> <a href="#schema-Row" class="text-fg-brand underline">Row</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">One row per capability, in id order.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">unbacked</td>
+                <td class="px-3 py-2 font-mono text-body">array of string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Runnable commands of the command line that no capability claims, in command order.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-capabilities-projections" class="font-mono text-fg-brand hover:underline">capabilities.projections</a></p></article><article id="schema-CockpitAreaRef" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">CockpitAreaRef</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -4720,7 +4802,7 @@ resolve an end adds an external node rather than a dangling edge.</p><div class=
                 <td class="px-3 py-2 text-body">The one error.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="#op-deploy-list" class="font-mono text-fg-brand hover:underline">deploy.list</a> <a href="#op-deploy-check" class="font-mono text-fg-brand hover:underline">deploy.check</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-distribution-model" class="font-mono text-fg-brand hover:underline">distribution.model</a> <a href="#op-distribution-artifact" class="font-mono text-fg-brand hover:underline">distribution.artifact</a> <a href="#op-distribution-build" class="font-mono text-fg-brand hover:underline">distribution.build</a> <a href="#op-distribution-releases" class="font-mono text-fg-brand hover:underline">distribution.releases</a> <a href="#op-distribution-status" class="font-mono text-fg-brand hover:underline">distribution.status</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-health-live" class="font-mono text-fg-brand hover:underline">health.live</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-product-feature" class="font-mono text-fg-brand hover:underline">product.feature</a> <a href="#op-product-features" class="font-mono text-fg-brand hover:underline">product.features</a> <a href="#op-product-matrix" class="font-mono text-fg-brand hover:underline">product.matrix</a> <a href="#op-product-providers" class="font-mono text-fg-brand hover:underline">product.providers</a> <a href="#op-product-validate" class="font-mono text-fg-brand hover:underline">product.validate</a> <a href="#op-health-ready" class="font-mono text-fg-brand hover:underline">health.ready</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a> <a href="#op-web-surfaces" class="font-mono text-fg-brand hover:underline">web.surfaces</a> <a href="#op-why-list" class="font-mono text-fg-brand hover:underline">why.list</a> <a href="#op-why-areas" class="font-mono text-fg-brand hover:underline">why.areas</a> <a href="#op-why-audiences" class="font-mono text-fg-brand hover:underline">why.audiences</a> <a href="#op-why-diagnose" class="font-mono text-fg-brand hover:underline">why.diagnose</a> <a href="#op-why-moment" class="font-mono text-fg-brand hover:underline">why.moment</a> <a href="#op-why-validate" class="font-mono text-fg-brand hover:underline">why.validate</a> <a href="#op-worktree-topology" class="font-mono text-fg-brand hover:underline">worktree.topology</a> <a href="#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a> <a href="#op-worktree-migration_plan" class="font-mono text-fg-brand hover:underline">worktree.migration_plan</a> <a href="#op-worktree-status" class="font-mono text-fg-brand hover:underline">worktree.status</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-projections" class="font-mono text-fg-brand hover:underline">capabilities.projections</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="#op-deploy-list" class="font-mono text-fg-brand hover:underline">deploy.list</a> <a href="#op-deploy-check" class="font-mono text-fg-brand hover:underline">deploy.check</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-distribution-model" class="font-mono text-fg-brand hover:underline">distribution.model</a> <a href="#op-distribution-artifact" class="font-mono text-fg-brand hover:underline">distribution.artifact</a> <a href="#op-distribution-build" class="font-mono text-fg-brand hover:underline">distribution.build</a> <a href="#op-distribution-releases" class="font-mono text-fg-brand hover:underline">distribution.releases</a> <a href="#op-distribution-status" class="font-mono text-fg-brand hover:underline">distribution.status</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-health-live" class="font-mono text-fg-brand hover:underline">health.live</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-product-feature" class="font-mono text-fg-brand hover:underline">product.feature</a> <a href="#op-product-features" class="font-mono text-fg-brand hover:underline">product.features</a> <a href="#op-product-matrix" class="font-mono text-fg-brand hover:underline">product.matrix</a> <a href="#op-product-providers" class="font-mono text-fg-brand hover:underline">product.providers</a> <a href="#op-product-validate" class="font-mono text-fg-brand hover:underline">product.validate</a> <a href="#op-health-ready" class="font-mono text-fg-brand hover:underline">health.ready</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a> <a href="#op-web-surfaces" class="font-mono text-fg-brand hover:underline">web.surfaces</a> <a href="#op-why-list" class="font-mono text-fg-brand hover:underline">why.list</a> <a href="#op-why-areas" class="font-mono text-fg-brand hover:underline">why.areas</a> <a href="#op-why-audiences" class="font-mono text-fg-brand hover:underline">why.audiences</a> <a href="#op-why-diagnose" class="font-mono text-fg-brand hover:underline">why.diagnose</a> <a href="#op-why-moment" class="font-mono text-fg-brand hover:underline">why.moment</a> <a href="#op-why-validate" class="font-mono text-fg-brand hover:underline">why.validate</a> <a href="#op-worktree-topology" class="font-mono text-fg-brand hover:underline">worktree.topology</a> <a href="#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a> <a href="#op-worktree-migration_plan" class="font-mono text-fg-brand hover:underline">worktree.migration_plan</a> <a href="#op-worktree-status" class="font-mono text-fg-brand hover:underline">worktree.status</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ErrorDetail</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -7811,7 +7893,69 @@ capability's provenance is.</p><p class="mt-3 text-sm text-body"><span class="fo
           <h3 class="font-mono text-base font-semibold text-heading">Route</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">string</span>
         </div><p class="mt-2 text-sm text-body">A route a platform polls: an absolute path on this service, never a URL. The host is
-the deployment's to know and not the object's to state.</p><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-HealthRoutes" class="font-mono text-fg-brand underline">HealthRoutes</a></p></article><article id="schema-RuleRef" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+the deployment's to know and not the object's to state.</p><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-HealthRoutes" class="font-mono text-fg-brand underline">HealthRoutes</a></p></article><article id="schema-Row" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">Row</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">Where one capability is projected, and where it is not.</p>
+<p>This is the coverage matrix of the rule: a row per capability, a column per interface.
+It is derived, never written down — a capability that reaches nothing shows as a row of
+<code>false</code>, which is exactly the "exists but is invisible" case worth seeing.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The canonical id.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">module</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The module that composes it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">kind</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Query, command or resource.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">stability</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where it stands.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">cli</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The command line, when it declares one and clap has it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">http</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The HTTP route, when it declares one.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">mcp_tool</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The MCP tool name, when it declares one.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">mcp_resource</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The MCP resource URI, when it declares one.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">closed</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether every exposure this row declares is answered by its surface.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where the capability is declared; repository-relative.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ClosureMatrix" class="font-mono text-fg-brand underline">ClosureMatrix</a></p></article><article id="schema-RuleRef" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">RuleRef</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -8923,7 +9067,7 @@ is inferred from similarity.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eeb72044d555bfd767124adaf11b428f10e44f5f" class="font-mono underline">eeb7204</a> · inputs <span class="font-mono">8fdd5ebbf08c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/914c13f565774aa4aa92ae9b382043692e5a7c27" class="font-mono underline">914c13f</a> · inputs <span class="font-mono">b96be7008953</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
