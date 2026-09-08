@@ -15,8 +15,8 @@
       <tbody>
         {%- for e in plan.edges %}{%- set t = [i for i in plan.issues if i.id == e.to][0] -%}{%- set f = [i for i in plan.issues if i.id == e.from][0] -%}
         <tr class="border-t border-default align-top">
-          <td class="px-4 py-2 font-mono text-xs"><a href="{{ get_url(path="/plan/" ~ (e.from | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ e.from }}</a> {{ <plan_status status={f.status} /> }}</td>
-          <td class="px-4 py-2 font-mono text-xs"><a href="{{ get_url(path="/plan/" ~ (e.to | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ e.to }}</a></td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="{{ get_url(path="/plan/" ~ (e.from | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand underline">{{ e.from }}</a> {{ <plan_status status={f.status} /> }}</td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="{{ get_url(path="/plan/" ~ (e.to | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand underline">{{ e.to }}</a></td>
           <td class="px-4 py-2">{{ <plan_status status={t.status} /> }} <span class="text-heading">{{ t.title }}</span></td>
         </tr>
         {%- endfor %}

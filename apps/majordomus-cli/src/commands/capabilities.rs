@@ -180,6 +180,58 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
             };
             w(&mut out, pretty(schema))?;
         }
+        CapabilitiesCommand::Projections {
+            module,
+            unmet,
+            format,
+        } => {
+            let v = ctx
+                .execute(
+                    cli_capability(ctx, &["capabilities", "projections"])?,
+                    json!({ "module": module, "unmet": unmet }),
+                )
+                .map_err(map)?;
+            match format {
+                OutputFormat::Json => w(&mut out, pretty(&v))?,
+                OutputFormat::Text => {
+                    let rows = v["rows"].as_array().cloned().unwrap_or_default();
+                    for r in &rows {
+                        let cell = |k: &str| r[k].as_str().unwrap_or("-").to_string();
+                        w(
+                            &mut out,
+                            format!(
+                                "{:<4} {:<34} {:<38} {:<34} {}",
+                                if r["closed"].as_bool() == Some(true) {
+                                    "ok"
+                                } else {
+                                    "FAIL"
+                                },
+                                r["id"].as_str().unwrap_or("?"),
+                                cell("cli"),
+                                cell("http"),
+                                cell("mcp_tool"),
+                            ),
+                        )?;
+                    }
+                    let unbacked = v["unbacked"].as_array().cloned().unwrap_or_default();
+                    w(&mut out, format!("rows: {}", rows.len()))?;
+                    if !unbacked.is_empty() {
+                        w(
+                            &mut out,
+                            format!(
+                                "commands no capability claims: {} ({})",
+                                unbacked.len(),
+                                unbacked
+                                    .iter()
+                                    .filter_map(Value::as_str)
+                                    .collect::<Vec<_>>()
+                                    .join(", ")
+                            ),
+                        )?;
+                    }
+                }
+            }
+        }
         CapabilitiesCommand::Validate => {
             // App::load already refused to build an invalid registry with every error named.
             let s = ctx.registry.summary();
@@ -240,6 +292,29 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
                     }
                 }
             }
+            // The command line is the one projection that is declared twice — once in
+            // clap and once as the `cli` exposure of a descriptor — so it is the one that
+            // can drift. Every other projection is built by walking the registry and
+            // cannot carry an entry the registry does not have.
+            let unmet = crate::capability::closure::findings(&ctx.registry, &cli);
+            let debt = crate::capability::closure::unbacked(&ctx.registry, &cli);
+            let declared = ctx
+                .registry
+                .iter()
+                .filter(|c| c.exposure.cli.is_some())
+                .count();
+            if unmet.is_empty() {
+                w(&mut out, format!("OK   projection  {declared} declared CLI exposure(s) answered by a runnable command; {} command(s) claimed by no capability", debt.len()))?;
+            } else {
+                failures += unmet.len();
+                w(&mut out, format!("FAIL projection  {} capability(ies) claim a command line the clap declaration does not answer  [reproduce: majordomus capabilities projections --unmet]", unmet.len()))?;
+                for f in &unmet {
+                    for line in f.to_string().lines() {
+                        w(&mut out, format!("     {line}"))?;
+                    }
+                }
+            }
+
             let projection = crate::bench::BenchmarkProjection::from_context(ctx);
             let coverage = crate::bench::Coverage::compute(ctx, &projection);
             let total = coverage.tallies.get("total").cloned().unwrap_or_default();

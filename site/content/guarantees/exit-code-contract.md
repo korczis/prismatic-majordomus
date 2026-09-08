@@ -1,7 +1,7 @@
 +++
 title = "Exit codes are a contract, and no code means \"warn and continue\""
 description = "Every command exits with one of a fixed set of codes: 0 ok, 2 usage, 10 contract unmet, 11 drift found, 12 missing artifact, 13 internal error, 15 refused. There is deliberately no code that means \"something was wrong but carry on\". A caller — including a git hook — must propagate them, and doctor scans hook lines for || true and || exit 0 around Majordomus invocations."
-weight = 23
+weight = 24
 [extra]
 claim_id = "exit-code-contract"
 status = "guaranteed"

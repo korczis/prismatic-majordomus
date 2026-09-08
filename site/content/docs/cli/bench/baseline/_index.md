@@ -4,7 +4,7 @@ description = "The accepted baseline of this platform under .ai/repo/benchmarks/
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 12
+weight = 13
 [extra]
 route = "/docs/cli/bench/baseline/"
 command = "majordomus bench baseline"

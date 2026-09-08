@@ -51,6 +51,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `modules/objects` | `markdown` | — | the `objects` module of the canonical Majordomus capability registry |
 | `modules/peers` | `markdown` | — | the `peers` module of the canonical Majordomus capability registry |
 | `modules/perf` | `markdown` | — | the `perf` module of the canonical Majordomus capability registry |
+| `modules/product` | `markdown` | — | the `product` module of the canonical Majordomus capability registry |
 | `modules/repository` | `markdown` | — | the `repository` module of the canonical Majordomus capability registry |
 | `modules/web` | `markdown` | — | the `web` module of the canonical Majordomus capability registry |
 | `modules/why` | `markdown` | — | the `why` module of the canonical Majordomus capability registry |
@@ -79,6 +80,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `sections/skill` | `text` | — | the document schema `share/schemas/majordomus/skill/skill.v1.proto` |
 | `sections/use-case` | `text` | — | the document schema `share/schemas/majordomus/use-case/use-case.v1.proto` |
 | `site-distribution` | `json` | — | share/distribution.yaml and the release records |
+| `site-product` | `json` | `majordomus-site-product/v1` | the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology |
+| `site-product-graph` | `json` | — | the features, what they are made of, and the interfaces that follow, as the derived `product` graph |
 | `site-registry` | `json` | `majordomus-site-registry/v2` | the capability registry and the index of this repository's layer |
 | `site-why` | `json` | `majordomus-site-why/v1` | the operational moments, audiences and areas of this repository's layer |
 | `site-why-graph` | `json` | — | the moments and what answers them, as the derived `why` graph |
@@ -94,33 +97,34 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
-| `docs/generated/benchmarks.json` | `benchmarks` | json | 12192 | `08e06b0898054b8a` |
-| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 6271 | `1a42d9f2b290bb73` |
-| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 8838 | `511a7874772ec92f` |
-| `docs/generated/capabilities.md` | `capabilities` | markdown | 9955 | `2e2df438ad9f7e65` |
-| `docs/generated/cli.json` | `cli` | json | 309768 | `0b061d8f15a38c08` |
-| `docs/generated/cli.md` | `cli` | markdown | 128809 | `317695509ae19936` |
-| `docs/generated/cli.yaml` | `cli` | yaml | 240798 | `3dacbbf64bf88ad8` |
+| `docs/generated/benchmarks.json` | `benchmarks` | json | 14028 | `8d49b65b2478e021` |
+| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 7046 | `8e87adf923f40b87` |
+| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 10130 | `5b8573dd742b30b4` |
+| `docs/generated/capabilities.md` | `capabilities` | markdown | 11511 | `97652af8b4879f31` |
+| `docs/generated/cli.json` | `cli` | json | 365663 | `9924a603db982475` |
+| `docs/generated/cli.md` | `cli` | markdown | 151217 | `6a74559fd9e62eb1` |
+| `docs/generated/cli.yaml` | `cli` | yaml | 284543 | `971571d4a253ba32` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `b900b116d861813a` |
-| `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 2074 | `444d3bca0664c436` |
+| `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `6b5db1a51c39bbba` |
 | `docs/generated/modules/continuity.md` | `modules/continuity` | markdown | 1519 | `d9b0f913e9be3b3e` |
 | `docs/generated/modules/deploy.md` | `modules/deploy` | markdown | 2737 | `41c2bdddaae0fc0b` |
 | `docs/generated/modules/directories.md` | `modules/directories` | markdown | 1653 | `65b6e352abcacfd4` |
-| `docs/generated/modules/distribution.md` | `modules/distribution` | markdown | 3610 | `de2638fdb4b34f14` |
+| `docs/generated/modules/distribution.md` | `modules/distribution` | markdown | 4534 | `40785d4763fee110` |
 | `docs/generated/modules/graph.md` | `modules/graph` | markdown | 1797 | `9f69eab6821cefef` |
 | `docs/generated/modules/health.md` | `modules/health` | markdown | 2449 | `053f540d8fed9770` |
 | `docs/generated/modules/objects.md` | `modules/objects` | markdown | 2793 | `d9be2088002fe494` |
 | `docs/generated/modules/peers.md` | `modules/peers` | markdown | 1943 | `779dbf056e6d4a03` |
 | `docs/generated/modules/perf.md` | `modules/perf` | markdown | 1040 | `a8d0581f34144725` |
-| `docs/generated/modules/repository.md` | `modules/repository` | markdown | 2522 | `cb4c5a38a9c5c25a` |
+| `docs/generated/modules/product.md` | `modules/product` | markdown | 6010 | `1384da4065c236b8` |
+| `docs/generated/modules/repository.md` | `modules/repository` | markdown | 2484 | `152c4d0588bdd32b` |
 | `docs/generated/modules/web.md` | `modules/web` | markdown | 1462 | `008784296b1d2b56` |
 | `docs/generated/modules/why.md` | `modules/why` | markdown | 6121 | `d09554e51b34a51b` |
 | `docs/generated/modules/worktree.md` | `modules/worktree` | markdown | 4892 | `ab8c023b51098ab6` |
-| `docs/generated/openapi.json` | `openapi` | json | 353500 | `12a66c89e79cb54f` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 273239 | `35ddb5f3f1b29e13` |
-| `docs/generated/registry.json` | `registry` | json | 438319 | `49c1b228d5df2ccd` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 333558 | `c1461aac3350c8e9` |
+| `docs/generated/openapi.json` | `openapi` | json | 428092 | `cd9cf5fb4e6d4321` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 331051 | `e0e9e5f1311b4b03` |
+| `docs/generated/registry.json` | `registry` | json | 522855 | `a2f7b39449e98eeb` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 399239 | `78085b113e0b778c` |
 | `docs/generated/web.json` | `web` | json | 4063 | `203ec053614bc9d2` |
 | `docs/generated/web.yaml` | `web` | yaml | 3130 | `f2dd80b4216fcaea` |
 | `share/allow/adr.txt` | `allow/adr` | text | 372 | `1fc4068683403a69` |
@@ -132,7 +136,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/document.txt` | `allow/document` | text | 273 | `0a90ba480eb1f07b` |
 | `share/allow/issue.txt` | `allow/issue` | text | 788 | `57e41a4ad52cd309` |
 | `share/allow/knowledge.txt` | `allow/knowledge` | text | 428 | `580e39bedc904932` |
-| `share/allow/manifest.txt` | `allow/manifest` | text | 627 | `44211b6d9fbe838c` |
+| `share/allow/manifest.txt` | `allow/manifest` | text | 648 | `e955e73fa04650ab` |
 | `share/allow/milestone.txt` | `allow/milestone` | text | 759 | `f0974dee1c9e9245` |
 | `share/allow/policy.txt` | `allow/policy` | text | 1340 | `e668e98db9e4526d` |
 | `share/allow/profile.txt` | `allow/profile` | text | 677 | `2d0de772be2e943c` |
@@ -165,9 +169,11 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `03087ecdccd04cee` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `bdba56212ef6061e` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1392849 | `47c6bb252e3b0221` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 59513 | `6eeba51f26d20cbc` |
+| `site/data/registry/product.json` | `site-product` | json | 299524 | `808a770ffd3d5afd` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1583405 | `2f556509cb453f50` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `fb5f4204da2c1cea` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `4a758ed225ba49cb` |
-| `site/static/install.sh` | `installer` | text | 28286 | `30e8f6d7c9317caa` |
+| `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |
 | `site/static/releases/latest.json` | `release/latest` | json | 2369 | `8331c85c5162a5b5` |
 | `site/static/releases/v0.3.1.json` | `release/v0.3.1` | json | 2369 | `8331c85c5162a5b5` |

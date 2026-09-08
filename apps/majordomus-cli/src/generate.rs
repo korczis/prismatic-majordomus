@@ -624,6 +624,10 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             // so the two `generate` passes of the derivation graph agree byte for byte
             // even though the pass between them adds documents to the index.
             out.extend(crate::site::why_artifacts(&app.context)?);
+            // The product model as the site reads it: the features with everything
+            // derived, the matrix, the providers. Index-independent like the catalogue,
+            // so both `generate` passes of the derivation graph agree byte for byte.
+            out.extend(crate::site::product_artifacts(&app.context)?);
         }
     }
     if targets.contains(&Target::Distribution) {

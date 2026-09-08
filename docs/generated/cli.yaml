@@ -630,6 +630,120 @@ cli:
         - path:
             - majordomus
             - capabilities
+            - projections
+          route: /docs/cli/capabilities/projections/
+          executable: true
+          usage: "majordomus capabilities projections [OPTIONS]"
+          about: "Where each capability is projected, and every claim its surface does not answer"
+          args:
+            - name: module
+              long: module
+              positional: false
+              help: Only capabilities composed in this module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: unmet
+              long: unmet
+              positional: false
+              help: Only the capabilities whose declared exposures are not all answered
+              value_name: UNMET
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: capabilities-projections-unmet
+              title: Every exposure a capability claims that its surface does not answer
+              description: "`rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written."
+              argv:
+                - capabilities
+                - projections
+                - "--unmet"
+              command: majordomus capabilities projections --unmet
+              setup: []
+              expectation: exits 0
+            - id: capabilities-projections-module
+              title: "Where one module's capabilities appear"
+              description: "A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one."
+              argv:
+                - capabilities
+                - projections
+                - "--module"
+                - worktree
+              command: majordomus capabilities projections --module worktree
+              setup: []
+              expectation: "exits 0; prints worktree.topology, majordomus worktree topology"
+          subcommands: []
+        - path:
+            - majordomus
+            - capabilities
             - validate
           route: /docs/cli/capabilities/validate/
           executable: true
@@ -4014,6 +4128,87 @@ cli:
         - path:
             - majordomus
             - distribution
+            - status
+          route: /docs/cli/distribution/status/
+          executable: true
+          usage: "majordomus distribution status [OPTIONS]"
+          about: "Whether the advertised one-line installation works right now, and what is missing when it does not"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: distribution-status
+              title: Whether the published one-line installation works right now
+              description: "The operator's question — *can a machine that has never seen this project install it with the advertised command?* — answered from the distribution model and the release records, without touching the network. Each check names what was observed; a failing one names its cause and the command that changes it. Shown here in a repository that has published nothing, where the answer is no and the exit code is 10, which is what makes it usable as a check rather than as prose. `distribution validate` is the gate over the model itself; this is the gate over the state a user meets."
+              argv:
+                - distribution
+                - status
+              command: majordomus distribution status
+              setup: []
+              expectation: exits 10
+          subcommands: []
+        - path:
+            - majordomus
+            - distribution
             - validate
           route: /docs/cli/distribution/validate/
           executable: true
@@ -6190,4 +6385,947 @@ cli:
               command: majordomus worktree branches
               setup: []
               expectation: exits 0
+          subcommands: []
+    - path:
+        - majordomus
+        - product
+      route: /docs/cli/product/
+      executable: true
+      usage: "majordomus product [OPTIONS] [COMMAND]"
+      about: "The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+        - name: featured
+          long: featured
+          positional: false
+          help: Only the features the homepage shows
+          value_name: FEATURED
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: all
+          long: all
+          positional: false
+          help: "Include drafts and deprecated features, not only the stable ones"
+          value_name: ALL
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: area
+          long: area
+          positional: false
+          help: Only features serving this operational area of the why catalogue
+          value_name: AREA
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: module
+          long: module
+          positional: false
+          help: Only features made of this capability module
+          value_name: MODULE
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: names_command
+          long: names-command
+          positional: false
+          help: Only features made of this shell command
+          value_name: NAMES_COMMAND
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: surface
+          long: surface
+          positional: false
+          help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+          value_name: SURFACE
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: query
+          long: query
+          short: q
+          positional: false
+          help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+          value_name: QUERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+      examples:
+        - id: product-default-list
+          title: "What the product does, as the layer declares it"
+          description: "`product` with nothing after it lists the features, because listing is what a person wants when they ask what the tool is for. Every column is derived: the surfaces a feature is exposed through come from the modules, commands and kinds it names, never from the file."
+          argv:
+            - product
+          command: majordomus product
+          setup: []
+          expectation: "exits 0; prints SLUG, SURFACES, feature(s)"
+      subcommands:
+        - path:
+            - majordomus
+            - product
+            - list
+          route: /docs/cli/product/list/
+          executable: true
+          usage: "majordomus product list [OPTIONS]"
+          about: "Every feature, narrowed by any filter, with the surfaces derived for each"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-list
+              title: "Every stable feature, in presentation order"
+              description: "Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered."
+              argv:
+                - product
+                - list
+              command: majordomus product list
+              setup: []
+              expectation: "exits 0; prints SLUG, fixture-feature"
+            - id: product-list-json
+              title: "The same, as the shape the API and MCP answer with"
+              description: "One domain model behind every projection: this document is what `GET /api/v1/product/features` returns and what the `majordomus_features` tool answers, with the counts, the fingerprint and the surfaces of every feature."
+              argv:
+                - product
+                - list
+                - "--format"
+                - json
+              command: majordomus product list --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /counts/features, /features/0/surfaces, /fingerprint"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - show
+          route: /docs/cli/product/show/
+          executable: true
+          usage: "majordomus product show [OPTIONS] <ID>"
+          about: "One feature in full: what it is made of, resolved, and everything derived from that"
+          args:
+            - name: id
+              positional: true
+              help: "The feature's id, which is also its slug and its route"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-show
+              title: "One feature, with everything derived from what it names"
+              description: "The record as its file declares it, then what nobody authored: the capabilities of its modules with their tools and routes, the commands with their summaries, the objects of its kinds counted, the rules with their class, the documents, the decisions, the claims with their status, the moments it answers, and the interfaces all of that adds up to."
+              argv:
+                - product
+                - show
+                - fixture-feature
+              command: majordomus product show fixture-feature
+              setup: []
+              expectation: "exits 0; prints fixture-feature, surfaces, derived"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - matrix
+          route: /docs/cli/product/matrix/
+          executable: true
+          usage: "majordomus product matrix [OPTIONS]"
+          about: "Every feature against every interface, and every module, command and kind against the features that name it"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-matrix
+              title: "Every feature against every interface, and what no feature names"
+              description: "One row per feature with a mark per surface, then every module of the executable, every public command and every kind of the layer with the features that name it. A row with no feature is a gap the product page cannot hide."
+              argv:
+                - product
+                - matrix
+              command: majordomus product matrix
+              setup: []
+              expectation: "exits 0; prints FEATURE, cli, MODULE"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - providers
+          route: /docs/cli/product/providers/
+          executable: true
+          usage: "majordomus product providers [OPTIONS]"
+          about: "Every provider the tool has an adapter for, with what this repository does with it"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-providers
+              title: Every provider the tool has an adapter for
+              description: "One line per template the distribution ships, with the bootstraps this repository's policy renders through it, the client configuration it carries for the shared MCP server, and the hooks the policy wires. The set is the templates; nothing here is a list of vendors."
+              argv:
+                - product
+                - providers
+              command: majordomus product providers
+              setup: []
+              expectation: "exits 0; prints PROVIDER, agents"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - validate
+          route: /docs/cli/product/validate/
+          executable: true
+          usage: "majordomus product validate [OPTIONS]"
+          about: Every finding over the model; exit 10 when any is an error
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-validate
+              title: Check the model before anything projects it
+              description: "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error."
+              argv:
+                - product
+                - validate
+              command: majordomus product validate
+              setup: []
+              expectation: "exits 0; prints feature(s), valid"
           subcommands: []

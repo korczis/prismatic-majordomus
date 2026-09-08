@@ -21,6 +21,10 @@
 
 function flush() {
   if (file == "") return
+  # A route that moved is published as Zola's alias stub: a title, a meta refresh and a
+  # script, and deliberately none of the landmarks a page has. It is a redirect, not a page,
+  # and holding it to a page's contract would be holding it to the wrong one.
+  if (redirect) return
   if (!has_viewport)    print rel "\tviewport\t"
   if (!has_description) print rel "\tdescription\t"
   if (!has_main)        print rel "\tmain\t"
@@ -51,11 +55,13 @@ FNR == 1 {
   placeholder = inline_style = gridcols = fixedwidth = 0
   has_mermaid = has_mermaid_js = 0
   in_pre = 0; wrapped = 0; seen_format = 0; prev = ""
+  redirect = 0
 }
 
 {
   line = $0
 
+  if (index(line, "<title>Redirect</title>"))    redirect = 1
   if (index(line, "<meta name=\"viewport\""))    has_viewport = 1
   if (index(line, "<meta name=\"description\"")) has_description = 1
   if (index(line, "<main"))                      has_main = 1

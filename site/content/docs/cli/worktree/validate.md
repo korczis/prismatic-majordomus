@@ -1,7 +1,7 @@
 +++
 title = "majordomus worktree validate"
 description = "Every error of the topology, and nothing else; exit 10 when there is one"
-weight = 51
+weight = 53
 [extra]
 route = "/docs/cli/worktree/validate/"
 command = "majordomus worktree validate"

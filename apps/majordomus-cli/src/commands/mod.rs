@@ -6,6 +6,7 @@ pub mod capabilities;
 pub mod distribution;
 pub mod generate;
 pub mod mcp;
+pub mod product;
 pub mod scope;
 pub mod serve;
 pub mod web;
@@ -28,5 +29,6 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Why(args) => why::run(args),
         Command::Distribution(args) => distribution::run(args),
         Command::Worktree(args) => worktree::run(args),
+        Command::Product(args) => product::run(args),
     }
 }

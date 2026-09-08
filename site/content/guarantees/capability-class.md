@@ -1,7 +1,7 @@
 +++
 title = "A profile names a capability class rather than a vendor model"
 description = "Profiles say fast, standard, strong or strongest, never a model identifier. The generated instructions tell the worker to pick the closest model its environment offers. The canonical layer stays provider-neutral; mapping a class to a concrete model is left to whoever runs the worker, or to a future adapter."
-weight = 56
+weight = 57
 [extra]
 claim_id = "capability-class"
 status = "advisory"

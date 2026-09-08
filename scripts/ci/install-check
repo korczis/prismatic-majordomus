@@ -26,6 +26,7 @@
 #
 #   scripts/ci/install-check              against the published site
 #   scripts/ci/install-check --base URL   against another origin (a preview deployment)
+#   scripts/ci/install-check --wait N     let the metadata appear within N seconds first
 #   scripts/ci/install-check --keep       leave the temporary tree for inspection
 #
 # Exit: 0 the advertised command works, 10 it does not, 12 this machine cannot judge.
@@ -36,9 +37,16 @@ cd "$ROOT"
 
 BASE=""
 KEEP=0
+# How long the metadata may still be on its way. Zero for a person, who wants an answer now;
+# CI passes a window, because publishing a release and deploying the site are two workflows
+# and the second is not instant — a push that lands between them would otherwise be told the
+# promise is broken when it is merely a few minutes old. A site that cannot serve the
+# metadata within the window is broken, and the finding stands.
+WAIT=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --base) BASE="${2:-}"; shift 2 ;;
+    --wait) WAIT="${2:-0}"; shift 2 ;;
     --keep) KEEP=1; shift ;;
     -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
     *) echo "install-check: unknown option $1" >&2; exit 2 ;;
@@ -103,6 +111,18 @@ fetch() { curl -fsSL --retry 3 --retry-delay 5 --max-time 120 "$1"; }
 
 # ---------------------------------------------------------------- 1. the metadata
 latest="$WORK/latest.json"
+if [ "$WAIT" -gt 0 ] && ! fetch "$latest_url" > "$latest" 2>/dev/null; then
+  printf 'install-check: the metadata is not there yet; waiting up to %ss for the deployment\n' "$WAIT"
+  waited=0
+  while [ "$waited" -lt "$WAIT" ]; do
+    sleep 15
+    waited=$((waited + 15))
+    if fetch "$latest_url" > "$latest" 2>/dev/null; then
+      printf 'install-check: the metadata appeared after %ss\n' "$waited"
+      break
+    fi
+  done
+fi
 if ! fetch "$latest_url" > "$latest" 2>"$WORK/latest.err"; then
   fail "the metadata the installer resolves is not served: $latest_url"
   fail "a reader of the README runs the advertised command and is told no release is published"

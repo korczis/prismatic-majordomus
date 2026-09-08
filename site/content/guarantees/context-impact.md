@@ -1,7 +1,7 @@
 +++
 title = "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing"
 description = "A change to the tree is a first-class event. majordomus context affected reads a change"
-weight = 73
+weight = 74
 [extra]
 claim_id = "context-impact"
 status = "guaranteed"

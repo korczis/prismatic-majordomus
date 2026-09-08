@@ -4,11 +4,10 @@ command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 "$T/scripts/generate-site-data" >/dev/null; cp -R "$T/site/data/generated" "$T/before"
-# 1. version
-# whatever the version is, not the version it was when this case was written: a release that
-# bumps MJ_VERSION would otherwise leave this `sed` matching nothing, and the case would fail
-# on the assertion below with no sign that the mutation never happened
-sed -i.bak 's/^MJ_VERSION=".*"/MJ_VERSION="9.9.9"/' "$T/bin/majordomus"; rm -f "$T/bin/majordomus.bak"
+# 1. version — whatever it is now, not a version written down here: pinning 0.1.0 meant the
+#    sed stopped matching at the first release and the mutation silently did nothing, so the
+#    assertion below compared the real version with 9.9.9 and failed on every run since.
+sed -i.bak -E 's/^MJ_VERSION="[^"]*"/MJ_VERSION="9.9.9"/' "$T/bin/majordomus"; rm -f "$T/bin/majordomus.bak"
 grep -q '^MJ_VERSION="9.9.9"$' "$T/bin/majordomus" || { echo "    the version mutation did not apply"; exit 1; }
 # 2. a profile description and effort
 sed -i.bak 's/^description: .*/description: CHANGED DESCRIPTION/; s/^effort: low$/effort: max/' "$T/share/skeleton/profiles/routine.yaml"; rm -f "$T/share/skeleton/profiles/routine.yaml.bak"

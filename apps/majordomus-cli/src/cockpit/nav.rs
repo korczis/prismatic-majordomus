@@ -42,6 +42,88 @@ pub enum Area {
     None,
 }
 
+/// One of the Cockpit's areas as data: what a person sees, where it goes, and the area it
+/// marks. The one list of areas there is; [`build`] reads it for the sidebar and the
+/// product model reads it to validate the areas a feature names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AreaInfo {
+    /// The id a feature names it by: the last segment of its route.
+    pub id: &'static str,
+    /// What the reader sees.
+    pub label: &'static str,
+    /// Where it goes.
+    pub href: &'static str,
+    /// The area it marks.
+    pub area: Area,
+}
+
+/// The areas, in the order the sidebar shows them. Written here because they are concepts
+/// rather than entities; every catalogue under them is derived.
+pub fn areas() -> &'static [AreaInfo] {
+    &[
+        AreaInfo {
+            id: "overview",
+            label: "Overview",
+            href: "/cockpit",
+            area: Area::Overview,
+        },
+        AreaInfo {
+            id: "capabilities",
+            label: "Capabilities",
+            href: "/cockpit/capabilities",
+            area: Area::Capabilities,
+        },
+        AreaInfo {
+            id: "objects",
+            label: "Objects",
+            href: "/cockpit/objects",
+            area: Area::Objects,
+        },
+        AreaInfo {
+            id: "directories",
+            label: "Directories",
+            href: "/cockpit/directories",
+            area: Area::Directories,
+        },
+        AreaInfo {
+            id: "graphs",
+            label: "Graphs",
+            href: "/cockpit/graphs",
+            area: Area::Graphs,
+        },
+        AreaInfo {
+            id: "continuity",
+            label: "Continuity",
+            href: "/cockpit/continuity",
+            area: Area::Continuity,
+        },
+        AreaInfo {
+            id: "worktrees",
+            label: "Worktrees",
+            href: "/cockpit/worktrees",
+            area: Area::Worktrees,
+        },
+        AreaInfo {
+            id: "health",
+            label: "Health",
+            href: "/cockpit/health",
+            area: Area::Health,
+        },
+        AreaInfo {
+            id: "artifacts",
+            label: "Artifacts",
+            href: "/cockpit/artifacts",
+            area: Area::Artifacts,
+        },
+        AreaInfo {
+            id: "api",
+            label: "API",
+            href: "/cockpit/api",
+            area: Area::Api,
+        },
+    ]
+}
+
 /// One entry.
 #[derive(Debug, Clone)]
 pub struct Item {
@@ -84,68 +166,23 @@ impl Navigation {
 /// current entry can be marked without a page saying which it is.
 pub fn build(ctx: &Context, here: &str) -> Navigation {
     let summary = ctx.registry.summary();
+    // the counts are facts of this context, decided per area: how many things are behind
+    // an entry is not part of what an area is
+    let count = |a: Area| -> Option<usize> {
+        match a {
+            Area::Capabilities => Some(summary.total),
+            Area::Objects => Some(ctx.index.objects.len()),
+            Area::Graphs => Some(graph::ids().len()),
+            Area::Api => Some(summary.http_routes),
+            _ => None,
+        }
+    };
     let areas = Section {
         title: "Cockpit".into(),
-        items: vec![
-            item("Overview", "/cockpit", Area::Overview, None, here),
-            item(
-                "Capabilities",
-                "/cockpit/capabilities",
-                Area::Capabilities,
-                Some(summary.total),
-                here,
-            ),
-            item(
-                "Objects",
-                "/cockpit/objects",
-                Area::Objects,
-                Some(ctx.index.objects.len()),
-                here,
-            ),
-            item(
-                "Directories",
-                "/cockpit/directories",
-                Area::Directories,
-                None,
-                here,
-            ),
-            item(
-                "Graphs",
-                "/cockpit/graphs",
-                Area::Graphs,
-                Some(graph::ids().len()),
-                here,
-            ),
-            item(
-                "Continuity",
-                "/cockpit/continuity",
-                Area::Continuity,
-                None,
-                here,
-            ),
-            item(
-                "Worktrees",
-                "/cockpit/worktrees",
-                Area::Worktrees,
-                None,
-                here,
-            ),
-            item("Health", "/cockpit/health", Area::Health, None, here),
-            item(
-                "Artifacts",
-                "/cockpit/artifacts",
-                Area::Artifacts,
-                None,
-                here,
-            ),
-            item(
-                "API",
-                "/cockpit/api",
-                Area::Api,
-                Some(summary.http_routes),
-                here,
-            ),
-        ],
+        items: areas()
+            .iter()
+            .map(|a| item(a.label, a.href, a.area, count(a.area), here))
+            .collect(),
     };
 
     // the executable's own modules: what a capability belongs to, from the registry

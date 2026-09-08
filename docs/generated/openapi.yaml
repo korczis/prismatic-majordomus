@@ -43,6 +43,8 @@ tags:
     description: "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process."
   - name: perf
     description: "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence."
+  - name: product
+    description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
   - name: repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
   - name: web
@@ -193,6 +195,77 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_capabilities
       x-majordomus-cli: capabilities list
+  "/api/v1/capabilities/projections":
+    get:
+      operationId: capabilities.projections
+      summary: Where each capability is projected
+      description: "A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down."
+      tags:
+        - capabilities
+      parameters:
+        - name: module
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Only capabilities composed in this module.
+        - name: unmet
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Only the capabilities whose declared exposures are not all answered by their\nsurface. Empty is the closure the rule asks for."
+          examples:
+            all:
+              value: false
+            unmet:
+              value: true
+      responses:
+        "200":
+          description: "Where each capability is projected: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ClosureMatrix"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: capabilities.projections
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::capabilities
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 8
+      x-majordomus-mcp:
+        tool: majordomus_projections
+      x-majordomus-cli: capabilities projections
   "/api/v1/capability":
     get:
       operationId: capabilities.describe
@@ -788,6 +861,58 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_releases
       x-majordomus-cli: distribution releases
+  "/api/v1/distribution/status":
+    get:
+      operationId: distribution.status
+      summary: Whether the published installation works
+      description: "Whether a machine that has never seen this project can install it right now with the advertised one-line command, and when it cannot, which link in the chain is missing and what changes it. Derived from the distribution model and the release records alone: it reaches no network, so it is as fast as any other local query and answers offline. The served bytes are proved by the release pipeline's smoke phase, not guessed at here."
+      tags:
+        - distribution
+      parameters: []
+      responses:
+        "200":
+          description: "Whether the published installation works: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/InstallabilityReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: distribution.status
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::distribution
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_install_status
+      x-majordomus-cli: distribution status
   "/api/v1/graph":
     get:
       operationId: graph.get
@@ -809,6 +934,8 @@ paths:
               value: composed
             layer:
               value: layer
+            product:
+              value: product
             registry:
               value: registry
             rules:
@@ -1319,6 +1446,337 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_perf
+  "/api/v1/product/feature":
+    get:
+      operationId: product.feature
+      summary: One feature
+      description: "One product feature in full: the record as its file declares it, and everything derived from what it names — the capabilities of its modules with their tools, routes and command-line paths, the commands with their summaries, the objects of its kinds counted, the rules with their class and whether the tool enforces them, the documents, the decisions, the claims with their status, the use cases, the Cockpit areas and web surfaces with their routes, the moments it answers, and the interfaces all of that adds up to."
+      tags:
+        - product
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The feature's id, as `product.features` gives it. This is also its slug and its route."
+          examples:
+            first-feature:
+              value: benchmarks
+      responses:
+        "200":
+          description: "One feature: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ResolvedRefs"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: product.feature
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::product
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 64
+      x-majordomus-mcp:
+        tool: majordomus_feature
+      x-majordomus-cli: product show
+  "/api/v1/product/features":
+    get:
+      operationId: product.features
+      summary: The features
+      description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
+      tags:
+        - product
+      parameters:
+        - name: featured
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Only the features the homepage shows.
+          examples:
+            featured:
+              value: true
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only features of this status. Absent means the stable ones; pass `any` for\neverything the model holds."
+        - name: area
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Only features serving this operational area.
+          examples:
+            by-area:
+              value: context
+        - name: module
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Only features made of this capability module.
+        - name: command
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Only features made of this shell command.
+        - name: surface
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only features exposed through this surface: `cli`, `api`, `mcp`, `cockpit`, `docs`."
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Case-insensitive text, matched against the identity, the titles, the headline, the\nsummary, the tags and the body."
+      responses:
+        "200":
+          description: "The features: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/FeatureList"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: product.features
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::product
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 32
+      x-majordomus-mcp:
+        tool: majordomus_features
+        resource:
+          uri: majordomus://product
+          name: product
+      x-majordomus-cli: product list
+  "/api/v1/product/matrix":
+    get:
+      operationId: product.matrix
+      summary: Features against interfaces
+      description: "Every feature against the command line, the HTTP API, MCP, the Cockpit and the documentation, each mark derived from what the feature names; then every builtin module of the executable, every public command of the shell tool and every kind of the layer with the stable features that name it. A row with no feature is reported as a gap rather than hidden."
+      tags:
+        - product
+      parameters: []
+      responses:
+        "200":
+          description: "Features against interfaces: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Matrix"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: product.matrix
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::product
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+      x-majordomus-mcp:
+        tool: majordomus_product_matrix
+        resource:
+          uri: majordomus://product/matrix
+          name: product-matrix
+      x-majordomus-cli: product matrix
+  "/api/v1/product/providers":
+    get:
+      operationId: product.providers
+      summary: The providers
+      description: "Every provider the tool has an adapter for — one per template the distribution ships — with the bootstraps this repository's policy renders through it, the client configuration it carries for the shared MCP server, and the hooks the policy wires. The set is the templates; nothing here is a list of vendors."
+      tags:
+        - product
+      parameters: []
+      responses:
+        "200":
+          description: "The providers: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ProviderList"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: product.providers
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::product
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+      x-majordomus-mcp:
+        tool: majordomus_providers
+        resource:
+          uri: majordomus://product/providers
+          name: providers
+      x-majordomus-cli: product providers
+  "/api/v1/product/validate":
+    get:
+      operationId: product.validate
+      summary: Validate the model
+      description: "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not."
+      tags:
+        - product
+      parameters: []
+      responses:
+        "200":
+          description: "Validate the model: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ProductValidationReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: product.validate
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::product
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 2
+      x-majordomus-mcp:
+        tool: majordomus_product_validate
+      x-majordomus-cli: product validate
   "/api/v1/ready":
     get:
       operationId: health.ready
@@ -1545,7 +2003,6 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_scope_classify
-      x-majordomus-cli: scope classify
   "/api/v1/search":
     get:
       operationId: objects.search
@@ -2364,6 +2821,27 @@ components:
         - profile
         - outcome
       description: "The active task of this checkout, when there is one."
+    AdrRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The declared id.
+        title:
+          type: string
+          description: The title.
+        status:
+          type: string
+          description: "`proposed`, `accepted`, `superseded` or `rejected`."
+        path:
+          type: string
+          description: Repository-relative path.
+      required:
+        - id
+        - title
+        - status
+        - path
+      description: One architecture decision the feature names.
     AnnounceInput:
       type: object
       additionalProperties: false
@@ -3146,6 +3624,47 @@ components:
             - media_type
           description: "Read from the repository's layer."
       description: Where a capability came from. Never an absolute path.
+    CapabilityRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The canonical id.
+        title:
+          type: string
+          description: The title.
+        kind:
+          type: string
+          description: "`query`, `command` or `resource`."
+        stability:
+          type: string
+          description: Where it stands.
+        tool:
+          type:
+            - string
+            - "null"
+          description: "The MCP tool name, when exposed as one."
+        resource:
+          type:
+            - string
+            - "null"
+          description: "The MCP resource URI, when exposed as one."
+        route:
+          type:
+            - string
+            - "null"
+          description: "`METHOD /path`, when exposed over HTTP."
+        cli:
+          type:
+            - string
+            - "null"
+          description: "The words after `majordomus`, when exposed on the command line."
+      required:
+        - id
+        - title
+        - kind
+        - stability
+      description: "One capability of a module the feature names, with the projections the registry\ndeclares for it."
     CapabilitySummary:
       type: object
       properties:
@@ -3273,6 +3792,35 @@ components:
           const: prerelease
           description: "Published, addressable by its exact tag, never resolved by default."
       description: Which releases an unpinned installation may resolve to.
+    CheckState:
+      oneOf:
+        - type: string
+          const: ok
+          description: The check holds.
+        - type: string
+          const: failed
+          description: "The check does not hold, and the public installation is affected."
+        - type: string
+          const: unknown
+          description: The check could not be made here; it says nothing either way.
+      description: "The state of one check in the installability report. Three states and no more: a check\neither holds, does not, or could not be made from what this process can see."
+    ClaimRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The claim id.
+        claim:
+          type: string
+          description: The sentence.
+        status:
+          type: string
+          description: "`guaranteed`, `advisory`, `planned` or `rejected`."
+      required:
+        - id
+        - claim
+        - status
+      description: "One claim the feature names, with the status the matrix gives it."
     Classification:
       type: object
       properties:
@@ -3340,6 +3888,62 @@ components:
         - name
         - version
       description: "What a client said about itself in `initialize`."
+    ClosureMatrix:
+      type: object
+      properties:
+        rows:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Row"
+          description: "One row per capability, in id order."
+        unbacked:
+          type: array
+          items:
+            type: string
+          description: "Runnable commands of the command line that no capability claims, in command order."
+      required:
+        - rows
+        - unbacked
+      description: "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\"."
+    CockpitAreaRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The area id.
+        title:
+          type: string
+          description: The label the Cockpit shows.
+        route:
+          type: string
+          description: The route under the running server.
+      required:
+        - id
+        - title
+        - route
+      description: One area of the Cockpit the feature names.
+    CommandRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The command.
+        summary:
+          type: string
+          description: One line.
+        stage:
+          type:
+            - string
+            - "null"
+          description: The lifecycle stage it belongs to.
+        read_only:
+          type: boolean
+          description: Whether it writes nothing.
+      required:
+        - id
+        - summary
+        - read_only
+      description: "One public command of the shell tool the feature names, as `share/commands.yaml`\ndeclares it."
     Concurrency:
       type: object
       additionalProperties: false
@@ -4183,6 +4787,20 @@ components:
           const: unknown
           description: "Git could not answer, so this process says so rather than guessing `exact`."
       description: "How far a record's recorded commit is from the commit this checkout is on.\n\nThe four words are the shell tool's, deliberately. A reader that met `advanced` from one\nsurface and `stale` from another would have to learn the same four facts twice."
+    DocRef:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Repository-relative path.
+        title:
+          type:
+            - string
+            - "null"
+          description: "The title, when the document has one."
+      required:
+        - path
+      description: One document the feature names.
     DocumentView:
       type: object
       properties:
@@ -4421,6 +5039,218 @@ components:
           const: cockpit
           description: This process serves the Cockpit.
       description: "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic."
+    FeatureCounts:
+      type: object
+      properties:
+        capabilities:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Builtin capabilities of the modules it names.
+        mcp_tools:
+          type: integer
+          format: uint
+          minimum: 0
+          description: MCP tools among them.
+        mcp_resources:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "MCP resources among them, plus one per object of the kinds it names."
+        http_routes:
+          type: integer
+          format: uint
+          minimum: 0
+          description: HTTP routes among them.
+        cli_paths:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Command-line paths of the executable among them.
+        commands:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Public commands of the shell tool it names.
+        objects:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Objects of the kinds it names.
+        rules:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Rules it names.
+        enforced_rules:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Rules the tool enforces among them.
+        docs:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Documents it names.
+        adrs:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Decisions it names.
+        claims:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Claims it names.
+        use_cases:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Use cases it names.
+        moments:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Moments it answers.
+      required:
+        - capabilities
+        - mcp_tools
+        - mcp_resources
+        - http_routes
+        - cli_paths
+        - commands
+        - objects
+        - rules
+        - enforced_rules
+        - docs
+        - adrs
+        - claims
+        - use_cases
+        - moments
+      description: "How much stands behind a feature, every number derived."
+    FeatureEvidence:
+      type: object
+      properties:
+        claims:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`."
+        modules:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: The modules it names by stability.
+      required:
+        - claims
+        - modules
+      description: "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity."
+    FeatureList:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "[`SCHEMA`]."
+        fingerprint:
+          type: string
+          description: "The hash of the model's sources and derived facts."
+        counts:
+          "$ref": "#/components/schemas/ProductCounts"
+          description: The counts.
+        surfaces:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SurfaceInfo"
+          description: "The surface vocabulary, with how many stable features each exposes."
+        features:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FeatureSummary"
+          description: "The matching features, in presentation order."
+      required:
+        - schema
+        - fingerprint
+        - counts
+        - surfaces
+        - features
+      description: The features as a client reads them.
+    FeatureSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The identity and the slug.
+        title:
+          type: string
+          description: The feature as a heading.
+        label:
+          type: string
+          description: "The name a narrow column shows: the short title, or the title."
+        headline:
+          type: string
+          description: The promise a visitor reads first.
+        summary:
+          type: string
+          description: "One line: what it does."
+        status:
+          type: string
+          description: "`stable`, `draft` or `deprecated`."
+        weight:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Presentation order.
+        featured:
+          type: boolean
+          description: Whether the homepage shows it.
+        areas:
+          type: array
+          items:
+            type: string
+          description: The operational areas it serves.
+        audiences:
+          type: array
+          items:
+            type: string
+          description: The audiences it is written for.
+        tags:
+          type: array
+          items:
+            type: string
+          description: Free tags.
+        route:
+          type: string
+          description: "Derived: `/features/<id>/`."
+        surfaces:
+          "$ref": "#/components/schemas/Surfaces"
+          description: "Derived: the interfaces it is exposed through."
+        counts:
+          "$ref": "#/components/schemas/FeatureCounts"
+          description: "Derived: how much stands behind it."
+        evidence:
+          "$ref": "#/components/schemas/FeatureEvidence"
+          description: "Derived: what is guaranteed."
+      required:
+        - id
+        - title
+        - label
+        - headline
+        - summary
+        - status
+        - weight
+        - featured
+        - areas
+        - audiences
+        - tags
+        - route
+        - surfaces
+        - counts
+        - evidence
+      description: "One feature as a listing shows it: everything a card needs and nothing a page needs."
     Finding:
       type: object
       properties:
@@ -4828,6 +5658,85 @@ components:
         - canonical
         - diagnostics
       description: "One branch, inspected: where its work tree belongs and what is there."
+    InstallCheck:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "A short stable name: `model`, `version`, `targets`, `release`, `artifacts`, `metadata`."
+        state:
+          "$ref": "#/components/schemas/CheckState"
+          description: Whether it holds.
+        observed:
+          type: string
+          description: "What was observed, in one line."
+        cause:
+          type:
+            - string
+            - "null"
+          description: Why it does not hold. Absent when it does.
+        next:
+          type:
+            - string
+            - "null"
+          description: The command or action that would change it. Absent when there is nothing to do.
+      required:
+        - id
+        - state
+        - observed
+      description: "One check: what was asked, what was seen, and — when it does not hold — why, and the\ncommand that changes it. The `cause` and `next` fields exist so that a report is\nactionable without a second document; a check that fails without naming its remedy is\na diagnostic nobody can act on."
+    InstallabilityReport:
+      type: object
+      properties:
+        installable:
+          type: boolean
+          description: "True when every check holds: a stable release is recorded and complete."
+        summary:
+          type: string
+          description: "One line for a person: what the state is, in the project's own terms."
+        local_version:
+          type: string
+          description: The version this tree would release.
+        stable_tag:
+          type:
+            - string
+            - "null"
+          description: "The tag an unpinned installation resolves to, when a stable release is recorded."
+        required_targets:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many targets a release must publish for that release to be complete.
+        published_artifacts:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of them the stable release actually publishes.
+        install_command:
+          type: string
+          description: "The command a person would run, whether or not it currently works."
+        installer_url:
+          type: string
+          description: Where the installer is served.
+        latest_url:
+          type: string
+          description: Where the stable pointer is served.
+        checks:
+          type: array
+          items:
+            "$ref": "#/components/schemas/InstallCheck"
+          description: "Every check, in the order they are worth reading."
+      required:
+        - installable
+        - summary
+        - local_version
+        - required_targets
+        - published_artifacts
+        - install_command
+        - installer_url
+        - latest_url
+        - checks
+      description: "Whether the advertised one-line installation works right now, and if not, what is missing.\n\nThis answers the operator's actual question — *can a machine that has never seen this\nproject install it with the published command?* — from local state alone. It performs no\nnetwork access: a repository can be offline and this still answers, because everything it\nneeds is the distribution model and the release records the repository itself carries.\nWhat it cannot see it reports as `unknown` rather than guessing; the public half of the\nquestion is answered by the release workflow's smoke phase, which installs from the\npublished URL on every native runner and is the only thing that proves the public path."
     Interface:
       oneOf:
         - type: string
@@ -4837,6 +5746,21 @@ components:
           const: all
           description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
       description: Which interface a process listens on.
+    KindRef:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The kind.
+        objects:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Objects of this kind in the index.
+      required:
+        - name
+        - objects
+      description: "One object kind the feature names, with how many objects of it the layer holds."
     Libc:
       oneOf:
         - type: string
@@ -4906,6 +5830,76 @@ components:
           const: same_branch
           description: "Same repository, same branch, another worktree of it."
       description: "Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered."
+    Matrix:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "[`SCHEMA`]."
+        surfaces:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SurfaceInfo"
+          description: The surface vocabulary.
+        rows:
+          type: array
+          items:
+            "$ref": "#/components/schemas/MatrixRow"
+          description: "One row per feature of any status but deprecated, in presentation order."
+        modules:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProductCoverage"
+          description: Every builtin module of the executable with the stable features that name it.
+        commands:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProductCoverage"
+          description: Every public command of the shell tool with the stable features that name it.
+        kinds:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProductCoverage"
+          description: "Every kind of the layer a feature can present, with the stable features that name it."
+      required:
+        - schema
+        - surfaces
+        - rows
+        - modules
+        - commands
+        - kinds
+      description: "Every feature against every interface, and every module, command and kind against the\nfeatures that name it."
+    MatrixRow:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The feature id.
+        label:
+          type: string
+          description: The name a narrow column shows.
+        route:
+          type: string
+          description: "`/features/<id>/`."
+        status:
+          type: string
+          description: "`stable` or `draft`."
+        surfaces:
+          "$ref": "#/components/schemas/Surfaces"
+          description: "The surfaces, by id, in the vocabulary's order."
+        exposed:
+          type: array
+          items:
+            type: string
+          description: The surface ids that are true.
+      required:
+        - id
+        - label
+        - route
+        - status
+        - surfaces
+        - exposed
+      description: "One row of the matrix: a feature and the surfaces it is exposed through."
     McpExposure:
       type: object
       properties:
@@ -5070,6 +6064,38 @@ components:
     ModuleId:
       type: string
       description: "A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject's module is its kind."
+    ModuleRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The module id.
+        title:
+          type: string
+          description: The short name.
+        description:
+          type: string
+          description: One paragraph.
+        stability:
+          type:
+            - string
+            - "null"
+          description: "Where the module stands, when it declared it."
+        source_path:
+          type: string
+          description: Repository-relative path of the file its descriptors were composed in.
+        capabilities:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CapabilityRef"
+          description: "The builtin capabilities it composes, in id order."
+      required:
+        - id
+        - title
+        - description
+        - source_path
+        - capabilities
+      description: One capability module the feature names.
     MomentDetail:
       type: object
       properties:
@@ -5237,6 +6263,27 @@ components:
         - related_detail
         - neighbours
       description: "One moment in full, with everything derived that a page shows and no file states."
+    MomentRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The moment id.
+        title:
+          type: string
+          description: The title.
+        hook:
+          type: string
+          description: The first-person line an index shows.
+        route:
+          type: string
+          description: "`/why/<id>/`."
+      required:
+        - id
+        - title
+        - hook
+        - route
+      description: "One operational moment the feature answers: derived from the moments that name any of\nthe feature's commands, capabilities, claims or rules."
     MomentSummary:
       type: object
       properties:
@@ -5715,6 +6762,187 @@ components:
       format: uint32
       minimum: 0
       description: "A count that is at least one: memory in megabytes, CPUs, machines. Zero is refused\nwherever zero would mean \"a deployment that cannot run\"."
+    ProductCounts:
+      type: object
+      properties:
+        features:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Stable features.
+        features_all:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Features of every status, drafts included."
+        featured:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Stable features the homepage shows.
+        providers:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Providers the tool has an adapter for.
+        modules:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Builtin modules of the executable, and how many a stable feature names."
+        modules_covered:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Modules a stable feature names.
+        commands:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Public commands of the shell tool.
+        commands_covered:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Commands a stable feature names.
+        kinds:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Kinds of the layer a feature can present.
+        kinds_covered:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Kinds a stable feature names.
+      required:
+        - features
+        - features_all
+        - featured
+        - providers
+        - modules
+        - modules_covered
+        - commands
+        - commands_covered
+        - kinds
+        - kinds_covered
+      description: How much the model holds. Every count anywhere is one of these.
+    ProductCoverage:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id.
+        title:
+          type: string
+          description: The title.
+        features:
+          type: array
+          items:
+            type: string
+          description: The stable features that name it.
+      required:
+        - id
+        - title
+        - features
+      description: "One thing of the product — a module, a public command, a kind — and the features that\nname it. Empty means the product page says nothing about it, which is a gap the\nvalidation reports and the matrix shows rather than hides."
+    ProductFinding:
+      type: object
+      properties:
+        severity:
+          "$ref": "#/components/schemas/Severity"
+          description: "`error` or `warning`."
+        code:
+          type: string
+          description: "`unknown_reference`, `duplicate_identity`, `missing_content`, `uncovered`, ..."
+        path:
+          type: string
+          description: "The repository-relative file the finding is in, or the registry it is about."
+        id:
+          type:
+            - string
+            - "null"
+          description: "The record's identity, when one record owns the finding."
+        field:
+          type:
+            - string
+            - "null"
+          description: "The front-matter key the finding is about, when one key owns it."
+        message:
+          type: string
+          description: "What is wrong, in one sentence."
+        did_you_mean:
+          type:
+            - string
+            - "null"
+          description: "The nearest existing name, when the value looks like a typo of one."
+      required:
+        - severity
+        - code
+        - path
+        - message
+      description: "One thing wrong with the product model, named where it is, with the nearest candidate\nwhen there is one."
+    ProductProvider:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The provider id: the template's file stem."
+        title:
+          type: string
+          description: The name a person knows it by.
+        bootstraps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProviderBootstrap"
+          description: "The bootstraps this repository's policy renders through it: target, mode, whether\nevery worker loads it."
+        client_config:
+          type:
+            - string
+            - "null"
+          description: "The client configuration at the repository root that starts the shared MCP server\nfor this provider, when the repository carries it."
+        hooks:
+          type: array
+          items:
+            type: string
+          description: "The enforcement entries of the policy wired by this provider's hooks."
+      required:
+        - id
+        - title
+        - bootstraps
+        - hooks
+      description: "One provider the tool has an adapter for, discovered from the templates the distribution\nships and decorated with what this repository does with it."
+    ProductValidationReport:
+      type: object
+      properties:
+        valid:
+          type: boolean
+          description: True when nothing is an error. Warnings do not make it false.
+        errors:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many findings are errors.
+        warnings:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many findings are warnings.
+        counts:
+          "$ref": "#/components/schemas/ProductCounts"
+          description: The counts the model reached.
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProductFinding"
+          description: "The findings, errors first, then by file."
+      required:
+        - valid
+        - errors
+        - warnings
+        - counts
+        - findings
+      description: "What the model's own validation found."
     Provenance:
       oneOf:
         - type: object
@@ -5786,6 +7014,40 @@ components:
       required:
         - name
       description: The provider and the facts that belong to it alone.
+    ProviderBootstrap:
+      type: object
+      properties:
+        target:
+          type: string
+          description: "The target file, repository-relative."
+        mode:
+          type: string
+          description: "`file` or `region`."
+        always_loaded:
+          type: boolean
+          description: Loaded by every worker without asking.
+      required:
+        - target
+        - mode
+        - always_loaded
+      description: One bootstrap a provider renders.
+    ProviderList:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many.
+        providers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProductProvider"
+          description: "Each, in id order."
+      required:
+        - count
+        - providers
+      description: Every provider.
     ProviderName:
       oneOf:
         - type: string
@@ -6193,6 +7455,225 @@ components:
         - git_common_dir
         - name
       description: "The repository's identity, as the topology reports it."
+    ResolvedRefs:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The identity, the slug and the file name."
+        title:
+          type: string
+          description: The feature as a heading.
+        short_title:
+          type:
+            - string
+            - "null"
+          description: Two or three words for a card or a matrix row.
+        headline:
+          type: string
+          description: The promise a visitor reads first.
+        summary:
+          type: string
+          description: "One line: what it does."
+        status:
+          type: string
+          description: "`stable`, `draft` or `deprecated`."
+        weight:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "Presentation order, lowest first."
+          default: 0
+        featured:
+          type: boolean
+          description: Whether the homepage shows it as a chapter.
+          default: false
+        areas:
+          type: array
+          items:
+            type: string
+          description: The operational areas of the why catalogue it serves.
+          default: []
+        audiences:
+          type: array
+          items:
+            type: string
+          description: The audiences of the why catalogue it is written for.
+          default: []
+        modules:
+          type: array
+          items:
+            type: string
+          description: Capability modules of the executable it is made of.
+          default: []
+        commands:
+          type: array
+          items:
+            type: string
+          description: Public commands of the shell tool it is made of.
+          default: []
+        kinds:
+          type: array
+          items:
+            type: string
+          description: Object kinds of the layer it is made of.
+          default: []
+        rules:
+          type: array
+          items:
+            type: string
+          description: "Rules of the effective set that govern it, by id without the version."
+          default: []
+        docs:
+          type: array
+          items:
+            type: string
+          description: "The documents that explain it, by repository-relative path."
+          default: []
+        adrs:
+          type: array
+          items:
+            type: string
+          description: "The decisions behind it, by declared id."
+          default: []
+        claims:
+          type: array
+          items:
+            type: string
+          description: Claims that say what is guaranteed here.
+          default: []
+        use_cases:
+          type: array
+          items:
+            type: string
+          description: Use cases that show it in use.
+          default: []
+        cockpit:
+          type: array
+          items:
+            type: string
+          description: Areas of the Cockpit that show it.
+          default: []
+        web:
+          type: array
+          items:
+            type: string
+          description: Web surfaces of the topology it is offered through.
+          default: []
+        related:
+          type: array
+          items:
+            type: string
+          description: Features explicitly related to this one. The reverse is derived.
+          default: []
+        tags:
+          type: array
+          items:
+            type: string
+          description: Free tags.
+          default: []
+        route:
+          type: string
+          description: "Derived: `/features/<id>/`. Never authored; the schema refuses a `route` key."
+          default: ""
+        source:
+          type: string
+          description: "Derived: the repository-relative file the record came from."
+          default: ""
+        body:
+          type: string
+          description: "The Markdown body, without its front matter."
+        surfaces:
+          "$ref": "#/components/schemas/Surfaces"
+          description: "Derived: the interfaces it is exposed through."
+        module_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ModuleRef"
+          description: "Derived: the modules it names, each with its capabilities and their projections."
+        command_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommandRef"
+          description: "Derived: the shell commands it names, as the command registry declares them."
+        kind_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KindRef"
+          description: "Derived: the kinds it names, each with its object count."
+        rule_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RuleRef"
+          description: "Derived: the rules it names, each with its class and whether it is enforced."
+        doc_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DocRef"
+          description: "Derived: the documents it names, with their titles."
+        adr_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AdrRef"
+          description: "Derived: the decisions it names, with their status."
+        claim_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ClaimRef"
+          description: "Derived: the claims it names, with their status."
+        use_case_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/UseCaseRef"
+          description: "Derived: the use cases it names."
+        cockpit_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CockpitAreaRef"
+          description: "Derived: the Cockpit areas it names, with their routes."
+        web_refs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SurfaceRef"
+          description: "Derived: the web surfaces it names, with their mounts."
+        moments:
+          type: array
+          items:
+            "$ref": "#/components/schemas/MomentRef"
+          description: "Derived: the moments that name any command, capability, claim or rule of this feature."
+        backlinks:
+          type: array
+          items:
+            type: string
+          description: "Derived: the features that name this one in their `related`."
+        counts:
+          "$ref": "#/components/schemas/FeatureCounts"
+          description: "Derived: how much stands behind it."
+        evidence:
+          "$ref": "#/components/schemas/FeatureEvidence"
+          description: "Derived: what is guaranteed."
+      required:
+        - id
+        - title
+        - headline
+        - summary
+        - status
+        - surfaces
+        - module_refs
+        - command_refs
+        - kind_refs
+        - rule_refs
+        - doc_refs
+        - adr_refs
+        - claim_refs
+        - use_case_refs
+        - cockpit_refs
+        - web_refs
+        - moments
+        - backlinks
+        - counts
+        - evidence
+      description: "One feature, resolved: the record as its file declares it, and everything derived."
     ResourceView:
       oneOf:
         - "$ref": "#/components/schemas/ObjectView"
@@ -6235,6 +7716,84 @@ components:
     Route:
       type: string
       description: "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
+    Row:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The canonical id.
+        module:
+          type: string
+          description: The module that composes it.
+        kind:
+          type: string
+          description: "Query, command or resource."
+        stability:
+          type: string
+          description: Where it stands.
+        cli:
+          type:
+            - string
+            - "null"
+          description: "The command line, when it declares one and clap has it."
+        http:
+          type:
+            - string
+            - "null"
+          description: "The HTTP route, when it declares one."
+        mcp_tool:
+          type:
+            - string
+            - "null"
+          description: "The MCP tool name, when it declares one."
+        mcp_resource:
+          type:
+            - string
+            - "null"
+          description: "The MCP resource URI, when it declares one."
+        closed:
+          type: boolean
+          description: Whether every exposure this row declares is answered by its surface.
+        source:
+          type: string
+          description: Where the capability is declared; repository-relative.
+      required:
+        - id
+        - module
+        - kind
+        - stability
+        - closed
+        - source
+      description: "Where one capability is projected, and where it is not.\n\nThis is the coverage matrix of the rule: a row per capability, a column per interface.\nIt is derived, never written down — a capability that reaches nothing shows as a row of\n`false`, which is exactly the \"exists but is invisible\" case worth seeing."
+    RuleRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The rule id, without the version."
+        identity:
+          type: string
+          description: "The identity the index holds, with the version."
+        title:
+          type: string
+          description: The title.
+        class:
+          type: string
+          description: "`blocking` or `advisory`."
+        enforced:
+          type: boolean
+          description: "Whether the tool enforces it: the rule carries an `x-majordomus` block."
+        path:
+          type: string
+          description: Repository-relative path.
+      required:
+        - id
+        - identity
+        - title
+        - class
+        - enforced
+        - path
+      description: One rule the feature names.
     ScopeReport:
       type: object
       properties:
@@ -6660,6 +8219,29 @@ components:
           const: warning
           description: Worth reading; serving is still coherent.
       description: How much a finding matters.
+    SurfaceInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "`cli`, `api`, `mcp`, `cockpit` or `docs`."
+        title:
+          type: string
+          description: The name a person reads.
+        route:
+          type: string
+          description: The route on the website where the surface is documented.
+        features:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many stable features it exposes.
+      required:
+        - id
+        - title
+        - route
+        - features
+      description: "One surface of the vocabulary, as a client reads it."
     SurfaceKind:
       oneOf:
         - type: string
@@ -6672,6 +8254,27 @@ components:
           const: redirect
           description: A path that answers with a redirect to another one.
       description: "How a surface answers a request.\n\nOnly what this repository serves: a directory of generated files, a path the executable\nanswers itself, and a redirect. A new *kind* is a new behaviour, never a new name for\nthe same behaviour with different data."
+    SurfaceRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The surface id.
+        title:
+          type: string
+          description: The title.
+        mount:
+          type: string
+          description: Where it is mounted.
+        category:
+          type: string
+          description: What it is for.
+      required:
+        - id
+        - title
+        - mount
+        - category
+      description: One web surface of the topology the feature names.
     SurfaceReport:
       type: object
       properties:
@@ -6716,6 +8319,31 @@ components:
           const: internal
           description: "Served and introspectable, not advertised: a machine speaks to it, or another\nsurface links to it."
       description: "Who a surface is offered to.\n\nTwo values and no more: a surface is either offered for a person to discover, or it is\npart of the topology without being advertised. Both are always in the machine-readable\nanswer — hiding a served route from introspection would only hide it from the people\nmaintaining it."
+    Surfaces:
+      type: object
+      properties:
+        cli:
+          type: boolean
+          description: "The command line: the executable's own, or the shell tool's."
+        api:
+          type: boolean
+          description: "The HTTP routes under `/api/v1/`, and the OpenAPI document over them."
+        mcp:
+          type: boolean
+          description: "MCP: a tool, or a resource."
+        cockpit:
+          type: boolean
+          description: The Cockpit.
+        docs:
+          type: boolean
+          description: The documentation.
+      required:
+        - cli
+        - api
+        - mcp
+        - cockpit
+        - docs
+      description: "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document."
     Tally:
       type: object
       properties:
@@ -7000,6 +8628,24 @@ components:
         - name
         - gone
       description: "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch."
+    UseCaseRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The use case id.
+        title:
+          type: string
+          description: The title.
+        category:
+          type:
+            - string
+            - "null"
+          description: The category it is filed under.
+      required:
+        - id
+        - title
+      description: One use case the feature names.
     ValidationReport:
       type: object
       properties:

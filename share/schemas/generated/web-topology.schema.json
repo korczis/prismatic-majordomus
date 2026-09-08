@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/web-topology.schema.json",
+  "title": "Web topology",
+  "description": "docs/generated/web.json: every web surface this repository exposes, resolved once from its producer — the routes the executable answers itself, the static trees a generator writes under the generated root, and the application that owns the site — with the mount each claims, in route-precedence order (ADR 0013). Written by `majordomus generate web`.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "generated_root", "reserved", "surfaces"],
+  "properties": {
+    "schema": { "const": "majordomus/web-topology/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "minLength": 1 },
+    "generated_root": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The directory a producer writes a static surface into, repository-relative."
+    },
+    "reserved": {
+      "type": "object",
+      "description": "The mounts the executable keeps for itself, by the name each is known by; a discovered surface may not claim one."
+    },
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "category",
+          "visibility",
+          "kind",
+          "mount",
+          "producer",
+          "availability"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "category": { "type": "string", "minLength": 1 },
+          "visibility": { "type": "string", "minLength": 1 },
+          "kind": { "type": "string", "minLength": 1 },
+          "mount": { "type": "string", "pattern": "^/" },
+          "producer": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What writes or answers this surface; the owner a reader goes to."
+          },
+          "availability": {
+            "enum": ["both", "served-only", "published-only"],
+            "description": "Where the surface means anything: served by the running executable and published as files, answered only by the process, or published as files it also serves."
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Where each value of this surface came from, by field."
+          }
+        }
+      }
+    }
+  }
+}

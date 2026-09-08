@@ -1,7 +1,7 @@
 +++
 title = "Overlap between parallel workers is computed on claimed paths in both containment directions"
 description = "When a task starts, Majordomus looks at every other worktree of the same repository, reads its active task record if it has one, and reports any scope entry that contains or is contained by yours: lib/auth overlaps lib/auth/oauth in both directions. It is a report, not a block."
-weight = 49
+weight = 50
 [extra]
 claim_id = "overlap-report"
 status = "guaranteed"
