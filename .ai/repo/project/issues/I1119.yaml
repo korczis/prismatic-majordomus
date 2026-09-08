@@ -1,0 +1,32 @@
+id: I1119
+milestone: two-folder-integration
+title: The budgets are measured, and a regression fails rather than being noticed
+slug: integration-budgets
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Measure what this architecture costs — discovery, reconciliation, the environment entry, the generated artifacts — and hold each to a budget derived from its measured baseline."
+why: "A spine every consumer reads is a cost every consumer pays. Measured once and then never again, it grows until somebody works around the tool instead of using it."
+current_state: "The benchmark infrastructure records distributions per command against a committed baseline. The new paths are not among its targets."
+desired_state: "Each new path is a benchmark target with a recorded baseline and a threshold that catches a material regression while tolerating ordinary growth."
+scope:
+  - .ai/repo/benchmarks
+  - .ai/repo/policy.yaml
+non_scope:
+  - A second benchmark system
+  - A threshold so tight that ordinary content growth fails the build
+depends_on:
+  - I1113
+acceptance_criteria:
+  - Discovery, reconciliation, the dry run and the environment entry are benchmark targets with recorded baselines
+  - The thresholds are policy data, and the check names the target, both values and the threshold when it fails
+  - The environment it was measured on is recorded with each baseline
+  - A material regression fails; a byte does not
+validation:
+  - majordomus bench --check
+evidence_required:
+  - budgets_measured
+  - regression_refused
+risk: "Wall-clock thresholds are noisy across machines. The structural counters gate strictly and the timings conservatively, as the existing performance doctrine already decided."
+created_at: 2026-09-06
+updated_at: 2026-09-06

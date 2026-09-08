@@ -1,0 +1,33 @@
+id: I1103
+milestone: two-folder-integration
+title: Whether a file is authored or derived is a field, not a naming convention
+slug: provenance-and-lifecycle
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Give every machine-processable artifact an explicit provenance and lifecycle — authored, derived, generated, cache or runtime — with its generator, its inputs and whether it is disposable, so that no consumer has to infer from a path what a file is."
+why: "A generated file that is indistinguishable from an authored one eventually becomes an input, and then it cannot be regenerated without losing something. Deciding that by directory name works until the first exception."
+current_state: "Generated artifacts carry a banner or an extension member saying they are generated, which the manifest validator reads. Nothing states a generator's inputs or whether an artifact may be deleted and rebuilt."
+desired_state: "Provenance and lifecycle are typed fields every artifact carries, and a consumer decides what it may do with a file by reading them."
+scope:
+  - apps/majordomus-cli/src/generate.rs
+  - share/schemas
+non_scope:
+  - Replacing the existing banner mechanism where it already answers the question
+  - A provenance field that repeats what the schema id already fixes
+depends_on:
+  - I1102
+acceptance_criteria:
+  - Every generated artifact declares its generator, its version and the canonical inputs it derives from
+  - Disposability is explicit, so a consumer can tell what may be deleted and rebuilt from what may not
+  - A generated artifact is never read back as canonical input, and a check proves it
+  - Authored artifacts are distinguishable from derived ones without consulting a path
+validation:
+  - majordomus generate --check
+  - cargo test --workspace --all-features
+evidence_required:
+  - provenance_declared
+  - disposability_explicit
+risk: "Recording inputs invites recording them by hand. The input list is derived from the generator, or it is not recorded."
+created_at: 2026-09-06
+updated_at: 2026-09-06

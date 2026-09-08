@@ -18,6 +18,7 @@ on:
     branches: [master]
     paths:
       - .ai/**
+      - .envrc
       - .githooks/**
       - .github/workflows/pages.yml
       - .nojekyll
@@ -40,13 +41,16 @@ on:
       - scripts/github-sync
       - scripts/lib/**
       - scripts/lib/cockpit-probe.mjs
+      - scripts/lib/ui-*.mjs
       - scripts/pages
       - scripts/rules-package
+      - scripts/site-basepath-check
       - scripts/site-build
       - scripts/site-check
       - scripts/site-deploy
       - scripts/site-probe
       - scripts/site-serve
+      - scripts/ui
       - SECURITY.md
       - share/**
       - share/allow/**

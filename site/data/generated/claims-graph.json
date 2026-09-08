@@ -51,6 +51,15 @@
       "note": "The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported."
     },
     {
+      "id": "claim:advertised-install-command-works",
+      "kind": "claim",
+      "label": "The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool",
+      "status": "guaranteed",
+      "route": "/guarantees/advertised-install-command-works/",
+      "external": false,
+      "note": "The line is run as it is written, pipe included, on Linux and macOS, into a home directory of the run's own. It proves the metadata resolves, the tool reports the version that was resolved, the MCP launcher runs with no toolchain, and a repository can be initialised. A release proves the same thing once at publication; this keeps proving it afterwards."
+    },
+    {
       "id": "claim:policy-parse",
       "kind": "claim",
       "label": "The canonical policy is parsed and rejected if it contains an unknown key",
@@ -1663,6 +1672,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/ci/install-check",
+      "kind": "implementation",
+      "label": "scripts/ci/install-check",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/ci/verdict",
       "kind": "implementation",
       "label": "scripts/ci/verdict",
@@ -2405,6 +2421,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_worktree_topology.sh"
     },
     {
+      "id": "test:test/cases/97_install_gate.sh",
+      "kind": "test",
+      "label": "test/cases/97_install_gate.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_install_gate.sh"
+    },
+    {
       "id": "test:test/cases/97_pages_fast_path.sh",
       "kind": "test",
       "label": "test/cases/97_pages_fast_path.sh",
@@ -2444,6 +2467,11 @@
     },
     {
       "source": "claim:release-is-complete-or-absent",
+      "target": "source:docs/DISTRIBUTION.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advertised-install-command-works",
       "target": "source:docs/DISTRIBUTION.md",
       "kind": "specified_by"
     },
@@ -3138,6 +3166,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:advertised-install-command-works",
+      "target": "impl:scripts/ci/install-check",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:policy-parse",
       "target": "impl:lib/common.sh",
       "kind": "implemented_by"
@@ -3785,6 +3818,11 @@
     {
       "source": "claim:release-is-complete-or-absent",
       "target": "test:test/cases/87_release_pipeline.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advertised-install-command-works",
+      "target": "test:test/cases/97_install_gate.sh",
       "kind": "proved_by"
     },
     {

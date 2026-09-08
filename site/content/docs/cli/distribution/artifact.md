@@ -1,7 +1,7 @@
 +++
 title = "majordomus distribution artifact"
 description = "The archive name and root directory a target and a tag derive"
-weight = 36
+weight = 37
 [extra]
 route = "/docs/cli/distribution/artifact/"
 command = "majordomus distribution artifact"

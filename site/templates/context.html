@@ -44,7 +44,7 @@
       <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">{{ d.contract.id }}</code> — {{ d.contract.title }}</p>
       <p class="mt-1 text-sm leading-relaxed text-body">{{ d.contract.description }}</p>
       {%- if d.contract.tracks | length > 0 %}
-      <p class="mt-2 text-xs text-body-subtle">tracks {% for t in d.contract.tracks %}<code class="font-mono">{{ t }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+      <p class="mt-2 text-xs text-body-subtle">tracks {% for t in d.contract.tracks %}<code class="break-all font-mono">{{ t }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p>
       {%- endif %}
       {%- else %}
       <p class="mt-2 text-sm text-body">No contract of its own; {% if d.governed_by %}<code class="font-mono text-xs">{{ d.governed_by }}</code> exempts the directories below it{% else %}nothing requires one here{% endif %}.</p>

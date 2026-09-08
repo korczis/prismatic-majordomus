@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# reference-check — every repository path an authored document names must be there.
+#
+# The failure this refuses is a document that points at a file which has moved or never
+# existed. It costs a reader the time to look, teaches them a layout that is wrong, and
+# nothing else in the repository notices: the site builds, the schemas validate, the tests
+# pass, and the prose quietly rots. Eight of these were on master at once, all from the same
+# move — the schemas grew a vendor and a kind directory (`share/schemas/majordomus/adr/`)
+# and every document naming the old flat file kept naming it.
+#
+# Three checks, each derived rather than enumerated:
+#
+#   references   a repository path named in the prose of an authored Markdown document
+#                exists. Fenced code blocks are exempt, and that is the whole distinction:
+#                a path inside a fence is an instruction to a reader — `printf ... >
+#                docs/MISSING.md` demonstrating a gate, a `target:` in an example config —
+#                while a path in prose is a claim about where something lives.
+#   schemas      a schema path anywhere outside the suite, fences included, is one the
+#                identity rule can produce. `share/kinds.yaml` fixes it: `majordomus.adr/v1`
+#                is share/schemas/majordomus/adr/adr.v1.*, and a file lying directly under
+#                share/schemas/ is not a stale path but one the rule could never have
+#                produced, so it is refused wherever it is written.
+#   contracts    every `contract` the generated site data publishes to a reader resolves.
+#                That field is a promise that a file is there to read; it was published
+#                pointing at the old flat schema paths for as long as they were wrong.
+#
+# Records are exempt from the first two: a session record, an ADR, an issue and a milestone
+# say what was true when they were written, and rewriting one to keep a path current would
+# falsify the record. Their derived projections are exempt with them.
+#
+#   scripts/ci/reference-check [ROOT]     ROOT defaults to this checkout
+set -eu
+ROOT="${1:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+TMP="$(mktemp -d "${TMPDIR:-/tmp}/mj-refcheck.XXXXXX")"
+trap 'rm -rf "$TMP"' EXIT
+rc=0
+
+# What is there: the tracked paths and every directory prefix of one. Tracked, not present
+# on disk — an untracked local file must not satisfy a reference that a fresh clone cannot.
+git ls-files > "$TMP/files"
+awk '{ print; while (sub(/\/[^\/]*$/, "")) print }' "$TMP/files" | sort -u > "$TMP/have"
+
+# The trees whose files are records, and the derived surfaces that project them.
+is_exempt() {
+  case "$1" in
+    .ai/repo/sessions/*|.ai/repo/adrs/*|.ai/repo/project/*) return 0 ;;
+    docs/generated/*|site/data/generated/*|site/data/registry/*) return 0 ;;
+    site/content/plan/*|site/content/sessions/*|site/content/adrs/*) return 0 ;;
+    examples/*/WALKTHROUGH.md) return 0 ;;    # a transcript of a run, regenerated whole
+  esac
+  return 1
+}
+
+# ---------------------------------------------------------------- references in prose
+TOP='(\.ai|\.github|\.githooks|\.claude|apps|assets|bin|docs|examples|lib|scripts|share|site|test)'
+EXT='md|markdown|yaml|yml|json|jsonl|proto|sh|bash|rs|toml|txt|html|css|js|mjs|jq|py|lock|tsv'
+: > "$TMP/md"
+while IFS= read -r f; do is_exempt "$f" || printf '%s\n' "$f" >> "$TMP/md"; done < <(git ls-files '*.md')
+# `tokens in|out` prints "<file><TAB><path>" for every path-shaped token of the document
+# set, inside or outside a fenced code block. A token is what remains after the character
+# that delimited it and any sentence punctuation are taken off. Nothing runs on an empty
+# list: xargs with nothing to hand over still runs the command once, and awk with no file
+# argument would read this script's own stdin.
+tokens() {
+  [ -s "$TMP/md" ] || return 0
+  tr '\n' '\0' < "$TMP/md" | xargs -0 awk -v want="$1" '
+    FNR == 1 { fence = 0 }
+    /^[[:space:]]*(```|~~~)/ { fence = !fence; next }
+    (want == "in") != (fence != 0) { next }
+    {
+      line = $0
+      while (match(line, /(^|[^A-Za-z0-9_$.\/-])'"$TOP"'\/[A-Za-z0-9._\/@+-]+/)) {
+        tok = substr(line, RSTART, RLENGTH)
+        line = substr(line, RSTART + RLENGTH)
+        sub(/^[^A-Za-z.]/, "", tok)
+        sub(/[.,;:)]+$/, "", tok)
+        print FILENAME "\t" tok
+      }
+    }' | sort -u
+}
+# awk's `NR == FNR` join reads its lookup file first, and when that file is empty the test
+# is still true for the first records of the second file: the join swallows them and the
+# gate reports nothing. Every lookup below is seeded with a line no path can equal, so an
+# empty exemption set exempts nothing rather than everything.
+NEVER='//never'
+tokens out > "$TMP/refs"
+# The tokens inside the fences are the document's own: a path a document creates in its own
+# demonstration, and then names in the prose that reports what happened to it, is not a
+# reference to the repository. `docs/claims/mcp-degraded-not-silent.md` writes a broken rule
+# file and quotes the refusal that names it.
+printf '%s\n' "$NEVER" > "$TMP/local"
+tokens in >> "$TMP/local"
+# A token is a reference only if its last segment carries a known artifact extension: a
+# truncation at a placeholder (`scripts/release-<version>`, `share/schemas/<kind>/`) is a
+# prefix of a path, never a path, and no document is asked to defend one.
+awk -F'\t' -v ext="^($EXT)$" '{ n = split($2, s, "."); if (n > 1 && s[n] ~ ext) print }' "$TMP/refs" > "$TMP/refs.ext"
+# `have` needs no seed: it is empty only when nothing is tracked, and then no document
+# was read and there is nothing to join.
+awk -F'\t' 'NR == FNR { have[$0]; next } !($2 in have)' "$TMP/have" "$TMP/refs.ext" > "$TMP/absent" || true
+# A path the repository ignores is not a broken reference: the runtime state under
+# .ai/local/, the build outputs under site/static/ and site/data/, the machine's own
+# benchmark baseline. Documents are expected to name those — a reader needs to know where
+# the tool writes — and a fresh clone is expected not to carry them.
+cut -f2 "$TMP/absent" | sort -u > "$TMP/absent.paths"
+printf '%s\n' "$NEVER" > "$TMP/ignored"
+[ -s "$TMP/absent.paths" ] && git check-ignore --stdin < "$TMP/absent.paths" >> "$TMP/ignored" 2>/dev/null || true
+awk -F'\t' 'NR == FNR { ign[$0]; next } !($2 in ign)' "$TMP/ignored" "$TMP/absent" > "$TMP/absent.kept" || true
+awk -F'\t' 'NR == FNR { own[$0]; next } !($0 in own)' "$TMP/local" "$TMP/absent.kept" > "$TMP/missing" || true
+if [ -s "$TMP/missing" ]; then
+  echo "a document names a file that is not there; correct the path, or — when the file is one" >&2
+  echo "the tool writes on demand rather than one the repository carries — name the directory and" >&2
+  echo "the file separately, so the sentence stops asserting that the join is present:" >&2
+  awk -F'\t' '{ printf "  %s names %s\n", $1, $2 }' "$TMP/missing" >&2
+  rc=1
+fi
+
+# ---------------------------------------------------------------- schema paths, everywhere
+# A schema path is not prose: `share/kinds.yaml` fixes it from the schema's identity, so
+# `majordomus.adr/v1` is share/schemas/majordomus/adr/adr.v1.* and nothing else can name
+# it. That makes the check exact — a token under share/schemas/ is a schema path when some
+# file in the tree begins with it, which accepts the file itself, the vendor and kind
+# directories, and the stem of `capture.v1.{schema.json,proto}`, and accepts nothing the
+# identity rule could not have produced. It runs over every tracked file outside test/,
+# fences included, because the wrong path is as easy to write in a shell script or a
+# template as in a sentence — that is where one of the nine after the schemas moved was.
+#
+# The suite is out of scope, and has to be: its cases build repositories that carry the
+# faults the gates refuse, so a gate reading them would refuse itself. Tokens introduced
+# by `$` are variable expansions (the fixture share directory a case builds under
+# "$share/schemas/") and name nothing in this tree either.
+git grep -h -I -o -E '(^|[^A-Za-z0-9_$./-])share/schemas/[A-Za-z0-9._/-]+' -- \
+    ':!.ai/repo/sessions' ':!.ai/repo/adrs' ':!.ai/repo/project' \
+    ':!docs/generated' ':!site/data/generated' ':!site/data/registry' \
+    ':!site/content/plan' ':!site/content/sessions' ':!test' 2>/dev/null \
+  | sed -E 's/^[^s]*//; s/[.,;:)]+$//' | sort -u > "$TMP/schemapaths" || true
+: > "$TMP/badschema"
+while IFS= read -r sp; do
+  [ -n "$sp" ] || continue
+  grep -q "^$sp" "$TMP/have" || printf '%s\n' "$sp" >> "$TMP/badschema"
+done < "$TMP/schemapaths"
+if [ -s "$TMP/badschema" ]; then
+  echo "no schema is at this path; a schema's identity fixes it, as" >&2
+  echo "share/schemas/<vendor>/<name>/<name>.v<n>.<ext> — see share/kinds.yaml:" >&2
+  while IFS= read -r sp; do
+    printf '  %s\n' "$sp" >&2
+    git grep -n -I -F -- "$sp" -- ':!test' | grep -vE '^(\.ai/repo/(sessions|adrs|project)|docs/generated|site/data)' | sed 's/^/    /' >&2 || true
+  done < "$TMP/badschema"
+  rc=1
+fi
+
+# ---------------------------------------------------------------- contracts the site publishes
+if command -v jq >/dev/null 2>&1; then
+  for f in site/data/generated/*.json; do
+    [ -f "$f" ] || continue
+    for c in $(jq -r '.. | objects | select(has("contract")) | .contract | select(type == "string")' "$f" 2>/dev/null | sort -u); do
+      case "$c" in ''|http*|/*) continue ;; esac
+      grep -qxF "$c" "$TMP/have" || { printf '%s publishes contract %s, which is not in the repository\n' "$f" "$c" >&2; rc=1; }
+    done
+  done
+fi
+
+[ "$rc" = 0 ] && echo "reference-check: every reference resolves"
+exit "$rc"

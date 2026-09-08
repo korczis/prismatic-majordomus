@@ -34,6 +34,11 @@ site/content/docs/site-claims.md    merge=derived
 # rewritten whenever the registry moves.
 site/content/registry/**            merge=derived
 
+# The CLI reference: one page per command, their `weight` a function of where the command
+# sits in the whole command list. Adding a command anywhere renumbers the pages after it,
+# so two branches that each add one conflict on every page between them.
+site/content/docs/cli/**            merge=derived
+
 # The schema, allow-list and section projections: `majordomus generate` writes all three out
 # of the kind and capability declarations, and they conflict for the same reason the rest of
 # this file exists — the merged tree's answer appears in neither side.

@@ -15,7 +15,7 @@
   {%- set rows = [r for r in cov.rows if r.class == cls] -%}
   {%- if rows | length > 0 %}
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{% if cls == "command" %}Public commands{% elif cls == "claim" %}Guaranteed claims{% else %}MCP tools{% endif %} <span class="font-mono text-sm text-body-subtle">{{ rows | length }}</span></h2>
-  <div class="mt-3 overflow-x-auto rounded-base border border-default">
+  <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[36rem] text-left text-sm">
       <thead class="bg-neutral-secondary-soft text-xs uppercase text-body-subtle"><tr><th class="px-3 py-2">target</th><th class="px-3 py-2 text-right">use cases</th><th class="px-3 py-2 text-right">executable</th><th class="px-3 py-2 text-right">evidence</th><th class="px-3 py-2">status</th><th class="px-3 py-2">policy</th></tr></thead>
       <tbody>

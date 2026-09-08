@@ -1217,14 +1217,14 @@ and `version`, never the file name. `docs/DOCTRINE.md` describes the format, the
 ```
 $ majordomus rules list
 majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch
-majordomus.sessions-are-workers            v1  advisory  vendor:majordomus not machine-enforced
-project.english-only                       v1  blocking  project          not machine-enforced
+majordomus.sessions-are-workers            v1  advisory  vendor:majordomus no validator; see the rule
+project.english-only                       v1  blocking  project          no validator; see the rule
 ```
 
 - `list [--json]` prints the effective set in resolved order: identity, class, provenance
   (`vendor:<name>` or `project`), and whether the tool enforces it. A rule without an
   `x-majordomus` block is normative for whoever reads it and enforced by nobody, and the
-  listing says `not machine-enforced` rather than hiding it.
+  listing says `no validator; see the rule` rather than hiding it: the rule is normative for whoever reads it, and nothing checks it by machine.
 - `show <id>` prints one rule, front matter and body, with the repository-relative path it
   was read from as the first line. An id outside the effective set exits 12.
 - `vendor status` compares the vendored baseline with the package the running executable
@@ -1563,7 +1563,9 @@ p99, maximum, mean and standard deviation; nothing is averaged away.
 - Every run is written under `.ai/local/benchmarks/` (`runs/<run-id>.json`, `latest.json`,
   one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored
   by git, never a baseline.
-- `--write-baseline` writes the run as `.ai/repo/benchmarks/baseline.json`, schema
+- `--write-baseline` writes the run under `.ai/repo/benchmarks/rust/`, as
+  `baseline.<platform>.json` — one baseline per platform, since a duration compared
+  across machines compares the machines — with schema
   `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It
   refuses a dirty tree without `--force`, because a baseline records a commit.
 - `--check` compares the run with the baseline under `benchmark.regression`: for each target

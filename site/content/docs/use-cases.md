@@ -25,7 +25,7 @@ canonical home; anything claimed as guaranteed is backed by executable evidence.
 
 ## Where things live
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | what | where | who owns it |
 |---|---|---|
@@ -142,7 +142,7 @@ go.
 (`guaranteed`, `advisory`). What the use case *is* is computed when the site data is
 generated, from the evidence and from what it names:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | observed | when |
 |---|---|
@@ -230,7 +230,7 @@ resolve. Nothing on a page was typed into a template.
 
 ## The gates, in one place
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | gate | where | what it refuses |
 |---|---|---|

@@ -309,7 +309,7 @@ limitation and is stated as such.
 
 Three tiers, each with a declared trigger:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Tier | What | Loaded when | Budget |
 |---|---|---|---|
@@ -508,7 +508,7 @@ shape.
 One executable, `majordomus`, portable POSIX shell in v0.1, with a small set of
 semantically distinct subcommands:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Command | Answers | Writes |
 |---|---|---|
@@ -558,7 +558,7 @@ blocking:
 **`watch`** answers "what has drifted in the work?" Deterministic, reported with
 reproduce commands, non-blocking by design because they concern work in progress:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Drift | Detected how |
 |---|---|
@@ -702,7 +702,7 @@ Deferred, with the reason:
 
 Stated for orientation, not commitment:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Tier | Adds |
 |---|---|

@@ -69,6 +69,7 @@ pub fn validate(topology: &Topology, root: &Path, artifacts: Artifacts) -> Vec<F
     let mut findings = Vec::new();
     findings.extend(identities(topology));
     findings.extend(mounts(topology));
+    findings.extend(shadowing(topology, root));
     findings.extend(namespaces(topology));
     findings.extend(roots(topology, root, artifacts));
     findings.sort_by(|a, b| {
@@ -182,6 +183,89 @@ fn namespaces(topology: &Topology) -> Vec<Finding> {
         }
     }
     findings
+}
+
+/// A route the executable answers itself, mounted over pages the root application has.
+///
+/// The nesting rule exempts the root application, because answering what nothing else claims
+/// is its whole job. That exemption is right for the topology and blind to one thing: the
+/// application does not only answer what nothing else claims — it has *files* at particular
+/// paths, and a native route mounted at one of them takes every page beneath it. The
+/// topology stays resolvable and the pages stop existing, silently, for anybody using the
+/// running executable rather than the published site.
+///
+/// So this is measured rather than reasoned about: the application's own output is asked
+/// whether it has something at the route. A warning, not an error, because which of the two
+/// should move is intent — a person decides whether the route or the section is renamed —
+/// and refusing to serve until they decide would be worse than telling them.
+fn shadowing(topology: &Topology, root: &Path) -> Vec<Finding> {
+    let mut findings = Vec::new();
+    let Some(application) = topology
+        .surfaces
+        .iter()
+        .find(|s| s.mount.is_root() && s.kind == SurfaceKind::StaticDirectory)
+    else {
+        return findings;
+    };
+    let Some(artifact) = application.artifact.as_ref() else {
+        return findings;
+    };
+    let base = root.join(artifact);
+    for surface in &topology.surfaces {
+        if surface.mount.is_root() || surface.kind == SurfaceKind::StaticDirectory {
+            continue;
+        }
+        let relative = surface.mount.relative();
+        if relative.is_empty() {
+            continue;
+        }
+        let target = base.join(&relative);
+        if !target.exists() {
+            continue;
+        }
+        let pages = if target.is_dir() {
+            count_pages(&target)
+        } else {
+            1
+        };
+        findings.push(Finding {
+            severity: Severity::Warning,
+            rule: "surface.shadows-application".into(),
+            surface: format!("{} over {}", surface.id, application.id),
+            message: format!(
+                "{} answers {} itself, and {} has {} page(s) there ({}/{})",
+                surface.id,
+                surface.mount,
+                application.id,
+                pages,
+                artifact.display(),
+                relative
+            ),
+            remedy: format!(
+                "move {} to a path the application does not use, or move those pages: while \
+                 both claim {}, the executable answers and the pages are unreachable",
+                surface.id, surface.mount
+            ),
+        });
+    }
+    findings
+}
+
+/// How many rendered pages a directory of the application holds, at any depth.
+fn count_pages(dir: &Path) -> usize {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return 0;
+    };
+    let mut total = 0;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            total += count_pages(&path);
+        } else if path.extension().is_some_and(|e| e == "html") {
+            total += 1;
+        }
+    }
+    total
 }
 
 /// Mount ownership: one owner per path, in each of the two worlds a surface can live in.

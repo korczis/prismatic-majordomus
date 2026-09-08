@@ -49,7 +49,7 @@ registry entry, none declared in the MCP code. The decision is
 
 ## One server per repository
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | | |
 |---|---|
@@ -74,7 +74,7 @@ The root of this repository carries the configuration each client reads, all nam
 same launcher, so that the first client to open the repository becomes the server and the
 others attach:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | client | file | what it names |
 |---|---|---|
@@ -107,7 +107,7 @@ transport, when it attached and when it was last seen. The `initialize` result's
 `instructions` tell a client the server's URL, its own peer id and every other peer with
 what it announced, before its first tool call.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | tool | capability | arguments | answers |
 |---|---|---|---|
@@ -132,7 +132,7 @@ The executable names no repository file except the two conventions the layer its
 documents, `.ai/manifest.yaml` and `sources.yaml` under the `knowledge` section, and reads
 how each kind is read from the tool distribution at run time. The rest is data:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | decides | read from |
 |---|---|
@@ -140,7 +140,7 @@ how each kind is read from the tool distribution at run time. The rest is data:
 | which sections exist | `sections:` in the manifest |
 | which files are sources, of which kind | `.ai/repo/knowledge/sources.yaml`, one pathspec and kind per class, through the git index |
 | how a kind is read and which keys it may carry | `share/kinds.yaml` and `share/schemas/<kind>.schema.json` in the distribution, plus a repository's own under `.ai/repo/knowledge/` |
-| which tools exist | the executable capabilities with an MCP tool exposure, composed in `apps/majordomus-cli/src/capability/builtin.rs` |
+| which tools exist | the executable capabilities with an MCP tool exposure, composed under `apps/majordomus-cli/src/capability/builtin/` |
 
 </div>
 
@@ -157,7 +157,7 @@ Consequences a repository can rely on:
 
 ## Resources
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | URI | content |
 |---|---|
@@ -185,7 +185,7 @@ manifest section it falls under, and its size.
 
 ## Tools
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | tool | capability | arguments | answers |
 |---|---|---|---|
@@ -216,7 +216,7 @@ carries the canonical id in `_meta.majordomus.id` and its `inputSchema` and
 
 ## Failure behaviour
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | state | what happens |
 |---|---|

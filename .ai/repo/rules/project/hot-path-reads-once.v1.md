@@ -31,10 +31,9 @@ at most the number of distinct canonical files the command needs.
 
 # Failure behaviour
 
-No command decides this rule; a reviewer does, with the counters. Case
-`test/cases/78_flatten_once.sh`, when it exists, holds the counts of `doctor` and `watch`
-on the tool's own repository to the number of distinct canonical files they read, and a
-change that reads a file twice fails it.
+No command decides this rule; a reviewer does, with the counters. No case holds these counts yet. The one that does will hold the counts of `doctor` and
+`watch` on the tool's own repository to the number of distinct canonical files they read,
+and a change that reads a file twice will fail it.
 
 # Verification
 

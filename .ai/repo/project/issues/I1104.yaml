@@ -1,0 +1,32 @@
+id: I1104
+milestone: two-folder-integration
+title: Both namespaces carry their contracts, all the way down
+slug: readme-hierarchy-both-namespaces
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Extend the directory-contract discipline that already governs `.ai/` to `.majordomus/`, so every directory of either namespace explains its purpose, its ownership, its lifecycle, the schemas that apply and how its contents are discovered."
+why: "A control-plane directory nobody documented is where the next copy of something appears. The mechanism for preventing that already exists on one side of the boundary and simply does not run on the other."
+current_state: "ADR 0011 established that every directory of the layer carries a contract, and a validator enforces it under `.ai/`. `.majordomus/` has no such requirement."
+desired_state: "The same validator covers both namespaces, and the effective context for an artifact composes from the contracts above it in either."
+scope:
+  - .majordomus
+non_scope:
+  - A second contract format for the second namespace
+  - Duplicating a parent's instructions in every child
+depends_on:
+  - I1102
+acceptance_criteria:
+  - Every directory of both namespaces carries a contract with valid typed front matter, and a missing one fails the existing validator
+  - Each states purpose, ownership and lifecycle, the schemas that apply, and how its contents are discovered and extended
+  - Contracts compose rather than repeat: a child adds to its ancestors and never restates them
+  - The same mechanism serves both namespaces, with no second format
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - contracts_present
+  - composition_holds
+risk: "Mechanical coverage produces mechanical documents. A contract that says nothing a reader could not guess is a cost with no benefit, and the review has to say so."
+created_at: 2026-09-06
+updated_at: 2026-09-06

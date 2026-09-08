@@ -36,7 +36,7 @@ DERIVED PROJECTIONS         the HTTP router · the home page at / · /api/v1/web
 Every path below is the mount its surface declares. Nothing in this table is typed twice:
 `majordomus web list` prints it from the same resolution, and a mount that moves moves here.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Path | Surface | What it is | Kind |
 |---|---|---|---|
@@ -196,7 +196,7 @@ and would make every clone report drift.
 
 ## What is enforced, and where
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Invariant | Enforced by |
 |---|---|

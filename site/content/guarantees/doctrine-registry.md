@@ -1,7 +1,7 @@
 +++
 title = "Every rule the tool enforces is declared once, as a rule object in the repository's effective set, and doctor proves each one is reached by the command that claims to run it"
 description = "The rule objects under the repository's rules section — the vendored baseline (.ai/repo/rules/vendor/majordomus/, a copy of the package the tool ships in share/standard/majordomus/) plus the repository's own rules — are the only place a rule is declared. Every command that enforces rules dispatches from it rather than naming checks by hand, and majordomus doctor walks the chain from the declaration to the CI job for each one, reading the source rather than the registry's description of itself."
-weight = 27
+weight = 28
 [extra]
 claim_id = "doctrine-registry"
 status = "guaranteed"

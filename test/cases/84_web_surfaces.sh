@@ -16,9 +16,12 @@ MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 # ---------------------------------------------------------------- what a bare repository has
 "$BIN" web list > list.txt
-expect_grep '^ID +KIND +MOUNT +SOURCE$' list.txt
+expect_grep '^ID +KIND +MOUNT +CATEGORY +WHERE +SOURCE$' list.txt
 expect_grep '^api +native +/api/v1' list.txt
-expect_grep '^swagger +native +/docs' list.txt
+expect_grep '^swagger +native +/swagger ' list.txt
+# and never at /docs: that prefix is the documentation's, and a native route there would take
+# every page under it (project.web-surface-declared-once)
+expect_no_grep '^swagger +native +/docs' list.txt
 # a repository with no site and nothing generated has no static surface at all
 expect_no_grep '^app +static' list.txt
 expect_exit 0 "$BIN" web validate
@@ -38,7 +41,7 @@ printf '<!DOCTYPE html><title>example</title><h1>example report</h1>\n' > target
 
 # it is discovered, described and valid, with nothing registered anywhere
 "$BIN" web list > list.txt
-expect_grep '^example-report +static +/example-report +target/web/example-report$' list.txt
+expect_grep '^example-report +static +/example-report +.*target/web/example-report$' list.txt
 expect_exit 0 "$BIN" web validate --artifacts
 "$BIN" web explain example-report > explain.txt
 expect_grep 'came from producer declaration target/web/example-report/surface.json' explain.txt

@@ -14,9 +14,12 @@ The script refuses (exit 10, nothing pushed) a working tree with uncommitted cha
 scripts/site-deploy --dry-run       # gate, build, check; "would push <sha> to origin/gh-pages: deploy: site from <source>"
 scripts/site-deploy                 # the same, then the push; GitHub serves it in about a minute
 curl -s https://korczis.github.io/prismatic-majordomus/ | grep -c "/commit/$(git rev-parse HEAD)"   # 1
+git log -1 --format='%an %s' origin/gh-pages    # github-actions[bot] for a workflow deploy, a person for a hand one
 ```
 
 ## What it does not cover
+
+A preview is published, not prevented. `--any-ref` exists so that unmerged work can be looked at on the real host, so after one the live site is a commit `origin/master` does not contain, and it stays that way until the next push to master publishes over it. That is the intended lifetime, not a leak: the page footer names the commit it was built from, the `gh-pages` commit message says `deploy: site from <sha>`, and its author is the person who ran the script rather than `github-actions[bot]`, so what is published can always be read off the site itself. Reading the footer or that commit is how you tell a preview from master, and either is faster than comparing routes.
 
 The script does not decide when to deploy; the operator does, and the workflow does on every push to master. It does not make a red gate green: a failed check stops before the push. It does not serve the site itself; GitHub's own "pages build and deployment" does, and that step is GitHub's.
 

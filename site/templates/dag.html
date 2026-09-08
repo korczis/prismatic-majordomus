@@ -9,7 +9,7 @@
   {{ <plan_graph mermaid={plan.mermaid} caption="Issue dependency graph" /> }}
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Edges</h2>
-  <div class="mt-4 overflow-x-auto rounded-base border border-default">
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[30rem] text-left text-sm">
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">must finish</th><th scope="col" class="px-4 py-2">before</th><th scope="col" class="px-4 py-2">which is</th></tr></thead>
       <tbody>
@@ -35,7 +35,7 @@
     {%- endfor %}
   </div>
 
-  <p class="mt-8 text-sm text-body">Read the same thing at a terminal with <code class="font-mono text-heading">majordomus plan graph</code> and <code class="font-mono text-heading">majordomus plan waves</code>, or the whole model at <a href="{{ get_url(path="/plan/", trailing_slash=true) }}" class="text-fg-brand hover:underline">the plan</a>.</p>
+  <p class="mt-8 text-sm text-body">Read the same thing at a terminal with <code class="font-mono text-heading">majordomus plan graph</code> and <code class="font-mono text-heading">majordomus plan waves</code>, or the whole model at <a href="{{ get_url(path="/plan/", trailing_slash=true) }}" class="text-fg-brand underline">the plan</a>.</p>
 </div>
 {% endblock body %}
 {% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}

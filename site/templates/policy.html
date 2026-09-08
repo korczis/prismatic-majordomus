@@ -1,16 +1,16 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set policy = load_data(path="data/generated/policy.json") -%}
-<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full">{{ page.content | safe }}</article>
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
 <div class="mt-10 grid gap-4 md:grid-cols-2">
-  {{ <card kicker="context" title={"Always-loaded budget: " ~ policy.context.always_loaded_budget_lines ~ " lines"} text={"Strategy <code>" ~ policy.context.strategy ~ "</code>. Transcript is state: <code>" ~ policy.context.transcript_is_state ~ "</code>. The generated instruction file marked always-loaded fails <code>doctor</code> and <code>update</code> when over budget."} /> }}
-  {{ <card kicker="profiles" title={"Default profile: " ~ policy.profiles.default} text={"Checkpoint interval default <code>" ~ policy.profiles.checkpoint_interval_default ~ "</code>; each profile may override it."} /> }}
-  {{ <card kicker="verification" title={"Finish contract"} text={"Required for changes: <code>" ~ policy.verification.required_for_changes ~ "</code>. Lines evaluated by <code>finish</code>: <code>" ~ policy.verification.finish_requires | join(sep="</code>, <code>") ~ "</code>."} /> }}
-  {{ <card kicker="handover" title={"Required sections"} text={"<code># " ~ policy.handover.required_sections | join(sep="</code>, <code># ") ~ "</code>; refused at write time if any is empty. Retention cap " ~ policy.handover.retention_max_files ~ " files."} /> }}
-  {{ <card kicker="ledger" title={"Append-only, capped at " ~ policy.ledger.retention_max_lines ~ " lines"} text={"Written only by Majordomus. <code>doctor</code> reports when the cap is exceeded; nothing is deleted."} /> }}
+  {{ <card level="2" kicker="context" title={"Always-loaded budget: " ~ policy.context.always_loaded_budget_lines ~ " lines"} text={"Strategy <code>" ~ policy.context.strategy ~ "</code>. Transcript is state: <code>" ~ policy.context.transcript_is_state ~ "</code>. The generated instruction file marked always-loaded fails <code>doctor</code> and <code>update</code> when over budget."} /> }}
+  {{ <card level="2" kicker="profiles" title={"Default profile: " ~ policy.profiles.default} text={"Checkpoint interval default <code>" ~ policy.profiles.checkpoint_interval_default ~ "</code>; each profile may override it."} /> }}
+  {{ <card level="2" kicker="verification" title={"Finish contract"} text={"Required for changes: <code>" ~ policy.verification.required_for_changes ~ "</code>. Lines evaluated by <code>finish</code>: <code>" ~ policy.verification.finish_requires | join(sep="</code>, <code>") ~ "</code>."} /> }}
+  {{ <card level="2" kicker="handover" title={"Required sections"} text={"<code># " ~ policy.handover.required_sections | join(sep="</code>, <code># ") ~ "</code>; refused at write time if any is empty. Retention cap " ~ policy.handover.retention_max_files ~ " files."} /> }}
+  {{ <card level="2" kicker="ledger" title={"Append-only, capped at " ~ policy.ledger.retention_max_lines ~ " lines"} text={"Written only by Majordomus. <code>doctor</code> reports when the cap is exceeded; nothing is deleted."} /> }}
   <div class="rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
     <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">enforcement</span>
-    <h3 class="mb-2 text-lg font-semibold tracking-tight text-heading">What doctor reconciles</h3>
+    <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">What doctor reconciles</h2>
     <ul class="space-y-2 text-sm text-body">{% for e in policy.enforcement %}<li><code class="font-mono text-heading">{{ e.name }}</code> — <code class="font-mono">{{ e.path }} {{ e.args | join(sep=" ") }}</code> wired by <code class="font-mono">{{ e.wired_by }}</code></li>{% endfor %}</ul>
   </div>
 </div>
@@ -31,7 +31,7 @@
     reader without JavaScript could not reveal. -#}
 <details id="raw" class="mt-8 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <summary class="flex cursor-pointer items-center justify-between px-5 py-4 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"><span>The policy file as installed by <code class="font-mono">majordomus init</code></span></summary>
-  <div class="border-t border-default"><div class="overflow-x-auto"><pre class="m-0 p-5 font-mono text-xs leading-relaxed text-heading"><code class="language-yaml">{{ policy.raw }}</code></pre></div></div>
+  <div class="border-t border-default"><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-5 font-mono text-xs leading-relaxed text-heading"><code class="language-yaml">{{ policy.raw }}</code></pre></div></div>
 </details>
 {% endblock body %}
 {% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}

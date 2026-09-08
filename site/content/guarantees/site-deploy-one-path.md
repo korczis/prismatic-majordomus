@@ -1,7 +1,7 @@
 +++
 title = "The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged"
 description = "scripts/site-deploy is the only way the site reaches GitHub Pages. The Pages workflow runs it after its gate; a person runs it when the operator wants the site live without waiting for the Actions queue (.ai/repo/skills/deploy-site/SKILL.md, just site-deploy). Either way the same checks run and the same branch is pushed: gh-pages, which GitHub Pages serves."
-weight = 133
+weight = 134
 [extra]
 claim_id = "site-deploy-one-path"
 status = "guaranteed"
@@ -23,9 +23,12 @@ The script refuses (exit 10, nothing pushed) a working tree with uncommitted cha
 scripts/site-deploy --dry-run       # gate, build, check; "would push <sha> to origin/gh-pages: deploy: site from <source>"
 scripts/site-deploy                 # the same, then the push; GitHub serves it in about a minute
 curl -s https://korczis.github.io/prismatic-majordomus/ | grep -c "/commit/$(git rev-parse HEAD)"   # 1
+git log -1 --format='%an %s' origin/gh-pages    # github-actions[bot] for a workflow deploy, a person for a hand one
 ```
 
 ## What it does not cover
+
+A preview is published, not prevented. `--any-ref` exists so that unmerged work can be looked at on the real host, so after one the live site is a commit `origin/master` does not contain, and it stays that way until the next push to master publishes over it. That is the intended lifetime, not a leak: the page footer names the commit it was built from, the `gh-pages` commit message says `deploy: site from <sha>`, and its author is the person who ran the script rather than `github-actions[bot]`, so what is published can always be read off the site itself. Reading the footer or that commit is how you tell a preview from master, and either is faster than comparing routes.
 
 The script does not decide when to deploy; the operator does, and the workflow does on every push to master. It does not make a red gate green: a failed check stops before the push. It does not serve the site itself; GitHub's own "pages build and deployment" does, and that step is GitHub's.
 

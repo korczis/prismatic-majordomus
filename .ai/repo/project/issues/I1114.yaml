@@ -1,0 +1,33 @@
+id: I1114
+milestone: two-folder-integration
+title: A provider is an adapter over the model, and adding one is an implementation
+slug: provider-adapters
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make every provider-specific representation a derived adapter over the repository model, so that supporting another provider is one implementation rather than a copy of the instructions in another file."
+why: "Provider files are the fastest-growing part of any repository that works with several assistants, and each copy drifts from the layer it was copied from. The layer is provider-neutral by design; the adapters are where a provider's requirements are allowed to exist."
+current_state: "Provider bootstraps are generated from the registry, which is the right shape, but they land at the root and their ownership is not recorded."
+desired_state: "Adapters are generated into the control-plane namespace, bridged at the root only where a tool truly requires a root file, and a new provider is a trait implementation."
+scope:
+  - apps/majordomus-cli/src/providers.rs
+  - .majordomus/generated
+non_scope:
+  - Provider semantics in the canonical layer
+  - A provider list maintained by hand
+depends_on:
+  - I1112
+acceptance_criteria:
+  - Every provider representation is derived from the model and declares its provenance
+  - Adding a provider is one implementation of the adapter contract, with no edit to the layer and no new list
+  - A provider that can be configured programmatically produces no repository file at all
+  - Where a root file is unavoidable it is a managed bridge with recorded ownership, and its content is derived
+validation:
+  - majordomus generate --check
+  - cargo test --workspace --all-features
+evidence_required:
+  - adapters_derived
+  - new_provider_is_one_impl
+risk: "An adapter layer can grow provider-shaped holes in the model beneath it. The check is whether the model would still be complete if every adapter were deleted."
+created_at: 2026-09-06
+updated_at: 2026-09-06

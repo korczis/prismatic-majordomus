@@ -113,7 +113,7 @@ MJ_PROVIDERS_DIR=""; MJ_TEMPLATES_DIR=""; MJ_CACHE_DIR=""
 # a repository path, relative to the repository root, for messages and records
 mj_rel() { printf '%s' "${1#"$MJ_ROOT/"}"; }
 # is repository-relative path $1 inside the AI layer (the tool's own files)?
-mj_is_ai_path() { case "$1" in "$(mj_rel "$MJ_AI_DIR")"|"$(mj_rel "$MJ_AI_DIR")"/*) return 0 ;; esac; return 1; }
+mj_is_ai_path() { local ai="${MJ_AI_DIR#"$MJ_ROOT/"}"; case "$1" in "$ai"|"$ai"/*) return 0 ;; esac; return 1; }
 
 # Resolve the repository layout. Never fails: a repository with no AI layer resolves to
 # the paths init would create, so init and doctor can name them.
@@ -326,16 +326,33 @@ mj_policy_cat() {
 }
 
 # normalise a repo-relative path: strip ./ and trailing /, collapse //, refuse escapes
-mj_norm_path() {
-  local p="$1"
-  p="$(printf '%s' "$p" | sed -e 's#^\./##' -e 's#//*#/#g' -e 's#/$##')"
+# Normalise a repository-relative path into the variable named by $1 — no subprocess. The
+# context scan asks this question once per document per tracked file, tens of thousands of
+# times in a repository this size, and a `sed` per question was most of the two minutes
+# `majordomus context` took: the answer is parameter expansion, and the value goes into a
+# variable rather than through a pipe, so a hot caller pays neither a fork nor an exec.
+# Returns 1 when the path is empty, absolute, or escapes the repository.
+mj_norm_path_into() {
+  local p="$2"
+  p="${p#./}"
+  while [[ "$p" == *//* ]]; do p="${p//\/\//\/}"; done
+  p="${p%/}"
   case "$p" in ""|/*|../*|*/../*|*/..|..) return 1 ;; esac
-  printf '%s' "$p"
+  printf -v "$1" '%s' "$p"
+}
+# The same, printed: for a caller that reads it with $(...). One fork for the substitution,
+# none inside it.
+mj_norm_path() {
+  local out
+  mj_norm_path_into out "$1" || return 1
+  printf '%s' "$out"
 }
 # does path a contain path b (or equal)? Both sides are normalised first: state files can be
 # hand-edited, so a trailing slash or ./ in a scope entry must not silently exclude everything.
 mj_path_contains() {
-  local a b; a="$(mj_norm_path "$1" 2>/dev/null || printf '%s' "$1")"; b="$(mj_norm_path "$2" 2>/dev/null || printf '%s' "$2")"
+  local a b
+  mj_norm_path_into a "$1" || a="$1"
+  mj_norm_path_into b "$2" || b="$2"
   case "$b" in "$a"|"$a"/*) return 0 ;; esac; return 1
 }
 

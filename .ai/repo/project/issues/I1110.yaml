@@ -1,0 +1,32 @@
+id: I1110
+milestone: two-folder-integration
+title: The second run changes nothing, and a test says so
+slug: init-idempotent
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make reconciliation idempotent: running it against a conforming repository produces no change at all, and prove it with a test rather than with an observation."
+why: "Idempotence is what separates a reconciler from a script that happens to run twice. It is also the cheapest possible regression test for the whole desired-state machinery: if the second run does something, the first one did something it could not describe."
+current_state: "Initialisation is not idempotent and nothing measures whether it is."
+desired_state: "A second reconciliation reports zero changes, the working tree is byte-identical, and a test fails the moment that stops being true."
+scope:
+  - test/cases
+non_scope:
+  - Achieving stillness by making the second run skip work it should do
+  - Ignoring a difference because it is only in a generated file
+depends_on:
+  - I1109
+acceptance_criteria:
+  - Reconciling a conforming repository twice leaves the tree byte-identical, including every generated artifact
+  - The second run reports no change rather than reporting changes it then does not make
+  - The test covers a repository that was already adopted, one adopted by an older version, and one where a person edited a bridge
+  - A deliberate divergence makes the test fail, proving it can
+validation:
+  - bash test/run.sh
+  - majordomus init --dry-run
+evidence_required:
+  - second_run_empty
+  - negative_test
+risk: "The easy way to pass this test is to make the second run do nothing on principle. The test has to distinguish a reconciler that found nothing to do from one that did not look."
+created_at: 2026-09-06
+updated_at: 2026-09-06

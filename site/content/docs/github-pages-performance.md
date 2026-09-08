@@ -211,7 +211,7 @@ because the larger half of it is GitHub's.
 Each domain is invalidated by its own inputs and nothing else, so a documentation change does
 not evict a toolchain and a lockfile change does not evict the site.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | cache | key | what a hit saves |
 |---|---|---|

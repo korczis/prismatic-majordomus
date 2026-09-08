@@ -1,7 +1,7 @@
 +++
 title = "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable"
 description = "A command of the native Rust command line cannot exist quietly. Whatever --help lists, the reference under /docs/cli/ lists too, with the same words, because both are projections of one declaration in apps/majordomus-cli/src/cli.rs. A command that runs on its own — as opposed to a parent that only groups the commands under it — must carry at least one example, and that example is not prose: it is an argument vector with a title, a description, whatever must have run before it, and a typed statement of what running it must produce. The command line a reader sees on the page is composed from that vector, so there is no second spelling of it to fall out of date."
-weight = 148
+weight = 149
 [extra]
 claim_id = "cli-documentation-executable"
 status = "guaranteed"
@@ -21,14 +21,14 @@ The examples are then run. `apps/majordomus-cli/tests/cli_docs.rs` takes the sam
 
 The tests are two levels over the same data. Level A parses every documented argument vector, and every vector an example says must run first, with `Cli::try_parse_from`: a renamed flag, a removed enum value or a missing required argument makes the example stale immediately. Level B runs each example against the built executable in a fresh fixture repository — asserting the exit code, the output, the JSON document or the JSON pointer the expectation names; `majordomus serve --port 0` is spawned, the address it logs is read within a deadline, its documented route is fetched over a real socket, and it is stopped by closing stdin; `majordomus mcp --standalone` is spoken to with a real `initialize` request. Both are held by a guard that kills the child whatever the probe found, so no test can leave a server behind.
 
-Downstream, the same tree becomes `docs/generated/cli.md`, the `cli` of `docs/generated/registry.json`, the `cli` and `cli_pages` of `site/data/registry/registry.json`, and one page per command under `/docs/cli/`. Each command's route is derived once, in Rust, so nothing else slugifies a command path; `scripts/site-check` compares the routes the build produced with the routes the executable declares, as sets and in both directions, and `test/cases/97_cli_reference.sh` proves the projection by editing the tree and watching pages appear and disappear.
+Downstream, the same tree becomes `docs/generated/cli.md`, the `cli` of `docs/generated/registry.json`, the `cli` and `cli_pages` of `site/data/registry/registry.json`, and one page per command under `/docs/cli/`. Each command's route is derived once, in Rust, so nothing else slugifies a command path; `scripts/site-check` compares the routes the build produced with the routes the executable declares, as sets and in both directions, and `test/cases/98_cli_reference.sh` proves the projection by editing the tree and watching pages appear and disappear.
 
 ## How to see it
 
 ```bash
 majordomus capabilities validate | grep '^OK   cli'
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cli_docs
-just test-shell 97_cli_reference
+just test-shell 98_cli_reference
 scripts/site-build && scripts/site-check | grep '^OK   cli'
 ```
 

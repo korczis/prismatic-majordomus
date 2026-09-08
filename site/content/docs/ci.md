@@ -92,7 +92,7 @@ person runs:
 
 ```bash
 scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases
-scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, site data
+scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, references, site data
 MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
 scripts/rust-check --ci                # every Rust gate but coverage, plus the benchmark check
 scripts/rust-check --integration       # the executable built and the registry checks only
@@ -141,7 +141,7 @@ Caches hold reusable dependency and build state; artifacts carry a job's outputs
 later job or a later phase. Jobs run on isolated runners, so nothing relies on a shared
 filesystem.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | cache | holds | key | invalidation | scope |
 |---|---|---|---|---|
@@ -154,7 +154,7 @@ filesystem.
 Nothing else is cached: Zola is one download, shellcheck one package, Chrome is on the
 runner image. What a cache holds is never a source of truth: every gate reads the checkout.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | artifact | from | for | retention |
 |---|---|---|---|

@@ -270,6 +270,12 @@ pub enum ReportCommand {
         #[arg(long)]
         from: PathBuf,
     },
+    /// The UI conformance audit, rendered as a section of the test surface (/tests/ui)
+    Ui {
+        /// A results document from `scripts/ui audit`
+        #[arg(long)]
+        from: PathBuf,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -1317,6 +1323,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 "web", "report", "benchmarks",
                 "--from", ".ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json",
             ],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "web report ui",
+        examples: &[ExampleDoc {
+            id: "web-report-ui",
+            title: "Render the UI conformance audit into /tests/ui",
+            description: "`scripts/ui audit` drives a browser over every page of the built site at every width the compiled stylesheet's breakpoints imply, and writes one results document; this renders it. The rendering is a section of the test surface rather than a surface of its own, because a conformance run is a test run and the topology refuses a surface mounted inside another's subtree. Without that document there is nothing to render and the command says so.",
+            argv: &["web", "report", "ui", "--from", "target/web/run-ui.json"],
             setup: &[],
             expect: Expect::ExitCode(13),
         }],

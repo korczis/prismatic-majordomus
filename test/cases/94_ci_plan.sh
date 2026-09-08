@@ -20,10 +20,15 @@ grep -q no-such-gate broken.yaml || { echo "    the mutation did not take"; exit
 expect_exit 10 "$PLAN" --model broken.yaml --check
 expect_grep 'names a gate that does not exist: no-such-gate'
 
-# --- the gates that always run are in every plan, and an empty change selects nothing else
+# --- the gates that always run are in every plan, and an empty change selects nothing else.
+# Which gates those are comes from the model, not from a list here: a gate that gains
+# `always: true` should not have to be spelled in a case to be believed.
 s="$(selected)"
-has "$s" shell-lint && has "$s" core-check || { echo "    the always gates are missing from the empty plan: $s"; exit 1; }
-[ "$(printf '%s\n' "$s" | wc -w | tr -d ' ')" = 2 ] || { echo "    an empty change selected more than the always gates: $s"; exit 1; }
+always="$(awk '/^  - id: /{id=$3} /^    always: true/{print id}' "$ROOT/.ai/repo/ci/gates.yaml")"
+[ -n "$always" ] || { echo "    the model declares no always-gate; the plan cannot be checked against it"; exit 1; }
+for g in $always; do has "$s" "$g" || { echo "    the always gate $g is missing from the empty plan: $s"; exit 1; }; done
+n="$(printf '%s\n' "$always" | wc -w | tr -d ' ')"
+[ "$(printf '%s\n' "$s" | wc -w | tr -d ' ')" = "$n" ] || { echo "    an empty change selected more than the $n always gate(s): $s"; exit 1; }
 
 # --- a Rust change selects the Rust gates and the suite, never the site
 s="$(selected apps/majordomus-cli/src/lib.rs)"
@@ -44,7 +49,7 @@ for g in rust-check rust-coverage rust-bench macos; do lacks "$s" "$g" || { echo
 
 # --- the distribution is read by both implementations and by the site: every gate but the
 #     always ones comes from the class, none from escalation
-p="$(plan share/schemas/policy.schema.json)"
+p="$(plan share/schemas/majordomus/policy/policy.v1.schema.json)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = affected ] || { echo "    a share change escalated instead of selecting by class"; exit 1; }
 s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
 for g in rust-check rust-coverage rust-bench shell-suite site-build site-probe macos; do has "$s" "$g" || { echo "    a share change did not select $g: $s"; exit 1; }; done
@@ -58,7 +63,9 @@ p="$(plan some/new/thing.txt)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = full ] || { echo "    an unclassified path did not escalate"; exit 1; }
 printf '%s' "$p" | jq -r .unclassified[0] | grep -qx 'some/new/thing.txt' || { echo "    the plan does not name the unclassified path"; exit 1; }
 p="$(plan .gitignore)"
-[ "$(printf '%s' "$p" | jq -r .mode)" = affected ] && [ "$(printf '%s' "$p" | jq -r '.selected | length')" = 2 ] || { echo "    an inert path selected a gate"; exit 1; }
+# an inert path selects the always-gates and nothing beyond them; how many that is comes
+# from the model, for the same reason as above
+[ "$(printf '%s' "$p" | jq -r .mode)" = affected ] && [ "$(printf '%s' "$p" | jq -r '.selected | length')" = "$n" ] || { echo "    an inert path selected a gate beyond the $n always gate(s)"; exit 1; }
 
 # --- the union: two classes select the union of their gates; implied and required gates
 #     come with their parent and say so

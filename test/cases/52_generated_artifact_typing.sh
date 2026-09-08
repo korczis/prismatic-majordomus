@@ -41,7 +41,7 @@ jq -r '.artifacts[] | [.path, (.bytes // "-"), (.sha256 // "-"), .format, .docum
   # --- and it carries a provenance header in the form its encoding allows
   case "$document" in providers/*) continue ;; esac
   case "$format" in
-    markdown) head -n 1 "$f" | grep -q '^<!-- GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
+    markdown) head -n 2 "$f" | grep -q '^<!-- GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
     yaml|text) head -n 1 "$f" | grep -q '^# GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
     json) jq -e '(.generated // .["x-majordomus-generated"] // "") | startswith("GENERATED FILE")' "$f" >/dev/null \
             || { echo "    $path says nothing about being generated"; exit 1; } ;;

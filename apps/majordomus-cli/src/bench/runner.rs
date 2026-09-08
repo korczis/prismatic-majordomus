@@ -12,7 +12,7 @@ use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
 
-use crate::capability::{CachePolicy, Context};
+use crate::capability::{CachePolicy, CapabilityError, Context};
 use crate::error::{Error, Result};
 use crate::http::server;
 use crate::http::Router;
@@ -190,14 +190,35 @@ impl Runner {
             }
             _ => ctx,
         };
+        // A refusal is an answer, and answering is the work a benchmark exists to measure:
+        // `objects.get` on a URI the layer does not hold, or `deploy.get` on a repository
+        // with no deployment, does the lookup and then declines, and a case declared to
+        // time that path is timing something real. Only `Internal` means the capability
+        // failed, and only then is the sample meaningless.
+        //
+        // The other two transports already draw the line here. The HTTP runner treats
+        // `status >= 500` as fatal, which is exactly `Internal` after the router's mapping
+        // (404 not_found, 422 refused, 500 internal); the MCP runner fails on a JSON-RPC
+        // `error`, and the surface answers a refusal as a *result* carrying `isError`,
+        // reserving `error` for `Internal`. This path was the one that disagreed, so the
+        // same capability timed three ways gave three verdicts on one event.
+        let fatal = |id: &str, e: CapabilityError| -> Option<Error> {
+            match e {
+                CapabilityError::Internal(reason) => Some(Error::Protocol {
+                    reason: format!("{id}: {reason}"),
+                }),
+                _ => None,
+            }
+        };
         let call = |ctx: &Context| -> Result<()> {
             if mode == CacheMode::Cold {
                 ctx.executor.clear();
             }
-            ctx.execute(id, input.clone())
-                .map_err(|e| Error::Protocol {
-                    reason: format!("{id}: {e}"),
-                })?;
+            if let Err(e) = ctx.execute(id, input.clone()) {
+                if let Some(fatal) = fatal(id, e) {
+                    return Err(fatal);
+                }
+            }
             Ok(())
         };
         for _ in 0..self.profile.warmup {
@@ -212,11 +233,13 @@ impl Runner {
                 ctx.executor.clear();
             }
             let t = Instant::now();
-            ctx.execute(id, input.clone())
-                .map_err(|e| Error::Protocol {
-                    reason: format!("{id}: {e}"),
-                })?;
+            let answered = ctx.execute(id, input.clone());
             samples.push(t.elapsed());
+            if let Err(e) = answered {
+                if let Some(fatal) = fatal(id, e) {
+                    return Err(fatal);
+                }
+            }
         }
         let after = COUNTERS
             .handler_invocations
