@@ -23,6 +23,31 @@ expect_no_grep() {
   else grep -qE -- "$pat" "$src" && { printf '    did not expect /%s/ in %s\n' "$pat" "$src"; return 1; }; fi
   return 0
 }
+# Run a command whose output the caller wants but whose noise it does not, and say what it
+# said if it fails.
+#
+# The idiom this replaces is `cmd 2>/dev/null > file`. Under `bash -eu` a non-zero exit
+# there ends the case having printed nothing anywhere: no message, no assertion, a zero-byte
+# log and a bare FAIL. Three commands in 76_capabilities_projections and the zola build in
+# 95_skills were written that way, and each of them failed exactly like that. `rust_bin`
+# above already does the right thing — stderr to a file, `cat` it on failure — and this is
+# that, reusable.
+#
+#   run_quiet "$S/list.err" "$RB" capabilities list --format json > "$S/list.json"
+#
+# The report goes to stderr, not stdout. Every caller redirects stdout into the file it
+# wants the command's output in, so a diagnostic written to stdout lands in that file
+# instead of the log — the same silence one layer along. The two `>&2` are load-bearing.
+run_quiet() {
+  local err="$1"; shift
+  "$@" 2> "$err" || {
+    local rc=$?
+    printf '    %s failed (exit %s):\n' "$1" "$rc" >&2
+    sed 's/^/    | /' "$err" >&2
+    return 1
+  }
+}
+
 # octal permission bits of a file, GNU stat first (BSD stat has no -c and fails), then BSD
 file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 
