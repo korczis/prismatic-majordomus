@@ -1,7 +1,7 @@
 +++
 title = "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree"
 description = "The task record, the ledger, decisions, open questions, checkpoints, handovers and closed session envelopes belong to the checkout that wrote them. They live under .ai/local/state/, init writes the one .ai/local/ line into .gitignore, and nothing Majordomus does stages or commits them. A fresh clone or a new worktree starts with no local state at all, and that absence is reported as absence rather than mistaken for a record."
-weight = 74
+weight = 75
 [extra]
 claim_id = "local-state-ignored"
 status = "guaranteed"

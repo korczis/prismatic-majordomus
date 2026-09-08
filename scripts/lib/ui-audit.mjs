@@ -11,6 +11,7 @@
 // hold a second opinion about how the site is served or on which port.
 
 import { readFileSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import { chromium } from 'playwright';
 
 const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
@@ -234,46 +235,77 @@ export async function auditPage(page, origin, route, width) {
 }
 
 /** Audit every page of a plan against a running origin. */
-export async function audit(origin, pages, { onVisit } = {}) {
+/**
+ * How many pages the audit drives at once.
+ *
+ * One visit is mostly waiting — for a navigation, for the accessibility engine inside the
+ * page — so a serial audit leaves a machine idle for most of a run that takes a quarter of
+ * an hour. The default follows the machine rather than a number chosen here, and stays
+ * modest because each worker is a browser tab with a page and an engine in it.
+ */
+export function jobs() {
+  const asked = Number.parseInt(process.env.MJ_UI_JOBS ?? '', 10);
+  if (Number.isFinite(asked) && asked > 0) return Math.min(asked, 16);
+  return Math.min(Math.max(availableParallelism(), 2), 4);
+}
+
+/**
+ * Audit every page of a plan against a running origin.
+ *
+ * The visits are spread over a pool of tabs, and the results are put back in plan order
+ * whatever order they finished in: a results document that changed with the scheduler would
+ * make every diff of a run unreadable.
+ */
+export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {}) {
   // the browser the repository already drives for the cockpit probe: the system Chrome,
   // so a CI runner and a laptop use one browser and neither downloads another
   const browser = await chromium.launch({ channel: 'chrome' });
   const context = await browser.newContext();
-  let page = await context.newPage();
-  const visits = [];
-  try {
-    // One throwaway visit first. The server answers its readiness probe before it has built
-    // anything, and the first real page pays for the index, the registry and every asset at
-    // once — long enough, on a loaded machine, to exceed a per-visit timeout and report the
-    // first page of the run as unreachable. Warming it costs one page load and removes a
-    // whole class of finding that says more about the machine than about the site.
-    await page.goto(origin, { waitUntil: 'networkidle', timeout: 120000 }).catch(() => {});
-    for (const target of pages) {
-      for (const width of target.widths) {
+
+  // the whole target set, flattened, so the workers share one queue rather than a page each:
+  // a page with twelve widths would otherwise hold a worker while the others idled
+  const targets = [];
+  for (const target of pages) {
+    for (const width of target.widths) targets.push({ route: target.route, width, tier: target.tier });
+  }
+  const visits = new Array(targets.length);
+  let next = 0;
+  let done = 0;
+  let stopped = null;
+
+  const worker = async () => {
+    let page = await context.newPage();
+    try {
+      while (stopped === null) {
+        const index = next;
+        if (index >= targets.length) break;
+        next += 1;
+        const target = targets[index];
         let visit;
         try {
           visit = await withDeadline(
-            auditPage(page, origin, target.route, width),
+            auditPage(page, origin, target.route, target.width),
             VISIT_DEADLINE_MS,
-            `${target.route} at ${width}px`,
+            `${target.route} at ${target.width}px`,
           );
         } catch (error) {
           // A refused connection is not a fact about this page. The server the audit drives
-          // is gone, and every remaining visit would be recorded as an unreachable page —
-          // 173 findings that say nothing, over a run that measured nothing after the first
-          // failure. Stop, and say what actually happened.
+          // is gone, and every remaining visit would be recorded as an unreachable page — a
+          // whole tail of the site marked broken by one process exiting. Stop, and say what
+          // actually happened.
           if (String(error?.message ?? error).includes('ERR_CONNECTION_REFUSED')) {
-            throw new Error(
+            stopped = new Error(
               `the server at ${origin} stopped answering during the run, at ${target.route} ` +
-                `(${visits.length} visit(s) measured); the audit cannot speak for the rest`,
+                `(${done} visit(s) measured); the audit cannot speak for the rest`,
             );
+            break;
           }
-          // Whatever else went wrong on this page, the next page is still worth measuring — but
-          // a deadline only stops *waiting*; the work it abandoned is still running in that
-          // tab, and every later operation would queue behind it. So the tab goes with it.
+          // Whatever else went wrong on this page, the next page is still worth measuring —
+          // but a deadline only stops *waiting*; the work it abandoned is still running in
+          // that tab, and every later operation would queue behind it. So the tab goes.
           visit = {
             route: target.route,
-            width,
+            width: target.width,
             status: 0,
             findings: [{
               rule: 'page.audit-failed',
@@ -283,12 +315,29 @@ export async function audit(origin, pages, { onVisit } = {}) {
           await page.close().catch(() => {});
           page = await context.newPage();
         }
-        visits.push({ ...visit, tier: target.tier });
-        onVisit?.(visit);
+        visits[index] = { ...visit, tier: target.tier };
+        done += 1;
+        onVisit?.(visit, done);
       }
+    } finally {
+      await page.close().catch(() => {});
     }
+  };
+
+  try {
+    // One throwaway visit first. The server answers its readiness probe before it has built
+    // anything, and the first real page pays for the index, the registry and every asset at
+    // once — long enough, on a loaded machine, to exceed a per-visit timeout and report the
+    // first page of the run as unreachable. Warming it costs one page load and removes a
+    // whole class of finding that says more about the machine than about the site.
+    const warm = await context.newPage();
+    await warm.goto(origin, { waitUntil: 'networkidle', timeout: 120000 }).catch(() => {});
+    await warm.close().catch(() => {});
+
+    await Promise.all(Array.from({ length: Math.max(1, concurrency) }, () => worker()));
+    if (stopped) throw stopped;
   } finally {
     await browser.close();
   }
-  return visits;
+  return visits.filter(Boolean);
 }

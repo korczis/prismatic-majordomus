@@ -54,9 +54,9 @@
     {%- for a in audiences %}
     <input type="radio" id="who-{{ a.id }}" name="why-who" class="sr-only"{% if loop.first %} checked{% endif %}>
     {%- endfor %}
-    <div class="why-who-pills mt-5 flex flex-wrap gap-2" role="tablist" aria-label="Who you are">
+    <div class="why-who-pills mt-5 flex flex-wrap gap-2" role="radiogroup" aria-label="Who you are">
       {%- for a in audiences %}
-      <label for="who-{{ a.id }}" class="cursor-pointer rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm font-semibold text-heading hover:bg-neutral-secondary-medium">{{ a.title }} <span class="font-mono text-xs font-normal text-body-subtle">{{ a.count }}</span></label>
+      <label for="who-{{ a.id }}" class="cursor-pointer rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm font-semibold text-heading hover:bg-neutral-secondary-medium">{{ a.title }} <span class="font-mono text-xs font-normal text-body">{{ a.count }}</span></label>
       {%- endfor %}
     </div>
     <div class="why-who-panels mt-5">
@@ -91,7 +91,7 @@
         {%- if a.summary %}<p class="mt-2 text-sm leading-relaxed text-body">{{ a.summary }}</p>{% endif %}
         <ul class="mt-4 space-y-2 border-t border-default pt-3">
           {%- for id in a.moments %}{% if loop.index <= 3 %}{% set m = [x for x in catalogue.moments if x.id == id][0] %}
-          <li class="min-w-0"><a href="{{ base }}{{ m.route }}" class="flex gap-2 text-sm font-medium text-heading hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0 break-words">{{ m.hook }}</span></a></li>
+          <li class="min-w-0"><a href="{{ base }}{{ m.route }}" class="flex gap-2 py-0.5 text-sm font-medium text-heading hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0 break-words">{{ m.hook }}</span></a></li>
           {%- endif %}{% endfor %}
         </ul>
         <a href="{{ base }}{{ a.route }}" class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline">All {{ a.count }} in this area &rarr;</a>

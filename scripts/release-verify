@@ -133,6 +133,13 @@ if [ "$native" = 1 ]; then
   [ "$reported_bin" = "majordomus ${tag#v}" ] \
     && ok "the unpacked executable reports ${tag#v}" \
     || fail "the unpacked executable reports '$reported_bin', not 'majordomus ${tag#v}'"
+  # The launcher chain, with no toolchain allowed. An installed tree has no crate to build
+  # from, so a launcher that was left out of the archive — or one whose executable was —
+  # fails here, and nowhere in a check that only reads the archive's list of names.
+  reported_launcher="$(MAJORDOMUS_NO_BUILD=1 "$work/$expected_root/bin/majordomus-cli" --version 2>/dev/null || true)"
+  [ "$reported_launcher" = "majordomus ${tag#v}" ] \
+    && ok "the launcher resolves its executable with no toolchain" \
+    || fail "bin/majordomus-cli reports '$reported_launcher' with MAJORDOMUS_NO_BUILD=1; an installed tree cannot build one"
 fi
 
 [ "$bad" = 0 ] || { printf 'release-verify: %s check(s) failed for %s\n' "$bad" "$(basename "$archive")" >&2; exit 10; }

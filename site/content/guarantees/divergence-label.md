@@ -1,7 +1,7 @@
 +++
 title = "State read back is labelled exact, advanced, diverged or different_context against git"
 description = "Whenever a task record or a handover is read, its recorded head and branch are compared with the current checkout and labelled: exact (same commit), advanced (the recorded commit is an ancestor of the current one — normal progress), diverged (history was rewritten or the record is stale), different_context (another branch). Stale state is detected and named, never silently trusted."
-weight = 47
+weight = 48
 [extra]
 claim_id = "divergence-label"
 status = "guaranteed"

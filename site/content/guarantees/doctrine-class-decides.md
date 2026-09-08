@@ -1,7 +1,7 @@
 +++
 title = "A doctrine's class is what decides whether a violation stops the command, not a label beside it"
 description = "There are two classes. blocking means a violation ends the command with a non-zero exit; advisory means the violation is reported and the command still succeeds. The class is read at dispatch time and is what routes the finding, so it is a mechanism rather than a label."
-weight = 28
+weight = 29
 [extra]
 claim_id = "doctrine-class-decides"
 status = "guaranteed"

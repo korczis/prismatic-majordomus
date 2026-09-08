@@ -1,7 +1,7 @@
 +++
 title = "Every enforcement the policy declares is reconciled against what actually runs"
 description = "The policy has an enforcement list: things that are supposed to run Majordomus (a pre-commit hook running doctor, a pre-push hook running finish --check). For each entry, doctor proves four things: the executable exists, it is executable, the hook or CI file named in wired_by exists and is executable, and that file actually invokes the command — without discarding its exit code. A declaration that fails any of these is reported as not wired. This is the single most important check in the tool."
-weight = 21
+weight = 22
 [extra]
 claim_id = "wiring-reconciliation"
 status = "guaranteed"

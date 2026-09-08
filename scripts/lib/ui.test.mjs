@@ -121,6 +121,16 @@ test('a directory with an index and a stray html file are both routes', () => {
   rmSync(root, { recursive: true, force: true });
 });
 
+test('a sitemap of bare paths is read, as a build for a mount writes it', () => {
+  const { root, write } = fixture();
+  write('index.html', '<h1>docs</h1>');
+  write('context/index.html', '<h1>context</h1>');
+  write('sitemap.xml', '<urlset><url><loc>/docs/</loc></url><url><loc>/docs/context/</loc></url></urlset>');
+  const pages = discoverPages(root);
+  assert.deepEqual(pages.map((p) => p.route), ['/', '/context/']);
+  assert.ok(pages.every((p) => p.published), 'a bare-path sitemap still names its pages');
+});
+
 test('a page the sitemap names but the build did not render is reported, not dropped', () => {
   const { root, write } = fixture();
   write('index.html', '<h1>home</h1>');
