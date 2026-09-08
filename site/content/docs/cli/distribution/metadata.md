@@ -1,7 +1,7 @@
 +++
 title = "majordomus distribution metadata"
 description = "The public metadata one release record publishes, rendered from the record alone"
-weight = 40
+weight = 41
 [extra]
 route = "/docs/cli/distribution/metadata/"
 command = "majordomus distribution metadata"

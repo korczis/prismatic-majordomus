@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.3.1
 coverage:
   - scope: direct
-    required: 43
-    covered: 43
+    required: 44
+    covered: 44
     missing: 0
     waived: 0
   - scope: http
-    required: 43
-    covered: 43
+    required: 44
+    covered: 44
     missing: 0
     waived: 0
   - scope: mcp
-    required: 41
-    covered: 41
+    required: 42
+    covered: 42
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 140
-    covered: 140
+    required: 143
+    covered: 143
     missing: 0
     waived: 0
 capabilities:
@@ -146,6 +146,15 @@ capabilities:
     cases:
       - default
   - id: distribution.releases
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: distribution.status
     module: distribution
     kind: query
     cache: "—"

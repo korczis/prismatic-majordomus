@@ -49,7 +49,7 @@
       "description": "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 4
+      "capabilities": 5
     },
     {
       "id": "graph",
@@ -4545,6 +4545,187 @@
       "tags": [
         "distribution",
         "release"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs"
+    },
+    {
+      "id": "distribution.status",
+      "module": "distribution",
+      "kind": "query",
+      "title": "Whether the published installation works",
+      "description": "Whether a machine that has never seen this project can install it right now with the advertised one-line command, and when it cannot, which link in the chain is missing and what changes it. Derived from the distribution model and the release records alone: it reaches no network, so it is as fast as any other local query and answers offline. The served bytes are proved by the release pipeline's smoke phase, not guessed at here.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "InstallabilityReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "installable": {
+              "type": "boolean",
+              "description": "True when every check holds: a stable release is recorded and complete."
+            },
+            "summary": {
+              "type": "string",
+              "description": "One line for a person: what the state is, in the project's own terms."
+            },
+            "local_version": {
+              "type": "string",
+              "description": "The version this tree would release."
+            },
+            "stable_tag": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The tag an unpinned installation resolves to, when a stable release is recorded."
+            },
+            "required_targets": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many targets a release must publish for that release to be complete."
+            },
+            "published_artifacts": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many of them the stable release actually publishes."
+            },
+            "install_command": {
+              "type": "string",
+              "description": "The command a person would run, whether or not it currently works."
+            },
+            "installer_url": {
+              "type": "string",
+              "description": "Where the installer is served."
+            },
+            "latest_url": {
+              "type": "string",
+              "description": "Where the stable pointer is served."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/InstallCheck"
+              },
+              "description": "Every check, in the order they are worth reading."
+            }
+          },
+          "required": [
+            "installable",
+            "summary",
+            "local_version",
+            "required_targets",
+            "published_artifacts",
+            "install_command",
+            "installer_url",
+            "latest_url",
+            "checks"
+          ],
+          "description": "Whether the advertised one-line installation works right now, and if not, what is missing.\n\nThis answers the operator's actual question — *can a machine that has never seen this\nproject install it with the published command?* — from local state alone. It performs no\nnetwork access: a repository can be offline and this still answers, because everything it\nneeds is the distribution model and the release records the repository itself carries.\nWhat it cannot see it reports as `unknown` rather than guessing; the public half of the\nquestion is answered by the release workflow's smoke phase, which installs from the\npublished URL on every native runner and is the only thing that proves the public path.",
+          "title": "InstallabilityReport",
+          "$defs": {
+            "InstallCheck": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "A short stable name: `model`, `version`, `targets`, `release`, `artifacts`, `metadata`."
+                },
+                "state": {
+                  "$ref": "#/$defs/CheckState",
+                  "description": "Whether it holds."
+                },
+                "observed": {
+                  "type": "string",
+                  "description": "What was observed, in one line."
+                },
+                "cause": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Why it does not hold. Absent when it does."
+                },
+                "next": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The command or action that would change it. Absent when there is nothing to do."
+                }
+              },
+              "required": [
+                "id",
+                "state",
+                "observed"
+              ],
+              "description": "One check: what was asked, what was seen, and — when it does not hold — why, and the\ncommand that changes it. The `cause` and `next` fields exist so that a report is\nactionable without a second document; a check that fails without naming its remedy is\na diagnostic nobody can act on."
+            },
+            "CheckState": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "ok",
+                  "description": "The check holds."
+                },
+                {
+                  "type": "string",
+                  "const": "failed",
+                  "description": "The check does not hold, and the public installation is affected."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "The check could not be made here; it says nothing either way."
+                }
+              ],
+              "description": "The state of one check in the installability report. Three states and no more: a check\neither holds, does not, or could not be made from what this process can see."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::distribution"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_install_status"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/distribution/status"
+        },
+        "cli": {
+          "path": [
+            "distribution",
+            "status"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "distribution",
+        "install",
+        "release",
+        "diagnostics"
       ],
       "benchmark": {
         "policy": "required"

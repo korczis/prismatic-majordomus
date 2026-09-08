@@ -861,6 +861,58 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_releases
       x-majordomus-cli: distribution releases
+  "/api/v1/distribution/status":
+    get:
+      operationId: distribution.status
+      summary: Whether the published installation works
+      description: "Whether a machine that has never seen this project can install it right now with the advertised one-line command, and when it cannot, which link in the chain is missing and what changes it. Derived from the distribution model and the release records alone: it reaches no network, so it is as fast as any other local query and answers offline. The served bytes are proved by the release pipeline's smoke phase, not guessed at here."
+      tags:
+        - distribution
+      parameters: []
+      responses:
+        "200":
+          description: "Whether the published installation works: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/InstallabilityReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: distribution.status
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::distribution
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_install_status
+      x-majordomus-cli: distribution status
   "/api/v1/graph":
     get:
       operationId: graph.get
@@ -3740,6 +3792,18 @@ components:
           const: prerelease
           description: "Published, addressable by its exact tag, never resolved by default."
       description: Which releases an unpinned installation may resolve to.
+    CheckState:
+      oneOf:
+        - type: string
+          const: ok
+          description: The check holds.
+        - type: string
+          const: failed
+          description: "The check does not hold, and the public installation is affected."
+        - type: string
+          const: unknown
+          description: The check could not be made here; it says nothing either way.
+      description: "The state of one check in the installability report. Three states and no more: a check\neither holds, does not, or could not be made from what this process can see."
     ClaimRef:
       type: object
       properties:
@@ -5594,6 +5658,85 @@ components:
         - canonical
         - diagnostics
       description: "One branch, inspected: where its work tree belongs and what is there."
+    InstallCheck:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "A short stable name: `model`, `version`, `targets`, `release`, `artifacts`, `metadata`."
+        state:
+          "$ref": "#/components/schemas/CheckState"
+          description: Whether it holds.
+        observed:
+          type: string
+          description: "What was observed, in one line."
+        cause:
+          type:
+            - string
+            - "null"
+          description: Why it does not hold. Absent when it does.
+        next:
+          type:
+            - string
+            - "null"
+          description: The command or action that would change it. Absent when there is nothing to do.
+      required:
+        - id
+        - state
+        - observed
+      description: "One check: what was asked, what was seen, and — when it does not hold — why, and the\ncommand that changes it. The `cause` and `next` fields exist so that a report is\nactionable without a second document; a check that fails without naming its remedy is\na diagnostic nobody can act on."
+    InstallabilityReport:
+      type: object
+      properties:
+        installable:
+          type: boolean
+          description: "True when every check holds: a stable release is recorded and complete."
+        summary:
+          type: string
+          description: "One line for a person: what the state is, in the project's own terms."
+        local_version:
+          type: string
+          description: The version this tree would release.
+        stable_tag:
+          type:
+            - string
+            - "null"
+          description: "The tag an unpinned installation resolves to, when a stable release is recorded."
+        required_targets:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many targets a release must publish for that release to be complete.
+        published_artifacts:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of them the stable release actually publishes.
+        install_command:
+          type: string
+          description: "The command a person would run, whether or not it currently works."
+        installer_url:
+          type: string
+          description: Where the installer is served.
+        latest_url:
+          type: string
+          description: Where the stable pointer is served.
+        checks:
+          type: array
+          items:
+            "$ref": "#/components/schemas/InstallCheck"
+          description: "Every check, in the order they are worth reading."
+      required:
+        - installable
+        - summary
+        - local_version
+        - required_targets
+        - published_artifacts
+        - install_command
+        - installer_url
+        - latest_url
+        - checks
+      description: "Whether the advertised one-line installation works right now, and if not, what is missing.\n\nThis answers the operator's actual question — *can a machine that has never seen this\nproject install it with the published command?* — from local state alone. It performs no\nnetwork access: a repository can be offline and this still answers, because everything it\nneeds is the distribution model and the release records the repository itself carries.\nWhat it cannot see it reports as `unknown` rather than guessing; the public half of the\nquestion is answered by the release workflow's smoke phase, which installs from the\npublished URL on every native runner and is the only thing that proves the public path."
     Interface:
       oneOf:
         - type: string

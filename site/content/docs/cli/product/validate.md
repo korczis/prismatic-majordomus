@@ -1,7 +1,7 @@
 +++
 title = "majordomus product validate"
 description = "Every finding over the model; exit 10 when any is an error"
-weight = 64
+weight = 65
 [extra]
 route = "/docs/cli/product/validate/"
 command = "majordomus product validate"

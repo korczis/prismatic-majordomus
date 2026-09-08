@@ -222,6 +222,23 @@
       "tool": "majordomus_releases"
     },
     {
+      "api_anchor": "/docs/api/#op-distribution-status",
+      "claims": [],
+      "cli": "majordomus distribution status",
+      "id": "distribution.status",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-status/",
+      "slug": "distribution-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "Whether the published installation works",
+      "tool": "majordomus_install_status"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -1013,7 +1030,7 @@
     ]
   },
   "counts": {
-    "capabilities": 43,
+    "capabilities": 44,
     "claims": 35,
     "modules": 16
   },
@@ -1140,6 +1157,11 @@
           "id": "distribution.releases",
           "route": "/registry/capabilities/distribution-releases/",
           "slug": "distribution-releases"
+        },
+        {
+          "id": "distribution.status",
+          "route": "/registry/capabilities/distribution-status/",
+          "slug": "distribution-status"
         }
       ],
       "claims": [],
