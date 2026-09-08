@@ -368,3 +368,150 @@ fn the_platform_table_lists_every_declared_target() {
         );
     }
 }
+
+// ---------------------------------------------------------------- installability
+//
+// The report the operator, the API, MCP and the Cockpit all read. What is worth asserting
+// is not its prose but its verdict, and that the verdict names the *first* thing that is
+// wrong rather than the last: a repository with no release and a repository with a partial
+// one need different actions, and a report that said "not installable" to both would be a
+// worse answer than the exit code alone.
+
+use crate::capability::builtin::distribution::{installability, CheckState};
+
+/// The check with this id, or a panic naming what was there instead.
+fn check<'a>(
+    r: &'a crate::capability::builtin::InstallabilityReport,
+    id: &str,
+) -> &'a crate::capability::builtin::InstallCheck {
+    r.checks.iter().find(|c| c.id == id).unwrap_or_else(|| {
+        panic!(
+            "no `{id}` check; the report holds {:?}",
+            r.checks.iter().map(|c| &c.id).collect::<Vec<_>>()
+        )
+    })
+}
+
+#[test]
+fn with_no_release_recorded_the_published_command_does_not_work() {
+    let model = real_model();
+    let records = Releases { releases: vec![] };
+    let r = installability(&model, &records);
+
+    assert!(
+        !r.installable,
+        "a project that has published nothing is not installable"
+    );
+    assert_eq!(r.stable_tag, None);
+    assert_eq!(r.published_artifacts, 0);
+    assert_eq!(r.required_targets, model.published().count());
+
+    // the model itself is fine; it is the release that is missing, and the report says which
+    assert_eq!(check(&r, "model").state, CheckState::Ok);
+    assert_eq!(check(&r, "release").state, CheckState::Failed);
+    // nothing is claimed about artifacts of a release that does not exist
+    assert_eq!(check(&r, "artifacts").state, CheckState::Unknown);
+    // and the network is never guessed at
+    assert_eq!(check(&r, "public").state, CheckState::Unknown);
+
+    // the remedy is a command, not a suggestion to investigate
+    let next = check(&r, "release")
+        .next
+        .as_deref()
+        .expect("a failing check names its remedy");
+    assert!(
+        next.contains(&format!("git tag v{}", crate::VERSION)),
+        "{next}"
+    );
+    assert_eq!(r.summary, check(&r, "release").cause.clone().unwrap());
+}
+
+#[test]
+fn a_complete_stable_release_makes_the_published_command_work() {
+    let model = real_model();
+    let records = Releases {
+        releases: vec![sample_release(&model, "v9.9.9", Channel::Stable)],
+    };
+    let r = installability(&model, &records);
+
+    assert!(
+        r.installable,
+        "a complete stable release is installable: {:?}",
+        r.checks
+    );
+    assert_eq!(r.stable_tag.as_deref(), Some("v9.9.9"));
+    assert_eq!(r.published_artifacts, r.required_targets);
+    assert_eq!(check(&r, "release").state, CheckState::Ok);
+    assert_eq!(check(&r, "artifacts").state, CheckState::Ok);
+    assert_eq!(check(&r, "metadata").state, CheckState::Ok);
+    assert!(r.summary.contains("v9.9.9"), "{}", r.summary);
+    // no check that holds carries a remedy for a problem it does not have
+    for c in r.checks.iter().filter(|c| c.state == CheckState::Ok) {
+        assert!(c.cause.is_none(), "{} states a cause while holding", c.id);
+    }
+}
+
+#[test]
+fn a_release_missing_a_target_is_reported_as_incomplete_not_as_absent() {
+    let model = real_model();
+    let mut release = sample_release(&model, "v9.9.9", Channel::Stable);
+    release
+        .artifacts
+        .pop()
+        .expect("the sample publishes several");
+    let records = Releases {
+        releases: vec![release],
+    };
+    let r = installability(&model, &records);
+
+    assert!(!r.installable);
+    // the distinction that matters: the release exists, so the remedy is not "tag a release"
+    assert_eq!(check(&r, "release").state, CheckState::Ok);
+    assert_eq!(check(&r, "artifacts").state, CheckState::Failed);
+    assert_eq!(r.published_artifacts, r.required_targets - 1);
+    // and the record's disagreement with the model is reported beside it, not instead of it
+    assert_eq!(check(&r, "metadata").state, CheckState::Failed);
+    assert!(check(&r, "artifacts").next.is_some());
+}
+
+#[test]
+fn a_prerelease_is_not_what_an_unpinned_installation_resolves_to() {
+    let model = real_model();
+    let records = Releases {
+        releases: vec![sample_release(&model, "v9.9.9", Channel::Prerelease)],
+    };
+    let r = installability(&model, &records);
+
+    assert!(
+        !r.installable,
+        "a prerelease does not make the published command work"
+    );
+    assert_eq!(r.stable_tag, None, "latest is the latest *stable* release");
+    assert_eq!(check(&r, "release").state, CheckState::Failed);
+}
+
+#[test]
+fn a_withdrawn_release_stops_being_the_one_an_unpinned_installation_resolves_to() {
+    let model = real_model();
+    let mut release = sample_release(&model, "v9.9.9", Channel::Stable);
+    release.yanked = true;
+    let records = Releases {
+        releases: vec![release],
+    };
+    let r = installability(&model, &records);
+
+    assert_eq!(r.stable_tag, None, "a withdrawn release is not offered");
+    assert!(!r.installable);
+}
+
+#[test]
+fn the_report_never_states_a_url_or_a_command_of_its_own() {
+    let model = real_model();
+    let r = installability(&model, &Releases { releases: vec![] });
+    // every address in the report is the model's, so that adding a target or moving the
+    // site changes them here without this file being touched
+    assert_eq!(r.install_command, model.install_command());
+    assert_eq!(r.installer_url, model.installer_url());
+    assert_eq!(r.latest_url, model.release_url(release::LATEST));
+    assert_eq!(r.local_version, crate::VERSION);
+}

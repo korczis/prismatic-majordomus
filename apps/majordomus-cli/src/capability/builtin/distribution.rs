@@ -370,6 +370,16 @@ fn artifact(
 fn status(ctx: &Context, _: Empty) -> Result<InstallabilityReport, CapabilityError> {
     let m = model(ctx)?;
     let records = Releases::from_index(&ctx.index).map_err(CapabilityError::Internal)?;
+    Ok(installability(m, &records))
+}
+
+/// The report itself, over a model and a set of records and nothing else.
+///
+/// Separated from the capability so that the answer can be examined for states this
+/// repository is not in — a complete release, a partial one, a model that publishes
+/// nothing — without constructing an index for each. The capability above is the only
+/// caller in the executable; the tests are the rest.
+pub(crate) fn installability(m: &Model, records: &Releases) -> InstallabilityReport {
     let required = m.published().count();
     let mut checks = Vec::new();
 
@@ -507,7 +517,7 @@ fn status(ctx: &Context, _: Empty) -> Result<InstallabilityReport, CapabilityErr
             .unwrap_or_else(|| "the published installation command does not currently work".into())
     };
 
-    Ok(InstallabilityReport {
+    InstallabilityReport {
         installable,
         summary,
         local_version,
@@ -518,7 +528,7 @@ fn status(ctx: &Context, _: Empty) -> Result<InstallabilityReport, CapabilityErr
         installer_url: m.installer_url(),
         latest_url: m.release_url(crate::distribution::release::LATEST),
         checks,
-    })
+    }
 }
 
 /// The module.
