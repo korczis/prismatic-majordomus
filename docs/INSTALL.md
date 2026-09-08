@@ -2,7 +2,7 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.2.0 -->
+     Generator: majordomus-cli 0.3.1 -->
 
 ## Quick install
 
@@ -89,10 +89,10 @@ MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://korczis.github.io/prismati
 ## Pinning a version
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --version v0.2.0
+curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --version v0.3.1
 ```
 
-A pinned installation resolves `https://korczis.github.io/prismatic-majordomus/releases/v0.2.0.json`, which names the exact artifact and its
+A pinned installation resolves `https://korczis.github.io/prismatic-majordomus/releases/v0.3.1.json`, which names the exact artifact and its
 sha256 digest, and therefore installs the same bytes every time. An unpinned
 installation resolves `https://korczis.github.io/prismatic-majordomus/releases/latest.json`, which is the latest stable release and moves
 forward as releases are published. Use the pinned form in CI.
@@ -100,7 +100,7 @@ forward as releases are published. Use the pinned form in CI.
 ## Using it in CI
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --version v0.2.0
+curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh -s -- --version v0.3.1
 export PATH="$HOME/.local/bin:$PATH"
 majordomus --version
 ```
@@ -132,7 +132,9 @@ the tool's, and no command of this project deletes them.
 
 ## Releases
 
-No release is published yet. When one is, its metadata appears at `https://korczis.github.io/prismatic-majordomus/releases/latest.json` and this table lists it.
+| Release | Published | Channel | Artifacts | Metadata |
+|---|---|---|---|---|
+| `v0.3.1` (latest) | 2026-09-08 | stable | 6 | [`v0.3.1.json`](https://korczis.github.io/prismatic-majordomus/releases/v0.3.1.json) |
 
 
 Each release publishes one archive per supported target plus a `SHA256SUMS` file, and

@@ -1,7 +1,7 @@
 +++
 title = "A repository on the pre-.ai layout is migrated once, explicitly, with a previewed plan and a verified backup of its local state, and the command is idempotent afterwards"
 description = "A repository whose project data still lives under .majordomus/ is not silently upgraded. Every ordinary command refuses that layout with exit 12 and names majordomus migrate. The migration itself prints its whole plan under --dry-run, one line per file with its action and destination, and writes nothing; the real run moves the canonical files into .ai/repo/ with history following, moves the state into .ai/local/state/ and takes it out of the index, backs the state up byte for byte first and verifies the copy, drops only the derived files it can regenerate, and reports a file it does not recognise rather than deleting it. Run again on a migrated repository it says so and exits 0."
-weight = 78
+weight = 79
 [extra]
 claim_id = "legacy-migration"
 status = "guaranteed"

@@ -1,7 +1,7 @@
 +++
 title = "check reports whether state, scope, blockers and checkpoint age are consistent right now"
 description = "majordomus check is the read-only question a worker asks before claiming anything is done: does the task record still describe this checkout, are all touched files inside the declared scope, is any open question for this task unresolved, and how long since the last checkpoint. It prints one line per aspect, exits 0 when nothing fails, 10 when something does, 12 when there is no active task."
-weight = 45
+weight = 46
 [extra]
 claim_id = "consistency-check"
 status = "guaranteed"

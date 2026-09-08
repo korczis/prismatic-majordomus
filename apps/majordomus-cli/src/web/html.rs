@@ -55,9 +55,13 @@ h2 {{ font-size: 1.1rem; margin: 2rem 0 .5rem; }}
 p.lede {{ color: var(--muted); margin: 0 0 1.5rem; }}
 dl.summary {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
               gap: .75rem; margin: 0 0 1.5rem; padding: 0; }}
-dl.summary > div {{ border: 1px solid var(--line); border-radius: .5rem; padding: .75rem; background: var(--soft); }}
+/* min-width: 0 because a grid item does not shrink below its content by default, and a
+   summary value is whatever the run measured — one long unbreakable figure widens its track,
+   the track widens the grid, and the page scrolls sideways at every width the track does not
+   fit. The wrap on the value is the other half: the figure gives way before the layout does. */
+dl.summary > div {{ min-width: 0; border: 1px solid var(--line); border-radius: .5rem; padding: .75rem; background: var(--soft); }}
 dl.summary dt {{ color: var(--muted); font-size: .8rem; margin: 0; }}
-dl.summary dd {{ margin: .25rem 0 0; font-size: 1.35rem; font-variant-numeric: tabular-nums; }}
+dl.summary dd {{ margin: .25rem 0 0; font-size: 1.35rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }}
 .scroll {{ overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: .5rem; }}
 table {{ border-collapse: collapse; width: 100%; font-size: .9rem; }}
 th, td {{ text-align: left; padding: .5rem .65rem; border-bottom: 1px solid var(--line); white-space: nowrap; }}

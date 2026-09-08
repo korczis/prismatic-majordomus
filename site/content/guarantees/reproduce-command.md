@@ -1,7 +1,7 @@
 +++
 title = "Every finding carries the command that reproduces it"
 description = "When doctor, check, watch or finish report a failure or a drift, the line ends with [reproduce: <command>] — a shell command a person can run to see the same fact without Majordomus. A finding that cannot be reproduced independently is treated as a bug in Majordomus."
-weight = 41
+weight = 42
 [extra]
 claim_id = "reproduce-command"
 status = "guaranteed"

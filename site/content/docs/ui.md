@@ -90,19 +90,37 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
   answered in time. A page that does not is a finding about that page, never the end of the
   run.
 
-## The origin the audit drives
+## What it costs
+
+The full audit is 723 pages and 2430 visits, and it drives a pool of browser tabs rather than
+one: a visit is mostly waiting — for a navigation, for the accessibility engine inside the
+page — so a serial run leaves the machine idle for most of it. `MJ_UI_JOBS=N` sets the pool;
+the default follows the machine, between two and four.
+
+Measured on one laptop, same tree, same 2430 visits: **873s at one job, 260s at four**. The
+audit covers half again as many pages as it did when it read a single directory and finishes
+in less than a third of the time.
+
+## The origin the audit drives, and where its pages are
 
 The audit runs against `majordomus serve` — this repository's own server, so the audit holds
 no second opinion about how the site is served, and so a route the executable answers itself
 is visible to it.
 
-Zola writes absolute URLs. A site built for the published base URL asks the *published*
-origin for its stylesheets while the local server answers for its pages, and an audit of
-that measures two different sites: it passes defects production has already fixed and fails
-ones it has not. So `scripts/ui audit` builds the site for the origin it is about to serve,
-audits it, and rebuilds it for the configured base URL afterwards, leaving the checkout as it
-found it. `--no-build` skips both, for a caller that has already built for the origin;
-`--origin URL` audits a server somebody else is running.
+**A built directory does not know where it is served from.** The same documentation is
+generated once and mounted at `/docs` by the executable and at the root by the published
+site. So the audit does not name a directory: it reads `majordomus web list`, takes every
+static surface the executable *serves*, and visits each one's pages under the mount the
+topology gives it. That is why `/tests` and `/benchmarks` are audited too — they are surfaces
+like any other, and nothing had to be added to a list to include them.
+
+It builds with `scripts/site-build --serve`, whose base URL is a path rather than an origin,
+so the pages resolve their assets wherever they are served. `--no-build` skips that, for a
+caller that has already built; `--origin URL` audits a server somebody else is running.
+
+The published tree (`site/public`) is `published-only` and is not served, so the audit does
+not visit it. Both trees come from one source and one generator; auditing the served one
+covers the same templates and the same data.
 
 ## Remediation: at the source, and only at the source
 

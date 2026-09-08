@@ -53,6 +53,7 @@ jobs:
       site_probe: ${{ steps.plan.outputs.site_probe }}
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
       macos: ${{ steps.plan.outputs.macos }}
+      installer_live: ${{ steps.plan.outputs.installer_live }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -386,13 +387,33 @@ jobs:
           path: suite.tsv
           retention-days: 14
 
+  # ------------------------------------------------------------------ install
+  # The advertised command, from the published site, on two of the platforms it claims to
+  # serve. Every other job here reads this checkout; this one reads what a stranger gets,
+  # which is why the plan selects it only in the full mode (a master push, the schedule, a
+  # dispatch, a pull request labelled ci:full): no change to a tree can make it pass or fail
+  # — only a deployment can. A release proves the same thing once, at publication; this is
+  # what keeps proving it afterwards.
+  install:
+    needs: plan
+    if: needs.plan.outputs.installer_live == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: the advertised install command, from the published site
+        run: scripts/ci/install-check
+
   # ------------------------------------------------------------------ ci
   # The one status to require: green only when planning succeeded, every selected gate's job
   # succeeded, and no job that ran failed or was cancelled. Always runs, so a required check
   # is never left pending by a skipped job. It also gathers the jobs' timing rows into the
   # artifact ci-performance-metrics.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos]
+    needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos, install]
     if: always()
     runs-on: ubuntu-latest
     steps:

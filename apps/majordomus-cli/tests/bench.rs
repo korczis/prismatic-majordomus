@@ -20,9 +20,9 @@ use majordomus_cli::bench::{
 use majordomus_cli::capability::handler::handler;
 use majordomus_cli::capability::{
     builtin, Availability, BenchmarkCases, BenchmarkPolicy, CachePolicy, CanonicalSchema,
-    Capability, CapabilityId, CapabilityKind, CapabilityRegistry, CaseContext, Context, Executable,
-    Exposure, HttpExposure, HttpMethod, McpExposure, ModuleId, NamedCase, Provenance as Origin,
-    Stability, Visibility, WaiverReason,
+    Capability, CapabilityError, CapabilityId, CapabilityKind, CapabilityRegistry, CaseContext,
+    Context, Executable, Exposure, HttpExposure, HttpMethod, McpExposure, ModuleId, NamedCase,
+    Provenance as Origin, Stability, Visibility, WaiverReason,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -107,6 +107,20 @@ fn fixture<I: BenchmarkCases + serde::de::DeserializeOwned + JsonSchema + 'stati
         }),
         cases: <I as BenchmarkCases>::benchmark_cases_json,
     }
+}
+
+/// A fixture executable whose handler always answers with `error`, for the runner tests
+/// that care what a benchmark does when a capability declines rather than succeeds.
+fn refusing(id: &str, error: fn() -> CapabilityError) -> Executable {
+    let mut e = fixture::<EchoIn>(
+        id,
+        false,
+        false,
+        BenchmarkPolicy::Required,
+        CachePolicy::Disabled,
+    );
+    e.handler = handler::<Value, EchoOut, _>(move |_, _| Err(error()));
+    e
 }
 
 /// A context over the fixture repository's index and the given executables.
@@ -648,4 +662,72 @@ fn the_command_line_answers_coverage_runs_benchmarks_records_and_checks_a_baseli
             .map(|m| m.capabilities.len())
             .sum::<usize>()
     );
+}
+
+#[test]
+fn a_refusal_is_timed_and_only_an_internal_failure_stops_the_run() {
+    // A refusal is an answer: `deploy.get` on a repository with no deployment does the
+    // lookup and declines, and a case declared to time that path — `deploy.get|absent` —
+    // is timing real work. Treating it as a failure aborted `bench baseline update` with
+    // exit 13 on any repository that had nothing for the case to name.
+    //
+    // The other two transports already drew this line. HTTP fails on `status >= 500`,
+    // which after the router's mapping is exactly `Internal` (404 not_found, 422 refused);
+    // MCP fails on a JSON-RPC `error`, and the surface answers a refusal as a result
+    // carrying `isError`. Only the direct path disagreed, so one capability timed three
+    // ways gave three verdicts on one event.
+    let f = Fixture::new();
+    let tiny = Profile {
+        name: "test",
+        warmup: 1,
+        samples: 3,
+        cold_spawns: 1,
+    };
+
+    for (id, error) in [
+        (
+            "fixture.not_found",
+            (|| CapabilityError::NotFound("nothing here".into())) as fn() -> CapabilityError,
+        ),
+        ("fixture.refused", || {
+            CapabilityError::Refused("declined".into())
+        }),
+        ("fixture.invalid", || {
+            CapabilityError::InvalidInput("not for me".into())
+        }),
+    ] {
+        let ctx = context(&f, vec![refusing(id, error)]);
+        let projection = BenchmarkProjection::from_context(&ctx);
+        let target = projection
+            .of_capability(id)
+            .next()
+            .unwrap_or_else(|| panic!("{id} is a target"));
+        let mut runner = Runner::new(ctx, tiny, &f.root());
+        let results = runner
+            .run(target)
+            .unwrap_or_else(|e| panic!("{id}: a refusal stopped the run: {e}"));
+        // the refusal was measured rather than reported: real samples, real time
+        for r in &results {
+            assert_eq!(r.stats.samples, 3, "{id}");
+            assert!(r.stats.p50_us > 0.0, "{id}: {:?}", r.stats);
+        }
+    }
+
+    // and the capability that actually broke still stops it, because that sample is
+    // meaningless rather than merely negative
+    let ctx = context(
+        &f,
+        vec![refusing("fixture.internal", || {
+            CapabilityError::Internal("the handler fell over".into())
+        })],
+    );
+    let projection = BenchmarkProjection::from_context(&ctx);
+    let target = projection.of_capability("fixture.internal").next().unwrap();
+    let mut runner = Runner::new(ctx, tiny, &f.root());
+    let err = runner
+        .run(target)
+        .expect_err("an internal failure is fatal")
+        .to_string();
+    assert!(err.contains("fixture.internal"), "{err}");
+    assert!(err.contains("the handler fell over"), "{err}");
 }

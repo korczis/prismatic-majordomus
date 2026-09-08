@@ -1,7 +1,7 @@
 +++
 title = "handover writes an append-only record with computed front matter and required sections"
 description = "majordomus handover takes a Markdown body on standard input and writes one new file under state/handovers/, named by timestamp, branch, short commit and a random suffix. The front matter — schema version, timestamps, task id, profile, owner, repository id, worktree, branch, head, working tree, changed files — is computed. The body must contain each section the policy requires (# Objective, # Current State, # Next Action by default), each non-empty; template placeholders in angle brackets count as empty. The file is created with mode 0600 through a temporary file and a hard link, so it cannot clobber an existing record; it lives under the ignored .ai/local/, so it is never staged or committed, and it reaches another checkout only by being carried there."
-weight = 50
+weight = 51
 [extra]
 claim_id = "handover-record"
 status = "guaranteed"

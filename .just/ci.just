@@ -26,3 +26,8 @@ ci-full:
 [group('ci')]
 ci-baseline *args:
     scripts/ci-baseline {{args}}
+
+# The install command this project advertises, fetched and run from the published site: does a stranger who copies the line off the front page get a working tool right now? Pass --base URL to ask the same of a local fixture (docs/DISTRIBUTION.md).
+[group('ci')]
+install-check *args:
+    scripts/ci/install-check {{args}}

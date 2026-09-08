@@ -23,6 +23,31 @@ expect_no_grep() {
   else grep -qE -- "$pat" "$src" && { printf '    did not expect /%s/ in %s\n' "$pat" "$src"; return 1; }; fi
   return 0
 }
+# Run a command whose output the caller wants but whose noise it does not, and say what it
+# said if it fails.
+#
+# The idiom this replaces is `cmd 2>/dev/null > file`. Under `bash -eu` a non-zero exit
+# there ends the case having printed nothing anywhere: no message, no assertion, a zero-byte
+# log and a bare FAIL. Three commands in 76_capabilities_projections and the zola build in
+# 95_skills were written that way, and each of them failed exactly like that. `rust_bin`
+# above already does the right thing — stderr to a file, `cat` it on failure — and this is
+# that, reusable.
+#
+#   run_quiet "$S/list.err" "$RB" capabilities list --format json > "$S/list.json"
+#
+# The report goes to stderr, not stdout. Every caller redirects stdout into the file it
+# wants the command's output in, so a diagnostic written to stdout lands in that file
+# instead of the log — the same silence one layer along. The two `>&2` are load-bearing.
+run_quiet() {
+  local err="$1"; shift
+  "$@" 2> "$err" || {
+    local rc=$?
+    printf '    %s failed (exit %s):\n' "$1" "$rc" >&2
+    sed 's/^/    | /' "$err" >&2
+    return 1
+  }
+}
+
 # octal permission bits of a file, GNU stat first (BSD stat has no -c and fails), then BSD
 file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 
@@ -48,6 +73,22 @@ rust_bin() {
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
 rust_bin_exit() { [ "$1" = 3 ] && { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }; exit 1; }
+
+# The whole workflow declaration of this repository, written to a file a case can grep.
+#
+# The root justfile imports one file per bounded context, so a case that reads only the root
+# file is reading a fragment of the declaration and will report a recipe missing the day it
+# is moved rather than the day it is removed. The generated bridge is not read: it is not
+# tracked, it is a projection of the command graph, and a case asserting what it contains
+# would be asserting what `majordomus commands bridge` writes rather than what this
+# repository declares.
+#   JF="$(just_declaration)"
+just_declaration() {
+  local out
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.just.XXXXXX")"
+  cat "$ROOT/justfile" "$ROOT"/.just/*.just > "$out" 2>/dev/null
+  printf '%s' "$out"
+}
 
 # restore the seeded policy and profiles from the skeleton after a case mutated them; the
 # files belong to the repository after init, so init itself never rewrites them
@@ -151,6 +192,25 @@ fixture_repo() {
   [ -e "$dst/docs/generated/registry.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/registry.json" "$dst/docs/generated/"; }
   [ -e "$dst/docs/generated/cli.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/cli.json" "$dst/docs/generated/"; }
   [ -e "$dst/docs/generated/artifacts.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/artifacts.json" "$dst/docs/generated/"; }
+  # Every file the templates load. `--inputs` names the site generator's own canonical
+  # inputs, which is not the same set: site/data/registry/registry.json and
+  # distribution.json are written by `majordomus generate`, so the generator does not call
+  # them inputs and a fixture built from that list alone had two of the four files the
+  # templates read. Zola then failed on the first page that loaded one, which is how
+  # 95_skills reported "zola could not build the fixture site".
+  #
+  # Read out of the templates rather than listed here, for the reason the input list is:
+  # a fixture that derives what it carries cannot drift from the thing it is a fixture for.
+  # data/generated/ is skipped: that is the generator's own output directory, and the
+  # fixture must produce it rather than inherit it, or a case would be checking this
+  # repository's data instead of what the run under test wrote.
+  for p in $(grep -rhoE 'load_data\(path="[^"]+"' "$ROOT/site/templates" 2>/dev/null \
+             | sed 's/.*path="//; s/"$//' | sort -u); do
+    case "$p" in data/generated/*) continue ;; esac
+    [ -f "$ROOT/site/$p" ] && [ ! -e "$dst/site/$p" ] || continue
+    mkdir -p "$dst/site/$(dirname "$p")"
+    cp "$ROOT/site/$p" "$dst/site/$p"
+  done
   # every path a claim names must resolve where the generator runs, so the fixture carries
   # them too, read from the matrix rather than listed here: a claim implemented outside the
   # trees copied above (the Rust executable under apps/) is otherwise "missing". After the
