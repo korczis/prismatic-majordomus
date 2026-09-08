@@ -64,7 +64,20 @@ printf '%s\n' "$out" | grep -q "the metadata the installer resolves is not serve
   || { echo "    the gate did not name the metadata as the missing thing: $out"; exit 1; }
 printf '%s\n' "$out" | grep -q "README" \
   || { echo "    the gate did not say what a reader of the README gets"; exit 1; }
-mv "$FIX/releases/latest.json.away" "$FIX/releases/latest.json"
+
+# --- ... and a window lets a late deployment arrive rather than calling it broken ----------
+# The metadata is put back while the gate is already waiting for it, which is the shape of a
+# push that lands between a release publishing and the site deploying.
+( sleep 18 && mv "$FIX/releases/latest.json.away" "$FIX/releases/latest.json" ) &
+late=$!
+out="$(env HOME="$T/home-late" "$GATE" --base "$HTTP_BASE" --wait 90 2>&1)" || {
+  wait "$late" 2>/dev/null
+  echo "    the gate refused a deployment that arrived inside its window"
+  printf '%s\n' "$out" | sed 's/^/      /'
+  exit 1
+}
+wait "$late" 2>/dev/null
+printf '%s\n' "$out" | grep -q "the metadata appeared after" || { echo "    the gate did not report the wait it did"; exit 1; }
 
 # --- an origin that serves metadata for an artifact it does not have ------------------------
 # The other half of the same failure: the pointer exists, the download behind it does not.
@@ -85,6 +98,11 @@ W="$ROOT/.github/workflows/validate.yml"
 grep -q "^  $job:" "$W" || { echo "    validate.yml has no $job job for the installer-live gate"; exit 1; }
 grep -q "needs.plan.outputs.installer_live" "$W" || { echo "    the $job job is not gated on the plan's decision"; exit 1; }
 grep -q "scripts/ci/install-check" "$W" || { echo "    the $job job does not run the gate"; exit 1; }
+# CI gives the deployment a window; a person does not. A gate that waits by default would
+# make `just install-check` hang for minutes on a site that is simply broken.
+grep -q 'scripts/ci/install-check --wait ' "$W" \
+  || { echo "    the $job job does not give the deployment a window (--wait)"; exit 1; }
+grep -q '^WAIT=0$' "$GATE" || { echo "    the gate waits by default; a person asking wants the answer now"; exit 1; }
 # no class may select it: it measures a deployment, and a tree cannot change the answer
 awk '/^classes:/{c=1} c' "$MODEL_CI" | grep -q 'installer-live' \
   && { echo "    a path class selects installer-live; no change to a tree can affect it"; exit 1; }

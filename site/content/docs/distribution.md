@@ -243,6 +243,12 @@ published site:
 Nothing outside its temporary tree is written: the install goes to a `HOME` of the run's
 own, so the prefix, the launchers and the PATH hint all land inside it.
 
+CI runs it as `--wait 300`. Publishing a release and deploying the site are two workflows and
+the second is not instant, so a push landing between them would be told the promise is broken
+when it is merely a few minutes old. Run by hand the wait is zero, because a person asking
+whether the command works wants the answer now. A site that cannot serve the metadata inside
+the window is broken either way, and the finding stands.
+
 It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](../.ai/repo/ci/gates.yaml),
 job `install`, on Linux and macOS. No path class selects it, deliberately: no change to a
 tree can make it true or false — only a deployment can. It runs in the full plan, which is
