@@ -290,7 +290,17 @@ impl BenchmarkCases for FeatureInput {
                     },
                 )]
             })
-            .unwrap_or_default()
+            // A repository that declares no feature yet still exposes this route, and a
+            // capability with no case is a capability nobody measures. The refusal is the
+            // measurable path there, so the case names a feature that is not there.
+            .unwrap_or_else(|| {
+                vec![NamedCase::new(
+                    "absent",
+                    FeatureInput {
+                        id: "absent".into(),
+                    },
+                )]
+            })
     }
 }
 
