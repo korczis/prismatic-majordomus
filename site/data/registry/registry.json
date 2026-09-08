@@ -6,25 +6,25 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "f06a22f8fdd95c64e2462b1d92cfa218b04a78f8595ae25c5a01be715af4ec1e",
+    "fingerprint": "b986213345ed84c23ac81fcb4bfb557890e3977ab78b85267452a97a20d5b202",
     "summary": {
-      "total": 1013,
+      "total": 1014,
       "builtin": 37,
-      "declarative": 976,
+      "declarative": 977,
       "by_kind": {
         "command": 1,
         "query": 36,
-        "resource": 976
+        "resource": 977
       },
       "by_stability": {
         "behaviorally_verified": 37,
-        "implemented": 976
+        "implemented": 977
       },
       "mcp_tools": 35,
-      "mcp_resources": 989,
+      "mcp_resources": 990,
       "http_routes": 37,
       "cli_commands": 18,
-      "modules": 40,
+      "modules": 41,
       "benchmark_required": 37,
       "benchmark_waived": 0,
       "cached": 15
@@ -12260,6 +12260,14 @@
         "capability_ids": []
       },
       {
+        "id": "release-record",
+        "title": "release-record",
+        "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "repository",
         "title": "Repository",
         "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.",
@@ -12376,7 +12384,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1ecf1093e7d83ad31b7024eddb7259513ee34d8a1905f08ac6075f70fdba11d2",
+    "fingerprint": "7a3ead6ee24257e46c1de983bde1c404ac3265cb52af62552ef1ba994945cfce",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -12416,6 +12424,7 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
+      "release-record": 1,
       "rule": 91,
       "scope": 1,
       "session": 8,
@@ -15231,7 +15240,7 @@
         "title": "Adoption",
         "path": "docs/ADOPTION.md",
         "source_class": "document",
-        "bytes": 5016
+        "bytes": 5548
       },
       {
         "uri": "majordomus://document/docs/CAPABILITIES.md",
@@ -15447,7 +15456,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 11201
+        "bytes": 11434
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -19983,6 +19992,16 @@
         "bytes": 817
       },
       {
+        "uri": "majordomus://release-record/v0.3.1",
+        "kind": "release-record",
+        "identity": "v0.3.1",
+        "title": "v0.3.1",
+        "path": ".ai/repo/releases/v0.3.1.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2274
+      },
+      {
         "uri": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "identity": "majordomus.adr-integrity@1",
@@ -23124,7 +23143,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 0
+      "objects": 1
     },
     {
       "name": "rule",

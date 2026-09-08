@@ -22,6 +22,7 @@ Each of these is rendered on the website as well, from this same Markdown.
 | [`DISTRIBUTION.md`](DISTRIBUTION.md) | contributors, AI workers | how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release |
 | [`CATALOGUE.md`](CATALOGUE.md) | everyone | the use-case and application registries: what they are for, how they differ from the why pages, the schema, and how to extend them |
 | [`ADOPTION.md`](ADOPTION.md) | teams | day one, week one, several workers, removal |
+| [`ADOPTION_FIRST_RUN.md`](ADOPTION_FIRST_RUN.md) | maintainers | forensic finding: what `doctor` reports in a repository that is not this one, why 109 of its findings cannot be satisfied there, and the decision that needs making |
 | [`ECONOMICS.md`](ECONOMICS.md) | leads | the claim it refuses to make, what v0.1 controls without measuring, where the cost actually is, what the ledger alone can measure, and what honest measurement would take |
 | [`EXTRACTION_REPORT.md`](EXTRACTION_REPORT.md) | humans | how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan |
 | [`DYNAMICITY.md`](DYNAMICITY.md) | maintainers | canonical ownership: what may be written down twice, what must be derived, and which entities still have no owner |
