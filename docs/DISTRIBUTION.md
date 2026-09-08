@@ -179,6 +179,14 @@ smoke    the published installer, from its published URL, installing the release
 
 Only `publish` has `contents: write`. Nothing else in the run can write anything.
 
+A runner label the model names must be a standard, currently offered GitHub-hosted label.
+This is not a style rule. A retired label does not fail: the job is accepted and queues for
+a runner that will never arrive, so the run neither publishes nor goes red — it simply never
+ends, and `fail-fast` cancels it when a sibling fails, which makes it look like collateral
+damage rather than the cause. `macos-13` sat that way through two release attempts. The list
+is GitHub's, at `actions/runner-images`; a `-large` or `-xlarge` suffix means a billed larger
+runner rather than a standard one.
+
 A run that fails in `build` publishes nothing, which is the intended behaviour and also the
 one that is easy to walk away from: the tag still exists, pointing at the commit the build
 failed on, and no release is behind it. Fixing the cause on the default branch does not fix
