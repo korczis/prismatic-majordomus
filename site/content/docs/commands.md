@@ -358,6 +358,32 @@ The root justfile imports the bridge optionally, so a clone without one still ha
 justfile: `just build` and `just bridge` are the two recipes the bridge cannot provide,
 because they are what produce it.
 
+## What proves it
+
+<div class="overflow-x-auto" tabindex="0">
+
+| | |
+|---|---|
+| `scripts/ci/command-graph` | the gate: the graph builds without an error, and no workflow file carries a hand-written bridge |
+| `test/cases/100_environment.sh` | the shell entry point is an adapter, and the check can fail |
+| `test/cases/101_command_graph.sh` | the graph, the bridge, the completion, the secret sentinels, one repository at a time |
+| `test/cases/102_completion_shell.sh` | the generated adapter, loaded into a real zsh, offering real candidates |
+| `apps/majordomus-cli/src/command_graph/` | the unit half: no adapter names a command, no mutation reaches a machine surface, no workflow is bridged back into a workflow, the fingerprint is stable |
+
+</div>
+
+
+Measured on this machine, debug build, macOS arm64:
+
+```text
+majordomus --help                      8.5 ms
+completion query (any shape)          14-16 ms
+commands bridge, nothing changed       8.8 ms
+commands graph, in full                128 ms   (two `just` subprocesses)
+repository entry, warm                 113 ms
+the bridge's overhead over a direct call 33 ms
+```
+
 ## Related
 
 - [`CAPABILITIES.md`](@/docs/capabilities.md) — the capability registry the graph joins against

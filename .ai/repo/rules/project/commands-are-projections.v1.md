@@ -83,6 +83,10 @@ The gate `command-graph` (`scripts/ci/command-graph`) fails, exit 10, when:
 - a workflow file declares a recipe whose body calls one of the two programs directly, with
   the two bootstrap recipes that produce the bridge named as the exception.
 
+`test/cases/102_completion_shell.sh` loads the generated adapter into a real zsh and reads
+what it offers, because a completion that looks correct in a file and does nothing at all is
+the normal failure of this kind of work.
+
 `test/cases/101_command_graph.sh` is the behavioural half: it proves the graph builds in a
 disposable repository, that the bridge it writes forwards arguments rather than interpolating
 them, that a second materialisation writes nothing, that adding a command to the declaration
