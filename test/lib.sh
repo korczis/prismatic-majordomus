@@ -176,6 +176,25 @@ fixture_repo() {
   [ -e "$dst/docs/generated/registry.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/registry.json" "$dst/docs/generated/"; }
   [ -e "$dst/docs/generated/cli.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/cli.json" "$dst/docs/generated/"; }
   [ -e "$dst/docs/generated/artifacts.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/artifacts.json" "$dst/docs/generated/"; }
+  # Every file the templates load. `--inputs` names the site generator's own canonical
+  # inputs, which is not the same set: site/data/registry/registry.json and
+  # distribution.json are written by `majordomus generate`, so the generator does not call
+  # them inputs and a fixture built from that list alone had two of the four files the
+  # templates read. Zola then failed on the first page that loaded one, which is how
+  # 95_skills reported "zola could not build the fixture site".
+  #
+  # Read out of the templates rather than listed here, for the reason the input list is:
+  # a fixture that derives what it carries cannot drift from the thing it is a fixture for.
+  # data/generated/ is skipped: that is the generator's own output directory, and the
+  # fixture must produce it rather than inherit it, or a case would be checking this
+  # repository's data instead of what the run under test wrote.
+  for p in $(grep -rhoE 'load_data\(path="[^"]+"' "$ROOT/site/templates" 2>/dev/null \
+             | sed 's/.*path="//; s/"$//' | sort -u); do
+    case "$p" in data/generated/*) continue ;; esac
+    [ -f "$ROOT/site/$p" ] && [ ! -e "$dst/site/$p" ] || continue
+    mkdir -p "$dst/site/$(dirname "$p")"
+    cp "$ROOT/site/$p" "$dst/site/$p"
+  done
   # every path a claim names must resolve where the generator runs, so the fixture carries
   # them too, read from the matrix rather than listed here: a claim implemented outside the
   # trees copied above (the Rust executable under apps/) is otherwise "missing". After the
