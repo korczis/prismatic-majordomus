@@ -87,7 +87,7 @@ pub enum Target {
     /// topology reaches the published documentation without the site shelling out to this
     /// executable, and how `generate --check` notices when it has gone stale.
     Web,
-    /// Everything derived from the distribution model (see [`crate::distribution`]): the
+    /// Everything derived from the distribution model (see `crate::distribution`): the
     /// release build matrix, the installer, the installation guide, the site's dataset,
     /// and the public metadata of every recorded release.
     Distribution,

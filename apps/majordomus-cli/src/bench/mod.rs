@@ -3,7 +3,7 @@
 //! policy is a target directly and through every transport its exposure declares; the
 //! inputs come from its input type's `BenchmarkCases`; the transports' own operations
 //! (`initialize`, `tools/list`, `/openapi.json`, ...) are system targets declared once in
-//! [`system`]. Coverage is `covered / required` with a generated denominator; the runners
+//! `system`. Coverage is `covered / required` with a generated denominator; the runners
 //! time targets through the executor, a real loopback socket and a real child process;
 //! the results are a versioned document; the accepted baseline is compared against a
 //! policy that is data.

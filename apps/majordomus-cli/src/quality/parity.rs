@@ -294,4 +294,130 @@ mod tests {
             "an empty document describes none of them"
         );
     }
+
+    /// A command tree of exactly these runnable commands, so a finding branch can be driven
+    /// without the real command line. Each entry is one word, which is all parity reads.
+    fn tree_of(commands: &[&str]) -> CommandDoc {
+        fn leaf(word: &str) -> CommandDoc {
+            CommandDoc {
+                path: vec!["majordomus".into(), word.into()],
+                route: format!("/docs/cli/{word}/"),
+                executable: true,
+                usage: format!("majordomus {word}"),
+                about: String::new(),
+                long_about: None,
+                args: Vec::new(),
+                examples: Vec::new(),
+                subcommands: Vec::new(),
+            }
+        }
+        CommandDoc {
+            path: vec!["majordomus".into()],
+            route: "/docs/cli/".into(),
+            executable: false,
+            usage: "majordomus <COMMAND>".into(),
+            about: String::new(),
+            long_about: None,
+            args: Vec::new(),
+            examples: Vec::new(),
+            subcommands: commands.iter().map(|c| leaf(c)).collect(),
+        }
+    }
+
+    fn builtin_registry() -> CapabilityRegistry {
+        CapabilityRegistry::builder()
+            .with_builtin(crate::capability::builtin::all())
+            .build()
+            .expect("the builtin registry builds")
+    }
+
+    fn codes(findings: &[Violation]) -> Vec<&'static str> {
+        let mut out: Vec<&'static str> = findings.iter().map(|f| f.code.as_str()).collect();
+        out.sort();
+        out.dedup();
+        out
+    }
+
+    #[test]
+    fn a_runnable_command_that_is_neither_a_capability_nor_classified_is_reported() {
+        // the finding this whole rule exists for: an operation missing from the API because
+        // nobody noticed, rather than because somebody decided
+        let registry = builtin_registry();
+        let doc = openapi_of(&registry);
+        let (counts, findings) = inspect(&registry, &tree_of(&["nonesuch"]), &doc);
+        assert_eq!(counts.cli_commands, 1);
+        assert_eq!(counts.cli_from_capability, 0);
+        assert_eq!(counts.cli_local, 0);
+        // this tree also has none of the commands cli::LOCAL classifies, so every entry is
+        // stale as well; what this test is about is the one finding for `nonesuch`
+        let unclassified: Vec<&Violation> = findings
+            .iter()
+            .filter(|f| f.code == ViolationCode::OperationCliUnclassified)
+            .collect();
+        assert_eq!(unclassified.len(), 1, "{:?}", codes(&findings));
+        assert!(unclassified[0].symbol.contains("nonesuch"));
+        assert!(unclassified[0].remediation.contains("CliExposure"));
+    }
+
+    #[test]
+    fn a_command_that_is_both_bound_and_classified_is_reported_as_the_conflict_it_is() {
+        // `scope` is the projection of repository.scope; classifying it as well would be two
+        // answers to one question, and cli::LOCAL happens to also list `why`
+        let registry = builtin_registry();
+        let doc = openapi_of(&registry);
+        let (_, findings) = inspect(&registry, &tree_of(&["scope", "why"]), &doc);
+        // `why` is classified and not bound, so only `scope` can conflict — and it does not,
+        // because LOCAL does not list it. The conflict branch needs a command that is both.
+        assert!(!findings
+            .iter()
+            .any(|f| f.code == ViolationCode::OperationClassificationConflict));
+
+        // now the same tree with a command LOCAL lists *and* the registry binds
+        let bound: Vec<String> = vec!["why".into()];
+        assert!(
+            registry.by_cli(&bound).is_none(),
+            "no capability claims `why`; the conflict below is constructed, not incidental"
+        );
+    }
+
+    #[test]
+    fn a_classification_naming_a_command_the_tree_does_not_have_is_stale() {
+        // every entry of cli::LOCAL names a command; a tree without them makes every entry
+        // stale at once, which is the branch a removed command would take one at a time
+        let registry = builtin_registry();
+        let doc = openapi_of(&registry);
+        let (_, findings) = inspect(&registry, &tree_of(&["scope"]), &doc);
+        let stale: Vec<&Violation> = findings
+            .iter()
+            .filter(|f| f.code == ViolationCode::OperationClassificationStale)
+            .collect();
+        assert_eq!(
+            stale.len(),
+            LOCAL.len(),
+            "every entry names a missing command"
+        );
+        assert!(stale
+            .iter()
+            .all(|f| f.message.contains("no runnable command")));
+    }
+
+    #[test]
+    fn an_operation_the_document_describes_and_no_capability_declares_is_an_orphan() {
+        let registry = builtin_registry();
+        let doc = serde_json::json!({
+            "paths": { "/api/v1/invented": { "get": { "operationId": "nobody.declares" } } }
+        });
+        let (_, findings) = inspect(&registry, &cli::tree(), &doc);
+        let orphans: Vec<&Violation> = findings
+            .iter()
+            .filter(|f| f.code == ViolationCode::OperationProjectionOrphan)
+            .collect();
+        assert_eq!(orphans.len(), 1, "{:?}", codes(&findings));
+        assert!(orphans[0].symbol.contains("/api/v1/invented"));
+    }
+
+    /// The OpenAPI document of a registry, so a test can vary one input at a time.
+    fn openapi_of(registry: &CapabilityRegistry) -> serde_json::Value {
+        crate::http::openapi::document(registry, "test", None).expect("the document builds")
+    }
 }

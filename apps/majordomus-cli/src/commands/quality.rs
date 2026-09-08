@@ -86,10 +86,13 @@ fn report(args: QualityReportArgs) -> Result<u8> {
     Ok(if answer.passes { 0 } else { EXIT_VIOLATIONS })
 }
 
-fn render(out: &mut std::io::StdoutLock<'_>, answer: &QualityAnswer) -> Result<()> {
-    let w = |out: &mut std::io::StdoutLock<'_>, s: String| {
-        writeln!(out, "{s}").map_err(Error::Transport)
-    };
+/// The terminal rendering of one answer.
+///
+/// Generic over the sink so the shape a person reads can be asserted against a buffer
+/// rather than only against a terminal: a renderer only a terminal can see is a renderer
+/// nothing tests, and this one carries the verdict a build acts on.
+fn render<W: Write>(out: &mut W, answer: &QualityAnswer) -> Result<()> {
+    let w = |out: &mut W, s: String| writeln!(out, "{s}").map_err(Error::Transport);
     if !answer.measured {
         w(
             out,
@@ -239,5 +242,147 @@ fn map(e: CapabilityError) -> Error {
         other => Error::Protocol {
             reason: other.to_string(),
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::quality::{QualityReport, Violation, ViolationCode};
+
+    fn rendered(answer: &QualityAnswer) -> String {
+        let mut buf: Vec<u8> = Vec::new();
+        render(&mut buf, answer).expect("the renderer writes");
+        String::from_utf8(buf).expect("utf-8")
+    }
+
+    fn measured(report: QualityReport, passes: bool, baselined: usize) -> QualityAnswer {
+        QualityAnswer {
+            measured: true,
+            reason: None,
+            report,
+            passes,
+            baselined,
+        }
+    }
+
+    #[test]
+    fn a_repository_with_no_crate_is_rendered_as_an_answer_and_not_as_a_failure() {
+        let out = rendered(&QualityAnswer {
+            measured: false,
+            reason: Some("no Rust crate at apps/majordomus-cli".into()),
+            report: QualityReport::default(),
+            passes: true,
+            baselined: 0,
+        });
+        assert!(out.contains("not measured"), "{out}");
+        assert!(
+            out.contains("no Rust crate at apps/majordomus-cli"),
+            "{out}"
+        );
+        // and nothing that would read as a measurement of zero
+        assert!(!out.contains("items "), "{out}");
+    }
+
+    #[test]
+    fn the_counts_a_reader_acts_on_are_all_present() {
+        let mut report = QualityReport::default();
+        report.target = "apps/majordomus-cli".into();
+        report.public_api.items = 10;
+        report.public_api.documented = 10;
+        report.public_api.owe_example = 4;
+        report.public_api.exampled = 3;
+        report.public_api.exempt = vec![crate::quality::Exemption {
+            reason: "a value is shown by an example of what reads it".into(),
+            items: 6,
+        }];
+        report.modules.modules = 2;
+        report.modules.documented = 2;
+        report.modules.exampled = 1;
+        report.modules.behaviourally_tested = 2;
+        report.operations.canonical = 5;
+        report.operations.cli = 2;
+        report.operations.http = 5;
+        report.operations.openapi = 5;
+        report.operations.mcp = 4;
+        report.operations.cli_commands = 7;
+        report.operations.cli_from_capability = 2;
+        report.operations.cli_local = 5;
+
+        let out = rendered(&measured(report, true, 0));
+        for fragment in [
+            "target      apps/majordomus-cli",
+            "10 exported, 10 documented",
+            "3 of 4 items that owe one",
+            "a value is shown by an example of what reads it",
+            "2 exported, 2 documented, 1 exampled, 2 behaviourally tested",
+            "5 canonical: 2 cli, 5 http, 5 openapi, 4 mcp",
+            "7 runnable: 2 from a capability, 5 classified local",
+            "quality: no findings",
+        ] {
+            assert!(out.contains(fragment), "missing {fragment:?} in:\n{out}");
+        }
+    }
+
+    #[test]
+    fn a_finding_is_rendered_with_the_rule_the_reason_and_the_remedy_once_per_code() {
+        let mut report = QualityReport::default();
+        let at = |symbol: &str, line| {
+            Violation::new(
+                ViolationCode::RustPublicMissingExample,
+                symbol,
+                "apps/majordomus-cli/src/a.rs",
+                Some(line),
+                "carries behaviour and no example of it",
+            )
+        };
+        report.violations = vec![at("a::one", 3), at("a::two", 9)];
+
+        let out = rendered(&measured(report, false, 0));
+        assert!(
+            out.contains("RUST_PUBLIC_MISSING_EXAMPLE  (2 finding(s))"),
+            "{out}"
+        );
+        // the reason and the remedy belong to the code, so they appear once, not per finding
+        assert_eq!(out.matches("  rule        ").count(), 1, "{out}");
+        assert_eq!(out.matches("  why         ").count(), 1, "{out}");
+        assert_eq!(out.matches("  remedy      ").count(), 1, "{out}");
+        // and every occurrence is located
+        assert!(
+            out.contains("src/a.rs:3") && out.contains("src/a.rs:9"),
+            "{out}"
+        );
+        assert!(out.contains("quality: 2 finding(s)"), "{out}");
+    }
+
+    #[test]
+    fn what_the_baseline_accepts_is_said_rather_than_hidden() {
+        let out = rendered(&measured(QualityReport::default(), true, 7));
+        assert!(out.contains("baseline    7 finding(s) accepted"), "{out}");
+        assert!(out.contains(BASELINE), "it names the file: {out}");
+
+        // and when it accepts nothing, the line is absent rather than reading "0"
+        let out = rendered(&measured(QualityReport::default(), true, 0));
+        assert!(!out.contains("baseline    "), "{out}");
+    }
+
+    #[test]
+    fn a_summary_that_hid_the_findings_does_not_read_as_a_clean_report() {
+        // --summary clears the list but not the verdict; saying "no findings" here would be
+        // the one lie this command must not tell
+        let out = rendered(&measured(QualityReport::default(), false, 0));
+        assert!(out.contains("were not listed"), "{out}");
+        assert!(!out.contains("quality: no findings"), "{out}");
+    }
+
+    #[test]
+    fn an_input_the_capability_refuses_is_the_callers_mistake_and_not_an_internal_error() {
+        let usage = map(CapabilityError::InvalidInput("no such code".into()));
+        assert_eq!(usage.exit_code(), crate::cli::EXIT_USAGE);
+        let refused = map(CapabilityError::Refused("blank".into()));
+        assert_eq!(refused.exit_code(), crate::cli::EXIT_USAGE);
+        // and a handler that broke is still the executable's fault
+        let internal = map(CapabilityError::Internal("boom".into()));
+        assert_eq!(internal.exit_code(), 13);
     }
 }
