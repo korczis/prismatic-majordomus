@@ -3,28 +3,28 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.3.0"
+    "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "f80f287cd2883346ca722f4b74acfb14a5543f5989978b254e31a33f216ba79b",
+    "fingerprint": "d1f8e98af2977d43054048dd836b65a46856b09d21e03124d3e58efaf2c7afd6",
     "summary": {
-      "total": 1053,
+      "total": 1054,
       "builtin": 42,
-      "declarative": 1011,
+      "declarative": 1012,
       "by_kind": {
         "command": 1,
         "query": 41,
-        "resource": 1011
+        "resource": 1012
       },
       "by_stability": {
         "behaviorally_verified": 42,
-        "implemented": 1011
+        "implemented": 1012
       },
       "mcp_tools": 40,
-      "mcp_resources": 1027,
+      "mcp_resources": 1028,
       "http_routes": 42,
       "cli_commands": 23,
-      "modules": 42,
+      "modules": 43,
       "benchmark_required": 42,
       "benchmark_waived": 0,
       "cached": 20
@@ -14328,6 +14328,14 @@
         "capability_ids": []
       },
       {
+        "id": "release-record",
+        "title": "release-record",
+        "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "repository",
         "title": "Repository",
         "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.",
@@ -14444,7 +14452,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3565c0d2c62b5781435e750be63adea78e05287aced6952bb585424bf2da9e0f",
+    "fingerprint": "c4db7fc761e22b64bc128fcffaf72a75677cb281d2d907e063dbf028d696f735",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14486,6 +14494,7 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
+      "release-record": 1,
       "rule": 92,
       "scope": 1,
       "session": 8,
@@ -17185,7 +17194,7 @@
         "identity": "share/distribution.yaml",
         "path": "share/distribution.yaml",
         "source_class": "distribution",
-        "bytes": 3543
+        "bytes": 4093
       },
       {
         "uri": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -17469,7 +17478,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 16362
+        "bytes": 16953
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -17541,7 +17550,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 9477
+        "bytes": 9530
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -22493,6 +22502,16 @@
         "bytes": 817
       },
       {
+        "uri": "majordomus://release-record/v0.3.1",
+        "kind": "release-record",
+        "identity": "v0.3.1",
+        "title": "v0.3.1",
+        "path": ".ai/repo/releases/v0.3.1.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2274
+      },
+      {
         "uri": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "identity": "majordomus.adr-integrity@1",
@@ -25669,7 +25688,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 0
+      "objects": 1
     },
     {
       "name": "rule",
