@@ -4,7 +4,7 @@
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
 //!
-//! What *is* written here is the ten areas: Overview, Capabilities, Objects,
+//! What *is* written here is the areas: Overview, Capabilities, Executions, Objects,
 //! Directories, Graphs, Continuity, Worktrees, Health, Artifacts, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
@@ -28,6 +28,8 @@ pub enum Area {
     Directories,
     /// The derived graphs.
     Graphs,
+    /// The executions this process is running and remembers.
+    Executions,
     /// What this checkout's lifecycle is holding.
     Continuity,
     /// The branch-to-worktree topology of the repository.
@@ -93,6 +95,13 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 "/cockpit/capabilities",
                 Area::Capabilities,
                 Some(summary.total),
+                here,
+            ),
+            item(
+                "Executions",
+                "/cockpit/executions",
+                Area::Executions,
+                Some(ctx.executions.store().active()),
                 here,
             ),
             item(

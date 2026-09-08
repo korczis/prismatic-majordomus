@@ -64,6 +64,19 @@ pub fn lease_path(repo: &Repository) -> PathBuf {
     repo.root().join(repo.local_path()).join(LEASE_PATH)
 }
 
+/// Which server is serving this repository right now, if any.
+///
+/// Read-only, unlike [`elect`]: it takes no lease, creates no file and waits for nobody, so
+/// a command that only wants to *ask* the running server something cannot accidentally
+/// become it. `None` means no lease, no URL in it, or a lease whose server does not answer
+/// for this root.
+pub fn serving(repo: &Repository) -> Option<String> {
+    let text = fs::read_to_string(lease_path(repo)).ok()?;
+    let document: Value = serde_json::from_str(&text).ok()?;
+    let url = document.get("url")?.as_str()?.to_string();
+    probe(&url, repo.root()).then_some(url)
+}
+
 /// Decide whether this process serves the repository or attaches to the process that does.
 ///
 /// An existing file is read on every attempt and classified: the lease of a live server

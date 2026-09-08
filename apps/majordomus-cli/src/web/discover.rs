@@ -225,6 +225,21 @@ pub fn native_all() -> Vec<Surface> {
             provenance: provenance([("mount", Provenance::Registry)]),
         },
         Surface {
+            id: "events".into(),
+            title: "The live channel: what this process's executions are doing".into(),
+            category: Category::Protocol,
+            visibility: Visibility::Internal,
+            kind: SurfaceKind::NativeRoute,
+            mount: Mount::parse(crate::http::events::PATH).expect("the events path is a mount"),
+            producer: "http::events".into(),
+            feature: None,
+            artifact: None,
+            index: None,
+            availability: Availability::ServedOnly,
+            built_from: None,
+            provenance: provenance([("mount", Provenance::Registry)]),
+        },
+        Surface {
             id: "cockpit".into(),
             title: "The registry, rendered for a person".into(),
             category: Category::Interface,
@@ -323,6 +338,11 @@ pub fn reserved() -> Vec<Reserved> {
             role: "capabilities",
             path: HttpExposure::PREFIX,
             owner: "api",
+        },
+        Reserved {
+            role: "events",
+            path: crate::http::events::PATH,
+            owner: "events",
         },
     ]
 }

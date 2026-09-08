@@ -5,24 +5,24 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 37,
-      "covered": 37,
+      "required": 45,
+      "covered": 42,
       "missing": 0,
-      "waived": 0
+      "waived": 3
     },
     {
       "scope": "http",
-      "required": 37,
-      "covered": 37,
+      "required": 45,
+      "covered": 42,
       "missing": 0,
-      "waived": 0
+      "waived": 3
     },
     {
       "scope": "mcp",
-      "required": 35,
-      "covered": 35,
+      "required": 43,
+      "covered": 40,
       "missing": 0,
-      "waived": 0
+      "waived": 3
     },
     {
       "scope": "system",
@@ -33,10 +33,10 @@
     },
     {
       "scope": "total",
-      "required": 122,
-      "covered": 122,
+      "required": 146,
+      "covered": 137,
       "missing": 0,
-      "waived": 0
+      "waived": 9
     }
   ],
   "capabilities": [
@@ -190,6 +190,84 @@
       ]
     },
     {
+      "id": "executions.cancel",
+      "module": "executions",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "executions.demonstrate",
+      "module": "executions",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "immediate"
+      ]
+    },
+    {
+      "id": "executions.events",
+      "module": "executions",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "executions.get",
+      "module": "executions",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "executions.list",
+      "module": "executions",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "recent"
+      ]
+    },
+    {
+      "id": "executions.protocol",
+      "module": "executions",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "executions.start",
+      "module": "executions",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "demonstrate"
+      ]
+    },
+    {
       "id": "graph.get",
       "module": "graph",
       "kind": "query",
@@ -292,6 +370,18 @@
       "cases": [
         "common-word",
         "no-hit"
+      ]
+    },
+    {
+      "id": "objects.verify",
+      "module": "objects",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "bounded"
       ]
     },
     {

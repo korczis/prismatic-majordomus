@@ -6,12 +6,14 @@
 //! OpenAPI document is derived from the same registry at request time, and the Swagger UI
 //! shell loads it.
 
+pub mod events;
 pub mod mcp;
 pub mod openapi;
 pub mod router;
 pub mod server;
 pub mod surfaces;
 pub mod swagger;
+pub mod ws;
 
 pub use router::{Body, Request, Response, Router};
 pub use surfaces::Served;

@@ -10,10 +10,12 @@
 use serde_json::{json, Value};
 
 use crate::capability::builtin::{
-    ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
-    ObjectList, ObjectSummary, Record, RepositoryReport,
+    ArtifactReport, Continuity, DirectoryReport, DirectoryState, EventHistory, ExecutionList,
+    ExecutionView, GraphList, Health, HealthStatus, ObjectList, ObjectSummary, Record,
+    RepositoryReport,
 };
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
+use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
@@ -553,11 +555,7 @@ fn select(name: &str, label: &str, current: Option<&str>, options: Vec<(String, 
 }
 
 fn kind_word(kind: CapabilityKind) -> &'static str {
-    match kind {
-        CapabilityKind::Query => "query",
-        CapabilityKind::Command => "command",
-        CapabilityKind::Resource => "resource",
-    }
+    kind.as_str()
 }
 
 /// Which projections a capability declares, as short marks.
@@ -782,8 +780,16 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
         )
     };
 
+    // the route that starts an execution, from the registry that declares it: the page
+    // names no path of its own
+    let start_route = ctx
+        .registry
+        .get("executions.start")
+        .and_then(|s| s.exposure.http.as_ref())
+        .map(|h| h.path.clone())
+        .unwrap_or_default();
     let runner = match (&c.exposure.http, c.stability.executable()) {
-        (Some(http), true) => runner_form(c, http),
+        (Some(http), true) => runner_form(c, http, &start_route),
         (Some(_), false) => card(
             "Run",
             alert(
@@ -820,6 +826,9 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
     if c.exposure.http.is_some() && c.stability.executable() {
         page = page.script("runner.js");
     }
+    if c.stability.executable() && !start_route.is_empty() {
+        page = page.script("executions.js");
+    }
     page
 }
 
@@ -843,7 +852,7 @@ fn projection_row(interface: &str, value: Option<String>, docs: Option<String>) 
 
 /// The generic runner: one form per capability, generated from the input schema. Nothing
 /// here is per-capability, and adding a capability adds a working form.
-fn runner_form(c: &Capability, http: &crate::capability::HttpExposure) -> El {
+fn runner_form(c: &Capability, http: &crate::capability::HttpExposure, start_route: &str) -> El {
     let (properties, required) = c.input.properties();
     let fields: Vec<El> = properties
         .iter()
@@ -855,6 +864,20 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure) -> El {
         .attr("data-mj-runner", c.id.as_str())
         .attr("data-mj-method", http.method.as_str())
         .attr("data-mj-path", http.path.clone())
+        // what the execution button needs, from the descriptor rather than from a list in
+        // the script: which capability to start, where to start it, and whether the page
+        // should ask first
+        .attr("data-mj-start", start_route)
+        .attr("data-mj-executions", "/cockpit/executions")
+        .attr(
+            "data-mj-confirm",
+            if c.execution.needs_confirmation() {
+                "yes"
+            } else {
+                "no"
+            },
+        )
+        .attr("data-mj-effect", word(&c.execution.effect))
         .attr("novalidate", "")
         .child(if fields.is_empty() {
             el("p")
@@ -877,6 +900,17 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure) -> El {
                         }),
                 )
                 .child(
+                    el("button")
+                        .class("mj-button")
+                        .attr("type", "button")
+                        .attr("data-mj-execute", c.id.as_str())
+                        .attr(
+                            "title",
+                            "Start it as an execution: it gets an id, a page of its own and a live stream of what it is doing",
+                        )
+                        .text("Run as an execution"),
+                )
+                .child(
                     el("code")
                         .class("mj-mono mj-preview")
                         .attr("data-mj-preview", "")
@@ -890,13 +924,18 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure) -> El {
                 .attr("aria-live", "polite"),
         );
 
-    let effect = if c.kind == CapabilityKind::Command {
-        alert(
+    // what the page says about running this comes from the descriptor's own policy, never
+    // from a list of capabilities that need care
+    let effect = match (c.kind, c.execution.cancellable) {
+        (CapabilityKind::Command, _) => alert(
             "warn",
             "A command. It changes this process's own memory — never the repository — and is sent as a POST from this page's origin.",
-        )
-    } else {
-        alert("info", "A query. It reads and changes nothing.")
+        ),
+        (_, true) => alert(
+            "info",
+            "It reads and changes nothing, and it stops when it is asked to. Run it as an execution to watch it happen and to be able to cancel it.",
+        ),
+        (_, false) => alert("info", "A query. It reads and changes nothing."),
     };
 
     card_with(
@@ -2850,6 +2889,512 @@ pub fn not_found(path: &str) -> Page {
 /// page from a missing capability.
 pub fn exists(registry: &CapabilityRegistry, id: &str) -> bool {
     registry.get(id).is_some()
+}
+
+// ------------------------------------------------------------------- executions
+
+/// The status word a badge uses for an execution state, so the colour of a state is
+/// decided once rather than in every place one is shown.
+fn execution_status(state: ExecutionState) -> &'static str {
+    match state {
+        ExecutionState::Succeeded => "ok",
+        ExecutionState::Failed => "fail",
+        ExecutionState::Cancelled => "warn",
+        ExecutionState::Running | ExecutionState::Cancelling | ExecutionState::Queued => "info",
+    }
+}
+
+/// How long an execution took, or has been going.
+fn duration_cell(e: &Execution) -> El {
+    match e.duration_ms {
+        Some(ms) if ms < 1000 => text_cell(format!("{ms} ms")),
+        Some(ms) => text_cell(format!("{:.1} s", ms as f64 / 1000.0)),
+        None if e.state.is_active() => cell(el("span").class("mj-muted").text("running")),
+        None => cell(el("span").class("mj-muted").text("-")),
+    }
+}
+
+/// The executions this process is running and remembers.
+pub fn executions(ctx: &Context, query: &[(String, String)]) -> Page {
+    let asked_state = query
+        .iter()
+        .find(|(k, _)| k == "state")
+        .map(|(_, v)| v.clone())
+        .filter(|v| !v.is_empty());
+    let asked_capability = query
+        .iter()
+        .find(|(k, _)| k == "capability")
+        .map(|(_, v)| v.clone())
+        .filter(|v| !v.is_empty());
+    let mut input = json!({});
+    if let Some(state) = &asked_state {
+        input["state"] = json!(state);
+    }
+    if let Some(capability) = &asked_capability {
+        input["capability"] = json!(capability);
+    }
+    let list: ExecutionList = match ask(ctx, "executions.list", input) {
+        Ok(l) => l,
+        Err(e) => return failed(Area::Executions, "Executions", e),
+    };
+
+    let counters = el("div")
+        .class("mj-stats")
+        .child(statistic(
+            list.remembered.to_string(),
+            "remembered",
+            "executions.list",
+        ))
+        .child(statistic(
+            list.active.to_string(),
+            "active",
+            "executions.list",
+        ))
+        .child(statistic(
+            list.queued.to_string(),
+            "queued",
+            "executions.list",
+        ))
+        .child(statistic(
+            list.live_channels.to_string(),
+            "live channels",
+            "http::events",
+        ));
+
+    let states = [
+        ExecutionState::Queued,
+        ExecutionState::Running,
+        ExecutionState::Cancelling,
+        ExecutionState::Succeeded,
+        ExecutionState::Failed,
+        ExecutionState::Cancelled,
+    ];
+    let filters = el("form")
+        .class("mj-filters")
+        .attr("method", "get")
+        .attr("action", "/cockpit/executions")
+        .child(select(
+            "state",
+            "State",
+            asked_state.as_deref(),
+            states
+                .iter()
+                .map(|s| (s.as_str().to_string(), s.as_str().to_string()))
+                .collect(),
+        ))
+        .child(
+            el("label")
+                .class("mj-field")
+                .child(el("span").class("mj-field-label").text("Capability"))
+                .child(
+                    el("input")
+                        .class("mj-input")
+                        .attr("type", "text")
+                        .attr("name", "capability")
+                        .attr("spellcheck", "false")
+                        .attr_if("value", asked_capability.clone()),
+                ),
+        )
+        .child(
+            el("button")
+                .class("mj-button")
+                .attr("type", "submit")
+                .text("Filter"),
+        );
+
+    let body = if list.executions.is_empty() {
+        card(
+            "Executions",
+            nothing(
+                "This process has run nothing yet. Open a capability, choose Run as an execution, and it will appear here.",
+            ),
+        )
+    } else {
+        card(
+            "Executions",
+            table(
+                &[
+                    "State",
+                    "Execution",
+                    "Capability",
+                    "Progress",
+                    "Took",
+                    "Started",
+                ],
+                list.executions
+                    .iter()
+                    .map(|view| {
+                        let e = &view.execution;
+                        row(vec![
+                            cell(badge(execution_status(e.state), e.state.as_str())),
+                            id_cell(view.links.cockpit.clone(), e.id.to_string()),
+                            cell(link(
+                                format!("/cockpit/capabilities/{}", percent_encode(&e.capability)),
+                                e.capability.clone(),
+                            )),
+                            cell(match e.percent() {
+                                Some(percent) => progress_bar(percent),
+                                None => el("span").class("mj-muted").text("-"),
+                            }),
+                            duration_cell(e),
+                            text_cell(e.started_at.clone().unwrap_or_else(|| e.created_at.clone())),
+                        ])
+                    })
+                    .collect(),
+            ),
+        )
+    };
+
+    Page::new(
+        Area::Executions,
+        "Executions",
+        el("div")
+            .class("mj-grid")
+            .child(counters)
+            .child(card("Narrow", filters))
+            .child(body)
+            .child(live_region()),
+    )
+    .subtitle(format!(
+        "{} of {} remembered by this process",
+        list.count, list.remembered
+    ))
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Executions", None)])
+    .script("executions.js")
+}
+
+/// The element the live channel writes into, carrying what a reader needs to know when
+/// JavaScript is not running — and the channel's own path, so that no path is written down
+/// in the browser.
+fn live_region() -> El {
+    el("div")
+        .class("mj-live")
+        .attr("data-mj-live", "")
+        .attr("data-mj-socket", crate::http::events::PATH)
+        .attr("aria-live", "polite")
+        .child(
+            el("p").class("mj-note").text(
+                "This page is complete as it is. With JavaScript, it follows the live channel and updates itself as executions run.",
+            ),
+        )
+}
+
+/// A progress bar with the accessible semantics a progress bar needs.
+fn progress_bar(percent: u64) -> El {
+    el("div")
+        .class("mj-progress")
+        .attr("role", "progressbar")
+        .attr("aria-valuenow", percent.to_string())
+        .attr("aria-valuemin", "0")
+        .attr("aria-valuemax", "100")
+        .attr("aria-label", "execution progress")
+        .child(
+            el("div")
+                .class("mj-progress-bar")
+                .attr("style", format!("width:{percent}%")),
+        )
+        .child(
+            el("span")
+                .class("mj-progress-text")
+                .text(format!("{percent}%")),
+        )
+}
+
+/// One execution, in full: what it is, where it is, what it has said, and what it produced.
+///
+/// The page is complete without JavaScript — this is what a reload restores from — and
+/// `executions.js` subscribes from the sequence the page was rendered at, so nothing is
+/// missed between the render and the stream.
+pub fn execution(ctx: &Context, id: &str) -> Page {
+    let view: ExecutionView = match ask(ctx, "executions.get", json!({ "id": id })) {
+        Ok(v) => v,
+        Err(reason) => {
+            return Page::new(
+                Area::Executions,
+                id.to_string(),
+                el("div")
+                    .child(alert("warn", reason))
+                    .child(el("p").class("mj-empty").text(
+                        "An execution lives as long as the process that ran it, and this process remembers a bounded number of them.",
+                    ))
+                    .child(link("/cockpit/executions", "Every execution this process remembers")),
+            )
+            .status(404)
+            .trail(vec![
+                ("Cockpit", Some("/cockpit")),
+                ("Executions", Some("/cockpit/executions")),
+                (id, None),
+            ])
+        }
+    };
+    let e = &view.execution;
+    let history: EventHistory =
+        ask(ctx, "executions.events", json!({ "id": id })).unwrap_or(EventHistory {
+            execution_id: e.id.to_string(),
+            state: e.state,
+            events: Vec::new(),
+            last_sequence: e.last_sequence,
+            more: false,
+            truncated: e.events_truncated,
+        });
+
+    let what = card_with(
+        "This execution",
+        badge(execution_status(e.state), e.state.as_str()),
+        facts(vec![
+            (
+                "Capability",
+                Node::Element(link(
+                    format!("/cockpit/capabilities/{}", percent_encode(&e.capability)),
+                    e.capability.clone(),
+                )),
+            ),
+            ("Title", Node::Text(e.title.clone())),
+            ("Started by", Node::Text(word(&e.actor.kind))),
+            ("Repository", Node::Text(e.repository.name.clone())),
+            (
+                "Branch",
+                Node::Text(e.repository.branch.clone().unwrap_or_else(|| "-".into())),
+            ),
+            ("Created", Node::Text(e.created_at.clone())),
+            (
+                "Finished",
+                Node::Text(e.finished_at.clone().unwrap_or_else(|| "-".into())),
+            ),
+            (
+                "Took",
+                Node::Text(match e.duration_ms {
+                    Some(ms) => format!("{ms} ms"),
+                    None => "-".into(),
+                }),
+            ),
+            (
+                "Correlation id",
+                Node::Element(mono(e.correlation_id.clone())),
+            ),
+        ]),
+    );
+
+    let control = {
+        let cancel = if e.state.is_final() {
+            alert(
+                "info",
+                "This execution has finished; there is nothing left to stop.",
+            )
+        } else if e.cancellable {
+            el("div")
+                .child(
+                    el("button")
+                        .class("mj-button mj-button--primary")
+                        .attr("type", "button")
+                        .attr("data-mj-cancel", e.id.to_string())
+                        .text("Cancel this execution"),
+                )
+                .child(el("p").class("mj-note").text(
+                    "Cancellation is cooperative: the flag is set and the task stops when it next looks at it.",
+                ))
+        } else {
+            alert(
+                "warn",
+                "This capability does not declare that it looks at its cancellation flag, so asking it to stop would be recorded and change nothing. Its execution policy says so.",
+            )
+        };
+        card("Control", cancel)
+    };
+
+    let progress = card(
+        "Progress",
+        match e.percent() {
+            Some(percent) => el("div")
+                .attr("data-mj-progress", "")
+                .child(progress_bar(percent))
+                .child(
+                    el("p").class("mj-note").text(
+                        e.progress
+                            .as_ref()
+                            .and_then(|p| p.message.clone())
+                            .unwrap_or_default(),
+                    ),
+                ),
+            None => el("div")
+                .attr("data-mj-progress", "")
+                .child(nothing("This execution reports no measured progress.")),
+        },
+    );
+
+    let steps = card(
+        "Steps",
+        if e.steps.is_empty() {
+            nothing("It has entered no named step.")
+        } else {
+            table(
+                &["", "Step", "Detail", "Started"],
+                e.steps
+                    .iter()
+                    .map(|s| {
+                        row(vec![
+                            cell(badge(
+                                match s.state {
+                                    StepState::Completed => "ok",
+                                    StepState::Failed => "fail",
+                                    StepState::Running => "info",
+                                },
+                                word(&s.state),
+                            )),
+                            text_cell(s.title.clone()),
+                            text_cell(s.detail.clone().unwrap_or_default()),
+                            text_cell(s.started_at.clone()),
+                        ])
+                    })
+                    .collect(),
+            )
+        },
+    );
+
+    let logs: Vec<El> = history
+        .events
+        .iter()
+        .filter_map(|event| match &event.payload {
+            crate::execution::EventPayload::Log { stream, message } => Some(
+                el("div")
+                    .class("mj-log-line")
+                    .child(
+                        el("span")
+                            .class("mj-log-time")
+                            .text(event.timestamp.clone()),
+                    )
+                    .child(
+                        el("span")
+                            .class(format!("mj-log-stream mj-log-stream--{}", word(stream)))
+                            .text(word(stream)),
+                    )
+                    .child(el("span").class("mj-log-text").text(message.clone())),
+            ),
+            _ => None,
+        })
+        .collect();
+    let output_card = card(
+        "Output",
+        match (&e.output, &e.error) {
+            (Some(output), _) => pre(serde_json::to_string_pretty(output).unwrap_or_default()),
+            (None, Some(error)) => el("div")
+                .child(alert("fail", format!("{}: {}", error.code, error.message)))
+                .child(match &error.suggestion {
+                    Some(s) => el("p").class("mj-note").text(s.clone()),
+                    None => el("span"),
+                }),
+            (None, None) => nothing("It has not finished."),
+        },
+    );
+
+    let diagnostics = card(
+        "Diagnostics",
+        if e.diagnostics.is_empty() {
+            nothing("It has reported no finding.")
+        } else {
+            table(
+                &["Severity", "Code", "What"],
+                e.diagnostics
+                    .iter()
+                    .map(|d| {
+                        row(vec![
+                            cell(badge(severity_status(d.severity), d.severity.as_str())),
+                            cell(mono(d.code.clone())),
+                            text_cell(d.summary.clone()),
+                        ])
+                    })
+                    .collect(),
+            )
+        },
+    );
+
+    let input_card = card(
+        "Input",
+        el("div")
+            .child(pre(
+                serde_json::to_string_pretty(&e.input).unwrap_or_default()
+            ))
+            .child(el("p").class("mj-note").text(
+                "As it was stored: every value the capability's input schema marks sensitive was replaced before this was written down.",
+            )),
+    );
+
+    let elsewhere = card(
+        "The same execution elsewhere",
+        table(
+            &["Interface", "Where"],
+            vec![
+                row(vec![
+                    text_cell("HTTP"),
+                    cell(mono(format!("GET {}", view.links.itself))),
+                ]),
+                row(vec![
+                    text_cell("Events"),
+                    cell(mono(format!("GET {}", view.links.events))),
+                ]),
+                row(vec![
+                    text_cell("Live channel"),
+                    cell(mono(format!("WebSocket {}", view.links.websocket))),
+                ]),
+                row(vec![
+                    text_cell("MCP"),
+                    cell(mono(format!(
+                        "majordomus_execution {{ \"id\": \"{}\" }}",
+                        e.id
+                    ))),
+                ]),
+                row(vec![
+                    text_cell("Command line"),
+                    cell(mono(format!("majordomus executions show {}", e.id))),
+                ]),
+            ],
+        ),
+    );
+
+    let mut log_card = el("div")
+        .class("mj-log")
+        .attr("data-mj-log", "")
+        .attr("aria-live", "polite");
+    if history.truncated {
+        log_card = log_card.child(alert(
+            "warn",
+            "The oldest events of this execution have been dropped: this process retains a bounded number per execution.",
+        ));
+    }
+    log_card = if logs.is_empty() {
+        log_card.child(nothing("It has written no output."))
+    } else {
+        log_card.children(logs)
+    };
+
+    Page::new(
+        Area::Executions,
+        e.id.to_string(),
+        el("div")
+            .class("mj-grid")
+            .attr("data-mj-execution", e.id.to_string())
+            .attr("data-mj-sequence", history.last_sequence.to_string())
+            .attr("data-mj-socket", view.links.websocket.clone())
+            .attr("data-mj-snapshot", view.links.itself.clone())
+            .attr("data-mj-events", view.links.events.clone())
+            .attr("data-mj-cancel-route", view.links.cancel.clone())
+            .child(what)
+            .child(control)
+            .child(progress)
+            .child(steps)
+            .child(card("Live output", log_card))
+            .child(diagnostics)
+            .child(output_card)
+            .child(input_card)
+            .child(elsewhere),
+    )
+    .subtitle(e.title.clone())
+    .trail(vec![
+        ("Cockpit", Some("/cockpit")),
+        ("Executions", Some("/cockpit/executions")),
+        (e.id.as_str(), None),
+    ])
+    .script("executions.js")
 }
 
 #[cfg(test)]

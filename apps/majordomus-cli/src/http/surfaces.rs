@@ -40,6 +40,8 @@ pub enum Native {
     Mcp,
     /// The Cockpit.
     Cockpit,
+    /// The live channel over which executions report what they are doing.
+    Events,
 }
 
 impl Native {
@@ -52,6 +54,7 @@ impl Native {
             "swagger" => Native::Swagger,
             "mcp" => Native::Mcp,
             "cockpit" => Native::Cockpit,
+            "events" => Native::Events,
             _ => return None,
         })
     }

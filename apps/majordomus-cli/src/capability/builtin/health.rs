@@ -176,6 +176,23 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
     })
 }
 
+/// Record one dimension, and say on the execution's stream that it was decided.
+///
+/// The report is the same whoever asked for it: a `GET /api/v1/health`, an MCP tool call
+/// and a browser watching an execution all run this function, and the reporting is silent
+/// for the two of them that are not executions. That is the whole of what it took to make
+/// an existing capability observable — no second implementation, no second route, and no
+/// change to what it answers.
+fn record(checks: &mut Vec<HealthCheck>, p: &crate::execution::Progress, check: HealthCheck) {
+    p.step_done(
+        &check.id,
+        check.status != HealthStatus::Fail,
+        Some(check.detail.clone()),
+    );
+    checks.push(check);
+    p.progress(checks.len() as u64, None, "dimension(s) decided");
+}
+
 fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     let index = &ctx.index;
     let mut checks = Vec::new();
@@ -191,71 +208,83 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
         .iter()
         .filter(|d| d.severity == Severity::Warning)
         .count();
-    checks.push(HealthCheck {
-        id: "layer".into(),
-        title: "The layer as it was read".into(),
-        status: match (index.state, warnings) {
-            (State::Degraded, _) => HealthStatus::Fail,
-            (State::Ok, 0) => HealthStatus::Ok,
-            (State::Ok, _) => HealthStatus::Warn,
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "layer".into(),
+            title: "The layer as it was read".into(),
+            status: match (index.state, warnings) {
+                (State::Degraded, _) => HealthStatus::Fail,
+                (State::Ok, 0) => HealthStatus::Ok,
+                (State::Ok, _) => HealthStatus::Warn,
+            },
+            detail: format!(
+                "{} object(s) indexed; {errors} error(s), {warnings} warning(s)",
+                index.objects.len()
+            ),
+            decided_by: "the index's own diagnostics".into(),
+            evidence: vec!["majordomus capabilities validate".into()],
+            findings: index
+                .diagnostics
+                .iter()
+                .filter(|d| d.severity != Severity::Info)
+                .map(|d| {
+                    format!(
+                        "{}: {} ({})",
+                        d.code,
+                        d.message,
+                        d.path.as_deref().unwrap_or("-")
+                    )
+                })
+                .collect(),
         },
-        detail: format!(
-            "{} object(s) indexed; {errors} error(s), {warnings} warning(s)",
-            index.objects.len()
-        ),
-        decided_by: "the index's own diagnostics".into(),
-        evidence: vec!["majordomus capabilities validate".into()],
-        findings: index
-            .diagnostics
-            .iter()
-            .filter(|d| d.severity != Severity::Info)
-            .map(|d| {
-                format!(
-                    "{}: {} ({})",
-                    d.code,
-                    d.message,
-                    d.path.as_deref().unwrap_or("-")
-                )
-            })
-            .collect(),
-    });
+    );
 
     // --- the registry: it exists, therefore it validated; a registry that does not build
     // stops the process before any transport is bound
     let summary = ctx.registry.summary();
-    checks.push(HealthCheck {
-        id: "registry".into(),
-        title: "The capability registry".into(),
-        status: HealthStatus::Ok,
-        detail: format!(
-            "{} capabilities ({} builtin, {} declarative) across {} modules; fingerprint {}",
-            summary.total,
-            summary.builtin,
-            summary.declarative,
-            summary.modules,
-            &ctx.registry.fingerprint()[..12.min(ctx.registry.fingerprint().len())]
-        ),
-        decided_by:
-            "the registry builder; it refuses to build on a duplicate or a malformed exposure"
-                .into(),
-        evidence: vec!["majordomus capabilities validate".into()],
-        findings: Vec::new(),
-    });
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "registry".into(),
+            title: "The capability registry".into(),
+            status: HealthStatus::Ok,
+            detail: format!(
+                "{} capabilities ({} builtin, {} declarative) across {} modules; fingerprint {}",
+                summary.total,
+                summary.builtin,
+                summary.declarative,
+                summary.modules,
+                &ctx.registry.fingerprint()[..12.min(ctx.registry.fingerprint().len())]
+            ),
+            decided_by:
+                "the registry builder; it refuses to build on a duplicate or a malformed exposure"
+                    .into(),
+            evidence: vec!["majordomus capabilities validate".into()],
+            findings: Vec::new(),
+        },
+    );
 
     // --- the scope: what a worker reads of this repository and what it never reads
     let tally = &index.scoped.tally;
-    checks.push(HealthCheck {
-        id: "scope".into(),
-        title: "The declared scope".into(),
-        status: HealthStatus::Ok,
-        detail: format!(
-            "{} of {} tracked file(s) in scope, {} out, read from {}",
-            tally.r#in, tally.files, tally.out, index.repository.scope_path
-        ),
-        decided_by: "the scope declaration the index was built under".into(),
-        evidence: vec!["majordomus scope".into()],
-        findings: Vec::new(),
-    });
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "scope".into(),
+            title: "The declared scope".into(),
+            status: HealthStatus::Ok,
+            detail: format!(
+                "{} of {} tracked file(s) in scope, {} out, read from {}",
+                tally.r#in, tally.files, tally.out, index.repository.scope_path
+            ),
+            decided_by: "the scope declaration the index was built under".into(),
+            evidence: vec!["majordomus scope".into()],
+            findings: Vec::new(),
+        },
+    );
 
     // --- git
     let (git_status, git_detail) = match &index.repository.git {
@@ -277,45 +306,53 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
         }
         GitState::Unavailable { reason } => (HealthStatus::Unknown, reason.clone()),
     };
-    checks.push(HealthCheck {
-        id: "git".into(),
-        title: "Version control".into(),
-        status: git_status,
-        detail: git_detail,
-        decided_by: "git, as the index asked it once at startup".into(),
-        evidence: vec!["git status".into()],
-        findings: Vec::new(),
-    });
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "git".into(),
+            title: "Version control".into(),
+            status: git_status,
+            detail: git_detail,
+            decided_by: "git, as the index asked it once at startup".into(),
+            evidence: vec!["git status".into()],
+            findings: Vec::new(),
+        },
+    );
 
     // --- benchmark coverage, from the projection that defines the targets
     let projection = BenchmarkProjection::from_context(ctx);
     let coverage = Coverage::compute(ctx, &projection);
     let total = coverage.tallies.get("total").cloned().unwrap_or_default();
-    checks.push(HealthCheck {
-        id: "benchmark-coverage".into(),
-        title: "Benchmark coverage".into(),
-        status: if total.missing > 0 {
-            HealthStatus::Fail
-        } else if total.waived > 0 {
-            HealthStatus::Warn
-        } else {
-            HealthStatus::Ok
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "benchmark-coverage".into(),
+            title: "Benchmark coverage".into(),
+            status: if total.missing > 0 {
+                HealthStatus::Fail
+            } else if total.waived > 0 {
+                HealthStatus::Warn
+            } else {
+                HealthStatus::Ok
+            },
+            detail: format!(
+                "{} of {} target(s) covered, {} missing, {} waived",
+                total.covered, total.required, total.missing, total.waived
+            ),
+            decided_by:
+                "the benchmark projection's coverage, the same one `bench coverage --check` reads"
+                    .into(),
+            evidence: vec!["majordomus bench coverage --check".into()],
+            findings: coverage
+                .lines
+                .iter()
+                .filter(|l| matches!(l.state, crate::bench::CoverageState::Missing))
+                .map(|l| format!("{} on {}: no case", l.subject, l.transport.name()))
+                .collect(),
         },
-        detail: format!(
-            "{} of {} target(s) covered, {} missing, {} waived",
-            total.covered, total.required, total.missing, total.waived
-        ),
-        decided_by:
-            "the benchmark projection's coverage, the same one `bench coverage --check` reads"
-                .into(),
-        evidence: vec!["majordomus bench coverage --check".into()],
-        findings: coverage
-            .lines
-            .iter()
-            .filter(|l| matches!(l.state, crate::bench::CoverageState::Missing))
-            .map(|l| format!("{} on {}: no case", l.subject, l.transport.name()))
-            .collect(),
-    });
+    );
 
     // --- the committed registry manifest against the registry this process built.
     // Only that one artifact: it is derived from the code alone, and rendering it costs
@@ -355,29 +392,37 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             vec![format!("{path} (missing)")],
         ),
     };
-    checks.push(HealthCheck {
-        id: "generated-registry".into(),
-        title: "Committed projections".into(),
-        status,
-        detail,
-        decided_by:
-            "the same rendering `majordomus generate` writes, compared with what is committed"
-                .into(),
-        evidence: vec!["majordomus generate --check".into()],
-        findings,
-    });
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "generated-registry".into(),
+            title: "Committed projections".into(),
+            status,
+            detail,
+            decided_by:
+                "the same rendering `majordomus generate` writes, compared with what is committed"
+                    .into(),
+            evidence: vec!["majordomus generate --check".into()],
+            findings,
+        },
+    );
 
     // --- the peers attached to this process
     let peers = ctx.peers.list();
-    checks.push(HealthCheck {
-        id: "peers".into(),
-        title: "Attached clients".into(),
-        status: HealthStatus::Ok,
-        detail: format!("{} peer(s) attached to this process", peers.len()),
-        decided_by: "the in-memory peer board of this process".into(),
-        evidence: vec!["majordomus_peers".into()],
-        findings: Vec::new(),
-    });
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "peers".into(),
+            title: "Attached clients".into(),
+            status: HealthStatus::Ok,
+            detail: format!("{} peer(s) attached to this process", peers.len()),
+            decided_by: "the in-memory peer board of this process".into(),
+            evidence: vec!["majordomus_peers".into()],
+            findings: Vec::new(),
+        },
+    );
 
     let status = checks
         .iter()

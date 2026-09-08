@@ -22,6 +22,7 @@ pub mod deploy;
 pub mod discovery;
 pub mod distribution;
 pub mod error;
+pub mod execution;
 pub mod generate;
 pub mod git;
 pub mod graph;

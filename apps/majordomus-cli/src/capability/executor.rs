@@ -57,12 +57,38 @@ impl CapabilityExecutor {
 
     /// Execute a capability by id with a JSON input. The one place a handler runs.
     pub fn execute(&self, ctx: &Context, id: &str, input: Value) -> Result<Value, CapabilityError> {
+        let policy = ctx.registry.get(id).map(|c| c.cache);
+        self.run(ctx, id, input, policy)
+    }
+
+    /// The same call with the cache stepped over: the handler runs, whatever is stored.
+    ///
+    /// One caller: the execution engine. A cached answer is indistinguishable from a fresh
+    /// one — that is the point of the cache and the rule `project.cache-is-invisible` says
+    /// so — but an *execution* is not an answer. It is a record of work happening, watched
+    /// while it happens, and an execution answered from a cache would report no steps, no
+    /// progress and no output of its own while claiming to have succeeded: a story of work
+    /// that did not occur. So an execution always runs the handler, and nothing it produces
+    /// is put into the cache either, because the cache holds what calls returned and this
+    /// call is a different kind of thing.
+    pub fn execute_uncached(
+        &self,
+        ctx: &Context,
+        id: &str,
+        input: Value,
+    ) -> Result<Value, CapabilityError> {
+        self.run(ctx, id, input, Some(CachePolicy::Disabled))
+    }
+
+    fn run(
+        &self,
+        ctx: &Context,
+        id: &str,
+        input: Value,
+        policy: Option<CachePolicy>,
+    ) -> Result<Value, CapabilityError> {
         Counters::bump(&COUNTERS.executions);
-        let capability = ctx
-            .registry
-            .get(id)
-            .ok_or_else(|| CapabilityError::NotFound(format!("capability {id}")))?;
-        let policy = capability.cache;
+        let policy = policy.ok_or_else(|| CapabilityError::NotFound(format!("capability {id}")))?;
         let key = match policy {
             CachePolicy::Disabled => None,
             CachePolicy::Process { .. } => Some(CacheKey {

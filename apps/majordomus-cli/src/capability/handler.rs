@@ -57,6 +57,18 @@ pub struct Context {
     /// The peer this call came from, when it came through an MCP session; `None` for the
     /// command line and for a plain HTTP request.
     pub caller: Option<PeerId>,
+    /// The executions this process is running, and the engine that starts them.
+    ///
+    /// One per process, so that an execution started from a browser is the same execution
+    /// an MCP client asks about and the command line lists. A handler reads it only when
+    /// it is itself the execution plane's own capability; every other handler reports
+    /// through [`Context::progress`] and never learns whether anything was listening.
+    pub executions: Arc<crate::execution::ExecutionEngine>,
+    /// What this call reports its steps and progress to, and how it learns it should stop.
+    ///
+    /// Silent unless the call came through the execution engine, which is why a handler
+    /// may report unconditionally and a benchmark sample costs nothing.
+    pub progress: crate::execution::Progress,
     /// The repository's web surfaces, resolved once for this process.
     ///
     /// Resolved here and never again: a projection that serves a subset of it narrows this
@@ -77,6 +89,8 @@ impl Context {
             why,
             peers: Arc::new(PeerBoard::new()),
             executor: Arc::new(CapabilityExecutor::new()),
+            executions: Arc::new(crate::execution::ExecutionEngine::default()),
+            progress: crate::execution::Progress::silent(),
             caller: None,
             web,
         }
@@ -86,6 +100,17 @@ impl Context {
     pub fn for_caller(&self, caller: PeerId) -> Self {
         Context {
             caller: Some(caller),
+            ..self.same()
+        }
+    }
+
+    /// The same context, seen by one execution: what the engine hands the handler it runs.
+    ///
+    /// Everything else is shared, the engine included, so a capability that reads the
+    /// executions of this process sees its own while it runs.
+    pub fn reporting(&self, progress: crate::execution::Progress) -> Self {
+        Context {
+            progress,
             ..self.same()
         }
     }
@@ -105,6 +130,8 @@ impl Context {
             why: Arc::clone(&self.why),
             peers: Arc::clone(&self.peers),
             executor: Arc::clone(&self.executor),
+            executions: Arc::clone(&self.executions),
+            progress: self.progress.clone(),
             caller: self.caller.clone(),
             web: Arc::clone(&self.web),
         }
@@ -113,6 +140,14 @@ impl Context {
     /// Execute a capability by id: the one way anything calls a handler.
     pub fn execute(&self, id: &str, input: Value) -> Result<Value, CapabilityError> {
         self.executor.execute(self, id, input)
+    }
+
+    /// The same, with the cache stepped over: what an execution runs.
+    ///
+    /// See [`CapabilityExecutor::execute_uncached`] for why watching something happen and
+    /// being handed a remembered answer are not the same request.
+    pub fn execute_observed(&self, id: &str, input: Value) -> Result<Value, CapabilityError> {
+        self.executor.execute_uncached(self, id, input)
     }
 }
 
@@ -184,6 +219,42 @@ pub struct Executable {
     pub handler: Arc<dyn Handler>,
     /// The representative inputs, from the input type's `BenchmarkCases`.
     pub cases: super::benchmark::CaseProvider,
+}
+
+impl Executable {
+    /// Declare that this handler looks at its cancellation flag and stops.
+    ///
+    /// The one thing about a capability that its kind cannot decide, because it is a fact
+    /// about the handler's own code rather than about what the call means. Everything a
+    /// client does with it — whether the Cockpit offers a Cancel button, what
+    /// `executions.cancel` reports — is read from here, so a handler that ignores its flag
+    /// never produces a control that lies.
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CaseContext, Context, CapabilityError, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct In {}
+    /// impl BenchmarkCases for In {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![NamedCase::new("default", In {})] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out { ok: bool }
+    /// fn walk(ctx: &Context, _: In) -> Result<Out, CapabilityError> {
+    ///     if ctx.progress.cancelled() { return Err(ctx.progress.cancellation()); }
+    ///     Ok(Out { ok: true })
+    /// }
+    /// let e = capability! {
+    ///     id: "demo.walk", title: "Walk", description: "Walks.", input: In, output: Out,
+    ///     stability: Stability::Experimental, exposure: Exposure::default(), tags: [],
+    ///     handler: walk,
+    /// }.cancellable();
+    /// assert!(e.capability.execution.cancellable);
+    /// ```
+    pub fn cancellable(mut self) -> Self {
+        self.capability.execution = self.capability.execution.stoppable();
+        self
+    }
 }
 
 /// The one canonical declaration of an executable capability. From it every projection is
@@ -263,6 +334,7 @@ macro_rules! capability {
                 tags: vec![$(String::from($tag)),*],
                 benchmark: $benchmark,
                 cache: $cache,
+                execution: $crate::capability::ExecutionPolicy::classify(kind),
             },
             handler: $crate::capability::handler::handler::<$input, $output, _>($handler),
             cases: <$input as $crate::capability::BenchmarkCases>::benchmark_cases_json,

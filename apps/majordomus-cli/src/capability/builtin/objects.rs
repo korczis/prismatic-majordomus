@@ -412,6 +412,269 @@ fn objects_search(ctx: &Context, input: SearchInput) -> Result<SearchResult, Cap
     })
 }
 
+// ---------------------------------------------------------------- objects.verify
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `objects.verify`.
+pub struct VerifyInput {
+    /// Only objects of this kind.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
+    /// How many objects to read at most; every one of them when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub limit: Option<usize>,
+}
+
+impl BenchmarkCases for VerifyInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // a bounded case: this reads files, and a benchmark of it should measure the
+        // reading rather than the size of whichever repository it happens to run in
+        vec![NamedCase::new(
+            "bounded",
+            VerifyInput {
+                kind: None,
+                limit: Some(25),
+            },
+        )]
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// How one file stands against what the index read from it.
+pub enum ObjectStanding {
+    /// It is what the index read.
+    Current,
+    /// It is there and it has changed since the index was built.
+    Changed,
+    /// The file the index read is no longer there.
+    Missing,
+    /// It is there and could not be read.
+    Unreadable,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// How closely a file could be compared with what the index holds.
+///
+/// A file that is one object is compared byte for byte, because the index kept its whole
+/// content. A collection file holds one object per member, and what the index kept for each
+/// is that member as JSON rather than the file's text — so the strongest thing that can be
+/// said without re-parsing it is whether its size is what it was. The report says which
+/// comparison was made rather than implying the stronger one.
+pub enum Comparison {
+    /// Byte for byte against the content the index holds.
+    Content,
+    /// By size against the size the index recorded.
+    Size,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// One file of the layer that is no longer what the index read.
+pub struct DriftedObject {
+    /// Its repository-relative path.
+    pub path: String,
+    /// How it stands.
+    pub standing: ObjectStanding,
+    /// How it was compared.
+    pub comparison: Comparison,
+    /// How many objects of the index came from it.
+    pub objects: usize,
+    /// One of the URIs it holds, so a reader can see what is affected.
+    pub example_uri: String,
+    /// What is wrong, for a person.
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// The answer of `objects.verify`.
+pub struct VerifyReport {
+    /// How many files were read.
+    pub files: usize,
+    /// How many of them are what the index read.
+    pub current: usize,
+    /// How many are not, of any kind of not.
+    pub drifted: usize,
+    /// How many objects of the index those files carry.
+    pub objects: usize,
+    /// How many were compared byte for byte rather than by size.
+    pub compared_by_content: usize,
+    /// The index fingerprint this process is serving.
+    pub fingerprint: String,
+    /// Whether the index is still a true picture of the working tree, as far as this
+    /// comparison can tell.
+    pub index_is_current: bool,
+    /// The files that are not, with what is wrong with each.
+    pub findings: Vec<DriftedObject>,
+}
+
+/// Read every file the layer was built from and compare it with what this process is
+/// serving.
+///
+/// The index is built once, when the process starts, and kept: that is the contract, and
+/// it is what makes every request cost nothing. The price of it is that a file edited
+/// afterwards is served as it was, and until now nothing could say so without restarting
+/// the server.
+///
+/// The unit of work is the file, not the object, because a collection file holds many
+/// objects and is read once. Each file's [`Comparison`] says how strongly it could be
+/// checked.
+fn objects_verify(ctx: &Context, input: VerifyInput) -> Result<VerifyReport, CapabilityError> {
+    if let Some(kind) = &input.kind {
+        if !ctx.index.objects.iter().any(|o| &o.kind == kind) {
+            return Err(CapabilityError::InvalidInput(format!(
+                "no objects of kind '{kind}'; the kinds are listed by objects.list"
+            )));
+        }
+    }
+    // one entry per file, in the index's order, with what the index knows about it
+    let mut files: Vec<FileSubject> = Vec::new();
+    let mut seen: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
+    for object in ctx
+        .index
+        .objects
+        .iter()
+        .filter(|o| input.kind.as_ref().is_none_or(|k| &o.kind == k))
+    {
+        let path = object.provenance.path.as_str();
+        match seen.get(path) {
+            Some(at) => files[*at].objects += 1,
+            None => {
+                seen.insert(path, files.len());
+                files.push(FileSubject {
+                    path: path.to_string(),
+                    bytes: object.provenance.bytes,
+                    objects: 1,
+                    example_uri: object.uri.clone(),
+                    // a member's content is the member as JSON, not the file's text: only a
+                    // file that is one whole object can be compared byte for byte
+                    content: object
+                        .provenance
+                        .member
+                        .is_none()
+                        .then(|| object.content.clone()),
+                });
+            }
+        }
+    }
+    let subjects: Vec<FileSubject> = files
+        .into_iter()
+        .take(input.limit.unwrap_or(usize::MAX))
+        .collect();
+
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let total = subjects.len() as u64;
+    let p = &ctx.progress;
+    p.step("read", &format!("Reading {total} file(s) of the layer"));
+
+    let mut findings = Vec::new();
+    let mut current = 0usize;
+    let mut objects = 0usize;
+    let mut by_content = 0usize;
+    for (n, subject) in subjects.iter().enumerate() {
+        if p.cancelled() {
+            p.step_done(
+                "read",
+                false,
+                Some(format!("cancelled after {n} of {total}")),
+            );
+            return Err(p.cancellation());
+        }
+        objects += subject.objects;
+        let comparison = if subject.content.is_some() {
+            by_content += 1;
+            Comparison::Content
+        } else {
+            Comparison::Size
+        };
+        let standing = match std::fs::read_to_string(root.join(&subject.path)) {
+            Ok(text) => match &subject.content {
+                Some(known) if &text == known => ObjectStanding::Current,
+                Some(_) => ObjectStanding::Changed,
+                None if text.len() as u64 == subject.bytes => ObjectStanding::Current,
+                None => ObjectStanding::Changed,
+            },
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => ObjectStanding::Missing,
+            Err(_) => ObjectStanding::Unreadable,
+        };
+        match standing {
+            ObjectStanding::Current => current += 1,
+            other => {
+                let detail = match other {
+                    ObjectStanding::Changed => match comparison {
+                        Comparison::Content => {
+                            "the file has changed since this process built its index".to_string()
+                        }
+                        Comparison::Size => format!(
+                            "the file's size is no longer the {} bytes this process read",
+                            subject.bytes
+                        ),
+                    },
+                    ObjectStanding::Missing => "the file is gone".to_string(),
+                    _ => "the file could not be read".to_string(),
+                };
+                p.diagnostic(crate::execution::ExecutionDiagnostic {
+                    severity: crate::model::Severity::Warning,
+                    code: format!("layer_file_{}", enum_word(&other)),
+                    summary: format!("{}: {detail}", subject.path),
+                    detail: Some(format!(
+                        "{} object(s) of the index came from it, such as {}",
+                        subject.objects, subject.example_uri
+                    )),
+                    suggestion: Some("restart this server to serve the layer as it is now".into()),
+                });
+                findings.push(DriftedObject {
+                    path: subject.path.clone(),
+                    standing: other,
+                    comparison,
+                    objects: subject.objects,
+                    example_uri: subject.example_uri.clone(),
+                    detail,
+                });
+            }
+        }
+        p.progress(
+            n as u64 + 1,
+            Some(total),
+            format!("{} file(s) read; last {}", n + 1, subject.path),
+        );
+    }
+    p.step_done(
+        "read",
+        findings.is_empty(),
+        Some(format!("{current} current, {} drifted", findings.len())),
+    );
+    Ok(VerifyReport {
+        files: subjects.len(),
+        current,
+        drifted: findings.len(),
+        objects,
+        compared_by_content: by_content,
+        fingerprint: ctx.index.fingerprint.clone(),
+        index_is_current: findings.is_empty(),
+        findings,
+    })
+}
+
+/// One file of the layer, and what the index knows about it.
+struct FileSubject {
+    path: String,
+    bytes: u64,
+    objects: usize,
+    example_uri: String,
+    /// The file's whole text, when the index kept it: a file that is one object.
+    content: Option<String>,
+}
+
+/// The serialised word of a small enum, for a diagnostic code.
+fn enum_word<T: Serialize>(value: &T) -> String {
+    serde_json::to_value(value)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_string))
+        .unwrap_or_default()
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -454,6 +717,18 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 64, ttl_seconds: None },
                 handler: objects_search,
             },
+            capability! {
+                id: "objects.verify",
+                title: "Verify the index against the working tree",
+                description: "Read every file the layer was built from and compare it with what this process is serving. The index is built once at start-up and kept, which is what makes every other request cost nothing and what makes a file edited afterwards be served as it was; this is how a running server says whether that has happened, without being restarted to find out. A file that is one object is compared byte for byte; a collection file, whose objects the index keeps as members rather than as text, is compared by size, and every finding says which comparison was made. It reads every file of the layer, so it reports its progress file by file and stops when it is asked to.",
+                input: VerifyInput,
+                output: VerifyReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure { mcp: mcp("majordomus_verify_objects"), http: get("/api/v1/objects/verify"), cli: None },
+                tags: ["objects", "diagnostic"],
+                handler: objects_verify,
+            }
+            .cancellable(),
         ],
     }
 }

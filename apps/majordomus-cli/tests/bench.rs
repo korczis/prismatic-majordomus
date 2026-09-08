@@ -99,6 +99,7 @@ fn fixture<I: BenchmarkCases + serde::de::DeserializeOwned + JsonSchema + 'stati
             tags: vec![],
             benchmark,
             cache,
+            execution: majordomus_cli::capability::ExecutionPolicy::classify(kind),
         },
         handler: handler::<Value, EchoOut, _>(|_, v| {
             Ok(EchoOut {
@@ -128,7 +129,39 @@ fn the_shipped_registry_is_fully_covered_and_every_target_traces_to_a_capability
     let ctx = app.context.clone();
     let projection = BenchmarkProjection::from_context(&ctx);
     let coverage = Coverage::compute(&ctx, &projection);
-    assert!(coverage.is_complete(), "{}", coverage.render());
+    // the rule is "missing 0"; a waiver is typed, reported and never counted, which is
+    // what `has_no_missing` decides and `is_complete` (nothing waived either) does not
+    assert!(coverage.has_no_missing(), "{}", coverage.render());
+    let waived: Vec<&str> = coverage
+        .lines
+        .iter()
+        .filter(|l| l.state == majordomus_cli::bench::CoverageState::Waived)
+        .map(|l| l.subject.as_str())
+        .collect();
+    for subject in &waived {
+        let reason = ctx
+            .registry
+            .get(subject)
+            .map(|c| c.benchmark)
+            .expect("a waived line names a capability");
+        assert!(
+            matches!(reason, BenchmarkPolicy::Waived { .. }),
+            "{subject} is reported as waived and its descriptor does not say so"
+        );
+    }
+    assert_eq!(
+        waived.len(),
+        ctx.registry
+            .iter()
+            .filter(
+                |c| matches!(c.benchmark, BenchmarkPolicy::Waived { .. }) && c.kind.is_executable()
+            )
+            .map(|c| 1
+                + usize::from(c.exposure.mcp.as_ref().is_some_and(|m| m.tool.is_some()))
+                + usize::from(c.exposure.http.is_some()))
+            .sum::<usize>(),
+        "every waived line traces to a descriptor that waived itself"
+    );
     let total = &coverage.tallies["total"];
     // the denominator is generated: every executable × its exposures, plus the system targets
     let expected: usize = ctx
@@ -141,8 +174,16 @@ fn the_shipped_registry_is_fully_covered_and_every_target_traces_to_a_capability
         })
         .sum::<usize>()
         + SystemTarget::ALL.len();
-    assert_eq!(total.required, expected);
-    assert_eq!(total.covered, expected);
+    assert_eq!(
+        total.required, expected,
+        "the denominator is every exposure of every executable"
+    );
+    assert_eq!(
+        total.covered + total.waived,
+        expected,
+        "and every requirement is either covered or waived, never neither"
+    );
+    assert_eq!(total.missing, 0);
     for t in &projection.targets {
         match &t.kind {
             TargetKind::Capability {
@@ -153,7 +194,11 @@ fn the_shipped_registry_is_fully_covered_and_every_target_traces_to_a_capability
                 ..
             } => {
                 let c = ctx.registry.get(id).expect("a target names a capability");
-                assert_eq!(c.benchmark, BenchmarkPolicy::Required);
+                assert_eq!(
+                    c.benchmark,
+                    BenchmarkPolicy::Required,
+                    "{id} is a target and its descriptor waived it"
+                );
                 match transport {
                     Transport::Mcp => assert_eq!(
                         tool.as_deref(),
@@ -169,8 +214,14 @@ fn the_shipped_registry_is_fully_covered_and_every_target_traces_to_a_capability
             TargetKind::System { target } => assert!(SystemTarget::ALL.contains(target)),
         }
     }
-    // every MCP tool and every HTTP route of the registry is a target
-    for c in ctx.registry.iter().filter(|c| c.kind.is_executable()) {
+    // every MCP tool and every HTTP route of a *required* executable is a target; a waived
+    // one is reported by the coverage projection and never timed, which is what the policy
+    // on its descriptor asked for
+    for c in ctx
+        .registry
+        .iter()
+        .filter(|c| c.kind.is_executable() && c.benchmark == BenchmarkPolicy::Required)
+    {
         if c.exposure.mcp.as_ref().is_some_and(|m| m.tool.is_some()) {
             assert!(
                 projection.covers(c.id.as_str(), Transport::Mcp),
@@ -528,9 +579,7 @@ fn the_command_line_answers_coverage_runs_benchmarks_records_and_checks_a_baseli
     let (code, out, err) = run_in(&f.root(), &["bench", "coverage"], "");
     assert_eq!(code, 0, "{err}");
     assert!(
-        out.contains("Benchmark coverage")
-            && out.contains("missing        0")
-            && out.contains("waived         0"),
+        out.contains("Benchmark coverage") && out.contains("missing        0"),
         "{out}"
     );
     let (code, out, _) = run_in(

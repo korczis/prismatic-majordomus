@@ -139,6 +139,10 @@ pub enum WaiverReason {
     Destructive,
     /// The capability talks to something the benchmark host cannot provide.
     ExternalDependency,
+    /// The capability starts, or answers about, work that exists only while it is running.
+    /// A benchmark host cannot stage an execution to read, and running the operation in a
+    /// loop would measure the work rather than the operation.
+    TransientState,
 }
 
 /// Whether the capability is a benchmark target. `Required` is the default and the norm:
@@ -206,6 +210,11 @@ impl CachePolicy {
 /// What a capability is. Three kinds exist because three semantics exist: something that
 /// is executed and changes nothing, something that is executed and changes this process's
 /// own memory, and something that is read. Nothing of any kind writes to the repository.
+///
+/// How *long* a call takes is not a kind. A read that walks every file of the layer is
+/// still a read, and the thing that makes it worth watching — that it reports as it goes
+/// and stops when it is asked to — is one property of its handler, declared with
+/// [`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -234,8 +243,149 @@ impl CapabilityKind {
     }
 
     /// Does a call of this kind leave the process as it found it?
+    ///
+    /// ```
+    /// use majordomus_cli::capability::CapabilityKind;
+    /// assert!(CapabilityKind::Query.is_read_only());
+    /// assert!(!CapabilityKind::Command.is_read_only());
+    /// ```
     pub fn is_read_only(self) -> bool {
         !matches!(self, CapabilityKind::Command)
+    }
+
+    /// The word as serialised.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            CapabilityKind::Query => "query",
+            CapabilityKind::Command => "command",
+            CapabilityKind::Resource => "resource",
+        }
+    }
+}
+
+/// What running a capability changes outside the caller.
+///
+/// Classified, never declared: it follows from the kind, which is the field a declaration
+/// already carries. A projection reads this to decide whether to ask before running
+/// something — the Cockpit's confirmation is derived from it — instead of naming
+/// capabilities it must treat carefully, which is a list that goes stale the day after it
+/// is written.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+// the component namespace of the OpenAPI document is flat, and `deploy` already has a
+// `Concurrency`; each says which it is
+#[schemars(rename = "ExecutionEffect")]
+pub enum Effect {
+    /// Nothing changes. Every query and every resource of this executable.
+    Read,
+    /// This process's own memory changes, and nothing outside it.
+    ProcessState,
+    /// The repository changes.
+    ///
+    /// Nothing classifies to this, and the doctrine of this tool is why: no capability of
+    /// any kind writes to the repository. It is on the model so that the day one does, it
+    /// says so here — where a projection already reads it and a client already asks before
+    /// running it — rather than in whichever page happens to render its button.
+    RepositoryMutation,
+}
+
+/// Whether two executions of one capability may overlap.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+#[schemars(rename = "ExecutionConcurrency")]
+pub enum Concurrency {
+    /// Any number at once. Every read is one of these: the index and the registry are
+    /// immutable for the life of the process, so concurrent readers cannot interfere.
+    Unrestricted,
+    /// One at a time. A second execution of the same capability waits for the first, which
+    /// is what a capability that changes anything — this process's own memory included —
+    /// needs in order to be reasoned about at all.
+    Serial,
+}
+
+/// What running a capability as an execution means: what it changes, whether asking it to
+/// stop achieves anything, and whether two of them may overlap.
+///
+/// The effect and the concurrency are classified from the kind by
+/// [`ExecutionPolicy::classify`], for the same reason [`Availability`] is: the facts are
+/// already on the declaration, and asking each `capability!` block to restate them would be
+/// one more thing that can disagree with itself.
+///
+/// Cancellability is the one thing the kind cannot decide, because it is a fact about the
+/// handler: whether it looks at its cancellation flag and stops. A handler that does says
+/// so with [`crate::capability::Executable::cancellable`], and a client is then told
+/// whether a Cancel button will achieve anything instead of being given one that lies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ExecutionPolicy {
+    /// What it changes.
+    pub effect: Effect,
+    /// Whether asking it to stop does anything. A task looks at its cancellation flag; a
+    /// query and a command do not, and a client is told so rather than being given a
+    /// button that lies.
+    pub cancellable: bool,
+    /// Whether two of them may overlap.
+    pub concurrency: Concurrency,
+}
+
+impl ExecutionPolicy {
+    /// The policy of a kind.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, Concurrency, Effect, ExecutionPolicy};
+    /// let query = ExecutionPolicy::classify(CapabilityKind::Query);
+    /// assert_eq!(query.effect, Effect::Read);
+    /// assert_eq!(query.concurrency, Concurrency::Unrestricted);
+    /// assert!(!query.cancellable, "until its handler says it looks at the flag");
+    /// assert!(query.stoppable().cancellable);
+    /// let command = ExecutionPolicy::classify(CapabilityKind::Command);
+    /// assert_eq!(command.effect, Effect::ProcessState);
+    /// assert_eq!(command.concurrency, Concurrency::Serial);
+    /// ```
+    pub fn classify(kind: CapabilityKind) -> Self {
+        match kind {
+            // an immutable index and an immutable registry: readers cannot interfere
+            CapabilityKind::Query | CapabilityKind::Resource => ExecutionPolicy {
+                effect: Effect::Read,
+                cancellable: false,
+                concurrency: Concurrency::Unrestricted,
+            },
+            // it changes this process's memory, so two of them are made to take turns
+            CapabilityKind::Command => ExecutionPolicy {
+                effect: Effect::ProcessState,
+                cancellable: false,
+                concurrency: Concurrency::Serial,
+            },
+        }
+    }
+
+    /// The same policy, for a handler that looks at its cancellation flag and stops.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy};
+    /// let p = ExecutionPolicy::classify(CapabilityKind::Query).stoppable();
+    /// assert!(p.cancellable);
+    /// assert_eq!(p.effect, ExecutionPolicy::classify(CapabilityKind::Query).effect);
+    /// ```
+    pub fn stoppable(self) -> Self {
+        ExecutionPolicy {
+            cancellable: true,
+            ..self
+        }
+    }
+
+    /// Should a client ask before running this? True for anything that changes something.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::{CapabilityKind, ExecutionPolicy};
+    /// assert!(!ExecutionPolicy::classify(CapabilityKind::Query).needs_confirmation());
+    /// assert!(ExecutionPolicy::classify(CapabilityKind::Command).needs_confirmation());
+    /// ```
+    pub fn needs_confirmation(self) -> bool {
+        !matches!(self.effect, Effect::Read)
     }
 }
 
@@ -614,6 +764,9 @@ pub struct Capability {
     pub benchmark: BenchmarkPolicy,
     /// Whether the executor keeps its results.
     pub cache: CachePolicy,
+    /// What running it as an execution means: classified from the kind, so that a client
+    /// reads a fact rather than deciding for itself.
+    pub execution: ExecutionPolicy,
 }
 
 #[cfg(test)]
