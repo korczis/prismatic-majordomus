@@ -1,5 +1,7 @@
 //! The `:(glob)` pathspec subset the repository uses: `*` and `?` never cross `/`, `**`
-//! matches any number of path segments. Matching is on repository-relative paths.
+//! matches any number of path segments, and a bracket expression `[0-9]` or `[!a-z]`
+//! matches one character of the class, as git's own matcher reads it. Matching is on
+//! repository-relative paths.
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Segment {
@@ -75,13 +77,33 @@ impl Glob {
     }
 }
 
-/// One segment against one path component; `*` and `?` stay inside the component.
+/// One segment against one path component; `*`, `?` and a bracket expression stay inside
+/// the component.
 fn segment_matches(pattern: &str, text: &str) -> bool {
     let p: Vec<char> = pattern.chars().collect();
     let t: Vec<char> = text.chars().collect();
     let (mut pi, mut ti) = (0, 0);
     let (mut star, mut mark) = (None, 0);
     while ti < t.len() {
+        let class = if pi < p.len() && p[pi] == '[' {
+            bracket(&p, pi, t[ti])
+        } else {
+            None
+        };
+        if let Some((matched, end)) = class {
+            if matched {
+                pi = end;
+                ti += 1;
+                continue;
+            } else if let Some(s) = star {
+                pi = s + 1;
+                mark += 1;
+                ti = mark;
+                continue;
+            } else {
+                return false;
+            }
+        }
         if pi < p.len() && (p[pi] == '?' || p[pi] == t[ti]) {
             pi += 1;
             ti += 1;
@@ -101,6 +123,38 @@ fn segment_matches(pattern: &str, text: &str) -> bool {
         pi += 1;
     }
     pi == p.len()
+}
+
+/// A bracket expression starting at `p[open]` (`[0-9]`, `[abc]`, `[!x]`, `[^x]`): whether
+/// `c` is in the class, and the index just past the closing bracket. `None` when the
+/// bracket never closes, in which case `[` is an ordinary character, as git treats it.
+fn bracket(p: &[char], open: usize, c: char) -> Option<(bool, usize)> {
+    let mut i = open + 1;
+    let negated = matches!(p.get(i), Some('!') | Some('^'));
+    if negated {
+        i += 1;
+    }
+    let mut matched = false;
+    let mut first = true;
+    while i < p.len() {
+        let ch = p[i];
+        if ch == ']' && !first {
+            return Some((matched != negated, i + 1));
+        }
+        first = false;
+        if i + 2 < p.len() && p[i + 1] == '-' && p[i + 2] != ']' {
+            if ch <= c && c <= p[i + 2] {
+                matched = true;
+            }
+            i += 3;
+        } else {
+            if ch == c {
+                matched = true;
+            }
+            i += 1;
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -146,6 +200,27 @@ mod tests {
         assert!(!g.could_match_under("docs"));
         assert!(Glob::new("*.md").could_match_under(""));
         assert!(!Glob::new("*.md").could_match_under("docs"));
+    }
+
+    /// The decisions are discovered by `[0-9][0-9][0-9][0-9]-*.md`, and a matcher that
+    /// read `[` as a letter discovered none of them while git listed every one.
+    #[test]
+    fn bracket_classes_match_one_character_as_git_reads_them() {
+        let g = Glob::new(".ai/repo/adrs/[0-9][0-9][0-9][0-9]-*.md");
+        assert!(g.matches(".ai/repo/adrs/0021-the-topology.md"));
+        assert!(!g.matches(".ai/repo/adrs/README.md"));
+        assert!(!g.matches(".ai/repo/adrs/021-short.md"));
+        assert!(segment_matches("[abc]x", "bx"));
+        assert!(!segment_matches("[abc]x", "dx"));
+        assert!(segment_matches("[!abc]x", "dx"));
+        assert!(segment_matches("[^0-9]?", "az"));
+        assert!(segment_matches("a[-x]b", "a-b"));
+        // a bracket that never closes is an ordinary character
+        assert!(segment_matches("a[b", "a[b"));
+        assert!(!segment_matches("a[b", "ab"));
+        // classes and stars together, backtracking through the star
+        assert!(segment_matches("*[0-9].md", "issue-7.md"));
+        assert!(!segment_matches("*[0-9].md", "issue-x.md"));
     }
 
     #[test]

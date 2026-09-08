@@ -9,8 +9,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-import { plan } from './ui-discover.mjs';
-import { audit } from './ui-audit.mjs';
+import { planSurfaces } from './ui-discover.mjs';
+import { audit, jobs } from './ui-audit.mjs';
 
 /** The contract of the results document, read back by `majordomus web report ui`. */
 export const RESULTS_SCHEMA = 'ui-audit/v1';
@@ -18,17 +18,22 @@ export const RESULTS_SCHEMA = 'ui-audit/v1';
 /**
  * Run the plan against a running origin and return the results document.
  *
+ * `surfaces` is what the topology says the executable serves: `[{ id, mount, dir }]`. The
+ * mount matters — a built directory does not know where it is served from, and a plan that
+ * assumed the root would visit paths nobody answers.
+ *
  * `select` narrows the pages for local iteration; a narrowed run says so in the document,
  * so a partial run can never be read as a clean full one.
  */
-export async function run(origin, publicDir, cssPath, { select, limit, onVisit } = {}) {
-  const target = plan(publicDir, cssPath);
+export async function run(origin, surfaces, cssPath, { select, limit, onVisit } = {}) {
+  const target = planSurfaces(surfaces, cssPath);
   let pages = target.pages;
   if (select) pages = pages.filter((page) => page.route.includes(select));
   if (limit) pages = pages.slice(0, limit);
 
   const started = Date.now();
-  const visits = await audit(origin, pages, { onVisit });
+  const concurrency = jobs();
+  const visits = await audit(origin, pages, { onVisit, concurrency });
   const findings = [];
   for (const visit of visits) {
     for (const finding of visit.findings) {
@@ -45,9 +50,11 @@ export async function run(origin, publicDir, cssPath, { select, limit, onVisit }
     source: target.source,
     breakpoints: target.breakpoints,
     viewports: target.viewports,
+    surfaces: target.surfaces,
     pages: pages.length,
     visits: visits.length,
     seconds: Math.round((Date.now() - started) / 1000),
+    concurrency,
     rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))),
     findings,
   };

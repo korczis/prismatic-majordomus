@@ -187,6 +187,22 @@ smoke    the published installer, from its published URL, installing the release
 
 Only `publish` has `contents: write`. Nothing else in the run can write anything.
 
+A runner label the model names must be a standard, currently offered GitHub-hosted label.
+This is not a style rule. A retired label does not fail: the job is accepted and queues for
+a runner that will never arrive, so the run neither publishes nor goes red — it simply never
+ends, and `fail-fast` cancels it when a sibling fails, which makes it look like collateral
+damage rather than the cause. `macos-13` sat that way through two release attempts. The list
+is GitHub's, at `actions/runner-images`; a `-large` or `-xlarge` suffix means a billed larger
+runner rather than a standard one.
+
+A run that fails in `build` publishes nothing, which is the intended behaviour and also the
+one that is easy to walk away from: the tag still exists, pointing at the commit the build
+failed on, and no release is behind it. Fixing the cause on the default branch does not fix
+the tag. Finish the release — a new version, bumped and tagged, is the ordinary way; moving
+a tag that has no release behind it is the other, and only before anyone can have pinned it.
+Until one of those happens the advertised install command is broken for everyone, and
+`installer-live` below is what says so.
+
 ### Testing it without publishing
 
 ```bash
@@ -199,6 +215,54 @@ MAJORDOMUS_RELEASE_BASE_URL=http://127.0.0.1:8099 MAJORDOMUS_INSECURE_BASE_URL=1
 That is what `test/cases/85_installer.sh` does, and it is the whole stack: a real archive
 built from the tree you are in, real metadata rendered by the renderer the site publishes,
 a real HTTP download, a real digest check, a real atomic install.
+
+### Proving the advertised command still works
+
+A release pipeline proves the advertised command works *once*, in its smoke phase, at the
+moment of publication. That is not the same promise as the one the front page makes, which
+is in the present tense, and the difference has been real: a build that failed on one
+platform publishes nothing, the tag stays where it is, the fix lands on the default branch
+and is never tagged again — and the URL every document points at keeps serving an installer
+that resolves no release. Every gate over the tree stayed green throughout, because none of
+them can see the published site.
+
+`scripts/ci/install-check` is the gate that can. It reads the addresses from
+`site/data/registry/distribution.json` — states none of its own — and then, from the
+published site:
+
+```text
+1  the metadata the installer resolves is served, and names a release
+2  the installer is served, and this machine's /bin/sh parses it
+3  the advertised line, run as it is written, pipe included, into a home of its own
+4  the installed tool reports the version the metadata resolved
+5  the installed MCP launcher runs with MAJORDOMUS_NO_BUILD=1 — an archive that left a
+   launcher out passes every check that only reads the archive's file list, and fails here
+6  the installed tool initialises a repository that has none
+```
+
+Nothing outside its temporary tree is written: the install goes to a `HOME` of the run's
+own, so the prefix, the launchers and the PATH hint all land inside it.
+
+CI runs it as `--wait 300`. Publishing a release and deploying the site are two workflows and
+the second is not instant, so a push landing between them would be told the promise is broken
+when it is merely a few minutes old. Run by hand the wait is zero, because a person asking
+whether the command works wants the answer now. A site that cannot serve the metadata inside
+the window is broken either way, and the finding stands.
+
+It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](../.ai/repo/ci/gates.yaml),
+job `install`, on Linux and macOS. No path class selects it, deliberately: no change to a
+tree can make it true or false — only a deployment can. It runs in the full plan, which is
+every push to the default branch, the weekly schedule, a dispatch, and a pull request
+labelled `ci:full`. So the default branch goes red while the advertised command is broken,
+which is the only condition under which anyone was going to find out.
+
+Against a local fixture rather than the published site:
+
+```bash
+scripts/release-fixture --out /tmp/rel --base-url http://127.0.0.1:8099
+(cd /tmp/rel && python3 -m http.server 8099 --bind 127.0.0.1) &
+scripts/ci/install-check --base http://127.0.0.1:8099
+```
 
 ### Recovering from a bad release
 
