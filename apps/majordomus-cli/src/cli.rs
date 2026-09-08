@@ -52,6 +52,65 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
+    Product(ProductArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus product`. The filters and the output shape are global, so they read the way
+/// a person writes them — `product list --featured` — and are declared once.
+pub struct ProductArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `list`, `show`, `matrix`, `providers` or `validate`; none lists.
+    pub command: Option<ProductCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only the features the homepage shows
+    #[arg(long, global = true)]
+    pub featured: bool,
+    /// Include drafts and deprecated features, not only the stable ones
+    #[arg(long, global = true)]
+    pub all: bool,
+    /// Only features serving this operational area of the why catalogue
+    #[arg(long, global = true)]
+    pub area: Option<String>,
+    /// Only features made of this capability module
+    #[arg(long, global = true)]
+    pub module: Option<String>,
+    /// Only features made of this shell command
+    #[arg(long = "names-command", global = true)]
+    pub names_command: Option<String>,
+    /// Only features exposed through this surface: cli, api, mcp, cockpit or docs
+    #[arg(long, global = true)]
+    pub surface: Option<String>,
+    /// Case-insensitive text over identities, titles, headlines, summaries, tags and bodies
+    #[arg(long, short = 'q', global = true)]
+    pub query: Option<String>,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus product`.
+pub enum ProductCommand {
+    /// Every feature, narrowed by any filter, with the surfaces derived for each
+    List,
+    /// One feature in full: what it is made of, resolved, and everything derived from that
+    Show {
+        /// The feature's id, which is also its slug and its route
+        id: String,
+    },
+    /// Every feature against every interface, and every module, command and kind against the features that name it
+    Matrix,
+    /// Every provider the tool has an adapter for, with what this repository does with it
+    Providers,
+    /// Every finding over the model; exit 10 when any is an error
+    Validate,
 }
 
 #[derive(Debug, Args)]
@@ -200,6 +259,8 @@ pub struct DistributionArgs {
 pub enum DistributionCommand {
     /// The model: the install command, where an installation goes, and every declared target
     Show,
+    /// Whether the advertised one-line installation works right now, and what is missing when it does not
+    Status,
     /// Every invariant of the model and of the release records; exit 10 with each violation named
     Validate,
     /// Every declared target, one line each, with the artifact name it derives
@@ -719,6 +780,18 @@ pub enum CapabilitiesCommand {
         /// Input or output.
         side: SchemaSide,
     },
+    /// Where each capability is projected, and every claim its surface does not answer
+    Projections {
+        /// Only capabilities composed in this module
+        #[arg(long)]
+        module: Option<String>,
+        /// Only the capabilities whose declared exposures are not all answered
+        #[arg(long)]
+        unmet: bool,
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        /// Output shape.
+        format: OutputFormat,
+    },
     /// Build the registry and every projection; exit 10 with every violation named
     Validate,
 }
@@ -930,6 +1003,82 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["env", "explain", "project.version"],
             setup: &[],
             expect: Expect::StdoutContains(&["project.version", "source", "resolver"]),
+        }],
+    },
+    CommandExamples {
+        command: "product",
+        examples: &[ExampleDoc {
+            id: "product-default-list",
+            title: "What the product does, as the layer declares it",
+            description: "`product` with nothing after it lists the features, because listing is what a person wants when they ask what the tool is for. Every column is derived: the surfaces a feature is exposed through come from the modules, commands and kinds it names, never from the file.",
+            argv: &["product"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["SLUG", "SURFACES", "feature(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "product list",
+        examples: &[
+            ExampleDoc {
+                id: "product-list",
+                title: "Every stable feature, in presentation order",
+                description: "Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.",
+                argv: &["product", "list"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SLUG", "fixture-feature"]),
+            },
+            ExampleDoc {
+                id: "product-list-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "One domain model behind every projection: this document is what `GET /api/v1/product/features` returns and what the `majordomus_features` tool answers, with the counts, the fingerprint and the surfaces of every feature.",
+                argv: &["product", "list", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/counts/features", "/features/0/surfaces", "/fingerprint"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "product show",
+        examples: &[ExampleDoc {
+            id: "product-show",
+            title: "One feature, with everything derived from what it names",
+            description: "The record as its file declares it, then what nobody authored: the capabilities of its modules with their tools and routes, the commands with their summaries, the objects of its kinds counted, the rules with their class, the documents, the decisions, the claims with their status, the moments it answers, and the interfaces all of that adds up to.",
+            argv: &["product", "show", "fixture-feature"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-feature", "surfaces", "derived"]),
+        }],
+    },
+    CommandExamples {
+        command: "product matrix",
+        examples: &[ExampleDoc {
+            id: "product-matrix",
+            title: "Every feature against every interface, and what no feature names",
+            description: "One row per feature with a mark per surface, then every module of the executable, every public command and every kind of the layer with the features that name it. A row with no feature is a gap the product page cannot hide.",
+            argv: &["product", "matrix"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["FEATURE", "cli", "MODULE"]),
+        }],
+    },
+    CommandExamples {
+        command: "product providers",
+        examples: &[ExampleDoc {
+            id: "product-providers",
+            title: "Every provider the tool has an adapter for",
+            description: "One line per template the distribution ships, with the bootstraps this repository's policy renders through it, the client configuration it carries for the shared MCP server, and the hooks the policy wires. The set is the templates; nothing here is a list of vendors.",
+            argv: &["product", "providers"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["PROVIDER", "agents"]),
+        }],
+    },
+    CommandExamples {
+        command: "product validate",
+        examples: &[ExampleDoc {
+            id: "product-validate",
+            title: "Check the model before anything projects it",
+            description: "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.",
+            argv: &["product", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["feature(s)", "valid"]),
         }],
     },
     CommandExamples {
@@ -1183,6 +1332,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["distribution", "artifact", "--target", "aarch64-apple-darwin", "--tag", "v0.2.0", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/name", "/root", "/url"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution status",
+        examples: &[ExampleDoc {
+            id: "distribution-status",
+            title: "Whether the published one-line installation works right now",
+            description: "The operator's question — *can a machine that has never seen this project install it with the advertised command?* — answered from the distribution model and the release records, without touching the network. Each check names what was observed; a failing one names its cause and the command that changes it. Shown here in a repository that has published nothing, where the answer is no and the exit code is 10, which is what makes it usable as a check rather than as prose. `distribution validate` is the gate over the model itself; this is the gate over the state a user meets.",
+            argv: &["distribution", "status"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {
@@ -1507,6 +1667,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::Json(&["/title"]),
         }],
+    },
+    CommandExamples {
+        command: "capabilities projections",
+        examples: &[
+            ExampleDoc {
+                id: "capabilities-projections-unmet",
+                title: "Every exposure a capability claims that its surface does not answer",
+                description: "`rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written.",
+                argv: &["capabilities", "projections", "--unmet"],
+                setup: &[],
+                expect: Expect::Success,
+            },
+            ExampleDoc {
+                id: "capabilities-projections-module",
+                title: "Where one module's capabilities appear",
+                description: "A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one.",
+                argv: &["capabilities", "projections", "--module", "worktree"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["worktree.topology", "majordomus worktree topology"]),
+            },
+        ],
     },
     CommandExamples {
         command: "capabilities validate",

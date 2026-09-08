@@ -1,7 +1,7 @@
 +++
 title = "A declared provider hook captures the person's raw prompts below the model, and doctor proves it by running it"
 description = ".ai/local/prompts/ holds the prompts a person actually submitted, written by the provider's own hook before the model was invoked, each one kept twice under a single stem: a .json record and the .md rendering of it. A repository that declares the enforcement is held to it: if the hook stops capturing, doctor fails, and because doctor runs on pre-commit, the commit stops with it. A provider whose prompts cannot be observed is reported as unsupported, not treated as one that had nothing to say."
-weight = 33
+weight = 34
 [extra]
 claim_id = "prompt-capture"
 status = "guaranteed"

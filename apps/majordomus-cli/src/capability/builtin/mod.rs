@@ -17,6 +17,7 @@ pub mod health;
 pub mod objects;
 pub mod peers;
 pub mod perf;
+pub mod product;
 pub mod repository;
 mod scope;
 mod views;
@@ -44,8 +45,8 @@ pub use directories::{
 // the two never collide — in this module, and in the one schema component namespace the
 // OpenAPI document has.
 pub use distribution::{
-    BuildReport, DistributionReport, ReleaseArtifactInput, ReleaseArtifactView, ReleaseView,
-    ReleasesReport, TargetView,
+    BuildReport, CheckState, DistributionReport, InstallCheck, InstallabilityReport,
+    ReleaseArtifactInput, ReleaseArtifactView, ReleaseView, ReleasesReport, TargetView,
 };
 pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENVIRONMENT_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
@@ -84,7 +85,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         distribution,
         why,
         web,
-        worktree
+        worktree,
+        product
     ]
 }
 

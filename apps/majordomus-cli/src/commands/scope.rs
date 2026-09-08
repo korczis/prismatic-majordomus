@@ -71,7 +71,9 @@ pub fn run(args: ScopeArgs) -> Result<u8> {
         }
         return Ok(0);
     }
-    let id = cli_capability(ctx, &["scope", "classify"])?;
+    // by identity, not by CLI path: this capability has no command line of its own —
+    // `majordomus scope <PATHS>` is the command, and it is `repository.scope`'s
+    let id = crate::capability::builtin::repository::SCOPE_CLASSIFY;
     let mut any_out = false;
     let mut results = Vec::with_capacity(args.paths.len());
     for path in &args.paths {

@@ -1,7 +1,7 @@
 +++
 title = "The web surface"
 description = "the web surface: every surface discovered from its producer rather than registered, the two reserved namespaces (`/docs` is documentation, `/swagger` is Swagger UI), what a surface declares, how to add one, how the documentation is built for its mount and served safely, and what is enforced where"
-weight = 33
+weight = 35
 [extra]
 source = "docs/WEB.md"
 +++

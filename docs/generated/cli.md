@@ -21,6 +21,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus capabilities list`](#majordomus-capabilities-list) | `/docs/cli/capabilities/list/` | Every capability, one line each, with its projections |
 | [`majordomus capabilities describe`](#majordomus-capabilities-describe) | `/docs/cli/capabilities/describe/` | One capability by canonical id: schemas, provenance, every projection |
 | [`majordomus capabilities schema`](#majordomus-capabilities-schema) | `/docs/cli/capabilities/schema/` | The canonical input or output JSON Schema of one capability |
+| [`majordomus capabilities projections`](#majordomus-capabilities-projections) | `/docs/cli/capabilities/projections/` | Where each capability is projected, and every claim its surface does not answer |
 | [`majordomus capabilities validate`](#majordomus-capabilities-validate) | `/docs/cli/capabilities/validate/` | Build the registry and every projection; exit 10 with every violation named |
 | [`majordomus generate`](#majordomus-generate) | `/docs/cli/generate/` | Write the committed projections of the registry (docs/generated), or check that they are current |
 | [`majordomus bench`](#majordomus-bench) | `/docs/cli/bench/` | Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations), report coverage, compare with the accepted baseline |
@@ -47,6 +48,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus why validate`](#majordomus-why-validate) | `/docs/cli/why/validate/` | Every finding over the catalogue; exit 10 when any is an error |
 | [`majordomus distribution`](#majordomus-distribution) | `/docs/cli/distribution/` | How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases |
 | [`majordomus distribution show`](#majordomus-distribution-show) | `/docs/cli/distribution/show/` | The model: the install command, where an installation goes, and every declared target |
+| [`majordomus distribution status`](#majordomus-distribution-status) | `/docs/cli/distribution/status/` | Whether the advertised one-line installation works right now, and what is missing when it does not |
 | [`majordomus distribution validate`](#majordomus-distribution-validate) | `/docs/cli/distribution/validate/` | Every invariant of the model and of the release records; exit 10 with each violation named |
 | [`majordomus distribution targets`](#majordomus-distribution-targets) | `/docs/cli/distribution/targets/` | Every declared target, one line each, with the artifact name it derives |
 | [`majordomus distribution matrix`](#majordomus-distribution-matrix) | `/docs/cli/distribution/matrix/` | The release build matrix, as the release workflow reads it |
@@ -76,13 +78,19 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
 | [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
+| [`majordomus product`](#majordomus-product) | `/docs/cli/product/` | The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation |
+| [`majordomus product list`](#majordomus-product-list) | `/docs/cli/product/list/` | Every feature, narrowed by any filter, with the surfaces derived for each |
+| [`majordomus product show`](#majordomus-product-show) | `/docs/cli/product/show/` | One feature in full: what it is made of, resolved, and everything derived from that |
+| [`majordomus product matrix`](#majordomus-product-matrix) | `/docs/cli/product/matrix/` | Every feature against every interface, and every module, command and kind against the features that name it |
+| [`majordomus product providers`](#majordomus-product-providers) | `/docs/cli/product/providers/` | Every provider the tool has an adapter for, with what this repository does with it |
+| [`majordomus product validate`](#majordomus-product-validate) | `/docs/cli/product/validate/` | Every finding over the model; exit 10 when any is an error |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus worktree`](#majordomus-worktree).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product).
 
 ```text
 majordomus <COMMAND>
@@ -172,7 +180,7 @@ Examples:
 
 Introspect the capability registry: what exists, where it came from, how it is exposed
 
-Subcommands: [`majordomus capabilities list`](#majordomus-capabilities-list), [`majordomus capabilities describe`](#majordomus-capabilities-describe), [`majordomus capabilities schema`](#majordomus-capabilities-schema), [`majordomus capabilities validate`](#majordomus-capabilities-validate).
+Subcommands: [`majordomus capabilities list`](#majordomus-capabilities-list), [`majordomus capabilities describe`](#majordomus-capabilities-describe), [`majordomus capabilities schema`](#majordomus-capabilities-schema), [`majordomus capabilities projections`](#majordomus-capabilities-projections), [`majordomus capabilities validate`](#majordomus-capabilities-validate).
 
 ```text
 majordomus capabilities [OPTIONS] <COMMAND>
@@ -277,6 +285,43 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /title.
+
+<a id="majordomus-capabilities-projections"></a>
+## `majordomus capabilities projections`
+
+Where each capability is projected, and every claim its surface does not answer
+
+```text
+majordomus capabilities projections [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--module` | `<MODULE>` | — | Only capabilities composed in this module |
+| `--unmet` | flag | — | Only the capabilities whose declared exposures are not all answered |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **Every exposure a capability claims that its surface does not answer** — `rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written.
+
+  ```console
+  $ majordomus capabilities projections --unmet
+  ```
+
+  Verified: exits 0.
+
+- **Where one module's capabilities appear** — A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one.
+
+  ```console
+  $ majordomus capabilities projections --module worktree
+  ```
+
+  Verified: exits 0; prints worktree.topology, majordomus worktree topology.
 
 <a id="majordomus-capabilities-validate"></a>
 ## `majordomus capabilities validate`
@@ -1093,7 +1138,7 @@ Examples:
 
 How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
 
-Subcommands: [`majordomus distribution show`](#majordomus-distribution-show), [`majordomus distribution validate`](#majordomus-distribution-validate), [`majordomus distribution targets`](#majordomus-distribution-targets), [`majordomus distribution matrix`](#majordomus-distribution-matrix), [`majordomus distribution artifact`](#majordomus-distribution-artifact), [`majordomus distribution releases`](#majordomus-distribution-releases), [`majordomus distribution metadata`](#majordomus-distribution-metadata), [`majordomus distribution build`](#majordomus-distribution-build).
+Subcommands: [`majordomus distribution show`](#majordomus-distribution-show), [`majordomus distribution status`](#majordomus-distribution-status), [`majordomus distribution validate`](#majordomus-distribution-validate), [`majordomus distribution targets`](#majordomus-distribution-targets), [`majordomus distribution matrix`](#majordomus-distribution-matrix), [`majordomus distribution artifact`](#majordomus-distribution-artifact), [`majordomus distribution releases`](#majordomus-distribution-releases), [`majordomus distribution metadata`](#majordomus-distribution-metadata), [`majordomus distribution build`](#majordomus-distribution-build).
 
 ```text
 majordomus distribution [OPTIONS] [COMMAND]
@@ -1143,6 +1188,33 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /install_command, /targets.
+
+<a id="majordomus-distribution-status"></a>
+## `majordomus distribution status`
+
+Whether the advertised one-line installation works right now, and what is missing when it does not
+
+```text
+majordomus distribution status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether the published one-line installation works right now** — The operator's question — *can a machine that has never seen this project install it with the advertised command?* — answered from the distribution model and the release records, without touching the network. Each check names what was observed; a failing one names its cause and the command that changes it. Shown here in a repository that has published nothing, where the answer is no and the exit code is 10, which is what makes it usable as a check rather than as prose. `distribution validate` is the gate over the model itself; this is the gate over the state a user meets.
+
+  ```console
+  $ majordomus distribution status
+  ```
+
+  Verified: exits 10.
 
 <a id="majordomus-distribution-validate"></a>
 ## `majordomus distribution validate`
@@ -1959,4 +2031,219 @@ Examples:
   ```
 
   Verified: exits 0.
+
+<a id="majordomus-product"></a>
+## `majordomus product`
+
+The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
+
+Subcommands: [`majordomus product list`](#majordomus-product-list), [`majordomus product show`](#majordomus-product-show), [`majordomus product matrix`](#majordomus-product-matrix), [`majordomus product providers`](#majordomus-product-providers), [`majordomus product validate`](#majordomus-product-validate).
+
+```text
+majordomus product [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
+| `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, headlines, summaries, tags and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **What the product does, as the layer declares it** — `product` with nothing after it lists the features, because listing is what a person wants when they ask what the tool is for. Every column is derived: the surfaces a feature is exposed through come from the modules, commands and kinds it names, never from the file.
+
+  ```console
+  $ majordomus product
+  ```
+
+  Verified: exits 0; prints SLUG, SURFACES, feature(s).
+
+<a id="majordomus-product-list"></a>
+## `majordomus product list`
+
+Every feature, narrowed by any filter, with the surfaces derived for each
+
+```text
+majordomus product list [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
+| `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, headlines, summaries, tags and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **Every stable feature, in presentation order** — Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.
+
+  ```console
+  $ majordomus product list
+  ```
+
+  Verified: exits 0; prints SLUG, fixture-feature.
+
+- **The same, as the shape the API and MCP answer with** — One domain model behind every projection: this document is what `GET /api/v1/product/features` returns and what the `majordomus_features` tool answers, with the counts, the fingerprint and the surfaces of every feature.
+
+  ```console
+  $ majordomus product list --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /counts/features, /features/0/surfaces, /fingerprint.
+
+<a id="majordomus-product-show"></a>
+## `majordomus product show`
+
+One feature in full: what it is made of, resolved, and everything derived from that
+
+```text
+majordomus product show [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The feature's id, which is also its slug and its route |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
+| `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, headlines, summaries, tags and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **One feature, with everything derived from what it names** — The record as its file declares it, then what nobody authored: the capabilities of its modules with their tools and routes, the commands with their summaries, the objects of its kinds counted, the rules with their class, the documents, the decisions, the claims with their status, the moments it answers, and the interfaces all of that adds up to.
+
+  ```console
+  $ majordomus product show fixture-feature
+  ```
+
+  Verified: exits 0; prints fixture-feature, surfaces, derived.
+
+<a id="majordomus-product-matrix"></a>
+## `majordomus product matrix`
+
+Every feature against every interface, and every module, command and kind against the features that name it
+
+```text
+majordomus product matrix [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
+| `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, headlines, summaries, tags and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **Every feature against every interface, and what no feature names** — One row per feature with a mark per surface, then every module of the executable, every public command and every kind of the layer with the features that name it. A row with no feature is a gap the product page cannot hide.
+
+  ```console
+  $ majordomus product matrix
+  ```
+
+  Verified: exits 0; prints FEATURE, cli, MODULE.
+
+<a id="majordomus-product-providers"></a>
+## `majordomus product providers`
+
+Every provider the tool has an adapter for, with what this repository does with it
+
+```text
+majordomus product providers [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
+| `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, headlines, summaries, tags and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **Every provider the tool has an adapter for** — One line per template the distribution ships, with the bootstraps this repository's policy renders through it, the client configuration it carries for the shared MCP server, and the hooks the policy wires. The set is the templates; nothing here is a list of vendors.
+
+  ```console
+  $ majordomus product providers
+  ```
+
+  Verified: exits 0; prints PROVIDER, agents.
+
+<a id="majordomus-product-validate"></a>
+## `majordomus product validate`
+
+Every finding over the model; exit 10 when any is an error
+
+```text
+majordomus product validate [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
+| `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, headlines, summaries, tags and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **Check the model before anything projects it** — A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.
+
+  ```console
+  $ majordomus product validate
+  ```
+
+  Verified: exits 0; prints feature(s), valid.
 

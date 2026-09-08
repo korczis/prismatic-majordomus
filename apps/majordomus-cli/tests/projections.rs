@@ -36,6 +36,10 @@ fn every_declared_projection_exists_and_no_projection_is_an_orphan() {
         .map(|a| a.content)
         .collect();
 
+    // the other declaration of the command line: clap, walked into the same tree every
+    // projection of the native CLI is rendered from
+    let cli_tree = majordomus_cli::cli::tree();
+
     let tools = surface.tools();
     let resources = surface.resources();
     let mut ops: Vec<(String, String, Value)> = Vec::new();
@@ -81,6 +85,27 @@ fn every_declared_projection_exists_and_no_projection_is_an_orphan() {
         }
         if let Some(cli) = &c.exposure.cli {
             assert_eq!(registry.by_cli(&cli.path).unwrap().id, c.id);
+            // ...and the same question asked of the other declaration. The line above asks
+            // the registry whether it agrees with itself, which any path satisfies; clap is
+            // where the command line actually exists, and it is the only projection with a
+            // declaration of its own that could disagree.
+            let cmd = cli_tree
+                .flatten()
+                .into_iter()
+                .find(|d| d.path.len() > 1 && d.path[1..] == cli.path[..])
+                .unwrap_or_else(|| {
+                    panic!(
+                        "{}: declares `majordomus {}`, which the clap declaration does not have",
+                        c.id,
+                        cli.path.join(" ")
+                    )
+                });
+            assert!(
+                cmd.executable,
+                "{}: declares `majordomus {}`, which only groups other commands and cannot be run",
+                c.id,
+                cli.path.join(" ")
+            );
         }
         if matches!(c.provenance, Provenance::Builtin { .. }) {
             assert!(

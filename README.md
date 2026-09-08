@@ -404,8 +404,8 @@ twice.
 
 Every generated file in the repository comes out of the same executable: `majordomus
 generate` writes `docs/generated/`, `share/allow/`, the provider bootstraps `AGENTS.md`
-and `CLAUDE.md` (from the policy and the templates), and the site's registry dataset
-`site/data/registry/registry.json`; `majordomus generate --check` says which of them is
+and `CLAUDE.md` (from the policy and the templates), and the site's registry and product
+datasets under `site/data/registry/`; `majordomus generate --check` says which of them is
 stale, and CI refuses a merge or a deploy from a stale one. The website's own generator
 consumes two of those files and nothing else of the crate, so `just derive` regenerates
 every derived file of the repository in dependency order and `just derive-check` names
@@ -416,6 +416,18 @@ and the graph is drawn in [`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGE
 the site's [Executable section](https://korczis.github.io/prismatic-majordomus/registry/) —
 the registry, every module and capability, the command line, the MCP surface, the HTTP API
 and the benchmarks — is rendered from that dataset and from nothing typed by hand.
+
+The website's front door is the same kind of projection. What the product does is stated
+once, as one file per feature under `.ai/repo/features/`, holding the references that name
+what the feature is made of and the editorial decisions nothing can infer; the interfaces
+it is exposed through, the counts behind it, the operational moments it answers and its
+route are derived from those references and refused as keys in the file. The homepage, the
+[feature pages](https://korczis.github.io/prismatic-majordomus/features/) and the
+[capability matrix](https://korczis.github.io/prismatic-majordomus/features/matrix/) name
+no feature, module, command, provider or count of their own, and a stale product dataset
+fails the build before it can be deployed. The contract is
+[`docs/PRODUCT.md`](docs/PRODUCT.md) and the decision is
+[ADR 23](.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md).
 
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)

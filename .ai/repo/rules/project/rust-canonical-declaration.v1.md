@@ -35,8 +35,10 @@ The registry refuses to build, naming the id and the provenance, on a capability
 outside its namespace's module, a module composed twice, an invalid id, a cache policy
 that keeps nothing, a cached command, or a benchmark policy that contradicts the kind;
 `tests/projections.rs` fails when a projection carries an entry the registry does not or
-lacks one it declares; `generate --check` fails on a stale generated file; a reviewer
-refuses a change that adds a definition to a projection.
+lacks one it declares, and when a `cli` exposure names a command the clap declaration does
+not have — the command line is the one projection the registry cannot build by itself, and
+therefore the one that can disagree with its declaration; `generate --check` fails on a
+stale generated file; a reviewer refuses a change that adds a definition to a projection.
 
 # Verification
 

@@ -1,0 +1,255 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/site-product.schema.json",
+  "title": "Site product dataset",
+  "description": "site/data/registry/product.json: the dataset the website's homepage and /features/ pages are rendered from — every feature of the layer resolved against the registry, the index, the catalogue and the topology, the matrix of features against interfaces, the providers, the Cockpit's areas and the telemetry counts, in one document written by `majordomus generate site`. Nothing in it is authored: a feature's file names what it is made of, and everything else here is derived.",
+  "type": "object",
+  "required": [
+    "schema",
+    "generated",
+    "generator",
+    "fingerprint",
+    "route",
+    "counts",
+    "surfaces",
+    "features",
+    "matrix",
+    "providers",
+    "rules",
+    "cockpit_areas",
+    "telemetry",
+    "valid"
+  ],
+  "properties": {
+    "schema": {
+      "const": "majordomus-site-product/v1"
+    },
+    "generated": {
+      "type": "string",
+      "pattern": "^GENERATED FILE"
+    },
+    "generator": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "majordomus-cli"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "fingerprint": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "route": {
+      "const": "/features/"
+    },
+    "counts": {
+      "type": "object",
+      "required": [
+        "features",
+        "features_all",
+        "featured",
+        "providers",
+        "modules",
+        "modules_covered",
+        "commands",
+        "commands_covered",
+        "kinds",
+        "kinds_covered"
+      ]
+    },
+    "surfaces": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "route",
+          "features"
+        ],
+        "properties": {
+          "id": {
+            "enum": [
+              "cli",
+              "api",
+              "mcp",
+              "cockpit",
+              "docs"
+            ]
+          }
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "headline",
+          "summary",
+          "status",
+          "weight",
+          "featured",
+          "route",
+          "source",
+          "surfaces",
+          "module_refs",
+          "command_refs",
+          "kind_refs",
+          "rule_refs",
+          "doc_refs",
+          "adr_refs",
+          "claim_refs",
+          "use_case_refs",
+          "cockpit_refs",
+          "web_refs",
+          "moments",
+          "backlinks",
+          "counts",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "status": {
+            "enum": [
+              "stable",
+              "draft",
+              "deprecated"
+            ]
+          },
+          "route": {
+            "type": "string",
+            "pattern": "^/features/[a-z][a-z0-9-]*/$"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^[^/].*\\.md$"
+          },
+          "surfaces": {
+            "type": "object",
+            "required": [
+              "cli",
+              "api",
+              "mcp",
+              "cockpit",
+              "docs"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "cli": {
+                "type": "boolean"
+              },
+              "api": {
+                "type": "boolean"
+              },
+              "mcp": {
+                "type": "boolean"
+              },
+              "cockpit": {
+                "type": "boolean"
+              },
+              "docs": {
+                "type": "boolean"
+              }
+            }
+          },
+          "body": false
+        }
+      }
+    },
+    "matrix": {
+      "type": "object",
+      "required": [
+        "rows",
+        "modules",
+        "commands",
+        "kinds"
+      ]
+    },
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "bootstraps",
+          "hooks"
+        ]
+      }
+    },
+    "rules": {
+      "type": "array",
+      "description": "Every rule a public feature names, once, with the class and the enforcement the rule declares. Derived: the union of the features' resolved rules, not a list.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "identity",
+          "title",
+          "class",
+          "enforced",
+          "path"
+        ],
+        "properties": {
+          "class": {
+            "enum": [
+              "blocking",
+              "advisory"
+            ]
+          },
+          "enforced": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "cockpit_areas": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "route"
+        ]
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "required": [
+        "capabilities",
+        "modules",
+        "mcp_tools",
+        "http_routes",
+        "cli_commands",
+        "shell_commands",
+        "kinds",
+        "objects",
+        "by_kind",
+        "providers",
+        "features"
+      ]
+    },
+    "valid": {
+      "type": "boolean"
+    }
+  }
+}

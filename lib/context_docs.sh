@@ -105,6 +105,34 @@ EOF
 mj_ctxd_scan() {
   local rel="$1" n="$2" f="$MJ_ROOT/$1" conv="$3" providers="$4" base dir depth st tmp
   base="${rel##*/}"
+  # Most files under the tree are not context documents, and reading each one cost four
+  # processes to establish that: a mktemp, the front-matter split, the flattener and the
+  # validator. The front matter is small and this shell can read it, so the question "could
+  # this file be a context document at all" is answered here, without a process, and only a
+  # file that could be goes on to the stages below.
+  #
+  # The test is the one the stages themselves apply: a file whose first line is not `---`
+  # has no front matter, and one whose front matter declares neither `kind: context` nor a
+  # `context/` schema is another kind. In both cases the stages return 2 without recording
+  # anything — unless the manifest names the file as a context document, which is the case
+  # that must still be reported, so those are never skipped.
+  case " $conv " in
+    *" $base "*) ;;
+    *)
+      local l lines=0 declares=0 opened=0
+      while IFS= read -r l || [ -n "$l" ]; do
+        lines=$((lines + 1))
+        if [ "$lines" = 1 ]; then
+          [ "$l" = "---" ] || break
+          opened=1; continue
+        fi
+        [ "$l" = "---" ] && break
+        case "$l" in kind:\ context|"kind: context "*|schema:\ context/*) declares=1; break ;; esac
+        [ "$lines" -gt 200 ] && break
+      done < "$f"
+      [ "$opened" = 1 ] && [ "$declares" = 1 ] || return 2
+      ;;
+  esac
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ctxd.XXXXXX")"
   # stage 1: the front matter, or exit 2 (none) / 4 (never closes)
   awk 'NR == 1 && $0 != "---" { exit 2 }

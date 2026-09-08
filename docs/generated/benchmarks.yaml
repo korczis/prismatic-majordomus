@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.3.1
 coverage:
   - scope: direct
-    required: 39
-    covered: 39
+    required: 46
+    covered: 46
     missing: 0
     waived: 0
   - scope: http
-    required: 39
-    covered: 39
+    required: 46
+    covered: 46
     missing: 0
     waived: 0
   - scope: mcp
-    required: 37
-    covered: 37
+    required: 44
+    covered: 44
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 128
-    covered: 128
+    required: 149
+    covered: 149
     missing: 0
     waived: 0
 capabilities:
@@ -60,6 +60,16 @@ capabilities:
     cases:
       - all
       - queries
+  - id: capabilities.projections
+    module: capabilities
+    kind: query
+    cache: "process, 8 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - unmet
   - id: continuity.state
     module: continuity
     kind: query
@@ -144,6 +154,15 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: distribution.status
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: environment.explain
     module: environment
     kind: query
@@ -177,6 +196,7 @@ capabilities:
       - adrs
       - use-cases
       - why
+      - product
       - composed
   - id: graph.list
     module: graph
@@ -266,6 +286,53 @@ capabilities:
     module: perf
     kind: query
     cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: product.feature
+    module: product
+    kind: query
+    cache: "process, 64 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-feature
+  - id: product.features
+    module: product
+    kind: query
+    cache: "process, 32 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - featured
+      - by-area
+  - id: product.matrix
+    module: product
+    kind: query
+    cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: product.providers
+    module: product
+    kind: query
+    cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: product.validate
+    module: product
+    kind: query
+    cache: "process, 2 entries"
     direct: covered
     mcp: covered
     http: covered

@@ -398,8 +398,12 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+      # --wait: publishing a release and deploying the site are two workflows, and the
+      # second is not instant. A push that lands between them would be told the promise is
+      # broken when it is merely a few minutes old; a site that cannot serve the metadata
+      # inside the window is broken, and the finding stands.
       - name: the advertised install command, from the published site
-        run: scripts/ci/install-check
+        run: scripts/ci/install-check --wait 300
 
   # ------------------------------------------------------------------ ci
   # The one status to require: green only when planning succeeded, every selected gate's job

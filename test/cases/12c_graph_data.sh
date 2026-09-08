@@ -53,24 +53,10 @@ expect_exit 0 "$T/scripts/generate-site-data"
 [ "$(jq '[.nodes[] | select(.kind=="claim" and .status=="guaranteed")] | length' "$C")" = 0 ] \
   || { echo "    claim status in the graph does not follow docs/CLAIMS.yaml"; exit 1; }
 
-# the why section is data too: the moments name commands, responsibilities and claims, and a
-# name that does not resolve must stop the build rather than ship a link to nothing
-W="$T/site/data/generated/why.json"
-git -C "$T" checkout -q -- docs/CLAIMS.yaml 2>/dev/null || true
-expect_exit 0 "$T/scripts/generate-site-data"
-[ "$(jq '.moments | length' "$W")" -ge 3 ] || { echo "    no moments were derived from site/content-src/why/"; exit 1; }
-# every moment resolves each thing it names, or the detail arrays would be shorter than the ids
-jq -e '[.moments[] | select((.claims | length) != (.claim_detail | length)
-                         or (.commands | length) != (.command_detail | length)
-                         or (.responsibilities | length) != (.responsibility_detail | length))] | length == 0' "$W" >/dev/null \
-  || { echo "    a moment names something the generator could not resolve"; exit 1; }
-
-first_why="$(cd "$T/site/content-src/why" && ls ./*.md | sed 's#^\./##' | grep -v '^_index\.md$' | head -1)"
-cp "$T/site/content-src/why/$first_why" "$T/why.bak"
-sed -i.bak 's/^claims = \[/claims = ["no-such-claim-id", /' "$T/site/content-src/why/$first_why"; rm -f "$T/site/content-src/why/$first_why.bak"
-expect_exit 10 "$T/scripts/generate-site-data"
-expect_grep 'names claims that do not exist'
-# and the previous generation is intact: a refused build publishes nothing
-[ "$(jq '.moments | length' "$W")" -ge 3 ]
-cp "$T/why.bak" "$T/site/content-src/why/$first_why"
-expect_exit 0 "$T/scripts/generate-site-data"
+# The why section used to be tested here, from site/content-src/why/*.md into
+# site/data/generated/why.json. Both are gone: operational moments became objects of the
+# layer (ADR 0018), the dataset is site/data/registry/why.json written by the executable,
+# and the catalogue — including an unresolved reference refusing the build with the nearest
+# candidate — is case 98_why_catalogue. This case is about the graphs being derived rather
+# than drawn, which is what it still proves above; the block that followed had been reading
+# a directory that no longer exists, so `cd` into it failed and took the case with it.

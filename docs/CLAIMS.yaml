@@ -73,6 +73,15 @@ claims:
     responsibility: projection
     note: The line is run as it is written, pipe included, on Linux and macOS, into a home directory of the run's own. It proves the metadata resolves, the tool reports the version that was resolved, the MCP launcher runs with no toolchain, and a repository can be initialised. A release proves the same thing once at publication; this keeps proving it afterwards.
 
+  - id: release-archive-shape
+    claim: A release archive carries every path once and carries nothing but files and directories
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/release-package
+    test: test/cases/87b_release_archive_shape.sh
+    status: guaranteed
+    responsibility: projection
+    note: The packer reads back what it wrote and deletes an archive carrying a repeated path or an entry that is not a file or a directory; the verifier checks the same two properties again on the runner that built it. There is no fallback packer, because an archive packed another way is not the one that was verified.
+
   - id: policy-parse
     claim: The canonical policy is parsed and rejected if it contains an unknown key
     source: docs/SCHEMAS.md
@@ -1260,3 +1269,48 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The plan changes nothing and is recomputed under the repository lock before it is applied. Git moves the directory in one rename; the container's occupant goes out to a staging path and then in; a move across filesystems is refused unless a copy is permitted, and then verified against a manifest of every entry before the original is removed. Nothing is reset, stashed, cleaned, checked out or overwritten: a destination that exists is a named conflict, a locked worktree waits, a detached one is never moved, and a session's scratch checkout is reported and moved only on request.
+
+  - id: product-features-discovered
+    claim: A product feature is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph, the capability matrix and the website's homepage and feature pages with nothing else changed
+    source: docs/PRODUCT.md
+    implementation: apps/majordomus-cli/src/product.rs
+    test: test/cases/97_product_features.sh
+    status: guaranteed
+    responsibility: layer
+    note: Removing the file removes it from all of them, which is what a hidden registry would fail. The kind, its schema and its source class are declarations, so discovery, validation, identity, the index and the MCP resource needed no code of their own.
+
+  - id: product-surfaces-derived
+    claim: Which interfaces a feature is exposed through, what stands behind it and what it answers are derived from the registries that own those facts, never authored, and a source file that writes one down is refused by its schema
+    source: docs/PRODUCT.md
+    implementation: apps/majordomus-cli/src/product.rs
+    test: apps/majordomus-cli/tests/product.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: A feature file holds references and editorial decisions only. The surfaces come from what its modules, commands and kinds are projected onto, the counts from the registry and the index, the moments from the why catalogue, the route from the id. The schema sets additionalProperties false, so `surfaces:` or `route:` in a feature is a validation error rather than a claim a page believes.
+
+  - id: product-references-resolve
+    claim: Every reference a feature makes resolves against the registry that owns it, and one that does not is an error naming the file, the key and the nearest candidate rather than a page linking to nothing
+    source: docs/PRODUCT.md
+    implementation: apps/majordomus-cli/src/product.rs
+    test: apps/majordomus-cli/tests/product.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: A capability module, a public command or an object kind that no stable feature names is reported as a gap and shown on the matrix rather than refused: a thing the product does that the product page does not mention is what the model exists to make visible.
+
+  - id: product-projection-public-safe
+    claim: The dataset the website is rendered from carries only fields an allow-list names, so a feature's prose, a machine path or a field nobody allowed cannot reach a published page
+    source: docs/PRODUCT.md
+    implementation: apps/majordomus-cli/src/site.rs
+    test: apps/majordomus-cli/tests/product.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The boundary is a field-by-field copy through PUBLIC_FEATURE_FIELDS, not an exclusion that could be forgotten: a field added to the model is absent from the site until somebody names it. The test asserts no un-allow-listed key, no body, no fixture root and no temporary path; scripts/generate-site-data refuses the artifact again before rendering anything from it.
+
+  - id: landing-page-is-a-projection
+    claim: The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed
+    source: docs/GITHUB_PAGES_ARCHITECTURE.md
+    implementation: site/templates/index.html
+    test: test/cases/12_site_build.sh
+    status: guaranteed
+    responsibility: none      # the site's projection of apps/majordomus-cli, not a supervised responsibility
+    note: scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository.

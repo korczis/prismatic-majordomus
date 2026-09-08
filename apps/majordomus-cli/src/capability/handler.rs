@@ -51,6 +51,10 @@ pub struct Context {
     /// The Why catalogue, derived from the index once when this context is composed and
     /// shared by every projection that reads it. A request never rebuilds it.
     pub why: Arc<crate::why::Catalogue>,
+    /// The product model: the features of the layer with every fact a surface may say
+    /// about them derived from the registry, the index, the catalogue and the topology.
+    /// Built once, after the three it reads, and shared the same way.
+    pub product: Arc<crate::product::ProductModel>,
     /// The one execution path: counters, cache, handler dispatch. Shared by every
     /// transport and every session of this process.
     pub executor: Arc<CapabilityExecutor>,
@@ -71,10 +75,14 @@ impl Context {
     pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {
         let web = Arc::new(resolve_web(&index));
         let why = Arc::new(crate::why::Catalogue::build(&index, &registry));
+        let product = Arc::new(crate::product::ProductModel::build(
+            &index, &registry, &why, &web,
+        ));
         Context {
             index,
             registry,
             why,
+            product,
             peers: Arc::new(PeerBoard::new()),
             executor: Arc::new(CapabilityExecutor::new()),
             caller: None,
@@ -103,6 +111,7 @@ impl Context {
             index: Arc::clone(&self.index),
             registry: Arc::clone(&self.registry),
             why: Arc::clone(&self.why),
+            product: Arc::clone(&self.product),
             peers: Arc::clone(&self.peers),
             executor: Arc::clone(&self.executor),
             caller: self.caller.clone(),

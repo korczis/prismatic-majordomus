@@ -1,19 +1,30 @@
 # Site navigation: a handful of intents, small on purpose. Rendered by templates/partials/navbar.html
-# as Flowbite dropdowns on desktop and as labelled flat lists inside the collapsed mobile menu.
-# A group with no items is a plain link. Every href must resolve; scripts/site-check verifies it.
+# as Flowbite dropdowns on desktop and as labelled flat lists inside the collapsed mobile menu,
+# and by templates/partials/footer.html as the footer's columns. A group with no items is a
+# plain link. Every href must resolve; scripts/site-check verifies it. Nothing here enumerates
+# a feature, a module, a capability or a command: those routes are the generator's.
 
 [[groups]]
 label = "Why"
 href = "/why/"
 
 [[groups]]
+label = "Product"
+href = "/features/"
+items = [
+  { label = "Features", href = "/features/" },
+  { label = "Features against interfaces", href = "/features/matrix/" },
+  { label = "Use cases", href = "/use-cases/" },
+  { label = "Applications", href = "/applications/" },
+  { label = "Skills", href = "/skills/" },
+]
+
+[[groups]]
 label = "Get started"
 href = "/getting-started/"
 items = [
   { label = "Quick start", href = "/getting-started/" },
-  { label = "Use cases", href = "/use-cases/" },
-  { label = "Skills", href = "/skills/" },
-  { label = "Applications", href = "/applications/" },
+  { label = "Install", href = "/docs/install/" },
   { label = "Commands", href = "/commands/" },
   { label = "Shell CLI specification", href = "/docs/cli-specification/" },
   { label = "Execution profiles", href = "/profiles/" },
@@ -73,9 +84,29 @@ label = "Reference"
 href = "/docs/"
 items = [
   { label = "All documents", href = "/docs/" },
+  { label = "How the product page is derived", href = "/docs/product/" },
   { label = "Rust CLI reference", href = "/docs/cli/" },
   { label = "HTTP API", href = "/docs/api/" },
   { label = "File schemas", href = "/docs/schemas/" },
   { label = "Program map", href = "/map/" },
   { label = "How this site is built", href = "/architecture/" },
 ]
+
+# Routes that moved. The generator turns each into a Zola alias on the page it points at,
+# so the old address answers with a redirect; scripts/site-check proves every one resolves.
+# The old outcome pages were the hero's three propositions; the features replaced them.
+[[redirects]]
+from = "/outcomes/"
+to = "/features/"
+
+[[redirects]]
+from = "/outcomes/faster-onboarding/"
+to = "/features/"
+
+[[redirects]]
+from = "/outcomes/lower-cost/"
+to = "/features/"
+
+[[redirects]]
+from = "/outcomes/less-wasted-time/"
+to = "/features/"

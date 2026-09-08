@@ -7,6 +7,7 @@ pub mod distribution;
 pub mod env;
 pub mod generate;
 pub mod mcp;
+pub mod product;
 pub mod scope;
 pub mod serve;
 pub mod web;
@@ -30,5 +31,6 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Distribution(args) => distribution::run(args),
         Command::Env(args) => env::run(args),
         Command::Worktree(args) => worktree::run(args),
+        Command::Product(args) => product::run(args),
     }
 }

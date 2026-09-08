@@ -1,7 +1,7 @@
 +++
 title = "majordomus env explain"
 description = "Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted"
-weight = 45
+weight = 47
 [extra]
 route = "/docs/cli/env/explain/"
 command = "majordomus env explain"

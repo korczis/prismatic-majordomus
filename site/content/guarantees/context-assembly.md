@@ -1,7 +1,7 @@
 +++
 title = "The context a worker is given is assembled from durable state in authority order, and what a profile excludes is excluded"
 description = "majordomus context prints one briefing: the git identity, the task and the profile constraining it, the questions blocking acceptance, recent decisions, the newest checkpoint, the most relevant handover, the files already touched in scope, and recent history — in that order. A worker that has lost its conversation runs one command and has what it needs, without reading a transcript or reconstructing state from someone's memory."
-weight = 60
+weight = 61
 [extra]
 claim_id = "context-assembly"
 status = "guaranteed"
