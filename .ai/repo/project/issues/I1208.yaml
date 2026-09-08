@@ -1,0 +1,38 @@
+id: I1208
+milestone: web-sign-in
+title: Adding a provider is one file, removing one is one deletion, and both are executed rather than described
+slug: identity-provider-lifecycle
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Document how a provider is added and how one is struck, and make the documentation executable: a test that adds a synthetic provider object and asserts it appears in the sign-in offer, in the capability read, in the generated documentation and in the Cockpit with no other edit, and a test that removes one of the two shipped objects and asserts every one of those surfaces loses it."
+why: "The operator has said the first two providers may both be struck once the audience is known. That is the operation this milestone must make cheap, and the only proof it is cheap is a test that performs it."
+current_state: "Nothing is documented and nothing performs the lifecycle."
+desired_state: "The add and the remove are both proved by tests, and the documentation states the one-file operation because a test executes it."
+scope:
+  - docs
+  - site
+  - apps/majordomus-cli/tests
+  - test/cases
+  - .ai/repo/rules/project
+non_scope:
+  - A migration path for sessions issued by a provider that has been struck, beyond revoking them
+depends_on:
+  - I1202
+  - I1206
+acceptance_criteria:
+  - A synthetic provider dropped into the directory appears on every applicable surface with no source edit, proved by a test
+  - Removing a provider object removes it from every surface, and sessions pinned to that issuer are refused
+  - The documentation names the file to write and the file to delete, and cites the tests that execute both
+  - A rule states that a provider fact may not be stated outside its object, with a check CI executes
+validation:
+  - bash test/run.sh
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - add_proved
+  - remove_proved
+  - rule_enforced
+risk: "The removal half is the half that is skipped, and it is the half the operator asked for."
+created_at: 2026-09-08
+updated_at: 2026-09-08
