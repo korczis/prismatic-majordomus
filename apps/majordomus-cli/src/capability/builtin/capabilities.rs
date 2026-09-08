@@ -395,7 +395,10 @@ mod tests {
         // one module
         let one = capabilities_projections(
             &ctx,
-            ProjectionsInput { module: Some("capabilities".into()), unmet: false },
+            ProjectionsInput {
+                module: Some("capabilities".into()),
+                unmet: false,
+            },
         )
         .expect("one module");
         assert!(!one.rows.is_empty());
@@ -405,7 +408,10 @@ mod tests {
         // the closure this crate ships: nothing unmet
         let unmet = capabilities_projections(
             &ctx,
-            ProjectionsInput { module: None, unmet: true },
+            ProjectionsInput {
+                module: None,
+                unmet: true,
+            },
         )
         .expect("unmet");
         assert!(unmet.rows.is_empty(), "the shipped declaration is closed");
@@ -414,9 +420,15 @@ mod tests {
         // as "this module has no capabilities"
         let err = capabilities_projections(
             &ctx,
-            ProjectionsInput { module: Some("nonesuch".into()), unmet: false },
+            ProjectionsInput {
+                module: Some("nonesuch".into()),
+                unmet: false,
+            },
         )
         .expect_err("an unknown module is refused");
-        assert!(matches!(err, CapabilityError::InvalidInput(ref m) if m.contains("nonesuch")), "{err:?}");
+        assert!(
+            matches!(err, CapabilityError::InvalidInput(ref m) if m.contains("nonesuch")),
+            "{err:?}"
+        );
     }
 }

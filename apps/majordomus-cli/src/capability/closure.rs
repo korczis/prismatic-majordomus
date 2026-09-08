@@ -188,7 +188,10 @@ pub struct Matrix {
 /// ```
 pub fn findings(registry: &CapabilityRegistry, tree: &CommandDoc) -> Vec<Finding> {
     let commands = index(tree);
-    let mut out: Vec<Finding> = registry.iter().filter_map(|c| check(c, &commands)).collect();
+    let mut out: Vec<Finding> = registry
+        .iter()
+        .filter_map(|c| check(c, &commands))
+        .collect();
     out.sort_by(|a, b| {
         (a.capability.as_str(), a.projection, a.code).cmp(&(
             b.capability.as_str(),
@@ -394,7 +397,10 @@ mod tests {
             RULE,
             "majordomus capabilities projections --unmet",
         ] {
-            assert!(shown.contains(part), "the finding does not show {part}:\n{shown}");
+            assert!(
+                shown.contains(part),
+                "the finding does not show {part}:\n{shown}"
+            );
         }
     }
 
@@ -501,7 +507,10 @@ mod tests {
         assert_eq!(r.id, "demo.ghost");
         assert_eq!(r.module, "demo");
         assert_eq!(r.kind, "query");
-        assert_eq!(r.cli, None, "a claim clap cannot answer is not shown as a command");
+        assert_eq!(
+            r.cli, None,
+            "a claim clap cannot answer is not shown as a command"
+        );
         assert!(!r.closed, "and the row says the claim is unmet");
         assert_eq!(r.http, None);
         assert_eq!(r.mcp_tool, None);
