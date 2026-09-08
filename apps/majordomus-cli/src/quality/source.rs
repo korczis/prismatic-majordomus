@@ -880,20 +880,19 @@ impl Walker<'_> {
                     });
                 }
             }
-            syn::Item::Use(u) => {
-                if exported && is_pub(&u.vis) {
-                    let mut targets = Vec::new();
-                    resolve_use(&u.tree, mod_path, String::new(), &mut targets);
-                    for target in targets {
-                        // the name the re-export offers it under: this module, then the
-                        // item's own last segment
-                        if let Some(last) = target.rsplit("::").next() {
-                            self.inv
-                                .reexport_aliases
-                                .insert(format!("{mod_path}::{last}"), target.clone());
-                        }
-                        self.inv.reexported.insert(target);
+            // only a `pub use` in an exported module carries anything out of the crate
+            syn::Item::Use(u) if exported && is_pub(&u.vis) => {
+                let mut targets = Vec::new();
+                resolve_use(&u.tree, mod_path, String::new(), &mut targets);
+                for target in targets {
+                    // the name the re-export offers it under: this module, then the
+                    // item's own last segment
+                    if let Some(last) = target.rsplit("::").next() {
+                        self.inv
+                            .reexport_aliases
+                            .insert(format!("{mod_path}::{last}"), target.clone());
                     }
+                    self.inv.reexported.insert(target);
                 }
             }
             _ => {}
