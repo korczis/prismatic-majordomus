@@ -57,3 +57,8 @@ CLAUDE.md                           merge=derived
 # platform declarations, and both carry a fingerprint of the tree they were generated from.
 docs/INSTALL.md                     merge=derived
 site/static/install.sh              merge=derived
+
+# The release metadata the site publishes: `majordomus generate distribution` writes one
+# file per release plus latest.json out of the release declarations, so two branches that
+# cut or record a release conflict here on content neither of them decides.
+site/static/releases/**             merge=derived

@@ -46,10 +46,15 @@ uncovered="$(xargs git -C "$ROOT" check-attr merge -- < "$T/artifacts.txt" | gre
 attr="$(git -C "$ROOT" check-attr merge -- lib/common.sh | sed 's/.*: //')"
 [ "$attr" != derived ] || { echo "    lib/common.sh is marked merge=derived"; exit 1; }
 
-# `just derive-merge-driver` is how a clone declares it; the recipe has to name the script
-grep -q 'derive-merge-driver' "$ROOT/justfile" || {
-  echo "    the justfile has no derive-merge-driver recipe to wire the driver"; exit 1; }
-grep -q 'merge-derived' "$ROOT/justfile" || {
+# `just derive-merge-driver` is how a clone declares it; the recipe has to name the script.
+# The recipes are spread over the justfile and the files it imports, so the question is put
+# to `just --dump` — the whole set after the imports — rather than to one file's text.
+dump="$(cd "$ROOT" && just --dump --dump-format json 2>/dev/null)"
+[ -n "$dump" ] || { echo "    just --dump produced nothing; the justfile does not parse"; exit 1; }
+printf '%s' "$dump" | jq -e '.recipes | has("derive-merge-driver")' >/dev/null 2>&1 || {
+  echo "    there is no derive-merge-driver recipe to wire the driver"; exit 1; }
+printf '%s' "$dump" | jq -r '[.recipes["derive-merge-driver"].body // [] | .. | strings] | join(" ")' \
+  | grep -q 'merge-derived' || {
   echo "    the derive-merge-driver recipe does not name scripts/merge-derived"; exit 1; }
 
 # ---------------------------------------------------------------- it resolves, in a real merge
