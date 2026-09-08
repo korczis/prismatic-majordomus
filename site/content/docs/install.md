@@ -145,7 +145,14 @@ the tool's, and no command of this project deletes them.
 
 ## Releases
 
-No release is published yet. When one is, its metadata appears at `https://korczis.github.io/prismatic-majordomus/releases/latest.json` and this table lists it.
+<div class="overflow-x-auto" tabindex="0">
+
+| Release | Published | Channel | Artifacts | Metadata |
+|---|---|---|---|---|
+| `v0.3.1` (latest) | 2026-09-08 | stable | 6 | [`v0.3.1.json`](https://korczis.github.io/prismatic-majordomus/releases/v0.3.1.json) |
+
+</div>
+
 
 
 Each release publishes one archive per supported target plus a `SHA256SUMS` file, and

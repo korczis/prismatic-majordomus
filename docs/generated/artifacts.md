@@ -59,6 +59,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `providers/agents` | `markdown` | — | the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself |
 | `providers/claude-code` | `markdown` | — | the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself |
 | `registry` | `json`, `yaml` | `majordomus/capability-registry/v1` | the canonical capability registry |
+| `release/latest` | `json` | — | the latest stable release record |
+| `release/v0.3.1` | `json` | — | the release record v0.3.1 |
 | `schemas/majordomus.adr/v1` | `json` | — | the document schema `share/schemas/majordomus/adr/adr.v1.proto` |
 | `schemas/majordomus.application/v1` | `json` | — | the document schema `share/schemas/majordomus/application/application.v1.proto` |
 | `schemas/majordomus.capture/v1` | `json` | — | the document schema `share/schemas/majordomus/capture/capture.v1.proto` |
@@ -88,7 +90,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 |---|---|---|---|---|
 | `AGENTS.md` | `providers/agents` | markdown | 3807 | `16a6f6fcc6869fb9` |
 | `CLAUDE.md` | `providers/claude-code` | markdown | 3096 | `c3ce98decbfc03c0` |
-| `docs/INSTALL.md` | `install-guide` | markdown | 9477 | `3c22ed5e2595d0b9` |
+| `docs/INSTALL.md` | `install-guide` | markdown | 9530 | `bb1ff360c4eaf84b` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
@@ -162,8 +164,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/rule.txt` | `sections/rule` | text | 335 | `e9f9b6e2c75403d1` |
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `03087ecdccd04cee` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `bdba56212ef6061e` |
-| `site/data/registry/distribution.json` | `site-distribution` | json | 2842 | `2ac359554068d8fd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1392248 | `2e7dc9b6117b6940` |
+| `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1392248 | `b0ec42dc87fa2755` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `fb5f4204da2c1cea` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `4a758ed225ba49cb` |
 | `site/static/install.sh` | `installer` | text | 28286 | `30e8f6d7c9317caa` |
+| `site/static/releases/latest.json` | `release/latest` | json | 2369 | `8331c85c5162a5b5` |
+| `site/static/releases/v0.3.1.json` | `release/v0.3.1` | json | 2369 | `8331c85c5162a5b5` |
