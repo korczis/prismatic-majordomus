@@ -1,7 +1,7 @@
 +++
 title = "A product feature is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph, the capability matrix and the website's homepage and feature pages with nothing else changed"
 description = "One Markdown file under .ai/repo/features/ with schema-valid front matter is the whole act"
-weight = 153
+weight = 154
 [extra]
 claim_id = "product-features-discovered"
 status = "guaranteed"

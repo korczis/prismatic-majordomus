@@ -68,9 +68,13 @@ expect_grep 'Install Majordomus' "$P/index.html"
 for href in $(grep -oE 'href="[^"]*/(features|profiles|guarantees|commands|why|doctrines)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
 expect_grep 'href="[^"]*/features/"' "$P/index.html"
 [ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
-# the recognition grid is the moments that declare themselves featured, and nothing else
+# The recognition grid is the moments that declare themselves featured, counted from the
+# catalogue the executable derives. It used to be counted from site/content-src/why/*.md,
+# which stopped existing when a moment became an object of the layer: the glob then matched
+# nothing, the count was one, and a bare comparison under `set -e` failed with no message.
 n_why="$(jq '[.moments[] | select(.status == "stable" and .featured)] | length' "$ROOT/site/data/registry/why.json")"
-[ "$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')" = "$n_why" ]
+n_linked="$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')"
+[ "$n_linked" = "$n_why" ] || { echo "    the homepage links $n_linked why moment(s); $n_why declare themselves featured"; exit 1; }
 # the doctrine section is the dataset's own rule list: every rule it names has its page
 for r in $(jq -r '.rules[].id' "$ROOT/site/data/registry/product.json"); do
   slug="$(jq -r --arg i "$r" '.doctrines[] | select(.id == $i) | .slug' "$ROOT/site/data/generated/doctrines.json")"

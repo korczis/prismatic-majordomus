@@ -1266,6 +1266,51 @@
       "note": "The plan changes nothing and is recomputed under the repository lock before it is applied. Git moves the directory in one rename; the container's occupant goes out to a staging path and then in; a move across filesystems is refused unless a copy is permitted, and then verified against a manifest of every entry before the original is removed. Nothing is reset, stashed, cleaned, checked out or overwritten: a destination that exists is a named conflict, a locked worktree waits, a detached one is never moved, and a session's scratch checkout is reported and moved only on request."
     },
     {
+      "id": "claim:product-features-discovered",
+      "kind": "claim",
+      "label": "A product feature is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph, the capability matrix and the website's homepage and feature pages with nothing else changed",
+      "status": "guaranteed",
+      "route": "/guarantees/product-features-discovered/",
+      "external": false,
+      "note": "Removing the file removes it from all of them, which is what a hidden registry would fail. The kind, its schema and its source class are declarations, so discovery, validation, identity, the index and the MCP resource needed no code of their own."
+    },
+    {
+      "id": "claim:product-surfaces-derived",
+      "kind": "claim",
+      "label": "Which interfaces a feature is exposed through, what stands behind it and what it answers are derived from the registries that own those facts, never authored, and a source file that writes one down is refused by its schema",
+      "status": "guaranteed",
+      "route": "/guarantees/product-surfaces-derived/",
+      "external": false,
+      "note": "A feature file holds references and editorial decisions only. The surfaces come from what its modules, commands and kinds are projected onto, the counts from the registry and the index, the moments from the why catalogue, the route from the id. The schema sets additionalProperties false, so `surfaces:` or `route:` in a feature is a validation error rather than a claim a page believes."
+    },
+    {
+      "id": "claim:product-references-resolve",
+      "kind": "claim",
+      "label": "Every reference a feature makes resolves against the registry that owns it, and one that does not is an error naming the file, the key and the nearest candidate rather than a page linking to nothing",
+      "status": "guaranteed",
+      "route": "/guarantees/product-references-resolve/",
+      "external": false,
+      "note": "A capability module, a public command or an object kind that no stable feature names is reported as a gap and shown on the matrix rather than refused: a thing the product does that the product page does not mention is what the model exists to make visible."
+    },
+    {
+      "id": "claim:product-projection-public-safe",
+      "kind": "claim",
+      "label": "The dataset the website is rendered from carries only fields an allow-list names, so a feature's prose, a machine path or a field nobody allowed cannot reach a published page",
+      "status": "guaranteed",
+      "route": "/guarantees/product-projection-public-safe/",
+      "external": false,
+      "note": "The boundary is a field-by-field copy through PUBLIC_FEATURE_FIELDS, not an exclusion that could be forgotten: a field added to the model is absent from the site until somebody names it. The test asserts no un-allow-listed key, no body, no fixture root and no temporary path; scripts/generate-site-data refuses the artifact again before rendering anything from it."
+    },
+    {
+      "id": "claim:landing-page-is-a-projection",
+      "kind": "claim",
+      "label": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed",
+      "status": "guaranteed",
+      "route": "/guarantees/landing-page-is-a-projection/",
+      "external": false,
+      "note": "scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -1388,6 +1433,13 @@
       "id": "impl:apps/majordomus-cli/src/perf.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/perf.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/product.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/product.rs",
       "route": null,
       "external": false
     },
@@ -1756,6 +1808,13 @@
       "external": false
     },
     {
+      "id": "impl:site/templates/index.html",
+      "kind": "implementation",
+      "label": "site/templates/index.html",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:test/cases/31_command_coverage.sh",
       "kind": "implementation",
       "label": "test/cases/31_command_coverage.sh",
@@ -1903,6 +1962,13 @@
       "external": false
     },
     {
+      "id": "source:docs/PRODUCT.md",
+      "kind": "source",
+      "label": "docs/PRODUCT.md",
+      "route": "/docs/product/",
+      "external": false
+    },
+    {
       "id": "source:docs/ROADMAP.md",
       "kind": "source",
       "label": "docs/ROADMAP.md",
@@ -1987,6 +2053,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cli_docs.rs"
     },
     {
+      "id": "test:apps/majordomus-cli/tests/product.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/product.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/product.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/projections.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/projections.rs",
@@ -2062,6 +2135,13 @@
       "label": "test/cases/08_no_forbidden_constructs.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
+    },
+    {
+      "id": "test:test/cases/12_site_build.sh",
+      "kind": "test",
+      "label": "test/cases/12_site_build.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/12_site_build.sh"
     },
     {
       "id": "test:test/cases/13_region_projection.sh",
@@ -2433,6 +2513,13 @@
       "label": "test/cases/97_pages_fast_path.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_pages_fast_path.sh"
+    },
+    {
+      "id": "test:test/cases/97_product_features.sh",
+      "kind": "test",
+      "label": "test/cases/97_product_features.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_product_features.sh"
     },
     {
       "id": "test:test/cases/98_why_catalogue.sh",
@@ -3146,6 +3233,31 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:product-features-discovered",
+      "target": "source:docs/PRODUCT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:product-surfaces-derived",
+      "target": "source:docs/PRODUCT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:product-references-resolve",
+      "target": "source:docs/PRODUCT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:product-projection-public-safe",
+      "target": "source:docs/PRODUCT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:landing-page-is-a-projection",
+      "target": "source:docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implemented_by"
@@ -3801,6 +3913,31 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:product-features-discovered",
+      "target": "impl:apps/majordomus-cli/src/product.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:product-surfaces-derived",
+      "target": "impl:apps/majordomus-cli/src/product.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:product-references-resolve",
+      "target": "impl:apps/majordomus-cli/src/product.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:product-projection-public-safe",
+      "target": "impl:apps/majordomus-cli/src/site.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:landing-page-is-a-projection",
+      "target": "impl:site/templates/index.html",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:distribution-canonical-model",
       "target": "test:test/cases/84_distribution_model.sh",
       "kind": "proved_by"
@@ -4453,6 +4590,31 @@
     {
       "source": "claim:worktree-migration-lossless",
       "target": "test:test/cases/96_worktree_topology.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:product-features-discovered",
+      "target": "test:test/cases/97_product_features.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:product-surfaces-derived",
+      "target": "test:apps/majordomus-cli/tests/product.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:product-references-resolve",
+      "target": "test:apps/majordomus-cli/tests/product.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:product-projection-public-safe",
+      "target": "test:apps/majordomus-cli/tests/product.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:landing-page-is-a-projection",
+      "target": "test:test/cases/12_site_build.sh",
       "kind": "proved_by"
     }
   ]
