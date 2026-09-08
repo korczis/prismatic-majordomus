@@ -1,7 +1,7 @@
 +++
 title = "The canonical policy is parsed and rejected if it contains an unknown key"
 description = ".ai/repo/policy.yaml is read by a parser that knows exactly which keys may appear at every level. A key it does not know — a typo, a field from a newer version, a field someone invented — is an error, not a silent no-op. The same rule applies to every profile file."
-weight = 20
+weight = 21
 [extra]
 claim_id = "policy-parse"
 status = "guaranteed"

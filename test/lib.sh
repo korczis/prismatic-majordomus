@@ -51,6 +51,13 @@ run_quiet() {
 # octal permission bits of a file, GNU stat first (BSD stat has no -c and fails), then BSD
 file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 
+# The SHA-256 of a file, for a case that must prove a file did not change rather than that a
+# command said it did not. sha256sum on Linux, shasum on macOS.
+sha256_of_file() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
+  else shasum -a 256 "$1" | cut -d' ' -f1; fi
+}
+
 # The Rust executable a case drives. MAJORDOMUS_BIN names a prebuilt one (CI hands the
 # artifact of its rust job to a later job this way, a person points at a release build);
 # without it the crate is built once, debug profile, and the target path is printed.
