@@ -150,6 +150,25 @@ session (under the temporary directory or `.claude/worktrees/`) is reported and 
 the session that made it. Bare repositories are refused by name: the topology is defined
 against a primary checkout.
 
+Creation is one command and removal is nobody's job, and that asymmetry has a bill. The
+decision leaves cleanup as derived state — `worktree cleanup` names what is merged and
+clean, and deletes nothing — so a worktree outlives the branch that justified it until a
+person remembers. Measured in this repository on 2026-09-08, eighteen hours after the
+topology landed: six worktrees held 78 GB in Rust `target/` directories and nine more,
+whose branches were already fully merged into the trunk, held 26 GB. The volume reached
+124 MiB free of 926 GiB, and the failure did not present as a disk failure. Three
+subsystems reported content errors instead — rules that do not resolve, a use-case
+scenario that fails with its detail written to a file that could not be written, a derive
+that succeeds and a check that then calls its output stale — and several sessions spent
+hours reading them as contention, memory pressure and flaky gates.
+
+That is the cost of the choice, not an argument against it: a tool that deleted a worktree
+because its branch merged would eventually delete work somebody had not finished, which is
+the failure this whole design refuses. But the consequence should be written down rather
+than discovered. Nothing in the topology reclaims anything, no budget is declared for the
+container, and the disk is the only thing that says stop — in a vocabulary that belongs to
+whatever subsystem happens to write next.
+
 This repository dogfooded the decision on the day it was made: thirty-two sibling
 worktrees, eleven of them dirty, were migrated by the executable in under ten seconds with
 every fingerprint equal; the exceptions were the sixteen ephemeral scratch checkouts, the

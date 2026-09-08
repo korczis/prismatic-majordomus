@@ -1,0 +1,38 @@
+id: I1201
+milestone: web-sign-in
+title: An identity provider is a declarative object, and Google and Facebook are two of them
+slug: identity-provider-kind
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Introduce the identity-provider kind: a JSON Schema, an entry in share/kinds.yaml, the generated allow-list, a directory contract under .ai/repo/identity/providers/, and the first two objects — google and facebook — each stating its issuer, its endpoints or discovery document, the scopes it is asked for, the claim that carries a stable subject, the environment variable names its client id and client secret arrive in, its display name and its order in the sign-in offer."
+why: "The provider set is expected to change, and the operator has said both of the first two may be struck. A provider that is a file is struck by deleting the file; a provider that is a match arm is struck by a release. Every other fact of this repository is already declared once and projected, and identity is not an exception to that."
+current_state: "There is no identity kind, no .ai/repo/identity directory and no notion of a provider anywhere in the layer or the executable."
+desired_state: "share/kinds.yaml carries an identity-provider kind with a schema, the allow-list is generated from that schema by majordomus generate, .ai/repo/identity/providers/ has its README chain and its two objects, and the index reports them like any other kind."
+scope:
+  - .ai/repo/identity
+  - share/kinds.yaml
+  - share/schemas
+  - share/allow
+  - share/skeleton
+non_scope:
+  - Any Rust code that reads the objects, which is I1202
+  - A client secret, a client id or any credential value in any file of the repository
+  - A provider-specific field that only one of the two objects can use
+acceptance_criteria:
+  - The schema expresses one flow shape, and both objects validate against it without a per-provider escape hatch
+  - Credentials are named, never carried: each object states the environment variable names and holds no value
+  - The directory satisfies the recursive README and front-matter doctrine of the layer
+  - The allow-list is generated from the schema by majordomus generate rather than written by hand
+  - majordomus doctor reports the new kind and both objects with no diagnostic
+validation:
+  - majordomus generate --check
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - schema_added
+  - objects_validate
+  - allow_list_generated
+risk: "A schema shaped around Google will need an escape hatch for Facebook the same day. The schema is written against the OpenID Connect flow, and any field only one provider can fill is evidence the shape is wrong."
+created_at: 2026-09-08
+updated_at: 2026-09-08

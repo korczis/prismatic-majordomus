@@ -1,0 +1,37 @@
+id: I1203
+milestone: web-sign-in
+title: One flow serves every provider, and it refuses everything it did not start
+slug: identity-flow
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Implement the authorisation-code flow with PKCE once, over the typed provider model: a start route that issues state and nonce and redirects to the provider's authorisation endpoint, a callback route that refuses a state it did not issue or that has expired, exchanges the code, verifies the issuer, the audience, the expiry and the nonce of the returned identity token, and resolves the stable subject from the claim the object names."
+why: "Two provider-specific flows are two places for a validation to be forgotten. The differences between the providers this milestone starts with are spellings of endpoints, which the objects already carry."
+current_state: "I1202 gives the providers; there is no flow, no route and no verification."
+desired_state: "Signing in with either declared provider works end to end against the real provider, and every refusal path — unknown state, replayed state, expired state, mismatched nonce, wrong issuer, absent credentials — is exercised by a test."
+scope:
+  - apps/majordomus-cli/src/identity
+  - apps/majordomus-cli/src/http
+  - apps/majordomus-cli/tests
+  - test/cases
+non_scope:
+  - Storing anything about the reader beyond the session of I1204
+  - A provider-specific branch anywhere in the flow
+depends_on:
+  - I1202
+acceptance_criteria:
+  - State and nonce are single-use, expiring, and bound to the provider they were issued for
+  - The identity token is verified for issuer, audience, expiry and nonce before any session exists
+  - A callback whose state was not issued by this server is refused without a session and without a redirect that leaks the parameters
+  - The redirect target after sign-in is validated against the surface's own origin rather than taken from the request
+  - Every refusal path has a test, and the tests run without contacting either provider
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - flow_single_implementation
+  - refusals_tested
+  - token_verified
+risk: "An open redirect and an unvalidated state are the two classic defects of this flow. Both are tested as refusals rather than assumed."
+created_at: 2026-09-08
+updated_at: 2026-09-08

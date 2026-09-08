@@ -70,7 +70,40 @@ cmd_current() {
     return 0
   fi
   printf 'pages: site/data/generated is stale — it carries input hash %s, this tree hashes to %s\n' "${have:0:12}" "${want:0:12}" >&2
-  printf '       the committed derived data is a projection of the tree it was generated from; run\n       scripts/generate-site-data and commit the result.\n' >&2
+  printf '       the committed derived data is a projection of the tree it was generated from; run\n       scripts/derive and commit the result.\n' >&2
+  return 10
+}
+
+# The second half of the same question. `scripts/derive` runs two generators over different
+# artifacts: stage B, `scripts/generate-site-data`, owns site/data/generated, which is what
+# cmd_current above compares; stages A and C, `majordomus generate`, own
+# site/data/registry/registry.json and docs/generated/artifacts.*, which it does not. A commit
+# that moves a source file and regenerates only the first half satisfied this gate and then
+# failed CI on the second, for somebody else to read as staleness they did not cause.
+#
+# The check is the executable's own `generate --check` rather than a comparison written here:
+# the staleness of a generated artifact is defined by the generator, and a second definition
+# in shell would be a second answer to the same question — and a weaker one, since it would
+# have to guess at what the generator hashes. It costs about 12 s against a hook that already
+# spends far longer in `doctor`.
+#
+# A repository without the built executable — an adopter's, or a clone before the first build
+# — skips it and says so. Skipping loudly is the point: silence here is what this gate is for.
+cmd_derived() {
+  local cli="$ROOT/bin/majordomus-cli" out rc=0
+  if [ ! -x "$cli" ]; then
+    printf 'pages: no %s; the registry half of the derived data was not checked\n' "bin/majordomus-cli" >&2
+    return 0
+  fi
+  out="$(MAJORDOMUS_NO_BUILD=1 "$cli" generate --check 2>&1)" || rc=$?
+  case "$rc" in
+    0) [ -n "${MJ_PAGES_QUIET:-}" ] || printf 'pages: the registry projections are in sync with this tree\n'
+       return 0 ;;
+    12) printf 'pages: the executable is not built, so the registry half of the derived data was not checked\n' >&2
+        return 0 ;;
+  esac
+  printf '%s\n' "$out" | grep -v '^20[0-9][0-9]-' >&2
+  printf '       the registry records every source file it indexed; a source change moves it, and\n       only `majordomus generate` writes it. Run scripts/derive and commit the result.\n' >&2
   return 10
 }
 
@@ -266,7 +299,8 @@ case "${1:-}" in
   build)       shift; cmd_build "$@" ;;
   check)       shift; cmd_check "$@" ;;
   fingerprint) shift; cmd_fingerprint "$@" ;;
-  current)     shift; cmd_current "$@" ;;
+  current)     shift; cmd_current "$@" && cmd_derived "$@" ;;
+  derived)     shift; cmd_derived "$@" ;;
   paths)       shift; cmd_paths "$@" ;;
   budget)      shift; cmd_budget "$@" ;;
   benchmark)   shift; cmd_benchmark "$@" ;;
