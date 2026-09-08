@@ -224,6 +224,22 @@ A handover records the branch and the worktree; a session resumed elsewhere deri
 worktree from the branch rather than trusting the recorded path, because the path is
 ephemeral and the branch is not.
 
+The last step is the one with no mechanism behind it. Creating a worktree is one command;
+removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes
+nothing — it names what is merged and clean and leaves the act to a person, because a tool
+that removed a worktree on the strength of a merged branch would eventually remove work
+somebody had not finished. The cost is real and was paid here on 2026-09-08, eighteen hours
+after the topology landed: fifteen worktrees between them held 104 GB of Rust `target/`
+directories, nine of those with branches already merged into the trunk, and the volume
+reached 124 MiB free. Nothing in the topology reclaims anything and no budget is declared
+for the container, so the disk is what says stop — and it says it in whatever vocabulary
+the next subsystem to fail happens to use. Three said their content was wrong. See ADR 0021
+for why the mechanism is absent rather than missing.
+
+If you hold a worktree whose branch has landed, `worktree cleanup` tells you; `git worktree
+remove <path>` and `git branch -d <branch>` are the two commands, and the `target/`
+directory inside it is usually most of what it costs.
+
 ## Enforcement
 
 Layered, and honest about what each layer can do:
