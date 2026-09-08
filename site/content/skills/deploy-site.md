@@ -58,6 +58,12 @@ curl -s https://korczis.github.io/prismatic-majordomus/ | grep -c "/commit/$(git
 
 Then open the page you changed.
 
+To read it the other way — you are looking at the live site and want to know what it is —
+`git log -1 --format='%an %s' origin/gh-pages` names the source commit and says who
+published it: `github-actions[bot]` for a push to master, a person for a hand deploy. A
+preview published with `--any-ref` stays live until the next push to master publishes over
+it, so a live site that is not master is expected rather than wrong.
+
 ### 4. Do not
 
 - Edit anything under `site/public/` or on `gh-pages` by hand: both are outputs. A wrong
