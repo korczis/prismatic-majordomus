@@ -64,6 +64,18 @@
           "command": "majordomus worktree",
           "name": "worktree",
           "route": "/docs/cli/worktree/"
+        },
+        {
+          "about": "Every command this repository can be asked to run, what running each one changes, and the surfaces it appears on",
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        },
+        {
+          "about": "Answer a shell's completion request, and print the generic adapter that asks",
+          "command": "majordomus completion",
+          "name": "completion",
+          "route": "/docs/cli/completion/"
         }
       ],
       "command": "majordomus",
@@ -9572,13 +9584,795 @@
       ],
       "route": "/docs/cli/worktree/branches/",
       "usage": "majordomus worktree branches [OPTIONS]"
+    },
+    {
+      "about": "Every command this repository can be asked to run, what running each one changes, and the surfaces it appears on",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Also discover the workflows `just` holds outside the executable",
+          "long": "workflows",
+          "name": "workflows",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "WORKFLOWS"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every command with its effect and the surfaces it appears on",
+          "command": "majordomus commands list",
+          "name": "list",
+          "route": "/docs/cli/commands/list/"
+        },
+        {
+          "about": "One command: where it is declared, what running it changes, and every spelling of it",
+          "command": "majordomus commands explain",
+          "name": "explain",
+          "route": "/docs/cli/commands/explain/"
+        },
+        {
+          "about": "The whole graph as one document",
+          "command": "majordomus commands graph",
+          "name": "graph",
+          "route": "/docs/cli/commands/graph/"
+        },
+        {
+          "about": "The graph as one surface spells it",
+          "command": "majordomus commands projection",
+          "name": "projection",
+          "route": "/docs/cli/commands/projection/"
+        },
+        {
+          "about": "Write the `just` bridge under the ignored runtime directory, when its bytes would differ",
+          "command": "majordomus commands materialise",
+          "name": "materialise",
+          "route": "/docs/cli/commands/materialise/"
+        }
+      ],
+      "command": "majordomus commands",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "commands"
+          ],
+          "command": "majordomus commands",
+          "description": "`commands` with nothing after it lists every canonical command: its identity, what running it changes, the surfaces it appears on, and its own one-line description. The list is the graph, so a command added to the declaration is in it without anything here being edited.",
+          "expectation": "exits 0; prints capabilities.list, read-only, just",
+          "id": "commands-default-list",
+          "setup": [],
+          "title": "Everything this repository can be asked to run"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "commands",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "commands"
+      ],
+      "route": "/docs/cli/commands/",
+      "usage": "majordomus commands [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Every command with its effect and the surfaces it appears on",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Also discover the workflows `just` holds outside the executable",
+          "long": "workflows",
+          "name": "workflows",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "WORKFLOWS"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands list",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "list",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus commands list --format json",
+          "description": "The same list as JSON: every node with its arguments, where its values come from, what running it changes and every spelling of it. This is what the Cockpit's palette and a shell adapter read.",
+          "expectation": "exits 0; prints one JSON document carrying /0/id, /0/projections/docs",
+          "id": "commands-list-json",
+          "setup": [],
+          "title": "The commands as one document"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "list",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "list"
+      ],
+      "route": "/docs/cli/commands/list/",
+      "usage": "majordomus commands list [OPTIONS]"
+    },
+    {
+      "about": "One command: where it is declared, what running it changes, and every spelling of it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The canonical id, `worktree.create`",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "COMMAND"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Also discover the workflows `just` holds outside the executable",
+          "long": "workflows",
+          "name": "workflows",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "WORKFLOWS"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands explain",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "explain",
+            "worktree.remove"
+          ],
+          "command": "majordomus commands explain worktree.remove",
+          "description": "One command, with where it is declared, what running it changes, and every surface it appears on — including the ones it does not, with the reason. A destructive command is on the command line and in the bridge, and is not an MCP tool, because its classification says so.",
+          "expectation": "exits 0; prints destructive, just worktree-remove, none —",
+          "id": "commands-explain-destructive",
+          "setup": [],
+          "title": "Why a command is not offered to a machine"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "explain",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "explain"
+      ],
+      "route": "/docs/cli/commands/explain/",
+      "usage": "majordomus commands explain [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "The whole graph as one document",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Also discover the workflows `just` holds outside the executable",
+          "long": "workflows",
+          "name": "workflows",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "WORKFLOWS"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands graph",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "graph"
+          ],
+          "command": "majordomus commands graph",
+          "description": "The graph as one document: its schema, the version of the executable that produced it, the fingerprint of its own content, every command and every diagnostic. The fingerprint is a function of the graph and not of the clock, so a cache keyed on it is safe.",
+          "expectation": "exits 0; prints one JSON document carrying /schema, /fingerprint, /commands/0/id",
+          "id": "commands-graph-json",
+          "setup": [],
+          "title": "The whole graph, with its fingerprint"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "graph",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "graph"
+      ],
+      "route": "/docs/cli/commands/graph/",
+      "usage": "majordomus commands graph [OPTIONS]"
+    },
+    {
+      "about": "The graph as one surface spells it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Which surface",
+          "name": "surface",
+          "positional": true,
+          "possible_values": [
+            {
+              "help": "The `just` bridge: one recipe per canonical command, forwarding its arguments",
+              "name": "just"
+            },
+            {
+              "help": "The command line",
+              "name": "cli"
+            },
+            {
+              "help": "MCP tool names",
+              "name": "mcp"
+            }
+          ],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SURFACE"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Also discover the workflows `just` holds outside the executable",
+          "long": "workflows",
+          "name": "workflows",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "WORKFLOWS"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands projection",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "projection",
+            "just"
+          ],
+          "command": "majordomus commands projection just",
+          "description": "The bridge as it is materialised: one recipe per canonical command, its description the command's own, its group its namespace, its arguments forwarded, and a confirmation on anything that changes the repository. Nothing in it is written by hand, and nothing in it calls `just`.",
+          "expectation": "exits 0; prints GENERATED FILE, capabilities-list *args:, [confirm(",
+          "id": "commands-projection-just",
+          "setup": [],
+          "title": "The `just` bridge, generated"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "projection",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "projection"
+      ],
+      "route": "/docs/cli/commands/projection/",
+      "usage": "majordomus commands projection [OPTIONS] <SURFACE>"
+    },
+    {
+      "about": "Write the `just` bridge under the ignored runtime directory, when its bytes would differ",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Also discover the workflows `just` holds outside the executable",
+          "long": "workflows",
+          "name": "workflows",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "WORKFLOWS"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands materialise",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "materialise"
+          ],
+          "command": "majordomus commands materialise",
+          "description": "Renders the `just` bridge and writes it under `.majordomus/runtime/`, which is ignored: entering a repository or listing its recipes never dirties the tree. The bytes are compared first, so an unchanged graph costs a read and no write, and the write itself is atomic — a second shell entering the repository at the same moment cannot see half a file.",
+          "expectation": "exits 0; prints bridge.just",
+          "id": "commands-materialise-bridge",
+          "setup": [],
+          "title": "The bridge on disk, written only when it changed"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "materialise",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "materialise"
+      ],
+      "route": "/docs/cli/commands/materialise/",
+      "usage": "majordomus commands materialise [OPTIONS]"
+    },
+    {
+      "about": "Answer a shell's completion request, and print the generic adapter that asks",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Answer one completion request: the words typed so far, and which one the cursor is in",
+          "command": "majordomus completion query",
+          "name": "query",
+          "route": "/docs/cli/completion/query/"
+        },
+        {
+          "about": "Print the generic adapter for one shell: it carries no command, and never needs regenerating",
+          "command": "majordomus completion script",
+          "name": "script",
+          "route": "/docs/cli/completion/script/"
+        }
+      ],
+      "command": "majordomus completion",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "completion",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "completion"
+      ],
+      "route": "/docs/cli/completion/",
+      "usage": "majordomus completion <COMMAND>"
+    },
+    {
+      "about": "Answer one completion request: the words typed so far, and which one the cursor is in",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus completion",
+          "name": "completion",
+          "route": "/docs/cli/completion/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "cli"
+          ],
+          "global": false,
+          "help": "Which command line is being completed",
+          "long": "surface",
+          "name": "surface",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "The executable's own command line",
+              "name": "cli"
+            },
+            {
+              "help": "The `just` bridge, whose recipes resolve to the same canonical commands",
+              "name": "just"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SURFACE"
+        },
+        {
+          "defaults": [
+            "0"
+          ],
+          "global": false,
+          "help": "The index, in the words after `--`, of the word being completed",
+          "long": "cursor",
+          "name": "cursor",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CURSOR"
+        },
+        {
+          "defaults": [
+            "shell"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "One candidate per line, value and description separated by a tab",
+              "name": "shell"
+            },
+            {
+              "help": "The typed answer, with the graph fingerprint it was computed from",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The words typed so far, without the program's own name",
+          "name": "words",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "WORD"
+        }
+      ],
+      "children": [],
+      "command": "majordomus completion query",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "completion",
+            "query",
+            "--surface",
+            "cli",
+            "--cursor",
+            "1",
+            "--",
+            "worktree",
+            ""
+          ],
+          "command": "majordomus completion query --surface cli --cursor 1 -- worktree ''",
+          "description": "The words typed so far and the index of the one being completed; the answer is what may follow, from the canonical graph. The same request against the `just` surface resolves the recipe to the same command and answers identically, which is why the two can never drift.",
+          "expectation": "exits 0; prints create, list",
+          "id": "completion-query-subcommands",
+          "setup": [],
+          "title": "What may be typed next"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "query",
+      "parent_route": "/docs/cli/completion/",
+      "path": [
+        "majordomus",
+        "completion",
+        "query"
+      ],
+      "route": "/docs/cli/completion/query/",
+      "usage": "majordomus completion query [OPTIONS] [WORD]"
+    },
+    {
+      "about": "Print the generic adapter for one shell: it carries no command, and never needs regenerating",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus completion",
+          "name": "completion",
+          "route": "/docs/cli/completion/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Which shell",
+          "name": "shell",
+          "positional": true,
+          "possible_values": [
+            {
+              "help": "zsh",
+              "name": "zsh"
+            },
+            {
+              "help": "bash",
+              "name": "bash"
+            }
+          ],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SHELL"
+        }
+      ],
+      "children": [],
+      "command": "majordomus completion script",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "completion",
+            "script",
+            "zsh"
+          ],
+          "command": "majordomus completion script zsh",
+          "description": "The generic adapter: it reports what has been typed and renders what comes back, and carries no command, no flag and no value of any repository. It is installed once and never regenerated, whatever is added to the executable afterwards.",
+          "expectation": "exits 0; prints #compdef, completion query",
+          "id": "completion-script-zsh",
+          "setup": [],
+          "title": "The adapter a shell installs once"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "script",
+      "parent_route": "/docs/cli/completion/",
+      "path": [
+        "majordomus",
+        "completion",
+        "script"
+      ],
+      "route": "/docs/cli/completion/script/",
+      "usage": "majordomus completion script <SHELL>"
     }
   ],
   "counts": {
-    "arguments": 425,
-    "commands": 57,
-    "examples": 63,
-    "runnable": 53
+    "arguments": 444,
+    "commands": 66,
+    "examples": 71,
+    "runnable": 61
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.2.0",

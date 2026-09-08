@@ -71,13 +71,22 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
 | [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
+| [`majordomus commands`](#majordomus-commands) | `/docs/cli/commands/` | Every command this repository can be asked to run, what running each one changes, and the surfaces it appears on |
+| [`majordomus commands list`](#majordomus-commands-list) | `/docs/cli/commands/list/` | Every command with its effect and the surfaces it appears on |
+| [`majordomus commands explain`](#majordomus-commands-explain) | `/docs/cli/commands/explain/` | One command: where it is declared, what running it changes, and every spelling of it |
+| [`majordomus commands graph`](#majordomus-commands-graph) | `/docs/cli/commands/graph/` | The whole graph as one document |
+| [`majordomus commands projection`](#majordomus-commands-projection) | `/docs/cli/commands/projection/` | The graph as one surface spells it |
+| [`majordomus commands materialise`](#majordomus-commands-materialise) | `/docs/cli/commands/materialise/` | Write the `just` bridge under the ignored runtime directory, when its bytes would differ |
+| [`majordomus completion`](#majordomus-completion) | `/docs/cli/completion/` | Answer a shell's completion request, and print the generic adapter that asks |
+| [`majordomus completion query`](#majordomus-completion-query) | `/docs/cli/completion/query/` | Answer one completion request: the words typed so far, and which one the cursor is in |
+| [`majordomus completion script`](#majordomus-completion-script) | `/docs/cli/completion/script/` | Print the generic adapter for one shell: it carries no command, and never needs regenerating |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus worktree`](#majordomus-worktree).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus worktree`](#majordomus-worktree), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion).
 
 ```text
 majordomus <COMMAND>
@@ -1811,4 +1820,214 @@ Examples:
   ```
 
   Verified: exits 0.
+
+<a id="majordomus-commands"></a>
+## `majordomus commands`
+
+Every command this repository can be asked to run, what running each one changes, and the surfaces it appears on
+
+Subcommands: [`majordomus commands list`](#majordomus-commands-list), [`majordomus commands explain`](#majordomus-commands-explain), [`majordomus commands graph`](#majordomus-commands-graph), [`majordomus commands projection`](#majordomus-commands-projection), [`majordomus commands materialise`](#majordomus-commands-materialise).
+
+```text
+majordomus commands [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--workflows` | flag | — | Also discover the workflows `just` holds outside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **Everything this repository can be asked to run** — `commands` with nothing after it lists every canonical command: its identity, what running it changes, the surfaces it appears on, and its own one-line description. The list is the graph, so a command added to the declaration is in it without anything here being edited.
+
+  ```console
+  $ majordomus commands
+  ```
+
+  Verified: exits 0; prints capabilities.list, read-only, just.
+
+<a id="majordomus-commands-list"></a>
+## `majordomus commands list`
+
+Every command with its effect and the surfaces it appears on
+
+```text
+majordomus commands list [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--workflows` | flag | — | Also discover the workflows `just` holds outside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **The commands as one document** — The same list as JSON: every node with its arguments, where its values come from, what running it changes and every spelling of it. This is what the Cockpit's palette and a shell adapter read.
+
+  ```console
+  $ majordomus commands list --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /0/id, /0/projections/docs.
+
+<a id="majordomus-commands-explain"></a>
+## `majordomus commands explain`
+
+One command: where it is declared, what running it changes, and every spelling of it
+
+```text
+majordomus commands explain [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<COMMAND>` | `<COMMAND>` | required | The canonical id, `worktree.create` |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--workflows` | flag | — | Also discover the workflows `just` holds outside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **Why a command is not offered to a machine** — One command, with where it is declared, what running it changes, and every surface it appears on — including the ones it does not, with the reason. A destructive command is on the command line and in the bridge, and is not an MCP tool, because its classification says so.
+
+  ```console
+  $ majordomus commands explain worktree.remove
+  ```
+
+  Verified: exits 0; prints destructive, just worktree-remove, none —.
+
+<a id="majordomus-commands-graph"></a>
+## `majordomus commands graph`
+
+The whole graph as one document
+
+```text
+majordomus commands graph [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--workflows` | flag | — | Also discover the workflows `just` holds outside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **The whole graph, with its fingerprint** — The graph as one document: its schema, the version of the executable that produced it, the fingerprint of its own content, every command and every diagnostic. The fingerprint is a function of the graph and not of the clock, so a cache keyed on it is safe.
+
+  ```console
+  $ majordomus commands graph
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /schema, /fingerprint, /commands/0/id.
+
+<a id="majordomus-commands-projection"></a>
+## `majordomus commands projection`
+
+The graph as one surface spells it
+
+```text
+majordomus commands projection [OPTIONS] <SURFACE>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<SURFACE>` | `just` \| `cli` \| `mcp` | required | Which surface — `just`: The `just` bridge: one recipe per canonical command, forwarding its arguments; `cli`: The command line; `mcp`: MCP tool names |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--workflows` | flag | — | Also discover the workflows `just` holds outside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **The `just` bridge, generated** — The bridge as it is materialised: one recipe per canonical command, its description the command's own, its group its namespace, its arguments forwarded, and a confirmation on anything that changes the repository. Nothing in it is written by hand, and nothing in it calls `just`.
+
+  ```console
+  $ majordomus commands projection just
+  ```
+
+  Verified: exits 0; prints GENERATED FILE, capabilities-list *args:, [confirm(.
+
+<a id="majordomus-commands-materialise"></a>
+## `majordomus commands materialise`
+
+Write the `just` bridge under the ignored runtime directory, when its bytes would differ
+
+```text
+majordomus commands materialise [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--workflows` | flag | — | Also discover the workflows `just` holds outside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **The bridge on disk, written only when it changed** — Renders the `just` bridge and writes it under `.majordomus/runtime/`, which is ignored: entering a repository or listing its recipes never dirties the tree. The bytes are compared first, so an unchanged graph costs a read and no write, and the write itself is atomic — a second shell entering the repository at the same moment cannot see half a file.
+
+  ```console
+  $ majordomus commands materialise
+  ```
+
+  Verified: exits 0; prints bridge.just.
+
+<a id="majordomus-completion"></a>
+## `majordomus completion`
+
+Answer a shell's completion request, and print the generic adapter that asks
+
+Subcommands: [`majordomus completion query`](#majordomus-completion-query), [`majordomus completion script`](#majordomus-completion-script).
+
+```text
+majordomus completion <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-completion-query"></a>
+## `majordomus completion query`
+
+Answer one completion request: the words typed so far, and which one the cursor is in
+
+```text
+majordomus completion query [OPTIONS] [WORD]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--surface` | `cli` \| `just` | `cli` | Which command line is being completed — `cli`: The executable's own command line; `just`: The `just` bridge, whose recipes resolve to the same canonical commands |
+| `--cursor` | `<CURSOR>` | `0` | The index, in the words after `--`, of the word being completed |
+| `--format` | `shell` \| `json` | `shell` | Output shape — `shell`: One candidate per line, value and description separated by a tab; `json`: The typed answer, with the graph fingerprint it was computed from |
+| `<WORD>` | `<WORD>` | — | The words typed so far, without the program's own name |
+
+Examples:
+
+- **What may be typed next** — The words typed so far and the index of the one being completed; the answer is what may follow, from the canonical graph. The same request against the `just` surface resolves the recipe to the same command and answers identically, which is why the two can never drift.
+
+  ```console
+  $ majordomus completion query --surface cli --cursor 1 -- worktree ''
+  ```
+
+  Verified: exits 0; prints create, list.
+
+<a id="majordomus-completion-script"></a>
+## `majordomus completion script`
+
+Print the generic adapter for one shell: it carries no command, and never needs regenerating
+
+```text
+majordomus completion script <SHELL>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<SHELL>` | `zsh` \| `bash` | required | Which shell — `zsh`: zsh; `bash`: bash |
+
+Examples:
+
+- **The adapter a shell installs once** — The generic adapter: it reports what has been typed and renders what comes back, and carries no command, no flag and no value of any repository. It is installed once and never regenerated, whatever is added to the executable afterwards.
+
+  ```console
+  $ majordomus completion script zsh
+  ```
+
+  Verified: exits 0; prints #compdef, completion query.
 
