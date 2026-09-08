@@ -30,13 +30,11 @@ documentation arrived the name meant two things; the rule
 | Surface | Path | Kind | Category | Offered to | Availability | Producer |
 |---|---|---|---|---|---|---|
 | The capability registry over HTTP | `/api/v1` | native-route | api | public | served-only | `capability registry` |
-| Benchmark results | `/benchmarks` | static-directory | report | public | both | `majordomus bench, rendered by majordomus web report benchmarks` |
 | The registry, rendered for a person | `/cockpit` | native-route | interface | public | served-only | `cockpit` |
 | The documentation, as this process serves it | `/docs` | static-directory | documentation | public | served-only | `scripts/site-build --serve` |
 | MCP over HTTP for attached clients | `/mcp` | native-route | protocol | internal | served-only | `mcp endpoint` |
 | The OpenAPI document of the capability registry | `/openapi.json` | native-route | api | public | served-only | `capability registry` |
 | Swagger UI over the OpenAPI document | `/swagger` | native-route | documentation | public | served-only | `http::swagger` |
-| Test results | `/tests` | static-directory | report | public | both | `bash test/run.sh + cargo test, rendered by majordomus web report tests` |
 | The site as it is deployed | `/` | static-directory | documentation | public | published-only | `scripts/site-build` |
 | This process, and everything it serves | `/` | native-route | interface | public | served-only | `web::home` |
 
