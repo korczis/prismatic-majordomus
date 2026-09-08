@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/web-topology.schema.json",
+  "title": "Web topology",
+  "description": "docs/generated/web.{json,yaml}: every web surface this repository exposes — its kind, where it is mounted, what produced it, whether it is served or published, and the routes the executable reserves for itself — resolved once and written by `majordomus generate web`.",
+  "type": "object",
+  "required": [
+    "schema",
+    "generated",
+    "generator",
+    "generated_root",
+    "reserved",
+    "surfaces"
+  ],
+  "properties": {
+    "schema": {
+      "const": "majordomus/web-topology/v1"
+    },
+    "generated": {
+      "type": "string",
+      "pattern": "^GENERATED FILE"
+    },
+    "generator": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reserved": {
+      "type": "object",
+      "description": "The routes the executable owns, so that a producer cannot claim one.",
+      "required": [
+        "home",
+        "documentation",
+        "swagger",
+        "openapi",
+        "capabilities"
+      ],
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^/"
+      }
+    },
+    "surfaces": {
+      "type": "array",
+      "description": "In route-precedence order: the order a router consults them in.",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "mount",
+          "producer",
+          "provenance",
+          "availability",
+          "visibility"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "producer": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provenance": {
+            "type": "object",
+            "description": "Where each resolved value came from — the registry, the site configuration, the filesystem or a default — one entry per value, so a surface can say why it is what it is.",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "path": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
