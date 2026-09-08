@@ -35,6 +35,7 @@ pub mod model;
 pub mod peers;
 pub mod perf;
 pub mod policy;
+pub mod product;
 pub mod proto;
 pub mod providers;
 pub mod repository;

@@ -1813,6 +1813,71 @@
       "source_route": "/docs/worktrees/",
       "command": null,
       "test_case": "96_worktree_topology"
+    },
+    {
+      "id": "product-features-discovered",
+      "claim": "A product feature is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph, the capability matrix and the website's homepage and feature pages with nothing else changed",
+      "source": "docs/PRODUCT.md",
+      "implementation": "apps/majordomus-cli/src/product.rs",
+      "test": "test/cases/97_product_features.sh",
+      "status": "guaranteed",
+      "note": "Removing the file removes it from all of them, which is what a hidden registry would fail. The kind, its schema and its source class are declarations, so discovery, validation, identity, the index and the MCP resource needed no code of their own.",
+      "responsibility": "layer",
+      "source_route": "/docs/product/",
+      "command": null,
+      "test_case": "97_product_features"
+    },
+    {
+      "id": "product-surfaces-derived",
+      "claim": "Which interfaces a feature is exposed through, what stands behind it and what it answers are derived from the registries that own those facts, never authored, and a source file that writes one down is refused by its schema",
+      "source": "docs/PRODUCT.md",
+      "implementation": "apps/majordomus-cli/src/product.rs",
+      "test": "apps/majordomus-cli/tests/product.rs",
+      "status": "guaranteed",
+      "note": "A feature file holds references and editorial decisions only. The surfaces come from what its modules, commands and kinds are projected onto, the counts from the registry and the index, the moments from the why catalogue, the route from the id. The schema sets additionalProperties false, so `surfaces:` or `route:` in a feature is a validation error rather than a claim a page believes.",
+      "responsibility": "none",
+      "source_route": "/docs/product/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/product.rs"
+    },
+    {
+      "id": "product-references-resolve",
+      "claim": "Every reference a feature makes resolves against the registry that owns it, and one that does not is an error naming the file, the key and the nearest candidate rather than a page linking to nothing",
+      "source": "docs/PRODUCT.md",
+      "implementation": "apps/majordomus-cli/src/product.rs",
+      "test": "apps/majordomus-cli/tests/product.rs",
+      "status": "guaranteed",
+      "note": "A capability module, a public command or an object kind that no stable feature names is reported as a gap and shown on the matrix rather than refused: a thing the product does that the product page does not mention is what the model exists to make visible.",
+      "responsibility": "none",
+      "source_route": "/docs/product/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/product.rs"
+    },
+    {
+      "id": "product-projection-public-safe",
+      "claim": "The dataset the website is rendered from carries only fields an allow-list names, so a feature's prose, a machine path or a field nobody allowed cannot reach a published page",
+      "source": "docs/PRODUCT.md",
+      "implementation": "apps/majordomus-cli/src/site.rs",
+      "test": "apps/majordomus-cli/tests/product.rs",
+      "status": "guaranteed",
+      "note": "The boundary is a field-by-field copy through PUBLIC_FEATURE_FIELDS, not an exclusion that could be forgotten: a field added to the model is absent from the site until somebody names it. The test asserts no un-allow-listed key, no body, no fixture root and no temporary path; scripts/generate-site-data refuses the artifact again before rendering anything from it.",
+      "responsibility": "none",
+      "source_route": "/docs/product/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/product.rs"
+    },
+    {
+      "id": "landing-page-is-a-projection",
+      "claim": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed",
+      "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+      "implementation": "site/templates/index.html",
+      "test": "test/cases/12_site_build.sh",
+      "status": "guaranteed",
+      "note": "scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository.",
+      "responsibility": "none",
+      "source_route": "/docs/github-pages-architecture/",
+      "command": null,
+      "test_case": "12_site_build"
     }
   ]
 }

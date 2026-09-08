@@ -12,6 +12,9 @@ pages="$(find "$out" -name '*.html')"
 bad=0
 for f in $pages; do
   rel="${f#"$out"/}"
+  # a route that moved is published as Zola's alias stub: a title, a meta refresh and a
+  # script, and deliberately none of a page's landmarks. It is a redirect, not a page.
+  grep -q '<title>Redirect</title>' "$f" && continue
   # 1. viewport meta on every page
   grep -q '<meta name="viewport" content="width=device-width, initial-scale=1' "$f" || { echo "    $rel: no viewport meta"; bad=1; }
   # 2. every <pre> sits directly inside an overflow-x-auto wrapper, so long lines scroll

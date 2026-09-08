@@ -1,0 +1,109 @@
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{#- Every feature of the product, from data/registry/product.json. This template names no
+    feature, no module, no command and no interface: the cards are the features the layer
+    declares, the marks are what the executable derived from each one's references, and the
+    filters are built from the dataset's own areas and surfaces (ADR 23). -#}
+{%- set model = load_data(path="data/registry/product.json") -%}
+{%- set public = [f for f in model.features if f.status != "draft"] -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  {% include "partials/breadcrumb.html" %}
+  <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1>
+  <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
+  <nav aria-label="Ways into the product" class="mt-6 flex flex-wrap gap-2 text-sm">
+    <a href="#features" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse {{ public | length }} features</a>
+    <a href="{{ get_url(path='/features/matrix/', trailing_slash=true) }}" class="rounded-base border border-brand bg-brand-softer px-3 py-1.5 font-medium text-fg-brand-strong hover:bg-neutral-secondary-medium">Every feature against every interface</a>
+    <a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">The problems these answer</a>
+  </nav>
+</div></div>
+
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  {#- ------------------------------------------------------------------ interfaces -#}
+  <section aria-labelledby="interfaces">
+    <h2 id="interfaces" class="text-2xl font-bold tracking-tight text-heading">One registry, every interface</h2>
+    <p class="mt-2 max-w-3xl text-body">A feature is on an interface because a capability module, a shell command or an object kind it names is projected there. The number under each is counted from that, at build time.</p>
+    <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {%- for s in model.surfaces %}
+      <li><a href="{{ base }}{{ s.route }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ s.id }}</span>
+        <span class="mt-1 text-base font-semibold text-heading">{{ s.title }}</span>
+        <span class="mt-auto pt-3 font-mono text-2xl font-bold text-fg-brand">{{ s.features }}</span>
+        <span class="text-xs text-body">features exposed here</span>
+      </a></li>
+      {%- endfor %}
+    </ul>
+  </section>
+
+  {#- ------------------------------------------------------------------- the cards -#}
+  <section id="features" class="mt-14 scroll-mt-24" aria-labelledby="features-h">
+    <h2 id="features-h" class="text-2xl font-bold tracking-tight text-heading">What the product is</h2>
+    <p class="mt-2 max-w-3xl text-body">One card per feature file under the layer. The words are editorial; every mark, count and link beside them is derived from what that file names.</p>
+    <ol class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {%- for f in public %}
+      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="{{ base }}{{ f.route }}" class="text-lg font-semibold tracking-tight text-heading hover:text-fg-brand hover:underline">{{ f.title }}</a>
+        </p>
+        <p class="mt-2 text-sm leading-relaxed text-body">{{ f.summary }}</p>
+        <div class="mt-4">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
+        <dl class="mt-3 flex flex-wrap gap-x-4 gap-y-1 font-mono text-xs text-body-subtle">
+          {%- if f.counts.capabilities > 0 %}<div class="flex gap-1"><dt>capabilities</dt><dd class="text-heading">{{ f.counts.capabilities }}</dd></div>{% endif -%}
+          {%- if f.counts.objects > 0 %}<div class="flex gap-1"><dt>objects</dt><dd class="text-heading">{{ f.counts.objects }}</dd></div>{% endif -%}
+          {%- if f.counts.rules > 0 %}<div class="flex gap-1"><dt>rules</dt><dd class="text-heading">{{ f.counts.rules }}</dd></div>{% endif -%}
+          {%- if f.counts.moments > 0 %}<div class="flex gap-1"><dt>moments</dt><dd class="text-heading">{{ f.counts.moments }}</dd></div>{% endif -%}
+        </dl>
+        <a href="{{ base }}{{ f.route }}" class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline">What it is, and what it does not do →</a>
+      </li>
+      {%- endfor %}
+    </ol>
+  </section>
+
+  {#- ------------------------------------------------------------------- the graph -#}
+  <section class="mt-14" aria-labelledby="graph-h">
+    <h2 id="graph-h" class="text-2xl font-bold tracking-tight text-heading">The product, composed</h2>
+    {%- set graph = load_data(path="data/registry/product-graph.json") -%}
+    {%- set graph_id = "product" -%}
+    {%- set graph_rings = "feature,module,command,kind,surface" -%}
+    {%- set graph_label = graph.description -%}
+    {% include "partials/graph.html" %}
+  </section>
+
+  {#- --------------------------------------------------------------- the providers -#}
+  <section class="mt-14" aria-labelledby="providers-h">
+    <h2 id="providers-h" class="text-2xl font-bold tracking-tight text-heading">The tools this answers</h2>
+    <p class="mt-2 max-w-3xl text-body">The set is the adapters the distribution ships. What this repository does with each — the instruction files its policy renders, the client configuration at its root — is read from the policy and the tree, never listed here.</p>
+    <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {%- for p in model.providers %}
+      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
+        <span class="text-base font-semibold text-heading">{{ p.title }}</span>
+        <code class="mt-1 font-mono text-xs text-body-subtle">{{ p.id }}</code>
+        {%- if p.bootstraps | length %}
+        <ul class="mt-3 space-y-1">
+          {%- for b in p.bootstraps %}<li class="break-all font-mono text-xs text-body">{{ b.target }}{% if b.always_loaded %} <span class="text-body-subtle">· always loaded</span>{% endif %}</li>{% endfor -%}
+        </ul>
+        {%- endif %}
+        {%- if p.client_config %}<p class="mt-2 break-all font-mono text-xs text-body-subtle">{{ p.client_config }}</p>{% endif -%}
+        {%- if p.hooks | length %}<p class="mt-2 font-mono text-xs text-body-subtle">{{ p.hooks | length }} hook(s) wired</p>{% endif -%}
+      </li>
+      {%- endfor %}
+    </ul>
+  </section>
+
+  {#- ------------------------------------------------------------------ provenance -#}
+  <p class="mt-14 border-t border-default pt-6 text-sm text-body-subtle">
+    Every fact on this page came from <code class="font-mono text-heading">majordomus product list</code>,
+    <code class="font-mono text-heading">majordomus product matrix</code> and
+    <code class="font-mono text-heading">majordomus product providers</code> — the same answers this
+    repository serves over HTTP and over MCP. <a href="{{ get_url(path='/docs/product/', trailing_slash=true) }}" class="font-medium text-fg-brand underline">How that derivation works →</a>
+  </p>
+</div>
+{% endblock content %}
+{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}
