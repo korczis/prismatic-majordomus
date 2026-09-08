@@ -195,6 +195,45 @@ a tag that has no release behind it is the other, and only before anyone can hav
 Until one of those happens the advertised install command is broken for everyone, and
 `installer-live` below is what says so.
 
+### When a release fails partway
+
+A release changes things the world can see, and it can fail after some of them have changed.
+Rerunning the workflow for the same tag is the supported recovery, and it is safe at every
+stage. What "safe" means is declared in [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml)
+under `rerun:` and implemented in the publish job:
+
+* **the assets on an existing release are the release.** If the tag already has a GitHub
+  release, the rerun downloads its published assets and discards its own rebuild. The record
+  is evidence of what a user downloads, and rebuilds are not bit-identical (see
+  *Reproducibility* below), so recording this run's bytes would state digests nothing serves.
+* **the metadata commit is idempotent.** A rerun that finds the record and its projections
+  already committed pushes nothing and succeeds.
+* **smoke is never skipped.** Both paths end in the same public installation test, so a
+  rerun proves the same external contract a first run does.
+
+Stage by stage:
+
+| Failed at | Visible outside? | Rerun | Cleanup |
+|---|---|---|---|
+| `plan` | no | yes | none — no artifact was built |
+| `build` | no | yes | none — nothing was uploaded |
+| `publish`, before the release exists | no | yes | none |
+| `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
+| `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
+| `pages` | yes — the record is committed but not served | rerun the **pages** workflow, or push any commit | none |
+| `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
+
+The one case a rerun cannot repair is a release that exists and publishes no archive — the
+assets cannot be reconstructed from a tag. The run stops and names the command that clears
+the way:
+
+```bash
+gh release delete v0.3.0 --yes    # then rerun the workflow
+```
+
+Nothing here needs the tag to be moved. A tag that points at the wrong commit is a different
+problem, and the answer to it is a new version, not a moved tag.
+
 ### Testing it without publishing
 
 ```bash
@@ -277,6 +316,17 @@ The inputs to an artifact are recorded rather than claimed: the tag, the target 
 commit and the build time go into `RELEASE.json` inside every archive, and the commit is
 compiled into the executable by `build.rs`. The archive itself is packed with entries in
 sorted order.
+
+Every archive carries each path exactly once, and carries nothing but regular files and
+directories: no hard link, no symlink, no device node. `scripts/release-package` checks that
+of the archive it has just written and deletes it rather than return a violating one, and
+`scripts/release-verify` checks it again of the archive it is handed. Both exist because
+release `v0.2.0` was never published: the packer passed a complete file list to a `tar` that
+also recursed into it, every path was archived twice, GNU tar wrote the second copy of each
+as a hard link, and the verifier — correctly — refused all 931 of them. There is deliberately
+no fallback in the packer: an archive packed differently from the one that was asked for is
+not the archive anything verified. `test/cases/87b_release_archive_shape.sh` reproduces that
+packer with a `tar` shim and proves the guard stops it.
 
 Bit-identical rebuilds are not claimed: that needs a reproducible compiler invocation
 (`SOURCE_DATE_EPOCH`, a pinned toolchain version, no absolute paths in debug info), and the

@@ -169,6 +169,70 @@ pub struct ReleaseArtifactView {
     pub url: String,
 }
 
+/// The state of one check in the installability report. Three states and no more: a check
+/// either holds, does not, or could not be made from what this process can see.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum CheckState {
+    /// The check holds.
+    Ok,
+    /// The check does not hold, and the public installation is affected.
+    Failed,
+    /// The check could not be made here; it says nothing either way.
+    Unknown,
+}
+
+/// One check: what was asked, what was seen, and — when it does not hold — why, and the
+/// command that changes it. The `cause` and `next` fields exist so that a report is
+/// actionable without a second document; a check that fails without naming its remedy is
+/// a diagnostic nobody can act on.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct InstallCheck {
+    /// A short stable name: `model`, `version`, `targets`, `release`, `artifacts`, `metadata`.
+    pub id: String,
+    /// Whether it holds.
+    pub state: CheckState,
+    /// What was observed, in one line.
+    pub observed: String,
+    /// Why it does not hold. Absent when it does.
+    pub cause: Option<String>,
+    /// The command or action that would change it. Absent when there is nothing to do.
+    pub next: Option<String>,
+}
+
+/// Whether the advertised one-line installation works right now, and if not, what is missing.
+///
+/// This answers the operator's actual question — *can a machine that has never seen this
+/// project install it with the published command?* — from local state alone. It performs no
+/// network access: a repository can be offline and this still answers, because everything it
+/// needs is the distribution model and the release records the repository itself carries.
+/// What it cannot see it reports as `unknown` rather than guessing; the public half of the
+/// question is answered by the release workflow's smoke phase, which installs from the
+/// published URL on every native runner and is the only thing that proves the public path.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct InstallabilityReport {
+    /// True when every check holds: a stable release is recorded and complete.
+    pub installable: bool,
+    /// One line for a person: what the state is, in the project's own terms.
+    pub summary: String,
+    /// The version this tree would release.
+    pub local_version: String,
+    /// The tag an unpinned installation resolves to, when a stable release is recorded.
+    pub stable_tag: Option<String>,
+    /// How many targets a release must publish for that release to be complete.
+    pub required_targets: usize,
+    /// How many of them the stable release actually publishes.
+    pub published_artifacts: usize,
+    /// The command a person would run, whether or not it currently works.
+    pub install_command: String,
+    /// Where the installer is served.
+    pub installer_url: String,
+    /// Where the stable pointer is served.
+    pub latest_url: String,
+    /// Every check, in the order they are worth reading.
+    pub checks: Vec<InstallCheck>,
+}
+
 /// The model this process was started with, or the reason there is none.
 fn model(ctx: &Context) -> Result<&Model, CapabilityError> {
     ctx.index.distribution.as_ref().ok_or_else(|| {
@@ -295,6 +359,168 @@ fn artifact(
     })
 }
 
+/// Whether the published one-line installation works, from what this repository can see.
+///
+/// The checks are ordered the way the pipeline is: the model must be valid before a target
+/// list means anything, targets must exist before a release can be complete, a release must
+/// be recorded before metadata can be published, and the metadata must agree with the model
+/// before an installer can use it. The first failure is the one that matters, and the
+/// summary names it; the rest are still reported, because an operator reading this wants the
+/// whole shape and not one line at a time.
+fn status(ctx: &Context, _: Empty) -> Result<InstallabilityReport, CapabilityError> {
+    let m = model(ctx)?;
+    let records = Releases::from_index(&ctx.index).map_err(CapabilityError::Internal)?;
+    let required = m.published().count();
+    let mut checks = Vec::new();
+
+    // The model itself. `findings` is the same function `distribution validate` reports and
+    // the release workflow refuses a tag over; this asks it rather than restating any of it.
+    let model_findings = records.findings(m);
+    let model_ok = required > 0;
+    checks.push(InstallCheck {
+        id: "model".into(),
+        state: if model_ok {
+            CheckState::Ok
+        } else {
+            CheckState::Failed
+        },
+        observed: format!(
+            "{} declared target(s), {required} published",
+            m.targets.len()
+        ),
+        cause: (!model_ok)
+            .then(|| "the model publishes no target, so a release could build nothing".into()),
+        next: (!model_ok)
+            .then(|| "declare a target with `status: supported` in share/distribution.yaml".into()),
+    });
+
+    // The version this tree would release. It is the crate's, compiled in, so it is the same
+    // string the released executable would print.
+    let local_version = crate::VERSION.to_string();
+    checks.push(InstallCheck {
+        id: "version".into(),
+        state: CheckState::Ok,
+        observed: format!("this tree releases v{local_version}"),
+        cause: None,
+        next: None,
+    });
+
+    // A stable release, or none. This is the check that was failing while the public
+    // installer answered "no stable release is currently published".
+    let latest = records.latest_stable();
+    let stable_tag = latest.map(|r| r.tag.clone());
+    checks.push(InstallCheck {
+        id: "release".into(),
+        state: if latest.is_some() {
+            CheckState::Ok
+        } else {
+            CheckState::Failed
+        },
+        observed: match &stable_tag {
+            Some(t) => format!("the stable channel resolves to {t}"),
+            None => format!(
+                "no stable release is recorded ({} record(s) in total)",
+                records.releases.len()
+            ),
+        },
+        cause: latest.is_none().then(|| {
+            "there is no release record for the stable channel, so nothing derives the public \
+             metadata an unpinned installation reads"
+                .into()
+        }),
+        next: latest
+            .is_none()
+            .then(|| format!("git tag v{local_version} && git push origin v{local_version}")),
+    });
+
+    // Completeness: a release is all of its supported targets or it is not a release.
+    let published_artifacts = latest.map_or(0, |r| r.artifacts.len());
+    checks.push(InstallCheck {
+        id: "artifacts".into(),
+        state: match latest {
+            None => CheckState::Unknown,
+            Some(_) if published_artifacts >= required => CheckState::Ok,
+            Some(_) => CheckState::Failed,
+        },
+        observed: match latest {
+            None => "no release to count artifacts for".into(),
+            Some(_) => format!("{published_artifacts} of {required} required artifact(s)"),
+        },
+        cause: latest
+            .filter(|_| published_artifacts < required)
+            .map(|_| "the stable release does not publish every target the model requires; a partial release is not a release".into()),
+        next: latest
+            .filter(|_| published_artifacts < required)
+            .map(|_| "withdraw the record (yanked: true) and release again; the pipeline refuses to publish a partial release, so a record like this was not written by it".into()),
+    });
+
+    // Whether every record agrees with the model. A record that disagrees renders metadata
+    // the installer would refuse, so this is part of installability and not merely of hygiene.
+    checks.push(InstallCheck {
+        id: "metadata".into(),
+        state: if model_findings.is_empty() {
+            CheckState::Ok
+        } else {
+            CheckState::Failed
+        },
+        observed: if model_findings.is_empty() {
+            format!("{} record(s) agree with the model", records.releases.len())
+        } else {
+            format!(
+                "{} finding(s): {}",
+                model_findings.len(),
+                model_findings.join("; ")
+            )
+        },
+        cause: (!model_findings.is_empty()).then(|| {
+            "a release record states something the distribution model does not derive".into()
+        }),
+        next: (!model_findings.is_empty()).then(|| "majordomus distribution validate".into()),
+    });
+
+    // The public half is deliberately not guessed at. Nothing here reaches the network, so
+    // the only honest thing to say about the served bytes is who proves them.
+    checks.push(InstallCheck {
+        id: "public".into(),
+        state: CheckState::Unknown,
+        observed: "not checked here; this report reaches no network".into(),
+        cause: None,
+        next: Some(format!(
+            "curl -fsSL {} | head -1",
+            m.release_url(crate::distribution::release::LATEST)
+        )),
+    });
+
+    let installable = checks.iter().all(|c| c.state != CheckState::Failed);
+    let summary = if installable {
+        match &stable_tag {
+            Some(t) => format!(
+                "{t} is recorded, complete and consistent; the published command installs it"
+            ),
+            None => "installable".into(),
+        }
+    } else {
+        checks
+            .iter()
+            .find(|c| c.state == CheckState::Failed)
+            .and_then(|c| c.cause.clone())
+            .unwrap_or_else(|| "the published installation command does not currently work".into())
+    };
+
+    Ok(InstallabilityReport {
+        installable,
+        summary,
+        local_version,
+        stable_tag,
+        required_targets: required,
+        published_artifacts,
+        install_command: m.install_command(),
+        installer_url: m.installer_url(),
+        latest_url: m.release_url(crate::distribution::release::LATEST),
+        checks,
+    })
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -317,6 +543,21 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["distribution", "install", "introspection"],
                 handler: distribution,
+            },
+            capability! {
+                id: "distribution.status",
+                title: "Whether the published installation works",
+                description: "Whether a machine that has never seen this project can install it right now with the advertised one-line command, and when it cannot, which link in the chain is missing and what changes it. Derived from the distribution model and the release records alone: it reaches no network, so it is as fast as any other local query and answers offline. The served bytes are proved by the release pipeline's smoke phase, not guessed at here.",
+                input: Empty,
+                output: InstallabilityReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_install_status"),
+                    http: get("/api/v1/distribution/status"),
+                    cli: Some(CliExposure { path: vec!["distribution".into(), "status".into()] }),
+                },
+                tags: ["distribution", "install", "release", "diagnostics"],
+                handler: status,
             },
             capability! {
                 id: "distribution.releases",
@@ -385,6 +626,11 @@ mod tests {
                 "distribution.model",
                 "majordomus_distribution",
                 "/api/v1/distribution",
+            ),
+            (
+                "distribution.status",
+                "majordomus_install_status",
+                "/api/v1/distribution/status",
             ),
             (
                 "distribution.releases",

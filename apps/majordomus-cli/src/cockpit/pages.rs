@@ -10,8 +10,8 @@
 use serde_json::{json, Value};
 
 use crate::capability::builtin::{
-    ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
-    ObjectList, ObjectSummary, Record, RepositoryReport,
+    ArtifactReport, CheckState, Continuity, DirectoryReport, DirectoryState, GraphList, Health,
+    HealthStatus, InstallabilityReport, ObjectList, ObjectSummary, Record, RepositoryReport,
 };
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
@@ -288,10 +288,70 @@ pub fn overview(ctx: &Context) -> Page {
             .child(statistics)
             .child(identity)
             .child(health_card)
+            .children(distribution_card(ctx).into_iter().collect::<Vec<_>>())
             .child(kinds)
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
+}
+
+/// The distribution card: whether the command the README advertises works right now.
+///
+/// It asks `distribution.status`, which is the same capability the command line, the HTTP
+/// route and the MCP tool answer from, so no number here is computed twice and none is
+/// written down. A repository that carries no distribution model gets no card rather than
+/// a card full of dashes.
+fn distribution_card(ctx: &Context) -> Option<El> {
+    let report: InstallabilityReport = ask(ctx, "distribution.status", json!({})).ok()?;
+    let verdict = if report.installable {
+        badge("ok", "healthy")
+    } else {
+        badge("fail", "blocked")
+    };
+    let mut rows = vec![
+        (
+            "Local version",
+            Node::Element(mono(format!("v{}", report.local_version))),
+        ),
+        (
+            "Stable release",
+            Node::Element(mono(
+                report.stable_tag.clone().unwrap_or_else(|| "none".into()),
+            )),
+        ),
+        (
+            "Artifacts",
+            Node::Element(mono(format!(
+                "{}/{}",
+                report.published_artifacts, report.required_targets
+            ))),
+        ),
+        ("Public install", Node::Element(verdict)),
+    ];
+    // Why, and what to do about it — the same cause and next action every other projection
+    // of this capability shows, rather than a second wording of them here.
+    if !report.installable {
+        if let Some(c) = report.checks.iter().find(|c| c.state == CheckState::Failed) {
+            if let Some(cause) = &c.cause {
+                rows.push(("Reason", Node::Element(el("span").text(cause))));
+            }
+            if let Some(next) = &c.next {
+                rows.push(("Next", Node::Element(mono(next))));
+            }
+        }
+    }
+    Some(card_with(
+        "Distribution",
+        link(
+            "/cockpit/capabilities/distribution.status",
+            "distribution.status",
+        ),
+        el("div").child(facts(rows)).child(
+            el("p")
+                .class("mj-note")
+                .child(mono(&report.install_command)),
+        ),
+    ))
 }
 
 fn health_badge(status: HealthStatus) -> El {

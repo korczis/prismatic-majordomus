@@ -207,6 +207,8 @@ pub struct DistributionArgs {
 pub enum DistributionCommand {
     /// The model: the install command, where an installation goes, and every declared target
     Show,
+    /// Whether the advertised one-line installation works right now, and what is missing when it does not
+    Status,
     /// Every invariant of the model and of the release records; exit 10 with each violation named
     Validate,
     /// Every declared target, one line each, with the artifact name it derives
@@ -1211,6 +1213,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["distribution", "artifact", "--target", "aarch64-apple-darwin", "--tag", "v0.2.0", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/name", "/root", "/url"]),
+        }],
+    },
+    CommandExamples {
+        command: "distribution status",
+        examples: &[ExampleDoc {
+            id: "distribution-status",
+            title: "Whether the published one-line installation works right now",
+            description: "The operator's question — *can a machine that has never seen this project install it with the advertised command?* — answered from the distribution model and the release records, without touching the network. Each check names what was observed; a failing one names its cause and the command that changes it. Shown here in a repository that has published nothing, where the answer is no and the exit code is 10, which is what makes it usable as a check rather than as prose. `distribution validate` is the gate over the model itself; this is the gate over the state a user meets.",
+            argv: &["distribution", "status"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

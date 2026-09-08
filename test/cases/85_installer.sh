@@ -148,7 +148,10 @@ cp "$T/latest.good" "$FIX/releases/latest.json"
 out="$(install_run --version "v$VERSION")"
 printf '%s\n' "$out" | grep -q "is already installed" || { echo "    a pinned install of the installed version did not say so: $out"; exit 1; }
 out="$(install_run --version "v0.0.1" || true)"
-printf '%s\n' "$out" | grep -q "no release metadata for" || { echo "    a version that was never published was not named: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "no release v0.0.1 is published" || { echo "    a version that was never published was not named: $out"; exit 1; }
+# a 404 is the project's answer and is said as one; a transport failure is not collapsed into it
+printf '%s\n' "$out" | grep -q "HTTP 404" || { echo "    the pinned miss did not distinguish a 404 from a failure to reach: $out"; exit 1; }
+printf '%s\n' "$out" | grep -qv "could not be retrieved" || { echo "    a 404 was reported as a retrieval failure: $out"; exit 1; }
 
 # --- an upgrade, and a refused downgrade ------------------------------------------------------------
 older="0.0.9"
@@ -178,7 +181,42 @@ chmod 700 "$T/readonly"
 # --- a release that does not exist at all ---------------------------------------------------------------
 out="$(env HOME="$T/other" MAJORDOMUS_RELEASE_BASE_URL="$HTTP_BASE/nothing-here" MAJORDOMUS_INSECURE_BASE_URL=1 \
         sh "$ROOT/site/static/install.sh" 2>&1 || true)"
-printf '%s\n' "$out" | grep -q "no stable release is published yet" || { echo "    a missing release was not named: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "no stable release is currently published" || { echo "    a missing release was not named: $out"; exit 1; }
+
+# --- the installer is published and the release is not: the v0.2.0 state, exactly ---------------------------
+# For a day and a half this was the repository's public answer. install.sh was served, every
+# other release URL was a 404, and the one-line command in the README ended in a diagnostic.
+# The behaviour is correct and stays that way: the run must fail, say which of the two things
+# is missing, and leave the installation that was already there working and byte-identical.
+before_launcher="$(sha256_of_file "$BIN/majordomus")"
+before_tree="$(ls "$HOMEDIR/.local/share/majordomus/versions")"
+mv "$FIX/releases/latest.json" "$T/latest.withheld"
+rc=0
+out="$(install_run)" || rc=$?
+mv "$T/latest.withheld" "$FIX/releases/latest.json"
+[ "$rc" != 0 ] || { echo "    a missing latest.json exited 0"; exit 1; }
+printf '%s\n' "$out" | grep -q "no stable release" \
+  || { echo "    a withheld latest.json was not named as a missing release: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "Nothing was installed or replaced" \
+  || { echo "    the failure did not state that nothing was replaced: $out"; exit 1; }
+# and the promise in that sentence is true of the filesystem, not only of the text
+[ "$(sha256_of_file "$BIN/majordomus")" = "$before_launcher" ] \
+  || { echo "    the launcher changed although nothing was supposed to be replaced"; exit 1; }
+[ "$(ls "$HOMEDIR/.local/share/majordomus/versions")" = "$before_tree" ] \
+  || { echo "    the installed versions changed although nothing was supposed to be replaced"; exit 1; }
+[ "$("$BIN/majordomus" version)" = "majordomus $VERSION" ] \
+  || { echo "    the installation that was there no longer runs"; exit 1; }
+
+# --- and with the metadata back, the same command installs ---------------------------------------------------
+# The complement of the case above, on the same fixture: the only thing that changed is that
+# releases/latest.json exists again.
+rm -rf "$T/clean"; mkdir -p "$T/clean"
+out="$(env HOME="$T/clean" MAJORDOMUS_RELEASE_BASE_URL="$HTTP_BASE" MAJORDOMUS_INSECURE_BASE_URL=1 \
+        sh "$ROOT/site/static/install.sh" 2>&1)" \
+  || { echo "    the installer failed with the metadata in place: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "installed successfully" || { echo "    the clean install did not report success: $out"; exit 1; }
+[ "$("$T/clean/.local/bin/majordomus" version)" = "majordomus $VERSION" ] \
+  || { echo "    the clean install did not report $VERSION"; exit 1; }
 
 # --- nothing was left behind ------------------------------------------------------------------------------
 find "$HOMEDIR/.local/share/majordomus" -maxdepth 1 -name '.staging.*' | grep -q . \

@@ -103,6 +103,36 @@ mkdir -p "$out"
 # writes the second copy as a hard link, which release-verify refuses by name, and bsdtar
 # writes it as a second regular entry, which it does not. Both are wrong; one of them is
 # also invisible on the machine most of this is written on.
-tar -czf "$out/$archive" -C "$stage" --no-recursion -T "$stage/.entries" 2>/dev/null \
-  || tar -czf "$out/$archive" -C "$stage" "$rootdir"
+#
+# There is deliberately no fallback. An earlier version ended this line with
+# `2>/dev/null || tar -czf "$out/$archive" -C "$stage" "$rootdir"`, and that is the whole
+# history of release v0.2.0: the first form was not yet passing --no-recursion, GNU tar
+# recursed over the list, wrote 931 duplicate members as hard links, release-verify refused
+# every one of them, fail-fast cancelled the other five targets, and nothing was ever
+# published. A fallback that silently produces a different archive than the one that was
+# asked for is not resilience; it is a way to ship the archive nobody verified. If tar
+# cannot pack the list it was given, the release stops here.
+tar -czf "$out/$archive" -C "$stage" --no-recursion -T "$stage/.entries" \
+  || die "tar could not pack the staged tree; there is no fallback, because a differently packed archive is not the one that was verified" 10
+
+# The structural contract of the archive, checked where it is written rather than only where
+# it is verified: one entry per path, and every entry a regular file or a directory. Both
+# hold by construction from the list above — which is exactly why a violation means the
+# packer misbehaved, and why finding out here costs a second instead of a release.
+listing="$stage/.listing"
+tar -tzvf "$out/$archive" > "$listing" || die "the archive just written does not read back" 10
+irregular="$(sed -n '/^[^-d]/p' "$listing" | head -n 3)"
+if [ -n "$irregular" ]; then
+  rm -f "$out/$archive"
+  printf '%s\n' "$irregular" | sed 's/^/  /' >&2
+  die "the archive carried an entry that is neither a regular file nor a directory (shown above)" 10
+fi
+packed="$(sed 's/^.*[0-9][0-9]:[0-9][0-9] //' "$listing" | sed 's:/$::')"
+duplicated="$(printf '%s\n' "$packed" | LC_ALL=C sort | uniq -d | head -n 3)"
+if [ -n "$duplicated" ]; then
+  rm -f "$out/$archive"
+  printf '%s\n' "$duplicated" | sed 's/^/  /' >&2
+  die "the archive carried a path more than once (shown above); the packer recursed over its own list" 10
+fi
+
 printf '%s\n' "$out/$archive"
