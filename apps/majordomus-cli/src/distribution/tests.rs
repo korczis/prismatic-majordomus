@@ -171,6 +171,7 @@ fn sample_release(model: &Model, tag: &str, channel: Channel) -> Release {
         published_at: "2026-01-01T00:00:00Z".into(),
         notes_url: None,
         yanked: false,
+        required_targets: Some(model.published().map(|t| t.id.clone()).collect()),
         artifacts: model
             .published()
             .map(|t| {
@@ -514,4 +515,80 @@ fn the_report_never_states_a_url_or_a_command_of_its_own() {
     assert_eq!(r.installer_url, model.installer_url());
     assert_eq!(r.latest_url, model.release_url(release::LATEST));
     assert_eq!(r.local_version, crate::VERSION);
+}
+
+// ---------------------------------------------------------------- completeness in time
+//
+// A release is complete over the set it was published against, not over the model as it
+// stands now. The distinction is invisible until the day someone adds a platform, and then
+// it is the difference between one edit and every historical record turning invalid.
+
+#[test]
+fn adding_a_target_does_not_make_a_published_release_incomplete() {
+    let model = real_model();
+    let release = sample_release(&model, "v0.3.1", Channel::Stable);
+    assert_eq!(release.findings(&model), Vec::<String>::new());
+
+    // the model grows a platform, as `share/distribution.yaml` may on any day
+    let mut later = real_model();
+    let mut added = later.targets[0].clone();
+    added.id = "linux-riscv64-gnu".into();
+    added.rust_target = "riscv64gc-unknown-linux-gnu".into();
+    later.targets.push(added);
+    assert_eq!(
+        later.published().count(),
+        model.published().count() + 1,
+        "the fixture must actually publish one more target"
+    );
+
+    // v0.3.1 cannot grow a riscv64 artifact, and is not asked to
+    assert_eq!(
+        release.findings(&later),
+        Vec::<String>::new(),
+        "a target added after a release was published is a promise about the next one"
+    );
+}
+
+#[test]
+fn a_release_short_of_the_set_it_was_published_against_is_still_refused() {
+    let model = real_model();
+    let mut release = sample_release(&model, "v0.3.1", Channel::Stable);
+    let dropped = release
+        .artifacts
+        .pop()
+        .expect("the sample publishes several")
+        .target;
+
+    let findings = release.findings(&model);
+    assert!(
+        findings
+            .iter()
+            .any(|f| f.contains(&dropped) && f.contains("published against")),
+        "dropping an artifact of the recorded set must be a finding; got {findings:?}"
+    );
+}
+
+#[test]
+fn a_record_written_before_the_set_existed_is_judged_on_what_it_says() {
+    let model = real_model();
+    let mut release = sample_release(&model, "v0.1.0", Channel::Stable);
+    // an older record: no snapshot, and fewer artifacts than the model now publishes
+    release.required_targets = None;
+    release.artifacts.truncate(1);
+
+    // it is not called incomplete against a model it never saw ...
+    assert_eq!(
+        release.findings(&model),
+        Vec::<String>::new(),
+        "a record with no recorded set is judged on internal consistency alone"
+    );
+    // ... but everything it does state is still checked
+    release.artifacts[0].sha256 = "not-a-digest".into();
+    assert!(
+        release
+            .findings(&model)
+            .iter()
+            .any(|f| f.contains("64 hexadecimal")),
+        "internal consistency is still enforced on an older record"
+    );
 }
