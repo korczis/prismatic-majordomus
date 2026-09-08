@@ -356,6 +356,19 @@ similarity: <code>feature/I00420-x</code> names no issue.</p>
 <p>A handover records the branch and the worktree; a session resumed elsewhere derives the
 worktree from the branch rather than trusting the recorded path, because the path is
 ephemeral and the branch is not.</p>
+<p>The last step is the one with no mechanism behind it. Creating a worktree is one command;
+removing one is a decision nobody is prompted to make, and <code>cleanup</code> deliberately deletes
+nothing — it names what is merged and clean and leaves the act to a person, because a tool
+that removed a worktree on the strength of a merged branch would eventually remove work
+somebody had not finished. The cost is real and was paid here on 2026-09-08, eighteen hours
+after the topology landed: fifteen worktrees between them held 104 GB of Rust <code>target/</code>
+directories, nine of those with branches already merged into the trunk, and the volume
+reached 124 MiB free. Nothing in the topology reclaims anything and no budget is declared
+for the container, so the disk is what says stop — and it says it in whatever vocabulary
+the next subsystem to fail happens to use. Three said their content was wrong. See ADR 0021
+for why the mechanism is absent rather than missing.</p>
+<p>If you hold a worktree whose branch has landed, <code>worktree cleanup</code> tells you; <code>git worktree remove &lt;path&gt;</code> and <code>git branch -d &lt;branch&gt;</code> are the two commands, and the <code>target/</code>
+directory inside it is usually most of what it costs.</p>
 <h2 id="enforcement"><a class="zola-anchor" href="#enforcement" aria-label="Anchor link for: enforcement">Enforcement</a></h2>
 <p>Layered, and honest about what each layer can do:</p>
 <div class="overflow-x-auto" tabindex="0">
@@ -466,7 +479,7 @@ topology changes outside the process.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3bdc000ac296ee974b41ccaa74138a6cf0c9f7d6" class="font-mono underline">3bdc000</a> · inputs <span class="font-mono">cdef9fccf752</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ebec65fd12ffe59a48119c5ac03cc0512160044d" class="font-mono underline">ebec65f</a> · inputs <span class="font-mono">09f7539c14bc</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
