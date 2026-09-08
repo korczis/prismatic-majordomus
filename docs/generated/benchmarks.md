@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 39 | 39 | 0 | 0 |
-| http | 39 | 39 | 0 | 0 |
-| mcp | 37 | 37 | 0 | 0 |
+| direct | 44 | 44 | 0 | 0 |
+| http | 44 | 44 | 0 | 0 |
+| mcp | 42 | 42 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 128 | 128 | 0 | 0 |
+| total | 143 | 143 | 0 | 0 |
 
 ## Capabilities
 
@@ -33,7 +33,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
-| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `composed` |
+| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
@@ -44,6 +44,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
+| `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
+| `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area` |
+| `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |
+| `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
+| `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |

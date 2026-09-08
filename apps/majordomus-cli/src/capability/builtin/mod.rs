@@ -17,6 +17,7 @@ pub mod health;
 pub mod objects;
 pub mod peers;
 pub mod perf;
+pub mod product;
 pub mod repository;
 mod scope;
 mod views;
@@ -84,7 +85,8 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         distribution,
         why,
         web,
-        worktree
+        worktree,
+        product
     ]
 }
 

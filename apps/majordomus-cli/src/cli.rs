@@ -54,6 +54,8 @@ pub enum Command {
     Commands(CommandsArgs),
     /// Answer a shell's completion request, and print the generic adapter that asks
     Completion(CompletionArgs),
+    /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
+    Product(ProductArgs),
 }
 
 #[derive(Debug, Args)]
@@ -168,6 +170,63 @@ pub enum CompletionShell {
     Zsh,
     /// bash
     Bash,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus product`. The filters and the output shape are global, so they read the way
+/// a person writes them — `product list --featured` — and are declared once.
+pub struct ProductArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `list`, `show`, `matrix`, `providers` or `validate`; none lists.
+    pub command: Option<ProductCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only the features the homepage shows
+    #[arg(long, global = true)]
+    pub featured: bool,
+    /// Include drafts and deprecated features, not only the stable ones
+    #[arg(long, global = true)]
+    pub all: bool,
+    /// Only features serving this operational area of the why catalogue
+    #[arg(long, global = true)]
+    pub area: Option<String>,
+    /// Only features made of this capability module
+    #[arg(long, global = true)]
+    pub module: Option<String>,
+    /// Only features made of this shell command
+    #[arg(long = "names-command", global = true)]
+    pub names_command: Option<String>,
+    /// Only features exposed through this surface: cli, api, mcp, cockpit or docs
+    #[arg(long, global = true)]
+    pub surface: Option<String>,
+    /// Case-insensitive text over identities, titles, headlines, summaries, tags and bodies
+    #[arg(long, short = 'q', global = true)]
+    pub query: Option<String>,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus product`.
+pub enum ProductCommand {
+    /// Every feature, narrowed by any filter, with the surfaces derived for each
+    List,
+    /// One feature in full: what it is made of, resolved, and everything derived from that
+    Show {
+        /// The feature's id, which is also its slug and its route
+        id: String,
+    },
+    /// Every feature against every interface, and every module, command and kind against the features that name it
+    Matrix,
+    /// Every provider the tool has an adapter for, with what this repository does with it
+    Providers,
+    /// Every finding over the model; exit 10 when any is an error
+    Validate,
 }
 
 #[derive(Debug, Args)]
@@ -1063,6 +1122,94 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["completion", "script", "zsh"],
             setup: &[],
             expect: Expect::StdoutContains(&["#compdef", "completion query"]),
+        }],
+    },
+    CommandExamples {
+        command: "product",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "product-default-list",
+            title: "What the product does, as the layer declares it",
+            description: "`product` with nothing after it lists the features, because listing is what a person wants when they ask what the tool is for. Every column is derived: the surfaces a feature is exposed through come from the modules, commands and kinds it names, never from the file.",
+            argv: &["product"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["SLUG", "SURFACES", "feature(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "product list",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[
+            ExampleDoc {
+                id: "product-list",
+                title: "Every stable feature, in presentation order",
+                description: "Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered.",
+                argv: &["product", "list"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["SLUG", "fixture-feature"]),
+            },
+            ExampleDoc {
+                id: "product-list-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "One domain model behind every projection: this document is what `GET /api/v1/product/features` returns and what the `majordomus_features` tool answers, with the counts, the fingerprint and the surfaces of every feature.",
+                argv: &["product", "list", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/counts/features", "/features/0/surfaces", "/fingerprint"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "product show",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "product-show",
+            title: "One feature, with everything derived from what it names",
+            description: "The record as its file declares it, then what nobody authored: the capabilities of its modules with their tools and routes, the commands with their summaries, the objects of its kinds counted, the rules with their class, the documents, the decisions, the claims with their status, the moments it answers, and the interfaces all of that adds up to.",
+            argv: &["product", "show", "fixture-feature"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-feature", "surfaces", "derived"]),
+        }],
+    },
+    CommandExamples {
+        command: "product matrix",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "product-matrix",
+            title: "Every feature against every interface, and what no feature names",
+            description: "One row per feature with a mark per surface, then every module of the executable, every public command and every kind of the layer with the features that name it. A row with no feature is a gap the product page cannot hide.",
+            argv: &["product", "matrix"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["FEATURE", "cli", "MODULE"]),
+        }],
+    },
+    CommandExamples {
+        command: "product providers",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "product-providers",
+            title: "Every provider the tool has an adapter for",
+            description: "One line per template the distribution ships, with the bootstraps this repository's policy renders through it, the client configuration it carries for the shared MCP server, and the hooks the policy wires. The set is the templates; nothing here is a list of vendors.",
+            argv: &["product", "providers"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["PROVIDER", "agents"]),
+        }],
+    },
+    CommandExamples {
+        command: "product validate",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "product-validate",
+            title: "Check the model before anything projects it",
+            description: "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error.",
+            argv: &["product", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["feature(s)", "valid"]),
         }],
     },
     CommandExamples {

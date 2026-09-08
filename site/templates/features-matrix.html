@@ -1,0 +1,76 @@
+{% extends "page.html" %}
+{% block body %}
+{#- Every feature against every interface, and every capability module, public command and
+    object kind against the features that name it. Both halves are `majordomus product
+    matrix`, read from data/registry/product.json. A gap is shown, never omitted: a module
+    no stable feature names is the warning that validation reports, and hiding it here would
+    be the defect ADR 23 exists to prevent. -#}
+{%- set model = load_data(path="data/registry/product.json") -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+{%- set rows = [r for r in model.matrix.rows if r.status != "draft"] -%}
+
+<p class="max-w-3xl text-body">Every mark is derived. A feature is on an interface because a capability module, a shell command or an object kind it names is projected there — a command-line path, an HTTP route, an MCP tool or resource, a Cockpit area, a document. No page and no file says so.</p>
+
+<div class="mt-8 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <table class="w-full min-w-[36rem] border-collapse text-sm">
+    <caption class="sr-only">Features against the interfaces they are exposed through</caption>
+    <thead class="bg-neutral-primary-soft">
+      <tr>
+        <th scope="col" class="border-b border-default px-4 py-3 text-start font-semibold text-heading">Feature</th>
+        {%- for s in model.surfaces %}
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="{{ base }}{{ s.route }}" class="hover:text-fg-brand hover:underline">{{ s.id }}</a></th>
+        {%- endfor %}
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-default">
+      {%- for r in rows %}
+      <tr class="hover:bg-neutral-primary-soft">
+        <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="{{ base }}{{ r.route }}" class="text-heading hover:text-fg-brand hover:underline">{{ r.label }}</a></th>
+        {%- for s in model.surfaces %}
+        <td class="px-3 py-2.5 text-center">
+          {%- if r.surfaces[s.id] %}<span class="font-mono text-fg-success-strong" title="{{ r.label }} is exposed on {{ s.title }}">✓</span><span class="sr-only">on {{ s.title }}</span>
+          {%- else %}<span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on {{ s.title }}</span>{% endif -%}
+        </td>
+        {%- endfor %}
+      </tr>
+      {%- endfor %}
+    </tbody>
+  </table>
+</div>
+
+{#- ------------------------------------------------------------------- the coverage -#}
+<h2 class="mt-14 text-2xl font-bold tracking-tight text-heading">What every part of the product belongs to</h2>
+<p class="mt-2 max-w-3xl text-body">The other direction: each capability module of the executable, each public command of the shell tool and each kind of object of the layer, with the features that name it. A row with no feature is a gap this page shows rather than hides, and closing it is one reference in one file.</p>
+
+{%- set groups = [{"key": "modules", "title": "Capability modules", "note": "Modules of the Rust executable. Every capability, route, tool and reference page behind a feature comes from one of these."}, {"key": "commands", "title": "Public commands", "note": "Subcommands of the shell tool. A feature names the ones a person runs to use it."}, {"key": "kinds", "title": "Object kinds", "note": "Kinds of the layer, with the objects this repository holds of each."}] -%}
+{%- for g in groups %}
+<section class="mt-8">
+  <h3 class="text-lg font-semibold tracking-tight text-heading">{{ g.title }}</h3>
+  <p class="mt-1 max-w-3xl text-sm text-body">{{ g.note }}</p>
+  <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+    {%- for row in model.matrix[g.key] %}
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">{{ row.title }}</span>
+      <code class="font-mono text-xs text-body-subtle">{{ row.id }}</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5">
+        {%- if row.features | length %}
+        {%- for id in row.features %}
+        {%- set hit = [x for x in model.features if x.id == id] -%}
+        {%- if hit | length %}<a href="{{ base }}{{ hit[0].route }}" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">{{ hit[0].short_title or hit[0].title }}</a>{% endif -%}
+        {%- endfor %}
+        {%- else %}
+        <span class="rounded border border-warning-subtle bg-warning-soft px-1.5 py-0.5 font-mono text-xs text-fg-warning">no stable feature names it</span>
+        {%- endif %}
+      </span>
+    </li>
+    {%- endfor %}
+  </ul>
+</section>
+{%- endfor %}
+
+<p class="mt-14 border-t border-default pt-6 text-sm text-body-subtle">
+  The same two tables on the command line: <code class="font-mono text-heading">majordomus product matrix</code>.
+  Over HTTP: <code class="font-mono text-heading">GET /api/v1/product/matrix</code>. Over MCP:
+  <code class="font-mono text-heading">majordomus_product_matrix</code>.
+</p>
+{% endblock body %}

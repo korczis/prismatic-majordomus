@@ -100,6 +100,14 @@
       "capabilities": 1
     },
     {
+      "id": "product",
+      "title": "Product",
+      "description": "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own.",
+      "stability": "behaviorally_verified",
+      "source": "builtin",
+      "capabilities": 5
+    },
+    {
       "id": "repository",
       "title": "Repository",
       "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.",
@@ -7041,6 +7049,2050 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs"
     },
     {
+      "id": "product.feature",
+      "module": "product",
+      "kind": "query",
+      "title": "One feature",
+      "description": "One product feature in full: the record as its file declares it, and everything derived from what it names — the capabilities of its modules with their tools, routes and command-line paths, the commands with their summaries, the objects of its kinds counted, the rules with their class and whether the tool enforces them, the documents, the decisions, the claims with their status, the use cases, the Cockpit areas and web surfaces with their routes, the moments it answers, and the interfaces all of that adds up to.",
+      "input": {
+        "name": "FeatureInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The feature's id, as `product.features` gives it. This is also its slug and its route."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "description": "Which feature to read.",
+          "title": "FeatureInput"
+        }
+      },
+      "output": {
+        "name": "ResolvedRefs",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The identity, the slug and the file name."
+            },
+            "title": {
+              "type": "string",
+              "description": "The feature as a heading."
+            },
+            "short_title": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Two or three words for a card or a matrix row."
+            },
+            "headline": {
+              "type": "string",
+              "description": "The promise a visitor reads first."
+            },
+            "summary": {
+              "type": "string",
+              "description": "One line: what it does."
+            },
+            "status": {
+              "type": "string",
+              "description": "`stable`, `draft` or `deprecated`."
+            },
+            "weight": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0,
+              "description": "Presentation order, lowest first.",
+              "default": 0
+            },
+            "featured": {
+              "type": "boolean",
+              "description": "Whether the homepage shows it as a chapter.",
+              "default": false
+            },
+            "areas": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The operational areas of the why catalogue it serves.",
+              "default": []
+            },
+            "audiences": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The audiences of the why catalogue it is written for.",
+              "default": []
+            },
+            "modules": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Capability modules of the executable it is made of.",
+              "default": []
+            },
+            "commands": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Public commands of the shell tool it is made of.",
+              "default": []
+            },
+            "kinds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Object kinds of the layer it is made of.",
+              "default": []
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Rules of the effective set that govern it, by id without the version.",
+              "default": []
+            },
+            "docs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The documents that explain it, by repository-relative path.",
+              "default": []
+            },
+            "adrs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The decisions behind it, by declared id.",
+              "default": []
+            },
+            "claims": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Claims that say what is guaranteed here.",
+              "default": []
+            },
+            "use_cases": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Use cases that show it in use.",
+              "default": []
+            },
+            "cockpit": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Areas of the Cockpit that show it.",
+              "default": []
+            },
+            "web": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Web surfaces of the topology it is offered through.",
+              "default": []
+            },
+            "related": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Features explicitly related to this one. The reverse is derived.",
+              "default": []
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Free tags.",
+              "default": []
+            },
+            "route": {
+              "type": "string",
+              "description": "Derived: `/features/<id>/`. Never authored; the schema refuses a `route` key.",
+              "default": ""
+            },
+            "source": {
+              "type": "string",
+              "description": "Derived: the repository-relative file the record came from.",
+              "default": ""
+            },
+            "body": {
+              "type": "string",
+              "description": "The Markdown body, without its front matter."
+            },
+            "surfaces": {
+              "$ref": "#/$defs/Surfaces",
+              "description": "Derived: the interfaces it is exposed through."
+            },
+            "module_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ModuleRef"
+              },
+              "description": "Derived: the modules it names, each with its capabilities and their projections."
+            },
+            "command_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CommandRef"
+              },
+              "description": "Derived: the shell commands it names, as the command registry declares them."
+            },
+            "kind_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/KindRef"
+              },
+              "description": "Derived: the kinds it names, each with its object count."
+            },
+            "rule_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RuleRef"
+              },
+              "description": "Derived: the rules it names, each with its class and whether it is enforced."
+            },
+            "doc_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/DocRef"
+              },
+              "description": "Derived: the documents it names, with their titles."
+            },
+            "adr_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AdrRef"
+              },
+              "description": "Derived: the decisions it names, with their status."
+            },
+            "claim_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ClaimRef"
+              },
+              "description": "Derived: the claims it names, with their status."
+            },
+            "use_case_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/UseCaseRef"
+              },
+              "description": "Derived: the use cases it names."
+            },
+            "cockpit_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CockpitAreaRef"
+              },
+              "description": "Derived: the Cockpit areas it names, with their routes."
+            },
+            "web_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SurfaceRef"
+              },
+              "description": "Derived: the web surfaces it names, with their mounts."
+            },
+            "moments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MomentRef"
+              },
+              "description": "Derived: the moments that name any command, capability, claim or rule of this feature."
+            },
+            "backlinks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Derived: the features that name this one in their `related`."
+            },
+            "counts": {
+              "$ref": "#/$defs/FeatureCounts",
+              "description": "Derived: how much stands behind it."
+            },
+            "evidence": {
+              "$ref": "#/$defs/FeatureEvidence",
+              "description": "Derived: what is guaranteed."
+            }
+          },
+          "required": [
+            "id",
+            "title",
+            "headline",
+            "summary",
+            "status",
+            "surfaces",
+            "module_refs",
+            "command_refs",
+            "kind_refs",
+            "rule_refs",
+            "doc_refs",
+            "adr_refs",
+            "claim_refs",
+            "use_case_refs",
+            "cockpit_refs",
+            "web_refs",
+            "moments",
+            "backlinks",
+            "counts",
+            "evidence"
+          ],
+          "description": "One feature, resolved: the record as its file declares it, and everything derived.",
+          "title": "ResolvedRefs",
+          "$defs": {
+            "Surfaces": {
+              "type": "object",
+              "properties": {
+                "cli": {
+                  "type": "boolean",
+                  "description": "The command line: the executable's own, or the shell tool's."
+                },
+                "api": {
+                  "type": "boolean",
+                  "description": "The HTTP routes under `/api/v1/`, and the OpenAPI document over them."
+                },
+                "mcp": {
+                  "type": "boolean",
+                  "description": "MCP: a tool, or a resource."
+                },
+                "cockpit": {
+                  "type": "boolean",
+                  "description": "The Cockpit."
+                },
+                "docs": {
+                  "type": "boolean",
+                  "description": "The documentation."
+                }
+              },
+              "required": [
+                "cli",
+                "api",
+                "mcp",
+                "cockpit",
+                "docs"
+              ],
+              "description": "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document."
+            },
+            "ModuleRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The module id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The short name."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "One paragraph."
+                },
+                "stability": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where the module stands, when it declared it."
+                },
+                "source_path": {
+                  "type": "string",
+                  "description": "Repository-relative path of the file its descriptors were composed in."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/CapabilityRef"
+                  },
+                  "description": "The builtin capabilities it composes, in id order."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "description",
+                "source_path",
+                "capabilities"
+              ],
+              "description": "One capability module the feature names."
+            },
+            "CapabilityRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The canonical id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title."
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "`query`, `command` or `resource`."
+                },
+                "stability": {
+                  "type": "string",
+                  "description": "Where it stands."
+                },
+                "tool": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The MCP tool name, when exposed as one."
+                },
+                "resource": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The MCP resource URI, when exposed as one."
+                },
+                "route": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "`METHOD /path`, when exposed over HTTP."
+                },
+                "cli": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The words after `majordomus`, when exposed on the command line."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "kind",
+                "stability"
+              ],
+              "description": "One capability of a module the feature names, with the projections the registry\ndeclares for it."
+            },
+            "CommandRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The command."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line."
+                },
+                "stage": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The lifecycle stage it belongs to."
+                },
+                "read_only": {
+                  "type": "boolean",
+                  "description": "Whether it writes nothing."
+                }
+              },
+              "required": [
+                "id",
+                "summary",
+                "read_only"
+              ],
+              "description": "One public command of the shell tool the feature names, as `share/commands.yaml`\ndeclares it."
+            },
+            "KindRef": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The kind."
+                },
+                "objects": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Objects of this kind in the index."
+                }
+              },
+              "required": [
+                "name",
+                "objects"
+              ],
+              "description": "One object kind the feature names, with how many objects of it the layer holds."
+            },
+            "RuleRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The rule id, without the version."
+                },
+                "identity": {
+                  "type": "string",
+                  "description": "The identity the index holds, with the version."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title."
+                },
+                "class": {
+                  "type": "string",
+                  "description": "`blocking` or `advisory`."
+                },
+                "enforced": {
+                  "type": "boolean",
+                  "description": "Whether the tool enforces it: the rule carries an `x-majordomus` block."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative path."
+                }
+              },
+              "required": [
+                "id",
+                "identity",
+                "title",
+                "class",
+                "enforced",
+                "path"
+              ],
+              "description": "One rule the feature names."
+            },
+            "DocRef": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative path."
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The title, when the document has one."
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "description": "One document the feature names."
+            },
+            "AdrRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The declared id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`proposed`, `accepted`, `superseded` or `rejected`."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Repository-relative path."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "status",
+                "path"
+              ],
+              "description": "One architecture decision the feature names."
+            },
+            "ClaimRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The claim id."
+                },
+                "claim": {
+                  "type": "string",
+                  "description": "The sentence."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`guaranteed`, `advisory`, `planned` or `rejected`."
+                }
+              },
+              "required": [
+                "id",
+                "claim",
+                "status"
+              ],
+              "description": "One claim the feature names, with the status the matrix gives it."
+            },
+            "UseCaseRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The use case id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title."
+                },
+                "category": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The category it is filed under."
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "description": "One use case the feature names."
+            },
+            "CockpitAreaRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The area id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The label the Cockpit shows."
+                },
+                "route": {
+                  "type": "string",
+                  "description": "The route under the running server."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "route"
+              ],
+              "description": "One area of the Cockpit the feature names."
+            },
+            "SurfaceRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The surface id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title."
+                },
+                "mount": {
+                  "type": "string",
+                  "description": "Where it is mounted."
+                },
+                "category": {
+                  "type": "string",
+                  "description": "What it is for."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "mount",
+                "category"
+              ],
+              "description": "One web surface of the topology the feature names."
+            },
+            "MomentRef": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The moment id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title."
+                },
+                "hook": {
+                  "type": "string",
+                  "description": "The first-person line an index shows."
+                },
+                "route": {
+                  "type": "string",
+                  "description": "`/why/<id>/`."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "hook",
+                "route"
+              ],
+              "description": "One operational moment the feature answers: derived from the moments that name any of\nthe feature's commands, capabilities, claims or rules."
+            },
+            "FeatureCounts": {
+              "type": "object",
+              "properties": {
+                "capabilities": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Builtin capabilities of the modules it names."
+                },
+                "mcp_tools": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "MCP tools among them."
+                },
+                "mcp_resources": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "MCP resources among them, plus one per object of the kinds it names."
+                },
+                "http_routes": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "HTTP routes among them."
+                },
+                "cli_paths": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Command-line paths of the executable among them."
+                },
+                "commands": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public commands of the shell tool it names."
+                },
+                "objects": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Objects of the kinds it names."
+                },
+                "rules": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Rules it names."
+                },
+                "enforced_rules": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Rules the tool enforces among them."
+                },
+                "docs": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Documents it names."
+                },
+                "adrs": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Decisions it names."
+                },
+                "claims": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Claims it names."
+                },
+                "use_cases": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Use cases it names."
+                },
+                "moments": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Moments it answers."
+                }
+              },
+              "required": [
+                "capabilities",
+                "mcp_tools",
+                "mcp_resources",
+                "http_routes",
+                "cli_paths",
+                "commands",
+                "objects",
+                "rules",
+                "enforced_rules",
+                "docs",
+                "adrs",
+                "claims",
+                "use_cases",
+                "moments"
+              ],
+              "description": "How much stands behind a feature, every number derived."
+            },
+            "FeatureEvidence": {
+              "type": "object",
+              "properties": {
+                "claims": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                  },
+                  "description": "Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`."
+                },
+                "modules": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                  },
+                  "description": "The modules it names by stability."
+                }
+              },
+              "required": [
+                "claims",
+                "modules"
+              ],
+              "description": "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::product"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_feature"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/product/feature"
+        },
+        "cli": {
+          "path": [
+            "product",
+            "show"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "product",
+        "features"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 64
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs"
+    },
+    {
+      "id": "product.features",
+      "module": "product",
+      "kind": "query",
+      "title": "The features",
+      "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+      "input": {
+        "name": "ProductQuery",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "featured": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Only the features the homepage shows.",
+              "default": null
+            },
+            "status": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only features of this status. Absent means the stable ones; pass `any` for\neverything the model holds.",
+              "default": null
+            },
+            "area": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only features serving this operational area.",
+              "default": null
+            },
+            "module": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only features made of this capability module.",
+              "default": null
+            },
+            "command": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only features made of this shell command.",
+              "default": null
+            },
+            "surface": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Only features exposed through this surface: `cli`, `api`, `mcp`, `cockpit`, `docs`.",
+              "default": null
+            },
+            "q": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Case-insensitive text, matched against the identity, the titles, the headline, the\nsummary, the tags and the body.",
+              "default": null
+            }
+          },
+          "description": "What a listing is narrowed by. Every field is optional and they compose as a\nconjunction; the values a caller may pass are the facets the model derives, never a list\nwritten anywhere.",
+          "title": "ProductQuery"
+        }
+      },
+      "output": {
+        "name": "FeatureList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "[`SCHEMA`]."
+            },
+            "fingerprint": {
+              "type": "string",
+              "description": "The hash of the model's sources and derived facts."
+            },
+            "counts": {
+              "$ref": "#/$defs/ProductCounts",
+              "description": "The counts."
+            },
+            "surfaces": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SurfaceInfo"
+              },
+              "description": "The surface vocabulary, with how many stable features each exposes."
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FeatureSummary"
+              },
+              "description": "The matching features, in presentation order."
+            }
+          },
+          "required": [
+            "schema",
+            "fingerprint",
+            "counts",
+            "surfaces",
+            "features"
+          ],
+          "description": "The features as a client reads them.",
+          "title": "FeatureList",
+          "$defs": {
+            "ProductCounts": {
+              "type": "object",
+              "properties": {
+                "features": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Stable features."
+                },
+                "features_all": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Features of every status, drafts included."
+                },
+                "featured": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Stable features the homepage shows."
+                },
+                "providers": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Providers the tool has an adapter for."
+                },
+                "modules": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Builtin modules of the executable, and how many a stable feature names."
+                },
+                "modules_covered": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Modules a stable feature names."
+                },
+                "commands": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public commands of the shell tool."
+                },
+                "commands_covered": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Commands a stable feature names."
+                },
+                "kinds": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Kinds of the layer a feature can present."
+                },
+                "kinds_covered": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Kinds a stable feature names."
+                }
+              },
+              "required": [
+                "features",
+                "features_all",
+                "featured",
+                "providers",
+                "modules",
+                "modules_covered",
+                "commands",
+                "commands_covered",
+                "kinds",
+                "kinds_covered"
+              ],
+              "description": "How much the model holds. Every count anywhere is one of these."
+            },
+            "SurfaceInfo": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "`cli`, `api`, `mcp`, `cockpit` or `docs`."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name a person reads."
+                },
+                "route": {
+                  "type": "string",
+                  "description": "The route on the website where the surface is documented."
+                },
+                "features": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many stable features it exposes."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "route",
+                "features"
+              ],
+              "description": "One surface of the vocabulary, as a client reads it."
+            },
+            "FeatureSummary": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The identity and the slug."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The feature as a heading."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "The name a narrow column shows: the short title, or the title."
+                },
+                "headline": {
+                  "type": "string",
+                  "description": "The promise a visitor reads first."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line: what it does."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`stable`, `draft` or `deprecated`."
+                },
+                "weight": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "Presentation order."
+                },
+                "featured": {
+                  "type": "boolean",
+                  "description": "Whether the homepage shows it."
+                },
+                "areas": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The operational areas it serves."
+                },
+                "audiences": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The audiences it is written for."
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Free tags."
+                },
+                "route": {
+                  "type": "string",
+                  "description": "Derived: `/features/<id>/`."
+                },
+                "surfaces": {
+                  "$ref": "#/$defs/Surfaces",
+                  "description": "Derived: the interfaces it is exposed through."
+                },
+                "counts": {
+                  "$ref": "#/$defs/FeatureCounts",
+                  "description": "Derived: how much stands behind it."
+                },
+                "evidence": {
+                  "$ref": "#/$defs/FeatureEvidence",
+                  "description": "Derived: what is guaranteed."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "label",
+                "headline",
+                "summary",
+                "status",
+                "weight",
+                "featured",
+                "areas",
+                "audiences",
+                "tags",
+                "route",
+                "surfaces",
+                "counts",
+                "evidence"
+              ],
+              "description": "One feature as a listing shows it: everything a card needs and nothing a page needs."
+            },
+            "Surfaces": {
+              "type": "object",
+              "properties": {
+                "cli": {
+                  "type": "boolean",
+                  "description": "The command line: the executable's own, or the shell tool's."
+                },
+                "api": {
+                  "type": "boolean",
+                  "description": "The HTTP routes under `/api/v1/`, and the OpenAPI document over them."
+                },
+                "mcp": {
+                  "type": "boolean",
+                  "description": "MCP: a tool, or a resource."
+                },
+                "cockpit": {
+                  "type": "boolean",
+                  "description": "The Cockpit."
+                },
+                "docs": {
+                  "type": "boolean",
+                  "description": "The documentation."
+                }
+              },
+              "required": [
+                "cli",
+                "api",
+                "mcp",
+                "cockpit",
+                "docs"
+              ],
+              "description": "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document."
+            },
+            "FeatureCounts": {
+              "type": "object",
+              "properties": {
+                "capabilities": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Builtin capabilities of the modules it names."
+                },
+                "mcp_tools": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "MCP tools among them."
+                },
+                "mcp_resources": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "MCP resources among them, plus one per object of the kinds it names."
+                },
+                "http_routes": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "HTTP routes among them."
+                },
+                "cli_paths": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Command-line paths of the executable among them."
+                },
+                "commands": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public commands of the shell tool it names."
+                },
+                "objects": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Objects of the kinds it names."
+                },
+                "rules": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Rules it names."
+                },
+                "enforced_rules": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Rules the tool enforces among them."
+                },
+                "docs": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Documents it names."
+                },
+                "adrs": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Decisions it names."
+                },
+                "claims": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Claims it names."
+                },
+                "use_cases": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Use cases it names."
+                },
+                "moments": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Moments it answers."
+                }
+              },
+              "required": [
+                "capabilities",
+                "mcp_tools",
+                "mcp_resources",
+                "http_routes",
+                "cli_paths",
+                "commands",
+                "objects",
+                "rules",
+                "enforced_rules",
+                "docs",
+                "adrs",
+                "claims",
+                "use_cases",
+                "moments"
+              ],
+              "description": "How much stands behind a feature, every number derived."
+            },
+            "FeatureEvidence": {
+              "type": "object",
+              "properties": {
+                "claims": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                  },
+                  "description": "Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`."
+                },
+                "modules": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0
+                  },
+                  "description": "The modules it names by stability."
+                }
+              },
+              "required": [
+                "claims",
+                "modules"
+              ],
+              "description": "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::product"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_features",
+          "resource": {
+            "uri": "majordomus://product",
+            "name": "product"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/product/features"
+        },
+        "cli": {
+          "path": [
+            "product",
+            "list"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "product",
+        "features",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 32
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs"
+    },
+    {
+      "id": "product.matrix",
+      "module": "product",
+      "kind": "query",
+      "title": "Features against interfaces",
+      "description": "Every feature against the command line, the HTTP API, MCP, the Cockpit and the documentation, each mark derived from what the feature names; then every builtin module of the executable, every public command of the shell tool and every kind of the layer with the stable features that name it. A row with no feature is reported as a gap rather than hidden.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "Matrix",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "[`SCHEMA`]."
+            },
+            "surfaces": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SurfaceInfo"
+              },
+              "description": "The surface vocabulary."
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/MatrixRow"
+              },
+              "description": "One row per feature of any status but deprecated, in presentation order."
+            },
+            "modules": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ProductCoverage"
+              },
+              "description": "Every builtin module of the executable with the stable features that name it."
+            },
+            "commands": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ProductCoverage"
+              },
+              "description": "Every public command of the shell tool with the stable features that name it."
+            },
+            "kinds": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ProductCoverage"
+              },
+              "description": "Every kind of the layer a feature can present, with the stable features that name it."
+            }
+          },
+          "required": [
+            "schema",
+            "surfaces",
+            "rows",
+            "modules",
+            "commands",
+            "kinds"
+          ],
+          "description": "Every feature against every interface, and every module, command and kind against the\nfeatures that name it.",
+          "title": "Matrix",
+          "$defs": {
+            "SurfaceInfo": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "`cli`, `api`, `mcp`, `cockpit` or `docs`."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name a person reads."
+                },
+                "route": {
+                  "type": "string",
+                  "description": "The route on the website where the surface is documented."
+                },
+                "features": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many stable features it exposes."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "route",
+                "features"
+              ],
+              "description": "One surface of the vocabulary, as a client reads it."
+            },
+            "MatrixRow": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The feature id."
+                },
+                "label": {
+                  "type": "string",
+                  "description": "The name a narrow column shows."
+                },
+                "route": {
+                  "type": "string",
+                  "description": "`/features/<id>/`."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`stable` or `draft`."
+                },
+                "surfaces": {
+                  "$ref": "#/$defs/Surfaces",
+                  "description": "The surfaces, by id, in the vocabulary's order."
+                },
+                "exposed": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The surface ids that are true."
+                }
+              },
+              "required": [
+                "id",
+                "label",
+                "route",
+                "status",
+                "surfaces",
+                "exposed"
+              ],
+              "description": "One row of the matrix: a feature and the surfaces it is exposed through."
+            },
+            "Surfaces": {
+              "type": "object",
+              "properties": {
+                "cli": {
+                  "type": "boolean",
+                  "description": "The command line: the executable's own, or the shell tool's."
+                },
+                "api": {
+                  "type": "boolean",
+                  "description": "The HTTP routes under `/api/v1/`, and the OpenAPI document over them."
+                },
+                "mcp": {
+                  "type": "boolean",
+                  "description": "MCP: a tool, or a resource."
+                },
+                "cockpit": {
+                  "type": "boolean",
+                  "description": "The Cockpit."
+                },
+                "docs": {
+                  "type": "boolean",
+                  "description": "The documentation."
+                }
+              },
+              "required": [
+                "cli",
+                "api",
+                "mcp",
+                "cockpit",
+                "docs"
+              ],
+              "description": "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document."
+            },
+            "ProductCoverage": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The id."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The title."
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The stable features that name it."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "features"
+              ],
+              "description": "One thing of the product — a module, a public command, a kind — and the features that\nname it. Empty means the product page says nothing about it, which is a gap the\nvalidation reports and the matrix shows rather than hides."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::product"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_product_matrix",
+          "resource": {
+            "uri": "majordomus://product/matrix",
+            "name": "product-matrix"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/product/matrix"
+        },
+        "cli": {
+          "path": [
+            "product",
+            "matrix"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "product",
+        "features",
+        "coverage"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 2
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs"
+    },
+    {
+      "id": "product.providers",
+      "module": "product",
+      "kind": "query",
+      "title": "The providers",
+      "description": "Every provider the tool has an adapter for — one per template the distribution ships — with the bootstraps this repository's policy renders through it, the client configuration it carries for the shared MCP server, and the hooks the policy wires. The set is the templates; nothing here is a list of vendors.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ProviderList",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many."
+            },
+            "providers": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ProductProvider"
+              },
+              "description": "Each, in id order."
+            }
+          },
+          "required": [
+            "count",
+            "providers"
+          ],
+          "description": "Every provider.",
+          "title": "ProviderList",
+          "$defs": {
+            "ProductProvider": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The provider id: the template's file stem."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name a person knows it by."
+                },
+                "bootstraps": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ProviderBootstrap"
+                  },
+                  "description": "The bootstraps this repository's policy renders through it: target, mode, whether\nevery worker loads it."
+                },
+                "client_config": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The client configuration at the repository root that starts the shared MCP server\nfor this provider, when the repository carries it."
+                },
+                "hooks": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The enforcement entries of the policy wired by this provider's hooks."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "bootstraps",
+                "hooks"
+              ],
+              "description": "One provider the tool has an adapter for, discovered from the templates the distribution\nships and decorated with what this repository does with it."
+            },
+            "ProviderBootstrap": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "description": "The target file, repository-relative."
+                },
+                "mode": {
+                  "type": "string",
+                  "description": "`file` or `region`."
+                },
+                "always_loaded": {
+                  "type": "boolean",
+                  "description": "Loaded by every worker without asking."
+                }
+              },
+              "required": [
+                "target",
+                "mode",
+                "always_loaded"
+              ],
+              "description": "One bootstrap a provider renders."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::product"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_providers",
+          "resource": {
+            "uri": "majordomus://product/providers",
+            "name": "providers"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/product/providers"
+        },
+        "cli": {
+          "path": [
+            "product",
+            "providers"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "product",
+        "providers"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 2
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs"
+    },
+    {
+      "id": "product.validate",
+      "module": "product",
+      "kind": "query",
+      "title": "Validate the model",
+      "description": "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ProductValidationReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "valid": {
+              "type": "boolean",
+              "description": "True when nothing is an error. Warnings do not make it false."
+            },
+            "errors": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many findings are errors."
+            },
+            "warnings": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many findings are warnings."
+            },
+            "counts": {
+              "$ref": "#/$defs/ProductCounts",
+              "description": "The counts the model reached."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ProductFinding"
+              },
+              "description": "The findings, errors first, then by file."
+            }
+          },
+          "required": [
+            "valid",
+            "errors",
+            "warnings",
+            "counts",
+            "findings"
+          ],
+          "description": "What the model's own validation found.",
+          "title": "ProductValidationReport",
+          "$defs": {
+            "ProductCounts": {
+              "type": "object",
+              "properties": {
+                "features": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Stable features."
+                },
+                "features_all": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Features of every status, drafts included."
+                },
+                "featured": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Stable features the homepage shows."
+                },
+                "providers": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Providers the tool has an adapter for."
+                },
+                "modules": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Builtin modules of the executable, and how many a stable feature names."
+                },
+                "modules_covered": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Modules a stable feature names."
+                },
+                "commands": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Public commands of the shell tool."
+                },
+                "commands_covered": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Commands a stable feature names."
+                },
+                "kinds": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Kinds of the layer a feature can present."
+                },
+                "kinds_covered": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Kinds a stable feature names."
+                }
+              },
+              "required": [
+                "features",
+                "features_all",
+                "featured",
+                "providers",
+                "modules",
+                "modules_covered",
+                "commands",
+                "commands_covered",
+                "kinds",
+                "kinds_covered"
+              ],
+              "description": "How much the model holds. Every count anywhere is one of these."
+            },
+            "ProductFinding": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "$ref": "#/$defs/Severity",
+                  "description": "`error` or `warning`."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "`unknown_reference`, `duplicate_identity`, `missing_content`, `uncovered`, ..."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "The repository-relative file the finding is in, or the registry it is about."
+                },
+                "id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The record's identity, when one record owns the finding."
+                },
+                "field": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The front-matter key the finding is about, when one key owns it."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What is wrong, in one sentence."
+                },
+                "did_you_mean": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The nearest existing name, when the value looks like a typo of one."
+                }
+              },
+              "required": [
+                "severity",
+                "code",
+                "path",
+                "message"
+              ],
+              "description": "One thing wrong with the product model, named where it is, with the nearest candidate\nwhen there is one."
+            },
+            "Severity": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "info",
+                  "description": "Worth knowing; changes nothing."
+                },
+                {
+                  "type": "string",
+                  "const": "warning",
+                  "description": "Something to look at; the object is still served."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "The file is excluded and the index is degraded."
+                }
+              ],
+              "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::product"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_product_validate"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/product/validate"
+        },
+        "cli": {
+          "path": [
+            "product",
+            "validate"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "product",
+        "introspection"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "process",
+        "max_entries": 2
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs"
+    },
+    {
       "id": "repository.info",
       "module": "repository",
       "kind": "query",
@@ -12829,6 +14881,7 @@
     "deployment",
     "distribution-model",
     "document",
+    "feature",
     "implementation",
     "issue",
     "knowledge",

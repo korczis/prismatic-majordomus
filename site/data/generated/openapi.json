@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 39,
-    "schemas": 182,
-    "tags": 16
+    "operations": 44,
+    "schemas": 210,
+    "tags": 17
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -127,6 +127,48 @@
       "used_by": [],
       "used_by_schemas": [
         "Continuity"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One architecture decision the feature names.",
+      "is_enum": false,
+      "name": "AdrRef",
+      "properties": [
+        {
+          "description": "The declared id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`proposed`, `accepted`, `superseded` or `rejected`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
       ],
       "values": [],
       "variants": []
@@ -1564,6 +1606,76 @@
       ]
     },
     {
+      "description": "One capability of a module the feature names, with the projections the registry\ndeclares for it.",
+      "is_enum": false,
+      "name": "CapabilityRef",
+      "properties": [
+        {
+          "description": "The canonical id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`query`, `command` or `resource`.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "stability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The MCP tool name, when exposed as one.",
+          "name": "tool",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The MCP resource URI, when exposed as one.",
+          "name": "resource",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`METHOD /path`, when exposed over HTTP.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The words after `majordomus`, when exposed on the command line.",
+          "name": "cli",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ModuleRef"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One capability as a listing shows it: everything the descriptor says except its two\nschemas, which `capabilities.describe` answers for one capability. A listing of a\nrepository's registry runs to hundreds of entries; their schemas would be megabytes\nof the same object view repeated.",
       "is_enum": false,
       "name": "CapabilitySummary",
@@ -1820,6 +1932,41 @@
       "variants": []
     },
     {
+      "description": "One claim the feature names, with the status the matrix gives it.",
+      "is_enum": false,
+      "name": "ClaimRef",
+      "properties": [
+        {
+          "description": "The claim id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The sentence.",
+          "name": "claim",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`guaranteed`, `advisory`, `planned` or `rejected`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One path, judged.",
       "is_enum": false,
       "name": "Classification",
@@ -1938,6 +2085,41 @@
       "used_by": [],
       "used_by_schemas": [
         "Peer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One area of the Cockpit the feature names.",
+      "is_enum": false,
+      "name": "CockpitAreaRef",
+      "properties": [
+        {
+          "description": "The area id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The label the Cockpit shows.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The route under the running server.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
       ],
       "values": [],
       "variants": []
@@ -2519,6 +2701,48 @@
       "used_by": [],
       "used_by_schemas": [
         "CommandNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One public command of the shell tool the feature names, as `share/commands.yaml`\ndeclares it.",
+      "is_enum": false,
+      "name": "CommandRef",
+      "properties": [
+        {
+          "description": "The command.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The lifecycle stage it belongs to.",
+          "name": "stage",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether it writes nothing.",
+          "name": "read_only",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
       ],
       "values": [],
       "variants": []
@@ -4117,6 +4341,34 @@
       "variants": []
     },
     {
+      "description": "One document the feature names.",
+      "is_enum": false,
+      "name": "DocRef",
+      "properties": [
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title, when the document has one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One document, and the encodings it is committed in.",
       "is_enum": false,
       "name": "DocumentView",
@@ -4298,6 +4550,11 @@
         "peers.list",
         "peers.announce",
         "perf.counters",
+        "product.feature",
+        "product.features",
+        "product.matrix",
+        "product.providers",
+        "product.validate",
         "health.ready",
         "repository.info",
         "repository.scope",
@@ -4592,6 +4849,328 @@
           "value": "cockpit"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "How much stands behind a feature, every number derived.",
+      "is_enum": false,
+      "name": "FeatureCounts",
+      "properties": [
+        {
+          "description": "Builtin capabilities of the modules it names.",
+          "name": "capabilities",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "MCP tools among them.",
+          "name": "mcp_tools",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "MCP resources among them, plus one per object of the kinds it names.",
+          "name": "mcp_resources",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "HTTP routes among them.",
+          "name": "http_routes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Command-line paths of the executable among them.",
+          "name": "cli_paths",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Public commands of the shell tool it names.",
+          "name": "commands",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Objects of the kinds it names.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Rules it names.",
+          "name": "rules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Rules the tool enforces among them.",
+          "name": "enforced_rules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Documents it names.",
+          "name": "docs",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Decisions it names.",
+          "name": "adrs",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Claims it names.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Use cases it names.",
+          "name": "use_cases",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Moments it answers.",
+          "name": "moments",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureSummary",
+        "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity.",
+      "is_enum": false,
+      "name": "FeatureEvidence",
+      "properties": [
+        {
+          "description": "Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "The modules it names by stability.",
+          "name": "modules",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureSummary",
+        "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The features as a client reads them.",
+      "is_enum": false,
+      "name": "FeatureList",
+      "properties": [
+        {
+          "description": "[`SCHEMA`].",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The hash of the model's sources and derived facts.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The counts.",
+          "name": "counts",
+          "refs": [
+            "ProductCounts"
+          ],
+          "required": true,
+          "type": "ProductCounts"
+        },
+        {
+          "description": "The surface vocabulary, with how many stable features each exposes.",
+          "name": "surfaces",
+          "refs": [
+            "SurfaceInfo"
+          ],
+          "required": true,
+          "type": "array of SurfaceInfo"
+        },
+        {
+          "description": "The matching features, in presentation order.",
+          "name": "features",
+          "refs": [
+            "FeatureSummary"
+          ],
+          "required": true,
+          "type": "array of FeatureSummary"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "product.features"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One feature as a listing shows it: everything a card needs and nothing a page needs.",
+      "is_enum": false,
+      "name": "FeatureSummary",
+      "properties": [
+        {
+          "description": "The identity and the slug.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The feature as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a narrow column shows: the short title, or the title.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The promise a visitor reads first.",
+          "name": "headline",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line: what it does.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`stable`, `draft` or `deprecated`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Presentation order.",
+          "name": "weight",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Whether the homepage shows it.",
+          "name": "featured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The operational areas it serves.",
+          "name": "areas",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The audiences it is written for.",
+          "name": "audiences",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: `/features/<id>/`.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the interfaces it is exposed through.",
+          "name": "surfaces",
+          "refs": [
+            "Surfaces"
+          ],
+          "required": true,
+          "type": "Surfaces"
+        },
+        {
+          "description": "Derived: how much stands behind it.",
+          "name": "counts",
+          "refs": [
+            "FeatureCounts"
+          ],
+          "required": true,
+          "type": "FeatureCounts"
+        },
+        {
+          "description": "Derived: what is guaranteed.",
+          "name": "evidence",
+          "refs": [
+            "FeatureEvidence"
+          ],
+          "required": true,
+          "type": "FeatureEvidence"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureList"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -5352,6 +5931,34 @@
       "variants": []
     },
     {
+      "description": "One object kind the feature names, with how many objects of it the layer holds.",
+      "is_enum": false,
+      "name": "KindRef",
+      "properties": [
+        {
+          "description": "The kind.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Objects of this kind in the index.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The C library a Linux artifact is linked against.",
       "is_enum": true,
       "name": "Libc",
@@ -5497,6 +6104,130 @@
           "value": "same_branch"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Every feature against every interface, and every module, command and kind against the\nfeatures that name it.",
+      "is_enum": false,
+      "name": "Matrix",
+      "properties": [
+        {
+          "description": "[`SCHEMA`].",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The surface vocabulary.",
+          "name": "surfaces",
+          "refs": [
+            "SurfaceInfo"
+          ],
+          "required": true,
+          "type": "array of SurfaceInfo"
+        },
+        {
+          "description": "One row per feature of any status but deprecated, in presentation order.",
+          "name": "rows",
+          "refs": [
+            "MatrixRow"
+          ],
+          "required": true,
+          "type": "array of MatrixRow"
+        },
+        {
+          "description": "Every builtin module of the executable with the stable features that name it.",
+          "name": "modules",
+          "refs": [
+            "ProductCoverage"
+          ],
+          "required": true,
+          "type": "array of ProductCoverage"
+        },
+        {
+          "description": "Every public command of the shell tool with the stable features that name it.",
+          "name": "commands",
+          "refs": [
+            "ProductCoverage"
+          ],
+          "required": true,
+          "type": "array of ProductCoverage"
+        },
+        {
+          "description": "Every kind of the layer a feature can present, with the stable features that name it.",
+          "name": "kinds",
+          "refs": [
+            "ProductCoverage"
+          ],
+          "required": true,
+          "type": "array of ProductCoverage"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "product.matrix"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One row of the matrix: a feature and the surfaces it is exposed through.",
+      "is_enum": false,
+      "name": "MatrixRow",
+      "properties": [
+        {
+          "description": "The feature id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a narrow column shows.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`/features/<id>/`.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`stable` or `draft`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The surfaces, by id, in the vocabulary's order.",
+          "name": "surfaces",
+          "refs": [
+            "Surfaces"
+          ],
+          "required": true,
+          "type": "Surfaces"
+        },
+        {
+          "description": "The surface ids that are true.",
+          "name": "exposed",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Matrix"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -5800,6 +6531,64 @@
       "variants": []
     },
     {
+      "description": "One capability module the feature names.",
+      "is_enum": false,
+      "name": "ModuleRef",
+      "properties": [
+        {
+          "description": "The module id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One paragraph.",
+          "name": "description",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the module stands, when it declared it.",
+          "name": "stability",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Repository-relative path of the file its descriptors were composed in.",
+          "name": "source_path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The builtin capabilities it composes, in id order.",
+          "name": "capabilities",
+          "refs": [
+            "CapabilityRef"
+          ],
+          "required": true,
+          "type": "array of CapabilityRef"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One moment in full, with everything derived that a page shows and no file states.",
       "is_enum": false,
       "name": "MomentDetail",
@@ -6033,6 +6822,48 @@
         "why.moment"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One operational moment the feature answers: derived from the moments that name any of\nthe feature's commands, capabilities, claims or rules.",
+      "is_enum": false,
+      "name": "MomentRef",
+      "properties": [
+        {
+          "description": "The moment id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first-person line an index shows.",
+          "name": "hook",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`/why/<id>/`.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
+      ],
       "values": [],
       "variants": []
     },
@@ -6931,6 +7762,295 @@
       "variants": []
     },
     {
+      "description": "How much the model holds. Every count anywhere is one of these.",
+      "is_enum": false,
+      "name": "ProductCounts",
+      "properties": [
+        {
+          "description": "Stable features.",
+          "name": "features",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Features of every status, drafts included.",
+          "name": "features_all",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Stable features the homepage shows.",
+          "name": "featured",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Providers the tool has an adapter for.",
+          "name": "providers",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Builtin modules of the executable, and how many a stable feature names.",
+          "name": "modules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Modules a stable feature names.",
+          "name": "modules_covered",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Public commands of the shell tool.",
+          "name": "commands",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Commands a stable feature names.",
+          "name": "commands_covered",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Kinds of the layer a feature can present.",
+          "name": "kinds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Kinds a stable feature names.",
+          "name": "kinds_covered",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureList",
+        "ProductValidationReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing of the product — a module, a public command, a kind — and the features that\nname it. Empty means the product page says nothing about it, which is a gap the\nvalidation reports and the matrix shows rather than hides.",
+      "is_enum": false,
+      "name": "ProductCoverage",
+      "properties": [
+        {
+          "description": "The id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stable features that name it.",
+          "name": "features",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Matrix"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing wrong with the product model, named where it is, with the nearest candidate\nwhen there is one.",
+      "is_enum": false,
+      "name": "ProductFinding",
+      "properties": [
+        {
+          "description": "`error` or `warning`.",
+          "name": "severity",
+          "refs": [
+            "Severity"
+          ],
+          "required": true,
+          "type": "Severity"
+        },
+        {
+          "description": "`unknown_reference`, `duplicate_identity`, `missing_content`, `uncovered`, ...",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The repository-relative file the finding is in, or the registry it is about.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record's identity, when one record owns the finding.",
+          "name": "id",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The front-matter key the finding is about, when one key owns it.",
+          "name": "field",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What is wrong, in one sentence.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The nearest existing name, when the value looks like a typo of one.",
+          "name": "did_you_mean",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProductValidationReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One provider the tool has an adapter for, discovered from the templates the distribution\nships and decorated with what this repository does with it.",
+      "is_enum": false,
+      "name": "ProductProvider",
+      "properties": [
+        {
+          "description": "The provider id: the template's file stem.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a person knows it by.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The bootstraps this repository's policy renders through it: target, mode, whether\nevery worker loads it.",
+          "name": "bootstraps",
+          "refs": [
+            "ProviderBootstrap"
+          ],
+          "required": true,
+          "type": "array of ProviderBootstrap"
+        },
+        {
+          "description": "The client configuration at the repository root that starts the shared MCP server\nfor this provider, when the repository carries it.",
+          "name": "client_config",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The enforcement entries of the policy wired by this provider's hooks.",
+          "name": "hooks",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the model's own validation found.",
+      "is_enum": false,
+      "name": "ProductValidationReport",
+      "properties": [
+        {
+          "description": "True when nothing is an error. Warnings do not make it false.",
+          "name": "valid",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many findings are errors.",
+          "name": "errors",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many findings are warnings.",
+          "name": "warnings",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The counts the model reached.",
+          "name": "counts",
+          "refs": [
+            "ProductCounts"
+          ],
+          "required": true,
+          "type": "ProductCounts"
+        },
+        {
+          "description": "The findings, errors first, then by file.",
+          "name": "findings",
+          "refs": [
+            "ProductFinding"
+          ],
+          "required": true,
+          "type": "array of ProductFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "product.validate"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code.",
       "is_enum": false,
       "name": "Provenance",
@@ -7059,6 +8179,71 @@
       "used_by_schemas": [
         "DeploymentView"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One bootstrap a provider renders.",
+      "is_enum": false,
+      "name": "ProviderBootstrap",
+      "properties": [
+        {
+          "description": "The target file, repository-relative.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`file` or `region`.",
+          "name": "mode",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Loaded by every worker without asking.",
+          "name": "always_loaded",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProductProvider"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every provider.",
+      "is_enum": false,
+      "name": "ProviderList",
+      "properties": [
+        {
+          "description": "How many.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Each, in id order.",
+          "name": "providers",
+          "refs": [
+            "ProductProvider"
+          ],
+          "required": true,
+          "type": "array of ProductProvider"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "product.providers"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -7807,6 +8992,328 @@
       "variants": []
     },
     {
+      "description": "One feature, resolved: the record as its file declares it, and everything derived.",
+      "is_enum": false,
+      "name": "ResolvedRefs",
+      "properties": [
+        {
+          "description": "The identity, the slug and the file name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The feature as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Two or three words for a card or a matrix row.",
+          "name": "short_title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The promise a visitor reads first.",
+          "name": "headline",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line: what it does.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`stable`, `draft` or `deprecated`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Presentation order, lowest first.",
+          "name": "weight",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Whether the homepage shows it as a chapter.",
+          "name": "featured",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "The operational areas of the why catalogue it serves.",
+          "name": "areas",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The audiences of the why catalogue it is written for.",
+          "name": "audiences",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Capability modules of the executable it is made of.",
+          "name": "modules",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Public commands of the shell tool it is made of.",
+          "name": "commands",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Object kinds of the layer it is made of.",
+          "name": "kinds",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Rules of the effective set that govern it, by id without the version.",
+          "name": "rules",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The documents that explain it, by repository-relative path.",
+          "name": "docs",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The decisions behind it, by declared id.",
+          "name": "adrs",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Claims that say what is guaranteed here.",
+          "name": "claims",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Use cases that show it in use.",
+          "name": "use_cases",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Areas of the Cockpit that show it.",
+          "name": "cockpit",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Web surfaces of the topology it is offered through.",
+          "name": "web",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Features explicitly related to this one. The reverse is derived.",
+          "name": "related",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: `/features/<id>/`. Never authored; the schema refuses a `route` key.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the repository-relative file the record came from.",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The Markdown body, without its front matter.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the interfaces it is exposed through.",
+          "name": "surfaces",
+          "refs": [
+            "Surfaces"
+          ],
+          "required": true,
+          "type": "Surfaces"
+        },
+        {
+          "description": "Derived: the modules it names, each with its capabilities and their projections.",
+          "name": "module_refs",
+          "refs": [
+            "ModuleRef"
+          ],
+          "required": true,
+          "type": "array of ModuleRef"
+        },
+        {
+          "description": "Derived: the shell commands it names, as the command registry declares them.",
+          "name": "command_refs",
+          "refs": [
+            "CommandRef"
+          ],
+          "required": true,
+          "type": "array of CommandRef"
+        },
+        {
+          "description": "Derived: the kinds it names, each with its object count.",
+          "name": "kind_refs",
+          "refs": [
+            "KindRef"
+          ],
+          "required": true,
+          "type": "array of KindRef"
+        },
+        {
+          "description": "Derived: the rules it names, each with its class and whether it is enforced.",
+          "name": "rule_refs",
+          "refs": [
+            "RuleRef"
+          ],
+          "required": true,
+          "type": "array of RuleRef"
+        },
+        {
+          "description": "Derived: the documents it names, with their titles.",
+          "name": "doc_refs",
+          "refs": [
+            "DocRef"
+          ],
+          "required": true,
+          "type": "array of DocRef"
+        },
+        {
+          "description": "Derived: the decisions it names, with their status.",
+          "name": "adr_refs",
+          "refs": [
+            "AdrRef"
+          ],
+          "required": true,
+          "type": "array of AdrRef"
+        },
+        {
+          "description": "Derived: the claims it names, with their status.",
+          "name": "claim_refs",
+          "refs": [
+            "ClaimRef"
+          ],
+          "required": true,
+          "type": "array of ClaimRef"
+        },
+        {
+          "description": "Derived: the use cases it names.",
+          "name": "use_case_refs",
+          "refs": [
+            "UseCaseRef"
+          ],
+          "required": true,
+          "type": "array of UseCaseRef"
+        },
+        {
+          "description": "Derived: the Cockpit areas it names, with their routes.",
+          "name": "cockpit_refs",
+          "refs": [
+            "CockpitAreaRef"
+          ],
+          "required": true,
+          "type": "array of CockpitAreaRef"
+        },
+        {
+          "description": "Derived: the web surfaces it names, with their mounts.",
+          "name": "web_refs",
+          "refs": [
+            "SurfaceRef"
+          ],
+          "required": true,
+          "type": "array of SurfaceRef"
+        },
+        {
+          "description": "Derived: the moments that name any command, capability, claim or rule of this feature.",
+          "name": "moments",
+          "refs": [
+            "MomentRef"
+          ],
+          "required": true,
+          "type": "array of MomentRef"
+        },
+        {
+          "description": "Derived: the features that name this one in their `related`.",
+          "name": "backlinks",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: how much stands behind it.",
+          "name": "counts",
+          "refs": [
+            "FeatureCounts"
+          ],
+          "required": true,
+          "type": "FeatureCounts"
+        },
+        {
+          "description": "Derived: what is guaranteed.",
+          "name": "evidence",
+          "refs": [
+            "FeatureEvidence"
+          ],
+          "required": true,
+          "type": "FeatureEvidence"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "product.feature"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The answer of `objects.get`: what the URI resolved to, tagged by `source` the way a\ncapability's provenance is.",
       "is_enum": false,
       "name": "ResourceView",
@@ -7896,6 +9403,62 @@
       "used_by": [],
       "used_by_schemas": [
         "HealthRoutes"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One rule the feature names.",
+      "is_enum": false,
+      "name": "RuleRef",
+      "properties": [
+        {
+          "description": "The rule id, without the version.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identity the index holds, with the version.",
+          "name": "identity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`blocking` or `advisory`.",
+          "name": "class",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the tool enforces it: the rule carries an `x-majordomus` block.",
+          "name": "enforced",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
       ],
       "values": [],
       "variants": []
@@ -8072,6 +9635,7 @@
       "used_by_schemas": [
         "Diagnostic",
         "Finding",
+        "ProductFinding",
         "TopologyDiagnostic"
       ],
       "values": [
@@ -8673,6 +10237,49 @@
       "variants": []
     },
     {
+      "description": "One surface of the vocabulary, as a client reads it.",
+      "is_enum": false,
+      "name": "SurfaceInfo",
+      "properties": [
+        {
+          "description": "`cli`, `api`, `mcp`, `cockpit` or `docs`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The route on the website where the surface is documented.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many stable features it exposes.",
+          "name": "features",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureList",
+        "Matrix"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How a surface answers a request.\n\nOnly what this repository serves: a directory of generated files, a path the executable\nanswers itself, and a redirect. A new *kind* is a new behaviour, never a new name for\nthe same behaviour with different data.",
       "is_enum": true,
       "name": "SurfaceKind",
@@ -8696,6 +10303,48 @@
           "value": "redirect"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One web surface of the topology the feature names.",
+      "is_enum": false,
+      "name": "SurfaceRef",
+      "properties": [
+        {
+          "description": "The surface id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is mounted.",
+          "name": "mount",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it is for.",
+          "name": "category",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -8771,6 +10420,57 @@
           "value": "internal"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document.",
+      "is_enum": false,
+      "name": "Surfaces",
+      "properties": [
+        {
+          "description": "The command line: the executable's own, or the shell tool's.",
+          "name": "cli",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The HTTP routes under `/api/v1/`, and the OpenAPI document over them.",
+          "name": "api",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "MCP: a tool, or a resource.",
+          "name": "mcp",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The Cockpit.",
+          "name": "cockpit",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The documentation.",
+          "name": "docs",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureSummary",
+        "MatrixRow",
+        "ResolvedRefs"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -9244,6 +10944,41 @@
       "used_by_schemas": [
         "BranchState",
         "WorktreeState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One use case the feature names.",
+      "is_enum": false,
+      "name": "UseCaseRef",
+      "properties": [
+        {
+          "description": "The use case id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The category it is filed under.",
+          "name": "category",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
       ],
       "values": [],
       "variants": []
@@ -10600,6 +12335,10 @@
                   "value": "\"layer\""
                 },
                 {
+                  "case": "product",
+                  "value": "\"product\""
+                },
+                {
                   "case": "registry",
                   "value": "\"registry\""
                 },
@@ -11289,6 +13028,354 @@
           "result_schema": "CounterSnapshot",
           "stability": "behaviorally_verified",
           "summary": "Performance counters"
+        }
+      ]
+    },
+    {
+      "description": "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own.",
+      "name": "product",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=64",
+          "cli": "product show",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/feature?id=benchmarks\"",
+          "description": "One product feature in full: the record as its file declares it, and everything derived from what it names — the capabilities of its modules with their tools, routes and command-line paths, the commands with their summaries, the objects of its kinds counted, the rules with their class and whether the tool enforces them, the documents, the decisions, the claims with their status, the use cases, the Cockpit areas and web surfaces with their routes, the moments it answers, and the interfaces all of that adds up to.",
+          "id": "product.feature",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_feature",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The feature's id, as `product.features` gives it. This is also its slug and its route.",
+              "examples": [
+                {
+                  "case": "first-feature",
+                  "value": "\"benchmarks\""
+                }
+              ],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/product/feature",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::product",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "One feature: the result.",
+              "schema": "ResolvedRefs",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ResolvedRefs",
+          "stability": "behaviorally_verified",
+          "summary": "One feature"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=32",
+          "cli": "product list",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/features?featured=true&area=context\"",
+          "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+          "id": "product.features",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "product",
+            "uri": "majordomus://product"
+          },
+          "mcp_tool": "majordomus_features",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only the features the homepage shows.",
+              "examples": [
+                {
+                  "case": "featured",
+                  "value": "true"
+                }
+              ],
+              "name": "featured",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Only features of this status. Absent means the stable ones; pass `any` for\neverything the model holds.",
+              "examples": [],
+              "name": "status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only features serving this operational area.",
+              "examples": [
+                {
+                  "case": "by-area",
+                  "value": "\"context\""
+                }
+              ],
+              "name": "area",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only features made of this capability module.",
+              "examples": [],
+              "name": "module",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only features made of this shell command.",
+              "examples": [],
+              "name": "command",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only features exposed through this surface: `cli`, `api`, `mcp`, `cockpit`, `docs`.",
+              "examples": [],
+              "name": "surface",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Case-insensitive text, matched against the identity, the titles, the headline, the\nsummary, the tags and the body.",
+              "examples": [],
+              "name": "q",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/product/features",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::product",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The features: the result.",
+              "schema": "FeatureList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "FeatureList",
+          "stability": "behaviorally_verified",
+          "summary": "The features"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2",
+          "cli": "product matrix",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/matrix\"",
+          "description": "Every feature against the command line, the HTTP API, MCP, the Cockpit and the documentation, each mark derived from what the feature names; then every builtin module of the executable, every public command of the shell tool and every kind of the layer with the stable features that name it. A row with no feature is reported as a gap rather than hidden.",
+          "id": "product.matrix",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "product-matrix",
+            "uri": "majordomus://product/matrix"
+          },
+          "mcp_tool": "majordomus_product_matrix",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/product/matrix",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::product",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Features against interfaces: the result.",
+              "schema": "Matrix",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Matrix",
+          "stability": "behaviorally_verified",
+          "summary": "Features against interfaces"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2",
+          "cli": "product providers",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/providers\"",
+          "description": "Every provider the tool has an adapter for — one per template the distribution ships — with the bootstraps this repository's policy renders through it, the client configuration it carries for the shared MCP server, and the hooks the policy wires. The set is the templates; nothing here is a list of vendors.",
+          "id": "product.providers",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "providers",
+            "uri": "majordomus://product/providers"
+          },
+          "mcp_tool": "majordomus_providers",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/product/providers",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::product",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The providers: the result.",
+              "schema": "ProviderList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ProviderList",
+          "stability": "behaviorally_verified",
+          "summary": "The providers"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=2",
+          "cli": "product validate",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/validate\"",
+          "description": "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
+          "id": "product.validate",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_product_validate",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/product/validate",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::product",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Validate the model: the result.",
+              "schema": "ProductValidationReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ProductValidationReport",
+          "stability": "behaviorally_verified",
+          "summary": "Validate the model"
         }
       ]
     },

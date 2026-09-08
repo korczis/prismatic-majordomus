@@ -1,73 +1,80 @@
 {% extends "base.html" %}
 {% block content %}
-{%- set lifecycle = load_data(path="data/generated/lifecycle.json") -%}
-{%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{#- The homepage is a projection. Every feature, interface, count, provider, kind and moment
+    below comes from data/registry/product.json and the datasets beside it, all written by
+    `majordomus generate site` from the capability registry, the objects of the layer and the
+    web topology. This template names no feature, no module, no command, no provider and no
+    number: adding a file under .ai/repo/features/ is what changes this page (ADR 23). The
+    only hand-written words are marketing.toml's, loaded as `m` by base.html. -#}
+{%- set model = load_data(path="data/registry/product.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set dist = load_data(path="data/registry/distribution.json") -%}
+{%- set chapters = [f for f in model.features if f.featured and f.status != "draft"] -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
 
-{# 1. hero — marketing.toml: three business outcomes, one complete message each. The first
-   proposition is the page's h1 and the checked default. The selector is a radio group, so it
-   needs no runtime: arrow keys move between the outcomes, every message is in the HTML, and
-   the checked input drives the visible message through Tailwind's peer and group-has variants.
-   The three messages share one grid cell and the inactive ones are invisible, not removed, so
-   the block keeps the height of the longest message and choosing another never moves the
-   buttons below. The first message is shown unless another input is checked, so a browser
-   without :has() still shows the h1. The positional ids (hero-p-1..3) are what the literal
-   class names below refer to: Tailwind compiles only classes it can read in this file. #}
-{%- set hero_show = ["group-has-[#hero-p-2:checked]/hero:invisible group-has-[#hero-p-3:checked]/hero:invisible", "invisible group-has-[#hero-p-2:checked]/hero:visible", "invisible group-has-[#hero-p-3:checked]/hero:visible"] -%}
+{#- 1. hero — the positioning sentences, and beside them the real answer the tool gives: every
+    feature this repository declares against every interface, with the marks derived. -#}
 <section class="border-b border-default bg-neutral-primary">
-  <div class="group/hero mx-auto grid max-w-screen-xl gap-6 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:gap-16 lg:px-8 lg:py-24">
-    {#- The three outcomes: a radio each. On a phone they are a row of pills above the message; from lg
-        up they are a column of cards that stretches to the height of the message column, each card
-        carrying its title, the headline, and the link to the page that explains it. The card is
-        styled by its own checked input (has-checked), so the link can sit beside the label. -#}
-    <div role="radiogroup" aria-label="Which outcome matters most to you?" class="flex flex-wrap gap-2 lg:order-2 lg:flex-col lg:gap-4">
-      {%- for p in m.hero.propositions %}
-      <div class="relative rounded-base border border-default bg-neutral-primary-soft has-checked:border-brand-subtle has-checked:bg-brand-softer has-focus-visible:ring-4 has-focus-visible:ring-brand-medium hover:bg-neutral-secondary-medium has-checked:hover:bg-brand-softer lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-6 lg:py-5">
-        <input type="radio" id="hero-p-{{ loop.index }}" name="hero-proposition" class="peer sr-only"{% if loop.first %} checked{% endif %}>
-        <label for="hero-p-{{ loop.index }}" class="block cursor-pointer px-3.5 py-2 text-sm font-semibold text-body peer-checked:text-fg-brand-strong lg:p-0 lg:text-2xl lg:font-extrabold lg:tracking-tight xl:text-3xl">
-          <span class="block">{{ p.label }}</span>
-          <span class="mt-1.5 hidden text-base font-normal leading-snug tracking-normal text-body lg:block">{{ p.headline }}</span>
-        </label>
-        <a href="{{ get_url(path="/outcomes/" ~ p.slug ~ "/", trailing_slash=true) }}" class="mt-3 hidden text-sm font-medium text-fg-brand hover:underline lg:inline-flex lg:items-center lg:gap-1">{{ m.hero.cta_more }} <span aria-hidden="true">&rarr;</span></a>
-      </div>
-      {%- endfor %}
-    </div>
-    <div class="flex min-w-0 flex-col lg:order-1">
+  <div class="mx-auto grid max-w-screen-xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-20">
+    <div class="flex min-w-0 flex-col">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fg-brand">{{ m.hero.eyebrow }}</p>
-      <div class="mt-4 grid" aria-live="polite">
-        {%- for p in m.hero.propositions %}
-        <div class="col-start-1 row-start-1 min-w-0 {{ hero_show[loop.index0] }}">
-          {%- if loop.first %}
-          <h1 class="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ p.headline }}</h1>
-          {%- else %}
-          <p class="text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ p.headline }}</p>
-          {%- endif %}
-          <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body sm:text-xl">{{ p.body }}</p>
-          <p class="mt-5 max-w-2xl text-lg font-semibold leading-snug text-heading sm:text-xl">{{ p.outcome }}</p>
-          <p class="mt-3 lg:hidden"><a href="{{ get_url(path="/outcomes/" ~ p.slug ~ "/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand underline">{{ m.hero.cta_more }} &rarr;</a></p>
-        </div>
-        {%- endfor %}
-      </div>
+      <h1 class="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">{{ m.hero.title }}</h1>
+      <p class="mt-5 flex flex-wrap gap-x-3 gap-y-1 font-mono text-sm uppercase tracking-widest text-fg-brand">
+        {%- for line in m.hero.mantra %}<span>{{ line }}</span>{% endfor -%}
+      </p>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body">{{ m.hero.lead }}</p>
       <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-        <a href="#how-it-works" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
-        <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_secondary }}</a>
+        <a href="#install" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">{{ m.hero.cta_primary }} <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></a>
+        <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ m.hero.cta_secondary }}</a>
       </div>
+    </div>
+
+    {#- the console: `majordomus product matrix`, rendered from the same dataset the command
+        prints. A table rather than padded text, so the columns align at every width and a
+        screen reader reads a table; the chrome is the only decoration. -#}
+    <div class="min-w-0">
+      <figure class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
+        <figcaption class="flex items-center justify-between gap-3 border-b border-default px-4 py-2">
+          <span class="font-mono text-xs text-body-subtle">$ majordomus product matrix</span>
+          <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ model.counts.features }} × {{ model.surfaces | length }}</span>
+        </figcaption>
+        <div class="max-h-[26rem] overflow-x-auto overflow-y-auto" tabindex="0">
+          <table class="w-full border-collapse font-mono text-xs">
+            <caption class="sr-only">Every feature of the product against the interfaces it is exposed through</caption>
+            <thead class="sticky top-0 bg-neutral-primary-soft">
+              <tr>
+                <th scope="col" class="border-b border-default px-3 py-2 text-start font-medium text-body-subtle">feature</th>
+                {%- for s in model.surfaces %}<th scope="col" class="border-b border-default px-2 py-2 text-center font-medium text-body-subtle">{{ s.id }}</th>{% endfor -%}
+              </tr>
+            </thead>
+            <tbody>
+              {%- for r in model.matrix.rows %}{% if r.status != "draft" %}
+              <tr class="hover:bg-neutral-secondary-medium">
+                <th scope="row" class="whitespace-nowrap px-3 py-1 text-start font-normal"><a href="{{ base }}{{ r.route }}" class="text-heading hover:text-fg-brand hover:underline">{{ r.label }}</a></th>
+                {%- for s in model.surfaces %}
+                <td class="px-2 py-1 text-center">{% if r.surfaces[s.id] %}<span class="text-fg-success-strong">●</span><span class="sr-only">on {{ s.title }}</span>{% else %}<span class="text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on {{ s.title }}</span>{% endif %}</td>
+                {%- endfor %}
+              </tr>
+              {%- endif %}{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </figure>
+      <p class="mt-3 text-sm text-body-subtle">{{ m.hero.console_caption }}</p>
     </div>
   </div>
 </section>
 
-{# 1a. install — one command, from data/registry/distribution.json, which the executable
-   generates from share/distribution.yaml. The command is plain text in the HTML: it is
-   selectable and correct without JavaScript, and the copy button is the shared `code`
-   component's, so the site has one clipboard implementation and not two. #}
-<section id="install" class="scroll-mt-20 border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
+{#- 2. install — the shared install component, from data/registry/distribution.json, which
+    the executable generates from share/distribution.yaml. One install block on the site. -#}
+<section id="install" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
     {{ <install command={dist.install_command} next={dist.next_command} binary={dist.binary} install_dir={dist.install_dir} docs_href={get_url(path="/docs/install/", trailing_slash=true)} /> }}
+    <p class="mt-6 max-w-3xl text-sm text-body">{{ m.install.layer }}</p>
   </div>
 </section>
 
-{# 1b. recognition — marketing.toml; situations, not claims #}
+{#- 3. recognition — the featured moments of the Why catalogue; situations, not claims -#}
 <section class="border-b border-default bg-brand-softer">
   <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
     <h2 class="text-2xl font-bold tracking-tight text-fg-brand-strong sm:text-3xl"><a href="{{ get_url(path="/why/", trailing_slash=true) }}" class="hover:underline">{{ m.recognise.title }}</a></h2>
@@ -76,54 +83,152 @@
   </div>
 </section>
 
-{# 2. how it works — marketing.toml; the hero's primary action lands here. Structural, no numbers #}
-<section id="how-it-works" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
+{#- 4. the chapters — the features that declare themselves featured, in their own weight order.
+    A feature becomes one of these by setting `featured: true` in its own file; this template
+    does not choose, and everything beside the words is derived from what the file names. -#}
+<section id="chapters" class="scroll-mt-20 border-b border-default bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="01" kicker="how it works" title={m.compare.title} /> }}
-    <div class="grid gap-6 lg:grid-cols-2">
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-6">
-        <h3 class="font-mono text-xs uppercase tracking-widest text-body-subtle">{{ m.compare.before_title }}</h3>
-        <ul class="mt-4 space-y-3">{%- for it in m.compare.before -%}<li class="flex gap-3 text-base text-body"><span aria-hidden="true" class="font-mono text-body-subtle">✕</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
-      </div>
-      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6">
-        <h3 class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ m.compare.after_title }}</h3>
-        <ul class="mt-4 space-y-3">{%- for it in m.compare.after -%}<li class="flex gap-3 text-base text-heading"><span aria-hidden="true" class="font-mono text-fg-brand-strong">✓</span><span>{{ it }}</span></li>{%- endfor -%}</ul>
-      </div>
+    {{ <section_head number="01" kicker={m.chapters.kicker} title="What it does" lead={m.chapters.lead} /> }}
+    <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {%- for f in chapters %}
+      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ loop.index }} / {{ chapters | length }}</span>
+        <h3 class="mt-2 text-lg font-semibold tracking-tight text-heading"><a href="{{ base }}{{ f.route }}" class="hover:text-fg-brand hover:underline">{{ f.title }}</a></h3>
+        <p class="mt-2 text-sm leading-relaxed text-body">{{ f.headline }}</p>
+        <div class="mt-4">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
+        {%- if f.moments | length %}
+        <p class="mt-3 text-xs text-body-subtle">Answers {{ f.counts.moments }} of the catalogue&rsquo;s operational moments, among them &ldquo;{{ f.moments[0].hook }}&rdquo;.</p>
+        {%- endif %}
+        <a href="{{ base }}{{ f.route }}" class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline">What it is, and what it does not do →</a>
+      </li>
+      {%- endfor %}
+    </ol>
+    <p class="mt-6 text-sm"><a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">All {{ model.counts.features }} features, each with the capabilities, objects, rules and guarantees behind it &rarr;</a></p>
+  </div>
+</section>
+
+{#- 5. write once — the kinds of the layer, counted from the index -#}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="02" kicker="the layer" title={m.write_once.title} lead={m.write_once.lead} /> }}
+    <ul class="flex flex-wrap gap-2">
+      {%- for kind, n in model.telemetry.by_kind %}
+      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-3 py-1.5"><code class="font-mono text-sm text-heading">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></li>
+      {%- endfor %}
+    </ul>
+    <p class="mt-6 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
+  </div>
+</section>
+
+{#- 6. providers — the adapters the distribution ships, and what this repository does with each -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="03" kicker="provider-neutral" title={m.providers.title} lead={m.providers.lead} /> }}
+    <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {%- for p in model.providers %}
+      <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
+        <span class="text-base font-semibold text-heading">{{ p.title }}</span>
+        {%- if p.bootstraps | length %}
+        <ul class="mt-3 space-y-1">
+          {%- for b in p.bootstraps %}<li class="break-all font-mono text-xs text-body">{{ b.target }}</li>{% endfor -%}
+        </ul>
+        {%- endif %}
+        {%- if p.client_config %}<p class="mt-auto break-all pt-2 font-mono text-xs text-body-subtle">{{ p.client_config }}</p>{% endif -%}
+      </li>
+      {%- endfor %}
+    </ul>
+    <div class="mt-8 rounded-base border border-brand-subtle bg-brand-softer p-6 sm:p-8">
+      <p class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">Repository intelligence is not a model provider.</p>
+      <p class="mt-4 max-w-3xl text-base leading-relaxed text-heading">{{ m.providers.boundary }}</p>
     </div>
   </div>
 </section>
 
-{# 3. the contract — what "done" looks like: the picture (the finish contract, drawn from the
-   generated data; the list under the canvas is what remains without JavaScript) and the real
-   output from the repository's own README. Below the hero on purpose: the hero says why, this
-   shows what. #}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-    <div class="max-w-3xl">
-      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">What &ldquo;done&rdquo; looks like when it has to be earned</h2>
-      <p class="mt-4 text-body">{{ m.contract.caption }}</p>
-      <p class="mt-4 text-sm"><a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The full contract, argument by argument &rarr;</a></p>
+{#- 7. the interfaces — the surfaces of the registry, with what stands behind each -#}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="04" kicker="one declaration" title={m.surfaces.title} lead={m.surfaces.lead} /> }}
+    <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {%- for s in model.surfaces %}
+      <li><a href="{{ base }}{{ s.route }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium">
+        <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ s.id }}</span>
+        <span class="mt-1 text-base font-semibold text-heading">{{ s.title }}</span>
+        <span class="mt-auto pt-3 font-mono text-2xl font-bold text-fg-brand">{{ s.features }}</span>
+        <span class="text-xs text-body">features exposed here</span>
+      </a></li>
+      {%- endfor %}
+    </ul>
+    <dl class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {%- for label, key in {"capabilities in the registry": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "objects of the layer": "objects"} %}
+      <div class="rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
+      {%- endfor %}
+    </dl>
+    <div class="mt-8 rounded-base border border-default bg-neutral-primary p-5">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Coverage</h3>
+      <p class="mt-2 max-w-3xl text-sm text-body">{{ m.matrix.lead }}</p>
+      <dl class="mt-4 grid gap-2 sm:grid-cols-3">
+        {%- for label, pair in {"capability modules": ["modules_covered", "modules"], "public commands": ["commands_covered", "commands"], "object kinds": ["kinds_covered", "kinds"]} %}
+        <div class="flex items-baseline justify-between gap-3 border-b border-default pb-2"><dt class="text-sm text-body">{{ label }} named by a feature</dt><dd class="font-mono text-sm text-heading">{{ model.counts[pair[0]] }} / {{ model.counts[pair[1]] }}</dd></div>
+        {%- endfor %}
+      </dl>
+      <p class="mt-4 text-sm text-body">A part of the product no feature names is reported as a gap by <code class="font-mono text-heading">majordomus product validate</code> and shown on the matrix, never quietly absent.</p>
     </div>
-    <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-start">
+    <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+      <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The full matrix, both directions &rarr;</a>
+      <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry itself, capability by capability &rarr;</a>
+    </p>
+  </div>
+</section>
+
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="05" kicker="the same model" title="The product, composed" lead={m.graph.lead} /> }}
+    {%- set graph = load_data(path="data/registry/product-graph.json") -%}
+    {%- set graph_id = "product" -%}
+    {%- set graph_rings = "feature,module,command,kind,surface" -%}
+    {%- set graph_label = graph.description -%}
+    {% include "partials/graph.html" %}
+  </div>
+</section>
+
+{#- 9. the doctrine — the rules the featured features rest on, with their class -#}
+<section class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="06" kicker="doctrine" title={m.principles.title} lead={m.principles.lead} /> }}
+    {#- the dataset's own `rules`: every rule a public feature names, resolved and
+        deduplicated by the executable. This page does not work out which rules the product
+        rests on; it renders the answer. -#}
+    {#- the route of a rule is the doctrine dataset's, joined by id: this page does not know
+        how a rule id becomes a slug, and there is one such rule on the site -#}
+    {%- set doctrines = load_data(path="data/generated/doctrines.json") -%}
+    <ul class="grid gap-3 md:grid-cols-2">
+      {%- for r in model.rules %}
+      {%- set d = [x for x in doctrines.doctrines if x.id == r.id] -%}
+      <li class="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1 rounded-base border border-default bg-neutral-primary-soft p-4">
+        {{ <doctrine_class class={r.class} /> }}
+        {%- if d | length %}<a href="{{ get_url(path="/doctrines/" ~ d[0].slug ~ "/", trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ r.title }}</a>
+        {%- else %}<span class="min-w-0 text-sm text-heading">{{ r.title }}</span>{% endif -%}
+      </li>
+      {%- endfor %}
+    </ul>
+    <p class="mt-6 text-sm"><a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every rule, with the validator that decides it and the test that proves it &rarr;</a></p>
+  </div>
+</section>
+
+{#- 10. the contract — real output from the repository's own README -#}
+<section class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+    {{ <section_head number="07" kicker="the finish contract" title="What &ldquo;done&rdquo; looks like when it has to be earned" lead={m.contract.caption} /> }}
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:items-start">
       <div class="min-w-0">
-        <figure class="overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"
-                data-hero
-                data-hero-checks="{{ readme.finish_checks | json_encode() }}"
-                data-hero-outcomes="{{ lifecycle.outcomes | json_encode() }}">
-          <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
-            <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">the finish contract</span>
-            <span class="font-mono text-xs text-body-subtle">{{ readme.finish_checks | length }} checks · {{ lifecycle.outcomes | length }} outcomes</span>
-          </figcaption>
-          <div class="relative h-64 w-full sm:h-72"><canvas class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas></div>
-          <ol class="grid grid-cols-2 gap-x-4 gap-y-1 border-t border-default px-4 py-3 sm:grid-cols-3">
-            {%- for c in readme.finish_checks %}
-            <li class="font-mono text-xs text-body-subtle"><span class="text-heading">{{ loop.index }}.</span> {{ c }}</li>
-            {%- endfor %}
-          </ol>
-        </figure>
-        <p class="mt-3 text-sm text-body-subtle">Work arrives from every session. It leaves as <span class="font-medium text-heading">completed</span> only when all {{ readme.finish_checks | length }} lines pass. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/map/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">See the program these checks run in &rarr;</a></p>
+        <ol class="divide-y divide-default rounded-base border border-default bg-neutral-primary">
+          {%- for c in readme.finish_checks %}
+          <li class="flex items-baseline gap-3 px-4 py-2 font-mono text-xs text-body"><span class="text-body-subtle">{{ loop.index }}</span><span class="text-heading">{{ c }}</span></li>
+          {%- endfor %}
+        </ol>
+        <p class="mt-3 text-sm text-body-subtle">Work leaves as <span class="font-medium text-heading">completed</span> only when every line passes. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The full contract, argument by argument &rarr;</a></p>
       </div>
-      <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
+      <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
         <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
         <div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
       </figure>
@@ -131,143 +236,23 @@
   </div>
 </section>
 
-{# 4. problem — the failure mode, then the README's evidence bullets only (its prose duplicates the hero) #}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="02" kicker="the problem" title="A session grades its own homework" lead={m.leads.problem} /> }}
-    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <ol class="min-w-0 space-y-2 font-mono text-sm" aria-label="What an unsupervised session does">
-        {%- for step in ["loads whatever context it likes", "interprets whichever rulebook it found", "chooses its own scope", "changes files", "declares itself done"] -%}
-        <li class="flex items-center gap-3 rounded-base border border-default bg-neutral-primary px-4 py-3 text-heading"><span class="text-body-subtle">{{ loop.index }}</span>{{ step }}</li>
-        {%- endfor -%}
-        <li class="pt-2 font-sans text-base font-semibold text-fg-brand-strong">Who independently checks that any of it was acceptable?</li>
-      </ol>
-      <div class="format min-w-0 max-w-none dark:format-invert">
-        <p class="text-body">The environments this tool was distilled from had the failure at scale:</p>
-        {{ readme.problem_bullets_md | markdown | safe }}
-        <p class="text-body">Better prompts do not fix any of this. <a href="{{ get_url(path="/docs/extraction-report/", trailing_slash=true) }}">The evidence, with its derivation →</a></p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{# 5. core model — diagrams.json (from README mental model) #}
-<section class="border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="03" kicker="the core model" title="Majordomus supervises how work is executed" lead={m.leads.model} /> }}
-    <div class="grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:items-center">
-      <div class="min-w-0 [&_figure]:my-0">{{ <diagram key="supervision" /> }}</div>
-      <div class="min-w-0 rounded-base border border-brand-subtle bg-brand-softer p-6 sm:p-8">
-        <p class="text-xl font-bold leading-snug tracking-tight text-fg-brand-strong sm:text-2xl">The worker does not get to define its own successful completion.</p>
-        <p class="mt-4 text-base leading-relaxed text-heading">{{ m.leads.boundary }}</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{# 6. drop-in installation — the real commands #}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="04" kicker="drop-in" title="One directory, one pointer" lead={m.leads.install} /> }}
-    <div class="grid gap-6 lg:grid-cols-2">
-      <div class="min-w-0">{% <code label="install once" wrap={true}> %}{{ dist.install_command }}
-
-cd your-project
-majordomus init      # .ai/ with the policy, profiles, rules, prompts and workflows
-majordomus update    # CLAUDE.md, AGENTS.md, GEMINI.md from the policy
-majordomus doctor    # names the two hook lines still missing
-{% </code> %}</div>
-      <div class="min-w-0">{% <code label="per task"> %}
-majordomus start "fix OAuth callback" --scope lib/auth --profile debugging
-# … the worker reads the generated instructions and works …
-majordomus check
-majordomus finish --outcome completed --verify-command "make test"
-{% </code> %}</div>
-    </div>
-    <p class="mt-6 max-w-3xl text-sm text-body">Requirements: {{ project.requirements | join(sep=", ") }}. Nothing is installed into your project except <code class="font-mono text-heading">.ai/</code> and the instruction files the policy names; <code class="font-mono text-heading">.ai/local/</code> is ignored and never leaves the checkout.</p>
-  </div>
-</section>
-
-{# 7. the lifecycle — lifecycle.json #}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="05" kicker="the lifecycle" title="A task is bounded by start and by finish or handover" /> }}
-    <ol class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {%- for step in lifecycle.steps -%}
-      <li><a href="{{ get_url(path="/commands/" ~ step.command ~ "/", trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium">
-        <span class="font-mono text-xs uppercase tracking-wide text-fg-brand">step {{ loop.index }}</span>
-        <code class="mt-2 font-mono text-lg font-semibold text-heading">majordomus {{ step.command }}</code>
-        <p class="mt-2 text-sm text-body">{{ step.what }}</p>
-      </a></li>
-      {%- endfor -%}
-    </ol>
-    <p class="mt-6 text-sm text-body">{{ readme.does | length }} responsibilities sit behind the {{ lifecycle.steps | length }} commands of that lifecycle — <a href="{{ get_url(path="/supervises/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">what Majordomus supervises →</a>. Outcomes are a closed vocabulary: {% for o in lifecycle.outcomes %}<code class="font-mono text-heading">{{ o }}</code>{% if not loop.last %}, {% endif %}{% endfor %}. State read back is labelled {% for l in lifecycle.divergence_labels %}<code class="font-mono text-heading">{{ l }}</code>{% if not loop.last %}, {% endif %}{% endfor %} against git.</p>
-  </div>
-</section>
-
-{# 8. capabilities — capabilities.json #}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="06" kicker="guaranteed · advisory · planned" title="What is real, what is projected, what is not built" lead={m.leads.capabilities} /> }}
-    <div class="grid gap-4 md:grid-cols-3">
-      {%- for status in ["guaranteed", "advisory", "planned"] -%}
-      {%- set rows = [c for c in caps.claims if c.status == status] -%}
-      <div class="flex h-full flex-col rounded-base border border-default bg-neutral-primary p-5">
-        <div class="mb-3 flex items-center justify-between"><a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="hover:underline">{{ <badge status={status} /> }}</a><span class="font-mono text-sm text-body-subtle">{{ rows | length }}</span></div>
-        <p class="mb-4 text-sm text-body">{{ caps.statuses[status] }}</p>
-        <ul class="space-y-2 text-sm text-heading">
-          {%- for c in rows[:4] -%}<li class="flex gap-2"><span aria-hidden="true" class="text-body-subtle">·</span><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="py-0.5 hover:text-fg-brand hover:underline">{{ c.claim }}</a></li>{%- endfor -%}
-        </ul>
-        <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="mt-auto inline-block pt-4 text-sm font-medium text-fg-brand hover:underline">All {{ status }} claims →</a>
-      </div>
-      {%- endfor -%}
-    </div>
-    <p class="mt-6"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-sm font-medium text-fg-brand underline">The full matrix with source, implementation and test for every row →</a></p>
-  </div>
-</section>
-
-{# 9. what it is not — README #}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="07" kicker="what it is not" title="Not another runtime" /> }}
-    <div class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ readme.not_md | markdown | safe }}</div>
-  </div>
-</section>
-
-{# 10. who it is for — marketing.toml audiences; no claims, no numbers #}
-<section class="border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
-    {{ <section_head number="08" kicker="who it is for" title="The same discipline, three vantage points" /> }}
-    <div class="grid gap-4 md:grid-cols-3">
-      {{ <linkcard href={get_url(path="/getting-started/", trailing_slash=true)} kicker="a developer" title="Copy one directory" text={m.audiences.developer} /> }}
-      {{ <linkcard href={get_url(path="/guarantees/", trailing_slash=true)} kicker="an engineering lead" title="One policy, one contract" text={m.audiences.lead} /> }}
-      {{ <linkcard href={get_url(path="/docs/economics/", trailing_slash=true)} kicker="an organisation" title="Measured, not estimated" text={m.audiences.organisation} /> }}
-    </div>
-  </div>
-</section>
-
-{# 11. final cta — one primary action, the rest are secondary #}
-<section class="bg-neutral-primary-soft">
+{#- 11. this page — the architecture note, and the final action -#}
+<section class="bg-neutral-primary">
   <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
     <div class="mx-auto max-w-3xl text-center">
-      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ m.leads.final }}</h2>
+      <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ m.final.title }}</h2>
+      <p class="mt-4 text-base leading-relaxed text-body">{{ m.architecture.lead }}</p>
       <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
         <a href="{{ get_url(path="/getting-started/", trailing_slash=true) }}" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">Install Majordomus</a>
       </div>
       <p class="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm font-medium">
+        <a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every feature</a>
         <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Read the guarantees</a>
-        <a href="{{ get_url(path="/architecture/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Explore the architecture</a>
+        <a href="{{ get_url(path="/docs/product/", trailing_slash=true) }}" class="text-fg-brand hover:underline">How this page is derived</a>
         <a href="{{ project.repository_url }}" class="text-fg-brand hover:underline">View on GitHub</a>
       </p>
     </div>
-    <ul class="mx-auto mt-12 grid max-w-4xl gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-      <li><a href="{{ get_url(path="/supervises/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium"><span class="block font-semibold text-heading">{{ readme.does | length }} responsibilities</span><span class="text-body">what each file and command is for, and the {{ lifecycle.principles | length }} sentences every worker reads</span></a></li>
-      <li><a href="{{ get_url(path="/profiles/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium"><span class="block font-semibold text-heading">Execution profiles</span><span class="text-body">independent axes, never collapsed into one</span></a></li>
-      <li><a href="{{ get_url(path="/docs/concepts/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium"><span class="block font-semibold text-heading">Vocabulary</span><span class="text-body">the words, and the two outcomes people confuse</span></a></li>
-      <li><a href="{{ get_url(path="/architecture/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary p-4 hover:bg-neutral-secondary-medium"><span class="block font-semibold text-heading">How this site is built</span><span class="text-body">a projection of the repository, checked for drift</span></a></li>
-    </ul>
   </div>
 </section>
 {% endblock content %}
-{% block scripts %}{% include "partials/mermaid.html" %}
-<script defer src="{{ get_url(path="js/hero.js") }}"></script>{% endblock scripts %}
+{% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}
