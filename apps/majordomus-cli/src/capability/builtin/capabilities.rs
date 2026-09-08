@@ -178,6 +178,57 @@ fn capabilities_describe(
         .ok_or_else(|| CapabilityError::NotFound(format!("unknown capability: {}", input.id)))
 }
 
+// ---------------------------------------------------------------- capabilities.projections
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `capabilities.projections`: which rows, and whether only the unmet claims.
+pub struct ProjectionsInput {
+    /// Only capabilities composed in this module.
+    #[serde(default)]
+    pub module: Option<String>,
+    /// Only the capabilities whose declared exposures are not all answered by their
+    /// surface. Empty is the closure the rule asks for.
+    #[serde(default)]
+    pub unmet: bool,
+}
+
+impl BenchmarkCases for ProjectionsInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("all", ProjectionsInput::default()),
+            NamedCase::new(
+                "unmet",
+                ProjectionsInput {
+                    module: None,
+                    unmet: true,
+                },
+            ),
+        ]
+    }
+}
+
+fn capabilities_projections(
+    ctx: &Context,
+    input: ProjectionsInput,
+) -> Result<crate::capability::closure::Matrix, CapabilityError> {
+    // the clap tree is a pure function of the declaration compiled into this executable:
+    // no repository is read, and the walk is the same one `cli::validate` runs
+    let mut m = crate::capability::closure::matrix(&ctx.registry, &crate::cli::tree());
+    if let Some(module) = &input.module {
+        if !ctx.registry.modules().any(|k| k.id.as_str() == module) {
+            return Err(CapabilityError::InvalidInput(format!(
+                "no module named '{module}'"
+            )));
+        }
+        m.rows.retain(|r| &r.module == module);
+    }
+    if input.unmet {
+        m.rows.retain(|r| !r.closed);
+    }
+    Ok(m)
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -217,6 +268,22 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["introspection"],
                 handler: capabilities_describe,
             },
+            capability! {
+                id: "capabilities.projections",
+                title: "Where each capability is projected",
+                description: "A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down.",
+                input: ProjectionsInput,
+                output: crate::capability::closure::Matrix,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_projections"),
+                    http: get("/api/v1/capabilities/projections"),
+                    cli: Some(CliExposure { path: vec!["capabilities".into(), "projections".into()] }),
+                },
+                tags: ["introspection", "projections"],
+                cache: CachePolicy::Process { max_entries: 8, ttl_seconds: None },
+                handler: capabilities_projections,
+            },
         ],
     }
 }
@@ -244,6 +311,11 @@ mod tests {
                 "capabilities.describe",
                 "majordomus_capability",
                 "/api/v1/capability",
+            ),
+            (
+                "capabilities.projections",
+                "majordomus_projections",
+                "/api/v1/capabilities/projections",
             ),
         ];
         let ids: Vec<&str> = m

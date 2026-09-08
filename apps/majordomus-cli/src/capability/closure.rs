@@ -108,7 +108,8 @@ impl std::fmt::Display for Finding {
 }
 
 /// The rule every finding here belongs to; named once so the text cannot drift from it.
-const RULE: &str = "a capability is defined once and every external interface is derived from that definition";
+const RULE: &str =
+    "a capability is defined once and every external interface is derived from that definition";
 
 /// A runnable command of the command line that no capability claims.
 ///
@@ -430,7 +431,10 @@ mod tests {
             .filter(|c| c.executable && c.path.len() > 1)
             .map(|c| c.path[1..].iter().map(String::as_str).collect())
             .collect();
-        assert!(!runnable.is_empty(), "the command line has runnable commands");
+        assert!(
+            !runnable.is_empty(),
+            "the command line has runnable commands"
+        );
         for words in &runnable {
             assert!(
                 check_one(&claiming("demo.ok", words), &tree).is_empty(),
@@ -469,7 +473,10 @@ mod tests {
         let m = matrix(&registry, &tree);
         assert_eq!(m.rows.len(), registry.len());
         assert!(m.findings.is_empty());
-        assert!(m.rows.iter().all(|r| r.closed), "the shipped tree is closed");
+        assert!(
+            m.rows.iter().all(|r| r.closed),
+            "the shipped tree is closed"
+        );
         // ordering is by id and therefore stable across runs
         let ids: Vec<&str> = m.rows.iter().map(|r| r.id.as_str()).collect();
         let mut sorted = ids.clone();
@@ -514,6 +521,9 @@ mod tests {
         assert!(!debt.iter().any(|u| u.command == "majordomus"));
         let mut sorted = debt.clone();
         sorted.sort();
-        assert_eq!(debt, sorted, "the inventory is ordered, so a baseline is stable");
+        assert_eq!(
+            debt, sorted,
+            "the inventory is ordered, so a baseline is stable"
+        );
     }
 }

@@ -75,6 +75,11 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench --profile ci --check --no-write
     summary: the benchmark check against the committed baseline of its platform (macOS, the one platform with a baseline under .ai/repo/benchmarks/rust/)
 
+  - id: projection-closure
+    job: structure
+    runs: scripts/ci/projection-check
+    summary: the command line, the one interface declared twice, agrees with the registry — no capability claims a command clap does not answer, and no new command is hand-written rather than derived
+
   - id: web-topology
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- web validate
@@ -125,8 +130,8 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, rust-coverage, rust-bench, shell-suite, macos, cockpit-probe, worktree-topology]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, projection-closure, rust-coverage, rust-bench, shell-suite, macos, cockpit-probe, worktree-topology]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite

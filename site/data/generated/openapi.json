@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 37,
-    "schemas": 167,
+    "operations": 38,
+    "schemas": 169,
     "tags": 15
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -3497,6 +3497,7 @@
       "used_by": [
         "artifacts.list",
         "capabilities.list",
+        "capabilities.projections",
         "capabilities.describe",
         "continuity.state",
         "deploy.get",
@@ -4715,6 +4716,36 @@
           "value": "same_branch"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\".",
+      "is_enum": false,
+      "name": "Matrix",
+      "properties": [
+        {
+          "description": "One row per capability, in id order.",
+          "name": "rows",
+          "refs": [
+            "Row"
+          ],
+          "required": true,
+          "type": "array of Row"
+        },
+        {
+          "description": "Runnable commands of the command line that no capability claims, in command order.",
+          "name": "unbacked",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "capabilities.projections"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -7119,6 +7150,90 @@
       "variants": []
     },
     {
+      "description": "Where one capability is projected, and where it is not.\n\nThis is the coverage matrix of the rule: a row per capability, a column per interface.\nIt is derived, never written down — a capability that reaches nothing shows as a row of\n`false`, which is exactly the \"exists but is invisible\" case worth seeing.",
+      "is_enum": false,
+      "name": "Row",
+      "properties": [
+        {
+          "description": "The canonical id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The module that composes it.",
+          "name": "module",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Query, command or resource.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "stability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command line, when it declares one and clap has it.",
+          "name": "cli",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The HTTP route, when it declares one.",
+          "name": "http",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The MCP tool name, when it declares one.",
+          "name": "mcp_tool",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The MCP resource URI, when it declares one.",
+          "name": "mcp_resource",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether every exposure this row declares is answered by its surface.",
+          "name": "closed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Where the capability is declared; repository-relative.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Matrix"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The scope: the declaration as read, its origin, and every tracked file against it.",
       "is_enum": false,
       "name": "ScopeReport",
@@ -8982,6 +9097,82 @@
           "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=8",
+          "cli": "capabilities projections",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/capabilities/projections?unmet=false\"",
+          "description": "A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down.",
+          "id": "capabilities.projections",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_projections",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only capabilities composed in this module.",
+              "examples": [],
+              "name": "module",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only the capabilities whose declared exposures are not all answered by their\nsurface. Empty is the closure the rule asks for.",
+              "examples": [
+                {
+                  "case": "all",
+                  "value": "false"
+                },
+                {
+                  "case": "unmet",
+                  "value": "true"
+                }
+              ],
+              "name": "unmet",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/capabilities/projections",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::capabilities",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where each capability is projected: the result.",
+              "schema": "Matrix",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Matrix",
+          "stability": "behaviorally_verified",
+          "summary": "Where each capability is projected"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
           "cli": "capabilities describe",
@@ -10469,7 +10660,7 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
-          "cli": "scope classify",
+          "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/scope/classify?path=.ai%2Frepo%2Fapplications%2Fci-gated-project.md\"",
           "description": "Whether a repository-relative path is in or out of the scope, the reason when it is out, and the pattern or limit that decided; an existing file is judged by name, then size, then content.",
           "id": "repository.scope_classify",

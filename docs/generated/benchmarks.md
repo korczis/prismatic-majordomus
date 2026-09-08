@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 37 | 37 | 0 | 0 |
-| http | 37 | 37 | 0 | 0 |
-| mcp | 35 | 35 | 0 | 0 |
+| direct | 38 | 38 | 0 | 0 |
+| http | 38 | 38 | 0 | 0 |
+| mcp | 36 | 36 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 122 | 122 | 0 | 0 |
+| total | 125 | 125 | 0 | 0 |
 
 ## Capabilities
 
@@ -22,6 +22,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
+| `capabilities.projections` | capabilities | query | process, 8 entries | covered | covered | covered | `all`, `unmet` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |

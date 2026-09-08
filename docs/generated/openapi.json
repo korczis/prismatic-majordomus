@@ -309,6 +309,115 @@
         "x-majordomus-cli": "capabilities list"
       }
     },
+    "/api/v1/capabilities/projections": {
+      "get": {
+        "operationId": "capabilities.projections",
+        "summary": "Where each capability is projected",
+        "description": "A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down.",
+        "tags": [
+          "capabilities"
+        ],
+        "parameters": [
+          {
+            "name": "module",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only capabilities composed in this module."
+          },
+          {
+            "name": "unmet",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Only the capabilities whose declared exposures are not all answered by their\nsurface. Empty is the closure the rule asks for.",
+            "examples": {
+              "all": {
+                "value": false
+              },
+              "unmet": {
+                "value": true
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Where each capability is projected: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Matrix"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "capabilities.projections",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::capabilities"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 8
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_projections"
+        },
+        "x-majordomus-cli": "capabilities projections"
+      }
+    },
     "/api/v1/capability": {
       "get": {
         "operationId": "capabilities.describe",
@@ -2401,8 +2510,7 @@
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_scope_classify"
-        },
-        "x-majordomus-cli": "scope classify"
+        }
       }
     },
     "/api/v1/search": {
@@ -7217,6 +7325,30 @@
         ],
         "description": "Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered."
       },
+      "Matrix": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Row"
+            },
+            "description": "One row per capability, in id order."
+          },
+          "unbacked": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Runnable commands of the command line that no capability claims, in command order."
+          }
+        },
+        "required": [
+          "rows",
+          "unbacked"
+        ],
+        "description": "The whole matrix, with the findings and the debt beside it: one value that answers\n\"where does each capability appear, and is any claim unmet\"."
+      },
       "McpExposure": {
         "type": "object",
         "properties": {
@@ -9083,6 +9215,72 @@
       "Route": {
         "type": "string",
         "description": "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state."
+      },
+      "Row": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The canonical id."
+          },
+          "module": {
+            "type": "string",
+            "description": "The module that composes it."
+          },
+          "kind": {
+            "type": "string",
+            "description": "Query, command or resource."
+          },
+          "stability": {
+            "type": "string",
+            "description": "Where it stands."
+          },
+          "cli": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The command line, when it declares one and clap has it."
+          },
+          "http": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The HTTP route, when it declares one."
+          },
+          "mcp_tool": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The MCP tool name, when it declares one."
+          },
+          "mcp_resource": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The MCP resource URI, when it declares one."
+          },
+          "closed": {
+            "type": "boolean",
+            "description": "Whether every exposure this row declares is answered by its surface."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where the capability is declared; repository-relative."
+          }
+        },
+        "required": [
+          "id",
+          "module",
+          "kind",
+          "stability",
+          "closed",
+          "source"
+        ],
+        "description": "Where one capability is projected, and where it is not.\n\nThis is the coverage matrix of the rule: a row per capability, a column per interface.\nIt is derived, never written down — a capability that reaches nothing shows as a row of\n`false`, which is exactly the \"exists but is invisible\" case worth seeing."
       },
       "ScopeReport": {
         "type": "object",
