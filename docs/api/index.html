@@ -198,7 +198,7 @@
         <ul class="ml-3 hidden lg:block"><li><a href="#op-continuity-state" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/continuity</a></li></ul></li><li><a href="#tag-deploy" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">deploy</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-deploy-get" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/deployment</a></li><li><a href="#op-deploy-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/deployments</a></li><li><a href="#op-deploy-check" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/deployments/check</a></li></ul></li><li><a href="#tag-directories" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">directories</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-directories-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/directories</a></li></ul></li><li><a href="#tag-distribution" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">distribution</a>
-        <ul class="ml-3 hidden lg:block"><li><a href="#op-distribution-model" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution</a></li><li><a href="#op-distribution-artifact" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution/artifact</a></li><li><a href="#op-distribution-build" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution/build</a></li><li><a href="#op-distribution-releases" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution/releases</a></li></ul></li><li><a href="#tag-graph" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">graph</a>
+        <ul class="ml-3 hidden lg:block"><li><a href="#op-distribution-model" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution</a></li><li><a href="#op-distribution-artifact" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution/artifact</a></li><li><a href="#op-distribution-build" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution/build</a></li><li><a href="#op-distribution-releases" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution/releases</a></li><li><a href="#op-distribution-status" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/distribution/status</a></li></ul></li><li><a href="#tag-graph" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">graph</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-graph-get" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/graph</a></li><li><a href="#op-graph-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/graphs</a></li></ul></li><li><a href="#tag-health" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">health</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-health-report" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/health</a></li><li><a href="#op-health-live" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/live</a></li><li><a href="#op-health-ready" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/ready</a></li></ul></li><li><a href="#tag-objects" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">objects</a>
         <ul class="ml-3 hidden lg:block"><li><a href="#op-objects-get" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/object</a></li><li><a href="#op-objects-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/objects</a></li><li><a href="#op-objects-search" class="block truncate rounded px-2 py-1 font-mono text-xs text-body-subtle hover:bg-neutral-secondary-medium hover:text-heading">GET /api/v1/search</a></li></ul></li><li><a href="#tag-peers" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">peers</a>
@@ -853,6 +853,49 @@ always resolved. Absent means every directory of the layer.</td>
                 <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-ReleasesReport" class="text-fg-brand hover:underline">ReleasesReport</a></td>
                 <td class="px-3 py-2 text-body">Published releases: the result.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+                <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+              </tr></tbody>
+          </table>
+        </div>
+      </article><article id="op-distribution-status" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+          <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/distribution/status</code>
+          <a href="#op-distribution-status" class="font-mono text-xs text-body-subtle hover:underline">distribution.status</a>
+        </div>
+        <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Whether the published installation works</h3>
+        <p class="mt-1 text-sm text-body">Whether a machine that has never seen this project can install it right now with the advertised one-line command, and when it cannot, which link in the chain is missing and what changes it. Derived from the distribution model and the release records alone: it reaches no network, so it is as fast as any other local query and answers offline. The served bytes are proved by the release pipeline&#39;s smoke phase, not guessed at here.</p>
+        <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+          <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+          <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool majordomus_install_status</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ distribution status</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+        <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/distribution/status&quot;</pre></div>
+
+        <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+                <td class="px-3 py-2 font-mono"><a href="#schema-InstallabilityReport" class="text-fg-brand hover:underline">InstallabilityReport</a></td>
+                <td class="px-3 py-2 text-body">Whether the published installation works: the result.</td>
               </tr><tr class="border-t border-default align-top">
                 <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
                 <td class="px-3 py-2 font-mono"><a href="#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
@@ -3547,7 +3590,12 @@ rest of the index, so two runs over one tree agree.</td>
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Channel</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;stable&quot; | &quot;prerelease&quot;</span>
-        </div><p class="mt-2 text-sm text-body">Which releases an unpinned installation may resolve to.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stable</code><span class="min-w-0 text-body">Resolved by `latest`.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">prerelease</code><span class="min-w-0 text-body">Published, addressable by its exact tag, never resolved by default.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ReleaseView" class="font-mono text-fg-brand underline">ReleaseView</a></p></article><article id="schema-ClaimRef" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-2 text-sm text-body">Which releases an unpinned installation may resolve to.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stable</code><span class="min-w-0 text-body">Resolved by `latest`.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">prerelease</code><span class="min-w-0 text-body">Published, addressable by its exact tag, never resolved by default.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-ReleaseView" class="font-mono text-fg-brand underline">ReleaseView</a></p></article><article id="schema-CheckState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">CheckState</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;ok&quot; | &quot;failed&quot; | &quot;unknown&quot;</span>
+        </div><p class="mt-2 text-sm text-body">The state of one check in the installability report. Three states and no more: a check
+either holds, does not, or could not be made from what this process can see.</p><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ok</code><span class="min-w-0 text-body">The check holds.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failed</code><span class="min-w-0 text-body">The check does not hold, and the public installation is affected.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 text-body">The check could not be made here; it says nothing either way.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-InstallCheck" class="font-mono text-fg-brand underline">InstallCheck</a></p></article><article id="schema-ClaimRef" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ClaimRef</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -4672,7 +4720,7 @@ resolve an end adds an external node rather than a dangling edge.</p><div class=
                 <td class="px-3 py-2 text-body">The one error.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="#op-deploy-list" class="font-mono text-fg-brand hover:underline">deploy.list</a> <a href="#op-deploy-check" class="font-mono text-fg-brand hover:underline">deploy.check</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-distribution-model" class="font-mono text-fg-brand hover:underline">distribution.model</a> <a href="#op-distribution-artifact" class="font-mono text-fg-brand hover:underline">distribution.artifact</a> <a href="#op-distribution-build" class="font-mono text-fg-brand hover:underline">distribution.build</a> <a href="#op-distribution-releases" class="font-mono text-fg-brand hover:underline">distribution.releases</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-health-live" class="font-mono text-fg-brand hover:underline">health.live</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-product-feature" class="font-mono text-fg-brand hover:underline">product.feature</a> <a href="#op-product-features" class="font-mono text-fg-brand hover:underline">product.features</a> <a href="#op-product-matrix" class="font-mono text-fg-brand hover:underline">product.matrix</a> <a href="#op-product-providers" class="font-mono text-fg-brand hover:underline">product.providers</a> <a href="#op-product-validate" class="font-mono text-fg-brand hover:underline">product.validate</a> <a href="#op-health-ready" class="font-mono text-fg-brand hover:underline">health.ready</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a> <a href="#op-web-surfaces" class="font-mono text-fg-brand hover:underline">web.surfaces</a> <a href="#op-why-list" class="font-mono text-fg-brand hover:underline">why.list</a> <a href="#op-why-areas" class="font-mono text-fg-brand hover:underline">why.areas</a> <a href="#op-why-audiences" class="font-mono text-fg-brand hover:underline">why.audiences</a> <a href="#op-why-diagnose" class="font-mono text-fg-brand hover:underline">why.diagnose</a> <a href="#op-why-moment" class="font-mono text-fg-brand hover:underline">why.moment</a> <a href="#op-why-validate" class="font-mono text-fg-brand hover:underline">why.validate</a> <a href="#op-worktree-topology" class="font-mono text-fg-brand hover:underline">worktree.topology</a> <a href="#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a> <a href="#op-worktree-migration_plan" class="font-mono text-fg-brand hover:underline">worktree.migration_plan</a> <a href="#op-worktree-status" class="font-mono text-fg-brand hover:underline">worktree.status</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-artifacts-list" class="font-mono text-fg-brand hover:underline">artifacts.list</a> <a href="#op-capabilities-list" class="font-mono text-fg-brand hover:underline">capabilities.list</a> <a href="#op-capabilities-describe" class="font-mono text-fg-brand hover:underline">capabilities.describe</a> <a href="#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a> <a href="#op-deploy-get" class="font-mono text-fg-brand hover:underline">deploy.get</a> <a href="#op-deploy-list" class="font-mono text-fg-brand hover:underline">deploy.list</a> <a href="#op-deploy-check" class="font-mono text-fg-brand hover:underline">deploy.check</a> <a href="#op-directories-list" class="font-mono text-fg-brand hover:underline">directories.list</a> <a href="#op-distribution-model" class="font-mono text-fg-brand hover:underline">distribution.model</a> <a href="#op-distribution-artifact" class="font-mono text-fg-brand hover:underline">distribution.artifact</a> <a href="#op-distribution-build" class="font-mono text-fg-brand hover:underline">distribution.build</a> <a href="#op-distribution-releases" class="font-mono text-fg-brand hover:underline">distribution.releases</a> <a href="#op-distribution-status" class="font-mono text-fg-brand hover:underline">distribution.status</a> <a href="#op-graph-get" class="font-mono text-fg-brand hover:underline">graph.get</a> <a href="#op-graph-list" class="font-mono text-fg-brand hover:underline">graph.list</a> <a href="#op-health-report" class="font-mono text-fg-brand hover:underline">health.report</a> <a href="#op-health-live" class="font-mono text-fg-brand hover:underline">health.live</a> <a href="#op-objects-get" class="font-mono text-fg-brand hover:underline">objects.get</a> <a href="#op-objects-list" class="font-mono text-fg-brand hover:underline">objects.list</a> <a href="#op-peers-list" class="font-mono text-fg-brand hover:underline">peers.list</a> <a href="#op-peers-announce" class="font-mono text-fg-brand hover:underline">peers.announce</a> <a href="#op-perf-counters" class="font-mono text-fg-brand hover:underline">perf.counters</a> <a href="#op-product-feature" class="font-mono text-fg-brand hover:underline">product.feature</a> <a href="#op-product-features" class="font-mono text-fg-brand hover:underline">product.features</a> <a href="#op-product-matrix" class="font-mono text-fg-brand hover:underline">product.matrix</a> <a href="#op-product-providers" class="font-mono text-fg-brand hover:underline">product.providers</a> <a href="#op-product-validate" class="font-mono text-fg-brand hover:underline">product.validate</a> <a href="#op-health-ready" class="font-mono text-fg-brand hover:underline">health.ready</a> <a href="#op-repository-info" class="font-mono text-fg-brand hover:underline">repository.info</a> <a href="#op-repository-scope" class="font-mono text-fg-brand hover:underline">repository.scope</a> <a href="#op-repository-scope_classify" class="font-mono text-fg-brand hover:underline">repository.scope_classify</a> <a href="#op-objects-search" class="font-mono text-fg-brand hover:underline">objects.search</a> <a href="#op-web-surfaces" class="font-mono text-fg-brand hover:underline">web.surfaces</a> <a href="#op-why-list" class="font-mono text-fg-brand hover:underline">why.list</a> <a href="#op-why-areas" class="font-mono text-fg-brand hover:underline">why.areas</a> <a href="#op-why-audiences" class="font-mono text-fg-brand hover:underline">why.audiences</a> <a href="#op-why-diagnose" class="font-mono text-fg-brand hover:underline">why.diagnose</a> <a href="#op-why-moment" class="font-mono text-fg-brand hover:underline">why.moment</a> <a href="#op-why-validate" class="font-mono text-fg-brand hover:underline">why.validate</a> <a href="#op-worktree-topology" class="font-mono text-fg-brand hover:underline">worktree.topology</a> <a href="#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a> <a href="#op-worktree-migration_plan" class="font-mono text-fg-brand hover:underline">worktree.migration_plan</a> <a href="#op-worktree-status" class="font-mono text-fg-brand hover:underline">worktree.status</a></p></article><article id="schema-ErrorDetail" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">ErrorDetail</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
@@ -5503,7 +5551,110 @@ and live under [<code>HttpExposure::PREFIX</code>].</p><div class="mt-3 overflow
                 <td class="px-3 py-2 text-body">What stands in the way, if anything.</td>
               </tr></tbody>
           </table>
-        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a></p></article><article id="schema-Interface" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-worktree-inspect" class="font-mono text-fg-brand hover:underline">worktree.inspect</a></p></article><article id="schema-InstallCheck" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">InstallCheck</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">One check: what was asked, what was seen, and — when it does not hold — why, and the
+command that changes it. The <code>cause</code> and <code>next</code> fields exist so that a report is
+actionable without a second document; a check that fails without naming its remedy is
+a diagnostic nobody can act on.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">A short stable name: <code>model</code>, <code>version</code>, <code>targets</code>, <code>release</code>, <code>artifacts</code>, <code>metadata</code>.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+                <td class="px-3 py-2 font-mono text-body">CheckState <span class="text-body-subtle">→</span> <a href="#schema-CheckState" class="text-fg-brand underline">CheckState</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Whether it holds.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">observed</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">What was observed, in one line.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">cause</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">Why it does not hold. Absent when it does.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">next</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The command or action that would change it. Absent when there is nothing to do.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#schema-InstallabilityReport" class="font-mono text-fg-brand underline">InstallabilityReport</a></p></article><article id="schema-InstallabilityReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 class="font-mono text-base font-semibold text-heading">InstallabilityReport</h3>
+          <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+        </div><p class="mt-2 text-sm text-body">Whether the advertised one-line installation works right now, and if not, what is missing.</p>
+<p>This answers the operator's actual question — <em>can a machine that has never seen this
+project install it with the published command?</em> — from local state alone. It performs no
+network access: a repository can be offline and this still answers, because everything it
+needs is the distribution model and the release records the repository itself carries.
+What it cannot see it reports as <code>unknown</code> rather than guessing; the public half of the
+question is answered by the release workflow's smoke phase, which installs from the
+published URL on every native runner and is the only thing that proves the public path.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+          <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+            <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+            <tbody><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">installable</td>
+                <td class="px-3 py-2 font-mono text-body">boolean</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">True when every check holds: a stable release is recorded and complete.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">summary</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">One line for a person: what the state is, in the project's own terms.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">local_version</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The version this tree would release.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">stable_tag</td>
+                <td class="px-3 py-2 font-mono text-body">string | null</td>
+                <td class="px-3 py-2 font-mono text-body">no</td>
+                <td class="px-3 py-2 text-body">The tag an unpinned installation resolves to, when a stable release is recorded.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">required_targets</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">How many targets a release must publish for that release to be complete.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">published_artifacts</td>
+                <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">How many of them the stable release actually publishes.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">install_command</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">The command a person would run, whether or not it currently works.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">installer_url</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where the installer is served.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">latest_url</td>
+                <td class="px-3 py-2 font-mono text-body">string</td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Where the stable pointer is served.</td>
+              </tr><tr class="border-t border-default align-top">
+                <td class="px-3 py-2 font-mono font-semibold text-heading">checks</td>
+                <td class="px-3 py-2 font-mono text-body">array of InstallCheck <span class="text-body-subtle">→</span> <a href="#schema-InstallCheck" class="text-fg-brand underline">InstallCheck</a></td>
+                <td class="px-3 py-2 font-mono text-body">yes</td>
+                <td class="px-3 py-2 text-body">Every check, in the order they are worth reading.</td>
+              </tr></tbody>
+          </table>
+        </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="#op-distribution-status" class="font-mono text-fg-brand hover:underline">distribution.status</a></p></article><article id="schema-Interface" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h3 class="font-mono text-base font-semibold text-heading">Interface</h3>
           <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;loopback&quot; | &quot;all&quot;</span>
@@ -8772,7 +8923,7 @@ is inferred from similarity.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/cdd7f1cd959400b1680066930387d47c8f220a0b" class="font-mono underline">cdd7f1c</a> · inputs <span class="font-mono">ebbeaf84d6d3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eeb72044d555bfd767124adaf11b428f10e44f5f" class="font-mono underline">eeb7204</a> · inputs <span class="font-mono">8fdd5ebbf08c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

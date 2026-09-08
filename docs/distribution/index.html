@@ -347,6 +347,55 @@ the tag. Finish the release — a new version, bumped and tagged, is the ordinar
 a tag that has no release behind it is the other, and only before anyone can have pinned it.
 Until one of those happens the advertised install command is broken for everyone, and
 <code>installer-live</code> below is what says so.</p>
+<h3 id="when-a-release-fails-partway"><a class="zola-anchor" href="#when-a-release-fails-partway" aria-label="Anchor link for: when-a-release-fails-partway">When a release fails partway</a></h3>
+<p>A release changes things the world can see, and it can fail after some of them have changed.
+Rerunning the workflow for the same tag is the supported recovery, and it is safe at every
+stage. What "safe" means is declared in <a href="../.ai/repo/ci/release.yaml"><code>.ai/repo/ci/release.yaml</code></a>
+under <code>rerun:</code> and implemented in the publish job:</p>
+<ul>
+<li><strong>the assets on an existing release are the release.</strong> If the tag already has a GitHub
+release, the rerun downloads its published assets and discards its own rebuild. The record
+is evidence of what a user downloads, and rebuilds are not bit-identical (see
+<em>Reproducibility</em> below), so recording this run's bytes would state digests nothing serves.</li>
+<li><strong>the metadata commit is idempotent.</strong> A rerun that finds the record and its projections
+already committed pushes nothing and succeeds.</li>
+<li><strong>smoke is never skipped.</strong> Both paths end in the same public installation test, so a
+rerun proves the same external contract a first run does.</li>
+</ul>
+<p>Stage by stage:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Failed at</th><th>Visible outside?</th><th>Rerun</th><th>Cleanup</th></tr></thead><tbody>
+<tr><td><code>plan</code></td><td>no</td><td>yes</td><td>none — no artifact was built</td></tr>
+<tr><td><code>build</code></td><td>no</td><td>yes</td><td>none — nothing was uploaded</td></tr>
+<tr><td><code>publish</code>, before the release exists</td><td>no</td><td>yes</td><td>none</td></tr>
+<tr><td><code>publish</code>, after the release exists</td><td>yes — the release and its assets</td><td>yes; the rerun adopts those assets</td><td>none</td></tr>
+<tr><td><code>publish</code>, after the metadata commit</td><td>yes — the record is on the default branch</td><td>yes; the commit step finds nothing to add</td><td>none</td></tr>
+<tr><td><code>pages</code></td><td>yes — the record is committed but not served</td><td><code>gh workflow run pages.yml --ref master</code></td><td>none</td></tr>
+<tr><td><code>smoke</code></td><td>yes — everything is published</td><td>fix the cause, then rerun</td><td>none; the release stands or is withdrawn below</td></tr>
+</tbody></table>
+</div>
+<h4 id="why-the-release-asks-pages-to-publish"><a class="zola-anchor" href="#why-the-release-asks-pages-to-publish" aria-label="Anchor link for: why-the-release-asks-pages-to-publish">Why the release asks Pages to publish</a></h4>
+<p>The publish job ends by running <code>gh workflow run pages.yml</code>, and that step is not a
+belt-and-braces addition: without it the release is structurally unable to reach a user.</p>
+<p>GitHub does not start a workflow from a push made with <code>GITHUB_TOKEN</code>. It is a deliberate
+loop-breaker and it cannot be disabled for a token. The commit the publish job makes — the
+only thing that carries <code>site/static/releases/latest.json</code> — therefore starts no <code>pages</code>
+run, so the site keeps serving a build from before the release existed, and the smoke phase
+waits fifteen minutes for a file nothing is going to write.</p>
+<p>Release <code>v0.3.1</code> spent its entire smoke phase in exactly that state: six green builds, a
+published GitHub Release, a committed record, and <code>latest.json</code> returning 404 to anyone who
+ran the advertised command. Every observable pointed at the packer, and the packer was fine;
+the last link of the chain simply did not exist. The dispatch is that link. It runs with
+<code>if: always()</code>, because a rerun after a failed deploy is precisely the case with nothing to
+commit and everything to publish.</p>
+<p><code>workflow_dispatch</code> is the entry point a person uses, so this starts the one deploy path
+rather than adding a second one (see the <code>site-deploy-one-path</code> guarantee).</p>
+<p>The one case a rerun cannot repair is a release that exists and publishes no archive — the
+assets cannot be reconstructed from a tag. The run stops and names the command that clears
+the way:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">gh</span><span class="z-l-8 z-d-8"> release</span><span class="z-l-8 z-d-8"> delete</span><span class="z-l-8 z-d-8"> v0.3.0</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-yes</span><span class="z-l-10 z-l-i z-d-4 z-d-i">    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> then rerun the workflow</span></span></code></pre>
+<p>Nothing here needs the tag to be moved. A tag that points at the wrong commit is a different
+problem, and the answer to it is a new version, not a moved tag.</p>
 <h3 id="testing-it-without-publishing"><a class="zola-anchor" href="#testing-it-without-publishing" aria-label="Anchor link for: testing-it-without-publishing">Testing it without publishing</a></h3>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/release-fixture</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-out</span><span class="z-l-8 z-d-8"> /tmp/rel</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-base-url</span><span class="z-l-8 z-d-8"> http://127.0.0.1:8099</span></span>
 <span class="giallo-l"><span>(</span><span class="z-l-15 z-d-14">cd</span><span class="z-l-8 z-d-8"> /tmp/rel</span><span class="z-l-6 z-d-9"> &amp;&amp;</span><span class="z-l-1 z-d-3"> python3</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">m</span><span class="z-l-8 z-d-8"> http.server</span><span class="z-l-9 z-d-11"> 8099</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-bind</span><span class="z-l-9 z-d-11"> 127.0.0.1</span><span>)</span><span class="z-l-6 z-d-9"> &amp;</span></span>
@@ -403,6 +452,16 @@ and no URL stops working.</p>
 commit and the build time go into <code>RELEASE.json</code> inside every archive, and the commit is
 compiled into the executable by <code>build.rs</code>. The archive itself is packed with entries in
 sorted order.</p>
+<p>Every archive carries each path exactly once, and carries nothing but regular files and
+directories: no hard link, no symlink, no device node. <code>scripts/release-package</code> checks that
+of the archive it has just written and deletes it rather than return a violating one, and
+<code>scripts/release-verify</code> checks it again of the archive it is handed. Both exist because
+release <code>v0.2.0</code> was never published: the packer passed a complete file list to a <code>tar</code> that
+also recursed into it, every path was archived twice, GNU tar wrote the second copy of each
+as a hard link, and the verifier — correctly — refused all 931 of them. There is deliberately
+no fallback in the packer: an archive packed differently from the one that was asked for is
+not the archive anything verified. <code>test/cases/87b_release_archive_shape.sh</code> reproduces that
+packer with a <code>tar</code> shim and proves the guard stops it.</p>
 <p>Bit-identical rebuilds are not claimed: that needs a reproducible compiler invocation
 (<code>SOURCE_DATE_EPOCH</code>, a pinned toolchain version, no absolute paths in debug info), and the
 toolchain here is <code>stable</code> rather than a pin. What is guaranteed is that two people
@@ -455,7 +514,7 @@ ship an executable nothing can drive.</p>
 </div>
 </article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
     <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/distribution-canonical-model/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/release-is-complete-or-absent/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A release publishes an artifact for every supported target or it is not published</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/advertised-install-command-works/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool</span></a></li></ul></div>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/distribution-canonical-model/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/release-is-complete-or-absent/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A release publishes an artifact for every supported target or it is not published</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/advertised-install-command-works/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/release-archive-shape/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A release archive carries every path once and carries nothing but files and directories</span></a></li></ul></div>
 </div>
 
 </div>
@@ -474,7 +533,7 @@ ship an executable nothing can drive.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/cdd7f1cd959400b1680066930387d47c8f220a0b" class="font-mono underline">cdd7f1c</a> · inputs <span class="font-mono">ebbeaf84d6d3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/eeb72044d555bfd767124adaf11b428f10e44f5f" class="font-mono underline">eeb7204</a> · inputs <span class="font-mono">8fdd5ebbf08c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
