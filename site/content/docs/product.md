@@ -15,7 +15,7 @@ layer holds, which operational moments a feature answers, what is guaranteed and
 only advisory. What a person writes is which parts of the product form one chapter, and in
 what order. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 22](../.ai/repo/adrs/0022-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
+[ADR 23](../.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
 the rule is `project.product-surface-derived`; the directory's own contract is
 [`.ai/repo/features/README.md`](../.ai/repo/features/README.md).
 
@@ -39,7 +39,7 @@ A feature file holds **references** and **editorial decisions**, and nothing els
 schema sets `additionalProperties: false`, so a derived key such as `surfaces:`, `route:`
 or a count is refused at validation rather than silently believed.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | In the file | Derived from it |
 |---|---|
@@ -71,7 +71,7 @@ with `capability!`, so the command line, the HTTP routes, the OpenAPI operations
 tools and resources and the generated reference are projections of one declaration
 ([ADR 2](../.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Answer | Command line | HTTP | MCP |
 |---|---|---|---|
@@ -107,7 +107,7 @@ again before it renders anything from it.
 feature under `site/content/features/`, with the feature's own Markdown as the body. The
 templates read the dataset and name nothing:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Route | Template | What it renders |
 |---|---|---|

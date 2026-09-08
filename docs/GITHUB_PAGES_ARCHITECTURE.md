@@ -25,7 +25,7 @@ being maintained separately from the repository that backs it.
 | marketing copy | the hero's positioning sentences, section leads, button labels; no capability claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
 | navigation | the intents, their dropdown items and hrefs, and the routes that moved (`[[redirects]]`, rendered as Zola aliases) | `site/data/nav.toml` | yes |
 | claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
-| product features | one file per feature: the references naming what it is made of, and the editorial decisions nothing can infer; every surface, count and route beside it is derived (`docs/PRODUCT.md`, ADR 22) | `.ai/repo/features/<id>.md` | yes |
+| product features | one file per feature: the references naming what it is made of, and the editorial decisions nothing can infer; every surface, count and route beside it is derived (`docs/PRODUCT.md`, ADR 23) | `.ai/repo/features/<id>.md` | yes |
 | case studies | the recognition moments, each with its homepage hook in front matter | `site/content-src/why/*.md` | yes |
 | skills | the repository's skills, one directory each; the site reads the catalogue `lib/skills.sh` derives from the source class `skill` | `.ai/repo/skills/<id>/SKILL.md` | yes |
 | rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
@@ -254,7 +254,7 @@ sixty-line budget.
 
 The one thing a person decides is which features are chapters and in what order, and that
 decision lives in the feature files themselves (`featured` and `weight`), not here: a
-feature becomes a chapter by declaring itself one. `docs/PRODUCT.md` is the contract, ADR 22
+feature becomes a chapter by declaring itself one. `docs/PRODUCT.md` is the contract, ADR 23
 is the decision, and `project.product-surface-derived` is the rule.
 
 Routes that moved are declared once, in `nav.toml` under `[[redirects]]`, beside the routes

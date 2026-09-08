@@ -4,14 +4,14 @@
     object kind against the features that name it. Both halves are `majordomus product
     matrix`, read from data/registry/product.json. A gap is shown, never omitted: a module
     no stable feature names is the warning that validation reports, and hiding it here would
-    be the defect ADR 22 exists to prevent. -#}
+    be the defect ADR 23 exists to prevent. -#}
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 {%- set rows = [r for r in model.matrix.rows if r.status != "draft"] -%}
 
 <p class="max-w-3xl text-body">Every mark is derived. A feature is on an interface because a capability module, a shell command or an object kind it names is projected there — a command-line path, an HTTP route, an MCP tool or resource, a Cockpit area, a document. No page and no file says so.</p>
 
-<div class="mt-8 overflow-x-auto rounded-base border border-default">
+<div class="mt-8 overflow-x-auto rounded-base border border-default" tabindex="0">
   <table class="w-full min-w-[36rem] border-collapse text-sm">
     <caption class="sr-only">Features against the interfaces they are exposed through</caption>
     <thead class="bg-neutral-primary-soft">

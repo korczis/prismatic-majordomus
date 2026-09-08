@@ -4,7 +4,7 @@
     dataset names; everything below it is derived. The feature file holds references and
     editorial words only — it has no surfaces, no counts and no route of its own — so a
     name here that the repository does not have would have failed `majordomus product
-    validate` and the site generation before this page existed (ADR 22). -#}
+    validate` and the site generation before this page existed (ADR 23). -#}
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set f = [x for x in model.features if x.id == page.extra.id][0] -%}
 {%- set docs = load_data(path="data/generated/docs.json") -%}
@@ -21,11 +21,11 @@
         <dd>{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</dd></div>
       {%- if f.areas | length %}
       <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">area</dt>
-        {%- for a in f.areas %}<dd><a href="{{ get_url(path='/why/areas/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a></dd>{% endfor %}</div>
+        {%- for a in f.areas %}<dd><a href="{{ get_url(path='/why/areas/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand underline">{{ a }}</a></dd>{% endfor %}</div>
       {%- endif %}
       {%- if f.audiences | length %}
       <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">for</dt>
-        {%- for a in f.audiences %}<dd><a href="{{ get_url(path='/why/audiences/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a></dd>{% endfor %}</div>
+        {%- for a in f.audiences %}<dd><a href="{{ get_url(path='/why/audiences/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand underline">{{ a }}</a></dd>{% endfor %}</div>
       {%- endif %}
     </dl>
 

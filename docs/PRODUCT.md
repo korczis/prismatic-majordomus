@@ -7,7 +7,7 @@ layer holds, which operational moments a feature answers, what is guaranteed and
 only advisory. What a person writes is which parts of the product form one chapter, and in
 what order. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 22](../.ai/repo/adrs/0022-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
+[ADR 23](../.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
 the rule is `project.product-surface-derived`; the directory's own contract is
 [`.ai/repo/features/README.md`](../.ai/repo/features/README.md).
 

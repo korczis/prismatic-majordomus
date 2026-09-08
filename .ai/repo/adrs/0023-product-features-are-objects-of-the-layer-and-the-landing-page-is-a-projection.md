@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0022
+id: adr-0023
 kind: adr
 title: Product features are objects of the layer, and the landing page is a projection of them
 status: accepted
@@ -25,7 +25,7 @@ provenance:
   origin: authored
 ---
 
-# 22. Product features are objects of the layer, and the landing page is a projection of them
+# 23. Product features are objects of the layer, and the landing page is a projection of them
 
 ## Context
 

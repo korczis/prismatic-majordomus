@@ -51,7 +51,9 @@ expect_grep 'id="second-level-heading"' "$P/render-test/index.html"
 expect_grep 'overflow-x-auto' "$P/render-test/index.html"
 expect_grep 'role="note"' "$P/render-test/index.html"
 expect_grep 'footnote' "$P/render-test/index.html"
-expect_grep '<pre class="mermaid">' "$P/render-test/index.html"
+# the opening tag, not the whole of it: the build's conformance pass adds tabindex="0" to
+# every scrolling element, so a fenced mermaid block renders as <pre class="mermaid" ...>
+expect_grep '<pre class="mermaid"' "$P/render-test/index.html"
 # navigation: five groups, dropdown menus present with Flowbite hooks; render-test is noindex
 # a dropdown per navigation group that has items; the count comes from the data, not from
 # a number written here, so adding a group to site/data/nav.toml does not break this case

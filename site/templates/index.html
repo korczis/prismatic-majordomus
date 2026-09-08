@@ -4,7 +4,7 @@
     below comes from data/registry/product.json and the datasets beside it, all written by
     `majordomus generate site` from the capability registry, the objects of the layer and the
     web topology. This template names no feature, no module, no command, no provider and no
-    number: adding a file under .ai/repo/features/ is what changes this page (ADR 22). The
+    number: adding a file under .ai/repo/features/ is what changes this page (ADR 23). The
     only hand-written words are marketing.toml's, loaded as `m` by base.html. -#}
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
@@ -38,7 +38,7 @@
           <span class="font-mono text-xs text-body-subtle">$ majordomus product matrix</span>
           <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ model.counts.features }} × {{ model.surfaces | length }}</span>
         </figcaption>
-        <div class="max-h-[26rem] overflow-x-auto overflow-y-auto">
+        <div class="max-h-[26rem] overflow-x-auto overflow-y-auto" tabindex="0">
           <table class="w-full border-collapse font-mono text-xs">
             <caption class="sr-only">Every feature of the product against the interfaces it is exposed through</caption>
             <thead class="sticky top-0 bg-neutral-primary-soft">
@@ -65,21 +65,12 @@
   </div>
 </section>
 
-{#- 2. install — one command, from data/registry/distribution.json -#}
+{#- 2. install — the shared install component, from data/registry/distribution.json, which
+    the executable generates from share/distribution.yaml. One install block on the site. -#}
 <section id="install" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
-    <div class="grid gap-6 lg:grid-cols-2">
-      <div class="min-w-0">
-        <h2 class="text-2xl font-bold tracking-tight text-heading">Install {{ dist.binary }}</h2>
-        <div class="mt-4">{% <code label="one command"> %}{{ dist.install_command }}{% </code> %}</div>
-        <p class="mt-4 text-sm text-body">{{ m.install.lead }} <a href="{{ get_url(path="/docs/install/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">Supported platforms, pinning a version, and the security model &rarr;</a></p>
-      </div>
-      <div class="min-w-0">
-        <p class="text-sm text-body">Then, in the repository you want supervised:</p>
-        <div class="mt-3">{% <code label="then"> %}{{ dist.next_command }}{% </code> %}</div>
-        <p class="mt-4 text-sm text-body">{{ m.install.layer }}</p>
-      </div>
-    </div>
+  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
+    {{ <install command={dist.install_command} next={dist.next_command} binary={dist.binary} install_dir={dist.install_dir} docs_href={get_url(path="/docs/install/", trailing_slash=true)} /> }}
+    <p class="mt-6 max-w-3xl text-sm text-body">{{ m.install.layer }}</p>
   </div>
 </section>
 
@@ -112,7 +103,7 @@
       </li>
       {%- endfor %}
     </ol>
-    <p class="mt-6 text-sm"><a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">All {{ model.counts.features }} features, each with the capabilities, objects, rules and guarantees behind it &rarr;</a></p>
+    <p class="mt-6 text-sm"><a href="{{ get_url(path="/features/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">All {{ model.counts.features }} features, each with the capabilities, objects, rules and guarantees behind it &rarr;</a></p>
   </div>
 </section>
 
@@ -125,7 +116,7 @@
       <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-3 py-1.5"><code class="font-mono text-sm text-heading">{{ kind }}</code><span class="font-mono text-xs text-body-subtle">{{ n }}</span></li>
       {%- endfor %}
     </ul>
-    <p class="mt-6 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The schemas, one per kind &rarr;</a></p>
+    <p class="mt-6 text-sm text-body">Every one of them is discovered by a declared source class, validated against a published schema, held in one index and read by every interface. <a href="{{ get_url(path="/docs/schemas/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The schemas, one per kind &rarr;</a></p>
   </div>
 </section>
 
@@ -220,7 +211,7 @@
       </li>
       {%- endfor %}
     </ul>
-    <p class="mt-6 text-sm"><a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">Every rule, with the validator that decides it and the test that proves it &rarr;</a></p>
+    <p class="mt-6 text-sm"><a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every rule, with the validator that decides it and the test that proves it &rarr;</a></p>
   </div>
 </section>
 
@@ -235,11 +226,11 @@
           <li class="flex items-baseline gap-3 px-4 py-2 font-mono text-xs text-body"><span class="text-body-subtle">{{ loop.index }}</span><span class="text-heading">{{ c }}</span></li>
           {%- endfor %}
         </ol>
-        <p class="mt-3 text-sm text-body-subtle">Work leaves as <span class="font-medium text-heading">completed</span> only when every line passes. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The full contract, argument by argument &rarr;</a></p>
+        <p class="mt-3 text-sm text-body-subtle">Work leaves as <span class="font-medium text-heading">completed</span> only when every line passes. Anything else gets a name, not a shrug. <a href="{{ get_url(path="/commands/finish/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">The full contract, argument by argument &rarr;</a></p>
       </div>
       <figure class="min-w-0 overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
         <figcaption class="border-b border-default px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">majordomus finish</figcaption>
-        <div class="overflow-x-auto"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
+        <div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading sm:text-sm"><code>{{ readme.finish_transcript | trim }}</code></pre></div>
       </figure>
     </div>
   </div>

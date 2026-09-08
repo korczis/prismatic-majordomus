@@ -85,10 +85,17 @@ if [ -f "$PD" ]; then
     hit="$(grep -l -F -- "$route" "$SITE"/templates/*.html "$SITE"/templates/partials/*.html "$ROOT"/scripts/generate-site-data "$ROOT"/scripts/lib/*.jq "$SITE"/data/nav.toml "$SITE"/data/marketing.toml 2>/dev/null || true)"
     [ -z "$hit" ] || { bad product "the feature route $route is named by hand in: $(printf '%s' "$hit" | tr '\n' ' ')"; prod_bad=1; }
   done
-  # no template ships a provider's own file names: the bootstraps a policy renders and the
-  # client configuration a vendor reads are read from the tree, never written into a page
+  # the provider section is derived, so nothing that stands in for that derivation may name a
+  # provider's own files: the bootstraps a policy renders and the client configuration a
+  # vendor reads are read from the tree. The templates that render the product and the two
+  # hand-written data files are where a substitute list would live; prose elsewhere on the
+  # site naming a bootstrap as an illustration is a sentence, not an inventory, and the
+  # documentation is full of such mentions by design.
   for f in $(jq -r '.providers[].bootstraps[]?.target, .providers[].client_config' "$PD" | grep -v '^null$' | sort -u); do
-    hit="$(grep -l -F -- "$f" "$SITE"/templates/*.html "$SITE"/templates/partials/*.html "$SITE"/data/nav.toml "$SITE"/data/marketing.toml 2>/dev/null || true)"
+    hit="$(grep -l -F -- "$f" "$SITE"/templates/index.html "$SITE"/templates/feature.html \
+             "$SITE"/templates/features-section.html "$SITE"/templates/features-matrix.html \
+             "$SITE"/templates/partials/feature-surfaces.html \
+             "$SITE"/data/nav.toml "$SITE"/data/marketing.toml 2>/dev/null || true)"
     [ -z "$hit" ] || { bad product "the provider file $f is named by hand in: $(printf '%s' "$hit" | tr '\n' ' ')"; prod_bad=1; }
   done
   [ "$prod_bad" = 0 ] && ok product "$(jq '.counts.features' "$PD") feature(s) over $(jq '.surfaces | length' "$PD") interface(s): every one has its page, no page is an orphan, every featured one is a chapter of the homepage, the matrix shows exactly the marks the model derived, and nothing is named by hand"

@@ -427,7 +427,7 @@ route are derived from those references and refused as keys in the file. The hom
 no feature, module, command, provider or count of their own, and a stale product dataset
 fails the build before it can be deployed. The contract is
 [`docs/PRODUCT.md`](docs/PRODUCT.md) and the decision is
-[ADR 22](.ai/repo/adrs/0022-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md).
+[ADR 23](.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md).
 
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)

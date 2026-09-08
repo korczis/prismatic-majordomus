@@ -8,7 +8,7 @@
 {#- Every feature of the product, from data/registry/product.json. This template names no
     feature, no module, no command and no interface: the cards are the features the layer
     declares, the marks are what the executable derived from each one's references, and the
-    filters are built from the dataset's own areas and surfaces (ADR 22). -#}
+    filters are built from the dataset's own areas and surfaces (ADR 23). -#}
 {%- set model = load_data(path="data/registry/product.json") -%}
 {%- set public = [f for f in model.features if f.status != "draft"] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
@@ -102,7 +102,7 @@
     Every fact on this page came from <code class="font-mono text-heading">majordomus product list</code>,
     <code class="font-mono text-heading">majordomus product matrix</code> and
     <code class="font-mono text-heading">majordomus product providers</code> — the same answers this
-    repository serves over HTTP and over MCP. <a href="{{ get_url(path='/docs/product/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">How that derivation works →</a>
+    repository serves over HTTP and over MCP. <a href="{{ get_url(path='/docs/product/', trailing_slash=true) }}" class="font-medium text-fg-brand underline">How that derivation works →</a>
   </p>
 </div>
 {% endblock content %}
