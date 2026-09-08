@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product — Prismatic Majordomus</title>
+<meta name="description" content="the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/docs/product/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Product — Prismatic Majordomus">
+<meta property="og:description" content="the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/docs/product/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.3.1</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-8" data-dropdown-toggle="nav-menu-8" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-8" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-8">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">How the product page is derived</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/product/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">How the product page is derived</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Product</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Product</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/product/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Product</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/PRODUCT.md" class="font-mono underline">docs/PRODUCT.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>The product's public face — the homepage, the <code>/features/</code> pages, the capability matrix —
+states what Majordomus does. Every fact on it is derived from the repository it describes:
+which capabilities exist, which interfaces expose them, how many objects of each kind the
+layer holds, which operational moments a feature answers, what is guaranteed and what is
+only advisory. What a person writes is which parts of the product form one chapter, and in
+what order. Behaviour as implemented and tested; where this document and the executable
+disagree, the document is wrong and changes in the same commit. The decision is
+<a href="../.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md">ADR 23</a>;
+the rule is <code>project.product-surface-derived</code>; the directory's own contract is
+<a href="../.ai/repo/features/README.md"><code>.ai/repo/features/README.md</code></a>.</p>
+<h2 id="the-kind"><a class="zola-anchor" href="#the-kind" aria-label="Anchor link for: the-kind">The kind</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>.ai/repo/features/&lt;id&gt;.md    one product feature    schema: feature/v1</span></span></code></pre>
+<p>The file name is the <code>id</code> is the slug is the route: <code>features/worktrees.md</code> is
+<code>majordomus product show worktrees</code>, <code>majordomus://feature/worktrees</code>,
+<code>GET /api/v1/product/feature?id=worktrees</code> and <code>/features/worktrees/</code>. Nothing registers a
+feature. The source class <code>feature</code> in <code>.ai/repo/knowledge/sources.yaml</code> discovers every
+file under that directory through the version-control index, the kind <code>feature</code> in
+<code>share/kinds.yaml</code> says how it is read, and
+<code>share/schemas/majordomus/feature/feature.v1.schema.json</code> decides whether it is valid.</p>
+<h2 id="what-is-authored-and-what-is-derived"><a class="zola-anchor" href="#what-is-authored-and-what-is-derived" aria-label="Anchor link for: what-is-authored-and-what-is-derived">What is authored and what is derived</a></h2>
+<p>A feature file holds <strong>references</strong> and <strong>editorial decisions</strong>, and nothing else. The
+schema sets <code>additionalProperties: false</code>, so a derived key such as <code>surfaces:</code>, <code>route:</code>
+or a count is refused at validation rather than silently believed.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>In the file</th><th>Derived from it</th></tr></thead><tbody>
+<tr><td><code>modules</code> — capability modules of the executable</td><td>the capabilities, MCP tools, HTTP routes and command-line paths behind the feature</td></tr>
+<tr><td><code>commands</code> — public commands of the shell tool</td><td>the command-line surface, and the stage and read-only flag of each</td></tr>
+<tr><td><code>kinds</code> — object kinds of the layer</td><td>how many objects of each kind this repository holds</td></tr>
+<tr><td><code>rules</code>, <code>claims</code></td><td>the class of each rule, whether the tool enforces it, the status of each claim</td></tr>
+<tr><td><code>docs</code>, <code>adrs</code>, <code>use_cases</code></td><td>titles, statuses and the routes the site gives them</td></tr>
+<tr><td><code>cockpit</code>, <code>web</code></td><td>the Cockpit areas and the mounts of the web topology</td></tr>
+<tr><td><code>areas</code>, <code>audiences</code> — the why catalogue's own taxonomies</td><td>the operational moments that name any of the feature's mechanisms</td></tr>
+<tr><td><code>headline</code>, <code>summary</code>, <code>short_title</code>, <code>status</code>, <code>weight</code>, <code>featured</code>, <code>tags</code>, <code>related</code></td><td>nothing: these are the editorial decisions</td></tr>
+</tbody></table>
+</div>
+<p>The interfaces a feature is exposed through are derived and never declared: <code>cli</code> when a
+module it names has a command-line path or it names a shell command, <code>api</code> when a module
+has an HTTP route, <code>mcp</code> when a module has a tool or a resource or the feature names a
+kind, <code>cockpit</code> when it names an area or a module with one, <code>docs</code> when it names a
+document. A feature therefore cannot claim a surface the registry does not have.</p>
+<h2 id="one-model-every-interface"><a class="zola-anchor" href="#one-model-every-interface" aria-label="Anchor link for: one-model-every-interface">One model, every interface</a></h2>
+<p><code>apps/majordomus-cli/src/product.rs</code> resolves every reference against the index, the
+capability registry, the command registry, the why catalogue and the web topology, and is
+the only place any of this is decided.
+<code>apps/majordomus-cli/src/capability/builtin/product.rs</code> declares five capabilities over it
+with <code>capability!</code>, so the command line, the HTTP routes, the OpenAPI operations, the MCP
+tools and resources and the generated reference are projections of one declaration
+(<a href="../.ai/repo/adrs/0002-canonical-capability-registry.md">ADR 2</a>, <code>docs/CAPABILITIES.md</code>).</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Answer</th><th>Command line</th><th>HTTP</th><th>MCP</th></tr></thead><tbody>
+<tr><td>every feature</td><td><code>majordomus product list</code></td><td><code>GET /api/v1/product/features</code></td><td><code>majordomus_features</code>, <code>majordomus://product</code></td></tr>
+<tr><td>one feature</td><td><code>majordomus product show &lt;id&gt;</code></td><td><code>GET /api/v1/product/feature</code></td><td><code>majordomus_feature</code>, <code>majordomus://feature/&lt;id&gt;</code></td></tr>
+<tr><td>the matrix</td><td><code>majordomus product matrix</code></td><td><code>GET /api/v1/product/matrix</code></td><td><code>majordomus_product_matrix</code></td></tr>
+<tr><td>the providers</td><td><code>majordomus product providers</code></td><td><code>GET /api/v1/product/providers</code></td><td><code>majordomus_providers</code></td></tr>
+<tr><td>the refusals</td><td><code>majordomus product validate</code></td><td><code>GET /api/v1/product/validate</code></td><td><code>majordomus_product_validate</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="the-public-projection-boundary"><a class="zola-anchor" href="#the-public-projection-boundary" aria-label="Anchor link for: the-public-projection-boundary">The public projection boundary</a></h2>
+<p><code>majordomus generate site</code> writes <code>site/data/registry/product.json</code> and
+<code>product-graph.json</code>. The dataset is not the model serialised: <code>PUBLIC_FEATURE_FIELDS</code> in
+<code>apps/majordomus-cli/src/site.rs</code> is an allow-list, and each field is copied by name. A
+field added to the model does not reach a published page until somebody adds it to that
+list, which is the point — accidental exclusion is not a boundary, and a field nobody
+allowed is not published.</p>
+<p>What that keeps out is asserted, not assumed: the feature's Markdown body, absolute paths,
+anything outside the repository. The test is <code>apps/majordomus-cli/tests/product.rs</code>, which
+builds the dataset over a fixture and refuses a key nobody allow-listed, a body, a fixture
+root path and a temporary directory; <code>scripts/generate-site-data</code> refuses the artifact
+again before it renders anything from it.</p>
+<h2 id="what-the-site-does-with-it"><a class="zola-anchor" href="#what-the-site-does-with-it" aria-label="Anchor link for: what-the-site-does-with-it">What the site does with it</a></h2>
+<p><code>scripts/generate-site-data</code> validates the dataset — the schema is
+<code>majordomus-site-product/v1</code>, published as
+<code>share/schemas/generated/site-product.schema.json</code> — and writes one page per non-draft
+feature under <code>site/content/features/</code>, with the feature's own Markdown as the body. The
+templates read the dataset and name nothing:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Route</th><th>Template</th><th>What it renders</th></tr></thead><tbody>
+<tr><td><code>/</code></td><td><code>site/templates/index.html</code></td><td>the chapters (features that declare themselves featured, in weight order), the interfaces, the matrix, the graph, the providers, the kinds and the doctrine</td></tr>
+<tr><td><code>/features/</code></td><td><code>features-section.html</code></td><td>every non-draft feature, the interfaces, the graph, the providers</td></tr>
+<tr><td><code>/features/&lt;id&gt;/</code></td><td><code>feature.html</code></td><td>the feature's own prose, then everything derived from its references</td></tr>
+<tr><td><code>/features/matrix/</code></td><td><code>features-matrix.html</code></td><td>features against interfaces, and modules, commands and kinds against the features that name them</td></tr>
+</tbody></table>
+</div>
+<p><code>site/data/marketing.toml</code> is the one hand-written file: positioning sentences and button
+labels, held to a line budget, carrying no number and no capability claim. Routes that
+moved are declared once in <code>site/data/nav.toml</code> under <code>[[redirects]]</code> and become Zola
+aliases on the page they point at.</p>
+<h2 id="what-is-refused"><a class="zola-anchor" href="#what-is-refused" aria-label="Anchor link for: what-is-refused">What is refused</a></h2>
+<ul>
+<li>A reference that resolves to nothing. The message names the file, the key and the
+nearest candidate, which makes it a repair rather than an investigation.</li>
+<li>A derived key in a feature file — <code>surfaces</code>, <code>route</code>, a count, a list of moments.</li>
+<li>A <code>featured</code> feature that is not <code>stable</code>; a <code>stable</code> feature that names no mechanism, or
+no document, or whose body lacks <code>## What it does</code> and <code>## What it does not do</code>.</li>
+<li>A stale dataset: <code>majordomus generate --check</code> fails a tree whose <code>product.json</code> does not
+match the repository, so the homepage cannot describe an executable this repository does
+not have.</li>
+<li>A template, a generator or a navigation file that names a feature, a module, a command,
+a provider or a count by hand. <code>scripts/site-check</code> decides that.</li>
+</ul>
+<p>A capability module, a public command or an object kind that no stable feature names is
+<strong>not</strong> refused. It is reported as a gap by <code>majordomus product validate</code> and shown on the
+matrix, because a thing the product does that the product page does not mention is exactly
+what this model exists to make visible. Closing it is one reference in one file.</p>
+<h2 id="adding-a-feature"><a class="zola-anchor" href="#adding-a-feature" aria-label="Anchor link for: adding-a-feature">Adding a feature</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">cp</span><span class="z-l-8 z-d-8"> .ai/repo/features/worktrees.md</span><span class="z-l-8 z-d-8"> .ai/repo/features/</span><span class="z-l-16 z-d-16">&lt;</span><span class="z-l-8 z-d-8">i</span><span>d</span><span class="z-l-16 z-d-16">&gt;</span><span class="z-l-8 z-d-8">.md</span></span>
+<span class="giallo-l"><span>$</span><span>EDITOR</span><span> .ai/repo/features/</span><span class="z-l-16 z-d-16">&lt;</span><span>id</span><span class="z-l-16 z-d-16">&gt;</span><span>.md</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> id, headline, summary, the references, the body</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">git</span><span class="z-l-8 z-d-8"> add</span><span class="z-l-8 z-d-8"> .ai/repo/features/</span><span class="z-l-16 z-d-16">&lt;</span><span class="z-l-8 z-d-8">i</span><span>d</span><span class="z-l-16 z-d-16">&gt;</span><span class="z-l-8 z-d-8">.md</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> discovery reads the version-control index</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> product</span><span class="z-l-8 z-d-8"> validate</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> schema, references, floors</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">just</span><span class="z-l-8 z-d-8"> derive</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the dataset, the pages and the generated docs follow</span></span></code></pre>
+<p><code>test/cases/97_product_features.sh</code> does exactly that and undoes it, proving the feature is
+answered by the command line, HTTP, MCP, the site dataset and the graph while it exists,
+and by none of them once it is gone.</p>
+</article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/product-features-discovered/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">A product feature is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph, the capability matrix and the website&#39;s homepage and feature pages with nothing else changed</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/product-surfaces-derived/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Which interfaces a feature is exposed through, what stands behind it and what it answers are derived from the registries that own those facts, never authored, and a source file that writes one down is refused by its schema</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/product-references-resolve/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">Every reference a feature makes resolves against the registry that owns it, and one that does not is an error naming the file, the key and the nearest candidate rather than a page linking to nothing</span></a></li><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/product-projection-public-safe/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span></span><span class="text-sm text-heading">The dataset the website is rendered from carries only fields an allow-list names, so a feature&#39;s prose, a machine path or a field nobody allowed cannot reach a published page</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/cdd7f1cd959400b1680066930387d47c8f220a0b" class="font-mono underline">cdd7f1c</a> · inputs <span class="font-mono">ebbeaf84d6d3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/mermaid.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/diagrams.js"></script>
+
+</body>
+</html>

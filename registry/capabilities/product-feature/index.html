@@ -1,0 +1,1346 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>product.feature — Prismatic Majordomus</title>
+<meta name="description" content="One product feature in full: the record as its file declares it, and everything derived from what it names — the capabilities of its modules with their tools, routes and command-line paths, the commands with their summaries, the objects of its kinds counted, the rules with their class and whether the tool enforces them, the documents, the decisions, the claims with their status, the use cases, the Cockpit areas and web surfaces with their routes, the moments it answers, and the interfaces all of that adds up to.">
+<link rel="canonical" href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/product-feature/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="product.feature — Prismatic Majordomus">
+<meta property="og:description" content="One product feature in full: the record as its file declares it, and everything derived from what it names — the capabilities of its modules with their tools, routes and command-line paths, the commands with their summaries, the objects of its kinds counted, the rules with their class and whether the tool enforces them, the documents, the decisions, the claims with their status, the use cases, the Cockpit areas and web surfaces with their routes, the moments it answers, and the interfaces all of that adds up to.">
+<meta property="og:url" content="https://korczis.github.io/prismatic-majordomus/registry/capabilities/product-feature/">
+<meta property="og:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://korczis.github.io/prismatic-majordomus/images/social-card.png">
+<link rel="icon" href="https://korczis.github.io/prismatic-majordomus/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/app.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-light.css">
+<link rel="stylesheet" href="https://korczis.github.io/prismatic-majordomus/giallo-dark.css"><script>if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); }</script><style>[x-cloak]{display:none!important}</style>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.3.1</span>
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div>
+    <div class="hidden w-full md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:items-center md:space-x-2 md:border-0 md:bg-neutral-primary md:p-0 rtl:space-x-reverse">
+        
+        
+        
+        
+        <li><a href="https://korczis.github.io/prismatic-majordomus/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Get started<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Get started</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/getting-started/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Quick start</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli-specification/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Shell CLI specification</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Concepts<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Concepts</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Plan<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Plan</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Trust<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Economics</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Trust</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/extraction-report/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Extraction report</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Economics</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-7" data-dropdown-toggle="nav-menu-7" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Executable<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-7" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-7">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Executable</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The Rust executable</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Capabilities</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command line</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-8" data-dropdown-toggle="nav-menu-8" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Reference<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-8" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-8">
+              <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Reference</p>
+          <ul class="md:hidden"><li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust CLI reference</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li><li><a href="https://korczis.github.io/prismatic-majordomus/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li></ul>
+        </li>
+        
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">product.feature</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">product.feature</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">One product feature in full: the record as its file declares it, and everything derived from what it names — the capabilities of its modules with their tools, routes and command-line paths, the commands with their summaries, the objects of its kinds counted, the rules with their class and whether the tool enforces them, the documents, the decisions, the claims with their status, the use cases, the Cockpit areas and web surfaces with their routes, the moments it answers, and the interfaces all of that adds up to.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">One product feature in full: the record as its file declares it, and everything derived from what it names — the capabilities of its modules with their tools, routes and command-line paths, the commands with their summaries, the objects of its kinds counted, the rules with their class and whether the tool enforces them, the documents, the decisions, the claims with their status, the use cases, the Cockpit areas and web surfaces with their routes, the moments it answers, and the interfaces all of that adds up to.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">behaviorally_verified</span></li>
+      <li><a href="https://korczis.github.io/prismatic-majordomus/registry/modules/product/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module product</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#product</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#features</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_feature</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://korczis.github.io/prismatic-majordomus/docs/api/#op-product-feature" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/product/feature</a> <span class="text-xs text-body-subtle">operationId product.feature</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus product show</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · FeatureInput</h3><p class="mt-1 text-sm text-body">Which feature to read.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The feature&#39;s id, as `product.features` gives it. This is also its slug and its route.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which feature to read.&quot;,
+  &quot;properties&quot;: {
+    &quot;id&quot;: {
+      &quot;description&quot;: &quot;The feature&#39;s id, as `product.features` gives it. This is also its slug and its route.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;
+  ],
+  &quot;title&quot;: &quot;FeatureInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · ResolvedRefs</h3><p class="mt-1 text-sm text-body">One feature, resolved: the record as its file declares it, and everything derived.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">adr_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the decisions it names, with their status.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">adrs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The decisions behind it, by declared id. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">areas</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The operational areas of the why catalogue it serves. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">audiences</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The audiences of the why catalogue it is written for. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">backlinks</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the features that name this one in their `related`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">body</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The Markdown body, without its front matter.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">claim_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the claims it names, with their status.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">claims</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Claims that say what is guaranteed here. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">cockpit</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Areas of the Cockpit that show it. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">cockpit_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the Cockpit areas it names, with their routes.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">command_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the shell commands it names, as the command registry declares them.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">commands</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Public commands of the shell tool it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">counts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: how much stands behind it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">doc_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the documents it names, with their titles.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">docs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">The documents that explain it, by repository-relative path. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">evidence</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: what is guaranteed.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">featured</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Whether the homepage shows it as a chapter. <span class="font-mono text-xs text-body-subtle">default false</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">headline</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The promise a visitor reads first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The identity, the slug and the file name.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kind_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the kinds it names, each with its object count.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kinds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Object kinds of the layer it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">module_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the modules it names, each with its capabilities and their projections.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">modules</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Capability modules of the executable it is made of. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">moments</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the moments that name any command, capability, claim or rule of this feature.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">related</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Features explicitly related to this one. The reverse is derived. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">route</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Derived: `/features/&lt;id&gt;/`. Never authored; the schema refuses a `route` key. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">rule_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the rules it names, each with its class and whether it is enforced.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">rules</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Rules of the effective set that govern it, by id without the version. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">short_title</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Two or three words for a card or a matrix row.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">source</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Derived: the repository-relative file the record came from. <span class="font-mono text-xs text-body-subtle">default &quot;&quot;</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">status</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">`stable`, `draft` or `deprecated`.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">summary</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">One line: what it does.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">surfaces</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the interfaces it is exposed through.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">tags</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Free tags. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">title</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">The feature as a heading.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">use_case_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the use cases it names.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">use_cases</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Use cases that show it in use. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">web</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Web surfaces of the topology it is offered through. <span class="font-mono text-xs text-body-subtle">default []</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">web_refs</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Derived: the web surfaces it names, with their mounts.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">weight</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Presentation order, lowest first. <span class="font-mono text-xs text-body-subtle">default 0</span></td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;AdrRef&quot;: {
+      &quot;description&quot;: &quot;One architecture decision the feature names.&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The declared id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;`proposed`, `accepted`, `superseded` or `rejected`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;status&quot;,
+        &quot;path&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;CapabilityRef&quot;: {
+      &quot;description&quot;: &quot;One capability of a module the feature names, with the projections the registry\ndeclares for it.&quot;,
+      &quot;properties&quot;: {
+        &quot;cli&quot;: {
+          &quot;description&quot;: &quot;The words after `majordomus`, when exposed on the command line.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The canonical id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;`query`, `command` or `resource`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;resource&quot;: {
+          &quot;description&quot;: &quot;The MCP resource URI, when exposed as one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;`METHOD /path`, when exposed over HTTP.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;stability&quot;: {
+          &quot;description&quot;: &quot;Where it stands.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;tool&quot;: {
+          &quot;description&quot;: &quot;The MCP tool name, when exposed as one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;kind&quot;,
+        &quot;stability&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ClaimRef&quot;: {
+      &quot;description&quot;: &quot;One claim the feature names, with the status the matrix gives it.&quot;,
+      &quot;properties&quot;: {
+        &quot;claim&quot;: {
+          &quot;description&quot;: &quot;The sentence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The claim id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;status&quot;: {
+          &quot;description&quot;: &quot;`guaranteed`, `advisory`, `planned` or `rejected`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;claim&quot;,
+        &quot;status&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;CockpitAreaRef&quot;: {
+      &quot;description&quot;: &quot;One area of the Cockpit the feature names.&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The area id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;The route under the running server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The label the Cockpit shows.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;route&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;CommandRef&quot;: {
+      &quot;description&quot;: &quot;One public command of the shell tool the feature names, as `share/commands.yaml`\ndeclares it.&quot;,
+      &quot;properties&quot;: {
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The command.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;read_only&quot;: {
+          &quot;description&quot;: &quot;Whether it writes nothing.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;stage&quot;: {
+          &quot;description&quot;: &quot;The lifecycle stage it belongs to.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;summary&quot;,
+        &quot;read_only&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;DocRef&quot;: {
+      &quot;description&quot;: &quot;One document the feature names.&quot;,
+      &quot;properties&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title, when the document has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;FeatureCounts&quot;: {
+      &quot;description&quot;: &quot;How much stands behind a feature, every number derived.&quot;,
+      &quot;properties&quot;: {
+        &quot;adrs&quot;: {
+          &quot;description&quot;: &quot;Decisions it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;capabilities&quot;: {
+          &quot;description&quot;: &quot;Builtin capabilities of the modules it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;claims&quot;: {
+          &quot;description&quot;: &quot;Claims it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;cli_paths&quot;: {
+          &quot;description&quot;: &quot;Command-line paths of the executable among them.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;commands&quot;: {
+          &quot;description&quot;: &quot;Public commands of the shell tool it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;docs&quot;: {
+          &quot;description&quot;: &quot;Documents it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;enforced_rules&quot;: {
+          &quot;description&quot;: &quot;Rules the tool enforces among them.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;http_routes&quot;: {
+          &quot;description&quot;: &quot;HTTP routes among them.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;mcp_resources&quot;: {
+          &quot;description&quot;: &quot;MCP resources among them, plus one per object of the kinds it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;mcp_tools&quot;: {
+          &quot;description&quot;: &quot;MCP tools among them.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;moments&quot;: {
+          &quot;description&quot;: &quot;Moments it answers.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;objects&quot;: {
+          &quot;description&quot;: &quot;Objects of the kinds it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;rules&quot;: {
+          &quot;description&quot;: &quot;Rules it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;use_cases&quot;: {
+          &quot;description&quot;: &quot;Use cases it names.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;capabilities&quot;,
+        &quot;mcp_tools&quot;,
+        &quot;mcp_resources&quot;,
+        &quot;http_routes&quot;,
+        &quot;cli_paths&quot;,
+        &quot;commands&quot;,
+        &quot;objects&quot;,
+        &quot;rules&quot;,
+        &quot;enforced_rules&quot;,
+        &quot;docs&quot;,
+        &quot;adrs&quot;,
+        &quot;claims&quot;,
+        &quot;use_cases&quot;,
+        &quot;moments&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;FeatureEvidence&quot;: {
+      &quot;description&quot;: &quot;What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature&#39;s maturity.&quot;,
+      &quot;properties&quot;: {
+        &quot;claims&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;description&quot;: &quot;Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;modules&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;description&quot;: &quot;The modules it names by stability.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;claims&quot;,
+        &quot;modules&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;KindRef&quot;: {
+      &quot;description&quot;: &quot;One object kind the feature names, with how many objects of it the layer holds.&quot;,
+      &quot;properties&quot;: {
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The kind.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;objects&quot;: {
+          &quot;description&quot;: &quot;Objects of this kind in the index.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;name&quot;,
+        &quot;objects&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ModuleRef&quot;: {
+      &quot;description&quot;: &quot;One capability module the feature names.&quot;,
+      &quot;properties&quot;: {
+        &quot;capabilities&quot;: {
+          &quot;description&quot;: &quot;The builtin capabilities it composes, in id order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/CapabilityRef&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;description&quot;: {
+          &quot;description&quot;: &quot;One paragraph.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The module id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;source_path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path of the file its descriptors were composed in.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;stability&quot;: {
+          &quot;description&quot;: &quot;Where the module stands, when it declared it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The short name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;description&quot;,
+        &quot;source_path&quot;,
+        &quot;capabilities&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;MomentRef&quot;: {
+      &quot;description&quot;: &quot;One operational moment the feature answers: derived from the moments that name any of\nthe feature&#39;s commands, capabilities, claims or rules.&quot;,
+      &quot;properties&quot;: {
+        &quot;hook&quot;: {
+          &quot;description&quot;: &quot;The first-person line an index shows.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The moment id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;`/why/&lt;id&gt;/`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;hook&quot;,
+        &quot;route&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RuleRef&quot;: {
+      &quot;description&quot;: &quot;One rule the feature names.&quot;,
+      &quot;properties&quot;: {
+        &quot;class&quot;: {
+          &quot;description&quot;: &quot;`blocking` or `advisory`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;enforced&quot;: {
+          &quot;description&quot;: &quot;Whether the tool enforces it: the rule carries an `x-majordomus` block.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The rule id, without the version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;identity&quot;: {
+          &quot;description&quot;: &quot;The identity the index holds, with the version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;identity&quot;,
+        &quot;title&quot;,
+        &quot;class&quot;,
+        &quot;enforced&quot;,
+        &quot;path&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SurfaceRef&quot;: {
+      &quot;description&quot;: &quot;One web surface of the topology the feature names.&quot;,
+      &quot;properties&quot;: {
+        &quot;category&quot;: {
+          &quot;description&quot;: &quot;What it is for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The surface id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;mount&quot;: {
+          &quot;description&quot;: &quot;Where it is mounted.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;,
+        &quot;mount&quot;,
+        &quot;category&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Surfaces&quot;: {
+      &quot;description&quot;: &quot;The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document.&quot;,
+      &quot;properties&quot;: {
+        &quot;api&quot;: {
+          &quot;description&quot;: &quot;The HTTP routes under `/api/v1/`, and the OpenAPI document over them.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;cli&quot;: {
+          &quot;description&quot;: &quot;The command line: the executable&#39;s own, or the shell tool&#39;s.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;cockpit&quot;: {
+          &quot;description&quot;: &quot;The Cockpit.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;docs&quot;: {
+          &quot;description&quot;: &quot;The documentation.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;mcp&quot;: {
+          &quot;description&quot;: &quot;MCP: a tool, or a resource.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;cli&quot;,
+        &quot;api&quot;,
+        &quot;mcp&quot;,
+        &quot;cockpit&quot;,
+        &quot;docs&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;UseCaseRef&quot;: {
+      &quot;description&quot;: &quot;One use case the feature names.&quot;,
+      &quot;properties&quot;: {
+        &quot;category&quot;: {
+          &quot;description&quot;: &quot;The category it is filed under.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The use case id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;title&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    }
+  },
+  &quot;description&quot;: &quot;One feature, resolved: the record as its file declares it, and everything derived.&quot;,
+  &quot;properties&quot;: {
+    &quot;adr_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the decisions it names, with their status.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/AdrRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;adrs&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;The decisions behind it, by declared id.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;areas&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;The operational areas of the why catalogue it serves.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;audiences&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;The audiences of the why catalogue it is written for.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;backlinks&quot;: {
+      &quot;description&quot;: &quot;Derived: the features that name this one in their `related`.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;body&quot;: {
+      &quot;description&quot;: &quot;The Markdown body, without its front matter.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;claim_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the claims it names, with their status.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ClaimRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;claims&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Claims that say what is guaranteed here.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;cockpit&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Areas of the Cockpit that show it.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;cockpit_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the Cockpit areas it names, with their routes.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/CockpitAreaRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;command_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the shell commands it names, as the command registry declares them.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/CommandRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;commands&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Public commands of the shell tool it is made of.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;counts&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/FeatureCounts&quot;,
+      &quot;description&quot;: &quot;Derived: how much stands behind it.&quot;
+    },
+    &quot;doc_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the documents it names, with their titles.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/DocRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;docs&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;The documents that explain it, by repository-relative path.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;evidence&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/FeatureEvidence&quot;,
+      &quot;description&quot;: &quot;Derived: what is guaranteed.&quot;
+    },
+    &quot;featured&quot;: {
+      &quot;default&quot;: false,
+      &quot;description&quot;: &quot;Whether the homepage shows it as a chapter.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;headline&quot;: {
+      &quot;description&quot;: &quot;The promise a visitor reads first.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;id&quot;: {
+      &quot;description&quot;: &quot;The identity, the slug and the file name.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;kind_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the kinds it names, each with its object count.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/KindRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;kinds&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Object kinds of the layer it is made of.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;module_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the modules it names, each with its capabilities and their projections.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/ModuleRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;modules&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Capability modules of the executable it is made of.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;moments&quot;: {
+      &quot;description&quot;: &quot;Derived: the moments that name any command, capability, claim or rule of this feature.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/MomentRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;related&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Features explicitly related to this one. The reverse is derived.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;route&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;description&quot;: &quot;Derived: `/features/&lt;id&gt;/`. Never authored; the schema refuses a `route` key.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;rule_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the rules it names, each with its class and whether it is enforced.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RuleRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;rules&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Rules of the effective set that govern it, by id without the version.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;short_title&quot;: {
+      &quot;description&quot;: &quot;Two or three words for a card or a matrix row.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;source&quot;: {
+      &quot;default&quot;: &quot;&quot;,
+      &quot;description&quot;: &quot;Derived: the repository-relative file the record came from.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;status&quot;: {
+      &quot;description&quot;: &quot;`stable`, `draft` or `deprecated`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;summary&quot;: {
+      &quot;description&quot;: &quot;One line: what it does.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;surfaces&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Surfaces&quot;,
+      &quot;description&quot;: &quot;Derived: the interfaces it is exposed through.&quot;
+    },
+    &quot;tags&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Free tags.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;title&quot;: {
+      &quot;description&quot;: &quot;The feature as a heading.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;use_case_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the use cases it names.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/UseCaseRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;use_cases&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Use cases that show it in use.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;web&quot;: {
+      &quot;default&quot;: [],
+      &quot;description&quot;: &quot;Web surfaces of the topology it is offered through.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;web_refs&quot;: {
+      &quot;description&quot;: &quot;Derived: the web surfaces it names, with their mounts.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/SurfaceRef&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;weight&quot;: {
+      &quot;default&quot;: 0,
+      &quot;description&quot;: &quot;Presentation order, lowest first.&quot;,
+      &quot;format&quot;: &quot;uint32&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;id&quot;,
+    &quot;title&quot;,
+    &quot;headline&quot;,
+    &quot;summary&quot;,
+    &quot;status&quot;,
+    &quot;surfaces&quot;,
+    &quot;module_refs&quot;,
+    &quot;command_refs&quot;,
+    &quot;kind_refs&quot;,
+    &quot;rule_refs&quot;,
+    &quot;doc_refs&quot;,
+    &quot;adr_refs&quot;,
+    &quot;claim_refs&quot;,
+    &quot;use_case_refs&quot;,
+    &quot;cockpit_refs&quot;,
+    &quot;web_refs&quot;,
+    &quot;moments&quot;,
+    &quot;backlinks&quot;,
+    &quot;counts&quot;,
+    &quot;evidence&quot;
+  ],
+  &quot;title&quot;: &quot;ResolvedRefs&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">process</span> — up to 64 entries in the process, scoped by the registry fingerprint</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-product-feature-direct-first-feature" class="break-all text-fg-brand hover:underline inline-block py-1">first-feature</a> <span class="text-body-subtle">cold+warm</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-product-feature-mcp-first-feature" class="break-all text-fg-brand hover:underline inline-block py-1">first-feature</a> <span class="text-body-subtle">cold+warm</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://korczis.github.io/prismatic-majordomus/registry/benchmarks/#target-product-feature-http-first-feature" class="break-all text-fg-brand hover:underline inline-block py-1">first-feature</a> <span class="text-body-subtle">cold+warm</span><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">product.feature</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/product.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::product</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">FeatureInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ResolvedRefs</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">0ad4196c6c0b6f1a211e5ade7a0682d5f78f84e56391728e5d2139f72eb70bc6</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.3.1</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://korczis.github.io/prismatic-majordomus/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+      <ul class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-body md:gap-x-6">
+        <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:underline">GitHub</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:underline">MIT licence</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:underline">Security</a></li>
+        <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:underline">Contributing</a></li>
+        <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="hover:underline">Docs</a></li>
+      </ul>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8">
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/cdd7f1cd959400b1680066930387d47c8f220a0b" class="font-mono underline">cdd7f1c</a> · inputs <span class="font-mono">ebbeaf84d6d3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+  </div>
+</footer>
+
+<script src="https://korczis.github.io/prismatic-majordomus/js/flowbite.min.js"></script>
+<script src="https://korczis.github.io/prismatic-majordomus/js/theme.js"></script>
+<script defer src="https://korczis.github.io/prismatic-majordomus/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>
