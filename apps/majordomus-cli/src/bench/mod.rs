@@ -9,12 +9,12 @@
 //! policy that is data.
 
 pub mod baseline;
-pub mod coverage;
-pub mod projection;
+pub(crate) mod coverage;
+pub(crate) mod projection;
 pub mod results;
-pub mod runner;
-pub mod stats;
-pub mod system;
+pub(crate) mod runner;
+pub(crate) mod stats;
+pub(crate) mod system;
 
 pub use coverage::{Coverage, CoverageLine, CoverageState};
 pub use projection::{BenchmarkProjection, BenchmarkTarget, TargetKind, Transport};

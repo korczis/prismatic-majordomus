@@ -4,23 +4,49 @@
 //! `compose_modules!`, and that list is the only root composition there is. Adding a
 //! capability to an existing module touches that module's file alone; every projection,
 //! benchmark target and generated document follows from the descriptor.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin;
+//!
+//! // the application is its modules, and each module stamps its namespace on what it holds
+//! let modules = builtin::modules();
+//! assert!(modules.iter().any(|m| m.id.as_str() == "repository"));
+//! for module in &modules {
+//!     for e in &module.capabilities {
+//!         assert_eq!(
+//!             e.capability.id.namespace(),
+//!             module.id.as_str(),
+//!             "{} is composed into the wrong module",
+//!             e.capability.id
+//!         );
+//!     }
+//! }
+//!
+//! // and `all` is the same set flattened, for a registry built without module metadata
+//! let flattened = builtin::all().len();
+//! assert_eq!(
+//!     flattened,
+//!     modules.iter().map(|m| m.capabilities.len()).sum::<usize>()
+//! );
+//! ```
 
 pub mod artifacts;
-pub mod capabilities;
+pub(crate) mod capabilities;
 pub mod continuity;
-pub mod deploy;
-pub mod directories;
-pub mod distribution;
-pub mod graph;
+pub(crate) mod deploy;
+pub(crate) mod directories;
+pub(crate) mod distribution;
+pub(crate) mod graph;
 pub mod health;
 pub mod objects;
-pub mod peers;
-pub mod perf;
+pub(crate) mod peers;
+pub(crate) mod perf;
+pub mod quality;
 pub mod repository;
 mod scope;
 mod views;
 pub mod web;
-pub mod worktree;
+pub(crate) mod worktree;
 
 use crate::compose_modules;
 
@@ -53,9 +79,10 @@ pub use objects::{
     SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
 };
 pub use peers::{AnnounceInput, PeerList};
+pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
-pub mod why;
+pub(crate) mod why;
 
 pub use views::{Empty, ObjectSummary, ObjectView};
 pub use web::{SurfaceReport, SURFACES_URI};
@@ -78,6 +105,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         directories,
         artifacts,
+        quality,
         distribution,
         why,
         web,

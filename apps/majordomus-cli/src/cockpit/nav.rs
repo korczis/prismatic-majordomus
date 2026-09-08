@@ -4,8 +4,8 @@
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
 //!
-//! What *is* written here is the ten areas: Overview, Capabilities, Objects,
-//! Directories, Graphs, Continuity, Worktrees, Health, Artifacts, API. Those are concepts rather than
+//! What *is* written here is the eleven areas: Overview, Capabilities, Objects,
+//! Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
 
@@ -34,6 +34,8 @@ pub enum Area {
     Worktrees,
     /// The health report.
     Health,
+    /// What the crate's own public surface is held to.
+    Quality,
     /// What the generator writes.
     Artifacts,
     /// The HTTP and MCP surfaces.
@@ -131,6 +133,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 here,
             ),
             item("Health", "/cockpit/health", Area::Health, None, here),
+            item("Quality", "/cockpit/quality", Area::Quality, None, here),
             item(
                 "Artifacts",
                 "/cockpit/artifacts",

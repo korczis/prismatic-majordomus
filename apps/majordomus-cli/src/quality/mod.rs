@@ -58,7 +58,7 @@
 //! assert!(!first.remediation.is_empty());
 //! ```
 
-pub mod model;
+pub(crate) mod model;
 pub mod parity;
 pub mod policy;
 pub mod report;

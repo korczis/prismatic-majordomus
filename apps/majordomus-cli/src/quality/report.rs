@@ -161,7 +161,10 @@ fn rust_surface(
                 &item.path,
                 at(&item.file),
                 Some(item.line),
-                format!("this exported {} carries no documentation", item.kind.noun()),
+                format!(
+                    "this exported {} carries no documentation",
+                    item.kind.noun()
+                ),
             ));
         } else if item.kind.carries_behaviour() && item.prose_words() < MIN_PROSE_WORDS {
             violations.push(Violation::new(
@@ -291,12 +294,7 @@ fn measure_module(
         )),
     }
 
-    let in_file = inventory
-        .in_file_tests
-        .get(&item.path)
-        .is_some_and(|t| !t.names.is_empty());
-    let named = inventory.named_by_tests.contains(&item.path);
-    if in_file || named {
+    if inventory.exercised_by_a_test(&item.path) {
         modules.behaviourally_tested += 1;
     } else {
         violations.push(Violation::new(
@@ -304,8 +302,7 @@ fn measure_module(
             &item.path,
             &at,
             Some(item.line),
-            "no #[cfg(test)] test stands beside it and no test under tests/ names it"
-                .to_string(),
+            "no #[cfg(test)] test stands beside it and no test under tests/ names it".to_string(),
         ));
     }
 }

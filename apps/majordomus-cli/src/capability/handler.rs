@@ -1,6 +1,58 @@
-//! Execution: a typed handler behind a JSON boundary, the context it runs in, and the
-//! transport-neutral error it may return. A handler never learns whether MCP, HTTP or the
-//! command line called it.
+//! What a capability's behaviour is, and what it is allowed to know.
+//!
+//! A handler is a typed function — `fn(&Context, Input) -> Result<Output, CapabilityError>`
+//! — placed behind a JSON boundary by [`handler`]. The boundary is what lets one registry
+//! hold capabilities with different input and output types; the typing is what keeps the
+//! handler from doing its own deserialisation.
+//!
+//! # What a handler may know
+//!
+//! [`Context`] is the whole of it: the index of the repository, the registry it belongs to,
+//! the board of peers attached to this process, the Why catalogue, the executor, the
+//! resolved web topology, and — only when the call arrived through an MCP session — which
+//! peer made it. A handler never learns whether MCP, HTTP or the command line called it,
+//! and that is deliberate: an answer that depended on the transport would be a second
+//! implementation hiding inside the first.
+//!
+//! Index, registry and topology are immutable for the life of a process and are shared by
+//! `Arc`, so a request never rebuilds canonical state. The peer board is the one thing that
+//! changes, and it lives in memory only.
+//!
+//! # The error model
+//!
+//! [`CapabilityError`] has four cases and names no status code and no JSON-RPC code. Each
+//! transport maps them into its own vocabulary, so adding a transport cannot change what a
+//! handler is able to say.
+//!
+//! ```
+//! use majordomus_cli::capability::{CapabilityError, Context, handler::handler};
+//! use serde::{Deserialize, Serialize};
+//!
+//! #[derive(Deserialize)]
+//! struct In { n: u32 }
+//! #[derive(Serialize)]
+//! struct Out { doubled: u32 }
+//!
+//! fn double(_: &Context, input: In) -> Result<Out, CapabilityError> {
+//!     if input.n > 100 {
+//!         return Err(CapabilityError::Refused("n is above the limit".into()));
+//!     }
+//!     Ok(Out { doubled: input.n * 2 })
+//! }
+//!
+//! // the JSON boundary: the same handler, called the way every transport calls it
+//! let boxed = handler::<In, Out, _>(double);
+//! assert_eq!(
+//!     CapabilityError::Refused("n is above the limit".into()).to_string(),
+//!     "refused: n is above the limit"
+//! );
+//! // an input the type cannot read is the caller's fault, and says so
+//! assert!(matches!(
+//!     serde_json::from_value::<In>(serde_json::json!({ "n": "twelve" })),
+//!     Err(_)
+//! ));
+//! let _ = boxed;
+//! ```
 
 use std::marker::PhantomData;
 use std::sync::Arc;
