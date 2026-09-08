@@ -1,7 +1,7 @@
 +++
 title = "Installing into a repository that already has an installation is refused"
 description = "majordomus init creates .ai/. If it already exists, init refuses with exit code 15 and says so. There is no flag that rewrites anything: --extend adds what is missing from the skeleton and overwrites nothing, so a policy, a profile or a rule the repository has edited stays exactly as it is, and .ai/local/state/, where the task record, decisions, open questions, handovers and ledger live, is never written over by any run of init."
-weight = 41
+weight = 42
 [extra]
 claim_id = "init-refuses"
 status = "guaranteed"

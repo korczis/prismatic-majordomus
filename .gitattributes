@@ -26,6 +26,12 @@ docs/SITE_CLAIMS.md                 merge=derived
 docs/generated/**                   merge=derived
 site/data/generated/**              merge=derived
 site/data/registry/**               merge=derived
+# The public release metadata: rendered from the record under .ai/repo/releases/ by
+# `majordomus generate`, one file per release plus the stable pointer. They arrived with the
+# first real release and had no rule until then, so every merge touching a release conflicted
+# on them — and the pointer changes on every release, which is exactly when several branches
+# are in flight. test/cases/57_derived_merge_driver.sh is what noticed.
+site/static/releases/**             merge=derived
 site/content/docs/pages-status.md   merge=derived
 site/content/docs/plan-status.md    merge=derived
 site/content/docs/site-claims.md    merge=derived

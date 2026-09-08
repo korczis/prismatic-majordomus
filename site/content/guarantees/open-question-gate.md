@@ -1,7 +1,7 @@
 +++
 title = "An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass"
 description = "Something unresolved is state, not a paragraph in a handover that a reader may or may not notice. An entry in state/open-questions.md naming the active task refuses majordomus finish --outcome completed."
-weight = 67
+weight = 68
 [extra]
 claim_id = "open-question-gate"
 status = "guaranteed"

@@ -56,3 +56,11 @@ unpinned installation.
 
 The model those targets come from is `share/distribution.yaml`. Adding a target there and
 regenerating is the whole procedure; this directory is never edited to keep up.
+
+## `required_targets`
+
+Each record snapshots the target ids the distribution model published on the day it was
+made. Completeness is judged against that set, not against the model as it stands now: a
+target added later is a promise about the next release, and a published release cannot grow
+an artifact. A record written before the field existed carries no set and is judged on
+internal consistency alone. `scripts/release-record` writes it; nothing else may.

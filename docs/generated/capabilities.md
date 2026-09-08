@@ -14,7 +14,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `continuity` | Continuity | behaviorally_verified | 1 | [`modules/continuity.md`](modules/continuity.md) |
 | `deploy` | Deployment | behaviorally_verified | 3 | [`modules/deploy.md`](modules/deploy.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
-| `distribution` | Distribution | behaviorally_verified | 4 | [`modules/distribution.md`](modules/distribution.md) |
+| `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `objects` | Objects | behaviorally_verified | 3 | [`modules/objects.md`](modules/objects.md) |
@@ -42,6 +42,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `distribution.build` | `distribution` | query | behaviorally_verified | `majordomus_build` | — | `GET /api/v1/distribution/build` | `majordomus distribution build` | — | required |
 | `distribution.model` | `distribution` | query | behaviorally_verified | `majordomus_distribution` | — | `GET /api/v1/distribution` | `majordomus distribution show` | — | required |
 | `distribution.releases` | `distribution` | query | behaviorally_verified | `majordomus_releases` | — | `GET /api/v1/distribution/releases` | `majordomus distribution releases` | — | required |
+| `distribution.status` | `distribution` | query | behaviorally_verified | `majordomus_install_status` | — | `GET /api/v1/distribution/status` | `majordomus distribution status` | — | required |
 | `graph.get` | `graph` | query | behaviorally_verified | `majordomus_graph` | — | `GET /api/v1/graph` | — | process, 16 entries | required |
 | `graph.list` | `graph` | query | behaviorally_verified | `majordomus_graphs` | `majordomus://graphs` | `GET /api/v1/graphs` | — | — | required |
 | `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |

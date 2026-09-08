@@ -1,7 +1,7 @@
 +++
 title = "majordomus product list"
 description = "Every feature, narrowed by any filter, with the surfaces derived for each"
-weight = 59
+weight = 60
 [extra]
 route = "/docs/cli/product/list/"
 command = "majordomus product list"
