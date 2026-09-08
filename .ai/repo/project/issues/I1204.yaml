@@ -1,0 +1,35 @@
+id: I1204
+milestone: web-sign-in
+title: The session is signed, short, and revocable from the server
+slug: identity-session
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Issue the session as a signed cookie carrying an opaque identifier, keep the server-side record needed to revoke it, set HttpOnly, SameSite and Secure according to how the surface is served, expire it, and implement sign-out as a server-side revocation rather than a cleared cookie."
+why: "A cookie that only the browser can invalidate cannot be signed out of, and a session that carries claims in its payload cannot be revoked when the provider set changes underneath it."
+current_state: "No cookie, no session, no signing key handling."
+desired_state: "A session exists as long as it is meant to, survives a restart only if that is the stated decision, and is gone from the server the moment sign-out is called."
+scope:
+  - apps/majordomus-cli/src/identity
+  - apps/majordomus-cli/src/http
+  - apps/majordomus-cli/tests
+non_scope:
+  - A session store shared between deployments
+  - Remembering anything about the reader between sessions
+depends_on:
+  - I1203
+acceptance_criteria:
+  - The cookie is signed with a key that comes from the environment and is absent from every artifact
+  - Secure is set whenever the surface is served over anything but loopback, and the decision comes from the surface rather than from a constant
+  - Sign-out revokes server-side, and a revoked session is refused even if the cookie is replayed
+  - Expiry is enforced on the server, not only in the cookie's attributes
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - cookie_attributes
+  - revocation_proved
+  - key_from_environment
+risk: "A signing key with a compiled-in default is a signing key that ships. Its absence is a refusal to issue sessions, not a fallback."
+created_at: 2026-09-08
+updated_at: 2026-09-08

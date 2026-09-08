@@ -1,0 +1,36 @@
+id: I1205
+milestone: web-sign-in
+title: Identity is resolved once, in the router, and every surface reads it from there
+slug: identity-resolution
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Resolve the caller once, where the request enters, and carry the result to every surface: the HTTP API, the Cockpit's rendering, the OpenAPI document's security scheme and the MCP surface. No handler parses a cookie, and no surface decides for itself what an absent identity means."
+why: "Authentication that is applied per handler is authentication that is forgotten on the handler added next week. One resolution point is also the only way the four surfaces can agree about who the caller is."
+current_state: "I1204 issues sessions; nothing reads them outside the flow."
+desired_state: "A request carries a resolved caller — anonymous or identified — from the router onward, and a handler cannot be written that skips the resolution."
+scope:
+  - apps/majordomus-cli/src/http
+  - apps/majordomus-cli/src/identity
+  - apps/majordomus-cli/src/cockpit
+  - apps/majordomus-cli/src/mcp
+  - apps/majordomus-cli/tests
+non_scope:
+  - Roles, groups or permissions beyond identified and anonymous
+  - A second resolution in any surface
+depends_on:
+  - I1204
+acceptance_criteria:
+  - Exactly one place reads the session cookie, proved by a test that fails when a second appears
+  - The Cockpit shows who is signed in and offers sign-out, from the resolved caller rather than from its own read
+  - The MCP surface receives the same caller as the HTTP API for the same connection
+  - An anonymous caller is a value, not an absence, so no surface can forget to handle it
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - single_resolution_point
+  - surfaces_agree
+risk: "The Cockpit is the surface most likely to re-read the cookie for convenience. The test that forbids a second read is what keeps it honest."
+created_at: 2026-09-08
+updated_at: 2026-09-08
