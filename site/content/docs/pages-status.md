@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 40
+weight = 41
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](@/docs/github-pages-performance.md).
 
-Generated from canonical inputs `d2d9981910da`.
+Generated from canonical inputs `2d4cd0bdfd84`.
 
 ## Controlled budget
 
@@ -21,7 +21,7 @@ Seconds of repository-controlled latency on a GitHub-hosted Linux runner. The Ac
 runner allocation and the "pages build and deployment" run GitHub does itself are measured
 and reported beside these and never budgeted: they belong to GitHub, not to this repository.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | phase | warm budget |
 |---|---|
@@ -69,6 +69,7 @@ held to it.
 - `scripts/github-sync`
 - `scripts/lib/**`
 - `scripts/lib/cockpit-probe.mjs`
+- `scripts/lib/ui-*.mjs`
 - `scripts/pages`
 - `scripts/rules-package`
 - `scripts/site-basepath-check`
@@ -77,6 +78,7 @@ held to it.
 - `scripts/site-deploy`
 - `scripts/site-probe`
 - `scripts/site-serve`
+- `scripts/ui`
 - `share/**`
 - `share/allow/**`
 - `share/cockpit/**`
@@ -89,7 +91,7 @@ held to it.
 The controlled build-and-check path, milliseconds, from `scripts/pages benchmark`. A baseline
 belongs to the machine that measured it; a value from one platform says nothing about another.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | platform | samples | routes | fingerprint | build | check | controlled |
 |---|---|---|---|---|---|---|

@@ -1,7 +1,7 @@
 +++
 title = "majordomus env status"
 description = "The whole snapshot, resolved in full: what the layer holds is counted, and the cache the banner reads is written"
-weight = 41
+weight = 42
 [extra]
 route = "/docs/cli/env/status/"
 command = "majordomus env status"

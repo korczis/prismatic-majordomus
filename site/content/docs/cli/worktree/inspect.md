@@ -1,7 +1,7 @@
 +++
 title = "majordomus worktree inspect"
 description = "One branch: its canonical path, whether it exists, what occupies the path, the worktree holding it, and what stands in the way"
-weight = 51
+weight = 52
 [extra]
 route = "/docs/cli/worktree/inspect/"
 command = "majordomus worktree inspect"

@@ -3111,6 +3111,12 @@
           "command": "majordomus web report benchmarks",
           "name": "benchmarks",
           "route": "/docs/cli/web/report/benchmarks/"
+        },
+        {
+          "about": "The UI conformance audit, rendered as a section of the test surface (/tests/ui)",
+          "command": "majordomus web report ui",
+          "name": "ui",
+          "route": "/docs/cli/web/report/ui/"
         }
       ],
       "command": "majordomus web report",
@@ -3487,6 +3493,180 @@
       ],
       "route": "/docs/cli/web/report/benchmarks/",
       "usage": "majordomus web report benchmarks [OPTIONS]"
+    },
+    {
+      "about": "The UI conformance audit, rendered as a section of the test surface (/tests/ui)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus web",
+          "name": "web",
+          "route": "/docs/cli/web/"
+        },
+        {
+          "command": "majordomus web report",
+          "name": "report",
+          "route": "/docs/cli/web/report/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A results document from `scripts/ui audit`",
+          "long": "from",
+          "name": "from",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "FROM"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only these surfaces, by discovered id (repeat or separate with commas)",
+          "long": "only",
+          "name": "only",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ONLY"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Every surface except these, by discovered id",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus web report ui",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "web",
+            "report",
+            "ui",
+            "--from",
+            "target/web/run-ui.json"
+          ],
+          "command": "majordomus web report ui --from target/web/run-ui.json",
+          "description": "`scripts/ui audit` drives a browser over every page of the built site at every width the compiled stylesheet's breakpoints imply, and writes one results document; this renders it. The rendering is a section of the test surface rather than a surface of its own, because a conformance run is a test run and the topology refuses a surface mounted inside another's subtree. Without that document there is nothing to render and the command says so.",
+          "expectation": "exits 13",
+          "id": "web-report-ui",
+          "setup": [],
+          "title": "Render the UI conformance audit into /tests/ui"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "ui",
+      "parent_route": "/docs/cli/web/report/",
+      "path": [
+        "majordomus",
+        "web",
+        "report",
+        "ui"
+      ],
+      "route": "/docs/cli/web/report/ui/",
+      "usage": "majordomus web report ui [OPTIONS]"
     },
     {
       "about": "Compose every published surface into one publishable tree",
@@ -10148,13 +10328,13 @@
     }
   ],
   "counts": {
-    "arguments": 448,
-    "commands": 61,
-    "examples": 67,
-    "runnable": 57
+    "arguments": 456,
+    "commands": 62,
+    "examples": 68,
+    "runnable": 58
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "0.2.0",
+  "generator_version": "0.3.1",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

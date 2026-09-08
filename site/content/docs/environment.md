@@ -84,7 +84,7 @@ plain, and under `CI` there is no banner at all. The `env` group of the justfile
 
 ## What is canonical, and what is derived
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Fact | Canonical source |
 |---|---|
