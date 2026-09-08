@@ -1,7 +1,7 @@
 +++
 title = "A hand-edited instruction file is never silently overwritten"
 description = "If a projection target on disk matches neither the stamp it carries nor the freshly generated output, update refuses to touch it (exit code 15), names the file, and points at update --diff <target>. Overwriting requires --force, given knowingly. Nothing you typed into a generated file disappears without a decision."
-weight = 35
+weight = 36
 [extra]
 claim_id = "no-silent-overwrite"
 status = "guaranteed"

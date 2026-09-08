@@ -1,7 +1,7 @@
 +++
 title = "A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited"
 description = "state/decisions.md was a file the finish contract read and nothing wrote. majordomus decision add writes it: what was decided, why, what was rejected, what the evidence is, which task decided it, and at which commit."
-weight = 65
+weight = 66
 [extra]
 claim_id = "decision-record"
 status = "guaranteed"

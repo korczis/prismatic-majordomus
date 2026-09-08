@@ -1,7 +1,7 @@
 +++
 title = "MCP, HTTP, OpenAPI, Swagger UI, the capabilities commands and the generated reference are derived from the registry, and a change to one definition reaches every one of them"
 description = "No interface of the Rust executable declares anything of its own. The MCP tools and resources, the HTTP routes and the OpenAPI operations, the Swagger UI page, majordomus capabilities list and describe, and docs/generated/capabilities.md are built from the registry when asked. Change a capability's description or input type in its descriptor, or add a declarative object to the layer, and every interface shows the change on the next start; nothing else is edited."
-weight = 105
+weight = 106
 [extra]
 claim_id = "interfaces-are-projections"
 status = "guaranteed"

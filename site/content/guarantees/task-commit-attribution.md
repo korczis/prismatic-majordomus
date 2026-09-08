@@ -1,7 +1,7 @@
 +++
 title = "A task will know which commits it produced, rather than inferring them from a range"
 description = "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
-weight = 80
+weight = 81
 [extra]
 claim_id = "task-commit-attribution"
 status = "planned"

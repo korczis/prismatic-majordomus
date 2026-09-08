@@ -10,6 +10,7 @@
 # same renderer the site publishes, and rewrites the artifact URLs to point at the local
 # base instead of GitHub. The result is a directory that can be served as-is:
 #
+#   DIR/install.sh                the generated installer, where the site serves it
 #   DIR/releases/v<version>.json
 #   DIR/releases/latest.json
 #   DIR/<artifact>...
@@ -105,5 +106,12 @@ prefix="$("$mj" distribution --repo "$ROOT" show --format json 2>/dev/null | sed
   | sed "s#https://github.com/$prefix/releases/download/$tag/#$base/#" \
   > "$out/releases/$tag.json"
 [ "$channel" = stable ] && cp "$out/releases/$tag.json" "$out/releases/latest.json"
+
+# The installer itself, where the published site serves it: site/static/ is copied to the
+# site root, so the generated installer sits directly under the base. With it here the
+# fixture is a complete stand-in for the origin rather than only for its metadata, and
+# `scripts/ci/install-check --base` can be pointed at it.
+cp "$ROOT/site/static/install.sh" "$out/install.sh"
+chmod 0644 "$out/install.sh"
 
 printf 'release-fixture: %s at %s (%s)\n' "$tag" "$out" "$base"
