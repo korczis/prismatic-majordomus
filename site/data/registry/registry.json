@@ -6,28 +6,28 @@
     "version": "0.2.0"
   },
   "registry": {
-    "fingerprint": "6283363d308d2108148a503511e4a54eb8b79fae3f89b4dc429984067ee25e10",
+    "fingerprint": "16983d57e65c895f1cf725b8125ee8a67bff38d44fbb4bb392b6b44c6ceb80ab",
     "summary": {
-      "total": 988,
-      "builtin": 37,
+      "total": 989,
+      "builtin": 38,
       "declarative": 951,
       "by_kind": {
         "command": 1,
-        "query": 36,
+        "query": 37,
         "resource": 951
       },
       "by_stability": {
-        "behaviorally_verified": 37,
+        "behaviorally_verified": 38,
         "implemented": 951
       },
-      "mcp_tools": 35,
-      "mcp_resources": 964,
-      "http_routes": 37,
-      "cli_commands": 18,
-      "modules": 39,
-      "benchmark_required": 37,
+      "mcp_tools": 36,
+      "mcp_resources": 965,
+      "http_routes": 38,
+      "cli_commands": 19,
+      "modules": 40,
+      "benchmark_required": 38,
       "benchmark_waived": 0,
-      "cached": 15
+      "cached": 16
     },
     "builtin": [
       {
@@ -6193,6 +6193,487 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs"
       },
       {
+        "id": "quality.report",
+        "module": "quality",
+        "kind": "query",
+        "title": "Public API quality report",
+        "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.",
+        "input": {
+          "name": "QualityInput",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only findings carrying this code (`RUST_PUBLIC_MISSING_EXAMPLE`). All of them when\nabsent. A code nothing recognises is refused rather than answered with an empty\nlist, so a typo cannot read as a clean report."
+              },
+              "path": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only findings whose file path starts with this, repository-relative\n(`apps/majordomus-cli/src/web`). All of them when absent."
+              },
+              "summary_only": {
+                "type": "boolean",
+                "description": "Answer with the counts and leave the findings out. For a caller that wants the\nstate of the crate and not the list of what to do about it.",
+                "default": false
+              },
+              "include_baselined": {
+                "type": "boolean",
+                "description": "Include the findings the ratchet already accepts, which are left out by default.\n\nThe default is what a gate wants: only what is new. This is what a person paying the\ndebt down wants, and it is what `--write-baseline` must ask for — a baseline written\nfrom a report that had the baseline applied to it would empty the file, accepting\nnothing and failing on everything the next time it ran.",
+                "default": false
+              }
+            },
+            "description": "The input of `quality.report`: which findings to answer with.",
+            "title": "QualityInput"
+          }
+        },
+        "output": {
+          "name": "QualityAnswer",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "measured": {
+                "type": "boolean",
+                "description": "Whether a crate was found and measured. `false` is a complete answer, not a failure:\nthe layer installs into repositories that carry no Rust crate, and a doctrine that\ncannot apply is not a violation."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why nothing was measured, when nothing was."
+              },
+              "report": {
+                "$ref": "#/$defs/QualityReport",
+                "description": "The measurement. Present and empty-of-findings when `measured` is false, so that a\nconsumer reads one shape either way and `measured` is the only question it must ask."
+              },
+              "passes": {
+                "type": "boolean",
+                "description": "Whether the report as filtered leaves nothing blocking. Answered here so that a\ncaller over any transport reads the verdict rather than deriving it, and so that the\ncommand line's exit code and this field can never disagree."
+              },
+              "baselined": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "The findings the ratchet accepts because they stood when the rule landed. A finding\noutside this count is what fails the gate."
+              }
+            },
+            "required": [
+              "measured",
+              "report",
+              "passes",
+              "baselined"
+            ],
+            "description": "The answer: the measurement, or the reason there was not one.",
+            "title": "QualityAnswer",
+            "$defs": {
+              "QualityReport": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "string",
+                    "description": "[`SCHEMA`].",
+                    "default": ""
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "What was measured: the crate directory, repository-relative."
+                  },
+                  "public_api": {
+                    "$ref": "#/$defs/PublicApiQuality",
+                    "description": "The exported item surface."
+                  },
+                  "modules": {
+                    "$ref": "#/$defs/ModuleQuality",
+                    "description": "The exported module surface."
+                  },
+                  "operations": {
+                    "$ref": "#/$defs/OperationParity",
+                    "description": "The canonical operations against their transports."
+                  },
+                  "violations": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Violation"
+                    },
+                    "description": "Every finding, errors first, then by file and line."
+                  }
+                },
+                "required": [
+                  "target",
+                  "public_api",
+                  "modules",
+                  "operations",
+                  "violations"
+                ],
+                "description": "One measurement of one crate, and everything found wrong in it."
+              },
+              "PublicApiQuality": {
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Items the crate exports, of every kind."
+                  },
+                  "documented": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of those, how many carry documentation."
+                  },
+                  "owe_example": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many owe an executable example under the policy."
+                  },
+                  "exampled": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of those, how many have one that counts."
+                  },
+                  "exempt": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Exemption"
+                    },
+                    "description": "How many are exempt from the example policy for a structural reason, and why, by\nreason, so that the exemptions are visible rather than implied by a subtraction."
+                  }
+                },
+                "required": [
+                  "items",
+                  "documented",
+                  "owe_example",
+                  "exampled",
+                  "exempt"
+                ],
+                "description": "What the exported item surface looks like."
+              },
+              "Exemption": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "description": "The reason, as the policy names it."
+                  },
+                  "items": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many items it covers."
+                  }
+                },
+                "required": [
+                  "reason",
+                  "items"
+                ],
+                "description": "A group of items the example policy does not apply to, with the reason it does not."
+              },
+              "ModuleQuality": {
+                "type": "object",
+                "properties": {
+                  "modules": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Modules the crate exports, the crate root included."
+                  },
+                  "documented": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of those, how many carry a `//!` header."
+                  },
+                  "exampled": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many carry an executable example in that header."
+                  },
+                  "behaviourally_tested": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many something exercises: an in-file test, or a test that names them."
+                  }
+                },
+                "required": [
+                  "modules",
+                  "documented",
+                  "exampled",
+                  "behaviourally_tested"
+                ],
+                "description": "What the exported module surface looks like."
+              },
+              "OperationParity": {
+                "type": "object",
+                "properties": {
+                  "canonical": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Executable capabilities in the registry."
+                  },
+                  "cli": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of those, how many declare a command-line projection."
+                  },
+                  "http": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many declare an HTTP route."
+                  },
+                  "openapi": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many the OpenAPI document describes."
+                  },
+                  "mcp": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many declare an MCP tool."
+                  },
+                  "cli_commands": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Commands of the command line, leaves and runnable parents."
+                  },
+                  "cli_from_capability": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Of those, how many are the projection of a capability."
+                  },
+                  "cli_local": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many are declared to belong to the command line alone, with a reason."
+                  }
+                },
+                "required": [
+                  "canonical",
+                  "cli",
+                  "http",
+                  "openapi",
+                  "mcp",
+                  "cli_commands",
+                  "cli_from_capability",
+                  "cli_local"
+                ],
+                "description": "What the canonical operations look like against the transports that project them."
+              },
+              "Violation": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "$ref": "#/$defs/ViolationCode",
+                    "description": "The stable code."
+                  },
+                  "severity": {
+                    "$ref": "#/$defs/QualitySeverity",
+                    "description": "How bad it is."
+                  },
+                  "rule": {
+                    "type": "string",
+                    "description": "The canonical id of the rule that requires this."
+                  },
+                  "path": {
+                    "type": "string",
+                    "description": "Where it is, repository-relative; empty when the finding is not about a file."
+                  },
+                  "line": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "The line, 1-based; `None` when the finding is not about a line."
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "description": "The item's full path, or the command, or the capability id: what the finding is about."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "One sentence, specific to this occurrence."
+                  },
+                  "why": {
+                    "type": "string",
+                    "description": "Why it matters, from the code."
+                  },
+                  "remediation": {
+                    "type": "string",
+                    "description": "What to do, from the code."
+                  }
+                },
+                "required": [
+                  "code",
+                  "severity",
+                  "rule",
+                  "path",
+                  "symbol",
+                  "message",
+                  "why",
+                  "remediation"
+                ],
+                "description": "One finding: what, where, why, and what to do."
+              },
+              "ViolationCode": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "RUST_PUBLIC_MISSING_DOCS",
+                    "description": "An exported item carries no documentation at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "RUST_PUBLIC_THIN_DOCS",
+                    "description": "An exported item's documentation says nothing its signature had not already said."
+                  },
+                  {
+                    "type": "string",
+                    "const": "RUST_PUBLIC_MISSING_EXAMPLE",
+                    "description": "An exported item that carries behaviour has no executable example."
+                  },
+                  {
+                    "type": "string",
+                    "const": "RUST_EXAMPLE_NOT_EXECUTABLE",
+                    "description": "Every example an item has is `ignore`d or is prose in a fenced box."
+                  },
+                  {
+                    "type": "string",
+                    "const": "RUST_EXAMPLE_PLACEHOLDER",
+                    "description": "An example asserts nothing, or asserts something that is true of any program."
+                  },
+                  {
+                    "type": "string",
+                    "const": "RUST_EXAMPLE_DOES_NOT_NAME_SUBJECT",
+                    "description": "An example never names the item it is documenting."
+                  },
+                  {
+                    "type": "string",
+                    "const": "RUST_MODULE_MISSING_DOCS",
+                    "description": "An exported module carries no module-level documentation."
+                  },
+                  {
+                    "type": "string",
+                    "const": "RUST_MODULE_MISSING_EXAMPLE",
+                    "description": "An exported module has no module-level executable example."
+                  },
+                  {
+                    "type": "string",
+                    "const": "RUST_MODULE_MISSING_BEHAVIOURAL_TEST",
+                    "description": "No test names an exported module, and it declares none of its own."
+                  },
+                  {
+                    "type": "string",
+                    "const": "OPERATION_CLI_UNCLASSIFIED",
+                    "description": "A command of the command line is neither a canonical capability nor classified as\nbelonging to the command line alone."
+                  },
+                  {
+                    "type": "string",
+                    "const": "OPERATION_CLASSIFICATION_STALE",
+                    "description": "A command is classified as belonging to the command line alone, and the command\nline no longer has it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "OPERATION_CLASSIFICATION_CONFLICT",
+                    "description": "A command is classified as local *and* bound to a capability: two answers to one\nquestion."
+                  },
+                  {
+                    "type": "string",
+                    "const": "OPERATION_MISSING_OPENAPI",
+                    "description": "A capability declares an HTTP route and the OpenAPI document does not describe it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "OPERATION_PROJECTION_MISSING",
+                    "description": "A capability declares a projection that the projection itself does not carry."
+                  },
+                  {
+                    "type": "string",
+                    "const": "OPERATION_PROJECTION_ORPHAN",
+                    "description": "A projection carries an entry the registry does not hold."
+                  }
+                ],
+                "description": "What is wrong, as a stable machine-readable code.\n\nThe codes are the contract between the validator and everything downstream: CI\nannotations, Cockpit filters, documentation anchors and an agent deciding what to fix.\nA code is never renamed once it has shipped; a rule that stops existing takes its code\nwith it."
+              },
+              "QualitySeverity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The gate fails."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Reported, and the gate passes."
+                  }
+                ],
+                "description": "How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::quality"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_quality",
+            "resource": {
+              "uri": "majordomus://quality",
+              "name": "quality"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/quality"
+          },
+          "cli": {
+            "path": [
+              "quality",
+              "report"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "quality",
+          "introspection",
+          "rust"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "process",
+          "max_entries": 8,
+          "ttl_seconds": 10
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
+      },
+      {
         "id": "repository.info",
         "module": "repository",
         "kind": "query",
@@ -12252,6 +12733,18 @@
         "capability_ids": []
       },
       {
+        "id": "quality",
+        "title": "Public API quality",
+        "description": "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "quality.report"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
+      },
+      {
         "id": "repository",
         "title": "Repository",
         "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.",
@@ -12368,7 +12861,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c2e55155ba2503f9c2c0ccb49fac425281689fae3475a31a6d1399fcce7684ef",
+    "fingerprint": "12f1a87b2fff682a034acf0b573920762ee6ab797dc6675f60793ebbc8dd9073",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14874,7 +15367,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 34585
+        "bytes": 35160
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -15081,7 +15574,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 11201
+        "bytes": 11613
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -31141,6 +31634,215 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "quality"
+        ],
+        "route": "/docs/cli/quality/",
+        "executable": false,
+        "usage": "majordomus quality <COMMAND>",
+        "about": "What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry",
+        "args": [],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "quality",
+              "report"
+            ],
+            "route": "/docs/cli/quality/report/",
+            "executable": true,
+            "usage": "majordomus quality report [OPTIONS]",
+            "about": "Measure the crate and report every finding, with the rule it breaks and what to do about it",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "code",
+                "long": "code",
+                "positional": false,
+                "help": "Only findings carrying this code, e.g. RUST_PUBLIC_MISSING_EXAMPLE",
+                "value_name": "CODE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "path",
+                "long": "path",
+                "positional": false,
+                "help": "Only findings under this repository-relative path prefix",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "summary",
+                "long": "summary",
+                "positional": false,
+                "help": "Print the counts and leave the findings out",
+                "value_name": "SUMMARY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "include_baselined",
+                "long": "include-baselined",
+                "positional": false,
+                "help": "Show the findings the baseline already accepts, which are left out by default",
+                "value_name": "INCLUDE_BASELINED",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "write_baseline",
+                "long": "write-baseline",
+                "positional": false,
+                "help": "Record today's findings as the accepted baseline, so the debt can shrink and cannot grow",
+                "value_name": "WRITE_BASELINE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "quality-summary",
+                "title": "Where the crate's public surface stands",
+                "description": "The counts alone: how much of the exported surface is documented and exampled, how many modules something exercises, and how the canonical operations stand against the command line, HTTP, OpenAPI and MCP. Exits 10 when any finding stands outside the recorded baseline.",
+                "argv": [
+                  "quality",
+                  "report",
+                  "--summary"
+                ],
+                "command": "majordomus quality report --summary",
+                "setup": [],
+                "expectation": "exits 0"
+              },
+              {
+                "id": "quality-code-json",
+                "title": "One kind of finding, with the rule and the remedy",
+                "description": "Filtered to one violation code. Every finding carries the rule that requires it, where it is, why it matters and what to do — which is what lets a person and an agent act on the same report.",
+                "argv": [
+                  "quality",
+                  "report",
+                  "--code",
+                  "RUST_MODULE_MISSING_EXAMPLE",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus quality report --code RUST_MODULE_MISSING_EXAMPLE --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /measured, /passes, /report/schema"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -31363,6 +32065,16 @@
         "output": "CounterSnapshot"
       },
       {
+        "name": "majordomus_quality",
+        "id": "quality.report",
+        "title": "Public API quality report",
+        "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.",
+        "kind": "query",
+        "read_only": true,
+        "input": "QualityInput",
+        "output": "QualityAnswer"
+      },
+      {
         "name": "majordomus_repository",
         "id": "repository.info",
         "title": "Repository and index state",
@@ -31544,6 +32256,13 @@
         "name": "health",
         "id": "health.report",
         "title": "Health of this process",
+        "kind": "query"
+      },
+      {
+        "uri": "majordomus://quality",
+        "name": "quality",
+        "id": "quality.report",
+        "title": "Public API quality report",
         "kind": "query"
       },
       {
@@ -31736,6 +32455,12 @@
         "method": "GET",
         "path": "/api/v1/perf",
         "id": "perf.counters",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/quality",
+        "id": "quality.report",
         "kind": "query"
       },
       {
@@ -32886,6 +33611,35 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/perf"
+      },
+      {
+        "key": "quality.report|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "quality.report",
+        "module": "quality",
+        "case": "default",
+        "cached": true
+      },
+      {
+        "key": "quality.report|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "quality.report",
+        "module": "quality",
+        "case": "default",
+        "cached": true,
+        "tool": "majordomus_quality"
+      },
+      {
+        "key": "quality.report|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "quality.report",
+        "module": "quality",
+        "case": "default",
+        "cached": true,
+        "route": "GET /api/v1/quality"
       },
       {
         "key": "repository.info|direct|default",
@@ -34061,6 +34815,27 @@
           "cases": 1
         },
         {
+          "subject": "quality.report",
+          "module": "quality",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "quality.report",
+          "module": "quality",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "quality.report",
+          "module": "quality",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "repository.info",
           "module": "repository",
           "transport": "direct",
@@ -34448,20 +35223,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 37,
-          "covered": 37,
+          "required": 38,
+          "covered": 38,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 37,
-          "covered": 37,
+          "required": 38,
+          "covered": 38,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 35,
-          "covered": 35,
+          "required": 36,
+          "covered": 36,
           "missing": 0,
           "waived": 0
         },
@@ -34472,8 +35247,8 @@
           "waived": 0
         },
         "total": {
-          "required": 122,
-          "covered": 122,
+          "required": 125,
+          "covered": 125,
           "missing": 0,
           "waived": 0
         }

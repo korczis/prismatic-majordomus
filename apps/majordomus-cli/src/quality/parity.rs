@@ -36,8 +36,8 @@
 //! ```
 
 use crate::capability::{CapabilityRegistry, HttpMethod};
-use crate::cli::CommandDoc;
 use crate::cli::local::{self, LocalReason, LOCAL};
+use crate::cli::CommandDoc;
 
 use super::model::{OperationParity, Violation, ViolationCode};
 
@@ -282,7 +282,8 @@ mod tests {
             .with_builtin(crate::capability::builtin::all())
             .build()
             .unwrap();
-        let (counts, findings) = inspect(&registry, &cli::tree(), &serde_json::json!({"paths": {}}));
+        let (counts, findings) =
+            inspect(&registry, &cli::tree(), &serde_json::json!({"paths": {}}));
         assert!(counts.http > 0);
         assert_eq!(
             findings

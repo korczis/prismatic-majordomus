@@ -43,6 +43,8 @@ tags:
     description: "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process."
   - name: perf
     description: "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence."
+  - name: quality
+    description: "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them."
   - name: repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
   - name: web
@@ -1319,6 +1321,95 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_perf
+  "/api/v1/quality":
+    get:
+      operationId: quality.report
+      summary: Public API quality report
+      description: "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it."
+      tags:
+        - quality
+      parameters:
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only findings carrying this code (`RUST_PUBLIC_MISSING_EXAMPLE`). All of them when\nabsent. A code nothing recognises is refused rather than answered with an empty\nlist, so a typo cannot read as a clean report."
+        - name: path
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only findings whose file path starts with this, repository-relative\n(`apps/majordomus-cli/src/web`). All of them when absent."
+        - name: summary_only
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Answer with the counts and leave the findings out. For a caller that wants the\nstate of the crate and not the list of what to do about it."
+          examples:
+            default:
+              value: false
+        - name: include_baselined
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Include the findings the ratchet already accepts, which are left out by default.\n\nThe default is what a gate wants: only what is new. This is what a person paying the\ndebt down wants, and it is what `--write-baseline` must ask for — a baseline written\nfrom a report that had the baseline applied to it would empty the file, accepting\nnothing and failing on everything the next time it ran."
+          examples:
+            default:
+              value: false
+      responses:
+        "200":
+          description: "Public API quality report: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/QualityAnswer"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: quality.report
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::quality
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 8
+        ttl_seconds: 10
+      x-majordomus-mcp:
+        tool: majordomus_quality
+        resource:
+          uri: majordomus://quality
+          name: quality
+      x-majordomus-cli: quality report
   "/api/v1/ready":
     get:
       operationId: health.ready
@@ -4307,6 +4398,21 @@ components:
         - before
         - after
       description: "One concrete situation, in one audience, with what happens today and what happens\ninstead."
+    Exemption:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: "The reason, as the policy names it."
+        items:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many items it covers.
+      required:
+        - reason
+        - items
+      description: "A group of items the example policy does not apply to, with the reason it does not."
     Exposure:
       type: object
       properties:
@@ -5070,6 +5176,35 @@ components:
     ModuleId:
       type: string
       description: "A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject's module is its kind."
+    ModuleQuality:
+      type: object
+      properties:
+        modules:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Modules the crate exports, the crate root included."
+        documented:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, how many carry a `//!` header."
+        exampled:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many carry an executable example in that header.
+        behaviourally_tested:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many something exercises: an in-file test, or a test that names them."
+      required:
+        - modules
+        - documented
+        - exampled
+        - behaviourally_tested
+      description: What the exported module surface looks like.
     MomentDetail:
       type: object
       properties:
@@ -5529,6 +5664,59 @@ components:
         - started_at
         - foreign
       description: "The open episode of this worktree, when there is one."
+    OperationParity:
+      type: object
+      properties:
+        canonical:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Executable capabilities in the registry.
+        cli:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, how many declare a command-line projection."
+        http:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many declare an HTTP route.
+        openapi:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many the OpenAPI document describes.
+        mcp:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many declare an MCP tool.
+        cli_commands:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Commands of the command line, leaves and runnable parents."
+        cli_from_capability:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, how many are the projection of a capability."
+        cli_local:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many are declared to belong to the command line alone, with a reason."
+      required:
+        - canonical
+        - cli
+        - http
+        - openapi
+        - mcp
+        - cli_commands
+        - cli_from_capability
+        - cli_local
+      description: What the canonical operations look like against the transports that project them.
     Origin:
       oneOf:
         - type: string
@@ -5792,6 +5980,109 @@ components:
           const: fly
           description: Fly.io.
       description: "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
+    PublicApiQuality:
+      type: object
+      properties:
+        items:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Items the crate exports, of every kind."
+        documented:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, how many carry documentation."
+        owe_example:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many owe an executable example under the policy.
+        exampled:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, how many have one that counts."
+        exempt:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Exemption"
+          description: "How many are exempt from the example policy for a structural reason, and why, by\nreason, so that the exemptions are visible rather than implied by a subtraction."
+      required:
+        - items
+        - documented
+        - owe_example
+        - exampled
+        - exempt
+      description: What the exported item surface looks like.
+    QualityAnswer:
+      type: object
+      properties:
+        measured:
+          type: boolean
+          description: "Whether a crate was found and measured. `false` is a complete answer, not a failure:\nthe layer installs into repositories that carry no Rust crate, and a doctrine that\ncannot apply is not a violation."
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why nothing was measured, when nothing was."
+        report:
+          "$ref": "#/components/schemas/QualityReport"
+          description: "The measurement. Present and empty-of-findings when `measured` is false, so that a\nconsumer reads one shape either way and `measured` is the only question it must ask."
+        passes:
+          type: boolean
+          description: "Whether the report as filtered leaves nothing blocking. Answered here so that a\ncaller over any transport reads the verdict rather than deriving it, and so that the\ncommand line's exit code and this field can never disagree."
+        baselined:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "The findings the ratchet accepts because they stood when the rule landed. A finding\noutside this count is what fails the gate."
+      required:
+        - measured
+        - report
+        - passes
+        - baselined
+      description: "The answer: the measurement, or the reason there was not one."
+    QualityReport:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "[`SCHEMA`]."
+          default: ""
+        target:
+          type: string
+          description: "What was measured: the crate directory, repository-relative."
+        public_api:
+          "$ref": "#/components/schemas/PublicApiQuality"
+          description: The exported item surface.
+        modules:
+          "$ref": "#/components/schemas/ModuleQuality"
+          description: The exported module surface.
+        operations:
+          "$ref": "#/components/schemas/OperationParity"
+          description: The canonical operations against their transports.
+        violations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Violation"
+          description: "Every finding, errors first, then by file and line."
+      required:
+        - target
+        - public_api
+        - modules
+        - operations
+        - violations
+      description: "One measurement of one crate, and everything found wrong in it."
+    QualitySeverity:
+      oneOf:
+        - type: string
+          const: error
+          description: The gate fails.
+        - type: string
+          const: warning
+          description: "Reported, and the gate passes."
+      description: "How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning."
     Readiness:
       type: object
       properties:
@@ -7040,6 +7331,98 @@ components:
           const: out
           description: Never read; the reason says why.
       description: In or out.
+    Violation:
+      type: object
+      properties:
+        code:
+          "$ref": "#/components/schemas/ViolationCode"
+          description: The stable code.
+        severity:
+          "$ref": "#/components/schemas/QualitySeverity"
+          description: How bad it is.
+        rule:
+          type: string
+          description: The canonical id of the rule that requires this.
+        path:
+          type: string
+          description: "Where it is, repository-relative; empty when the finding is not about a file."
+        line:
+          type:
+            - integer
+            - "null"
+          format: uint
+          minimum: 0
+          description: "The line, 1-based; `None` when the finding is not about a line."
+        symbol:
+          type: string
+          description: "The item's full path, or the command, or the capability id: what the finding is about."
+        message:
+          type: string
+          description: "One sentence, specific to this occurrence."
+        why:
+          type: string
+          description: "Why it matters, from the code."
+        remediation:
+          type: string
+          description: "What to do, from the code."
+      required:
+        - code
+        - severity
+        - rule
+        - path
+        - symbol
+        - message
+        - why
+        - remediation
+      description: "One finding: what, where, why, and what to do."
+    ViolationCode:
+      oneOf:
+        - type: string
+          const: RUST_PUBLIC_MISSING_DOCS
+          description: An exported item carries no documentation at all.
+        - type: string
+          const: RUST_PUBLIC_THIN_DOCS
+          description: "An exported item's documentation says nothing its signature had not already said."
+        - type: string
+          const: RUST_PUBLIC_MISSING_EXAMPLE
+          description: An exported item that carries behaviour has no executable example.
+        - type: string
+          const: RUST_EXAMPLE_NOT_EXECUTABLE
+          description: "Every example an item has is `ignore`d or is prose in a fenced box."
+        - type: string
+          const: RUST_EXAMPLE_PLACEHOLDER
+          description: "An example asserts nothing, or asserts something that is true of any program."
+        - type: string
+          const: RUST_EXAMPLE_DOES_NOT_NAME_SUBJECT
+          description: An example never names the item it is documenting.
+        - type: string
+          const: RUST_MODULE_MISSING_DOCS
+          description: An exported module carries no module-level documentation.
+        - type: string
+          const: RUST_MODULE_MISSING_EXAMPLE
+          description: An exported module has no module-level executable example.
+        - type: string
+          const: RUST_MODULE_MISSING_BEHAVIOURAL_TEST
+          description: "No test names an exported module, and it declares none of its own."
+        - type: string
+          const: OPERATION_CLI_UNCLASSIFIED
+          description: "A command of the command line is neither a canonical capability nor classified as\nbelonging to the command line alone."
+        - type: string
+          const: OPERATION_CLASSIFICATION_STALE
+          description: "A command is classified as belonging to the command line alone, and the command\nline no longer has it."
+        - type: string
+          const: OPERATION_CLASSIFICATION_CONFLICT
+          description: "A command is classified as local *and* bound to a capability: two answers to one\nquestion."
+        - type: string
+          const: OPERATION_MISSING_OPENAPI
+          description: A capability declares an HTTP route and the OpenAPI document does not describe it.
+        - type: string
+          const: OPERATION_PROJECTION_MISSING
+          description: A capability declares a projection that the projection itself does not carry.
+        - type: string
+          const: OPERATION_PROJECTION_ORPHAN
+          description: A projection carries an entry the registry does not hold.
+      description: "What is wrong, as a stable machine-readable code.\n\nThe codes are the contract between the validator and everything downstream: CI\nannotations, Cockpit filters, documentation anchors and an agent deciding what to fix.\nA code is never renamed once it has shipped; a rule that stops existing takes its code\nwith it."
     WaiverReason:
       oneOf:
         - type: string

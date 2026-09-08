@@ -71,13 +71,15 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
 | [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
+| [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
+| [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus worktree`](#majordomus-worktree).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus worktree`](#majordomus-worktree), [`majordomus quality`](#majordomus-quality).
 
 ```text
 majordomus <COMMAND>
@@ -1811,4 +1813,57 @@ Examples:
   ```
 
   Verified: exits 0.
+
+<a id="majordomus-quality"></a>
+## `majordomus quality`
+
+What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
+
+Subcommands: [`majordomus quality report`](#majordomus-quality-report).
+
+```text
+majordomus quality <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-quality-report"></a>
+## `majordomus quality report`
+
+Measure the crate and report every finding, with the rule it breaks and what to do about it
+
+```text
+majordomus quality report [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--code` | `<CODE>` | — | Only findings carrying this code, e.g. RUST_PUBLIC_MISSING_EXAMPLE |
+| `--path` | `<PATH>` | — | Only findings under this repository-relative path prefix |
+| `--summary` | flag | — | Print the counts and leave the findings out |
+| `--include-baselined` | flag | — | Show the findings the baseline already accepts, which are left out by default |
+| `--write-baseline` | flag | — | Record today's findings as the accepted baseline, so the debt can shrink and cannot grow |
+
+Examples:
+
+- **Where the crate's public surface stands** — The counts alone: how much of the exported surface is documented and exampled, how many modules something exercises, and how the canonical operations stand against the command line, HTTP, OpenAPI and MCP. Exits 10 when any finding stands outside the recorded baseline.
+
+  ```console
+  $ majordomus quality report --summary
+  ```
+
+  Verified: exits 0.
+
+- **One kind of finding, with the rule and the remedy** — Filtered to one violation code. Every finding carries the rule that requires it, where it is, why it matters and what to do — which is what lets a person and an agent act on the same report.
+
+  ```console
+  $ majordomus quality report --code RUST_MODULE_MISSING_EXAMPLE --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /measured, /passes, /report/schema.
 

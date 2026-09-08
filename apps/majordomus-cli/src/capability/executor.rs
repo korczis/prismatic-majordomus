@@ -1,16 +1,42 @@
-//! The one execution path. Every call of an executable capability, whether it came from
-//! the stdio session, from `/mcp`, from an HTTP route, from the command line or from a
-//! benchmark runner, goes through [`CapabilityExecutor::execute`]: the registry lookup,
-//! the counters, the cache the capability's policy asks for, and the handler. Transport
-//! adapters convert protocol to JSON and back and own nothing else, so instrumentation
-//! and caching apply to every transport at once and cannot drift apart.
+//! The one execution path.
 //!
-//! The cache is process memory, bounded per capability by its policy, keyed by the
-//! canonical id, the input normalised (object keys sorted at every level) and the
-//! registry fingerprint (which hashes every descriptor and every declarative object's
-//! content), so two processes over different repository states never share an entry and
-//! a changed layer never answers from an old one. Errors are never cached; commands are
-//! never cached, and the registry refuses a descriptor that asks for it.
+//! Every call of an executable capability — from the stdio MCP session, from `/mcp`, from
+//! an HTTP route, from the command line, from the Cockpit or from a benchmark runner —
+//! goes through [`CapabilityExecutor::execute`]: registry lookup, counters, the cache the
+//! capability's own policy asks for, then the handler. Transport adapters convert protocol
+//! to JSON and back and own nothing else, so instrumentation and caching apply to every
+//! transport at once and cannot drift apart. A second execution path is the defect this
+//! module exists to make impossible.
+//!
+//! # The cache key
+//!
+//! Process memory, bounded per capability by its [`CachePolicy`](super::CachePolicy), keyed
+//! by three things: the canonical id, the input **normalised** (object keys sorted at every
+//! level, so `{"a":1,"b":2}` and `{"b":2,"a":1}` are one entry), and the registry
+//! fingerprint — which hashes every descriptor and every declarative object's content. Two
+//! processes over different repository states therefore never share an entry, and a changed
+//! layer never answers from an old one.
+//!
+//! Errors are never cached. Commands are never cached, and the registry refuses a
+//! descriptor that asks for it, so that is a build-time refusal rather than a runtime one.
+//!
+//! # Invisibility
+//!
+//! A cached answer is byte-identical to a computed one; nothing in a response says which it
+//! was. `project.cache-is-invisible` requires it, and [`canonical_json`] is what makes the
+//! key well-defined enough for it to be true.
+//!
+//! ```
+//! use majordomus_cli::capability::executor::canonical_json;
+//!
+//! // the same input written two ways is one cache entry, at every level of nesting
+//! let one = serde_json::json!({ "b": 2, "a": { "y": 1, "x": 0 } });
+//! let other = serde_json::json!({ "a": { "x": 0, "y": 1 }, "b": 2 });
+//! assert_eq!(canonical_json(&one), canonical_json(&other));
+//!
+//! // and a different input is a different entry
+//! assert_ne!(canonical_json(&one), canonical_json(&serde_json::json!({ "b": 3 })));
+//! ```
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::Mutex;

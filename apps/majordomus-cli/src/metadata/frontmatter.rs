@@ -1,6 +1,35 @@
-//! Front matter: a YAML block between a first line `---` and the next line `---`, as the
-//! shell tool's `mj_record_front` reads it. Nothing else is recognised: no `+++`, no JSON,
-//! no leading blank line.
+//! Front matter: the metadata block at the top of a document of the layer.
+//!
+//! A YAML block between a first line `---` and the next line `---`, read exactly as the
+//! shell tool's `mj_record_front` reads it — the two implementations have to agree about
+//! every file in the repository, so this one recognises no more than that one does. There
+//! is no `+++`, no JSON block, and no leading blank line before the opening fence: a
+//! document that opens with a blank line has no front matter, it has a body that starts
+//! with a rule.
+//!
+//! Splitting and parsing are two steps on purpose. [`split`] is total over any text and
+//! tells a document with no front matter from one whose front matter is malformed;
+//! [`parse`] then reads the block, and a failure there is a diagnostic about a file rather
+//! than an error that stops the process. A block larger than [`MAX_FRONT_MATTER_BYTES`] is
+//! refused rather than parsed, because at that size it is not metadata.
+//!
+//! ```
+//! use majordomus_cli::metadata::frontmatter;
+//!
+//! let document = "---\nid: project.example\nkind: rule\n---\n\n# The body\n";
+//! let split = frontmatter::split(document).unwrap();
+//! assert_eq!(split.body.trim_start(), "# The body\n");
+//!
+//! let front = frontmatter::parse(split.front.expect("this document has front matter")).unwrap();
+//! assert_eq!(front["kind"], "rule");
+//!
+//! // a document with no fence is all body, and that is not an error
+//! let plain = frontmatter::split("# Just a document\n").unwrap();
+//! assert!(plain.front.is_none());
+//!
+//! // one that opens a block and never closes it is
+//! assert!(frontmatter::split("---\nid: x\n").is_err());
+//! ```
 
 use serde_json::{Map, Value};
 

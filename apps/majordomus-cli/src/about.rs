@@ -4,6 +4,18 @@
 //! of its own and none can drift from the others. Prose only: counts, URLs of a running
 //! server and anything else that is measured are added by the projection that measures
 //! it.
+//!
+//! ```
+//! use majordomus_cli::about;
+//!
+//! // one sentence, and every projection titles itself with it
+//! assert_eq!(about::NAME, "Majordomus");
+//! let text = about::description();
+//! assert!(text.starts_with(about::SUMMARY));
+//! // the description is the summary and every paragraph, so a projection that shows the
+//! // description cannot be missing one a projection that shows the paragraphs has
+//! assert!(about::PARAGRAPHS.iter().all(|p| text.contains(p)));
+//! ```
 
 /// The product name, as every projection titles itself.
 pub const NAME: &str = "Majordomus";

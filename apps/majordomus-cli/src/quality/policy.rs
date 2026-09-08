@@ -206,10 +206,7 @@ impl Verdict {
     /// assert_eq!(Verdict::best(&[], "Thing"), None);
     /// ```
     pub fn best(examples: &[&Example], subject: &str) -> Option<Verdict> {
-        examples
-            .iter()
-            .map(|e| Verdict::of(e, subject))
-            .min()
+        examples.iter().map(|e| Verdict::of(e, subject)).min()
     }
 
     /// The finding this verdict raises, or `None` when the example counts.
@@ -390,9 +387,15 @@ mod tests {
             Verdict::Placeholder
         );
         // and without even that, the finding is the more basic one
-        assert_eq!(Verdict::of(&ex("", "assert!(true);"), "Foo"), Verdict::DoesNotNameSubject);
         assert_eq!(
-            Verdict::of(&ex("", "let _ = Foo::A;\nassert_eq!(2 + 2, 4, \"maths\");"), "Foo"),
+            Verdict::of(&ex("", "assert!(true);"), "Foo"),
+            Verdict::DoesNotNameSubject
+        );
+        assert_eq!(
+            Verdict::of(
+                &ex("", "let _ = Foo::A;\nassert_eq!(2 + 2, 4, \"maths\");"),
+                "Foo"
+            ),
             Verdict::Placeholder,
             "an arithmetic identity is not evidence about Foo"
         );
@@ -439,7 +442,10 @@ mod tests {
             Verdict::best(&[&diagram, &real], "Thing"),
             Some(Verdict::Counts)
         );
-        assert_eq!(Verdict::best(&[&diagram], "Thing"), Some(Verdict::NotExecutable));
+        assert_eq!(
+            Verdict::best(&[&diagram], "Thing"),
+            Some(Verdict::NotExecutable)
+        );
     }
 
     #[test]
