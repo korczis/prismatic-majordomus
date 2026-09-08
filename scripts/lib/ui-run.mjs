@@ -10,7 +10,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 import { planSurfaces } from './ui-discover.mjs';
-import { audit } from './ui-audit.mjs';
+import { audit, jobs } from './ui-audit.mjs';
 
 /** The contract of the results document, read back by `majordomus web report ui`. */
 export const RESULTS_SCHEMA = 'ui-audit/v1';
@@ -32,7 +32,8 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
   if (limit) pages = pages.slice(0, limit);
 
   const started = Date.now();
-  const visits = await audit(origin, pages, { onVisit });
+  const concurrency = jobs();
+  const visits = await audit(origin, pages, { onVisit, concurrency });
   const findings = [];
   for (const visit of visits) {
     for (const finding of visit.findings) {
@@ -53,6 +54,7 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
     pages: pages.length,
     visits: visits.length,
     seconds: Math.round((Date.now() - started) / 1000),
+    concurrency,
     rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))),
     findings,
   };

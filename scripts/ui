@@ -17,6 +17,8 @@
 #   --no-build         do not build the served documentation first
 #   --report           render the results into the tests surface afterwards (/tests/ui)
 #
+#   MJ_UI_JOBS=N       how many pages are driven at once (default: the machine, 2-4)
+#
 # Nothing here holds a list, and nothing here decides where a page is served from. The
 # surfaces come from `majordomus web list` — every static directory the executable serves,
 # with the mount the topology gives it — so a page is visited at the path the server actually
@@ -184,11 +186,9 @@ const surfaces = readFileSync(process.argv[1], "utf8").split("\n").filter(Boolea
 const only = "'"$only"'" || undefined;
 const limit = "'"$limit"'" ? Number("'"$limit"'") : undefined;
 const started = Date.now();
-let done = 0;
 const results = await run("'"$origin"'", surfaces, "'"$CSS"'", {
   select: only, limit,
-  onVisit: (visit) => {
-    done += 1;
+  onVisit: (visit, done) => {
     if (visit.findings.length || done % 50 === 0)
       process.stderr.write(`  ${String(done).padStart(4)}  ${visit.route} @${visit.width}  ${visit.findings.length} finding(s)\n`);
   },
@@ -199,7 +199,7 @@ if ('"$json"') { console.log(JSON.stringify(results, null, 2)); }
 else {
   for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
   const scope = results.complete ? "every page" : "a selected part of the site";
-  console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${scope} in ${results.seconds}s -> ${"'"$out"'".replace("'"$ROOT"'/", "")}`);
+  console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${scope} in ${results.seconds}s at ${results.concurrency} job(s) -> ${"'"$out"'".replace("'"$ROOT"'/", "")}`);
 }
 process.exitCode = total ? 10 : 0;
 ' "$surf" || status=$?
