@@ -422,6 +422,91 @@
       "tool": "majordomus_perf"
     },
     {
+      "api_anchor": "/docs/api/#op-product-feature",
+      "claims": [],
+      "cli": "majordomus product show",
+      "id": "product.feature",
+      "kind": "query",
+      "module": "product",
+      "module_route": "/registry/modules/product/",
+      "resource": null,
+      "route": "/registry/capabilities/product-feature/",
+      "slug": "product-feature",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
+      "tests": [],
+      "title": "One feature",
+      "tool": "majordomus_feature"
+    },
+    {
+      "api_anchor": "/docs/api/#op-product-features",
+      "claims": [],
+      "cli": "majordomus product list",
+      "id": "product.features",
+      "kind": "query",
+      "module": "product",
+      "module_route": "/registry/modules/product/",
+      "resource": "majordomus://product",
+      "route": "/registry/capabilities/product-features/",
+      "slug": "product-features",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
+      "tests": [],
+      "title": "The features",
+      "tool": "majordomus_features"
+    },
+    {
+      "api_anchor": "/docs/api/#op-product-matrix",
+      "claims": [],
+      "cli": "majordomus product matrix",
+      "id": "product.matrix",
+      "kind": "query",
+      "module": "product",
+      "module_route": "/registry/modules/product/",
+      "resource": "majordomus://product/matrix",
+      "route": "/registry/capabilities/product-matrix/",
+      "slug": "product-matrix",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
+      "tests": [],
+      "title": "Features against interfaces",
+      "tool": "majordomus_product_matrix"
+    },
+    {
+      "api_anchor": "/docs/api/#op-product-providers",
+      "claims": [],
+      "cli": "majordomus product providers",
+      "id": "product.providers",
+      "kind": "query",
+      "module": "product",
+      "module_route": "/registry/modules/product/",
+      "resource": "majordomus://product/providers",
+      "route": "/registry/capabilities/product-providers/",
+      "slug": "product-providers",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
+      "tests": [],
+      "title": "The providers",
+      "tool": "majordomus_providers"
+    },
+    {
+      "api_anchor": "/docs/api/#op-product-validate",
+      "claims": [],
+      "cli": "majordomus product validate",
+      "id": "product.validate",
+      "kind": "query",
+      "module": "product",
+      "module_route": "/registry/modules/product/",
+      "resource": null,
+      "route": "/registry/capabilities/product-validate/",
+      "slug": "product-validate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
+      "tests": [],
+      "title": "Validate the model",
+      "tool": "majordomus_product_validate"
+    },
+    {
       "api_anchor": "/docs/api/#op-repository-info",
       "claims": [],
       "cli": null,
@@ -833,6 +918,34 @@
         "route": "/guarantees/worktree-migration-lossless/",
         "status": "guaranteed",
         "test": "test/cases/96_worktree_topology.sh"
+      },
+      {
+        "id": "product-features-discovered",
+        "implementation": "apps/majordomus-cli/src/product.rs",
+        "route": "/guarantees/product-features-discovered/",
+        "status": "guaranteed",
+        "test": "test/cases/97_product_features.sh"
+      },
+      {
+        "id": "product-surfaces-derived",
+        "implementation": "apps/majordomus-cli/src/product.rs",
+        "route": "/guarantees/product-surfaces-derived/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/product.rs"
+      },
+      {
+        "id": "product-references-resolve",
+        "implementation": "apps/majordomus-cli/src/product.rs",
+        "route": "/guarantees/product-references-resolve/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/product.rs"
+      },
+      {
+        "id": "product-projection-public-safe",
+        "implementation": "apps/majordomus-cli/src/site.rs",
+        "route": "/guarantees/product-projection-public-safe/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/product.rs"
       }
     ],
     "http": [
@@ -883,9 +996,9 @@
     ]
   },
   "counts": {
-    "capabilities": 37,
-    "claims": 31,
-    "modules": 15
+    "capabilities": 42,
+    "claims": 35,
+    "modules": 16
   },
   "generator": "majordomus-cli 0.3.1",
   "modules": [
@@ -1132,6 +1245,42 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/perf.rs",
       "title": "Performance"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "product.feature",
+          "route": "/registry/capabilities/product-feature/",
+          "slug": "product-feature"
+        },
+        {
+          "id": "product.features",
+          "route": "/registry/capabilities/product-features/",
+          "slug": "product-features"
+        },
+        {
+          "id": "product.matrix",
+          "route": "/registry/capabilities/product-matrix/",
+          "slug": "product-matrix"
+        },
+        {
+          "id": "product.providers",
+          "route": "/registry/capabilities/product-providers/",
+          "slug": "product-providers"
+        },
+        {
+          "id": "product.validate",
+          "route": "/registry/capabilities/product-validate/",
+          "slug": "product-validate"
+        }
+      ],
+      "claims": [],
+      "id": "product",
+      "route": "/registry/modules/product/",
+      "slug": "product",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
+      "title": "Product"
     },
     {
       "capabilities": [

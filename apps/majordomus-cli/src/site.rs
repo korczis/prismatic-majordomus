@@ -848,3 +848,225 @@ fn render_json(v: &serde_json::Value) -> String {
     s.push('\n');
     s
 }
+
+// ---------------------------------------------------------------- the product model
+
+/// The dataset's own format version.
+pub const PRODUCT_SCHEMA: &str = "majordomus-site-product/v1";
+
+/// Where `product.json` says it came from.
+pub const PRODUCT_SOURCE: &str =
+    "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology";
+
+/// The fields of one feature the public dataset carries. An allow-list, not an exclusion:
+/// a field added to the resolved view reaches the published site only when it is named
+/// here, so a value that names a machine or an internal state cannot arrive by accident.
+pub const PUBLIC_FEATURE_FIELDS: &[&str] = &[
+    "id",
+    "title",
+    "short_title",
+    "headline",
+    "summary",
+    "status",
+    "weight",
+    "featured",
+    "areas",
+    "audiences",
+    "modules",
+    "commands",
+    "kinds",
+    "rules",
+    "docs",
+    "adrs",
+    "claims",
+    "use_cases",
+    "cockpit",
+    "web",
+    "related",
+    "tags",
+    "route",
+    "source",
+    "surfaces",
+    "module_refs",
+    "command_refs",
+    "kind_refs",
+    "rule_refs",
+    "doc_refs",
+    "adr_refs",
+    "claim_refs",
+    "use_case_refs",
+    "cockpit_refs",
+    "web_refs",
+    "moments",
+    "backlinks",
+    "counts",
+    "evidence",
+];
+
+/// The product model as the site's templates read it: `site/data/registry/product.json`.
+///
+/// A projection of [`crate::product::ProductModel`] through the `product.*` capabilities, so the
+/// homepage renders what the API and MCP answer. The bodies are not in it: a feature's
+/// page takes its prose from the file the record names in `source`, so the dataset stays
+/// the metadata every card, chapter, matrix row and count needs and never a second copy of
+/// the writing.
+///
+/// Every feature is copied field by field through [`PUBLIC_FEATURE_FIELDS`]: the site is
+/// public, and what reaches it is what was named, not what was not excluded.
+///
+/// Index-independent, like the Why dataset: the payload depends on the features, the
+/// registry, the catalogue and the topology and never on the index's fingerprint, so both
+/// `generate` passes of `scripts/derive` produce the same bytes.
+pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
+    let by_cli = |path: &[&str]| -> Option<String> {
+        ctx.registry
+            .by_cli(&path.iter().map(|w| w.to_string()).collect::<Vec<_>>())
+            .map(|c| c.id.to_string())
+    };
+    let run = |path: &[&str], input: serde_json::Value| -> Result<serde_json::Value> {
+        let id = by_cli(path).ok_or_else(|| Error::Protocol {
+            reason: format!(
+                "no capability is exposed as `majordomus {}`",
+                path.join(" ")
+            ),
+        })?;
+        ctx.execute(&id, input).map_err(|e| Error::Protocol {
+            reason: e.to_string(),
+        })
+    };
+
+    let list = run(&["product", "list"], serde_json::json!({ "status": "any" }))?;
+    let mut features = Vec::new();
+    for f in list["features"].as_array().into_iter().flatten() {
+        let id = f["id"].as_str().unwrap_or_default();
+        let detail = run(&["product", "show"], serde_json::json!({ "id": id }))?;
+        // the allow-list, applied: the body stays in the file, and nothing the view did not
+        // name reaches the site
+        let mut public = serde_json::Map::new();
+        if let Some(o) = detail.as_object() {
+            for (k, v) in o {
+                if PUBLIC_FEATURE_FIELDS.contains(&k.as_str()) {
+                    public.insert(k.clone(), v.clone());
+                }
+            }
+        }
+        features.push(serde_json::Value::Object(public));
+    }
+    let matrix = run(&["product", "matrix"], serde_json::json!({}))?;
+    let providers = run(&["product", "providers"], serde_json::json!({}))?;
+    let validation = run(&["product", "validate"], serde_json::json!({}))?;
+
+    // the telemetry the homepage shows: every number a fact of the registry and the index,
+    // counted here once so that no template counts and no template can be handed a number
+    let summary = ctx.registry.summary();
+    let by_kind: BTreeMap<String, usize> = ctx
+        .index
+        .kinds()
+        .into_iter()
+        .map(|(k, n)| (k.to_string(), n))
+        .collect();
+    let modules = ctx
+        .registry
+        .modules()
+        .filter(|m| m.source != ModuleSource::Declarative)
+        .count();
+    let cli_commands = crate::cli::tree()
+        .flatten()
+        .iter()
+        .filter(|c| c.executable)
+        .count();
+    let telemetry = serde_json::json!({
+        "capabilities": summary.total,
+        "builtin": summary.builtin,
+        "declarative": summary.declarative,
+        "modules": modules,
+        "mcp_tools": summary.mcp_tools,
+        "mcp_resources": summary.mcp_resources,
+        "http_routes": summary.http_routes,
+        "cli_commands": cli_commands,
+        "shell_commands": list["counts"]["commands"],
+        "kinds": by_kind.len(),
+        "objects": ctx.index.objects.len(),
+        "by_kind": by_kind,
+        "providers": list["counts"]["providers"],
+        "features": list["counts"]["features"],
+        "web_surfaces": ctx.web.surfaces.len(),
+    });
+
+    // The doctrine the product rests on: every rule a public feature names, once, carrying the
+    // class and the enforcement the rule itself declares. Deduplicated here and not in a
+    // template, because which rules the product rests on is a fact of the model, and a page
+    // that had to work it out would be a page inferring domain structure.
+    let mut by_rule: BTreeMap<String, serde_json::Value> = BTreeMap::new();
+    for f in &features {
+        if f["status"].as_str() == Some("draft") {
+            continue;
+        }
+        for r in f["rule_refs"].as_array().into_iter().flatten() {
+            if let Some(id) = r["id"].as_str() {
+                by_rule.entry(id.to_string()).or_insert_with(|| r.clone());
+            }
+        }
+    }
+    let rules: Vec<serde_json::Value> = by_rule.into_values().collect();
+
+    let cockpit_areas: Vec<serde_json::Value> = crate::cockpit::nav::areas()
+        .iter()
+        .map(|a| serde_json::json!({ "id": a.id, "title": a.label, "route": a.href }))
+        .collect();
+
+    let document = serde_json::json!({
+        "schema": PRODUCT_SCHEMA,
+        "generated": crate::generate::json_banner(PRODUCT_SOURCE),
+        "generator": { "id": "majordomus-cli", "version": crate::VERSION },
+        "fingerprint": list["fingerprint"],
+        "route": crate::product::ROUTE,
+        "counts": list["counts"],
+        "surfaces": list["surfaces"],
+        "features": features,
+        "matrix": { "rows": matrix["rows"], "modules": matrix["modules"], "commands": matrix["commands"], "kinds": matrix["kinds"] },
+        "providers": providers["providers"],
+        "rules": rules,
+        "cockpit_areas": cockpit_areas,
+        "telemetry": telemetry,
+        "valid": validation["valid"],
+    });
+
+    let graph = crate::graph::derive("product", &ctx.registry, &ctx.index).ok_or_else(|| {
+        Error::Protocol {
+            reason: "this executable derives no `product` graph".into(),
+        }
+    })?;
+    let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
+    if let Some(o) = graph_document.as_object_mut() {
+        o.insert(
+            "generated".into(),
+            serde_json::Value::String(crate::generate::json_banner(
+                "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
+            )),
+        );
+        o.insert(
+            "generator".into(),
+            serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
+        );
+    }
+
+    Ok(vec![
+        crate::generate::Artifact::verbatim(
+            format!("{}/product.json", crate::generate::SITE_DATA_DIR),
+            "site-product",
+            crate::generate::ArtifactFormat::Json,
+            Some(PRODUCT_SCHEMA.to_string()),
+            PRODUCT_SOURCE,
+            render_json(&document),
+        ),
+        crate::generate::Artifact::verbatim(
+            format!("{}/product-graph.json", crate::generate::SITE_DATA_DIR),
+            "site-product-graph",
+            crate::generate::ArtifactFormat::Json,
+            None,
+            "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
+            render_json(&graph_document),
+        ),
+    ])
+}

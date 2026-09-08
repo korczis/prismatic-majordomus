@@ -62,6 +62,10 @@
           "type": "string",
           "description": "The deployments of this repository's executable, one canonical object each; every provider artifact is generated from one of them."
         },
+        "features": {
+          "type": "string",
+          "description": "The product features of this repository, one canonical object each; every surface that presents a feature is derived from them (ADR 0022)."
+        },
         "knowledge": {
           "type": "string"
         },
@@ -77,6 +81,10 @@
         "prompts": {
           "type": "string"
         },
+        "releases": {
+          "type": "string",
+          "description": "The releases this repository published, one record each; the public release metadata is a projection of them."
+        },
         "rules": {
           "type": "string"
         },
@@ -86,10 +94,6 @@
         "sessions": {
           "type": "string",
           "description": "The closed execution episodes, one record each (ADR 0014)."
-        },
-        "releases": {
-          "type": "string",
-          "description": "The releases this repository published, one record each; the public release metadata is a projection of them."
         },
         "skills": {
           "type": "string"

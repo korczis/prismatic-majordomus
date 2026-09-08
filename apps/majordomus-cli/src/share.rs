@@ -119,6 +119,27 @@ impl Share {
     pub fn generated_schemas_dir(&self) -> PathBuf {
         self.dir.join(SCHEMAS_DIR).join(GENERATED_SCHEMAS_DIR)
     }
+
+    /// `<share>/providers`: the provider templates the tool ships, `<provider>.tmpl` each.
+    pub fn providers_dir(&self) -> PathBuf {
+        self.dir.join("providers")
+    }
+
+    /// The providers the tool has a template for, by id (the file stem), sorted. A
+    /// distribution without the directory has none; that is not an error, it is a
+    /// distribution that ships no adapter.
+    pub fn provider_templates(&self) -> Vec<String> {
+        let Ok(entries) = std::fs::read_dir(self.providers_dir()) else {
+            return Vec::new();
+        };
+        let mut out: Vec<String> = entries
+            .filter_map(|e| e.ok())
+            .filter_map(|e| e.file_name().to_str().map(str::to_string))
+            .filter_map(|n| n.strip_suffix(".tmpl").map(str::to_string))
+            .collect();
+        out.sort();
+        out
+    }
 }
 
 /// Every `<vendor>/<name>/<name>.v<n>.schema.json` under a schema root, parsed, keyed by
