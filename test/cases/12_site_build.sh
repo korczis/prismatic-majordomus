@@ -33,7 +33,10 @@ expect_grep 'id="second-level-heading"' "$P/render-test/index.html"
 expect_grep 'overflow-x-auto' "$P/render-test/index.html"
 expect_grep 'role="note"' "$P/render-test/index.html"
 expect_grep 'footnote' "$P/render-test/index.html"
-expect_grep '<pre class="mermaid">' "$P/render-test/index.html"
+# The class, not the whole tag: the build's accessibility pass puts every scrolling
+# element in the tab order, so this `pre` carries a `tabindex` the diagram does not choose.
+# What matters is that the fenced block became a mermaid element the browser will render.
+expect_grep '<pre class="mermaid"[ >]' "$P/render-test/index.html"
 # navigation: five groups, dropdown menus present with Flowbite hooks; render-test is noindex
 # a dropdown per navigation group that has items; the count comes from the data, not from
 # a number written here, so adding a group to site/data/nav.toml does not break this case
@@ -48,7 +51,12 @@ expect_grep 'Install Majordomus' "$P/index.html"
 for href in $(grep -oE 'href="[^"]*/(supervises|profiles|guarantees|commands|why)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
 expect_grep 'href="[^"]*/supervises/"' "$P/index.html"
 [ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
-n_why=0; for f in "$ROOT"/site/content-src/why/*.md; do case "$(basename "$f")" in _index.md) ;; *) n_why=$((n_why + 1)) ;; esac; done
+# The homepage links the moments the catalogue marks `featured`. The count comes from the
+# catalogue, not from a directory of hand-written pages: operational moments became objects
+# of the layer (ADR 0018) and site/content-src/why/ was removed, at which point this glob
+# stopped expanding and silently compared against the literal pattern — one.
+n_why="$(jq '[.moments[] | select(.featured)] | length' "$ROOT/site/data/registry/why.json")"
+[ "$n_why" -gt 0 ] || { echo "    the catalogue features no moment; the homepage would link none"; exit 1; }
 [ "$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')" = "$n_why" ]
 # every claim listed on the homepage links to its page; claim pages carry provenance and a verify command
 [ "$(grep -oE 'href="[^"]*/guarantees/[a-z-]+/"' "$P/index.html" | grep -vE '/(guaranteed|advisory|planned|rejected)/' | sort -u | wc -l | tr -d ' ')" -ge 12 ]
