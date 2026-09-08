@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+# install-check — the gate of the one promise the front page makes to a stranger:
+#
+#   curl -fsSL <the installer this project advertises> | sh
+#
+# installs a working tool on this machine, now, from the published site. Every other gate
+# measures the tree; this one measures what a reader of the README actually gets, which is
+# a different thing and has been wrong while every tree-level gate was green: a release
+# whose build failed leaves the advertised URL serving an installer that resolves nothing,
+# and nothing in a tree can notice that.
+#
+# It states no URL of its own. The addresses come from site/data/registry/distribution.json,
+# the generated projection of share/distribution.yaml — the same file, read the same way,
+# as the release pipeline's smoke phase.
+#
+# What it proves, in order, each failure naming what a person would see:
+#
+#   1. the metadata the installer resolves is served, and names a release;
+#   2. the installer is served, and is a shell script this machine's /bin/sh can parse;
+#   3. it installs, into a prefix and an install directory of this run's own, with the
+#      home directory of this run — nothing outside the temporary tree is touched;
+#   4. the installed tool reports the version the metadata resolved;
+#   5. the installed MCP launcher runs with no toolchain present, because an archive
+#      missing a launcher passes every check that only reads the archive's file list;
+#   6. the installed tool initialises a repository that has none.
+#
+#   scripts/ci/install-check              against the published site
+#   scripts/ci/install-check --base URL   against another origin (a preview deployment)
+#   scripts/ci/install-check --keep       leave the temporary tree for inspection
+#
+# Exit: 0 the advertised command works, 10 it does not, 12 this machine cannot judge.
+set -eu
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+
+BASE=""
+KEEP=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --base) BASE="${2:-}"; shift 2 ;;
+    --keep) KEEP=1; shift ;;
+    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
+    *) echo "install-check: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+findings=0
+fail() { printf 'FAIL install-check  %s\n' "$*"; findings=$((findings + 1)); }
+ok()   { printf 'OK   install-check  %s\n' "$*"; }
+
+command -v curl >/dev/null 2>&1 || { echo "install-check: curl is required" >&2; exit 12; }
+
+# ---------------------------------------------------------------- the addresses
+# The generated projection of the distribution model. Read, never composed: a URL written
+# here would be a second statement of where this project publishes.
+MODEL_JSON="site/data/registry/distribution.json"
+[ -f "$MODEL_JSON" ] || { echo "install-check: no $MODEL_JSON; run scripts/derive" >&2; exit 12; }
+json_field() { sed -n "s/.*\"$1\": \"\([^\"]*\)\".*/\1/p" "$MODEL_JSON" | head -n 1; }
+
+installer_url="$(json_field installer_url)"
+latest_url="$(json_field latest_url)"
+command_line="$(json_field install_command)"
+[ -n "$installer_url" ] && [ -n "$latest_url" ] && [ -n "$command_line" ] \
+  || { echo "install-check: $MODEL_JSON names no installer_url, latest_url and install_command" >&2; exit 12; }
+
+# The installer resolves its own base from the address compiled into it; --base moves both
+# that and the addresses this script reads, so the whole flow points at one other origin.
+# A loopback fixture is not HTTPS, and the installer refuses a plaintext base unless it is
+# told twice: that refusal is a protection, and this is the one caller it exists for.
+env_for_base=""
+if [ -n "$BASE" ]; then
+  # The model puts the installer directly under the base and the metadata under it too, so
+  # the installer's URL minus its last segment is the base. Asserted rather than assumed:
+  # if the two addresses stop sharing that prefix, the model has changed shape and this
+  # rewrite would quietly point at the wrong place.
+  origin="${installer_url%/*}"
+  case "$latest_url" in
+    "$origin"/*) ;;
+    *) echo "install-check: $installer_url and $latest_url share no base; --base cannot rewrite them" >&2; exit 12 ;;
+  esac
+  installer_url="$BASE/${installer_url#"$origin"/}"
+  latest_url="$BASE/${latest_url#"$origin"/}"
+  command_line="$(printf '%s' "$command_line" | sed "s#$origin#$BASE#")"
+  env_for_base="MAJORDOMUS_RELEASE_BASE_URL=$BASE"
+  case "$BASE" in https://*) ;; *) env_for_base="$env_for_base MAJORDOMUS_INSECURE_BASE_URL=1" ;; esac
+fi
+printf 'install-check: command   %s\n' "$command_line"
+printf 'install-check: metadata  %s\n' "$latest_url"
+
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/mj-install-check.XXXXXX")"
+if [ "$KEEP" = 1 ]; then
+  trap 'printf "install-check: the temporary tree is %s\n" "$WORK"' EXIT
+else
+  trap 'rm -rf "$WORK"' EXIT INT TERM HUP
+fi
+HOMEDIR="$WORK/home"; mkdir -p "$HOMEDIR"
+BIN="$HOMEDIR/.local/bin"
+
+# --retry: a published site behind a CDN is allowed one bad minute; it is not allowed to be
+# unreachable, and a retry that still fails is still a finding.
+fetch() { curl -fsSL --retry 3 --retry-delay 5 --max-time 120 "$1"; }
+
+# ---------------------------------------------------------------- 1. the metadata
+latest="$WORK/latest.json"
+if ! fetch "$latest_url" > "$latest" 2>"$WORK/latest.err"; then
+  fail "the metadata the installer resolves is not served: $latest_url"
+  fail "a reader of the README runs the advertised command and is told no release is published"
+  sed 's/^/                    /' "$WORK/latest.err" >&2
+  printf 'install-check: %s finding(s)\n' "$findings" >&2
+  exit 10
+fi
+tag="$(sed -n 's/.*"tag": "\([^"]*\)".*/\1/p' "$latest" | head -n 1)"
+[ -n "$tag" ] || { fail "the metadata at $latest_url names no release"; printf 'install-check: %s finding(s)\n' "$findings" >&2; exit 10; }
+version="${tag#v}"
+ok "the metadata names $tag"
+
+# ---------------------------------------------------------------- 2. the installer
+script="$WORK/install.sh"
+fetch "$installer_url" > "$script" 2>/dev/null \
+  || { fail "the installer is not served: $installer_url"; printf 'install-check: %s finding(s)\n' "$findings" >&2; exit 10; }
+sh -n "$script" || { fail "the served installer is not a script this machine's shell can parse"; printf 'install-check: %s finding(s)\n' "$findings" >&2; exit 10; }
+ok "the installer is served and parses ($(wc -c < "$script" | tr -d ' ') bytes)"
+
+# ---------------------------------------------------------------- 3. it installs
+# The advertised line, run as it is written — the pipe included, because a `curl | sh` that
+# works when the script is a file and not when it is a stream is a broken promise too. The
+# home directory is this run's own, so the PATH hint, the prefix and the launchers all land
+# inside $WORK and nothing on this machine is written to or replaced.
+# env_for_base is a deliberate list of NAME=VALUE words, empty unless --base was given
+# shellcheck disable=SC2086
+if ! out="$(env HOME="$HOMEDIR" $env_for_base sh -c "$command_line" 2>&1)"; then
+  fail "the advertised command failed on this machine"
+  printf '%s\n' "$out" | sed 's/^/                    /'
+  printf 'install-check: %s finding(s)\n' "$findings" >&2
+  exit 10
+fi
+printf '%s\n' "$out" | grep -q "installed successfully" \
+  || fail "the installer did not report success: $(printf '%s' "$out" | tail -n 3 | tr '\n' ' ')"
+[ -x "$BIN/majordomus" ] || fail "no launcher at $BIN/majordomus after a successful install"
+[ -x "$BIN/majordomus-mcp" ] || fail "no launcher at $BIN/majordomus-mcp after a successful install"
+[ "$findings" = 0 ] && ok "installed $tag from the published archive" || true
+
+# ---------------------------------------------------------------- 4. it is the release
+if [ -x "$BIN/majordomus" ]; then
+  reported="$(env HOME="$HOMEDIR" "$BIN/majordomus" version 2>/dev/null || true)"
+  [ "$reported" = "majordomus $version" ] \
+    && ok "the installed tool reports $version" \
+    || fail "the installed tool reports '$reported', not 'majordomus $version'"
+fi
+
+# ---------------------------------------------------------------- 5. no toolchain needed
+# The check the archive's own file list cannot make. An installed tree has no crate, so a
+# launcher whose executable was left out of the archive fails here and nowhere earlier.
+if [ -x "$BIN/majordomus-mcp" ]; then
+  if printf '' | env HOME="$HOMEDIR" MAJORDOMUS_NO_BUILD=1 "$BIN/majordomus-mcp" --standalone --repo "$ROOT" >/dev/null 2>"$WORK/mcp.err"; then
+    ok "the installed MCP launcher runs with no toolchain"
+  else
+    fail "the installed MCP launcher needs a toolchain, or is missing what it runs"
+    sed 's/^/                    /' "$WORK/mcp.err" >&2
+  fi
+fi
+
+# ---------------------------------------------------------------- 6. it supervises a repository
+if [ -x "$BIN/majordomus" ] && command -v git >/dev/null 2>&1; then
+  repo="$WORK/repo"; mkdir -p "$repo"
+  ( cd "$repo" && git init -q . && git config user.email ci@example.invalid && git config user.name ci ) >/dev/null 2>&1
+  if ( cd "$repo" && env HOME="$HOMEDIR" "$BIN/majordomus" init ) >"$WORK/init.log" 2>&1 && [ -f "$repo/.ai/repo/policy.yaml" ]; then
+    ok "the installed tool initialises a repository that has none"
+  else
+    fail "the installed tool could not initialise a repository"
+    tail -n 5 "$WORK/init.log" | sed 's/^/                    /' >&2
+  fi
+fi
+
+if [ "$findings" != 0 ]; then
+  printf 'install-check: %s finding(s); the advertised install command does not work\n' "$findings" >&2
+  exit 10
+fi
+printf 'install-check: the advertised install command installs %s and it works\n' "$tag"
