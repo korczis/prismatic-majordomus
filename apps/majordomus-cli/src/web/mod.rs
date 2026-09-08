@@ -6,8 +6,8 @@
 //! Before this module each of those was known separately by the router, the publication
 //! script, the gate model and the documentation, and a new one cost a registration in each.
 //! Here it is discovered from its producer ([`discover`]), checked against the invariants a
-//! topology must satisfy ([`validate`]), composed into a publishable tree ([`compose`]) and
-//! written out for diagnostics ([`manifest`]) — all from the same [`model::Topology`].
+//! topology must satisfy ([`validate`]), composed into a publishable tree (`compose`) and
+//! written out for diagnostics (`manifest`) — all from the same [`model::Topology`].
 //!
 //! The decision and what it rejected are in `.ai/repo/adrs/0013-*.md`.
 //!

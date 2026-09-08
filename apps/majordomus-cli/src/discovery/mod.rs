@@ -16,10 +16,11 @@
 //!
 //! # The two enumerations
 //!
-//! [`DiscoveryKind::Vcs`] asks git for the tracked files, which is the layer's contract:
-//! what is not tracked is not part of the layer. [`DiscoveryKind::FileSystem`] walks the
-//! tree with the same glob semantics, for a checkout git cannot describe — a scratch
-//! fixture, a tree with no commits. The index records which one it used, so an answer can
+//! [`VcsIndex`] asks git for the tracked files, which is the layer's contract and the only
+//! mode [`DiscoveryKind`] declares: what is not tracked is not part of the layer.
+//! [`FileSystem`] walks the tree with the same glob semantics, for a checkout git cannot
+//! describe — a scratch fixture, a tree with no commits. The index records which one it
+//! used, so an answer can
 //! never be silently about a different file set than the caller expected.
 //!
 //! ```

@@ -10,7 +10,7 @@
 //!
 //! # The cache key
 //!
-//! Process memory, bounded per capability by its [`CachePolicy`](super::CachePolicy), keyed
+//! Process memory, bounded per capability by its [`CachePolicy`], keyed
 //! by three things: the canonical id, the input **normalised** (object keys sorted at every
 //! level, so `{"a":1,"b":2}` and `{"b":2,"a":1}` are one entry), and the registry
 //! fingerprint — which hashes every descriptor and every declarative object's content. Two

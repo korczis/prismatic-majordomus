@@ -23,7 +23,7 @@
 //! without any list being kept by hand.
 //!
 //! Nothing here judges: the policy that decides which items owe an example lives in
-//! [`super::policy`], and the codes a finding carries live in [`super::model`]. This
+//! [`super::policy`], and the codes a finding carries are [`super::ViolationCode`]. This
 //! module answers only *what is there*.
 //!
 //! # Determinism

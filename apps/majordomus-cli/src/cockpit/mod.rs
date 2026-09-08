@@ -199,7 +199,7 @@ impl Cockpit {
 /// injection, which needs the escaping to have already failed and which cannot execute; the
 /// exposure `script-src 'unsafe-inline'` would carry is arbitrary code, and that stays shut.
 ///
-/// The digest is computed from [`view::THEME_BOOTSTRAP`] itself, so the policy cannot
+/// The digest is computed from `view::THEME_BOOTSTRAP` itself, so the policy cannot
 /// drift from the script it allows.
 ///
 /// ```

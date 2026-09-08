@@ -4,7 +4,7 @@
 //!
 //! Two sources feed the registry: typed executable capabilities written in Rust
 //! ([`builtin`]) and declarative objects the repository's layer declares
-//! ([`declarative`]). Both normalise into the same [`Capability`] descriptor; a consumer
+//! (`declarative`). Both normalise into the same [`Capability`] descriptor; a consumer
 //! cannot tell, and need not care, which source an entry came from except through its
 //! provenance.
 //!
