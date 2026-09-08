@@ -120,7 +120,7 @@ gates:
 classes:
   # the pipeline itself: a change here can only be validated by running everything
   - id: ci
-    paths: [.github/workflows/**, .github/actions/**, scripts/ci/**, scripts/ci-plan, scripts/ci-baseline, .ai/repo/ci/**, test/run.sh, test/lib.sh, justfile]
+    paths: [.github/workflows/**, .github/actions/**, scripts/ci/**, scripts/ci-plan, scripts/ci-baseline, .ai/repo/ci/**, test/run.sh, test/lib.sh, justfile, .just/**]
     gates: full
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline

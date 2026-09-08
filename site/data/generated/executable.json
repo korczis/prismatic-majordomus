@@ -205,6 +205,40 @@
       "tool": "majordomus_releases"
     },
     {
+      "api_anchor": "/docs/api/#op-environment-explain",
+      "claims": [],
+      "cli": null,
+      "id": "environment.explain",
+      "kind": "query",
+      "module": "environment",
+      "module_route": "/registry/modules/environment/",
+      "resource": null,
+      "route": "/registry/capabilities/environment-explain/",
+      "slug": "environment-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "tests": [],
+      "title": "Where an environment value came from",
+      "tool": "majordomus_environment_explain"
+    },
+    {
+      "api_anchor": "/docs/api/#op-environment-status",
+      "claims": [],
+      "cli": null,
+      "id": "environment.status",
+      "kind": "query",
+      "module": "environment",
+      "module_route": "/registry/modules/environment/",
+      "resource": "majordomus://environment",
+      "route": "/registry/capabilities/environment-status/",
+      "slug": "environment-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "tests": [],
+      "title": "The repository environment",
+      "tool": "majordomus_environment"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -883,9 +917,9 @@
     ]
   },
   "counts": {
-    "capabilities": 37,
+    "capabilities": 39,
     "claims": 31,
-    "modules": 15
+    "modules": 16
   },
   "generator": "majordomus-cli 0.2.0",
   "modules": [
@@ -1014,6 +1048,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "title": "Distribution"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "environment.explain",
+          "route": "/registry/capabilities/environment-explain/",
+          "slug": "environment-explain"
+        },
+        {
+          "id": "environment.status",
+          "route": "/registry/capabilities/environment-status/",
+          "slug": "environment-status"
+        }
+      ],
+      "claims": [],
+      "id": "environment",
+      "route": "/registry/modules/environment/",
+      "slug": "environment",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "title": "Repository environment"
     },
     {
       "capabilities": [

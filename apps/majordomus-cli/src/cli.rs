@@ -47,9 +47,61 @@ pub enum Command {
     Why(WhyArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
+    /// What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
+    Env(EnvArgs),
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus env`.
+pub struct EnvArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to do with the snapshot; none prints it.
+    pub command: Option<EnvCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus env`.
+pub enum EnvCommand {
+    /// The whole snapshot, resolved in full: what the layer holds is counted, and the cache the banner reads is written
+    Status,
+    /// Render the snapshot for a terminal. Goes to standard error, never standard output, because direnv reads standard output as the environment it is setting
+    Banner {
+        /// How much to show: `auto`, `full`, `compact` or `off`. Without it, MAJORDOMUS_BANNER decides, and without that, `auto` — which is silent when nothing is watching, shows the whole box when the repository has something new to say, and the two-line form when it does not
+        #[arg(long, value_name = "MODE")]
+        mode: Option<String>,
+        /// Draw as if the terminal were this wide, whatever it is
+        #[arg(long, value_name = "COLUMNS")]
+        width: Option<usize>,
+    },
+    /// The variable assignments a shell in this repository benefits from, for `eval`. Assignments only: no command, no side effect
+    Export {
+        /// The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`
+        #[arg(long = "shell", value_name = "SHELL", default_value = "direnv")]
+        shell: String,
+        /// Also draw the banner, to standard error, from the same snapshot. What an adapter asks for: one process on the path a shell takes on every entry, rather than two that each pay for a `git status`
+        #[arg(long)]
+        banner: bool,
+        /// With --banner, how much to show; MAJORDOMUS_BANNER decides without it
+        #[arg(long, value_name = "MODE", requires = "banner")]
+        mode: Option<String>,
+    },
+    /// Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted
+    Explain {
+        /// One field in dotted form (`vcs.branch`, `layer.objects`), or a prefix; every field when absent
+        #[arg(value_name = "FIELD")]
+        field: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -825,6 +877,61 @@ pub struct CommandExamples {
 /// disposable repository. Adding a command without adding its example does not pass
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
+    CommandExamples {
+        command: "env",
+        examples: &[ExampleDoc {
+            id: "env-status",
+            title: "What this checkout is",
+            description: "`env` with nothing after it resolves the whole snapshot: the project and its version, the repository and its layer, version control, the toolchains the repository declares, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services. This is the resolution that counts the layer, so it builds the index and writes the cache the banner reads.",
+            argv: &["env"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["project", "repository", "resolution"]),
+        }],
+    },
+    CommandExamples {
+        command: "env status",
+        examples: &[ExampleDoc {
+            id: "env-status-json",
+            title: "The snapshot as one document",
+            description: "The same value the HTTP route `/api/v1/environment` and the MCP resource `majordomus://environment` answer with, and the value the banner renders. Every field carries where it came from under `provenance`, and a value nothing could resolve is absent rather than zero.",
+            argv: &["env", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/project/version", "/repository/name", "/provenance"]),
+        }],
+    },
+    CommandExamples {
+        command: "env banner",
+        examples: &[ExampleDoc {
+            id: "env-banner-compact",
+            title: "The two-line form, at a width you choose",
+            description: "What `direnv` renders on entering the repository. It resolves fast — it never builds the index — and it writes to standard error, because direnv reads the standard output of a `.envrc` as the environment it is applying. `--width` renders as if the terminal were that wide, which is what makes the layout testable.",
+            argv: &["env", "banner", "--mode", "compact", "--width", "80"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "env export",
+        examples: &[ExampleDoc {
+            id: "env-export-direnv",
+            title: "The assignments a shell in this repository wants",
+            description: "Assignments and nothing else, safe to `eval`: no command runs, no file is touched, and every value is quoted so that a repository path holding a quote or a `$(...)` cannot become shell code. This is the whole of what `.envrc` needs from Majordomus.",
+            argv: &["env", "export", "--shell", "direnv"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["export MAJORDOMUS_ROOT="]),
+        }],
+    },
+    CommandExamples {
+        command: "env explain",
+        examples: &[ExampleDoc {
+            id: "env-explain-field",
+            title: "Where one value came from",
+            description: "An inferred system without provenance is magic. Every field of the snapshot can name the file, command or compile-time constant that decided it, the resolver that read it, and whether it was read now, taken from the cache, or not resolved at all.",
+            argv: &["env", "explain", "project.version"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["project.version", "source", "resolver"]),
+        }],
+    },
     CommandExamples {
         command: "worktree",
         examples: &[ExampleDoc {
