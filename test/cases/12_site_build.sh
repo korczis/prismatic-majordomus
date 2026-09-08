@@ -33,7 +33,9 @@ expect_grep 'id="second-level-heading"' "$P/render-test/index.html"
 expect_grep 'overflow-x-auto' "$P/render-test/index.html"
 expect_grep 'role="note"' "$P/render-test/index.html"
 expect_grep 'footnote' "$P/render-test/index.html"
-expect_grep '<pre class="mermaid">' "$P/render-test/index.html"
+# the opening tag, not the whole of it: the build's conformance pass adds tabindex="0" to
+# every scrolling element, so a fenced mermaid block renders as <pre class="mermaid" ...>
+expect_grep '<pre class="mermaid"' "$P/render-test/index.html"
 # navigation: five groups, dropdown menus present with Flowbite hooks; render-test is noindex
 # a dropdown per navigation group that has items; the count comes from the data, not from
 # a number written here, so adding a group to site/data/nav.toml does not break this case
@@ -48,8 +50,13 @@ expect_grep 'Install Majordomus' "$P/index.html"
 for href in $(grep -oE 'href="[^"]*/(supervises|profiles|guarantees|commands|why)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
 expect_grep 'href="[^"]*/supervises/"' "$P/index.html"
 [ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
-n_why=0; for f in "$ROOT"/site/content-src/why/*.md; do case "$(basename "$f")" in _index.md) ;; *) n_why=$((n_why + 1)) ;; esac; done
-[ "$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')" = "$n_why" ]
+# The recognition grid is the moments that declare themselves featured, counted from the
+# catalogue the executable derives. It used to be counted from site/content-src/why/*.md,
+# which stopped existing when a moment became an object of the layer: the glob then matched
+# nothing, the count was one, and a bare comparison under `set -e` failed with no message.
+n_why="$(jq '[.moments[] | select(.status == "stable" and .featured)] | length' "$ROOT/site/data/registry/why.json")"
+n_linked="$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')"
+[ "$n_linked" = "$n_why" ] || { echo "    the homepage links $n_linked why moment(s); $n_why declare themselves featured"; exit 1; }
 # every claim listed on the homepage links to its page; claim pages carry provenance and a verify command
 [ "$(grep -oE 'href="[^"]*/guarantees/[a-z-]+/"' "$P/index.html" | grep -vE '/(guaranteed|advisory|planned|rejected)/' | sort -u | wc -l | tr -d ' ')" -ge 12 ]
 expect_grep 'bash test/run.sh 03_update' "$P/guarantees/wiring-reconciliation/index.html"

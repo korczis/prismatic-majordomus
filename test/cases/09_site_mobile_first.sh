@@ -20,8 +20,13 @@ for f in $pages; do
   flat="$(tr -d '\n' < "$f")"
   #    Typography containers (class="format ... [&_pre]:overflow-x-auto") scroll their own <pre>; a page
   #    without such a container must wrap every <pre> in an overflow-x-auto element
+  #    A <pre> that wraps cannot widen the page either: whitespace-pre-wrap is the other way
+  #    of satisfying the same requirement, and the shared install component uses it so that a
+  #    command a person has to read is never behind a scrollbar. Count those as satisfied.
   n_pre="$(printf '%s' "$flat" | grep -o '<pre' | wc -l | tr -d ' ')"
   n_wrapped="$(printf '%s' "$flat" | grep -oE 'overflow-x-auto[^>]*>[[:space:]]*<pre' | wc -l | tr -d ' ')"
+  n_wrapping="$(printf '%s' "$flat" | grep -oE '<pre[^>]*whitespace-pre-wrap' | wc -l | tr -d ' ')"
+  n_wrapped=$((n_wrapped + n_wrapping))
   if printf '%s' "$flat" | grep -q 'class="format [^"]*\[&_pre\]:overflow-x-auto'; then :
   elif [ "$n_pre" != "$n_wrapped" ]; then echo "    $rel: $((n_pre - n_wrapped)) of $n_pre <pre> block(s) not wrapped in overflow-x-auto"; bad=1; fi
   # 3. every <table> likewise (Typography containers carry [&_table]:overflow-x-auto)
