@@ -175,7 +175,9 @@ impl Served {
     /// let served = Served::resolve(&topology, std::path::Path::new("/nonexistent"), Runtime::full()).unwrap();
     /// let line = served.summary("http://127.0.0.1:8741");
     /// assert!(line.contains("http://127.0.0.1:8741/swagger"));
-    /// assert!(line.contains("6 surface(s)"));
+    /// // the count is the resolution's, not a number written here: a surface added to
+    /// // native_all is in this line, and this assertion does not go stale for saying so
+    /// assert!(line.contains(&format!("{} surface(s)", discover::native_all().len())));
     /// ```
     pub fn summary(&self, base: &str) -> String {
         let mut parts: Vec<String> = self

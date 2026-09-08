@@ -275,9 +275,17 @@ fn render(
     command: &Option<ExecutionsCommand>,
     answer: &Value,
 ) -> Result<()> {
-    let w = |out: &mut std::io::StdoutLock<'_>, s: String| {
-        writeln!(out, "{s}").map_err(Error::Transport)
-    };
+    write_render(out, command, answer)
+}
+
+/// The rendering itself, over anything that can be written to, so that what a reader sees
+/// can be asserted without a terminal.
+fn write_render(
+    out: &mut dyn Write,
+    command: &Option<ExecutionsCommand>,
+    answer: &Value,
+) -> Result<()> {
+    let w = |out: &mut dyn Write, s: String| writeln!(out, "{s}").map_err(Error::Transport);
     match command {
         None | Some(ExecutionsCommand::List { .. }) => {
             w(
@@ -427,4 +435,202 @@ fn map(e: CapabilityError) -> Error {
 
 fn pretty(v: &Value) -> String {
     serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::execution::{
+        EventPayload, ExecutionDiagnostic, ExecutionError, ExecutionId, LogStream, ProgressView,
+    };
+
+    fn event(payload: EventPayload) -> crate::execution::ExecutionEvent {
+        crate::execution::ExecutionEvent::new(ExecutionId::fresh(), 1, payload)
+    }
+
+    /// Every event a terminal can be shown has a line, and no line is blank. A payload
+    /// added without a line here would be an execution that stopped saying what it was
+    /// doing halfway through, on the one interface where that is the whole output.
+    #[test]
+    fn every_event_a_terminal_sees_has_a_line() {
+        let cases = [
+            EventPayload::Created {
+                capability: "demo.x".into(),
+                title: "Demo".into(),
+                input: json!({}),
+            },
+            EventPayload::Started,
+            EventPayload::StepStarted {
+                name: "scan".into(),
+                title: "Scanning".into(),
+            },
+            EventPayload::StepCompleted {
+                name: "scan".into(),
+                ok: true,
+                detail: Some("41 files".into()),
+            },
+            EventPayload::StepCompleted {
+                name: "scan".into(),
+                ok: false,
+                detail: None,
+            },
+            EventPayload::Progress(ProgressView {
+                current: 3,
+                total: Some(4),
+                message: Some("three of four".into()),
+            }),
+            EventPayload::Progress(ProgressView {
+                current: 3,
+                total: None,
+                message: None,
+            }),
+            EventPayload::Log {
+                stream: LogStream::Stderr,
+                message: "a line".into(),
+            },
+            EventPayload::Diagnostic(ExecutionDiagnostic {
+                severity: crate::model::Severity::Warning,
+                code: "slow".into(),
+                summary: "it took a while".into(),
+                detail: None,
+                suggestion: None,
+            }),
+            EventPayload::Cancelling {
+                by: "client".into(),
+            },
+            EventPayload::Cancelled,
+            EventPayload::Completed { output: json!({}) },
+            EventPayload::Failed {
+                error: ExecutionError {
+                    code: "internal".into(),
+                    message: "it broke".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+            },
+        ];
+        for payload in cases {
+            let name = payload.type_name();
+            let line = describe(&event(payload)).unwrap_or_else(|| panic!("{name} has no line"));
+            assert!(!line.trim().is_empty(), "{name} renders as blank");
+        }
+        // the one event a terminal does not need: it is already looking at the queue
+        assert!(describe(&event(EventPayload::Queued { ahead: 0 })).is_none());
+        // and the words a reader looks for are there
+        assert!(describe(&event(EventPayload::Progress(ProgressView {
+            current: 3,
+            total: Some(4),
+            message: Some("three of four".into()),
+        })))
+        .unwrap()
+        .contains("75%"));
+        assert!(describe(&event(EventPayload::Failed {
+            error: ExecutionError {
+                code: "internal".into(),
+                message: "it broke".into(),
+                suggestion: None,
+                correlation_id: "x".into(),
+            },
+        }))
+        .unwrap()
+        .contains("it broke"));
+    }
+
+    /// What each subcommand prints, from the answer its capability gave. The renderer is
+    /// asked with the shapes the capabilities actually answer, so a renamed field is a
+    /// failure here rather than a blank column for a reader.
+    #[test]
+    fn each_subcommand_renders_what_its_capability_answered() {
+        let render_to_string = |command: Option<ExecutionsCommand>, answer: Value| {
+            // the renderer writes to stdout; the assertions below are about what it reads,
+            // so it is driven for its side effects and its refusals
+            let mut sink = Vec::new();
+            write_render(&mut sink, &command, &answer).expect("rendering writes");
+            String::from_utf8(sink).expect("text")
+        };
+
+        let list = json!({
+            "count": 1, "active": 1, "queued": 0, "live_channels": 2,
+            "executions": [{
+                "id": "x-20260101T120000Z-4c3b2a19",
+                "state": "running",
+                "capability": "objects.verify",
+                "duration_ms": null
+            }]
+        });
+        let out = render_to_string(None, list.clone());
+        assert!(
+            out.contains("1 execution(s); 1 active, 0 queued, 2 live channel(s)"),
+            "{out}"
+        );
+        assert!(
+            out.contains("objects.verify") && out.contains("running"),
+            "{out}"
+        );
+        assert_eq!(
+            render_to_string(
+                Some(ExecutionsCommand::List {
+                    state: None,
+                    capability: None
+                }),
+                list
+            )
+            .lines()
+            .count(),
+            2
+        );
+
+        let one = json!({
+            "id": "x-20260101T120000Z-4c3b2a19",
+            "state": "failed",
+            "capability": "demo.x",
+            "steps": [{ "state": "failed", "title": "Scanning" }],
+            "error": { "code": "internal", "message": "it broke" }
+        });
+        let out = render_to_string(
+            Some(ExecutionsCommand::Show { id: "x".into() }),
+            one.clone(),
+        );
+        assert!(
+            out.contains("failed") && out.contains("Scanning") && out.contains("it broke"),
+            "{out}"
+        );
+
+        let cancelled = json!({ "outcome": "requested", "cancellable": true, "execution": one });
+        let out = render_to_string(
+            Some(ExecutionsCommand::Cancel { id: "x".into() }),
+            cancelled,
+        );
+        assert!(out.contains("cancel     requested"), "{out}");
+
+        let history = json!({
+            "events": [{ "sequence": 1, "type": "execution.created", "data": {} }],
+            "last_sequence": 1, "more": false, "truncated": false
+        });
+        let out = render_to_string(
+            Some(ExecutionsCommand::Events {
+                id: "x".into(),
+                after: None,
+            }),
+            history,
+        );
+        assert!(
+            out.contains("execution.created") && out.contains("last_sequence 1"),
+            "{out}"
+        );
+
+        let protocol = json!({
+            "protocol_version": "1", "websocket": "/events", "heartbeat_seconds": 20,
+            "subscription": [{ "name": "execution", "description": "one to follow", "required": false }],
+            "event_types": ["execution.created"], "stream_types": ["stream.ready"]
+        });
+        let out = render_to_string(Some(ExecutionsCommand::Protocol), protocol);
+        assert!(out.contains("protocol   1 over /events"), "{out}");
+        assert!(out.contains("heartbeat  20s"), "{out}");
+        assert!(out.contains("parameter  execution"), "{out}");
+        assert!(
+            out.contains("message    execution.created") && out.contains("message    stream.ready"),
+            "{out}"
+        );
+    }
 }
