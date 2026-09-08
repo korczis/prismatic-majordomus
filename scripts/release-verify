@@ -100,7 +100,10 @@ done < "$listing"
 # One entry per path. A packer that lists a directory and its contents to a tar that also
 # recurses writes everything twice; where that lands as a hard link the check above catches
 # it, and where it lands as a second regular entry nothing did until here.
-dupes="$(LC_ALL=C sort "$names" | uniq -d | head -n 5)"
+# awk rather than `head -n 5`: under pipefail, head closing the pipe early makes the whole
+# pipeline exit 141 once the writer outstrips a pipe buffer, which is precisely the badly
+# malformed archive this line is here to describe. awk reads its input to the end.
+dupes="$(LC_ALL=C sort "$names" | uniq -d | awk 'NR <= 5')"
 if [ -n "$dupes" ]; then
   fail "the archive carries a path more than once: $(printf '%s' "$dupes" | tr '\n' ' ')"
 else
