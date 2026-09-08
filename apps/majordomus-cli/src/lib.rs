@@ -37,6 +37,7 @@ pub mod perf;
 pub mod policy;
 pub mod proto;
 pub mod providers;
+pub mod quality;
 pub mod repository;
 pub mod scope;
 pub mod share;
