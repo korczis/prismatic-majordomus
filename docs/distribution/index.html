@@ -359,6 +359,11 @@ published site:</p>
 <span class="giallo-l"><span>6  the installed tool initialises a repository that has none</span></span></code></pre>
 <p>Nothing outside its temporary tree is written: the install goes to a <code>HOME</code> of the run's
 own, so the prefix, the launchers and the PATH hint all land inside it.</p>
+<p>CI runs it as <code>--wait 300</code>. Publishing a release and deploying the site are two workflows and
+the second is not instant, so a push landing between them would be told the promise is broken
+when it is merely a few minutes old. Run by hand the wait is zero, because a person asking
+whether the command works wants the answer now. A site that cannot serve the metadata inside
+the window is broken either way, and the finding stands.</p>
 <p>It is the gate <code>installer-live</code> in <a href="../.ai/repo/ci/gates.yaml"><code>.ai/repo/ci/gates.yaml</code></a>,
 job <code>install</code>, on Linux and macOS. No path class selects it, deliberately: no change to a
 tree can make it true or false — only a deployment can. It runs in the full plan, which is
@@ -453,7 +458,7 @@ ship an executable nothing can drive.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c2629a26c35c8280a1f6d1f04b0c3f4cce529268" class="font-mono underline">c2629a2</a> · inputs <span class="font-mono">62827e8e7e8f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4cf59c1a628778d3e10dc998f15752456e72aceb" class="font-mono underline">4cf59c1</a> · inputs <span class="font-mono">ce036a2821e2</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
