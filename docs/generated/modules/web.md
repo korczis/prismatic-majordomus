@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `web` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.2.0 -->
+     Generator: majordomus-cli 0.3.1 -->
 # Module `web` — Web surfaces
 
 What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication.

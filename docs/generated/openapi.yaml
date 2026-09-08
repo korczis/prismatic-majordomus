@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.2.0
+# Generator: majordomus-cli 0.3.1
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.2.0"
+  version: "0.3.1"
   summary: "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry."
   description: "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -1107,7 +1107,7 @@ paths:
           description: "`majordomus://<kind>/<identity>`, or a URI a query projects\n(`majordomus://repository`)."
           examples:
             first-object:
-              value: majordomus://application/ci-gated-project
+              value: majordomus://adr/adr-0001
             repository:
               value: majordomus://repository
       responses:
@@ -1169,7 +1169,7 @@ paths:
           description: "Only objects of this kind; the kinds present are listed by `repository.info`. A kind\nthe repository does not have is an invalid input, not an empty answer."
           examples:
             first-kind:
-              value: application
+              value: adr
         - name: tag
           in: query
           required: false
@@ -1564,7 +1564,7 @@ paths:
           description: "Repository-relative, forward slashes; `./` is stripped. An absolute path or a\n`..` segment is an invalid input."
           examples:
             first-object:
-              value: .ai/repo/applications/ci-gated-project.md
+              value: .ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md
             layer-file:
               value: .ai/manifest.yaml
             local-half:
@@ -7328,7 +7328,7 @@ components:
         - diagnostics
       description: "One work tree, as the topology sees it."
 x-majordomus:
-  generator: majordomus-cli 0.2.0
+  generator: majordomus-cli 0.3.1
   infrastructure:
     - /
     - /openapi.json
@@ -7350,4 +7350,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.2.0
+x-majordomus-generator: majordomus-cli 0.3.1

@@ -64,6 +64,15 @@ claims:
     responsibility: projection
     note: The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported.
 
+  - id: advertised-install-command-works
+    claim: The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/ci/install-check
+    test: test/cases/97_install_gate.sh
+    status: guaranteed
+    responsibility: projection
+    note: The line is run as it is written, pipe included, on Linux and macOS, into a home directory of the run's own. It proves the metadata resolves, the tool reports the version that was resolved, the MCP launcher runs with no toolchain, and a repository can be initialised. A release proves the same thing once at publication; this keeps proving it afterwards.
+
   - id: policy-parse
     claim: The canonical policy is parsed and rejected if it contains an unknown key
     source: docs/SCHEMAS.md
