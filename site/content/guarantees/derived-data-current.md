@@ -35,7 +35,11 @@ majordomus doctor                      # OK wiring derived-current — wired via
 
 It answers one question — is the committed site data current for this tree — and answers it from a hash. It does not say which artifact is stale or what changed inside it; `scripts/derive-check` does that, by running both generators and diffing, and CI and the Pages workflow still run it. The fingerprint is the cheap check that can afford to run on every commit; the exhaustive one runs where minutes are available.
 
-It covers the site data. `majordomus generate`'s own projections — the CLI reference, the registry, the provider bootstraps — are held by `generate --check`, which `derive-check` and the Rust gate run.
+It covers both halves now. `scripts/generate-site-data` owns `site/data/generated`, which the input hash above answers for; `majordomus generate` owns `site/data/registry/registry.json` and `docs/generated/artifacts.*`, which record every source file the index holds — and a source file is not a site input, so the hash does not move when one changes. The gate asks the second question with `majordomus generate --check`, the generator's own definition of staleness rather than a comparison written in the gate, and reports both. A repository without the built executable is told the registry half went unchecked rather than passed silently.
+
+A rebase does not pass through it, and this is the gap most likely to bite. Rebasing a branch that touches a source file the registry measures leaves the tree stale, because the `merge=derived` driver resolves the derived files to ours and git then drops the branch's own regeneration commit as "patch contents already upstream" — true of its content when the trunk has regenerated the same bytes, false of the rebased tree. The rebase reports success and `generate --check` is red immediately afterwards. Nothing runs the hook during a rebase, so re-run `scripts/derive` after one and commit the result.
+
+Checking that by hand needs the branch's own executable. `generate --check` run with a binary built from another worktree reports artifacts stale that are not, because the generator producing the comparison comes from a different tree, and the answer reads exactly like a real finding.
 
 It is a local gate, so it binds whoever has the hook installed (`git config core.hooksPath .githooks`). A merge made through the forge does not pass through it; the CI `site` job and the Pages workflow remain the backstop there.
 
