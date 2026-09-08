@@ -5896,6 +5896,12 @@
           "route": "/docs/cli/distribution/show/"
         },
         {
+          "about": "Whether the advertised one-line installation works right now, and what is missing when it does not",
+          "command": "majordomus distribution status",
+          "name": "status",
+          "route": "/docs/cli/distribution/status/"
+        },
+        {
           "about": "Every invariant of the model and of the release records; exit 10 with each violation named",
           "command": "majordomus distribution validate",
           "name": "validate",
@@ -6094,6 +6100,135 @@
       ],
       "route": "/docs/cli/distribution/show/",
       "usage": "majordomus distribution show [OPTIONS]"
+    },
+    {
+      "about": "Whether the advertised one-line installation works right now, and what is missing when it does not",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus distribution",
+          "name": "distribution",
+          "route": "/docs/cli/distribution/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus distribution status",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "distribution",
+            "status"
+          ],
+          "command": "majordomus distribution status",
+          "description": "The operator's question — *can a machine that has never seen this project install it with the advertised command?* — answered from the distribution model and the release records, without touching the network. Each check names what was observed; a failing one names its cause and the command that changes it. Shown here in a repository that has published nothing, where the answer is no and the exit code is 10, which is what makes it usable as a check rather than as prose. `distribution validate` is the gate over the model itself; this is the gate over the state a user meets.",
+          "expectation": "exits 10",
+          "id": "distribution-status",
+          "setup": [],
+          "title": "Whether the published one-line installation works right now"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/distribution/",
+      "path": [
+        "majordomus",
+        "distribution",
+        "status"
+      ],
+      "route": "/docs/cli/distribution/status/",
+      "usage": "majordomus distribution status [OPTIONS]"
     },
     {
       "about": "Every invariant of the model and of the release records; exit 10 with each violation named",
@@ -10939,10 +11074,10 @@
     }
   ],
   "counts": {
-    "arguments": 498,
-    "commands": 63,
-    "examples": 70,
-    "runnable": 59
+    "arguments": 503,
+    "commands": 64,
+    "examples": 71,
+    "runnable": 60
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.3.1",

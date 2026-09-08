@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 42,
-    "schemas": 195,
+    "operations": 43,
+    "schemas": 198,
     "tags": 16
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1932,6 +1932,32 @@
       "variants": []
     },
     {
+      "description": "The state of one check in the installability report. Three states and no more: a check\neither holds, does not, or could not be made from what this process can see.",
+      "is_enum": true,
+      "name": "CheckState",
+      "properties": [],
+      "type": "\"ok\" | \"failed\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "InstallCheck"
+      ],
+      "values": [
+        {
+          "description": "The check holds.",
+          "value": "ok"
+        },
+        {
+          "description": "The check does not hold, and the public installation is affected.",
+          "value": "failed"
+        },
+        {
+          "description": "The check could not be made here; it says nothing either way.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One claim the feature names, with the status the matrix gives it.",
       "is_enum": false,
       "name": "ClaimRef",
@@ -3759,6 +3785,7 @@
         "distribution.artifact",
         "distribution.build",
         "distribution.releases",
+        "distribution.status",
         "graph.get",
         "graph.list",
         "health.report",
@@ -5121,6 +5148,143 @@
       "type": "object",
       "used_by": [
         "worktree.inspect"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One check: what was asked, what was seen, and — when it does not hold — why, and the\ncommand that changes it. The `cause` and `next` fields exist so that a report is\nactionable without a second document; a check that fails without naming its remedy is\na diagnostic nobody can act on.",
+      "is_enum": false,
+      "name": "InstallCheck",
+      "properties": [
+        {
+          "description": "A short stable name: `model`, `version`, `targets`, `release`, `artifacts`, `metadata`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it holds.",
+          "name": "state",
+          "refs": [
+            "CheckState"
+          ],
+          "required": true,
+          "type": "CheckState"
+        },
+        {
+          "description": "What was observed, in one line.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it does not hold. Absent when it does.",
+          "name": "cause",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The command or action that would change it. Absent when there is nothing to do.",
+          "name": "next",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "InstallabilityReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether the advertised one-line installation works right now, and if not, what is missing.\n\nThis answers the operator's actual question — *can a machine that has never seen this\nproject install it with the published command?* — from local state alone. It performs no\nnetwork access: a repository can be offline and this still answers, because everything it\nneeds is the distribution model and the release records the repository itself carries.\nWhat it cannot see it reports as `unknown` rather than guessing; the public half of the\nquestion is answered by the release workflow's smoke phase, which installs from the\npublished URL on every native runner and is the only thing that proves the public path.",
+      "is_enum": false,
+      "name": "InstallabilityReport",
+      "properties": [
+        {
+          "description": "True when every check holds: a stable release is recorded and complete.",
+          "name": "installable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "One line for a person: what the state is, in the project's own terms.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version this tree would release.",
+          "name": "local_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The tag an unpinned installation resolves to, when a stable release is recorded.",
+          "name": "stable_tag",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many targets a release must publish for that release to be complete.",
+          "name": "required_targets",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many of them the stable release actually publishes.",
+          "name": "published_artifacts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The command a person would run, whether or not it currently works.",
+          "name": "install_command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the installer is served.",
+          "name": "installer_url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the stable pointer is served.",
+          "name": "latest_url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Every check, in the order they are worth reading.",
+          "name": "checks",
+          "refs": [
+            "InstallCheck"
+          ],
+          "required": true,
+          "type": "array of InstallCheck"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "distribution.status"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -11352,6 +11516,58 @@
           "result_schema": "ReleasesReport",
           "stability": "behaviorally_verified",
           "summary": "Published releases"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "distribution status",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/distribution/status\"",
+          "description": "Whether a machine that has never seen this project can install it right now with the advertised one-line command, and when it cannot, which link in the chain is missing and what changes it. Derived from the distribution model and the release records alone: it reaches no network, so it is as fast as any other local query and answers offline. The served bytes are proved by the release pipeline's smoke phase, not guessed at here.",
+          "id": "distribution.status",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_install_status",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/distribution/status",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::distribution",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether the published installation works: the result.",
+              "schema": "InstallabilityReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "InstallabilityReport",
+          "stability": "behaviorally_verified",
+          "summary": "Whether the published installation works"
         }
       ]
     },

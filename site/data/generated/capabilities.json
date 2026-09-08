@@ -73,6 +73,19 @@
       "test_case": "97_install_gate"
     },
     {
+      "id": "release-archive-shape",
+      "claim": "A release archive carries every path once and carries nothing but files and directories",
+      "source": "docs/DISTRIBUTION.md",
+      "implementation": "scripts/release-package",
+      "test": "test/cases/87b_release_archive_shape.sh",
+      "status": "guaranteed",
+      "note": "The packer reads back what it wrote and deletes an archive carrying a repeated path or an entry that is not a file or a directory; the verifier checks the same two properties again on the runner that built it. There is no fallback packer, because an archive packed another way is not the one that was verified.",
+      "responsibility": "projection",
+      "source_route": "/docs/distribution/",
+      "command": null,
+      "test_case": "87b_release_archive_shape"
+    },
+    {
       "id": "policy-parse",
       "claim": "The canonical policy is parsed and rejected if it contains an unknown key",
       "source": "docs/SCHEMAS.md",

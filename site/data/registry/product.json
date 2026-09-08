@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.3.1"
   },
-  "fingerprint": "1985e9ddb366f77df5cc95ecc723ef8e7c93af9b279dcf5dec20b699859164fa",
+  "fingerprint": "82bbeef6e2cb08268676661c8d936f94a25a7332722e6f874d4471731878c8aa",
   "route": "/features/",
   "counts": {
     "features": 19,
@@ -265,7 +265,7 @@
         },
         {
           "name": "claim",
-          "objects": 144
+          "objects": 145
         }
       ],
       "rule_refs": [
@@ -527,11 +527,11 @@
       "counts": {
         "capabilities": 8,
         "mcp_tools": 8,
-        "mcp_resources": 196,
+        "mcp_resources": 197,
         "http_routes": 8,
         "cli_paths": 7,
         "commands": 2,
-        "objects": 192,
+        "objects": 193,
         "rules": 5,
         "enforced_rules": 0,
         "docs": 3,
@@ -2431,7 +2431,7 @@
         },
         {
           "name": "document",
-          "objects": 200
+          "objects": 201
         }
       ],
       "rule_refs": [
@@ -2680,11 +2680,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 225,
+        "mcp_resources": 226,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 224,
+        "objects": 225,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -4749,6 +4749,15 @@
               "tool": "majordomus_releases",
               "route": "GET /api/v1/distribution/releases",
               "cli": "majordomus distribution releases"
+            },
+            {
+              "id": "distribution.status",
+              "title": "Whether the published installation works",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_install_status",
+              "route": "GET /api/v1/distribution/status",
+              "cli": "majordomus distribution status"
             }
           ]
         }
@@ -4900,11 +4909,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 1,
-        "http_routes": 4,
-        "cli_paths": 4,
+        "http_routes": 5,
+        "cli_paths": 5,
         "commands": 3,
         "objects": 1,
         "rules": 3,
@@ -7626,7 +7635,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (144)",
+        "title": "claim (145)",
         "features": [
           "declare-once"
         ]
@@ -8460,28 +8469,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1054,
-    "builtin": 42,
-    "declarative": 1012,
+    "capabilities": 1058,
+    "builtin": 43,
+    "declarative": 1015,
     "modules": 16,
-    "mcp_tools": 40,
-    "mcp_resources": 1028,
-    "http_routes": 42,
-    "cli_commands": 59,
+    "mcp_tools": 41,
+    "mcp_resources": 1031,
+    "http_routes": 43,
+    "cli_commands": 60,
     "shell_commands": 27,
     "kinds": 27,
-    "objects": 1012,
+    "objects": 1015,
     "by_kind": {
       "adr": 23,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 144,
+      "claim": 145,
       "command": 28,
       "context": 26,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 200,
+      "document": 201,
       "feature": 20,
       "implementation": 42,
       "issue": 176,
@@ -8497,7 +8506,7 @@
       "session": 8,
       "skill": 3,
       "taxonomy": 10,
-      "test": 112,
+      "test": 113,
       "use-case": 40
     },
     "providers": 5,
