@@ -28,6 +28,7 @@ use serde::{Deserialize, Serialize};
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "CommandEffectClass")]
 pub enum EffectClass {
     /// Reads and reports. Nothing outside the process is different afterwards.
     ReadOnly,
@@ -88,6 +89,7 @@ impl EffectClass {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "CommandInteractivity")]
 pub enum Interactivity {
     /// Starts, answers, exits.
     Batch,
@@ -118,6 +120,7 @@ impl Interactivity {
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
+#[schemars(rename = "CommandSemantics")]
 pub struct Semantics {
     /// What running it changes.
     pub effect: EffectClass,

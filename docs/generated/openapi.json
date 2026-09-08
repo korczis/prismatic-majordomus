@@ -35,6 +35,10 @@
       "description": "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
     },
     {
+      "name": "commands",
+      "description": "The canonical command graph: every command this repository can be asked to run, what running each one changes, and the surfaces it reaches. Read from the command line's own declaration, never from a list."
+    },
+    {
       "name": "continuity",
       "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
     },
@@ -402,6 +406,228 @@
           "tool": "majordomus_capability"
         },
         "x-majordomus-cli": "capabilities describe"
+      }
+    },
+    "/api/v1/commands": {
+      "get": {
+        "operationId": "commands.list",
+        "summary": "Every command, in one line each",
+        "description": "The index of the command graph: identity, summary, effect and the surfaces each command reaches, narrowed by namespace, effect, free text or whether a machine may call it. Small on purpose — the detail of one command is commands.get.",
+        "tags": [
+          "commands"
+        ],
+        "parameters": [
+          {
+            "name": "namespace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only commands whose identity starts with this namespace (`worktree`).",
+            "examples": {
+              "by-namespace": {
+                "value": "worktree"
+              }
+            }
+          },
+          {
+            "name": "effect",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only commands with this effect (`read_only`, `destructive`).",
+            "examples": {
+              "by-effect": {
+                "value": "read_only"
+              }
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only commands whose identity or summary contains this text, case-insensitively."
+          },
+          {
+            "name": "machine_callable",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": "Only commands a machine surface may invoke."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every command, in one line each: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandIndex"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "commands.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::commands"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 16
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_commands"
+        }
+      }
+    },
+    "/api/v1/commands/get": {
+      "get": {
+        "operationId": "commands.get",
+        "summary": "One command, whole",
+        "description": "One command by canonical identity: its arguments and where their values come from, what running it changes, how it runs, the names it has answered to, and every surface spelling of it — including the surfaces it is absent from.",
+        "tags": [
+          "commands"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The canonical identity, `worktree.create`.",
+            "examples": {
+              "one": {
+                "value": "capabilities.list"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One command, whole: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommandNode"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "commands.get",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::commands"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 32
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_command"
+        }
       }
     },
     "/api/v1/continuity": {
@@ -5026,6 +5252,614 @@
           "version"
         ],
         "description": "What a client said about itself in `initialize`."
+      },
+      "CommandArgument": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The argument's id."
+          },
+          "long": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`--transport`, without the dashes."
+          },
+          "short": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 1,
+            "description": "`-t`, without the dash."
+          },
+          "positional": {
+            "type": "boolean",
+            "description": "Given by position rather than by flag."
+          },
+          "help": {
+            "type": "string",
+            "description": "The help text."
+          },
+          "value_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The placeholder for the value."
+          },
+          "takes_value": {
+            "type": "boolean",
+            "description": "Whether it takes a value at all."
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Must be given."
+          },
+          "defaults": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The default value(s), as clap renders them."
+          },
+          "values": {
+            "$ref": "#/components/schemas/CommandValueSource",
+            "description": "Where its values come from."
+          }
+        },
+        "required": [
+          "name",
+          "positional",
+          "help",
+          "takes_value",
+          "required",
+          "defaults",
+          "values"
+        ],
+        "description": "One argument of one command, as the declaration has it, with where its values come\nfrom resolved once here."
+      },
+      "CommandAvailability": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "available"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "description": "Offer it."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string",
+                "description": "One line, in the reader's terms."
+              },
+              "state": {
+                "type": "string",
+                "const": "unavailable"
+              }
+            },
+            "required": [
+              "state",
+              "reason"
+            ],
+            "description": "Do not offer it as usable; the reason is shown wherever it is listed."
+          }
+        ],
+        "description": "Whether a command can be offered, and why not when it cannot."
+      },
+      "CommandDiagnostic": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The stable code a reader greps for."
+          },
+          "fatal": {
+            "type": "boolean",
+            "description": "Whether the graph is unusable, or merely poorer."
+          },
+          "subject": {
+            "type": "string",
+            "description": "What it is about."
+          },
+          "detail": {
+            "type": "string",
+            "description": "One line."
+          }
+        },
+        "required": [
+          "code",
+          "fatal",
+          "subject",
+          "detail"
+        ],
+        "description": "Something wrong with the graph, or with what fed it."
+      },
+      "CommandEffectClass": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "read_only",
+            "description": "Reads and reports. Nothing outside the process is different afterwards."
+          },
+          {
+            "type": "string",
+            "const": "local_mutation",
+            "description": "Changes this machine outside the repository's tracked tree: a build output, a\nprocess, a cache, a runtime file under an ignored path."
+          },
+          {
+            "type": "string",
+            "const": "repository_mutation",
+            "description": "Writes tracked files of the repository, or moves its git state."
+          },
+          {
+            "type": "string",
+            "const": "destructive",
+            "description": "Removes work that the repository cannot give back."
+          }
+        ],
+        "description": "What a command changes. The order is the order of increasing consequence, and it is\nthe order the variants are declared in, so a comparison reads as one."
+      },
+      "CommandEnumValue": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The value as typed."
+          },
+          "help": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its help, when the declaration gave one."
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "description": "One accepted value of a value-enum argument."
+      },
+      "CommandExample": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The example's id."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line: what it shows."
+          },
+          "command": {
+            "type": "string",
+            "description": "The command line as a person types it."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "command"
+        ],
+        "description": "One example, carried through so that every surface shows the same one."
+      },
+      "CommandExecution": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "capability": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The capability behind it, when one is declared for this path."
+              },
+              "kind": {
+                "type": "string",
+                "const": "native"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "description": "The executable itself runs it, through the clap declaration."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "runner": {
+                "type": "string",
+                "description": "What runs it, as a person would type it."
+              },
+              "source": {
+                "type": "string",
+                "description": "Where it was discovered."
+              },
+              "kind": {
+                "type": "string",
+                "const": "external"
+              }
+            },
+            "required": [
+              "kind",
+              "runner",
+              "source"
+            ],
+            "description": "A workflow the repository keeps outside the executable, discovered where it lives."
+          }
+        ],
+        "description": "How a command runs."
+      },
+      "CommandIndex": {
+        "type": "object",
+        "properties": {
+          "fingerprint": {
+            "type": "string",
+            "description": "The graph's fingerprint, so a caller can tell whether its cache is current."
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many commands the graph holds, before the query narrowed it."
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommandSummary"
+            },
+            "description": "The commands the query matched, in identity order."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommandDiagnostic"
+            },
+            "description": "What the composition found wrong; empty is the healthy answer."
+          }
+        },
+        "required": [
+          "fingerprint",
+          "total",
+          "commands",
+          "diagnostics"
+        ],
+        "description": "The index."
+      },
+      "CommandInteractivity": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "batch",
+            "description": "Starts, answers, exits."
+          },
+          {
+            "type": "string",
+            "const": "long_running",
+            "description": "Runs until it is stopped: a server, a watcher."
+          },
+          {
+            "type": "string",
+            "const": "interactive",
+            "description": "Needs a terminal: it asks, or it renders for one."
+          }
+        ],
+        "description": "How a command occupies the caller. A command that never returns on its own cannot be a\nrequest/response call whatever it changes, so this narrows exposure independently of\nthe effect class."
+      },
+      "CommandNode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The stable identity: the path, joined by dots. Survives a change of summary, of\nhelp, of recipe spelling and of tool name, because none of those is in it."
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The words after `majordomus`."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The one-line description; the one text every surface shows."
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The long description, when there is one."
+          },
+          "usage": {
+            "type": "string",
+            "description": "The usage line."
+          },
+          "group": {
+            "type": "boolean",
+            "description": "Whether it only groups other commands and cannot be run."
+          },
+          "semantics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommandSemantics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What running it does; absent for a group."
+          },
+          "execution": {
+            "$ref": "#/components/schemas/CommandExecution",
+            "description": "How it runs."
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommandArgument"
+            },
+            "description": "Its arguments."
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommandExample"
+            },
+            "description": "Its documented examples."
+          },
+          "projections": {
+            "$ref": "#/components/schemas/CommandProjections",
+            "description": "Every spelling of it."
+          },
+          "availability": {
+            "$ref": "#/components/schemas/CommandAvailability",
+            "description": "Whether it is offered."
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names it has answered to before; kept working by every surface that can."
+          },
+          "provenance": {
+            "type": "string",
+            "description": "Where it is declared, repository-relative."
+          }
+        },
+        "required": [
+          "id",
+          "path",
+          "summary",
+          "usage",
+          "group",
+          "execution",
+          "arguments",
+          "examples",
+          "projections",
+          "availability",
+          "aliases",
+          "provenance"
+        ],
+        "description": "One canonical command."
+      },
+      "CommandProjections": {
+        "type": "object",
+        "properties": {
+          "cli": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The words after `majordomus`."
+          },
+          "just": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The recipe `just` runs, when the command is bridged."
+          },
+          "mcp": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The MCP tool, when a machine surface may call it."
+          },
+          "http": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The HTTP route, when the capability behind it declares one."
+          },
+          "cockpit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The Cockpit action, when a machine surface may call it."
+          },
+          "docs": {
+            "type": "string",
+            "description": "The page the documentation publishes."
+          }
+        },
+        "required": [
+          "cli",
+          "docs"
+        ],
+        "description": "Every spelling of one command, computed together so that a consumer never assembles\none of its own."
+      },
+      "CommandSemantics": {
+        "type": "object",
+        "properties": {
+          "effect": {
+            "$ref": "#/components/schemas/CommandEffectClass",
+            "description": "What running it changes."
+          },
+          "interactivity": {
+            "$ref": "#/components/schemas/CommandInteractivity",
+            "description": "How it occupies the caller."
+          }
+        },
+        "required": [
+          "effect",
+          "interactivity"
+        ],
+        "description": "The semantics a command declares beside its own declaration: what it changes, and how\nit occupies the caller. Everything else about a command is derived."
+      },
+      "CommandSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The canonical identity."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The one-line description."
+          },
+          "effect": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What running it changes; absent for a command that only groups others."
+          },
+          "surfaces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The surfaces it reaches, in a fixed order."
+          },
+          "machine_callable": {
+            "type": "boolean",
+            "description": "Whether a machine surface may invoke it."
+          }
+        },
+        "required": [
+          "id",
+          "summary",
+          "surfaces",
+          "machine_callable"
+        ],
+        "description": "One command, as the index shows it: enough to choose one, and no more."
+      },
+      "CommandValueRegistry": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "capability",
+            "description": "Capability identities."
+          },
+          {
+            "type": "string",
+            "const": "object_kind",
+            "description": "The kinds the layer declares."
+          },
+          {
+            "type": "string",
+            "const": "moment",
+            "description": "The operational moments of the Why catalogue."
+          },
+          {
+            "type": "string",
+            "const": "branch",
+            "description": "Branches of this repository."
+          },
+          {
+            "type": "string",
+            "const": "command",
+            "description": "Canonical commands of this graph."
+          }
+        ],
+        "description": "A registry that can answer with identities. Each one is something this repository\nalready holds; none of them is a list kept for completion."
+      },
+      "CommandValueSource": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "none"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "Nothing can be offered."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "values": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CommandEnumValue"
+                },
+                "description": "Each value with the help clap declared for it."
+              },
+              "source": {
+                "type": "string",
+                "const": "enum"
+              }
+            },
+            "required": [
+              "source",
+              "values"
+            ],
+            "description": "The values the declaration accepts."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "path"
+              }
+            },
+            "required": [
+              "source"
+            ],
+            "description": "A path on this machine."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "registry": {
+                "$ref": "#/components/schemas/CommandValueRegistry",
+                "description": "Which registry."
+              },
+              "source": {
+                "type": "string",
+                "const": "registry"
+              }
+            },
+            "required": [
+              "source",
+              "registry"
+            ],
+            "description": "Identities a registry of this repository holds."
+          }
+        ],
+        "description": "Where an argument's values come from. Inferred from the argument's own declaration:\na value-enum carries its values, a value name from the typed vocabulary names a\nregistry, and everything else has no source rather than a guessed one."
       },
       "Concurrency": {
         "type": "object",

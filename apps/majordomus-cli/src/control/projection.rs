@@ -88,6 +88,7 @@ pub fn docs_route(path: &[String]) -> String {
 /// Every spelling of one command, computed together so that a consumer never assembles
 /// one of its own.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "CommandProjections")]
 pub struct Projections {
     /// The words after `majordomus`.
     pub cli: Vec<String>,
@@ -112,6 +113,7 @@ pub struct Projections {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "CommandSurface")]
 pub enum Surface {
     /// The command line of the executable.
     Cli,

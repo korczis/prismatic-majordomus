@@ -38,6 +38,7 @@ pub const SCHEMA: &str = "majordomus/commands/v1";
 /// How a command runs.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
+#[schemars(rename = "CommandExecution")]
 pub enum Execution {
     /// The executable itself runs it, through the clap declaration.
     Native {
@@ -57,6 +58,7 @@ pub enum Execution {
 /// Whether a command can be offered, and why not when it cannot.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "state", rename_all = "snake_case")]
+#[schemars(rename = "CommandAvailability")]
 pub enum Availability {
     /// Offer it.
     Available,
@@ -79,6 +81,7 @@ impl Availability {
 /// registry, and everything else has no source rather than a guessed one.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "source", rename_all = "snake_case")]
+#[schemars(rename = "CommandValueSource")]
 pub enum ValueSource {
     /// Nothing can be offered.
     None,
@@ -98,6 +101,7 @@ pub enum ValueSource {
 
 /// One accepted value of a value-enum argument.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "CommandEnumValue")]
 pub struct EnumValue {
     /// The value as typed.
     pub value: String,
@@ -112,6 +116,7 @@ pub struct EnumValue {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "CommandValueRegistry")]
 pub enum RegistryValues {
     /// Capability identities.
     Capability,
@@ -150,6 +155,7 @@ impl RegistryValues {
 /// One argument of one command, as the declaration has it, with where its values come
 /// from resolved once here.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "CommandArgument")]
 pub struct Argument {
     /// The argument's id.
     pub name: String,
@@ -217,6 +223,7 @@ impl Argument {
 
 /// One example, carried through so that every surface shows the same one.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "CommandExample")]
 pub struct Example {
     /// The example's id.
     pub id: String,
@@ -271,6 +278,7 @@ impl CommandNode {
 
 /// Something wrong with the graph, or with what fed it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "CommandDiagnostic")]
 pub struct Diagnostic {
     /// The stable code a reader greps for.
     pub code: String,

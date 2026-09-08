@@ -11,6 +11,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 |---|---|---|---|---|
 | `artifacts` | Generated artifacts | behaviorally_verified | 1 | [`modules/artifacts.md`](modules/artifacts.md) |
 | `capabilities` | Capabilities | behaviorally_verified | 2 | [`modules/capabilities.md`](modules/capabilities.md) |
+| `commands` | Commands | behaviorally_verified | 2 | [`modules/commands.md`](modules/commands.md) |
 | `continuity` | Continuity | behaviorally_verified | 1 | [`modules/continuity.md`](modules/continuity.md) |
 | `deploy` | Deployment | behaviorally_verified | 3 | [`modules/deploy.md`](modules/deploy.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
@@ -32,6 +33,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `artifacts.list` | `artifacts` | query | behaviorally_verified | `majordomus_artifacts` | `majordomus://artifacts` | `GET /api/v1/artifacts` | — | process, 8 entries, 5s | required |
 | `capabilities.describe` | `capabilities` | query | behaviorally_verified | `majordomus_capability` | — | `GET /api/v1/capability` | `majordomus capabilities describe` | — | required |
 | `capabilities.list` | `capabilities` | query | behaviorally_verified | `majordomus_capabilities` | — | `GET /api/v1/capabilities` | `majordomus capabilities list` | process, 16 entries | required |
+| `commands.get` | `commands` | query | behaviorally_verified | `majordomus_command` | — | `GET /api/v1/commands/get` | — | process, 32 entries | required |
+| `commands.list` | `commands` | query | behaviorally_verified | `majordomus_commands` | — | `GET /api/v1/commands` | — | process, 16 entries | required |
 | `continuity.state` | `continuity` | query | behaviorally_verified | `majordomus_continuity` | `majordomus://continuity` | `GET /api/v1/continuity` | — | process, 2 entries, 2s | required |
 | `deploy.check` | `deploy` | query | behaviorally_verified | `majordomus_deploy_check` | — | `GET /api/v1/deployments/check` | — | process, 2 entries, 5s | required |
 | `deploy.get` | `deploy` | query | behaviorally_verified | `majordomus_deployment` | — | `GET /api/v1/deployment` | — | — | required |

@@ -52,6 +52,40 @@
       "tool": "majordomus_capabilities"
     },
     {
+      "api_anchor": "/docs/api/#op-commands-get",
+      "claims": [],
+      "cli": null,
+      "id": "commands.get",
+      "kind": "query",
+      "module": "commands",
+      "module_route": "/registry/modules/commands/",
+      "resource": null,
+      "route": "/registry/capabilities/commands-get/",
+      "slug": "commands-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "tests": [],
+      "title": "One command, whole",
+      "tool": "majordomus_command"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commands-list",
+      "claims": [],
+      "cli": null,
+      "id": "commands.list",
+      "kind": "query",
+      "module": "commands",
+      "module_route": "/registry/modules/commands/",
+      "resource": null,
+      "route": "/registry/capabilities/commands-list/",
+      "slug": "commands-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "tests": [],
+      "title": "Every command, in one line each",
+      "tool": "majordomus_commands"
+    },
+    {
       "api_anchor": "/docs/api/#op-continuity-state",
       "claims": [],
       "cli": null,
@@ -883,9 +917,9 @@
     ]
   },
   "counts": {
-    "capabilities": 37,
+    "capabilities": 39,
     "claims": 31,
-    "modules": 15
+    "modules": 16
   },
   "generator": "majordomus-cli 0.2.0",
   "modules": [
@@ -925,6 +959,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "commands.get",
+          "route": "/registry/capabilities/commands-get/",
+          "slug": "commands-get"
+        },
+        {
+          "id": "commands.list",
+          "route": "/registry/capabilities/commands-list/",
+          "slug": "commands-list"
+        }
+      ],
+      "claims": [],
+      "id": "commands",
+      "route": "/registry/modules/commands/",
+      "slug": "commands",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "title": "Commands"
     },
     {
       "capabilities": [

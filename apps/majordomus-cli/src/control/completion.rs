@@ -34,6 +34,7 @@ use crate::control::Surface;
 /// What the shell adapter reports: the words of the command line without the program's own
 /// name, and which of them the cursor is in.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "CompletionRequest")]
 pub struct Request {
     /// Which command line this is.
     pub surface: Surface,
@@ -77,6 +78,7 @@ impl Request {
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "CompletionCandidateKind")]
 pub enum CandidateKind {
     /// A command or a subcommand.
     Command,
@@ -92,6 +94,7 @@ pub enum CandidateKind {
 
 /// One thing that may be typed next.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "CompletionCandidate")]
 pub struct Candidate {
     /// What is inserted.
     pub value: String,
@@ -107,6 +110,7 @@ pub struct Candidate {
 /// The answer, with the fingerprint of the graph it was computed from so that a cache can
 /// tell whether it is still current.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "CompletionAnswer")]
 pub struct Answer {
     /// The candidates, in the order they should be offered.
     pub candidates: Vec<Candidate>,
