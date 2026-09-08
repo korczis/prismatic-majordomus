@@ -1,7 +1,7 @@
 +++
 title = "A profile sets how often a worker should checkpoint, and a stale task is reported"
 description = "Each profile has a checkpoint_interval. check --checkpoint records a checkpoint; check and watch compare the last checkpoint with the interval and report a task that has gone quiet for longer than its profile allows."
-weight = 59
+weight = 60
 [extra]
 claim_id = "checkpoint-interval"
 status = "advisory"

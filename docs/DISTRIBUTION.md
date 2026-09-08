@@ -220,8 +220,29 @@ Stage by stage:
 | `publish`, before the release exists | no | yes | none |
 | `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
 | `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
-| `pages` | yes — the record is committed but not served | rerun the **pages** workflow, or push any commit | none |
+| `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
 | `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
+
+#### Why the release asks Pages to publish
+
+The publish job ends by running `gh workflow run pages.yml`, and that step is not a
+belt-and-braces addition: without it the release is structurally unable to reach a user.
+
+GitHub does not start a workflow from a push made with `GITHUB_TOKEN`. It is a deliberate
+loop-breaker and it cannot be disabled for a token. The commit the publish job makes — the
+only thing that carries `site/static/releases/latest.json` — therefore starts no `pages`
+run, so the site keeps serving a build from before the release existed, and the smoke phase
+waits fifteen minutes for a file nothing is going to write.
+
+Release `v0.3.1` spent its entire smoke phase in exactly that state: six green builds, a
+published GitHub Release, a committed record, and `latest.json` returning 404 to anyone who
+ran the advertised command. Every observable pointed at the packer, and the packer was fine;
+the last link of the chain simply did not exist. The dispatch is that link. It runs with
+`if: always()`, because a rerun after a failed deploy is precisely the case with nothing to
+commit and everything to publish.
+
+`workflow_dispatch` is the entry point a person uses, so this starts the one deploy path
+rather than adding a second one (see the `site-deploy-one-path` guarantee).
 
 The one case a rerun cannot repair is a release that exists and publishes no archive — the
 assets cannot be reconstructed from a tag. The run stops and names the command that clears

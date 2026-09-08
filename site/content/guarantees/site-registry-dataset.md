@@ -1,7 +1,7 @@
 +++
 title = "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI"
 description = "GitHub Pages has no content model of its own for the registry. /registry/ reads site/data/registry/registry.json; the Rust executable writes that file from the capability registry and the index (majordomus generate site), and majordomus generate --check, which CI runs on every push, derives it again and exits 10 when the committed file differs. A number on that page that disagrees with the executable is a stale generated file, and the build refuses it."
-weight = 123
+weight = 124
 [extra]
 claim_id = "site-registry-dataset"
 status = "guaranteed"

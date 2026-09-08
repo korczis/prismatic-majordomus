@@ -1,7 +1,7 @@
 +++
 title = "finish evaluates the finish contract line by line and refuses when any line is unmet"
 description = "\"Done\" is a checklist, written in the policy before work starts, evaluated by majordomus finish. For completed the default lines are: touched files within scope; the verification command ran and exited zero; the task record is at or behind HEAD, not diverged; no unresolved open question for this task; a handover or completion note with the required sections exists. Every line is printed as pass or fail. If any fails, nothing is written and the exit code is 10."
-weight = 53
+weight = 54
 [extra]
 claim_id = "finish-contract"
 status = "guaranteed"

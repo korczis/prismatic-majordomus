@@ -1,7 +1,7 @@
 +++
 title = "A use case's scenario executes against the real tool in a disposable repository, every step's exit code and output are asserted, and the normalised evidence is what the site shows"
 description = "A use case carries a scenario: a prepared repository and real invocations of"
-weight = 132
+weight = 133
 [extra]
 claim_id = "use-case-evidence"
 status = "guaranteed"

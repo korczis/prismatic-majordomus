@@ -133,6 +133,9 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write
+      # to start the pages workflow by hand. A push made with GITHUB_TOKEN starts no
+      # workflow — see the step that uses this — so the publication has to be asked for.
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -227,6 +230,31 @@ jobs:
             sleep 5
           done
           exit 1
+
+      # The step without which none of the above reaches a user.
+      #
+      # GitHub does not start a workflow from a push made with GITHUB_TOKEN. That is a
+      # deliberate loop-breaker and it cannot be turned off for a token; it means the commit
+      # above — the one carrying site/static/releases/latest.json — starts no `pages` run,
+      # ever. The release then owns a GitHub Release, a committed record, and a published
+      # site that has never heard of either, and smoke waits fifteen minutes for a file that
+      # nothing is going to write. Release v0.3.1 spent its whole smoke phase in exactly
+      # that state, with all six builds green and the external contract broken the entire
+      # time; the deploy is the last link of the chain, so the release asks for it rather
+      # than assuming a side effect it does not have.
+      #
+      # `workflow_dispatch` is the same entry point a person uses, so this adds no second
+      # deploy path (site-deploy-one-path); it starts the one that exists. It runs whether
+      # or not the commit step had anything to push, because a rerun after a failed deploy
+      # is precisely the case with nothing to commit and everything to publish.
+      - name: ask Pages to publish it, because the commit above will not
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run pages.yml --ref "${{ github.event.repository.default_branch }}" \
+            || { echo "::error::could not start the pages workflow; the release metadata is committed but unpublished. Start it by hand: gh workflow run pages.yml --ref ${{ github.event.repository.default_branch }}"; exit 1; }
+          echo "pages requested on ${{ github.event.repository.default_branch }}"
 
   # ------------------------------------------------------------------ smoke
   # The published installer, from its published URL, installing the release that was just

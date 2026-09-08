@@ -1,7 +1,7 @@
 +++
 title = "A release archive carries every path once and carries nothing but files and directories"
 description = "The tar that a release publishes holds regular files and directories and nothing else: no"
-weight = 19
+weight = 20
 [extra]
 claim_id = "release-archive-shape"
 status = "guaranteed"
