@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `commands` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.2.0 -->
+     Generator: majordomus-cli 0.3.1 -->
 # Module `commands` — Commands
 
 The canonical command graph: every command this repository can be asked to run, what running each one changes, and the surfaces it reaches. Read from the command line's own declaration, never from a list.
