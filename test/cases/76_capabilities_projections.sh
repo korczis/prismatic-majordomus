@@ -26,22 +26,7 @@ expect_grep '^OK   openapi '
 expect_grep 'validate: 0 failure\(s\)'
 
 # --- one executable capability, described: its id, and every projection it declares
-# stderr to a file rather than to /dev/null: the tracing is noise when this works and the
-# only diagnosis when it does not. Discarding it made `bash -eu` exit here with nothing
-# printed anywhere — the case failed and its log was empty.
-# The report goes to stderr, not stdout: every caller redirects stdout to the file it wants
-# the command's output in, and a diagnostic written to stdout lands in that file instead of
-# in the log. That is the same silence in a new place, so it is worth the two `>&2`.
-run_quietly() {   # file-for-stderr, then the command: report what it said if it fails
-  local err="$1"; shift
-  "$@" 2> "$err" || {
-    local rc=$?
-    printf '    %s failed (exit %s):\n' "$1" "$rc" >&2
-    sed 's/^/    | /' "$err" >&2
-    exit 1
-  }
-}
-run_quietly "$S/cap.err" "$RB" capabilities describe objects.get --format json > "$S/cap.json"
+run_quiet "$S/cap.err" "$RB" capabilities describe objects.get --format json > "$S/cap.json"
 jq -e '.id == "objects.get" and .kind == "query" and .exposure.mcp.tool == "majordomus_get" and .exposure.http.method == "GET" and .exposure.http.path == "/api/v1/object" and .provenance.source == "builtin"' "$S/cap.json" >/dev/null \
   || { echo "    capabilities describe objects.get is not the descriptor"; cat "$S/cap.json"; exit 1; }
 # the same entry under MCP: the tool carries the id, and calling it answers from the layer
@@ -98,7 +83,7 @@ printf '\n  - id: note\n    kind: note\n    discovery: vcs\n    pathspec: '"'"':
 printf -- '---\nid: first\ntitle: The first note\n---\n\nBody.\n' > .ai/repo/notes/first.md
 printf -- '---\nid: second\ntitle: T\ncolour: red\n---\n' > .ai/repo/notes/second.md
 git add -A >/dev/null
-run_quietly "$S/list.err" "$RB" capabilities list --kind resource --format json > "$S/list.json"
+run_quiet "$S/list.err" "$RB" capabilities list --kind resource --format json > "$S/list.json"
 jq -e '[.capabilities[].id] | index("rule.project.example@1") != null and index("note.first") != null and index("note.second") == null' "$S/list.json" >/dev/null \
   || { echo "    the added rule and the repository-defined note are not both listed, or the broken note is"; exit 1; }
 "$MJ" rules list | grep -q '^project.example ' || { echo "    the shell tool does not see the same rule"; exit 1; }
