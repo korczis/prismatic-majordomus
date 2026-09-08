@@ -1,0 +1,113 @@
+---
+schema: adr/v1
+id: adr-0023
+kind: adr
+title: A command is declared once and every surface is a projection of the command graph
+status: proposed
+date: 2026-09-08
+tags:
+  - commands
+  - projections
+  - completion
+provenance:
+  origin: extracted
+  derived_from:
+    - file:apps/majordomus-cli/src/command_graph/mod.rs
+    - file:docs/COMMANDS.md
+    - test:test/cases/101_command_graph.sh
+---
+
+# 23. A command is declared once and every surface is a projection of the command graph
+
+## Context
+
+Three programs answer to a person in this repository: the Rust executable, the shell tool
+that carries the task lifecycle, and the workflow runner. Each declares its own commands,
+and each declaration is already authority — the clap tree, `share/commands.yaml` reconciled
+against the tool's dispatch table, and the runner's own structured dump.
+
+Every surface that wanted to *show* those commands kept a list instead of reading them. The
+`justfile` carried a recipe per command with a description copied from the command's help.
+The website parsed a help message. A shell completion, had one existed, would have carried a
+fourth copy, and the Cockpit a fifth.
+
+The evidence that this decays is in the repository rather than in the argument. A capability
+declared that it was reached as `majordomus scope classify`; the command line had never had
+such a command, and the generated reference documented it anyway. Nothing could notice,
+because nothing joined the two declarations. `docs/HARDCODING_LEDGER.yaml` had already named
+the general case — the public command surface with no owner — as a priority-1 finding.
+
+The question was not whether to have one owner. It was where the owner lives, given that
+three programs legitimately declare commands and none of them should stop.
+
+## Decision
+
+Compose rather than centralise. A **command graph** reads the three declarations that
+already exist and produces one typed document; every surface is a projection of it and none
+keeps a catalogue.
+
+- **Identity is derived**: `<program>.<path>` — `executable.worktree.status`, `tool.check`,
+  `workflow.site-build`. The program is part of the identity because two of the three share a
+  name on the path. Nothing writes an identity by hand.
+- **Semantics that a declaration cannot carry are annotated once, beside it**, in
+  `command_graph/semantics.rs`: what running a command changes, whether it holds a terminal,
+  what it requires, where an argument's values come from, and the recipe names that predate
+  the bridge. The default is what most commands are, so only a departure is written down, and
+  completeness is enforced in both directions.
+- **Exposure is derived, never declared**: an effect model (read-only, local mutation,
+  repository mutation, network mutation, destructive) and an interactivity model decide which
+  surface carries a command, in one function. Every surface that withholds a command carries
+  the reason.
+- **The workflow bridge is generated and untracked**, under `.ai/local/cache/`. It is a pure
+  function of the tree it sits in, it is fingerprinted, and repository entry refreshes it when
+  a declaration behind it has changed.
+- **One completion engine answers every surface.** `just <TAB>` resolves the recipe name back
+  to the canonical command and is then answered by the same code, from the same argument
+  metadata, as `majordomus <TAB>`.
+
+## Alternatives rejected
+
+**A hand-maintained `commands.yaml` for every program.** The ledger's own proposed remedy for
+the shell tool, and right for it: that registry states reference semantics a shell dispatch
+table cannot. Extending it to the executable would have meant restating clap's entire tree —
+every argument, default and value set — in YAML, and keeping the two in step by hand. The
+executable's commands already have a declaration; a second one is the defect, not the fix.
+
+**Deriving the graph from the workflow runner.** `just --dump` describes every recipe, and a
+graph read from it would have needed no new code. It would also have made the runner the
+authority for what the two programs offer, which is exactly backwards: a recipe is a
+projection of a command, and a projection that feeds the canonical source makes the source a
+rendering of its own output.
+
+**Generating the bridge into the tree.** Tracked generated files are the repository's normal
+pattern, and this one would have been visible in review. It would also have to be regenerated
+by whoever changes a command, checked by a gate, and merged by hand on every branch that
+touches the command line — for a file that is a pure function of the tree. The staleness cost
+is a hash comparison; the merge cost is not.
+
+**Letting one program win a colliding recipe name.** `majordomus bench` exists in both
+programs. Picking one by origin order would make the meaning of `just bench` depend on which
+contributor happened to run first. Both are qualified instead, and a short spelling for
+either is a decision declared once as an alias.
+
+## Consequences
+
+Adding a command to any of the three declarations puts it on the command line, the workflow
+bridge, the shell completion of both surfaces, the machine surfaces the policy admits, the
+Cockpit and the generated reference. No second registration exists to forget.
+
+The graph refuses to project while it carries an error, and the gate `command-graph` refuses
+the change: a duplicate identity, a recipe name two commands would take, a capability that
+claims a command line that does not exist, an annotation or alias that names a command that
+does not, or a secret argument something would enumerate.
+
+Three costs are now real and permanent. The annotation table beside the command line must
+stay complete — it fails the build when it does not, which is the point. The exposure policy
+is a single function that every surface obeys, so a surface that genuinely needs an exception
+has to argue for it in one place rather than implement it quietly. And the bridge's names are
+an algorithm, so a command's recipe name changes when its path does; the compatibility
+aliases exist to make that survivable, and they are declared once.
+
+`bin/majordomus` keeps `share/commands.yaml`. It is not a duplicate of the dispatch table: it
+states reference semantics — class, stage, what a command reads and writes, its exit codes —
+that shell cannot declare, and the `command_surface_complete` doctrine reconciles the two.

@@ -17,6 +17,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
+  - id: commands
+    title: Command graph
+    description: "Every command this repository offers, from whichever program offers it: the Rust executable, the shell tool that carries the task lifecycle, and the workflows the repository declares for a person to run. Composed from the three declarations that already exist — the clap tree, the shipped command registry and the workflow runner's own dump — never from a list. Each command carries what running it changes, what it needs, where its argument values come from, and every surface that carries it, with the reason when one does not."
+    stability: implemented
+    source: builtin
+    capabilities: 3
   - id: continuity
     title: Continuity
     description: "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
@@ -1173,6 +1179,1298 @@ capabilities:
       policy: process
       max_entries: 16
     source_path: apps/majordomus-cli/src/capability/builtin/capabilities.rs
+  - id: commands.get
+    module: commands
+    kind: query
+    title: One command in full
+    description: "One command by its canonical identity: its arguments with the source of each one's values, what running it changes, what it needs, where it came from, and every surface that carries it — with the reason a machine surface withholds it when one does."
+    input:
+      name: CommandRequest
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: "The identity, `executable.worktree.status`."
+        required:
+          - id
+        description: "One command, by its canonical identity."
+        title: CommandRequest
+    output:
+      name: CommandNode
+      schema:
+        type: object
+        properties:
+          id:
+            "$ref": "#/$defs/CommandId"
+            description: The canonical identity.
+          origin:
+            "$ref": "#/$defs/CommandOrigin"
+            description: Which program runs it.
+          path:
+            type: array
+            items:
+              type: string
+            description: "The words after the program's own name."
+          invocation:
+            type: string
+            description: "The command line a person types, rendered once here."
+          summary:
+            type: string
+            description: One line.
+          description:
+            type:
+              - string
+              - "null"
+            description: "The longer description, when the declaration carries one."
+          runnable:
+            type: boolean
+            description: "Can it be run on its own, or does it only group the commands under it?"
+          arguments:
+            type: array
+            items:
+              "$ref": "#/$defs/CommandArgument"
+            description: "The arguments, in declaration order."
+          execution:
+            "$ref": "#/$defs/CommandExecution"
+            description: How it is run.
+          effect:
+            "$ref": "#/$defs/CommandEffect"
+            description: What it changes.
+          interactivity:
+            "$ref": "#/$defs/CommandInteractivity"
+            description: How it behaves towards a terminal.
+          stability:
+            "$ref": "#/$defs/Stability"
+            description: Where it stands.
+          availability:
+            "$ref": "#/$defs/CommandAvailability"
+            description: Where it means anything.
+          group:
+            type:
+              - string
+              - "null"
+            description: "The group a person finds it under, when the declaration has groups."
+          tags:
+            type: array
+            items:
+              type: string
+            description: Free tags.
+          aliases:
+            type: array
+            items:
+              type: string
+            description: "Other names that resolve to this node, declared once here and honoured by every\nprojection that has a use for one."
+          deprecation:
+            anyOf:
+              - "$ref": "#/$defs/CommandDeprecation"
+              - type: "null"
+            description: Whether this is still the name to use.
+          provenance:
+            "$ref": "#/$defs/CommandProvenance"
+            description: Where it came from.
+          projections:
+            "$ref": "#/$defs/CommandProjections"
+            description: Where it appears.
+          entrypoint:
+            type:
+              - boolean
+              - "null"
+            description: Is this command an entry point of its group — the one a newcomer is offered?
+        required:
+          - id
+          - origin
+          - path
+          - invocation
+          - summary
+          - runnable
+          - arguments
+          - execution
+          - effect
+          - interactivity
+          - stability
+          - availability
+          - provenance
+          - projections
+        description: "One command, from whichever program offers it."
+        title: CommandNode
+        "$defs":
+          CommandId:
+            type: string
+            description: "The canonical identity of one command.\n\nConstructed from the origin and the command path, never written by hand, so that a\nprojection cannot invent one and a rename of a display string cannot change one."
+          CommandOrigin:
+            oneOf:
+              - type: string
+                const: executable
+                description: "The Rust executable, `apps/majordomus-cli`: the read-only interfaces, generation,\nintrospection, the servers. Declared by clap."
+              - type: string
+                const: tool
+                description: "The shell tool, `bin/majordomus`: the task lifecycle. Declared by the shipped\ncommand registry and dispatched by the tool itself."
+              - type: string
+                const: workflow
+                description: "A workflow the repository declares for a person to run — a `just` recipe that is\nnot a generated bridge. Declared by the justfile and read from the runner's dump."
+            description: "Which program runs a command. Part of the identity, because the three are different\nprograms that share one name on the path."
+          CommandArgument:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The argument's id."
+              long:
+                type:
+                  - string
+                  - "null"
+                description: "`--long`, without the dashes."
+              short:
+                type:
+                  - string
+                  - "null"
+                minLength: 1
+                maxLength: 1
+                description: "`-s`, without the dash."
+              positional:
+                type: boolean
+                description: Given by position rather than by flag.
+              takes_value:
+                type: boolean
+                description: Takes a value at all; a flag does not.
+              required:
+                type: boolean
+                description: Must be given.
+              variadic:
+                type: boolean
+                description: Takes any number of values.
+              global:
+                type: boolean
+                description: Accepted by every command under the one that declares it.
+              help:
+                type: string
+                description: "The help text, one line."
+              value_name:
+                type:
+                  - string
+                  - "null"
+                description: "The placeholder, `PATH`."
+              values:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommandValueChoice"
+                description: "The values the declaration carries, each with its help."
+              defaults:
+                type: array
+                items:
+                  type: string
+                description: "The defaults, as the declaration renders them."
+              source:
+                "$ref": "#/$defs/CommandValueSource"
+                description: Where further values come from.
+              secrecy:
+                "$ref": "#/$defs/CommandSecrecy"
+                description: How openly the value may be handled.
+            required:
+              - name
+              - positional
+              - takes_value
+              - required
+              - variadic
+              - global
+              - help
+              - source
+              - secrecy
+            description: "One argument of a command, as the declaration gives it plus what can be inferred."
+          CommandValueChoice:
+            type: object
+            properties:
+              value:
+                type: string
+                description: The value as typed.
+              description:
+                type:
+                  - string
+                  - "null"
+                description: "Its help, when the declaration carries one."
+            required:
+              - value
+            description: "One value an argument accepts, from the declaration."
+          CommandValueSource:
+            oneOf:
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: free
+                required:
+                  - kind
+                description: Nothing here knows the set; the caller types a value.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: enumerated
+                required:
+                  - kind
+                description: The declaration carries the values; they are on the argument.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: path
+                required:
+                  - kind
+                description: A path in the filesystem.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: repository_path
+                required:
+                  - kind
+                description: A path inside the repository.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: capability
+                required:
+                  - kind
+                description: "A capability id, from the registry."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: command
+                required:
+                  - kind
+                description: "A command id, from this graph."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: rule
+                required:
+                  - kind
+                description: "A rule id, from the effective rule set."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: object_kind
+                required:
+                  - kind
+                description: "An object kind, from the index."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: branch
+                required:
+                  - kind
+                description: A git branch in this repository.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: graph
+                required:
+                  - kind
+                description: "A graph id, from the graph registry."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: moment
+                required:
+                  - kind
+                description: "A moment id, from the why catalogue."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: shell
+                required:
+                  - kind
+                description: "A shell name, from the shells the activation supports."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: secret
+                required:
+                  - kind
+                description: "A secret. Never enumerated, never cached, never suggested."
+            description: "Where a value for an argument comes from, when something in this repository knows the\nset.\n\nThis is the completion contract, and it is a property of the *argument*, not of a shell\nscript: the same source answers a shell's TAB, a generated form's select and a machine\nsurface's enumeration of what it will accept. Inference from the declaration comes\nfirst — a value-enum argument carries its own values, a `PATH` placeholder is a path —\nand only what cannot be inferred is annotated beside the command."
+          CommandSecrecy:
+            oneOf:
+              - type: string
+                const: public
+                description: "Ordinary: may be logged, completed, shown."
+              - type: string
+                const: sensitive
+                description: "A path or an identifier that names something private. Shown, never logged."
+              - type: string
+                const: secret
+                description: "A credential. Never completed, never logged, never cached."
+            description: How openly a value may be handled.
+          CommandExecution:
+            type: object
+            properties:
+              origin:
+                "$ref": "#/$defs/CommandOrigin"
+                description: Which program.
+              argv:
+                type: array
+                items:
+                  type: string
+                description: "The words that precede the caller's arguments, the program's own name excluded."
+            required:
+              - origin
+              - argv
+            description: "How a command is actually run: the program and the words before the caller's own.\n\nThis is what forbids a cycle. A projection renders an invocation from the execution\ndescriptor, so a generated bridge always spells the *canonical* program — never the\nsurface it is a bridge for."
+          CommandEffect:
+            oneOf:
+              - type: string
+                const: read_only
+                description: Reads and answers. Changes nothing anywhere.
+              - type: string
+                const: local_mutation
+                description: "Writes only where the repository keeps a checkout's own state — the process's\nmemory, `.ai/local/`, a build directory. Nothing a commit would carry."
+              - type: string
+                const: repository_mutation
+                description: "Writes tracked files: generated artifacts, the worktree, git itself."
+              - type: string
+                const: network_mutation
+                description: "Reaches the network with an effect on the far side: a push, a deploy, a release."
+              - type: string
+                const: destructive
+                description: Removes something a person would have to reconstruct.
+            description: "What running a command changes. The one thing a surface policy is allowed to ask.\n\nThe order is the order of increasing consequence, and it is the order the derived\nexposure policy reads: a surface declares the strongest effect it will carry, and\nevery node at or below it is projected there. Nothing configures a surface per\ncommand."
+          CommandInteractivity:
+            oneOf:
+              - type: string
+                const: non_interactive
+                description: "Runs, answers, exits. Safe to call from a machine surface."
+              - type: string
+                const: interactive
+                description: "Asks the person something, or reads the body of a record from a terminal. A\nmachine surface that offered it would hang."
+              - type: string
+                const: long_running
+                description: Serves until it is stopped. A request/response surface cannot carry it.
+            description: "How a command behaves towards the caller's terminal and the caller's patience."
+          Stability:
+            oneOf:
+              - type: string
+                const: implemented
+                description: "Implemented, and no behavioural test names it yet."
+              - type: string
+                const: behaviorally_verified
+                description: Implemented and proved by a behavioural test.
+              - type: string
+                const: experimental
+                description: "Implemented, executable, and expected to change."
+              - type: string
+                const: planned
+                description: "Specified and not implemented: listed, never executable."
+              - type: string
+                const: unsupported
+                description: "Considered and refused: listed with the reason, never executable."
+            description: "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise."
+          CommandAvailability:
+            type: object
+            properties:
+              available:
+                type: boolean
+                description: "Can it be run here, now?"
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why not, in one line, when it cannot."
+              requires:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommandRequirement"
+                description: "What it needs, whether or not that is satisfied here."
+            required:
+              - available
+            description: "Where a command means anything, and why not when it does not.\n\nDerived from the repository environment rather than declared per command, so that a\nprojection reads a field instead of re-deciding. The reason is carried because the\nanswer a person needs is never `false`."
+          CommandRequirement:
+            oneOf:
+              - type: string
+                const: repository
+                description: A git repository.
+              - type: string
+                const: layer
+                description: "The `.ai/` layer, initialised."
+              - type: string
+                const: task
+                description: An active task record.
+              - type: string
+                const: executable
+                description: "The Rust executable, built."
+              - type: string
+                const: workflow_runner
+                description: "The workflow runner, installed."
+              - type: string
+                const: rust_toolchain
+                description: A cargo workspace and a toolchain to build it.
+              - type: string
+                const: site
+                description: The site sources and its generator.
+            description: One thing a command needs before it can run.
+          CommandDeprecation:
+            type: object
+            properties:
+              reason:
+                type: string
+                description: "Why, in one line."
+              replaced_by:
+                anyOf:
+                  - "$ref": "#/$defs/CommandId"
+                  - type: "null"
+                description: What to use instead.
+            required:
+              - reason
+            description: A command that is no longer the name to use.
+          CommandProvenance:
+            type: object
+            properties:
+              declared_in:
+                type: string
+                description: The repository-relative file that declares it.
+              read_by:
+                type:
+                  - string
+                  - "null"
+                description: "The command that reads that declaration, when a reader wants to reproduce it."
+              capability:
+                anyOf:
+                  - "$ref": "#/$defs/CapabilityId"
+                  - type: "null"
+                description: "The capability this command runs, when it runs one."
+            required:
+              - declared_in
+            description: "Where a node came from, in enough detail to open the file."
+          CapabilityId:
+            type: string
+            description: "A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `<kind>.<identity>` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind's identity rule produced it."
+          CommandProjections:
+            type: object
+            properties:
+              cli:
+                type:
+                  - string
+                  - "null"
+                description: "The command line, as typed."
+              workflow:
+                type:
+                  - string
+                  - "null"
+                description: "The generated workflow bridge's recipe name."
+              mcp:
+                type:
+                  - string
+                  - "null"
+                description: "The MCP tool name, when the capability behind it declares one."
+              http:
+                type:
+                  - string
+                  - "null"
+                description: "The HTTP route, when the capability behind it declares one."
+              cockpit:
+                type:
+                  - string
+                  - "null"
+                description: "The Cockpit address, when the surface carries it."
+              docs:
+                type: string
+                description: The page on the site. Every command has one.
+              withheld:
+                type:
+                  - string
+                  - "null"
+                description: "Why a machine surface does not carry it, when one does not."
+            required:
+              - docs
+            description: "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::commands
+    exposure:
+      mcp:
+        tool: majordomus_command
+      http:
+        method: GET
+        path: /api/v1/command
+    availability: runtime
+    visibility: public
+    stability: implemented
+    tags:
+      - commands
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/commands.rs
+  - id: commands.graph
+    module: commands
+    kind: query
+    title: The whole command graph
+    description: "The graph as one document, with its fingerprint and every diagnostic its build found: a duplicate identity, a recipe name two commands would take, an annotation that names a command which no longer exists. Deterministic — two builds over one tree produce the same document — so a client may cache against the fingerprint."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: CommandGraphReport
+      schema:
+        type: object
+        properties:
+          graph:
+            "$ref": "#/$defs/CommandGraph"
+            description: The graph.
+          errors:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many findings are errors; a projection refuses to write while this is not zero.
+        required:
+          - graph
+          - errors
+        description: "The whole graph, with what its build found."
+        title: CommandGraphReport
+        "$defs":
+          CommandGraph:
+            type: object
+            properties:
+              schema:
+                type: string
+                description: The schema of this document.
+              fingerprint:
+                type: string
+                description: "A hash of the semantic content: the identity a cache and a generated projection\nkey on. Nothing that varies between two runs over the same tree is in it."
+              commands:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommandNode"
+                description: "Every command, in a deterministic order: origin, then path."
+              diagnostics:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommandDiagnostic"
+                description: What the build found.
+            required:
+              - schema
+              - fingerprint
+              - commands
+              - diagnostics
+            description: The whole graph.
+          CommandNode:
+            type: object
+            properties:
+              id:
+                "$ref": "#/$defs/CommandId"
+                description: The canonical identity.
+              origin:
+                "$ref": "#/$defs/CommandOrigin"
+                description: Which program runs it.
+              path:
+                type: array
+                items:
+                  type: string
+                description: "The words after the program's own name."
+              invocation:
+                type: string
+                description: "The command line a person types, rendered once here."
+              summary:
+                type: string
+                description: One line.
+              description:
+                type:
+                  - string
+                  - "null"
+                description: "The longer description, when the declaration carries one."
+              runnable:
+                type: boolean
+                description: "Can it be run on its own, or does it only group the commands under it?"
+              arguments:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommandArgument"
+                description: "The arguments, in declaration order."
+              execution:
+                "$ref": "#/$defs/CommandExecution"
+                description: How it is run.
+              effect:
+                "$ref": "#/$defs/CommandEffect"
+                description: What it changes.
+              interactivity:
+                "$ref": "#/$defs/CommandInteractivity"
+                description: How it behaves towards a terminal.
+              stability:
+                "$ref": "#/$defs/Stability"
+                description: Where it stands.
+              availability:
+                "$ref": "#/$defs/CommandAvailability"
+                description: Where it means anything.
+              group:
+                type:
+                  - string
+                  - "null"
+                description: "The group a person finds it under, when the declaration has groups."
+              tags:
+                type: array
+                items:
+                  type: string
+                description: Free tags.
+              aliases:
+                type: array
+                items:
+                  type: string
+                description: "Other names that resolve to this node, declared once here and honoured by every\nprojection that has a use for one."
+              deprecation:
+                anyOf:
+                  - "$ref": "#/$defs/CommandDeprecation"
+                  - type: "null"
+                description: Whether this is still the name to use.
+              provenance:
+                "$ref": "#/$defs/CommandProvenance"
+                description: Where it came from.
+              projections:
+                "$ref": "#/$defs/CommandProjections"
+                description: Where it appears.
+              entrypoint:
+                type:
+                  - boolean
+                  - "null"
+                description: Is this command an entry point of its group — the one a newcomer is offered?
+            required:
+              - id
+              - origin
+              - path
+              - invocation
+              - summary
+              - runnable
+              - arguments
+              - execution
+              - effect
+              - interactivity
+              - stability
+              - availability
+              - provenance
+              - projections
+            description: "One command, from whichever program offers it."
+          CommandId:
+            type: string
+            description: "The canonical identity of one command.\n\nConstructed from the origin and the command path, never written by hand, so that a\nprojection cannot invent one and a rename of a display string cannot change one."
+          CommandOrigin:
+            oneOf:
+              - type: string
+                const: executable
+                description: "The Rust executable, `apps/majordomus-cli`: the read-only interfaces, generation,\nintrospection, the servers. Declared by clap."
+              - type: string
+                const: tool
+                description: "The shell tool, `bin/majordomus`: the task lifecycle. Declared by the shipped\ncommand registry and dispatched by the tool itself."
+              - type: string
+                const: workflow
+                description: "A workflow the repository declares for a person to run — a `just` recipe that is\nnot a generated bridge. Declared by the justfile and read from the runner's dump."
+            description: "Which program runs a command. Part of the identity, because the three are different\nprograms that share one name on the path."
+          CommandArgument:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The argument's id."
+              long:
+                type:
+                  - string
+                  - "null"
+                description: "`--long`, without the dashes."
+              short:
+                type:
+                  - string
+                  - "null"
+                minLength: 1
+                maxLength: 1
+                description: "`-s`, without the dash."
+              positional:
+                type: boolean
+                description: Given by position rather than by flag.
+              takes_value:
+                type: boolean
+                description: Takes a value at all; a flag does not.
+              required:
+                type: boolean
+                description: Must be given.
+              variadic:
+                type: boolean
+                description: Takes any number of values.
+              global:
+                type: boolean
+                description: Accepted by every command under the one that declares it.
+              help:
+                type: string
+                description: "The help text, one line."
+              value_name:
+                type:
+                  - string
+                  - "null"
+                description: "The placeholder, `PATH`."
+              values:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommandValueChoice"
+                description: "The values the declaration carries, each with its help."
+              defaults:
+                type: array
+                items:
+                  type: string
+                description: "The defaults, as the declaration renders them."
+              source:
+                "$ref": "#/$defs/CommandValueSource"
+                description: Where further values come from.
+              secrecy:
+                "$ref": "#/$defs/CommandSecrecy"
+                description: How openly the value may be handled.
+            required:
+              - name
+              - positional
+              - takes_value
+              - required
+              - variadic
+              - global
+              - help
+              - source
+              - secrecy
+            description: "One argument of a command, as the declaration gives it plus what can be inferred."
+          CommandValueChoice:
+            type: object
+            properties:
+              value:
+                type: string
+                description: The value as typed.
+              description:
+                type:
+                  - string
+                  - "null"
+                description: "Its help, when the declaration carries one."
+            required:
+              - value
+            description: "One value an argument accepts, from the declaration."
+          CommandValueSource:
+            oneOf:
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: free
+                required:
+                  - kind
+                description: Nothing here knows the set; the caller types a value.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: enumerated
+                required:
+                  - kind
+                description: The declaration carries the values; they are on the argument.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: path
+                required:
+                  - kind
+                description: A path in the filesystem.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: repository_path
+                required:
+                  - kind
+                description: A path inside the repository.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: capability
+                required:
+                  - kind
+                description: "A capability id, from the registry."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: command
+                required:
+                  - kind
+                description: "A command id, from this graph."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: rule
+                required:
+                  - kind
+                description: "A rule id, from the effective rule set."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: object_kind
+                required:
+                  - kind
+                description: "An object kind, from the index."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: branch
+                required:
+                  - kind
+                description: A git branch in this repository.
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: graph
+                required:
+                  - kind
+                description: "A graph id, from the graph registry."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: moment
+                required:
+                  - kind
+                description: "A moment id, from the why catalogue."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: shell
+                required:
+                  - kind
+                description: "A shell name, from the shells the activation supports."
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    const: secret
+                required:
+                  - kind
+                description: "A secret. Never enumerated, never cached, never suggested."
+            description: "Where a value for an argument comes from, when something in this repository knows the\nset.\n\nThis is the completion contract, and it is a property of the *argument*, not of a shell\nscript: the same source answers a shell's TAB, a generated form's select and a machine\nsurface's enumeration of what it will accept. Inference from the declaration comes\nfirst — a value-enum argument carries its own values, a `PATH` placeholder is a path —\nand only what cannot be inferred is annotated beside the command."
+          CommandSecrecy:
+            oneOf:
+              - type: string
+                const: public
+                description: "Ordinary: may be logged, completed, shown."
+              - type: string
+                const: sensitive
+                description: "A path or an identifier that names something private. Shown, never logged."
+              - type: string
+                const: secret
+                description: "A credential. Never completed, never logged, never cached."
+            description: How openly a value may be handled.
+          CommandExecution:
+            type: object
+            properties:
+              origin:
+                "$ref": "#/$defs/CommandOrigin"
+                description: Which program.
+              argv:
+                type: array
+                items:
+                  type: string
+                description: "The words that precede the caller's arguments, the program's own name excluded."
+            required:
+              - origin
+              - argv
+            description: "How a command is actually run: the program and the words before the caller's own.\n\nThis is what forbids a cycle. A projection renders an invocation from the execution\ndescriptor, so a generated bridge always spells the *canonical* program — never the\nsurface it is a bridge for."
+          CommandEffect:
+            oneOf:
+              - type: string
+                const: read_only
+                description: Reads and answers. Changes nothing anywhere.
+              - type: string
+                const: local_mutation
+                description: "Writes only where the repository keeps a checkout's own state — the process's\nmemory, `.ai/local/`, a build directory. Nothing a commit would carry."
+              - type: string
+                const: repository_mutation
+                description: "Writes tracked files: generated artifacts, the worktree, git itself."
+              - type: string
+                const: network_mutation
+                description: "Reaches the network with an effect on the far side: a push, a deploy, a release."
+              - type: string
+                const: destructive
+                description: Removes something a person would have to reconstruct.
+            description: "What running a command changes. The one thing a surface policy is allowed to ask.\n\nThe order is the order of increasing consequence, and it is the order the derived\nexposure policy reads: a surface declares the strongest effect it will carry, and\nevery node at or below it is projected there. Nothing configures a surface per\ncommand."
+          CommandInteractivity:
+            oneOf:
+              - type: string
+                const: non_interactive
+                description: "Runs, answers, exits. Safe to call from a machine surface."
+              - type: string
+                const: interactive
+                description: "Asks the person something, or reads the body of a record from a terminal. A\nmachine surface that offered it would hang."
+              - type: string
+                const: long_running
+                description: Serves until it is stopped. A request/response surface cannot carry it.
+            description: "How a command behaves towards the caller's terminal and the caller's patience."
+          Stability:
+            oneOf:
+              - type: string
+                const: implemented
+                description: "Implemented, and no behavioural test names it yet."
+              - type: string
+                const: behaviorally_verified
+                description: Implemented and proved by a behavioural test.
+              - type: string
+                const: experimental
+                description: "Implemented, executable, and expected to change."
+              - type: string
+                const: planned
+                description: "Specified and not implemented: listed, never executable."
+              - type: string
+                const: unsupported
+                description: "Considered and refused: listed with the reason, never executable."
+            description: "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise."
+          CommandAvailability:
+            type: object
+            properties:
+              available:
+                type: boolean
+                description: "Can it be run here, now?"
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why not, in one line, when it cannot."
+              requires:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommandRequirement"
+                description: "What it needs, whether or not that is satisfied here."
+            required:
+              - available
+            description: "Where a command means anything, and why not when it does not.\n\nDerived from the repository environment rather than declared per command, so that a\nprojection reads a field instead of re-deciding. The reason is carried because the\nanswer a person needs is never `false`."
+          CommandRequirement:
+            oneOf:
+              - type: string
+                const: repository
+                description: A git repository.
+              - type: string
+                const: layer
+                description: "The `.ai/` layer, initialised."
+              - type: string
+                const: task
+                description: An active task record.
+              - type: string
+                const: executable
+                description: "The Rust executable, built."
+              - type: string
+                const: workflow_runner
+                description: "The workflow runner, installed."
+              - type: string
+                const: rust_toolchain
+                description: A cargo workspace and a toolchain to build it.
+              - type: string
+                const: site
+                description: The site sources and its generator.
+            description: One thing a command needs before it can run.
+          CommandDeprecation:
+            type: object
+            properties:
+              reason:
+                type: string
+                description: "Why, in one line."
+              replaced_by:
+                anyOf:
+                  - "$ref": "#/$defs/CommandId"
+                  - type: "null"
+                description: What to use instead.
+            required:
+              - reason
+            description: A command that is no longer the name to use.
+          CommandProvenance:
+            type: object
+            properties:
+              declared_in:
+                type: string
+                description: The repository-relative file that declares it.
+              read_by:
+                type:
+                  - string
+                  - "null"
+                description: "The command that reads that declaration, when a reader wants to reproduce it."
+              capability:
+                anyOf:
+                  - "$ref": "#/$defs/CapabilityId"
+                  - type: "null"
+                description: "The capability this command runs, when it runs one."
+            required:
+              - declared_in
+            description: "Where a node came from, in enough detail to open the file."
+          CapabilityId:
+            type: string
+            description: "A stable, globally meaningful identity: a namespace, a dot, and a local part.\n`repository.info` and `objects.get` for executables; `<kind>.<identity>` for a\ndeclarative object (`rule.majordomus.scope-integrity@1`, `document.docs/CLI.md`,\n`policy..ai/repo/policy.yaml`).\n\nGrammar: the namespace matches `[a-z][a-z0-9_-]*`; the local part is non-empty and\ncarries no whitespace or control character, any other Unicode included, because it is\nopaque: a path, a versioned identity, or a name, as the kind's identity rule produced it."
+          CommandProjections:
+            type: object
+            properties:
+              cli:
+                type:
+                  - string
+                  - "null"
+                description: "The command line, as typed."
+              workflow:
+                type:
+                  - string
+                  - "null"
+                description: "The generated workflow bridge's recipe name."
+              mcp:
+                type:
+                  - string
+                  - "null"
+                description: "The MCP tool name, when the capability behind it declares one."
+              http:
+                type:
+                  - string
+                  - "null"
+                description: "The HTTP route, when the capability behind it declares one."
+              cockpit:
+                type:
+                  - string
+                  - "null"
+                description: "The Cockpit address, when the surface carries it."
+              docs:
+                type: string
+                description: The page on the site. Every command has one.
+              withheld:
+                type:
+                  - string
+                  - "null"
+                description: "Why a machine surface does not carry it, when one does not."
+            required:
+              - docs
+            description: "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
+          CommandDiagnostic:
+            type: object
+            properties:
+              severity:
+                "$ref": "#/$defs/CommandDiagnosticSeverity"
+                description: How bad.
+              code:
+                type: string
+                description: "A stable code, for a gate to match on."
+              message:
+                type: string
+                description: "What is wrong, in one line."
+              commands:
+                type: array
+                items:
+                  "$ref": "#/$defs/CommandId"
+                description: The nodes it is about.
+              remedy:
+                type:
+                  - string
+                  - "null"
+                description: What to do about it.
+            required:
+              - severity
+              - code
+              - message
+            description: One thing the build found.
+          CommandDiagnosticSeverity:
+            oneOf:
+              - type: string
+                const: error
+                description: The graph is wrong and a projection built from it would be wrong.
+              - type: string
+                const: warning
+                description: Worth saying; the graph stands.
+              - type: string
+                const: info
+                description: A fact a reader may want.
+            description: How bad a finding is.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::commands
+    exposure:
+      mcp:
+        tool: majordomus_command_graph
+      http:
+        method: GET
+        path: /api/v1/commands/graph
+    availability: runtime
+    visibility: public
+    stability: implemented
+    tags:
+      - commands
+      - introspection
+      - diagnostics
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/commands.rs
+  - id: commands.list
+    module: commands
+    kind: query
+    title: "Every command, one line each"
+    description: "The commands this repository offers, filtered by the program that runs them, by what running them changes, or by text. A summary rather than the whole graph: enough to choose a command, and never so much that a client has to read every argument of every command to find one."
+    input:
+      name: CommandFilter
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          origin:
+            type:
+              - string
+              - "null"
+            description: "Only the commands of one program: `executable`, `tool` or `workflow`."
+          effect:
+            type:
+              - string
+              - "null"
+            description: "Only the commands whose effect is at most this one: `read_only`,\n`local_mutation`, `repository_mutation`, `network_mutation`, `destructive`."
+          search:
+            type:
+              - string
+              - "null"
+            description: "Only the commands matching this text in their invocation, summary, tags or identity."
+        description: "Which commands to answer with. Every filter is the graph's own vocabulary; none is a\nsearch over rendered text."
+        title: CommandFilter
+    output:
+      name: CommandIndex
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: The schema of the graph these came from.
+          fingerprint:
+            type: string
+            description: "The fingerprint of that graph: a client may cache against it."
+          total:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many commands the graph holds, before the filter."
+          commands:
+            type: array
+            items:
+              "$ref": "#/$defs/CommandSummary"
+            description: "The commands that matched, in graph order."
+        required:
+          - schema
+          - fingerprint
+          - total
+          - commands
+        description: "The commands this repository offers, filtered."
+        title: CommandIndex
+        "$defs":
+          CommandSummary:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The canonical identity.
+              invocation:
+                type: string
+                description: The command line a person types.
+              summary:
+                type: string
+                description: One line.
+              origin:
+                type: string
+                description: Which program runs it.
+              effect:
+                type: string
+                description: What running it changes.
+              group:
+                type:
+                  - string
+                  - "null"
+                description: The group it is found under.
+              projections:
+                "$ref": "#/$defs/CommandProjections"
+                description: Where it appears.
+            required:
+              - id
+              - invocation
+              - summary
+              - origin
+              - effect
+              - projections
+            description: "One command, as an index shows it: enough to choose, never enough to have to skim."
+          CommandProjections:
+            type: object
+            properties:
+              cli:
+                type:
+                  - string
+                  - "null"
+                description: "The command line, as typed."
+              workflow:
+                type:
+                  - string
+                  - "null"
+                description: "The generated workflow bridge's recipe name."
+              mcp:
+                type:
+                  - string
+                  - "null"
+                description: "The MCP tool name, when the capability behind it declares one."
+              http:
+                type:
+                  - string
+                  - "null"
+                description: "The HTTP route, when the capability behind it declares one."
+              cockpit:
+                type:
+                  - string
+                  - "null"
+                description: "The Cockpit address, when the surface carries it."
+              docs:
+                type: string
+                description: The page on the site. Every command has one.
+              withheld:
+                type:
+                  - string
+                  - "null"
+                description: "Why a machine surface does not carry it, when one does not."
+            required:
+              - docs
+            description: "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::commands
+    exposure:
+      mcp:
+        tool: majordomus_commands
+      http:
+        method: GET
+        path: /api/v1/commands
+    availability: runtime
+    visibility: public
+    stability: implemented
+    tags:
+      - commands
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    source_path: apps/majordomus-cli/src/capability/builtin/commands.rs
   - id: continuity.state
     module: continuity
     kind: query
@@ -5929,10 +7227,6 @@ capabilities:
       http:
         method: GET
         path: /api/v1/scope/classify
-      cli:
-        path:
-          - scope
-          - classify
     availability: runtime
     visibility: public
     stability: behaviorally_verified

@@ -17,6 +17,7 @@ pub mod bench;
 pub mod capability;
 pub mod cli;
 pub mod cockpit;
+pub mod command_graph;
 pub mod commands;
 pub mod deploy;
 pub mod discovery;

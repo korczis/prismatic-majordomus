@@ -1,43 +1,35 @@
-# Serving: the shared server this repository runs, its two user interfaces, and the
-# assets one of them needs. One server per repository; every client attaches to it.
-
-# MCP on stdio for the client that spawned it, joining or starting the repository's one shared server (its home page at / lists every surface). Extra arguments pass through.
-[group('serve')]
-mcp *args: build
-    "{{rust_bin}}" mcp {{args}}
-
-# The shared server alone, on 127.0.0.1:8741 by default: the home page /, the documentation /docs/, the Cockpit /cockpit, Swagger UI /swagger, /openapi.json, MCP over HTTP /mcp. Exits 0 if one already runs.
-[group('serve')]
-serve *args: build
-    "{{rust_bin}}" serve {{args}}
-
-# What `mcp` would serve, and every diagnostic; exit 10 when the layer is degraded.
-[group('serve')]
-inspect *args: build
-    "{{rust_bin}}" mcp --inspect {{args}}
+# Serving: the two user interfaces of the shared server this repository runs, and the
+# assets one of them needs.
+#
+# The commands that *start* a server are not here. `mcp`, `serve` and `inspect` are
+# commands of the Rust executable, and the generated bridge writes a recipe for each from
+# the command graph — one description, one declaration, one place to change them. What
+# remains here is what no program implements: opening a browser, and building the
+# Cockpit's static assets.
 
 # Where the repository's shared server is, if one runs (from the lease under .ai/local/).
 [group('serve')]
 mcp-status:
     @f=".ai/local/state/mcp/server.json"; if [ -f "$f" ]; then cat "$f"; echo; else echo "no shared server lease at $f"; fi
 
-# Open Swagger UI of the running shared server in the browser (macOS `open`, else xdg-open).
+# Open a surface of the running shared server in a browser: `just open`, `just open cockpit`, `just open swagger`. The address comes from the lease; the surfaces come from the server.
 [group('serve')]
-swagger-ui:
+open surface="":
     @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
-    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/swagger"; (command -v open >/dev/null && open "$url/swagger") || xdg-open "$url/swagger"
+    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")/{{surface}}"; echo "$url"; \
+    (command -v open >/dev/null && open "$url") || xdg-open "$url"
+
+# Open Swagger UI of the running shared server in the browser.
+[group('serve')]
+swagger-ui: (open "swagger")
 
 # Open the running shared server's home page — every surface it serves, derived from the topology.
 [group('serve')]
-home:
-    @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
-    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/"; (command -v open >/dev/null && open "$url/") || xdg-open "$url/"
+home: (open "")
 
-# Open the Cockpit of the running shared server in the browser (macOS `open`, else xdg-open).
+# Open the Cockpit of the running shared server in the browser.
 [group('serve')]
-cockpit:
-    @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
-    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/cockpit"; (command -v open >/dev/null && open "$url/cockpit") || xdg-open "$url/cockpit"
+cockpit: (open "cockpit")
 
 # Build the Cockpit's static assets: compile share/cockpit/cockpit.css, vendor the pinned libraries (needs npm ci).
 [group('serve')]

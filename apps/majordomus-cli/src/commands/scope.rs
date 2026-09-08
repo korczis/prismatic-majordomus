@@ -11,6 +11,10 @@ use crate::capability::CapabilityError;
 use crate::cli::{OutputFormat, ScopeArgs};
 use crate::error::{Error, Result};
 
+/// The capability that judges one path. Named by its canonical identity: it is reached
+/// through this command and declares no command line of its own.
+pub const CLASSIFY: &str = "repository.scope_classify";
+
 /// The exit code when `--check` finds a path out of the scope.
 pub const EXIT_OUT_OF_SCOPE: u8 = 10;
 
@@ -71,7 +75,9 @@ pub fn run(args: ScopeArgs) -> Result<u8> {
         }
         return Ok(0);
     }
-    let id = cli_capability(ctx, &["scope", "classify"])?;
+    // By identity: the classification has no command line of its own — it is what this
+    // command does with a path — so there is no cli exposure to look it up by.
+    let id = CLASSIFY;
     let mut any_out = false;
     let mut results = Vec::with_capacity(args.paths.len());
     for path in &args.paths {

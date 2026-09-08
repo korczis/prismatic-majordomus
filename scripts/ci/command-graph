@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# The command-graph gate: the graph is coherent, and no surface keeps a command catalogue
+# of its own.
+#
+# Two questions, both of which fail loudly rather than quietly:
+#
+#   1. Does the graph build without an error? A duplicate identity, a recipe name two
+#      commands would take, a capability that claims a command line the executable does not
+#      declare, an annotation that names a command that no longer exists, a compatibility
+#      alias pointing at nothing, or a secret argument something would enumerate.
+#   2. Does any workflow file still carry a recipe whose whole body is a call to one of the
+#      two programs? That is a hand-written bridge, and a hand-written bridge is a second
+#      copy of a command's name and description that nothing keeps in step with the first.
+#
+# Exit 0 clean, 10 with every finding named.
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$root"
+
+fail=0
+say() { printf '%s\n' "$*"; }
+
+# ---------------------------------------------------------------- 1. the graph is coherent
+if ! out="$(MAJORDOMUS_NO_BUILD="${MAJORDOMUS_NO_BUILD:-0}" bin/majordomus-cli commands graph --check 2>&1)"; then
+  status=$?
+  say "$out"
+  if [ "$status" = 10 ]; then
+    say "command-graph: the graph carries an error; every finding is named above"
+  else
+    say "command-graph: the graph could not be built (exit $status)"
+  fi
+  fail=1
+else
+  say "$out" | sed -n '1,6p'
+fi
+
+# ---------------------------------------------------------------- 2. no hand-written bridge
+#
+# A recipe body that calls one of the two launchers, or the built executable directly, is a
+# bridge somebody wrote by hand. The generated bridge is not under version control and is
+# not read here. Building the crate is not a bridge: `cargo build --manifest-path
+# apps/majordomus-cli/Cargo.toml` names the crate, not the program.
+#
+# Two recipes are allowed to do it, and they are named rather than pattern-matched: they are
+# what produce the bridge, so they cannot come from it.
+allowed='^(bridge)$'
+while IFS= read -r file; do
+  recipe=""
+  while IFS= read -r line; do
+    case "$line" in
+      [a-zA-Z_]*:*) recipe="${line%%[ :]*}" ;;
+      *bin/majordomus*|*"{{rust_bin}}"*|*"{{shell_bin}}"*|*target/debug/majordomus\ *|*target/release/majordomus\ *)
+        case "$line" in
+          \#*) continue ;;
+        esac
+        [ -n "$recipe" ] || continue
+        if printf '%s' "$recipe" | grep -Eq "$allowed"; then continue; fi
+        say "command-graph: $file declares \`$recipe\`, whose body calls the program directly"
+        say "               a recipe that only spells a command is the generated bridge's work;"
+        say "               remove it and let \`majordomus commands bridge\` write it"
+        fail=1
+        ;;
+    esac
+  done < "$file"
+done < <(ls justfile .just/*.just 2>/dev/null)
+
+[ "$fail" = 0 ] || exit 10
+say "command-graph: coherent, and no surface keeps a command catalogue of its own"

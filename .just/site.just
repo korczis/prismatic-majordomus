@@ -21,9 +21,7 @@ site-deploy *args:
 site-build:
     scripts/site-build
 
-# Build the same documentation source for the running executable: mounted at /docs, written
-# into target/web/docs with the surface.json that makes it discoverable. One source, one
-# generator, two base URLs; `just serve` then answers /docs/ from it.
+# Build the documentation source for the running executable: mounted at /docs, written into target/web/docs with the surface.json that makes it discoverable — one source, one generator, two base URLs, and `just serve` answers /docs/ from it.
 [group('site')]
 site-docs:
     scripts/site-build --serve

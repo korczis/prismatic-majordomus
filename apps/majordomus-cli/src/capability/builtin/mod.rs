@@ -7,6 +7,7 @@
 
 pub mod artifacts;
 pub mod capabilities;
+pub mod commands;
 pub mod continuity;
 pub mod deploy;
 pub mod directories;
@@ -59,6 +60,7 @@ pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
 pub mod why;
 
+pub use commands::{CommandGraphReport, CommandIndex, CommandSummary};
 pub use views::{Empty, ObjectSummary, ObjectView};
 pub use web::{SurfaceReport, SURFACES_URI};
 pub use worktree::{
@@ -72,6 +74,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         repository,
         objects,
         capabilities,
+        commands,
         graph,
         health,
         continuity,

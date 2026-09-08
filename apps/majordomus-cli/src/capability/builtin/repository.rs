@@ -106,7 +106,12 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure {
                     mcp: mcp("majordomus_scope_classify"),
                     http: get("/api/v1/scope/classify"),
-                    cli: Some(CliExposure { path: vec!["scope".into(), "classify".into()] }),
+                    // No command-line exposure: the classification is what `majordomus
+                    // scope <path>` does, and that command is `repository.scope`'s. A
+                    // second declaration naming `scope classify` claimed a command the
+                    // command line does not have, which is the defect the command graph's
+                    // join reports.
+                    cli: None,
                 },
                 tags: ["repository", "scope"],
                 handler: scope_classify,

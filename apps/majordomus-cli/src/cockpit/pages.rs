@@ -10,9 +10,10 @@
 use serde_json::{json, Value};
 
 use crate::capability::builtin::{
-    ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
-    ObjectList, ObjectSummary, Record, RepositoryReport,
+    ArtifactReport, CommandIndex, Continuity, DirectoryReport, DirectoryState, GraphList, Health,
+    HealthStatus, ObjectList, ObjectSummary, Record, RepositoryReport,
 };
+use crate::command_graph::CommandNode;
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
 use crate::generate;
 use crate::graph::Graph;
@@ -2895,4 +2896,303 @@ mod tests {
         assert!(rendered.contains("max=\"50\""), "{rendered}");
         assert!(rendered.contains("data-mj-type=\"integer\""), "{rendered}");
     }
+}
+
+// ------------------------------------------------------------------------ commands
+
+/// Every command this repository offers, from whichever program offers it.
+///
+/// The page carries no command of its own: it asks `commands.list`, which is the same
+/// capability the MCP tool and the HTTP route answer with, over the same graph the
+/// generated workflow bridge and the shell completion are derived from. The filters are the
+/// graph's vocabulary — the program, and what running a command changes — so a chip here and
+/// a `--effect` on the command line select the same set.
+pub fn commands(ctx: &Context, query: &[(String, String)]) -> Page {
+    let origin = param(query, "origin");
+    let effect = param(query, "effect");
+    let search = param(query, "q");
+    let mut input = json!({});
+    if let Some(o) = &origin {
+        input["origin"] = json!(o);
+    }
+    if let Some(e) = &effect {
+        input["effect"] = json!(e);
+    }
+    if let Some(s) = &search {
+        input["search"] = json!(s);
+    }
+    let index: CommandIndex = match ask(ctx, "commands.list", input) {
+        Ok(v) => v,
+        Err(e) => return failed(Area::Commands, "Commands", e),
+    };
+
+    let here = |key: &str, value: Option<&str>| -> String {
+        let mut parts: Vec<String> = Vec::new();
+        for (k, v) in [
+            ("origin", origin.as_deref()),
+            ("effect", effect.as_deref()),
+            ("q", search.as_deref()),
+        ] {
+            let v = if k == key { value } else { v };
+            if let Some(v) = v {
+                parts.push(format!("{k}={}", percent_encode(v)));
+            }
+        }
+        if parts.is_empty() {
+            "/cockpit/commands".into()
+        } else {
+            format!("/cockpit/commands?{}", parts.join("&"))
+        }
+    };
+
+    let programs = chips(
+        [
+            ("every program", None),
+            ("executable", Some("executable")),
+            ("shell tool", Some("tool")),
+            ("workflow", Some("workflow")),
+        ]
+        .into_iter()
+        .map(|(label, value)| {
+            (
+                label.to_string(),
+                here("origin", value),
+                index
+                    .commands
+                    .iter()
+                    .filter(|c| value.is_none_or(|v| c.origin == v))
+                    .count(),
+                origin.as_deref() == value,
+            )
+        })
+        .collect(),
+    );
+
+    let effects = chips(
+        [
+            ("any effect", None),
+            ("read-only", Some("read_only")),
+            ("up to local", Some("local_mutation")),
+            ("up to repository", Some("repository_mutation")),
+        ]
+        .into_iter()
+        .map(|(label, value)| {
+            (
+                label.to_string(),
+                here("effect", value),
+                0,
+                effect.as_deref() == value,
+            )
+        })
+        .collect(),
+    );
+
+    let rows = index
+        .commands
+        .iter()
+        .map(|c| {
+            row(vec![
+                cell(link(
+                    format!("/cockpit/commands/{}", percent_encode(&c.id)),
+                    c.invocation.clone(),
+                )),
+                cell(badge(effect_status(&c.effect), c.effect.replace('_', " "))),
+                text_cell(c.origin.clone()),
+                cell(match &c.projections.workflow {
+                    Some(w) => mono(format!("just {w}")),
+                    None => el("span").class("mj-note").text("—"),
+                }),
+                cell(match &c.projections.mcp {
+                    Some(t) => mono(t.clone()),
+                    None => el("span").class("mj-note").text("—"),
+                }),
+                text_cell(c.summary.clone()),
+            ])
+        })
+        .collect::<Vec<_>>();
+
+    Page::new(
+        Area::Commands,
+        "Commands",
+        el("div")
+            .class("mj-grid")
+            .child(card_with(
+                "What this repository offers",
+                badge("ok", index.fingerprint.clone()),
+                el("div")
+                    .child(
+                        el("div")
+                            .class("mj-stats")
+                            .child(statistic(
+                                index.total.to_string(),
+                                "commands",
+                                "the command graph",
+                            ))
+                            .child(statistic(
+                                index.commands.len().to_string(),
+                                "shown",
+                                "this filter",
+                            )),
+                    )
+                    .child(programs)
+                    .child(effects)
+                    .child(el("p").class("mj-note").text(
+                        "Composed from the three declarations that already exist: the clap tree of the Rust executable, the shipped command registry of the shell tool, and the recipes the workflow runner describes. Where a command appears is derived from what running it changes, never declared.",
+                    )),
+            ))
+            .child(card("Every command", table(
+                &["command", "effect", "program", "workflow", "mcp tool", "summary"],
+                rows,
+            ))),
+    )
+    .subtitle("Every command of every program here, and every surface that carries it.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Commands", None)])
+}
+
+/// One command: what it takes, what running it changes, and every surface that carries it.
+pub fn command(ctx: &Context, id: &str) -> Page {
+    let node: CommandNode = match ask(ctx, "commands.get", json!({ "id": id })) {
+        Ok(v) => v,
+        Err(e) => {
+            return failed(Area::Commands, "Command", e)
+                .status(404)
+                .trail(vec![
+                    ("Cockpit", Some("/cockpit")),
+                    ("Commands", Some("/cockpit/commands")),
+                    (id, None),
+                ])
+        }
+    };
+
+    let arguments = table(
+        &["argument", "values from", "required", "help"],
+        node.arguments
+            .iter()
+            .map(|a| {
+                let spelling = match &a.long {
+                    Some(long) => format!("--{long}"),
+                    None => format!("<{}>", a.name.to_uppercase()),
+                };
+                row(vec![
+                    cell(mono(spelling)),
+                    cell(tag(word(&a.source).replace('_', " "))),
+                    text_cell(if a.required { "yes" } else { "—" }),
+                    text_cell(a.help.clone()),
+                ])
+            })
+            .collect(),
+    );
+
+    let p = &node.projections;
+    let surfaces = facts(vec![
+        (
+            "Command line",
+            Node::Element(match &p.cli {
+                Some(v) => mono(v.clone()),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+        (
+            "Workflow",
+            Node::Element(match &p.workflow {
+                Some(v) => mono(format!("just {v}")),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+        (
+            "MCP tool",
+            Node::Element(match &p.mcp {
+                Some(v) => mono(v.clone()),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+        (
+            "HTTP",
+            Node::Element(match &p.http {
+                Some(v) => mono(v.clone()),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+        ("Declared in", Node::Element(mono(node.provenance.declared_in.clone()))),
+        (
+            "Capability",
+            Node::Element(match &node.provenance.capability {
+                Some(c) => link(
+                    format!("/cockpit/capabilities/{}", percent_encode(c.as_str())),
+                    c.to_string(),
+                ),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+    ]);
+
+    let effect_word = word(&node.effect).replace('_', " ");
+    Page::new(
+        Area::Commands,
+        node.invocation.clone(),
+        el("div")
+            .class("mj-grid")
+            .child(card_with(
+                "What it is",
+                badge(effect_status(&word(&node.effect)), effect_word),
+                el("div")
+                    .child(el("p").text(node.summary.clone()))
+                    .child(facts(vec![
+                        ("Identity", Node::Element(mono(node.id.to_string()))),
+                        ("Program", Node::Element(tag(word(&node.origin)))),
+                        (
+                            "Runs",
+                            Node::Element(tag(word(&node.interactivity).replace('_', " "))),
+                        ),
+                        (
+                            "Requires",
+                            Node::Element(el("span").class("mj-marks").children(
+                                node.availability
+                                    .requires
+                                    .iter()
+                                    .map(|r| tag(word(r).replace('_', " ")))
+                                    .collect::<Vec<_>>(),
+                            )),
+                        ),
+                    ]))
+                    .when(p.withheld.is_some(), |d| {
+                        d.child(alert(
+                            "warn",
+                            format!(
+                                "No machine surface carries this command: {}",
+                                p.withheld.clone().unwrap_or_default()
+                            ),
+                        ))
+                    }),
+            ))
+            .child(card("Where it appears", surfaces))
+            .when(!node.arguments.is_empty(), |d| {
+                d.child(card("Arguments", arguments))
+            }),
+    )
+    .subtitle(node.description.clone().unwrap_or_else(|| node.summary.clone()))
+    .trail(vec![
+        ("Cockpit", Some("/cockpit")),
+        ("Commands", Some("/cockpit/commands")),
+        (node.id.as_str(), None),
+    ])
+}
+
+/// The badge status for an effect: what a reader should feel about running it.
+fn effect_status(effect: &str) -> &'static str {
+    match effect {
+        "read_only" => "ok",
+        "local_mutation" => "info",
+        "repository_mutation" | "network_mutation" => "warn",
+        _ => "fail",
+    }
+}
+
+/// One query parameter, when it carries something.
+fn param(query: &[(String, String)], key: &str) -> Option<String> {
+    query
+        .iter()
+        .find(|(k, _)| k == key)
+        .map(|(_, v)| v.clone())
+        .filter(|v| !v.is_empty())
 }

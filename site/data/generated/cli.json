@@ -66,6 +66,18 @@
           "route": "/docs/cli/env/"
         },
         {
+          "about": "Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it",
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        },
+        {
+          "about": "Completion for any surface, answered from the command graph: the candidates a shell asks for, and the one-time integration that asks",
+          "command": "majordomus completion",
+          "name": "completion",
+          "route": "/docs/cli/completion/"
+        },
+        {
           "about": "The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard",
           "command": "majordomus worktree",
           "name": "worktree",
@@ -7533,6 +7545,20 @@
           "value_name": "MODE"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Also refresh the workflow bridge under .ai/local/cache/ when a declaration behind it has changed. A few `stat` calls when nothing has; never a build, never a network call",
+          "long": "bridge",
+          "name": "bridge",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "BRIDGE"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -7788,6 +7814,1353 @@
       ],
       "route": "/docs/cli/env/explain/",
       "usage": "majordomus env explain [OPTIONS] [FIELD]"
+    },
+    {
+      "about": "Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every command, one line each: what it is, what running it changes, and where it is projected",
+          "command": "majordomus commands list",
+          "name": "list",
+          "route": "/docs/cli/commands/list/"
+        },
+        {
+          "about": "One command in full: its arguments, its effect, what it needs, and every surface that carries it",
+          "command": "majordomus commands show",
+          "name": "show",
+          "route": "/docs/cli/commands/show/"
+        },
+        {
+          "about": "Why one command appears where it does: the declaration it came from, the policy that placed it, and the reason for every surface that withholds it",
+          "command": "majordomus commands explain",
+          "name": "explain",
+          "route": "/docs/cli/commands/explain/"
+        },
+        {
+          "about": "The whole graph as one document, with its fingerprint and every diagnostic",
+          "command": "majordomus commands graph",
+          "name": "graph",
+          "route": "/docs/cli/commands/graph/"
+        },
+        {
+          "about": "Materialise the workflow bridge from the graph, and refresh the cache the completion reads; writes nothing when the graph has not changed",
+          "command": "majordomus commands bridge",
+          "name": "bridge",
+          "route": "/docs/cli/commands/bridge/"
+        }
+      ],
+      "command": "majordomus commands",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "commands"
+          ],
+          "command": "majordomus commands",
+          "description": "The command graph, composed from the three declarations that already exist: the clap tree of this executable, the shipped command registry of the shell tool, and the recipes the workflow runner describes. One line per command, with the program that runs it and what running it changes.",
+          "expectation": "exits 0; prints commands, executable, read-only",
+          "id": "commands-list",
+          "setup": [],
+          "title": "Every command this repository offers"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "commands",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "commands"
+      ],
+      "route": "/docs/cli/commands/",
+      "usage": "majordomus commands [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Every command, one line each: what it is, what running it changes, and where it is projected",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only the commands of this program",
+          "long": "origin",
+          "name": "origin",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "This executable",
+              "name": "executable"
+            },
+            {
+              "help": "The shell tool, bin/majordomus",
+              "name": "tool"
+            },
+            {
+              "help": "A workflow the repository declares",
+              "name": "workflow"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ORIGIN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only the commands whose effect is at most this",
+          "long": "effect",
+          "name": "effect",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Reads and answers",
+              "name": "read-only"
+            },
+            {
+              "help": "Writes only what no commit carries",
+              "name": "local-mutation"
+            },
+            {
+              "help": "Writes tracked files",
+              "name": "repository-mutation"
+            },
+            {
+              "help": "Reaches the network with an effect",
+              "name": "network-mutation"
+            },
+            {
+              "help": "Removes something",
+              "name": "destructive"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EFFECT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only the commands matching this text, in their invocation, summary, tags or identity",
+          "long": "search",
+          "name": "search",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TEXT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands list",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "list",
+            "--effect",
+            "read-only"
+          ],
+          "command": "majordomus commands list --effect read-only",
+          "description": "The filters are the graph's own vocabulary rather than a search over text: `--effect read-only` is every command that changes nothing anywhere, which is the same predicate the exposure policy uses to decide what a machine surface may call.",
+          "expectation": "exits 0; prints read-only",
+          "id": "commands-list-filtered",
+          "setup": [],
+          "title": "Only what reads"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "list",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "list"
+      ],
+      "route": "/docs/cli/commands/list/",
+      "usage": "majordomus commands list [OPTIONS]"
+    },
+    {
+      "about": "One command in full: its arguments, its effect, what it needs, and every surface that carries it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The command's identity, `executable.worktree.status`",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands show",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "show",
+            "executable.worktree.status"
+          ],
+          "command": "majordomus commands show executable.worktree.status",
+          "description": "The arguments with the source of each one's values, the effect, and the projections: the command line, the workflow recipe, the MCP tool, the HTTP route, the Cockpit and the page. A surface that withholds it says why.",
+          "expectation": "exits 0; prints executable.worktree.status, projections",
+          "id": "commands-show",
+          "setup": [],
+          "title": "One command, and every surface that carries it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "show",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "show"
+      ],
+      "route": "/docs/cli/commands/show/",
+      "usage": "majordomus commands show [OPTIONS] <ID>"
+    },
+    {
+      "about": "Why one command appears where it does: the declaration it came from, the policy that placed it, and the reason for every surface that withholds it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The command's identity, `executable.worktree.status`",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands explain",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "explain",
+            "executable.serve"
+          ],
+          "command": "majordomus commands explain executable.serve",
+          "description": "The same command with its provenance: the file that declares it, the reader that found it, the capability behind it when there is one, what it requires, and the file the exposure policy lives in. Nothing about a command's placement is a mystery a grep has to solve.",
+          "expectation": "exits 0; prints declared in, policy",
+          "id": "commands-explain",
+          "setup": [],
+          "title": "Why a command appears where it does"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "explain",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "explain"
+      ],
+      "route": "/docs/cli/commands/explain/",
+      "usage": "majordomus commands explain [OPTIONS] <ID>"
+    },
+    {
+      "about": "The whole graph as one document, with its fingerprint and every diagnostic",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Exit 10 when the graph carries an error",
+          "long": "check",
+          "name": "check",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "CHECK"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands graph",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "graph",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus commands graph --format json",
+          "description": "Deterministic and fingerprinted: two builds over one tree produce the same bytes, which is what lets the workflow bridge, the completion index and the Cockpit all key on the fingerprint instead of regenerating.",
+          "expectation": "exits 0; prints one JSON document carrying /schema, /fingerprint, /commands",
+          "id": "commands-graph-json",
+          "setup": [],
+          "title": "The whole graph as one document"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "graph",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "graph"
+      ],
+      "route": "/docs/cli/commands/graph/",
+      "usage": "majordomus commands graph [OPTIONS]"
+    },
+    {
+      "about": "Materialise the workflow bridge from the graph, and refresh the cache the completion reads; writes nothing when the graph has not changed",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus commands",
+          "name": "commands",
+          "route": "/docs/cli/commands/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Exit 10 when the materialised bridge is not the one this graph projects; write nothing",
+          "long": "check",
+          "name": "check",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "CHECK"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus commands bridge",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "commands",
+            "bridge"
+          ],
+          "command": "majordomus commands bridge",
+          "description": "Every command of both programs, written as a recipe that runs the canonical program with the caller's own arguments. It goes under .ai/local/cache/, which no commit carries, and it is rewritten only when the graph's fingerprint changes.",
+          "expectation": "exits 0; prints bridge, recipe",
+          "id": "commands-bridge",
+          "setup": [],
+          "title": "The workflow runner's recipes, derived"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "bridge",
+      "parent_route": "/docs/cli/commands/",
+      "path": [
+        "majordomus",
+        "commands",
+        "bridge"
+      ],
+      "route": "/docs/cli/commands/bridge/",
+      "usage": "majordomus commands bridge [OPTIONS]"
+    },
+    {
+      "about": "Completion for any surface, answered from the command graph: the candidates a shell asks for, and the one-time integration that asks",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        }
+      ],
+      "children": [
+        {
+          "about": "The candidates for one command line, from the command graph. What a shell adapter calls on every TAB",
+          "command": "majordomus completion query",
+          "name": "query",
+          "route": "/docs/cli/completion/query/"
+        },
+        {
+          "about": "The shell integration to load once, which carries no command of its own and asks this executable for every candidate",
+          "command": "majordomus completion init",
+          "name": "init",
+          "route": "/docs/cli/completion/init/"
+        }
+      ],
+      "command": "majordomus completion",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "completion"
+          ],
+          "command": "majordomus completion",
+          "description": "With no subcommand, the shell integration for zsh. It contains no command, no flag and no identifier: every candidate comes from a query against the command graph of the repository the shell is in, so one integration serves every checkout and never goes stale.",
+          "expectation": "exits 0; prints completion query, compdef",
+          "id": "completion-default",
+          "setup": [],
+          "title": "The integration a person installs once"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "completion",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "completion"
+      ],
+      "route": "/docs/cli/completion/",
+      "usage": "majordomus completion [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "The candidates for one command line, from the command graph. What a shell adapter calls on every TAB",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus completion",
+          "name": "completion",
+          "route": "/docs/cli/completion/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "cli"
+          ],
+          "global": false,
+          "help": "Which surface the words are spelled for",
+          "long": "surface",
+          "name": "surface",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "The command line of either program",
+              "name": "cli"
+            },
+            {
+              "help": "The workflow runner",
+              "name": "workflow"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SURFACE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The index of the word the cursor is in; the default is a new word after the last",
+          "long": "cursor",
+          "name": "cursor",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "N"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The words of the command line, the program's own name first",
+          "name": "words",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "WORD"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        }
+      ],
+      "children": [],
+      "command": "majordomus completion query",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "completion",
+            "query",
+            "--surface",
+            "cli",
+            "--",
+            "majordomus",
+            "work"
+          ],
+          "command": "majordomus completion query --surface cli -- majordomus work",
+          "description": "The words of the command line and the position of the cursor; back come the candidates with their descriptions. The same call answers the workflow runner's completion with `--surface workflow`, resolving the recipe name to the command it bridges and then completing that command's own arguments.",
+          "expectation": "exits 0; prints worktree",
+          "id": "completion-query",
+          "setup": [],
+          "title": "What a shell asks on every TAB"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "query",
+      "parent_route": "/docs/cli/completion/",
+      "path": [
+        "majordomus",
+        "completion",
+        "query"
+      ],
+      "route": "/docs/cli/completion/query/",
+      "usage": "majordomus completion query [OPTIONS] [WORD]"
+    },
+    {
+      "about": "The shell integration to load once, which carries no command of its own and asks this executable for every candidate",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus completion",
+          "name": "completion",
+          "route": "/docs/cli/completion/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "zsh"
+          ],
+          "global": false,
+          "help": "Which shell to print the integration for",
+          "long": "shell",
+          "name": "shell",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "zsh",
+              "name": "zsh"
+            },
+            {
+              "help": "bash",
+              "name": "bash"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SHELL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        }
+      ],
+      "children": [],
+      "command": "majordomus completion init",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "completion",
+            "init",
+            "--shell",
+            "bash"
+          ],
+          "command": "majordomus completion init --shell bash",
+          "description": "A different shell's protocol, the same question. Both adapters read the words being completed, find the cursor, ask this executable and print what comes back.",
+          "expectation": "exits 0; prints completion query, complete -F",
+          "id": "completion-init-bash",
+          "setup": [],
+          "title": "The same, for bash"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "init",
+      "parent_route": "/docs/cli/completion/",
+      "path": [
+        "majordomus",
+        "completion",
+        "init"
+      ],
+      "route": "/docs/cli/completion/init/",
+      "usage": "majordomus completion init [OPTIONS]"
     },
     {
       "about": "The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard",
@@ -10328,10 +11701,10 @@
     }
   ],
   "counts": {
-    "arguments": 456,
-    "commands": 62,
-    "examples": 68,
-    "runnable": 58
+    "arguments": 511,
+    "commands": 71,
+    "examples": 77,
+    "runnable": 67
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.2.0",

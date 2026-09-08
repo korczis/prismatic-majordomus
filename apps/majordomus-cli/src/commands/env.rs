@@ -49,7 +49,8 @@ pub fn run(args: EnvArgs) -> Result<u8> {
             shell,
             banner,
             mode,
-        }) => export_command(&args.repo, &shell, banner, mode.as_deref()),
+            bridge,
+        }) => export_command(&args.repo, &shell, banner, mode.as_deref(), bridge),
     }
 }
 
@@ -388,6 +389,7 @@ fn export_command(
     shell: &str,
     with_banner: bool,
     mode: Option<&str>,
+    with_bridge: bool,
 ) -> Result<u8> {
     let dialect = Dialect::parse(shell).ok_or_else(|| Error::Protocol {
         reason: format!(
@@ -407,6 +409,9 @@ fn export_command(
         // The same snapshot, rendered for the other stream. One resolution, two surfaces:
         // this is the whole reason an adapter makes one call rather than two.
         draw(&environment, mode, &Presentation::detect());
+    }
+    if with_bridge {
+        refresh_bridge(repo);
     }
     Ok(0)
 }
@@ -456,7 +461,7 @@ mod tests {
     #[test]
     fn a_shell_this_does_not_write_for_is_refused_by_name() {
         let args = RepoArgs::default();
-        match export_command(&args, "powershell", false, None) {
+        match export_command(&args, "powershell", false, None, false) {
             Err(Error::Protocol { reason }) => assert!(reason.contains("powershell"), "{reason}"),
             other => panic!("{other:?}"),
         }
@@ -478,4 +483,31 @@ mod tests {
             0
         );
     }
+}
+
+/// Refresh the workflow bridge if one of the declarations behind it has changed.
+///
+/// The third thing an entry into the repository is for. It is here rather than in the
+/// shell entry point because deciding whether a generated file is current is exactly the
+/// kind of work the entry point may not do: it would be a second implementation of the
+/// staleness rule, running on every `cd`, that nothing tests.
+///
+/// Silent, and never fatal. A repository the graph cannot be built for still has an
+/// environment, and a failure here must not make a shell report that entering the
+/// directory failed.
+fn refresh_bridge(repo: &RepoArgs) {
+    use crate::command_graph::{bridge, load};
+    let Ok(root) = load::root(repo) else {
+        return;
+    };
+    if bridge::is_current(&root) {
+        return;
+    }
+    let Ok(loaded) = load::full(repo) else {
+        return;
+    };
+    if !loaded.graph.errors().is_empty() {
+        return;
+    }
+    let _ = bridge::materialise(&root, &loaded.graph);
 }
