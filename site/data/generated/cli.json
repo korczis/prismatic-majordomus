@@ -542,6 +542,12 @@
           "route": "/docs/cli/capabilities/schema/"
         },
         {
+          "about": "Where each capability is projected, and every claim its surface does not answer",
+          "command": "majordomus capabilities projections",
+          "name": "projections",
+          "route": "/docs/cli/capabilities/projections/"
+        },
+        {
           "about": "Build the registry and every projection; exit 10 with every violation named",
           "command": "majordomus capabilities validate",
           "name": "validate",
@@ -1014,6 +1020,176 @@
       ],
       "route": "/docs/cli/capabilities/schema/",
       "usage": "majordomus capabilities schema [OPTIONS] <ID>"
+    },
+    {
+      "about": "Where each capability is projected, and every claim its surface does not answer",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus capabilities",
+          "name": "capabilities",
+          "route": "/docs/cli/capabilities/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only capabilities composed in this module",
+          "long": "module",
+          "name": "module",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MODULE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only the capabilities whose declared exposures are not all answered",
+          "long": "unmet",
+          "name": "unmet",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "UNMET"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        }
+      ],
+      "children": [],
+      "command": "majordomus capabilities projections",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "capabilities",
+            "projections",
+            "--unmet"
+          ],
+          "command": "majordomus capabilities projections --unmet",
+          "description": "`rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written.",
+          "expectation": "exits 0",
+          "id": "capabilities-projections-unmet",
+          "setup": [],
+          "title": "Every exposure a capability claims that its surface does not answer"
+        },
+        {
+          "argv": [
+            "capabilities",
+            "projections",
+            "--module",
+            "worktree"
+          ],
+          "command": "majordomus capabilities projections --module worktree",
+          "description": "A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one.",
+          "expectation": "exits 0; prints worktree.topology, majordomus worktree topology",
+          "id": "capabilities-projections-module",
+          "setup": [],
+          "title": "Where one module's capabilities appear"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "projections",
+      "parent_route": "/docs/cli/capabilities/",
+      "path": [
+        "majordomus",
+        "capabilities",
+        "projections"
+      ],
+      "route": "/docs/cli/capabilities/projections/",
+      "usage": "majordomus capabilities projections [OPTIONS]"
     },
     {
       "about": "Build the registry and every projection; exit 10 with every violation named",
@@ -10939,10 +11115,10 @@
     }
   ],
   "counts": {
-    "arguments": 498,
-    "commands": 63,
-    "examples": 70,
-    "runnable": 59
+    "arguments": 505,
+    "commands": 64,
+    "examples": 72,
+    "runnable": 60
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.3.1",
