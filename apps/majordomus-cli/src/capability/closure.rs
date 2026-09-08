@@ -188,37 +188,7 @@ pub struct Matrix {
 /// ```
 pub fn findings(registry: &CapabilityRegistry, tree: &CommandDoc) -> Vec<Finding> {
     let commands = index(tree);
-    let mut out = Vec::new();
-    for c in registry.iter() {
-        let Some(cli) = &c.exposure.cli else { continue };
-        let claim = format!("majordomus {}", cli.path.join(" "));
-        match commands.get(cli.path.as_slice()) {
-            None => out.push(Finding {
-                code: "CLOSURE_CLI_ABSENT",
-                capability: c.id.to_string(),
-                projection: Projection::Cli,
-                claim,
-                detail: format!(
-                    "the clap declaration has no command `{}`",
-                    cli.path.join(" ")
-                ),
-                source: c.provenance.source_path(),
-                rule: RULE,
-            }),
-            Some(cmd) if !cmd.executable => out.push(Finding {
-                code: "CLOSURE_CLI_NOT_RUNNABLE",
-                capability: c.id.to_string(),
-                projection: Projection::Cli,
-                claim,
-                detail:
-                    "the command exists but only groups other commands and cannot be run on its own"
-                        .to_string(),
-                source: c.provenance.source_path(),
-                rule: RULE,
-            }),
-            Some(_) => {}
-        }
-    }
+    let mut out: Vec<Finding> = registry.iter().filter_map(|c| check(c, &commands)).collect();
     out.sort_by(|a, b| {
         (a.capability.as_str(), a.projection, a.code).cmp(&(
             b.capability.as_str(),
@@ -311,6 +281,40 @@ fn row(c: &Capability, commands: &BTreeMap<&[String], &CommandDoc>) -> Row {
     }
 }
 
+/// The whole comparison, for one descriptor: `None` when the claim is answered.
+///
+/// [`findings`] maps this over the registry, and the tests drive it directly over one
+/// descriptor, so the rule is proved where it is written rather than by a second copy of it
+/// in the test module.
+fn check(c: &Capability, commands: &BTreeMap<&[String], &CommandDoc>) -> Option<Finding> {
+    let cli = c.exposure.cli.as_ref()?;
+    let claim = format!("majordomus {}", cli.path.join(" "));
+    let finding = |code, detail| Finding {
+        code,
+        capability: c.id.to_string(),
+        projection: Projection::Cli,
+        claim: claim.clone(),
+        detail,
+        source: c.provenance.source_path(),
+        rule: RULE,
+    };
+    match commands.get(cli.path.as_slice()) {
+        None => Some(finding(
+            "CLOSURE_CLI_ABSENT",
+            format!(
+                "the clap declaration has no command `{}`",
+                cli.path.join(" ")
+            ),
+        )),
+        Some(cmd) if !cmd.executable => Some(finding(
+            "CLOSURE_CLI_NOT_RUNNABLE",
+            "the command exists but only groups other commands and cannot be run on its own"
+                .to_string(),
+        )),
+        Some(_) => None,
+    }
+}
+
 /// The clap tree by path-after-`majordomus`, so a claim is looked up rather than searched.
 fn index(tree: &CommandDoc) -> BTreeMap<&[String], &CommandDoc> {
     tree.flatten()
@@ -358,52 +362,40 @@ mod tests {
         }
     }
 
-    /// The check is a pure function of two structures, so a finding can be produced without
-    /// a registry: this drives the same comparison `findings` runs, over one descriptor.
-    fn check_one(c: &Capability, tree: &CommandDoc) -> Vec<Finding> {
-        let commands = index(tree);
-        let mut out = Vec::new();
-        let cli = c.exposure.cli.as_ref().unwrap();
-        let claim = format!("majordomus {}", cli.path.join(" "));
-        match commands.get(cli.path.as_slice()) {
-            None => out.push(Finding {
-                code: "CLOSURE_CLI_ABSENT",
-                capability: c.id.to_string(),
-                projection: Projection::Cli,
-                claim,
-                detail: String::new(),
-                source: c.provenance.source_path(),
-                rule: RULE,
-            }),
-            Some(cmd) if !cmd.executable => out.push(Finding {
-                code: "CLOSURE_CLI_NOT_RUNNABLE",
-                capability: c.id.to_string(),
-                projection: Projection::Cli,
-                claim,
-                detail: String::new(),
-                source: c.provenance.source_path(),
-                rule: RULE,
-            }),
-            Some(_) => {}
-        }
-        out
+    /// One descriptor against the shipped command line, through the real comparison.
+    fn check_one(c: &Capability, tree: &CommandDoc) -> Option<Finding> {
+        check(c, &index(tree))
     }
 
     #[test]
     fn a_claim_the_command_line_does_not_answer_is_a_finding() {
         let tree = crate::cli::tree();
         let bogus = claiming("demo.ghost", &["ghost", "walks"]);
-        let found = check_one(&bogus, &tree);
-        assert_eq!(found.len(), 1, "an absent command is one finding");
-        assert_eq!(found[0].code, "CLOSURE_CLI_ABSENT");
-        assert_eq!(found[0].capability, "demo.ghost");
-        assert_eq!(found[0].claim, "majordomus ghost walks");
+        let found = check_one(&bogus, &tree).expect("an absent command is a finding");
+        assert_eq!(found.code, "CLOSURE_CLI_ABSENT");
+        assert_eq!(found.capability, "demo.ghost");
+        assert_eq!(found.claim, "majordomus ghost walks");
+        assert!(found.detail.contains("ghost walks"));
         // the finding names the file to edit, repository-relative
         assert_eq!(
-            found[0].source,
+            found.source,
             "apps/majordomus-cli/src/capability/builtin/demo.rs"
         );
-        assert!(!found[0].source.starts_with('/'), "never a machine path");
+        assert!(!found.source.starts_with('/'), "never a machine path");
+
+        // the rendering a person reads carries every part of the repair, and no machine path
+        let shown = found.to_string();
+        for part in [
+            "CLOSURE_CLI_ABSENT",
+            "demo.ghost",
+            "majordomus ghost walks",
+            "apps/majordomus-cli/src/capability/builtin/demo.rs",
+            Projection::Cli.declaration(),
+            RULE,
+            "majordomus capabilities projections --unmet",
+        ] {
+            assert!(shown.contains(part), "the finding does not show {part}:\n{shown}");
+        }
     }
 
     #[test]
@@ -417,9 +409,10 @@ mod tests {
             .find(|c| !c.executable && c.path.len() > 1)
             .expect("the command line has at least one command that only groups others");
         let words: Vec<&str> = group.path[1..].iter().map(String::as_str).collect();
-        let found = check_one(&claiming("demo.group", &words), &tree);
-        assert_eq!(found.len(), 1, "{} should be unrunnable", group.command());
-        assert_eq!(found[0].code, "CLOSURE_CLI_NOT_RUNNABLE");
+        let found = check_one(&claiming("demo.group", &words), &tree)
+            .unwrap_or_else(|| panic!("{} should be unrunnable", group.command()));
+        assert_eq!(found.code, "CLOSURE_CLI_NOT_RUNNABLE");
+        assert!(found.detail.contains("cannot be run"));
     }
 
     #[test]
@@ -437,7 +430,7 @@ mod tests {
         );
         for words in &runnable {
             assert!(
-                check_one(&claiming("demo.ok", words), &tree).is_empty(),
+                check_one(&claiming("demo.ok", words), &tree).is_none(),
                 "majordomus {} is runnable and must not be a finding",
                 words.join(" ")
             );
@@ -495,6 +488,64 @@ mod tests {
                 r.id
             );
         }
+    }
+
+    #[test]
+    fn a_row_never_reports_a_command_line_the_claim_does_not_have() {
+        // the row is what every surface renders, so a broken claim must not appear there as
+        // a working command: the finding says it is broken, the row says nothing
+        let tree = crate::cli::tree();
+        let commands = index(&tree);
+        let bogus = claiming("demo.ghost", &["ghost", "walks"]);
+        let r = row(&bogus, &commands);
+        assert_eq!(r.id, "demo.ghost");
+        assert_eq!(r.module, "demo");
+        assert_eq!(r.kind, "query");
+        assert_eq!(r.cli, None, "a claim clap cannot answer is not shown as a command");
+        assert!(!r.closed, "and the row says the claim is unmet");
+        assert_eq!(r.http, None);
+        assert_eq!(r.mcp_tool, None);
+        assert_eq!(r.mcp_resource, None);
+
+        // one that resolves is reported, and closed
+        let ok = claiming("demo.ok", &["scope"]);
+        let r = row(&ok, &commands);
+        assert_eq!(r.cli.as_deref(), Some("majordomus scope"));
+        assert!(r.closed);
+    }
+
+    #[test]
+    fn the_matrix_serialises_as_the_shape_every_transport_answers() {
+        // HTTP, MCP and the command line all render this value; the fields a client reads
+        // are asserted here rather than in three transport tests
+        let tree = crate::cli::tree();
+        let commands = index(&tree);
+        let m = Matrix {
+            rows: vec![row(&claiming("demo.ok", &["scope"]), &commands)],
+            findings: vec![],
+            unbacked: vec!["majordomus serve".to_string()],
+        };
+        let v = serde_json::to_value(&m).expect("the matrix serialises");
+        assert_eq!(v["rows"][0]["id"], "demo.ok");
+        assert_eq!(v["rows"][0]["cli"], "majordomus scope");
+        assert_eq!(v["rows"][0]["closed"], true);
+        assert_eq!(v["unbacked"][0], "majordomus serve");
+        // absent exposures are omitted rather than rendered as null, so a client can ask
+        // "is there an http route" without distinguishing null from missing
+        assert!(v["rows"][0].get("http").is_none());
+        // findings are not part of the wire shape: `--unmet` filters rows, and the failure
+        // text belongs to `capabilities validate`
+        assert!(v.get("findings").is_none());
+    }
+
+    #[test]
+    fn the_projection_names_itself_and_the_file_it_is_declared_in() {
+        assert_eq!(Projection::Cli.name(), "cli");
+        assert_eq!(Projection::Cli.declaration(), crate::cli::DECLARATION);
+        assert!(
+            !Projection::Cli.declaration().starts_with('/'),
+            "repository-relative, never a machine path"
+        );
     }
 
     #[test]

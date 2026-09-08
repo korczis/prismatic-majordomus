@@ -342,4 +342,81 @@ mod tests {
             );
         }
     }
+
+    /// The handler's two filters and its one refusal, over the registry this crate ships.
+    /// `Context::new` needs no repository: the filters read the registry and the clap tree,
+    /// and neither touches the index.
+    #[test]
+    fn projections_filters_by_module_and_refuses_a_module_that_does_not_exist() {
+        use crate::capability::{CapabilityRegistry, Context};
+        use crate::git::GitState;
+        use crate::index::{Index, RepositoryInfo, State};
+        use std::sync::Arc;
+
+        // an index with no objects: the filters read the registry and the clap tree, and
+        // neither of them touches the layer
+        let index = Index {
+            repository: RepositoryInfo {
+                root: "/tmp/projections".into(),
+                layer_schema: "ai-repository/v1".into(),
+                sections: Default::default(),
+                git: GitState::Unavailable {
+                    reason: "unit test".into(),
+                },
+                discovery: "filesystem".into(),
+                source_classes: vec![],
+                kind_sources: vec![],
+                scope_origin: crate::scope::Origin::Distribution,
+                scope_path: String::new(),
+            },
+            objects: vec![],
+            diagnostics: vec![],
+            state: State::Ok,
+            fingerprint: String::new(),
+            scoped: Default::default(),
+            distribution: None,
+        };
+        let registry = Arc::new(
+            CapabilityRegistry::builder()
+                .with_modules(super::super::modules())
+                .build()
+                .expect("the builtin registry builds"),
+        );
+        let ctx = Context::new(Arc::new(index), Arc::clone(&registry));
+
+        // every row, unfiltered
+        let all = capabilities_projections(&ctx, ProjectionsInput::default()).expect("all rows");
+        assert_eq!(all.rows.len(), registry.len());
+        assert!(
+            all.unbacked.iter().any(|c| c == "majordomus serve"),
+            "the process commands are the debt this reports"
+        );
+
+        // one module
+        let one = capabilities_projections(
+            &ctx,
+            ProjectionsInput { module: Some("capabilities".into()), unmet: false },
+        )
+        .expect("one module");
+        assert!(!one.rows.is_empty());
+        assert!(one.rows.iter().all(|r| r.module == "capabilities"));
+        assert!(one.rows.len() < all.rows.len());
+
+        // the closure this crate ships: nothing unmet
+        let unmet = capabilities_projections(
+            &ctx,
+            ProjectionsInput { module: None, unmet: true },
+        )
+        .expect("unmet");
+        assert!(unmet.rows.is_empty(), "the shipped declaration is closed");
+
+        // a module nobody composes is a refusal naming it, not an empty answer that reads
+        // as "this module has no capabilities"
+        let err = capabilities_projections(
+            &ctx,
+            ProjectionsInput { module: Some("nonesuch".into()), unmet: false },
+        )
+        .expect_err("an unknown module is refused");
+        assert!(matches!(err, CapabilityError::InvalidInput(ref m) if m.contains("nonesuch")), "{err:?}");
+    }
 }

@@ -6,7 +6,11 @@
   <p class="mt-2 text-sm text-body">{{ n.about }}</p>
   {%- if n.long_about %}<p class="mt-2 whitespace-pre-line text-sm text-body">{{ n.long_about }}</p>{% endif -%}
   <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="px-3 py-2 text-xs text-body"><code>{{ n.usage }}</code></pre></div>
-  <p class="mt-2 text-sm"><a href="{{ get_url(path=n.route, trailing_slash=true) }}" class="font-mono text-fg-brand underline">{{ n.route }}</a> <span class="text-body-subtle">— this command on its own page</span></p>
+  {#- `break-all`: the route is one unbreakable monospace run and grows with the command
+      tree, so a third path segment overflows a 320px viewport. The heading above and the
+      source links elsewhere on the page already break; this one did not, and it was the
+      only overflow the probe found on /registry/cli/. -#}
+  <p class="mt-2 text-sm"><a href="{{ get_url(path=n.route, trailing_slash=true) }}" class="break-all font-mono text-fg-brand underline">{{ n.route }}</a> <span class="text-body-subtle">— this command on its own page</span></p>
   {%- if n.subcommands | length > 0 -%}
   <p class="mt-2 text-sm text-body-subtle">Subcommands: {% for s in n.subcommands %}<a href="#cmd-{{ s.path | join(sep="-") }}" class="font-mono text-fg-brand underline">{{ s.path | last }}</a>{% if not loop.last %}, {% endif %}{% endfor %}.</p>
   {%- endif -%}
