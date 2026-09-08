@@ -6,25 +6,25 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "f06a22f8fdd95c64e2462b1d92cfa218b04a78f8595ae25c5a01be715af4ec1e",
+    "fingerprint": "a4fdc6c7c9dbc1489f48438cc57cb3f4d2ddd22f2c2801526d3662a76f04ee57",
     "summary": {
-      "total": 1013,
+      "total": 1014,
       "builtin": 37,
-      "declarative": 976,
+      "declarative": 977,
       "by_kind": {
         "command": 1,
         "query": 36,
-        "resource": 976
+        "resource": 977
       },
       "by_stability": {
         "behaviorally_verified": 37,
-        "implemented": 976
+        "implemented": 977
       },
       "mcp_tools": 35,
-      "mcp_resources": 989,
+      "mcp_resources": 990,
       "http_routes": 37,
       "cli_commands": 18,
-      "modules": 40,
+      "modules": 41,
       "benchmark_required": 37,
       "benchmark_waived": 0,
       "cached": 15
@@ -12260,6 +12260,14 @@
         "capability_ids": []
       },
       {
+        "id": "release-record",
+        "title": "release-record",
+        "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "repository",
         "title": "Repository",
         "description": "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads.",
@@ -12376,7 +12384,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1ecf1093e7d83ad31b7024eddb7259513ee34d8a1905f08ac6075f70fdba11d2",
+    "fingerprint": "1176ba94fbd109b7df23f7d433f734605044ef848c7f69c77665aa0f4f7646c8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -12416,6 +12424,7 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
+      "release-record": 1,
       "rule": 91,
       "scope": 1,
       "session": 8,
@@ -19983,6 +19992,16 @@
         "bytes": 817
       },
       {
+        "uri": "majordomus://release-record/v0.3.1",
+        "kind": "release-record",
+        "identity": "v0.3.1",
+        "title": "v0.3.1",
+        "path": ".ai/repo/releases/v0.3.1.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2274
+      },
+      {
         "uri": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "identity": "majordomus.adr-integrity@1",
@@ -21700,7 +21719,7 @@
         "identity": "test/cases/11_site_derivation.sh",
         "path": "test/cases/11_site_derivation.sh",
         "source_class": "case",
-        "bytes": 2698
+        "bytes": 4633
       },
       {
         "uri": "majordomus://test/test/cases/12_site_build.sh",
@@ -21708,7 +21727,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 5843
+        "bytes": 6538
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -21724,7 +21743,7 @@
         "identity": "test/cases/12c_graph_data.sh",
         "path": "test/cases/12c_graph_data.sh",
         "source_class": "case",
-        "bytes": 5447
+        "bytes": 5890
       },
       {
         "uri": "majordomus://test/test/cases/13_region_projection.sh",
@@ -22044,7 +22063,7 @@
         "identity": "test/cases/52_generated_artifact_typing.sh",
         "path": "test/cases/52_generated_artifact_typing.sh",
         "source_class": "case",
-        "bytes": 6377
+        "bytes": 6665
       },
       {
         "uri": "majordomus://test/test/cases/53_status_vocabulary.sh",
@@ -22340,7 +22359,7 @@
         "identity": "test/cases/86_installer_platform.sh",
         "path": "test/cases/86_installer_platform.sh",
         "source_class": "case",
-        "bytes": 6572
+        "bytes": 7187
       },
       {
         "uri": "majordomus://test/test/cases/87_release_pipeline.sh",
@@ -23124,7 +23143,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 0
+      "objects": 1
     },
     {
       "name": "rule",

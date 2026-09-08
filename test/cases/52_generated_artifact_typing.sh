@@ -42,7 +42,10 @@ jq -r '.artifacts[] | [.path, (.bytes // "-"), (.sha256 // "-"), .format, .docum
   case "$document" in providers/*) continue ;; esac
   case "$format" in
     markdown) head -n 2 "$f" | grep -q '^<!-- GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
-    yaml|text) head -n 1 "$f" | grep -q '^# GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
+    yaml) head -n 1 "$f" | grep -q '^# GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
+    # a text artifact may be a script, and a script's first line belongs to the interpreter:
+    # the banner then sits on the second, which is still the top of the file a reader sees
+    text) head -n 2 "$f" | grep -q '^# GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
     json) jq -e '(.generated // .["x-majordomus-generated"] // "") | startswith("GENERATED FILE")' "$f" >/dev/null \
             || { echo "    $path says nothing about being generated"; exit 1; } ;;
     *) echo "    $path declares the unknown encoding $format"; exit 1 ;;

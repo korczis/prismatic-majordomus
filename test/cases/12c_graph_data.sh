@@ -8,8 +8,12 @@ fixture_repo "$T" AGENTS.md docs
 mkdir -p "$T/site/data" "$T/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$T/site/data/"; cp -R "$ROOT/site/content-src" "$T/site/"; cp -R "$ROOT/test/cases" "$T/test/"
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 A="$T/site/data/generated/architecture.json"; C="$T/site/data/generated/claims-graph.json"
+# --no-scenarios throughout: this case proves the graphs are derived by breaking the
+# sources they are scanned from — it removes a module's reference to a state file, which
+# also stops that command working. Executing the behavioural scenarios over a tree edited
+# like that reports the fixture, not the derivation this case is about.
 
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 
 # the entry point reaches every command that has a module of its own
 for c in start finish doctor; do
@@ -23,14 +27,14 @@ jq -e '[.nodes[] | select(.kind=="module" and .command != null) | select(.route 
 # a new dependency between two modules becomes an edge
 [ "$(jq -r '[.edges[] | select(.source=="lib/history.sh" and .target=="lib/search.sh")] | length' "$A")" = 0 ]
 printf '. "$MJ_LIB_DIR/search.sh"\n' >> "$T/lib/history.sh"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ "$(jq -r '[.edges[] | select(.source=="lib/history.sh" and .target=="lib/search.sh" and .kind=="sources")] | length' "$A")" = 1 ] \
   || { echo "    a new module dependency did not appear in the graph"; exit 1; }
 
 # a module that stops naming a state file loses its edge to it
 [ "$(jq -r '[.edges[] | select(.source=="lib/question.sh" and .target==".ai/local/state/open-questions.md")] | length' "$A")" = 1 ]
 grep -v 'MJ_STATE_DIR/open-questions.md' "$T/lib/question.sh" > "$T/lib/question.sh.new" && mv "$T/lib/question.sh.new" "$T/lib/question.sh"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ "$(jq -r '[.edges[] | select(.source=="lib/question.sh" and .target==".ai/local/state/open-questions.md")] | length' "$A")" = 0 ] \
   || { echo "    the graph kept an edge for a reference that is no longer in the source"; exit 1; }
 
@@ -49,7 +53,7 @@ jq -e '[.nodes[] | select(.kind=="claim" and .status=="guaranteed") | .id] as $g
 
 # a claim whose status changes moves in the graph without any hand edit
 sed -i.bak 's/^    status: guaranteed$/    status: advisory/' "$T/docs/CLAIMS.yaml"; rm -f "$T/docs/CLAIMS.yaml.bak"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ "$(jq '[.nodes[] | select(.kind=="claim" and .status=="guaranteed")] | length' "$C")" = 0 ] \
   || { echo "    claim status in the graph does not follow docs/CLAIMS.yaml"; exit 1; }
 
@@ -57,7 +61,7 @@ expect_exit 0 "$T/scripts/generate-site-data"
 # name that does not resolve must stop the build rather than ship a link to nothing
 W="$T/site/data/generated/why.json"
 git -C "$T" checkout -q -- docs/CLAIMS.yaml 2>/dev/null || true
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ "$(jq '.moments | length' "$W")" -ge 3 ] || { echo "    no moments were derived from site/content-src/why/"; exit 1; }
 # every moment resolves each thing it names, or the detail arrays would be shorter than the ids
 jq -e '[.moments[] | select((.claims | length) != (.claim_detail | length)
@@ -68,9 +72,9 @@ jq -e '[.moments[] | select((.claims | length) != (.claim_detail | length)
 first_why="$(cd "$T/site/content-src/why" && ls ./*.md | sed 's#^\./##' | grep -v '^_index\.md$' | head -1)"
 cp "$T/site/content-src/why/$first_why" "$T/why.bak"
 sed -i.bak 's/^claims = \[/claims = ["no-such-claim-id", /' "$T/site/content-src/why/$first_why"; rm -f "$T/site/content-src/why/$first_why.bak"
-expect_exit 10 "$T/scripts/generate-site-data"
+expect_exit 10 "$T/scripts/generate-site-data" --no-scenarios
 expect_grep 'names claims that do not exist'
 # and the previous generation is intact: a refused build publishes nothing
 [ "$(jq '.moments | length' "$W")" -ge 3 ]
 cp "$T/why.bak" "$T/site/content-src/why/$first_why"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
