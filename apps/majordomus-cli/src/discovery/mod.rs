@@ -5,6 +5,40 @@
 //! pathspec and a kind, and discovery enumerates exactly those. Two implementations of the
 //! enumeration exist: the version-control index, which the contract prescribes, and a
 //! filesystem walk with the same glob semantics for a checkout git cannot describe.
+//!
+//! # Why the declaration and not a walk
+//!
+//! A walk of `.ai/` would have to guess what a file is from where it sits, which makes the
+//! directory layout part of the contract and makes adding a file a change to the reader.
+//! Declaring the classes instead means a repository can add a kind — a pathspec and a kind
+//! name in `sources.yaml`, a schema under `.ai/repo/knowledge/` — and this executable
+//! serves it without being rebuilt.
+//!
+//! # The two enumerations
+//!
+//! [`DiscoveryKind::Vcs`] asks git for the tracked files, which is the layer's contract:
+//! what is not tracked is not part of the layer. [`DiscoveryKind::FileSystem`] walks the
+//! tree with the same glob semantics, for a checkout git cannot describe — a scratch
+//! fixture, a tree with no commits. The index records which one it used, so an answer can
+//! never be silently about a different file set than the caller expected.
+//!
+//! ```
+//! use majordomus_cli::discovery::{DiscoveryKind, Sources};
+//!
+//! let declaration = "\
+//! version: 1
+//! sources:
+//!   - id: rules
+//!     kind: rule
+//!     discovery: vcs
+//!     pathspec: ':(glob).ai/repo/rules/**/*.md'
+//!     required: false
+//! ";
+//! let sources = Sources::parse(std::path::Path::new("sources.yaml"), declaration).unwrap();
+//! assert_eq!(sources.sources.len(), 1);
+//! assert_eq!(sources.sources[0].kind, "rule");
+//! assert_eq!(sources.sources[0].discovery, DiscoveryKind::Vcs);
+//! ```
 
 pub mod glob;
 

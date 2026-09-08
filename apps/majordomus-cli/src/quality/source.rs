@@ -211,11 +211,15 @@ impl Example {
             "edition2018",
             "edition2021",
         ];
-        let is_rust = tokens.iter().all(|t| {
-            ATTRS.contains(t) || t.starts_with("edition") || t.starts_with("ignore-")
-        });
-        let ignored = tokens.iter().any(|t| *t == "ignore" || t.starts_with("ignore-"));
-        let no_run = tokens.iter().any(|t| *t == "no_run" || *t == "compile_fail");
+        let is_rust = tokens
+            .iter()
+            .all(|t| ATTRS.contains(t) || t.starts_with("edition") || t.starts_with("ignore-"));
+        let ignored = tokens
+            .iter()
+            .any(|t| *t == "ignore" || t.starts_with("ignore-"));
+        let no_run = tokens
+            .iter()
+            .any(|t| *t == "no_run" || *t == "compile_fail");
         Example {
             info: info.to_string(),
             lines: lines.to_vec(),
@@ -381,6 +385,14 @@ pub struct Inventory {
     /// of the crate's surface, which is what `missing_docs` also thinks, so the inventory
     /// has to think it too.
     pub reexported: BTreeSet<String>,
+    /// The name a re-export offers an item under, mapped to the item it names:
+    /// `majordomus_cli::capability::builtin::GetInput` to
+    /// `majordomus_cli::capability::builtin::objects::GetInput`.
+    ///
+    /// A consumer writes the alias, so a test that exercises a module through one would
+    /// otherwise look like a test that names no module at all. This is what carries the
+    /// credit back to the module that declares the item.
+    pub reexport_aliases: BTreeMap<String, String>,
 }
 
 impl Inventory {
@@ -475,6 +487,47 @@ impl Inventory {
     /// ```
     pub fn exported(&self) -> Vec<&Item> {
         self.items.iter().filter(|i| i.exported).collect()
+    }
+
+    /// Does any test of this crate exercise the module at `path`?
+    ///
+    /// A test counts when it names the module, names something under it, or names an item
+    /// through the alias a `pub use` offers it under — which is how these tests are actually
+    /// written: `use majordomus_cli::capability::builtin::GetInput` exercises
+    /// `capability::builtin::objects`, and nothing in the text says so.
+    ///
+    /// ```
+    /// use majordomus_cli::quality::source::Inventory;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let src = dir.path().join("src");
+    /// std::fs::create_dir_all(src.join("outer")).unwrap();
+    /// std::fs::write(src.join("lib.rs"), "//! Root.\npub mod outer;\n").unwrap();
+    /// std::fs::write(src.join("outer/mod.rs"),
+    ///     "//! Outer.\npub mod inner;\npub use inner::Thing;\n").unwrap();
+    /// std::fs::write(src.join("outer/inner.rs"), "//! Inner.\n/// A thing.\npub struct Thing;\n").unwrap();
+    /// std::fs::create_dir_all(dir.path().join("tests")).unwrap();
+    /// std::fs::write(dir.path().join("tests/it.rs"),
+    ///     "use majordomus_cli::outer::Thing;\n#[test]\nfn t() { let _ = Thing; }\n").unwrap();
+    ///
+    /// let inv = Inventory::of_crate(dir.path()).unwrap();
+    /// assert!(inv.exercised_by_a_test("majordomus_cli::outer::inner"),
+    ///         "the test reaches inner through the alias outer::Thing");
+    /// ```
+    pub fn exercised_by_a_test(&self, path: &str) -> bool {
+        if self
+            .in_file_tests
+            .get(path)
+            .is_some_and(|t| !t.names.is_empty())
+        {
+            return true;
+        }
+        if self.named_by_tests.contains(path) {
+            return true;
+        }
+        let under = format!("{path}::");
+        self.reexport_aliases.iter().any(|(alias, target)| {
+            target.starts_with(&under) && self.named_by_tests.contains(alias)
+        })
     }
 
     /// Every exported module, in walk order. The crate root is one of them.
@@ -590,11 +643,11 @@ impl Walker<'_> {
     /// One non-module item.
     fn item(&mut self, item: &syn::Item, mod_path: &str, exported: bool, rel: &str) {
         let push = |name: String,
-                        kind: ItemKind,
-                        vis_pub: bool,
-                        attrs: &[syn::Attribute],
-                        line: usize,
-                        inv: &mut Inventory| {
+                    kind: ItemKind,
+                    vis_pub: bool,
+                    attrs: &[syn::Attribute],
+                    line: usize,
+                    inv: &mut Inventory| {
             let doc = doc_of(attrs);
             inv.items.push(Item {
                 path: format!("{mod_path}::{name}"),
@@ -831,7 +884,16 @@ impl Walker<'_> {
                 if exported && is_pub(&u.vis) {
                     let mut targets = Vec::new();
                     resolve_use(&u.tree, mod_path, String::new(), &mut targets);
-                    self.inv.reexported.extend(targets);
+                    for target in targets {
+                        // the name the re-export offers it under: this module, then the
+                        // item's own last segment
+                        if let Some(last) = target.rsplit("::").next() {
+                            self.inv
+                                .reexport_aliases
+                                .insert(format!("{mod_path}::{last}"), target.clone());
+                        }
+                        self.inv.reexported.insert(target);
+                    }
                 }
             }
             _ => {}
@@ -887,18 +949,17 @@ fn resolve_use(tree: &syn::UseTree, at: &str, prefix: String, out: &mut Vec<Stri
         match seg {
             "crate" => CRATE.to_string(),
             "self" => at.to_string(),
-            "super" => at.rsplit_once("::").map(|(o, _)| o.to_string()).unwrap_or(CRATE.to_string()),
+            "super" => at
+                .rsplit_once("::")
+                .map(|(o, _)| o.to_string())
+                .unwrap_or(CRATE.to_string()),
             other => format!("{at}::{other}"),
         }
     };
     match tree {
         syn::UseTree::Path(p) => {
-            let seg = p.ident.to_string();
-            let next = if matches!(seg.as_str(), "crate" | "self" | "super") && prefix.is_empty() {
-                base(&seg)
-            } else {
-                base(&seg)
-            };
+            // `base` already handles `crate`, `self` and `super` at the head of a path
+            let next = base(&p.ident.to_string());
             resolve_use(&p.tree, at, next, out);
         }
         syn::UseTree::Name(n) => out.push(base(&n.ident.to_string())),
@@ -925,31 +986,29 @@ fn apply_reexports(inv: &mut Inventory) {
         return;
     }
     let targets = inv.reexported.clone();
-    // an item is reachable when it is named, or when an ancestor of it is
-    for _ in 0..2 {
-        let reachable: BTreeSet<String> = inv
-            .items
-            .iter()
-            .filter(|i| {
-                // a re-export carries out what is declared `pub`; a private field of a
-                // re-exported type stays private, which is what rustc thinks too
-                !i.exported
-                    && i.declared_pub
-                    && (targets.contains(&i.path)
-                        || targets.iter().any(|t| i.path.starts_with(&format!("{t}::"))))
-            })
-            .map(|i| i.path.clone())
-            .collect();
-        if reachable.is_empty() {
-            break;
-        }
-        // the owner chain has to be public for the item to be, and a re-export is exactly
-        // what makes it so: the item is exported, its private module is not
-        for item in inv.items.iter_mut() {
-            if reachable.contains(&item.path) {
-                item.exported = true;
-            }
-        }
+    let reached = |path: &str| {
+        targets.contains(path) || targets.iter().any(|t| path.starts_with(&format!("{t}::")))
+    };
+    // Indices and not paths: a struct's private field and one of its public methods can
+    // share a path — `Served::topology` names both — so marking every item *at* a path
+    // would carry the private one out along with the public one.
+    let reachable: Vec<usize> = inv
+        .items
+        .iter()
+        .enumerate()
+        .filter(|(_, i)| {
+            // a re-export carries out what is declared `pub`; a private member of a
+            // re-exported type stays private, which is what rustc thinks too
+            !i.exported && i.declared_pub && reached(&i.path)
+        })
+        .map(|(n, _)| n)
+        .collect();
+    // the owner chain has to be public for the item to be, and a re-export is exactly what
+    // makes it so: the item is exported, its private module is not. One pass is enough
+    // because reachability is decided against the re-export targets, not against what this
+    // pass has already marked.
+    for n in reachable {
+        inv.items[n].exported = true;
     }
 }
 
@@ -1045,10 +1104,7 @@ fn crate_paths_in(text: &str) -> Vec<String> {
                     j = j + skipped + 2 + lead + close + 1;
                     break;
                 }
-                let ident_len = after_trim
-                    .bytes()
-                    .take_while(|b| is_ident_byte(*b))
-                    .count();
+                let ident_len = after_trim.bytes().take_while(|b| is_ident_byte(*b)).count();
                 if ident_len == 0 {
                     break;
                 }
@@ -1292,7 +1348,10 @@ mod tests {
         assert_eq!(found.len(), 3);
         assert!(!found[0].executable(), "text");
         assert!(!found[1].executable(), "ignore");
-        assert!(found[2].compiles && !found[2].runs, "no_run compiles and does not run");
+        assert!(
+            found[2].compiles && !found[2].runs,
+            "no_run compiles and does not run"
+        );
     }
 
     #[test]

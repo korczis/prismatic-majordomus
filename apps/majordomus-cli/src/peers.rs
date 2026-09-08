@@ -3,6 +3,40 @@
 //! `initialize` gives it a name (the client's own `clientInfo`), and `peers.announce`
 //! lets it say what it is working on. The board lives in the server's memory and nowhere
 //! else: it ends with the process, and nothing here touches the repository.
+//!
+//! # Why it is in memory and stays there
+//!
+//! A peer board is about *now*: who is attached, what they said they are doing. Writing it
+//! into the repository would make it a record of something that has already stopped being
+//! true, and the layer's records are for what survives the session. The board ends with the
+//! process, which is exactly right for a fact about the process.
+//!
+//! # What a peer may say
+//!
+//! An announcement is informational and enforces nothing. Its whole purpose is that another
+//! agent working in the same checkout can read it and choose not to collide — the
+//! coordination is between the peers, not imposed by the server.
+//!
+//! ```
+//! use majordomus_cli::peers::{ClientInfo, PeerBoard, Transport};
+//!
+//! let board = PeerBoard::new();
+//! let id = board.attach(Transport::Stdio);
+//! board.identify(&id, ClientInfo::unknown());
+//!
+//! let announced = board
+//!     .announce(&id, "landing the quality gate", vec!["apps/majordomus-cli".into()])
+//!     .expect("the peer is attached");
+//! assert_eq!(
+//!     announced.announcement.as_ref().map(|a| a.intent.as_str()),
+//!     Some("landing the quality gate")
+//! );
+//! assert_eq!(board.list().len(), 1);
+//!
+//! // and a session that ends leaves the board, because the board is about now
+//! board.detach(&id);
+//! assert!(board.list().is_empty());
+//! ```
 
 use std::collections::BTreeMap;
 use std::fmt;

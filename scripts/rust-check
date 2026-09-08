@@ -3,7 +3,8 @@
 # warnings as errors (a public item without documentation is one), the suites including
 # doctests, rustdoc with warnings denied, the benchmarks compiling, the registry's own
 # validation, the committed projections in sync, the benchmark coverage complete, the web
-# topology valid (one owner per path, every native surface answerable), and line
+# topology valid (one owner per path, every native surface answerable), the crate's own
+# public API quality report clean against its baseline, and line
 # coverage above the threshold in scripts/rust-coverage-threshold when cargo-llvm-cov is
 # installed. One script, so that CI and a person run the same gates in the same order.
 #
@@ -12,7 +13,7 @@
 #                                       benchmark check against this platform's baseline
 #   scripts/rust-check --integration    the executable built and the registry checks only:
 #                                       capabilities validate, generate --check, bench
-#                                       coverage --check, web validate. What a change outside the crate
+#                                       coverage --check, web validate, quality report. What a change outside the crate
 #                                       can affect: the layer, the schemas, the documents the
 #                                       registry dataset is derived from.
 #   --artifact DIR                      after building, copy the executable into DIR with a
@@ -59,6 +60,12 @@ step "bench coverage --check";       cargo run --quiet -- bench coverage --check
 # --artifacts, so it is a check on the declarations rather than on whether a producer has
 # run in this checkout; the serving path requires the artifact at the moment it serves.
 step "web validate";                 cargo run --quiet -- web validate
+# the crate's own public surface against project.rust-public-api-quality and
+# project.operation-transport-parity: documentation that says more than the signature, an
+# executable example on everything that carries behaviour, a module boundary something
+# exercises, and every command of the command line accounted for against the registry.
+# Ratcheted against .ai/repo/rust-quality-baseline.txt while the debt shrinks.
+step "quality report";               cargo run --quiet -- quality report --summary
 if [ "$MODE" = ci ]; then
   # a conservative measurement through the real transports, compared with this platform's
   # baseline under .ai/repo/benchmarks/rust/ when one is committed

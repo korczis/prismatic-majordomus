@@ -50,6 +50,56 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
+    Quality(QualityArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus quality`. One subcommand today; declared as a group so that a second
+/// measurement joins it rather than crowding the root.
+pub struct QualityArgs {
+    #[command(subcommand)]
+    /// `report`.
+    pub command: QualityCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `quality` subcommands.
+pub enum QualityCommand {
+    /// Measure the crate and report every finding, with the rule it breaks and what to do about it
+    Report(QualityReportArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus quality report`.
+pub struct QualityReportArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only findings carrying this code, e.g. RUST_PUBLIC_MISSING_EXAMPLE
+    #[arg(long)]
+    pub code: Option<String>,
+
+    /// Only findings under this repository-relative path prefix
+    #[arg(long)]
+    pub path: Option<String>,
+
+    /// Print the counts and leave the findings out
+    #[arg(long)]
+    pub summary: bool,
+
+    /// Show the findings the baseline already accepts, which are left out by default
+    #[arg(long)]
+    pub include_baselined: bool,
+
+    /// Record today's findings as the accepted baseline, so the debt can shrink and cannot grow
+    #[arg(long)]
+    pub write_baseline: bool,
 }
 
 #[derive(Debug, Args)]
@@ -1519,6 +1569,37 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 argv: &["scope", "docs/CLI.md", "--format", "json"],
                 setup: &[],
                 expect: Expect::Json(&["/0/verdict", "/0/rule"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "quality report",
+        examples: &[
+            ExampleDoc {
+                id: "quality-summary",
+                title: "Where the crate's public surface stands",
+                description: "The counts alone: how much of the exported surface is documented and exampled, how many modules something exercises, and how the canonical operations stand against the command line, HTTP, OpenAPI and MCP. Exits 10 when any finding stands outside the recorded baseline.",
+                argv: &["quality", "report", "--summary"],
+                setup: &[],
+                // Success and not a fixed line: a repository that carries no Rust crate is
+                // answered with the reason and exits 0, because a rule that cannot apply is
+                // not a violation — and the examples run against exactly such a repository.
+                expect: Expect::Success,
+            },
+            ExampleDoc {
+                id: "quality-code-json",
+                title: "One kind of finding, with the rule and the remedy",
+                description: "Filtered to one violation code. Every finding carries the rule that requires it, where it is, why it matters and what to do — which is what lets a person and an agent act on the same report.",
+                argv: &[
+                    "quality",
+                    "report",
+                    "--code",
+                    "RUST_MODULE_MISSING_EXAMPLE",
+                    "--format",
+                    "json",
+                ],
+                setup: &[],
+                expect: Expect::Json(&["/measured", "/passes", "/report/schema"]),
             },
         ],
     },

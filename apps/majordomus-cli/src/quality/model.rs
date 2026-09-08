@@ -421,9 +421,7 @@ impl Violation {
 }
 
 /// What the exported item surface looks like.
-#[derive(
-    Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema,
-)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct PublicApiQuality {
     /// Items the crate exports, of every kind.
     pub items: usize,
@@ -448,9 +446,7 @@ pub struct Exemption {
 }
 
 /// What the exported module surface looks like.
-#[derive(
-    Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema,
-)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct ModuleQuality {
     /// Modules the crate exports, the crate root included.
     pub modules: usize,
@@ -463,9 +459,7 @@ pub struct ModuleQuality {
 }
 
 /// What the canonical operations look like against the transports that project them.
-#[derive(
-    Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema,
-)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct OperationParity {
     /// Executable capabilities in the registry.
     pub canonical: usize,
@@ -486,9 +480,7 @@ pub struct OperationParity {
 }
 
 /// One measurement of one crate, and everything found wrong in it.
-#[derive(
-    Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema,
-)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema)]
 pub struct QualityReport {
     /// [`SCHEMA`].
     #[serde(default)]
@@ -591,10 +583,7 @@ mod tests {
             // the code as text is the enum name in screaming snake, and round-trips
             let json = serde_json::to_string(&code).unwrap();
             assert_eq!(json, format!("\"{}\"", code.as_str()));
-            assert_eq!(
-                serde_json::from_str::<ViolationCode>(&json).unwrap(),
-                code
-            );
+            assert_eq!(serde_json::from_str::<ViolationCode>(&json).unwrap(), code);
         }
     }
 
@@ -631,10 +620,14 @@ mod tests {
                 "none",
             )
         };
-        let mut a = QualityReport::default();
-        a.violations = vec![v("b.rs", 2), v("a.rs", 9), v("a.rs", 1)];
-        let mut b = QualityReport::default();
-        b.violations = vec![v("a.rs", 1), v("b.rs", 2), v("a.rs", 9)];
+        let mut a = QualityReport {
+            violations: vec![v("b.rs", 2), v("a.rs", 9), v("a.rs", 1)],
+            ..QualityReport::default()
+        };
+        let mut b = QualityReport {
+            violations: vec![v("a.rs", 1), v("b.rs", 2), v("a.rs", 9)],
+            ..QualityReport::default()
+        };
         a.sort();
         b.sort();
         assert_eq!(a.violations, b.violations);

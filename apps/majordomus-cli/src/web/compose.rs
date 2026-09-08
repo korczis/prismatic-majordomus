@@ -9,7 +9,7 @@
 //! the same topology over the same inputs produces the same tree.
 
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
@@ -141,9 +141,14 @@ fn copy_tree(source: &Path, target: &Path, boundary: &Path, surface: &str) -> Re
     Ok(written)
 }
 
-/// Every file of a composed tree, repository-relative to it, sorted: what a test compares.
-pub fn walk(root: &Path) -> Vec<PathBuf> {
-    fn inner(dir: &Path, base: &Path, out: &mut Vec<PathBuf>) {
+/// Every file of a composed tree, repository-relative to it, sorted: what this module's
+/// own tests compare a composition against.
+///
+/// Test support, and compiled only for tests: a helper that exists for the suite has no
+/// business in the shipped binary, and `pub` on one is how internals leak into an API.
+#[cfg(test)]
+pub(crate) fn walk(root: &Path) -> Vec<std::path::PathBuf> {
+    fn inner(dir: &Path, base: &Path, out: &mut Vec<std::path::PathBuf>) {
         let Ok(read) = std::fs::read_dir(dir) else {
             return;
         };
@@ -169,6 +174,7 @@ mod tests {
     use super::*;
     use crate::web::model::{Availability, Category, Mount, Surface, SurfaceKind, Visibility};
     use std::collections::BTreeMap;
+    use std::path::PathBuf;
 
     fn static_surface(id: &str, mount: &str, artifact: &str) -> Surface {
         Surface {

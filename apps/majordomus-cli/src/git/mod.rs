@@ -1,6 +1,27 @@
-//! A minimal, optional, read-only view of git: where the work tree is, what HEAD is, and
-//! which tracked files match a pathspec. Everything shells out to `git`; nothing links a
-//! library, nothing writes, and GitHub is not involved.
+//! A minimal, optional, read-only view of git.
+//!
+//! Where the work tree is, what HEAD is, and which tracked files match a pathspec — and
+//! nothing else. Everything shells out to the `git` binary; no library is linked, nothing
+//! is written, and GitHub is not involved at any point.
+//!
+//! # Optional means optional
+//!
+//! Every function here answers when git is absent, when the directory is not a repository,
+//! and when the repository has no commits. [`inspect`] returns a [`GitState`] that says
+//! which of those it is rather than an error, because a repository of the layer does not
+//! have to be version controlled — discovery falls back to a filesystem walk with the same
+//! glob semantics, and the index says which mode it used.
+//!
+//! ```
+//! use majordomus_cli::git::{inspect, GitState};
+//!
+//! // a directory that is not a work tree is a state with a reason, not a failure
+//! let plain = tempfile::tempdir().unwrap();
+//! match inspect(plain.path()) {
+//!     GitState::Unavailable { reason } => assert!(!reason.is_empty(), "it says why"),
+//!     GitState::Available(_) => panic!("a fresh temporary directory is not a work tree"),
+//! }
+//! ```
 
 use std::path::{Path, PathBuf};
 use std::process::Command;

@@ -6,6 +6,29 @@
 //! canonical state, what `perf.counters` answers over every transport, and what the
 //! benchmark evidence carries beside its latencies. Atomics only: reading them costs
 //! nothing worth measuring, and nothing here allocates on a hot path.
+//!
+//! # What the counters are for
+//!
+//! They exist to make one class of regression visible that no functional test can see: a
+//! change that makes every request correct and rebuilds the index to get there. The
+//! startup counters must stay at their post-startup values however many requests arrive,
+//! and `tests/hot_path.rs` asserts exactly that. `project.hot-path-reads-once` is the rule.
+//!
+//! ```
+//! use majordomus_cli::perf::{Counters, Phase, COUNTERS};
+//!
+//! // a phase is timed by a guard, so the timing ends when the work does and not later
+//! let before = COUNTERS.snapshot();
+//! {
+//!     let _timing = majordomus_cli::perf::phase(Phase::IndexBuild);
+//!     Counters::bump(&COUNTERS.index_builds);
+//! }
+//! let after = COUNTERS.snapshot();
+//! assert_eq!(after.index_builds, before.index_builds + 1);
+//!
+//! // and what happened once at startup is reported apart from what happens per call
+//! assert!(after.startup_work().iter().any(|(name, _)| *name == "index_builds"));
+//! ```
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
