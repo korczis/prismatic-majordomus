@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.3.0 -->
+     Generator: majordomus-cli 0.3.1 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
