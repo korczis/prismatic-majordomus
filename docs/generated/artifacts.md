@@ -119,8 +119,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/openapi.yaml` | `openapi` | yaml | 273260 | `caa7024945c7d0f9` |
 | `docs/generated/registry.json` | `registry` | json | 438286 | `b93a3514efb3d8db` |
 | `docs/generated/registry.yaml` | `registry` | yaml | 333531 | `527e7fe68b6940f6` |
-| `docs/generated/web.json` | `web` | json | 4063 | `d9d055d8d7a2de0d` |
-| `docs/generated/web.yaml` | `web` | yaml | 3130 | `b483fa40057de33f` |
+| `docs/generated/web.json` | `web` | json | 5598 | `bd44768be0a1890f` |
+| `docs/generated/web.yaml` | `web` | yaml | 4297 | `fd8989e2259f19fa` |
 | `share/allow/adr.txt` | `allow/adr` | text | 372 | `2de0fc9b4fe17702` |
 | `share/allow/application.txt` | `allow/application` | text | 383 | `9645786e3b58f9dd` |
 | `share/allow/context.txt` | `allow/context` | text | 446 | `b0ba3c8239f27b86` |
@@ -163,7 +163,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `6853ce3f5bc27958` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `955c0ee83c492d2f` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 2842 | `2ac359554068d8fd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1377565 | `b9c6aff5bf676805` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1377565 | `71fd359f89c2c684` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `11096610c060625f` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `b2924aa93542a505` |
 | `site/static/install.sh` | `installer` | text | 28286 | `30e8f6d7c9317caa` |

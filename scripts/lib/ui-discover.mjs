@@ -58,9 +58,13 @@ export function routesFromSitemap(publicDir) {
   const paths = [];
   for (const match of xml.matchAll(/<loc>([^<]+)<\/loc>/g)) {
     try {
-      paths.push(new URL(match[1]).pathname);
+      // A `<loc>` is an absolute URL when the site was built for an origin and a bare path
+      // when it was built for a mount — `base_url = "/docs"`, which is what the build for
+      // the running server uses so its assets resolve wherever it is served. Both are
+      // routes; only one of them parses without a base.
+      paths.push(new URL(match[1], 'http://sitemap.invalid').pathname);
     } catch {
-      /* a sitemap entry that is not a URL is not a route */
+      /* a sitemap entry that is not a location is not a route */
     }
   }
   // A project site is published under a base path (`/prismatic-majordomus/`), and the
@@ -155,7 +159,10 @@ export function tierPages(pages, viewportList) {
   const critical = criticalWidths(viewportList);
   const seen = new Set();
   return pages.map((page) => {
-    const section = page.route.split('/').filter(Boolean)[0] ?? '';
+    // a page carries its own section when it was discovered under a mount: everything under
+    // `/docs` shares a first segment, and tiering by that would spend the whole sweep on one
+    // page of a surface with four hundred
+    const section = page.section ?? page.route.split('/').filter(Boolean)[0] ?? '';
     const first = !seen.has(section);
     seen.add(section);
     return {
@@ -175,7 +182,7 @@ export function criticalWidths(viewportList) {
   return [...new Set([REFLOW_FLOOR, middle, DESKTOP])].sort((a, b) => a - b);
 }
 
-/** The whole audit target set: pages × widths, with the provenance of both. */
+/** The whole audit target set for one directory: pages × widths, with the provenance of both. */
 export function plan(publicDir, cssPath) {
   const breakpoints = breakpointsFromCss(cssPath);
   const widths = viewports(breakpoints);
@@ -185,6 +192,60 @@ export function plan(publicDir, cssPath) {
     viewports: viewports(breakpoints),
     source: {
       pages: 'the built site: its filesystem and its sitemap, unioned',
+      viewports: `the media queries of ${relative(process.cwd(), cssPath)}`,
+    },
+  };
+}
+
+/**
+ * A route as the server answers it: the surface's mount, then the page's own path.
+ *
+ * ```
+ * mounted('/docs', '/context/')   // '/docs/context/'
+ * mounted('/', '/context/')       // '/context/'
+ * ```
+ */
+export function mounted(mount, route) {
+  const prefix = mount === '/' ? '' : mount.replace(/\/+$/, '');
+  return `${prefix}${route}` || '/';
+}
+
+/**
+ * The audit target set over a *topology*: every static surface the running executable
+ * serves, each visited under the mount the topology gives it.
+ *
+ * This exists because a built directory does not know where it is served from. The
+ * documentation is generated once and mounted at `/docs` by the executable and at the root
+ * by the published site; a plan that assumed either would audit paths nobody answers. So
+ * the mount is read from `majordomus web list`, which is the one place a mount is written,
+ * and the audit follows the topology rather than a second opinion about it.
+ *
+ * `surfaces` is `[{ id, mount, dir }]`; `dir` is absolute.
+ */
+export function planSurfaces(surfaces, cssPath) {
+  const breakpoints = breakpointsFromCss(cssPath);
+  const widths = viewports(breakpoints);
+  const pages = [];
+  for (const surface of surfaces) {
+    for (const page of discoverPages(surface.dir)) {
+      pages.push({
+        ...page,
+        surface: surface.id,
+        // the section is the page's own, inside its surface: the sweep is spent per section
+        // of each surface rather than once on whichever surface sorted first
+        section: `${surface.id}:${page.route.split('/').filter(Boolean)[0] ?? ''}`,
+        route: mounted(surface.mount, page.route),
+      });
+    }
+  }
+  pages.sort((a, b) => (a.route < b.route ? -1 : a.route > b.route ? 1 : 0));
+  return {
+    pages: tierPages(pages, widths),
+    breakpoints,
+    viewports: widths,
+    surfaces: surfaces.map((s) => ({ id: s.id, mount: s.mount })),
+    source: {
+      pages: `every static surface the executable serves (${surfaces.map((s) => `${s.id} at ${s.mount}`).join(', ') || 'none'}), each from its filesystem and its sitemap`,
       viewports: `the media queries of ${relative(process.cwd(), cssPath)}`,
     },
   };
