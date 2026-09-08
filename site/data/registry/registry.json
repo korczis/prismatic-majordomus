@@ -6,22 +6,22 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "4dee6eac70da03acc7db70f9a144002a9c0f4dfe513224d0f8ce43d839cc5281",
+    "fingerprint": "9fb9971c81e48b319f1340f50210a15b8d28fe4b69b0c5e18f0c8ab7f3d61bbe",
     "summary": {
-      "total": 1061,
+      "total": 1070,
       "builtin": 44,
-      "declarative": 1017,
+      "declarative": 1026,
       "by_kind": {
         "command": 1,
         "query": 43,
-        "resource": 1017
+        "resource": 1026
       },
       "by_stability": {
         "behaviorally_verified": 44,
-        "implemented": 1017
+        "implemented": 1026
       },
       "mcp_tools": 42,
-      "mcp_resources": 1033,
+      "mcp_resources": 1042,
       "http_routes": 44,
       "cli_commands": 24,
       "modules": 43,
@@ -14559,7 +14559,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 176,
+        "capabilities": 184,
         "capability_ids": []
       },
       {
@@ -14575,7 +14575,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 14,
+        "capabilities": 15,
         "capability_ids": []
       },
       {
@@ -14790,7 +14790,7 @@
     ]
   },
   "index": {
-    "fingerprint": "00210bf578f8121fb666b840f550b5d71b50af2bf577f291d3bc8e4217aa2a21",
+    "fingerprint": "e247eea9e3554c6c52d454217ac5696cd6b516b5ff4cb2826ddc6fe9eb972f2e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14825,9 +14825,9 @@
       "document": 202,
       "feature": 20,
       "implementation": 42,
-      "issue": 176,
+      "issue": 184,
       "knowledge": 1,
-      "milestone": 14,
+      "milestone": 15,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -15164,7 +15164,7 @@
         "path": ".ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 8906,
+        "bytes": 10347,
         "tags": [
           "git",
           "worktree",
@@ -17952,7 +17952,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 40132
+        "bytes": 43074
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -18069,7 +18069,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 19659
+        "bytes": 20845
       },
       {
         "uri": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -18375,7 +18375,7 @@
         "title": "A commit whose derived data is behind its canonical inputs is refused before it exists",
         "path": "docs/claims/derived-data-current.md",
         "source_class": "claim_page",
-        "bytes": 4125
+        "bytes": 5458
       },
       {
         "uri": "majordomus://document/docs/claims/derived-not-declared.md",
@@ -21957,6 +21957,94 @@
         "bytes": 1836
       },
       {
+        "uri": "majordomus://issue/I1201",
+        "kind": "issue",
+        "identity": "I1201",
+        "title": "An identity provider is a declarative object, and Google and Facebook are two of them",
+        "description": "Introduce the identity-provider kind: a JSON Schema, an entry in share/kinds.yaml, the generated allow-list, a directory contract under .ai/repo/identity/providers/, and the first two objects — google and facebook — each stating its issuer, its endpoints or discovery document, the scopes it is asked for, the claim that carries a stable subject, the environment variable names its client id and client secret arrive in, its display name and its order in the sign-in offer.",
+        "path": ".ai/repo/project/issues/I1201.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2739
+      },
+      {
+        "uri": "majordomus://issue/I1202",
+        "kind": "issue",
+        "identity": "I1202",
+        "title": "One typed provider model reads the objects, and no code names a provider",
+        "description": "Add apps/majordomus-cli/src/identity with the typed model of a provider object: discovery of every object under .ai/repo/identity/providers/, validation against the schema, resolution of the credential environment variables at use rather than at load, and a deterministic ordering of the sign-in offer. Expose the read as a capability so the provider list reaches the CLI, the API, OpenAPI, MCP and the Cockpit through the registry rather than through five readers.",
+        "path": ".ai/repo/project/issues/I1202.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2460
+      },
+      {
+        "uri": "majordomus://issue/I1203",
+        "kind": "issue",
+        "identity": "I1203",
+        "title": "One flow serves every provider, and it refuses everything it did not start",
+        "description": "Implement the authorisation-code flow with PKCE once, over the typed provider model: a start route that issues state and nonce and redirects to the provider's authorisation endpoint, a callback route that refuses a state it did not issue or that has expired, exchanges the code, verifies the issuer, the audience, the expiry and the nonce of the returned identity token, and resolves the stable subject from the claim the object names.",
+        "path": ".ai/repo/project/issues/I1203.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2378
+      },
+      {
+        "uri": "majordomus://issue/I1204",
+        "kind": "issue",
+        "identity": "I1204",
+        "title": "The session is signed, short, and revocable from the server",
+        "description": "Issue the session as a signed cookie carrying an opaque identifier, keep the server-side record needed to revoke it, set HttpOnly, SameSite and Secure according to how the surface is served, expire it, and implement sign-out as a server-side revocation rather than a cleared cookie.",
+        "path": ".ai/repo/project/issues/I1204.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1941
+      },
+      {
+        "uri": "majordomus://issue/I1205",
+        "kind": "issue",
+        "identity": "I1205",
+        "title": "Identity is resolved once, in the router, and every surface reads it from there",
+        "description": "Resolve the caller once, where the request enters, and carry the result to every surface: the HTTP API, the Cockpit's rendering, the OpenAPI document's security scheme and the MCP surface. No handler parses a cookie, and no surface decides for itself what an absent identity means.",
+        "path": ".ai/repo/project/issues/I1205.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2012
+      },
+      {
+        "uri": "majordomus://issue/I1206",
+        "kind": "issue",
+        "identity": "I1206",
+        "title": "What an anonymous reader may do is derived from the effect classification, not from a list",
+        "description": "Derive the exposure decision from the capability registry: a read-only capability stays open to an anonymous reader, anything that mutates requires an identified one, and the decision is stated once in policy over effect classes rather than per route. Project the decision into the OpenAPI security scheme, the Cockpit's disabled controls with their reason, and the generated documentation.",
+        "path": ".ai/repo/project/issues/I1206.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2453
+      },
+      {
+        "uri": "majordomus://issue/I1207",
+        "kind": "issue",
+        "identity": "I1207",
+        "title": "No credential reaches any output, and hostile provider metadata renders safely",
+        "description": "Prove the negatives. Place sentinel values in the client-secret and signing-key environment variables and exercise every output this repository produces — API responses, the Cockpit's HTML, the generated site, OpenAPI and its examples, MCP answers, the artifact manifest, the caches, the logs and the doctor report — asserting no sentinel appears anywhere. Separately, give a provider object a display name carrying control characters, ANSI sequences and markup, and assert it renders as text in the terminal, in the HTML and in the JSON.",
+        "path": ".ai/repo/project/issues/I1207.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2030
+      },
+      {
+        "uri": "majordomus://issue/I1208",
+        "kind": "issue",
+        "identity": "I1208",
+        "title": "Adding a provider is one file, removing one is one deletion, and both are executed rather than described",
+        "description": "Document how a provider is added and how one is struck, and make the documentation executable: a test that adds a synthetic provider object and asserts it appears in the sign-in offer, in the capability read, in the generated documentation and in the Cockpit with no other edit, and a test that removes one of the two shipped objects and asserts every one of those surfaces loses it.",
+        "path": ".ai/repo/project/issues/I1208.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2092
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -22124,6 +22212,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 5910
+      },
+      {
+        "uri": "majordomus://milestone/web-sign-in",
+        "kind": "milestone",
+        "identity": "web-sign-in",
+        "title": "The deployed surfaces know who is asking, and the identity providers are data",
+        "description": "One canonical identity-provider kind under .ai/repo/identity/providers/ describes each provider as data: its issuer, its endpoints or its discovery document, the scopes requested, the claim that carries a stable subject and the environment variable names its credentials arrive in. A single OpenID-Connect-shaped flow in the executable serves every provider in that directory; Google and Facebook are two objects, not two code paths. Sessions are cookie-borne, signed, short and revocable; identity is attached to a request once, in the router, and every surface — HTTP, Cockpit, OpenAPI, MCP — reads it from the same place. The capability registry's effect classification, not a per-route list, decides what an anonymous reader may do, and the OpenAPI document and the Cockpit both state that decision because both project it from the registry. Striking a provider is deleting one file and regenerating.",
+        "path": ".ai/repo/project/milestones/web-sign-in.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7519
       },
       {
         "uri": "majordomus://moment/abandoned-worktree",
@@ -24999,7 +25098,7 @@
         "identity": "test/cases/56_derived_current_gate.sh",
         "path": "test/cases/56_derived_current_gate.sh",
         "source_class": "case",
-        "bytes": 4945
+        "bytes": 7868
       },
       {
         "uri": "majordomus://test/test/cases/57_derived_merge_driver.sh",
@@ -25997,7 +26096,7 @@
       "identity": [
         "id"
       ],
-      "objects": 176
+      "objects": 184
     },
     {
       "name": "knowledge",
@@ -26017,7 +26116,7 @@
       "identity": [
         "id"
       ],
-      "objects": 14
+      "objects": 15
     },
     {
       "name": "moment",
