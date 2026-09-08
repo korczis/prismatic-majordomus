@@ -244,17 +244,30 @@ the site.</li>
 answered in time. A page that does not is a finding about that page, never the end of the
 run.</li>
 </ul>
-<h2 id="the-origin-the-audit-drives"><a class="zola-anchor" href="#the-origin-the-audit-drives" aria-label="Anchor link for: the-origin-the-audit-drives">The origin the audit drives</a></h2>
+<h2 id="what-it-costs"><a class="zola-anchor" href="#what-it-costs" aria-label="Anchor link for: what-it-costs">What it costs</a></h2>
+<p>The full audit is 723 pages and 2430 visits, and it drives a pool of browser tabs rather than
+one: a visit is mostly waiting — for a navigation, for the accessibility engine inside the
+page — so a serial run leaves the machine idle for most of it. <code>MJ_UI_JOBS=N</code> sets the pool;
+the default follows the machine, between two and four.</p>
+<p>Measured on one laptop, same tree, same 2430 visits: <strong>873s at one job, 260s at four</strong>. The
+audit covers half again as many pages as it did when it read a single directory and finishes
+in less than a third of the time.</p>
+<h2 id="the-origin-the-audit-drives-and-where-its-pages-are"><a class="zola-anchor" href="#the-origin-the-audit-drives-and-where-its-pages-are" aria-label="Anchor link for: the-origin-the-audit-drives-and-where-its-pages-are">The origin the audit drives, and where its pages are</a></h2>
 <p>The audit runs against <code>majordomus serve</code> — this repository's own server, so the audit holds
 no second opinion about how the site is served, and so a route the executable answers itself
 is visible to it.</p>
-<p>Zola writes absolute URLs. A site built for the published base URL asks the <em>published</em>
-origin for its stylesheets while the local server answers for its pages, and an audit of
-that measures two different sites: it passes defects production has already fixed and fails
-ones it has not. So <code>scripts/ui audit</code> builds the site for the origin it is about to serve,
-audits it, and rebuilds it for the configured base URL afterwards, leaving the checkout as it
-found it. <code>--no-build</code> skips both, for a caller that has already built for the origin;
-<code>--origin URL</code> audits a server somebody else is running.</p>
+<p><strong>A built directory does not know where it is served from.</strong> The same documentation is
+generated once and mounted at <code>/docs</code> by the executable and at the root by the published
+site. So the audit does not name a directory: it reads <code>majordomus web list</code>, takes every
+static surface the executable <em>serves</em>, and visits each one's pages under the mount the
+topology gives it. That is why <code>/tests</code> and <code>/benchmarks</code> are audited too — they are surfaces
+like any other, and nothing had to be added to a list to include them.</p>
+<p>It builds with <code>scripts/site-build --serve</code>, whose base URL is a path rather than an origin,
+so the pages resolve their assets wherever they are served. <code>--no-build</code> skips that, for a
+caller that has already built; <code>--origin URL</code> audits a server somebody else is running.</p>
+<p>The published tree (<code>site/public</code>) is <code>published-only</code> and is not served, so the audit does
+not visit it. Both trees come from one source and one generator; auditing the served one
+covers the same templates and the same data.</p>
 <h2 id="remediation-at-the-source-and-only-at-the-source"><a class="zola-anchor" href="#remediation-at-the-source-and-only-at-the-source" aria-label="Anchor link for: remediation-at-the-source-and-only-at-the-source">Remediation: at the source, and only at the source</a></h2>
 <p><strong>Markup this repository writes</strong> is held at its source. <code>scripts/ui check</code> reads every
 tracked <code>.html</code> and every rendered page and refuses a scrolling box a keyboard cannot reach
@@ -318,7 +331,7 @@ not this document's tables, because none of them enumerate rules.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c4f135dede30815972387b12075b6dd5fd7e927f" class="font-mono underline">c4f135d</a> · inputs <span class="font-mono">5d556ae81b2a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1fd5e32e0392d5e3107b14e8b4ac962409bf355f" class="font-mono underline">1fd5e32</a> · inputs <span class="font-mono">52cac2298e98</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
