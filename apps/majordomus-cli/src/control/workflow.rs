@@ -108,6 +108,7 @@ impl Workflow {
                 docs: projection::docs_route(&path),
             },
             availability: Availability::Available,
+            aliases: Vec::new(),
             provenance: self.source.clone(),
             path,
         }

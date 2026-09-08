@@ -318,6 +318,91 @@ fn values_of(arg: &Argument, values: &dyn Values) -> Vec<Candidate> {
     }
 }
 
+/// The resolver a shell gets: identities this repository already holds, answered from the
+/// cheapest place that holds them.
+///
+/// Capability and command identities are in this process the moment the graph is: no file
+/// is read for them. Branches are one local `git` call. The kinds of the layer and the Why
+/// catalogue are behind the repository's index, which costs seconds to build, so they are
+/// answered with nothing rather than with a pause — a completion that stalls is worse than
+/// one that stays quiet.
+pub struct Repository {
+    root: PathBuf,
+}
+
+impl Repository {
+    /// The resolver for the directory the shell is standing in.
+    pub fn here() -> Self {
+        Repository {
+            root: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
+        }
+    }
+
+    /// The resolver for one root.
+    pub fn at(root: PathBuf) -> Self {
+        Repository { root }
+    }
+
+    fn branches(&self) -> Vec<Candidate> {
+        let out = std::process::Command::new("git")
+            .args(["for-each-ref", "--format=%(refname:short)", "refs/heads"])
+            .current_dir(&self.root)
+            .output();
+        let Ok(out) = out else { return Vec::new() };
+        if !out.status.success() {
+            return Vec::new();
+        }
+        String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .map(|name| Candidate {
+                value: name.trim().to_string(),
+                description: None,
+                kind: CandidateKind::Value,
+                append_space: true,
+            })
+            .filter(|c| !c.value.is_empty())
+            .collect()
+    }
+}
+
+impl Values for Repository {
+    fn resolve(&self, registry: RegistryValues, _prefix: &str) -> Vec<Candidate> {
+        match registry {
+            RegistryValues::Branch => self.branches(),
+            RegistryValues::Capability => {
+                let built = crate::capability::CapabilityRegistry::builder()
+                    .with_modules(crate::capability::builtin::modules())
+                    .build();
+                built
+                    .map(|r| {
+                        r.iter()
+                            .map(|c| Candidate {
+                                value: c.id.as_str().to_string(),
+                                description: Some(c.title.clone()),
+                                kind: CandidateKind::Value,
+                                append_space: true,
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default()
+            }
+            RegistryValues::Command => crate::control::graph::of_this_executable()
+                .commands
+                .iter()
+                .filter(|c| !c.group)
+                .map(|c| Candidate {
+                    value: c.id.clone(),
+                    description: Some(c.summary.clone()),
+                    kind: CandidateKind::Value,
+                    append_space: true,
+                })
+                .collect(),
+            // behind the index, and the index is not something a keystroke may pay for
+            RegistryValues::ObjectKind | RegistryValues::Moment => Vec::new(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -409,91 +494,6 @@ mod tests {
             vec!["--"],
         ] {
             let _ = answer(&g, &request(Surface::Cli, &words), &Offline);
-        }
-    }
-}
-
-/// The resolver a shell gets: identities this repository already holds, answered from the
-/// cheapest place that holds them.
-///
-/// Capability and command identities are in this process the moment the graph is: no file
-/// is read for them. Branches are one local `git` call. The kinds of the layer and the Why
-/// catalogue are behind the repository's index, which costs seconds to build, so they are
-/// answered with nothing rather than with a pause — a completion that stalls is worse than
-/// one that stays quiet.
-pub struct Repository {
-    root: PathBuf,
-}
-
-impl Repository {
-    /// The resolver for the directory the shell is standing in.
-    pub fn here() -> Self {
-        Repository {
-            root: std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")),
-        }
-    }
-
-    /// The resolver for one root.
-    pub fn at(root: PathBuf) -> Self {
-        Repository { root }
-    }
-
-    fn branches(&self) -> Vec<Candidate> {
-        let out = std::process::Command::new("git")
-            .args(["for-each-ref", "--format=%(refname:short)", "refs/heads"])
-            .current_dir(&self.root)
-            .output();
-        let Ok(out) = out else { return Vec::new() };
-        if !out.status.success() {
-            return Vec::new();
-        }
-        String::from_utf8_lossy(&out.stdout)
-            .lines()
-            .map(|name| Candidate {
-                value: name.trim().to_string(),
-                description: None,
-                kind: CandidateKind::Value,
-                append_space: true,
-            })
-            .filter(|c| !c.value.is_empty())
-            .collect()
-    }
-}
-
-impl Values for Repository {
-    fn resolve(&self, registry: RegistryValues, _prefix: &str) -> Vec<Candidate> {
-        match registry {
-            RegistryValues::Branch => self.branches(),
-            RegistryValues::Capability => {
-                let built = crate::capability::CapabilityRegistry::builder()
-                    .with_modules(crate::capability::builtin::modules())
-                    .build();
-                built
-                    .map(|r| {
-                        r.iter()
-                            .map(|c| Candidate {
-                                value: c.id.as_str().to_string(),
-                                description: Some(c.title.clone()),
-                                kind: CandidateKind::Value,
-                                append_space: true,
-                            })
-                            .collect()
-                    })
-                    .unwrap_or_default()
-            }
-            RegistryValues::Command => crate::control::graph::of_this_executable()
-                .commands
-                .iter()
-                .filter(|c| !c.group)
-                .map(|c| Candidate {
-                    value: c.id.clone(),
-                    description: Some(c.summary.clone()),
-                    kind: CandidateKind::Value,
-                    append_space: true,
-                })
-                .collect(),
-            // behind the index, and the index is not something a keystroke may pay for
-            RegistryValues::ObjectKind | RegistryValues::Moment => Vec::new(),
         }
     }
 }

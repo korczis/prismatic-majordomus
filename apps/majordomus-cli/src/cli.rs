@@ -91,6 +91,8 @@ pub enum CommandsCommand {
         #[arg(value_enum)]
         surface: ProjectionSurface,
     },
+    /// Write the `just` bridge under the ignored runtime directory, when its bytes would differ
+    Materialise,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -931,6 +933,13 @@ pub struct ExampleDoc {
 pub struct CommandExamples {
     /// `bench baseline update`; the empty string is the root.
     pub command: &'static str,
+    /// Names this command has answered to before, kept working wherever a surface has a
+    /// naming rule of its own to honour them in.
+    ///
+    /// Declared here so that a compatibility name is part of the command rather than a
+    /// line in a generated file someone maintains: the `just` bridge renders them, and
+    /// removing one is removing it from here.
+    pub aliases: &'static [&'static str],
     /// What running this command changes, and how it occupies the caller.
     ///
     /// The one thing about a command that cannot be read off its declaration: clap sees
@@ -954,6 +963,7 @@ pub struct CommandExamples {
 pub const EXAMPLES: &[CommandExamples] = &[
     CommandExamples {
         command: "commands",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "commands-default-list",
@@ -966,6 +976,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "commands list",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "commands-list-json",
@@ -978,6 +989,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "commands explain",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "commands-explain-destructive",
@@ -990,6 +1002,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "commands graph",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "commands-graph-json",
@@ -1002,6 +1015,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "commands projection",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "commands-projection-just",
@@ -1013,7 +1027,21 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "commands materialise",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::LocalMutation),
+        examples: &[ExampleDoc {
+            id: "commands-materialise-bridge",
+            title: "The bridge on disk, written only when it changed",
+            description: "Renders the `just` bridge and writes it under `.majordomus/runtime/`, which is ignored: entering a repository or listing its recipes never dirties the tree. The bytes are compared first, so an unchanged graph costs a read and no write, and the write itself is atomic — a second shell entering the repository at the same moment cannot see half a file.",
+            argv: &["commands", "materialise"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["bridge.just"]),
+        }],
+    },
+    CommandExamples {
         command: "completion query",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "completion-query-subcommands",
@@ -1026,6 +1054,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "completion script",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "completion-script-zsh",
@@ -1038,6 +1067,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree",
+        aliases: &["wt"],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-default-status",
@@ -1050,6 +1080,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree status",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-status-json",
@@ -1062,6 +1093,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree list",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-list-text",
@@ -1074,6 +1106,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree topology",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-topology-json",
@@ -1086,6 +1119,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree root",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-root-path",
@@ -1098,6 +1132,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree path",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-path-branch",
@@ -1110,6 +1145,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree inspect",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-inspect-branch",
@@ -1122,6 +1158,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree create",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-create-branch",
@@ -1134,6 +1171,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree ensure",
+        aliases: &["wt-create"],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-ensure-existing",
@@ -1146,6 +1184,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree migrate",
+        aliases: &["wt-migrate"],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-migrate-plan",
@@ -1158,6 +1197,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree validate",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-validate-clean",
@@ -1170,6 +1210,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree doctor",
+        aliases: &["wt-doctor"],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-doctor-clean",
@@ -1182,6 +1223,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree guard",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-guard-ok",
@@ -1194,6 +1236,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree repair",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-repair-dry-run",
@@ -1206,6 +1249,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree remove",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::Destructive),
         examples: &[ExampleDoc {
             id: "worktree-remove-clean",
@@ -1218,6 +1262,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree cleanup",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::Destructive),
         examples: &[ExampleDoc {
             id: "worktree-cleanup-nothing",
@@ -1230,6 +1275,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree branches",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-branches-list",
@@ -1242,6 +1288,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-show-default",
@@ -1254,6 +1301,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution show",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-show-json",
@@ -1266,6 +1314,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution targets",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-targets",
@@ -1278,6 +1327,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution validate",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-validate",
@@ -1290,6 +1340,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution matrix",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-matrix",
@@ -1302,6 +1353,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution artifact",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-artifact",
@@ -1314,6 +1366,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution releases",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-releases",
@@ -1326,6 +1379,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution metadata",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-metadata",
@@ -1338,6 +1392,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution build",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::LocalMutation),
         examples: &[ExampleDoc {
             id: "distribution-build",
@@ -1350,6 +1405,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "mcp",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::LocalMutation).long_running(),
         examples: &[
             ExampleDoc {
@@ -1380,6 +1436,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web list",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-list",
@@ -1392,6 +1449,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-topology",
@@ -1404,6 +1462,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web explain",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-explain",
@@ -1416,6 +1475,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web validate",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-validate",
@@ -1428,6 +1488,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web manifest",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-manifest",
@@ -1440,6 +1501,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report tests",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-tests",
@@ -1452,6 +1514,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report benchmarks",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-benchmarks",
@@ -1467,6 +1530,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report ui",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-ui",
@@ -1479,6 +1543,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web compose",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::LocalMutation),
         examples: &[ExampleDoc {
             id: "web-compose",
@@ -1491,6 +1556,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-catalogue",
@@ -1503,6 +1569,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why list",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
@@ -1533,6 +1600,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why show",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-show",
@@ -1545,6 +1613,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why audiences",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-audiences",
@@ -1557,6 +1626,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why areas",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-areas",
@@ -1569,6 +1639,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why diagnose",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
@@ -1591,6 +1662,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why validate",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-validate",
@@ -1603,6 +1675,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "serve",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::LocalMutation).long_running(),
         examples: &[ExampleDoc {
             id: "serve-ephemeral-port",
@@ -1615,6 +1688,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities list",
+        aliases: &["capabilities"],
         semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
@@ -1637,6 +1711,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities describe",
+        aliases: &["describe"],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-describe-objects-get",
@@ -1649,6 +1724,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities schema",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-schema-output",
@@ -1661,6 +1737,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities validate",
+        aliases: &["validate"],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-validate",
@@ -1673,6 +1750,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "generate",
+        aliases: &[],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[
             ExampleDoc {
@@ -1703,6 +1781,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench",
+        aliases: &["bench-run"],
         semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "bench-direct-quick",
@@ -1724,6 +1803,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench coverage",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
@@ -1746,6 +1826,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench baseline update",
+        aliases: &["bench-baseline"],
         semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "bench-baseline-update-quick",
@@ -1765,6 +1846,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "scope",
+        aliases: &[],
         semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {

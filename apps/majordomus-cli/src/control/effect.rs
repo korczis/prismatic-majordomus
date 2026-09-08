@@ -13,6 +13,8 @@
 //! assert!(EffectClass::ReadOnly.machine_callable());
 //! assert!(!EffectClass::Destructive.machine_callable());
 //! assert!(EffectClass::Destructive.needs_confirmation());
+//! // recoverable through git, run constantly: asking would only train the answer
+//! assert!(!EffectClass::RepositoryMutation.needs_confirmation());
 //! // a server is not a call that returns, wherever it is classified
 //! assert!(!Interactivity::LongRunning.machine_callable());
 //! ```
@@ -50,11 +52,12 @@ impl EffectClass {
     }
 
     /// Must a caller say yes before it runs?
+    ///
+    /// Only for what cannot be undone. A command that writes tracked files is recoverable
+    /// through git and is run constantly here; asking about it would train the answer, and
+    /// a prompt everyone answers without reading protects nothing.
     pub fn needs_confirmation(self) -> bool {
-        matches!(
-            self,
-            EffectClass::RepositoryMutation | EffectClass::Destructive
-        )
+        matches!(self, EffectClass::Destructive)
     }
 
     /// The word a surface shows.

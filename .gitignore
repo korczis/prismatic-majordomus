@@ -54,6 +54,12 @@ share/cockpit/vendor/p5.min.js
 # and nothing under it is ever normative. majordomus init adds this line once.
 .ai/local/
 
+# Runtime projections of the canonical command graph: the `just` bridge and anything else
+# a shell needs materialised. Every byte of it is a function of the declaration and of the
+# executable's version, both of which are already in the tree, so committing it would be
+# committing a derivation of what is beside it. Entering the repository must not dirty it.
+.majordomus/runtime/
+
 # personal Claude Code settings; the shared ones, including the capture hook, are tracked
 .claude/settings.local.json
 

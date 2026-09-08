@@ -1,11 +1,18 @@
 # Majordomus — the recipes a person runs here. `just` lists them; `just <recipe>` runs one.
 #
-# Two executables share the name `majordomus`: the shell tool `bin/majordomus` (the task
-# lifecycle: init, start, check, finish, doctor, update, ...) and the Rust executable under
-# apps/majordomus-cli (the read-only interfaces: MCP, HTTP, OpenAPI, Swagger UI, the Cockpit,
-# introspection, generation). Everything the Rust executable can do is routed to it here;
-# the shell tool keeps what only it does. Every recipe is a thin call: the source of truth
-# for what a step does is the script or the command it names, never this file.
+# What is *not* in this file: a recipe for anything the Rust executable already declares.
+# Those are a projection of the canonical command graph, generated into an ignored runtime
+# file and imported below, with their descriptions, their groups, their compatibility
+# aliases and their confirmations all derived from the command's own declaration. Adding a
+# command to apps/majordomus-cli therefore adds a recipe here, and editing this file to add
+# one by hand would be declaring it twice. `just bridge` materialises the projection;
+# `majordomus commands explain <id>` says where any of it came from.
+#
+# What is in this file: bootstrap that cannot be derived (building the executable), the
+# other executable — the shell tool `bin/majordomus`, whose task lifecycle is its own
+# program — and the workflows that are genuinely scripts. Every recipe is a thin call: the
+# source of truth for what a step does is the script or the command it names, never this
+# file.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -17,6 +24,11 @@ rust_bin  := crate / "target" / profile / "majordomus"
 shell_bin := root / "bin/majordomus"
 
 export MAJORDOMUS_SHARE := root / "share"
+
+# The generated bridge: one recipe per canonical command of the Rust executable. Optional,
+# because a fresh clone has not materialised it yet and `just --list` must still work;
+# `just bridge` writes it, and anything that needs it depends on that recipe.
+import? ".majordomus/runtime/just/bridge.just"
 
 # List every recipe, by group.
 [private]
@@ -35,6 +47,11 @@ build:
 build-release:
     RUSTFLAGS='' cargo build --locked --release --manifest-path "{{manifest}}"
 
+# Materialise the generated `just` bridge: one recipe per canonical command, written under the ignored .majordomus/runtime/ only when its bytes would differ. Run it after a fresh clone, and after adding a command.
+[group('build')]
+bridge: build
+    "{{rust_bin}}" commands materialise
+
 # Remove the Rust build output.
 [group('build')]
 [confirm("Remove apps/majordomus-cli/target? [y/N]")]
@@ -42,16 +59,6 @@ clean:
     cargo clean --manifest-path "{{manifest}}"
 
 # ---------------------------------------------------------------- serve (Rust executable)
-
-# MCP on stdio for the client that spawned it, joining or starting the repository's one shared server (its home page at / lists every surface). Extra arguments pass through.
-[group('serve')]
-mcp *args: build
-    "{{rust_bin}}" mcp {{args}}
-
-# The shared server alone, on 127.0.0.1:8741 by default: the home page /, the documentation /docs/, the Cockpit /cockpit, Swagger UI /swagger, /openapi.json, MCP over HTTP /mcp. Exits 0 if one already runs.
-[group('serve')]
-serve *args: build
-    "{{rust_bin}}" serve {{args}}
 
 # What `mcp` would serve, and every diagnostic; exit 10 when the layer is degraded.
 [group('serve')]
@@ -98,26 +105,6 @@ cockpit-probe *args:
 
 # ---------------------------------------------------------------- registry (Rust executable)
 
-# Every capability with its projections (Rust registry). Extra arguments pass through (--kind, --exposure, --format).
-[group('registry')]
-capabilities *args: build
-    "{{rust_bin}}" capabilities list {{args}}
-
-# One capability by id: schemas, provenance, every projection.
-[group('registry')]
-describe id *args: build
-    "{{rust_bin}}" capabilities describe "{{id}}" {{args}}
-
-# The registry's invariants and every projection; exit 10 with every violation named.
-[group('registry')]
-validate: build
-    "{{rust_bin}}" capabilities validate
-
-# Regenerate every projection: docs/generated/, share/allow/, AGENTS.md/CLAUDE.md/... from the policy, site/data/registry/ from the registry.
-[group('registry')]
-generate: build
-    "{{rust_bin}}" generate
-
 # Exit 10 naming every stale generated projection; writes nothing.
 [group('registry')]
 generate-check: build
@@ -125,25 +112,10 @@ generate-check: build
 
 # ---------------------------------------------------------------- benchmarks (Rust executable)
 
-# Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations). `just bench-run objects.search --transport mcp --profile full` narrows it.
-[group('bench')]
-bench-run *args: build
-    "{{rust_bin}}" bench {{args}}
-
-# Benchmark coverage: covered / required, the denominator generated from the registry; exit 10 when anything is missing or waived.
-[group('bench')]
-bench-coverage *args: build
-    "{{rust_bin}}" bench coverage --check {{args}}
-
 # Compare a run with this platform's accepted baseline under .ai/repo/benchmarks/rust/ (policy.yaml); exit 10 on a regression.
 [group('bench')]
 bench-check *args: build
     "{{rust_bin}}" bench --profile ci --check --no-write {{args}}
-
-# Record this platform's baseline from a full run (a reviewable, tracked file); refuses a dirty tree.
-[group('bench')]
-bench-baseline *args: build
-    "{{rust_bin}}" bench baseline update {{args}}
 
 # ---------------------------------------------------------------- use cases (shell tool)
 
@@ -225,9 +197,9 @@ rust-check:
 coverage:
     cd "{{crate}}" && RUSTFLAGS='' cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat "{{root}}/scripts/rust-coverage-threshold")"
 
-# The criterion microbenchmarks (benches/projections.rs, benches/shared.rs, benches/scaling.rs). `just bench scaling` runs one; `just bench-run` is the end-to-end measurement.
+# The criterion microbenchmarks (benches/projections.rs, benches/shared.rs, benches/scaling.rs). `just bench-criterion scaling` runs one; `just bench` is the end-to-end measurement of the executable itself, bridged from the command graph.
 [group('test')]
-bench *name:
+bench-criterion *name:
     RUSTFLAGS='' cargo bench --manifest-path "{{manifest}}" {{ if name == "" { "" } else { "--bench " + name } }}
 
 # bash -n and shellcheck over the shell tool, the scripts and every case (scripts/ci/shell-lint, the same gate CI runs).
@@ -335,23 +307,3 @@ derive-merge-driver:
     @echo "merge.derived wired; .gitattributes now resolves the derived artifacts on merge"
 
 # ---------------------------------------------------------------- worktree (Rust executable)
-
-# Where this checkout stands in the branch-to-worktree topology (<repo>-wt/<branch>): `just wt`, `just wt list`, `just wt create feature/x`, `just wt migrate --plan`. Every argument passes through to `majordomus worktree`.
-[group('worktree')]
-wt *args: build
-    "{{rust_bin}}" worktree {{args}}
-
-# Start work on a branch: its canonical worktree, created if absent; prints the path to cd into.
-[group('worktree')]
-wt-create branch *args: build
-    "{{rust_bin}}" worktree ensure "{{branch}}" {{args}}
-
-# Bring every misplaced worktree to its canonical path, dirty state included, fingerprint-verified; `just wt-migrate --plan` shows the moves and changes nothing.
-[group('worktree')]
-wt-migrate *args: build
-    "{{rust_bin}}" worktree migrate {{args}}
-
-# Every diagnostic of the topology with its code and remedy; exit 10 when an error stands.
-[group('worktree')]
-wt-doctor *args: build
-    "{{rust_bin}}" worktree doctor {{args}}

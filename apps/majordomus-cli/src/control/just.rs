@@ -49,9 +49,14 @@ fn header(graph: &CommandGraph) -> String {
 pub fn render(graph: &CommandGraph) -> String {
     let mut out = header(graph);
     out.push_str(
-        "\n# The executable the bridge calls. `bin/majordomus-cli` resolves it — an\n\
-         # installed one, this workspace's build — and is the only place that resolution\n\
-         # is written.\nmajordomus_exe := env(\"MAJORDOMUS_EXE\", justfile_directory() / \"bin/majordomus-cli\")\n",
+        "\n# Arguments reach the executable exactly as they were typed — spaces, quotes,\n\
+         # `$`, everything — because `just` passes them as positional arguments and the\n\
+         # bodies below forward \"$@\" rather than interpolating a string.\n\
+         set positional-arguments\n\
+         \n\
+         # The executable the bridge calls. `bin/majordomus-cli` resolves it — an installed\n\
+         # one, this workspace's build — and is the only place that resolution is written.\n\
+         majordomus_exe := env(\"MAJORDOMUS_EXE\", justfile_directory() / \"bin/majordomus-cli\")\n",
     );
     for node in graph.commands.iter().filter(|c| bridged(c)) {
         let Some(recipe) = node.projections.just.as_deref() else {
@@ -74,9 +79,12 @@ pub fn render(graph: &CommandGraph) -> String {
         }
         out.push_str(&format!("{recipe} *args:\n"));
         out.push_str(&format!(
-            "    \"{{{{majordomus_exe}}}}\" {} {{{{args}}}}\n",
+            "    \"{{{{majordomus_exe}}}}\" {} \"$@\"\n",
             node.path.join(" ")
         ));
+        for alias in &node.aliases {
+            out.push_str(&format!("alias {alias} := {recipe}\n"));
+        }
     }
     out
 }

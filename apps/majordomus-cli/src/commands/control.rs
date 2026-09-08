@@ -50,6 +50,21 @@ pub fn run(args: CommandsArgs) -> Result<u8> {
             writeln!(out, "{text}").map_err(Error::Transport)?;
         }
         CommandsCommand::Projection { surface } => projection(&mut out, &graph, surface)?,
+        CommandsCommand::Materialise => {
+            let root = repository_root();
+            let state = just::materialise(&root, &graph).map_err(Error::Transport)?;
+            let path = root.join(just::BRIDGE_PATH);
+            writeln!(
+                out,
+                "{} {}",
+                match state {
+                    just::Materialised::Written => "wrote",
+                    just::Materialised::Current => "current",
+                },
+                path.display()
+            )
+            .map_err(Error::Transport)?;
+        }
     }
     for d in graph.diagnostics.iter().filter(|d| d.fatal) {
         writeln!(out, "FAIL {}  {}  {}", d.code, d.subject, d.detail).map_err(Error::Transport)?;
@@ -61,15 +76,20 @@ pub fn run(args: CommandsArgs) -> Result<u8> {
     })
 }
 
+/// The repository this call is standing in, or the directory itself when it is not one.
+fn repository_root() -> std::path::PathBuf {
+    let here = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+    crate::repository::Repository::discover(&here)
+        .map(|r| r.root().to_path_buf())
+        .unwrap_or(here)
+}
+
 /// The graph, with the repository's own workflows when they were asked for.
 fn build(workflows: bool) -> CommandGraph {
     if !workflows {
         return graph::of_this_executable();
     }
-    let root = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
-    let root = crate::repository::Repository::discover(&root)
-        .map(|r| r.root().to_path_buf())
-        .unwrap_or(root);
+    let root = repository_root();
     let discovered = crate::control::workflow::discover(&root).unwrap_or_default();
     let registry = crate::capability::CapabilityRegistry::builder()
         .with_modules(crate::capability::builtin::modules())

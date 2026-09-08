@@ -256,6 +256,8 @@ pub struct CommandNode {
     pub projections: Projections,
     /// Whether it is offered.
     pub availability: Availability,
+    /// Names it has answered to before; kept working by every surface that can.
+    pub aliases: Vec<String>,
     /// Where it is declared, repository-relative.
     pub provenance: String,
 }
@@ -342,12 +344,51 @@ pub fn of_this_executable() -> CommandGraph {
     build(&cli::tree(), &registry, &[])
 }
 
+/// What a command declares beside itself: the semantics of running it, and the names it
+/// has answered to before. Everything else about a command is read off the declaration or
+/// computed.
+///
+/// A parameter rather than a constant so that the composition can be exercised over a
+/// command line this crate does not ship — which is how the invariant that a new command
+/// needs no edit to any projection is proved rather than asserted.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Declaration<'a> {
+    /// The command's path as a person types it, without `majordomus`.
+    pub command: &'a str,
+    /// What running it changes.
+    pub semantics: Semantics,
+    /// Names it has answered to before.
+    pub aliases: &'a [&'a str],
+}
+
+/// The declarations of this executable's own command line.
+pub fn declarations() -> Vec<Declaration<'static>> {
+    cli::EXAMPLES
+        .iter()
+        .map(|set| Declaration {
+            command: set.command,
+            semantics: set.semantics,
+            aliases: set.aliases,
+        })
+        .collect()
+}
+
 /// The graph over a command-line tree, a registry and the external workflows discovered
-/// for this repository.
+/// for this repository, using this executable's own declarations.
 pub fn build(
     tree: &CommandDoc,
     registry: &CapabilityRegistry,
     workflows: &[crate::control::workflow::Workflow],
+) -> CommandGraph {
+    compose(tree, registry, workflows, &declarations())
+}
+
+/// The composition itself, over any command line and any set of declarations.
+pub fn compose(
+    tree: &CommandDoc,
+    registry: &CapabilityRegistry,
+    workflows: &[crate::control::workflow::Workflow],
+    declarations: &[Declaration<'_>],
 ) -> CommandGraph {
     let mut commands = Vec::new();
     let mut diagnostics = Vec::new();
@@ -358,9 +399,13 @@ pub fn build(
         .filter_map(|c| c.exposure.cli.as_ref().map(|e| (e.path.clone(), c)))
         .collect();
 
-    let semantics: BTreeMap<&str, Semantics> = cli::EXAMPLES
+    let semantics: BTreeMap<&str, Semantics> = declarations
         .iter()
-        .map(|set| (set.command, set.semantics))
+        .map(|d| (d.command, d.semantics))
+        .collect();
+    let aliases: BTreeMap<&str, &[&str]> = declarations
+        .iter()
+        .map(|d| (d.command, d.aliases))
         .collect();
 
     for doc in tree.flatten() {
@@ -429,6 +474,10 @@ pub fn build(
                 _ => Availability::Available,
             },
             provenance: cli::DECLARATION.to_string(),
+            aliases: aliases
+                .get(key.as_str())
+                .map(|names| names.iter().map(|n| n.to_string()).collect())
+                .unwrap_or_default(),
             path,
         };
         commands.push(node);
@@ -468,11 +517,14 @@ fn stability_word(s: Stability) -> &'static str {
     }
 }
 
+/// How one surface spells a command; `None` when the command is not on it.
+type Spelling = fn(&CommandNode) -> Option<String>;
+
 /// Two commands that would answer to one spelling on one surface. Never resolved by
 /// order: both ends are named and the graph is refused.
 fn collisions(commands: &[CommandNode]) -> Vec<Diagnostic> {
     let mut out = Vec::new();
-    let surfaces: [(Surface, fn(&CommandNode) -> Option<String>); 4] = [
+    let surfaces: [(Surface, Spelling); 4] = [
         (Surface::Just, |c| c.projections.just.clone()),
         (Surface::Mcp, |c| c.projections.mcp.clone()),
         (Surface::Cockpit, |c| c.projections.cockpit.clone()),
