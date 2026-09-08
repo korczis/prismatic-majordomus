@@ -1,7 +1,7 @@
 +++
 title = "Why"
 description = "the operational failure modes this tool answers, as objects of the layer: the three kinds, the flow from one Markdown file to every projection, what is authored and what is derived, and what enforces each"
-weight = 30
+weight = 31
 [extra]
 source = "docs/WHY.md"
 +++

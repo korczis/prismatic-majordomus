@@ -164,7 +164,7 @@ fixture_repo() {
   # repositories from, and the executable's registry the MCP tools resolve against
   if [ ! -f "$dst/.ai/manifest.yaml" ]; then
     mkdir -p "$dst/.ai/repo"; cp "$ROOT/.ai/README.md" "$ROOT/.ai/manifest.yaml" "$dst/.ai/"
-    for p in README.md policy.yaml scope.yaml knowledge rules profiles prompts workflows use-cases applications adrs why; do
+    for p in README.md policy.yaml scope.yaml knowledge rules profiles prompts workflows use-cases applications adrs why features; do
       [ -e "$ROOT/.ai/repo/$p" ] && [ ! -e "$dst/.ai/repo/$p" ] && cp -R "$ROOT/.ai/repo/$p" "$dst/.ai/repo/$p"
     done
     for p in "$ROOT"/.ai/repo/use-cases/* "$ROOT"/.ai/repo/applications/*; do

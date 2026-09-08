@@ -540,6 +540,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/features",
+      "kind": "artifact",
+      "label": "repo/features",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/sessions}",
       "kind": "artifact",
       "label": "repo/sessions}",
@@ -1469,6 +1479,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/deployments}",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/features",
       "kind": "uses"
     },
     {

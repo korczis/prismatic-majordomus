@@ -78,6 +78,9 @@ H
   # the why catalogue: the section and its contract exist from the start, so that the first
   # moment is one file and nothing has to be registered for it
   mj_init_tree "$skel/ai/repo/why" "$MJ_AI_REPO_DIR/why" '*'
+  # the product features: the section and its contract exist from the start, so that the
+  # first feature is one file and every surface that presents it is derived from it
+  mj_init_tree "$skel/ai/repo/features" "$MJ_AI_REPO_DIR/features" '*'
   mkdir -p "$MJ_PROJECT_DIR"
   # The sessions section, at the path the manifest names — or, on the first init, at the
   # path the skeleton's manifest is about to name. The resolved variable is empty on that
