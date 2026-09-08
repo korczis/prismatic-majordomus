@@ -99,7 +99,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/cli.json` | `cli` | json | 309768 | `d032215e37562c21` |
 | `docs/generated/cli.md` | `cli` | markdown | 128809 | `dd8c3fcfb47da62e` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 240798 | `65846d1351f098a4` |
-| `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2666 | `c1bdb64b545586e9` |
+| `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `fa6ae67435697e1d` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 2074 | `af5bc1fea27331d3` |
 | `docs/generated/modules/continuity.md` | `modules/continuity` | markdown | 1519 | `c9fba91efb6e2e24` |
@@ -163,7 +163,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `749013b70d76faf7` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `30e71338d0ec96d6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 2842 | `2ac359554068d8fd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1392248 | `e8e9dfb6f5faf636` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1392248 | `450f96ed75b42a1d` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `2bb68783b4195c7e` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `07c4fd6a938169b8` |
 | `site/static/install.sh` | `installer` | text | 28286 | `30e8f6d7c9317caa` |

@@ -52,6 +52,13 @@ titles:
 # Every target the project has an opinion about. `status: supported` is a promise: the
 # release refuses to publish without the artifact, the installer offers it, and the
 # documentation lists it. Nothing is listed here that a release does not build.
+#
+# `build.runner` must be a *standard*, currently offered GitHub-hosted label. A retired one
+# does not fail: the job is accepted and queues for a runner that will never come, so the
+# release neither publishes nor reports an error. That is how `macos-13` — retired when
+# GitHub moved to supporting the last two macOS versions — held two releases at 5/6 targets
+# with nothing red to look at. GitHub keeps the list at actions/runner-images; a label with
+# a `-large` or `-xlarge` suffix is a billed larger runner and is not one of these.
 targets:
   - id: macos-aarch64
     os: macos
@@ -59,7 +66,7 @@ targets:
     rust_target: aarch64-apple-darwin
     status: supported
     build:
-      runner: macos-14
+      runner: macos-15
       native: true
 
   - id: macos-x86_64
@@ -68,7 +75,7 @@ targets:
     rust_target: x86_64-apple-darwin
     status: supported
     build:
-      runner: macos-13
+      runner: macos-15-intel
       native: true
 
   - id: linux-x86_64-gnu
