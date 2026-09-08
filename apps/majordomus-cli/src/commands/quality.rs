@@ -286,28 +286,36 @@ mod tests {
 
     #[test]
     fn the_counts_a_reader_acts_on_are_all_present() {
-        let mut report = QualityReport::default();
-        report.target = "apps/majordomus-cli".into();
-        report.public_api.items = 10;
-        report.public_api.documented = 10;
-        report.public_api.owe_example = 4;
-        report.public_api.exampled = 3;
-        report.public_api.exempt = vec![crate::quality::Exemption {
-            reason: "a value is shown by an example of what reads it".into(),
-            items: 6,
-        }];
-        report.modules.modules = 2;
-        report.modules.documented = 2;
-        report.modules.exampled = 1;
-        report.modules.behaviourally_tested = 2;
-        report.operations.canonical = 5;
-        report.operations.cli = 2;
-        report.operations.http = 5;
-        report.operations.openapi = 5;
-        report.operations.mcp = 4;
-        report.operations.cli_commands = 7;
-        report.operations.cli_from_capability = 2;
-        report.operations.cli_local = 5;
+        let report = QualityReport {
+            target: "apps/majordomus-cli".into(),
+            public_api: crate::quality::PublicApiQuality {
+                items: 10,
+                documented: 10,
+                owe_example: 4,
+                exampled: 3,
+                exempt: vec![crate::quality::Exemption {
+                    reason: "a value is shown by an example of what reads it".into(),
+                    items: 6,
+                }],
+            },
+            modules: crate::quality::ModuleQuality {
+                modules: 2,
+                documented: 2,
+                exampled: 1,
+                behaviourally_tested: 2,
+            },
+            operations: crate::quality::OperationParity {
+                canonical: 5,
+                cli: 2,
+                http: 5,
+                openapi: 5,
+                mcp: 4,
+                cli_commands: 7,
+                cli_from_capability: 2,
+                cli_local: 5,
+            },
+            ..QualityReport::default()
+        };
 
         let out = rendered(&measured(report, true, 0));
         for fragment in [
@@ -326,7 +334,6 @@ mod tests {
 
     #[test]
     fn a_finding_is_rendered_with_the_rule_the_reason_and_the_remedy_once_per_code() {
-        let mut report = QualityReport::default();
         let at = |symbol: &str, line| {
             Violation::new(
                 ViolationCode::RustPublicMissingExample,
@@ -336,7 +343,10 @@ mod tests {
                 "carries behaviour and no example of it",
             )
         };
-        report.violations = vec![at("a::one", 3), at("a::two", 9)];
+        let report = QualityReport {
+            violations: vec![at("a::one", 3), at("a::two", 9)],
+            ..QualityReport::default()
+        };
 
         let out = rendered(&measured(report, false, 0));
         assert!(
