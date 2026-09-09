@@ -104,8 +104,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 |---|---|---|---|---|
 | `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `1af7cda8801d7388` |
 | `.dockerignore` | `deployment` | text | 573 | `b5411ad35adb24ea` |
-| `AGENTS.md` | `providers/agents` | markdown | 3807 | `5b22a667f98d7e43` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 3096 | `fd231d4285895bcf` |
+| `AGENTS.md` | `providers/agents` | markdown | 4530 | `2e6745a03a0eedd8` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 3819 | `53279f7ebb40a5cc` |
 | `deploy/Dockerfile` | `deployment` | text | 1429 | `bd5ae89f838bd0ea` |
 | `docs/INSTALL.md` | `install-guide` | markdown | 9530 | `21cf0b7ae50c13a2` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
@@ -115,9 +115,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/benchmarks.md` | `benchmarks` | markdown | 8831 | `0f80c504782ebbe5` |
 | `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 13268 | `76366b8e140422b2` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 15493 | `13c28f795babf05d` |
-| `docs/generated/changelog.json` | `changelog` | json | 231207 | `f6a69c6ca3bc5b36` |
-| `docs/generated/changelog.md` | `changelog` | markdown | 83336 | `f98936c283ed3b7d` |
-| `docs/generated/changelog.yaml` | `changelog` | yaml | 175872 | `9e1c0d565444466f` |
+| `docs/generated/changelog.json` | `changelog` | json | 232607 | `7afcaa702e7518b6` |
+| `docs/generated/changelog.md` | `changelog` | markdown | 83766 | `d620eee2a40483ac` |
+| `docs/generated/changelog.yaml` | `changelog` | yaml | 176908 | `6f77b3f414d851d8` |
 | `docs/generated/cli.json` | `cli` | json | 500420 | `02ded72a89df9e7f` |
 | `docs/generated/cli.md` | `cli` | markdown | 210107 | `02afac4bf17792a9` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 389169 | `78fd41c6c1e812df` |
@@ -197,9 +197,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `d06856785900aae7` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `d5dc7da86ab749a1` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 60224 | `84a1d07a20b8dc28` |
-| `site/data/registry/product.json` | `site-product` | json | 303476 | `43e462376b593054` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2169707 | `7a6cae525b42328a` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 60224 | `70399cf9320897c2` |
+| `site/data/registry/product.json` | `site-product` | json | 303476 | `7f12573aaf6355a2` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2172138 | `5a6a3ee77885732e` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `58f7d0d6945968ba` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `626b03ff72b5b235` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |

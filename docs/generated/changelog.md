@@ -21,6 +21,8 @@ Current version: **0.4.0**
 
 ### Added
 
+- **rules**: an empty result and a failed command must not look alike (`824223cb5`)
+- **ci**: three failures of one session, turned into checks (`1e96e91b7`)
 - **peers**: a session is told it has not announced, and doctor names the work that exists on one disk (`1487d729e`)
 - **design**: one declaration for the design, and every surface projects it (`2b3b9fffa`)
 - **closure**: a task owes obligations, and the evidence that discharges them goes stale (`cf1ee94ca`)
@@ -154,8 +156,12 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`c4b6d0715`)
+- **derive**: the projections follow the master merge (`8c53e2b11`)
+- **derive**: the projections follow the master merge (`a4f9780b0`)
 - **derive**: the projections follow the master merge (`16cc159c7`)
 - **derive**: the projections follow the master merge (`91b4e8be6`)
+- **derive**: the projections follow the master merge (`3a2aeab52`)
 - **derive**: the projections follow the merge (`f2b018f26`)
 - **derive**: the projections follow the two merges, and the baseline records lib/doctor.sh (`501ea2d41`)
 - **derive**: the projections follow the master merge, and the baseline records three scripts that arrived with it (`8ddb6496d`)
