@@ -22,11 +22,15 @@ use super::model::{Availability, SurfaceKind, Topology};
 #[serde(rename_all = "kebab-case")]
 // `Severity` alone is the index's diagnostic severity; a topology's finding has its own
 #[schemars(rename = "SurfaceFindingSeverity")]
+// Declared least first, like `model::Severity`, so `Ord` means the same thing in both:
+// greater is worse, and every comparator that puts the worst first reads `b.cmp(a)`.
+// Declared the other way round, the two enums made identical intent look like opposite
+// code, and a change that reconciled the two comparators would have inverted one report.
 pub enum Severity {
-    /// The topology may not be served or published in this state.
-    Error,
     /// Worth reading; serving is still coherent.
     Warning,
+    /// The topology may not be served or published in this state.
+    Error,
 }
 
 /// One thing wrong with a topology, said so a person can fix it without reading this file.
@@ -72,11 +76,14 @@ pub fn validate(topology: &Topology, root: &Path, artifacts: Artifacts) -> Vec<F
     findings.extend(shadowing(topology, root));
     findings.extend(namespaces(topology));
     findings.extend(roots(topology, root, artifacts));
+    // The worst first, then the canonical order over what is left. The same shape the
+    // other two finding lists use (`why::findings`, `product::findings`), and now the same
+    // direction: `b.cmp(a)` on a severity whose greater variant is the worse one.
     findings.sort_by(|a, b| {
-        a.severity
-            .cmp(&b.severity)
-            .then_with(|| a.rule.cmp(&b.rule))
-            .then_with(|| a.surface.cmp(&b.surface))
+        b.severity
+            .cmp(&a.severity)
+            .then_with(|| crate::order::natural_cmp(&a.rule, &b.rule))
+            .then_with(|| crate::order::natural_cmp(&a.surface, &b.surface))
     });
     findings
 }
@@ -342,7 +349,13 @@ fn mounts(topology: &Topology) -> Vec<Finding> {
             }
         }
     }
-    findings.sort_by(|a, b| a.rule.cmp(&b.rule).then_with(|| a.surface.cmp(&b.surface)));
+    // Grouped so that `dedup_by` sees duplicates adjacent, with the worst of a duplicated
+    // pair first so that it is the one that survives. The caller sorts the result again.
+    findings.sort_by(|a, b| {
+        crate::order::natural_cmp(&a.rule, &b.rule)
+            .then_with(|| crate::order::natural_cmp(&a.surface, &b.surface))
+            .then_with(|| b.severity.cmp(&a.severity))
+    });
     findings.dedup_by(|a, b| a.rule == b.rule && a.surface == b.surface);
     findings
 }

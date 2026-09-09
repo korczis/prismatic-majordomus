@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, Stability};
+use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::command_graph::load;
 use crate::command_graph::model::{
@@ -254,7 +254,17 @@ pub fn module() -> ModuleDescriptor {
                 output: CommandIndex,
                 stability: Stability::Implemented,
                 exposure: Exposure {
-                    mcp: mcp("majordomus_commands"),
+                    // A tool for a client that asks a question, and a resource for one that
+                    // wants the index in its context without asking: the summary is small by
+                    // construction — an id, a summary and an effect per command — which is
+                    // what makes it safe to read whole, and what the detail capability is for.
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_commands".into()),
+                        resource: Some(McpResource {
+                            uri: COMMANDS_URI.into(),
+                            name: "commands".into(),
+                        }),
+                    }),
                     http: get("/api/v1/commands"),
                     cli: None,
                 },
@@ -292,5 +302,60 @@ pub fn module() -> ModuleDescriptor {
                 handler: commands_graph,
             }
         ],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The module's own documentation says three capabilities, all read-only, all answered
+    /// by the command graph. That sentence is the thing every surface then derives from:
+    /// the MCP tool names, the HTTP routes, the OpenAPI operations, the Cockpit views. A
+    /// refactor that dropped one, renamed a route or added a fourth would still compile,
+    /// and every suite that exercises the graph behind them would still pass. This is the
+    /// assertion that would not.
+    #[test]
+    fn the_declaration_yields_the_projections_it_claims() {
+        let m = module();
+        assert_eq!(m.id.as_str(), "commands");
+        let expected: &[(&str, &str, &str)] = &[
+            ("commands.list", "majordomus_commands", "/api/v1/commands"),
+            ("commands.get", "majordomus_command", "/api/v1/command"),
+            (
+                "commands.graph",
+                "majordomus_command_graph",
+                "/api/v1/commands/graph",
+            ),
+        ];
+        let ids: Vec<&str> = m
+            .capabilities
+            .iter()
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        let want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        assert_eq!(
+            ids, want,
+            "the module declares a different set of capabilities"
+        );
+        for (executable, (id, tool, path)) in m.capabilities.iter().zip(expected) {
+            let exposure = &executable.capability.exposure;
+            assert_eq!(
+                exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+                Some(*tool),
+                "{id} lost or renamed its MCP tool"
+            );
+            assert_eq!(
+                exposure.http.as_ref().map(|h| h.path.as_str()),
+                Some(*path),
+                "{id} lost or renamed its HTTP route"
+            );
+            assert!(
+                exposure.cli.is_none(),
+                "{id} grew a command line of its own; the graph is read through the \
+                 executable's own surfaces, and a command that lists commands would be \
+                 the second catalogue this module exists to avoid"
+            );
+        }
     }
 }

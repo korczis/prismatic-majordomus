@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# release-check — the gate of project.release-is-a-projection: the version is one fact with
+# one writer, and the changelog is composed rather than kept.
+#
+# `majordomus generate --check` already proves that docs/generated/changelog.* is what the
+# composer would write from this tree today. It cannot prove the two things below, because
+# both are about declarations it never reads:
+#
+#   1. Where the version is stated is itself stated twice. The crate names the two sites in
+#      apps/majordomus-cli/src/release/version.rs (MANIFEST, ENTRY) and the release script
+#      names them again in scripts/release-version, because an installed tree has no
+#      Cargo.toml and the crate is compiled before the shell tool exists. Two readers of one
+#      fact is tolerable; two readers that have drifted is a writer raising files the check
+#      does not read, and nothing else notices until a tag is cut.
+#   2. That the two sites agree is checked only by the release workflow, at the moment of
+#      publication — so a half-applied bump lives on the default branch until somebody tries
+#      to ship it. The same verdict belongs on every plan.
+#   3. Nothing may keep a changelog by hand. A composed changelog and a maintained
+#      CHANGELOG.md are two answers to one question, and the maintained one wins by being
+#      the file people open. A page that renders the derived document is a projection and is
+#      not this: only the two conventional homes of an authored changelog are refused.
+#   4. The version the tree declares is never behind the newest release the layer records:
+#      a published 1.2.0 with a tree that still says 1.1.0 means the bump was never made.
+#
+#   scripts/ci/release-check                report every finding, exit 10 on any
+#   MJ_ROOT=<dir> scripts/ci/release-check  against another tree (the behavioural case does)
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+findings=0
+ok()   { printf 'ok    %s\n' "$*"; }
+fail() { printf 'FAIL  %s\n' "$*"; findings=$((findings+1)); }
+
+MODULE=apps/majordomus-cli/src/release/version.rs
+SCRIPT=scripts/release-version
+[ -f "$MODULE" ] || { echo "release-check: $MODULE is missing" >&2; exit 12; }
+[ -f "$SCRIPT" ] || { echo "release-check: $SCRIPT is missing" >&2; exit 12; }
+
+# ------------------------------------------------------ 1. the two sites are named the same
+# Both declarations are read; neither is written here, so this gate cannot become a third
+# copy of the fact it is holding together.
+rust_const() { sed -n "s/^pub const $1: &str = \"\\([^\"]*\\)\";/\\1/p" "$MODULE" | head -n 1; }
+sh_path()    { sed -n "s|^$1=\"\\\$ROOT/\\(.*\\)\"\$|\\1|p" "$SCRIPT" | head -n 1; }
+
+for site in MANIFEST ENTRY; do
+  from_rust="$(rust_const "$site")"
+  from_shell="$(sh_path "$site")"
+  if [ -z "$from_rust" ] || [ -z "$from_shell" ]; then
+    fail "the $site version site is not declared in both $MODULE and $SCRIPT (rust '$from_rust', shell '$from_shell')"
+    continue
+  fi
+  if [ "$from_rust" = "$from_shell" ]; then
+    ok "$site is $from_rust in both the crate and the release script"
+  else
+    fail "the $site version site has drifted: the crate writes $from_rust and $SCRIPT reads $from_shell"
+  fi
+done
+
+MANIFEST_PATH="$(rust_const MANIFEST)"
+ENTRY_PATH="$(rust_const ENTRY)"
+
+# ------------------------------------------------------------ 2. the two sites state one version
+if [ -n "$MANIFEST_PATH" ] && [ -n "$ENTRY_PATH" ] && [ -f "$MANIFEST_PATH" ] && [ -f "$ENTRY_PATH" ]; then
+  crate="$(awk '/^\[package\]/{p=1;next} /^\[/{p=0} p && /^version *=/{gsub(/[^0-9A-Za-z.+-]/,"",$3); print $3; exit}' "$MANIFEST_PATH")"
+  tool="$(sed -n 's/^MJ_VERSION="\([^"]*\)".*/\1/p' "$ENTRY_PATH" | head -n 1)"
+  if [ -z "$crate" ]; then
+    fail "$MANIFEST_PATH states no version under [package]"
+  elif [ "$crate" = "$tool" ]; then
+    ok "both writers state $crate"
+  else
+    fail "$MANIFEST_PATH states '$crate' and $ENTRY_PATH states '$tool'; one release has one version — \`majordomus release bump --exact $crate\` writes both"
+  fi
+else
+  fail "a version site the crate declares does not exist: $MANIFEST_PATH, $ENTRY_PATH"
+  crate=""
+fi
+
+# ------------------------------------------------------------------- 3. no changelog is kept
+# The two conventional homes of an authored changelog, and only those: a site page whose body
+# renders the derived document is a projection, and the generated tree is the projection.
+authored=0
+for f in \
+  [Cc][Hh][Aa][Nn][Gg][Ee][Ll][Oo][Gg]* \
+  docs/[Cc][Hh][Aa][Nn][Gg][Ee][Ll][Oo][Gg]*
+do
+  [ -f "$f" ] || continue
+  case "$f" in docs/generated/*) continue ;; esac
+  fail "$f is an authored changelog; the changelog is composed by \`majordomus release changelog\` and written by \`majordomus generate changelog\` into docs/generated/"
+  authored=$((authored+1))
+done
+if [ "$authored" = 0 ]; then ok "no changelog is kept by hand"; fi
+
+# ----------------------------------------------- 4. the tree is not behind what was published
+newest=""
+for r in .ai/repo/releases/*.yaml; do
+  [ -f "$r" ] || continue
+  v="$(sed -n 's/^version: *"\{0,1\}\([0-9][0-9.]*\)"\{0,1\} *$/\1/p' "$r" | head -n 1)"
+  [ -n "$v" ] || continue
+  newest="$(printf '%s\n%s\n' "$newest" "$v" | grep -v '^$' | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
+done
+if [ -z "$newest" ] || [ -z "$crate" ]; then
+  ok "no published release to compare the declared version with"
+else
+  behind="$(printf '%s\n%s\n' "$crate" "$newest" | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
+  if [ "$behind" = "$crate" ]; then
+    ok "the tree declares $crate and the newest release is $newest"
+  else
+    fail "the tree declares $crate and $newest is already published; the bump that released it was never made"
+  fi
+fi
+
+if [ "$findings" -eq 0 ]; then
+  printf 'release-check: the release is a projection — one writer, no kept changelog\n'
+  exit 0
+fi
+printf 'release-check: %s finding(s)\n' "$findings" >&2
+exit 10

@@ -9,6 +9,7 @@ summary: One distribution model owns every platform, artifact name and URL; the 
 status: stable
 weight: 120
 featured: false
+areas: [verification, documentation]
 modules: [distribution]
 commands: [init, migrate, version]
 kinds: [distribution-model]

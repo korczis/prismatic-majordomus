@@ -624,20 +624,30 @@ impl Router {
     /// than a second one — the schemas, the parameters and the examples stay in the
     /// OpenAPI document, which is generated from the same descriptors.
     fn routes(&self, ctx: &Arc<Context>) -> Response {
-        let mut routes: Vec<Value> = ctx
+        // Ordered as routes, then serialised — the same order the Cockpit's table and the
+        // OpenAPI document read in. The previous sort compared `Value::to_string()`, which
+        // is the JSON encoding of the path, quotes included, and had no method tiebreak.
+        let mut declared: Vec<_> = ctx
             .registry
             .iter()
-            .filter_map(|c| {
-                let http = c.exposure.http.as_ref()?;
-                Some(json!({
+            .filter_map(|c| c.exposure.http.as_ref().map(|http| (c, http)))
+            .collect();
+        declared.sort_by(|(a, ha), (b, hb)| {
+            crate::order::natural_cmp(&ha.path, &hb.path)
+                .then_with(|| crate::order::natural_cmp(ha.method.as_str(), hb.method.as_str()))
+                .then_with(|| crate::order::natural_cmp(a.id.as_str(), b.id.as_str()))
+        });
+        let routes: Vec<Value> = declared
+            .into_iter()
+            .map(|(c, http)| {
+                json!({
                     "method": http.method.as_str(),
                     "path": http.path,
                     "capability": c.id.as_str(),
                     "title": c.title,
-                }))
+                })
             })
             .collect();
-        routes.sort_by(|a, b| a["path"].to_string().cmp(&b["path"].to_string()));
         json_response(
             200,
             &json!({

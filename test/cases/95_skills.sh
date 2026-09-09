@@ -118,6 +118,20 @@ skill twin; sed -i.bak 's/^id: twin$/id: review/' .ai/repo/skills/twin/SKILL.md 
 expect_exit 10 "$MJ" skills check
 expect_grep "duplicate skill id 'review'"
 git rm -rqf .ai/repo/skills/twin >/dev/null
+# two skills that describe themselves the same way: a worker selects on the description, so
+# neither can be reached. Case, spacing and a trailing full stop are not a difference.
+skill sibling
+sed -i.bak 's/^description: .*$/description:   THE  REVIEW   PROCEDURE./' .ai/repo/skills/sibling/SKILL.md && rm -f .ai/repo/skills/sibling/SKILL.md.bak && git add .ai/repo/skills/sibling >/dev/null
+expect_exit 10 "$MJ" skills check
+expect_grep "description does not tell this skill apart from 'review'"
+expect_exit 10 "$MJ" doctor
+expect_grep 'sibling/SKILL\.md — description does not tell this skill apart'
+expect_exit 11 "$MJ" watch
+expect_grep '^DRIFT skill +\.ai/repo/skills/sibling/SKILL\.md'
+# a description that says something else is not a duplicate, however similar it looks
+sed -i.bak 's/^description: .*$/description: The review procedure, but for something else entirely./' .ai/repo/skills/sibling/SKILL.md && rm -f .ai/repo/skills/sibling/SKILL.md.bak && git add .ai/repo/skills/sibling >/dev/null
+expect_exit 0 "$MJ" skills check
+git rm -rqf .ai/repo/skills/sibling >/dev/null
 # an example under a directory with no skill, and one without a heading
 mkdir -p .ai/repo/skills/orphan/examples && printf 'no heading here\n' > .ai/repo/skills/orphan/examples/x.md && git add .ai/repo/skills/orphan >/dev/null
 expect_exit 10 "$MJ" skills check

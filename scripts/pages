@@ -147,7 +147,7 @@ cmd_paths() {
     END { for (k in p) { split(k, a, "."); if (a[1] in want) print p[k] } }
   ' "$GFLAT" > "$GFLAT.paths"
   ml trigger.extra >> "$GFLAT.paths"
-  sort -u "$GFLAT.paths"
+  LC_ALL=C sort -u "$GFLAT.paths"
   rm -f "$GFLAT.paths"
 }
 

@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
 import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
-import { nameTaskCheckboxes, normalise, normaliseRendered, scan, scrollingTags, textOf } from './ui-static.mjs';
+import { escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 
 const tests = [];
@@ -34,6 +34,51 @@ test('an arbitrary variant scrolls the descendant it names, not the element carr
   assert.deepEqual(scan('<article class="format [&_pre]:overflow-x-auto"></article>'), [],
     'the article does not scroll; its pre does, and the stylesheet says so');
   assert.equal(scan('<div class="overflow-x-auto"></div>').length, 1);
+});
+
+test('an absolutely positioned box inside a scroller that is not a containing block escapes it', () => {
+  const caught = escapes('<div class="overflow-x-auto"><table><caption class="sr-only">c</caption></table></div>');
+  assert.equal(caught.length, 1);
+  assert.equal(caught[0].rule, 'ui.positioned-escapes-scroller');
+  assert.match(caught[0].detail, /<caption>/);
+  assert.deepEqual(
+    escapes('<div class="relative overflow-x-auto"><table><caption class="sr-only">c</caption></table></div>'),
+    [],
+    'the scroller positions it, so it stays inside',
+  );
+});
+
+test('a containing block between the scroller and the box is enough; a sibling of it is not', () => {
+  assert.deepEqual(
+    escapes('<div class="overflow-x-auto"><div class="relative"><span class="absolute">x</span></div></div>'),
+    [],
+    'the inner wrapper holds it',
+  );
+  assert.equal(
+    escapes('<div class="overflow-x-auto"><div class="relative"></div><span class="absolute">x</span></div>').length,
+    1,
+    'a wrapper that closed before the span holds nothing',
+  );
+});
+
+test('the escape check reads the resting state, not a variant', () => {
+  assert.deepEqual(plainClasses('class="sr-only focus:not-sr-only focus:absolute sm:relative"'), ['sr-only']);
+  assert.deepEqual(
+    escapes('<div class="overflow-x-auto"><a class="text-sm focus:absolute">skip</a></div>'),
+    [],
+    'it is only positioned while focused, and then it is not in the scrolled content',
+  );
+});
+
+test('a scroller with nothing positioned in it, and a positioned box outside one, are both fine', () => {
+  assert.deepEqual(escapes('<div class="overflow-x-auto"><table><tr><td>x</td></tr></table></div>'), []);
+  assert.deepEqual(escapes('<div><span class="sr-only">x</span></div><div class="overflow-x-auto"></div>'), []);
+});
+
+test('the escape is reported through scan, beside the offences it already finds', () => {
+  const found = scan('<div class="overflow-x-auto" tabindex="0"><caption class="sr-only">c</caption></div>');
+  assert.equal(found.length, 1, 'the tab order is satisfied; the containing block is not');
+  assert.equal(found[0].rule, 'ui.positioned-escapes-scroller');
 });
 
 test('a page that declares a scrolling class it does not use has nothing wrong with it', () => {

@@ -228,12 +228,34 @@ MJ_SKILLS_N=0; MJ_SKILLS_VALID=0; MJ_SKILLS_EXAMPLES=0; MJ_SKILLS_REFS=0
 mj_skills_examine() {
   # $1: reporter for a violation, called as <fn> <subject> <message> <reproduce>
   local report="$1" cat n=0 valid=0 refs=0 exn=0 row id st ver title desc path sha dir tags rel ins outs ok reason r d p ids="" seen="" heading
+  local descs key prev
   cat="$(mktemp "${TMPDIR:-/tmp}/mj.sc.XXXXXX")"; mj_skills_catalogue > "$cat"
+  descs="$(mktemp "${TMPDIR:-/tmp}/mj.sd.XXXXXX")"
   while IFS=$'\037' read -r id st ver title desc path sha dir tags rel ins outs ok reason; do
     [ -n "$id" ] || continue; n=$((n + 1)); ids="$ids $id"
     if [ "$ok" = 1 ]; then valid=$((valid + 1)); else "$report" "$path" "$reason" "majordomus skills show $id"; fi
     case " $seen " in *" $id "*) "$report" "$path" "duplicate skill id '$id'; another skill already claims it" "majordomus skills list" ;; esac
     seen="$seen $id"
+  done < "$cat"
+  # descriptions discriminate: a skill is selected by what its description says it covers,
+  # so two skills that say the same thing cannot both be chosen, and the one a worker
+  # wanted is unreachable. Compared on the description alone, folded to lower case with
+  # runs of whitespace collapsed and trailing sentence punctuation dropped, so that the
+  # difference has to be in what it says, not in how it is typed. A description already
+  # reported as empty or a skill already reported as invalid is not reported twice.
+  while IFS=$'\037' read -r id st ver title desc path sha dir tags rel ins outs ok reason; do
+    [ -n "$id" ] || continue
+    [ "$ok" = 1 ] || continue
+    key="$(printf '%s' "$desc" | tr '[:upper:]' '[:lower:]' | tr -s '[:space:]' ' ' | sed 's/^ //; s/ $//; s/[.!?]*$//')"
+    [ -n "$key" ] || continue
+    # through the environment, not -v: awk expands escape sequences in a -v value, so a
+    # description carrying a backslash would be compared as something it is not
+    prev="$(k="$key" awk -F'\t' '$1 == ENVIRON["k"] { print $2; exit }' "$descs")"
+    if [ -n "$prev" ]; then
+      "$report" "$path" "description does not tell this skill apart from '$prev'; a worker selecting on description cannot reach either" "majordomus skills list"
+    else
+      printf '%s\t%s\n' "$key" "$id" >> "$descs"
+    fi
   done < "$cat"
   # references: related ids resolve within the catalogue
   while IFS=$'\037' read -r id st ver title desc path sha dir tags rel ins outs ok reason; do
@@ -250,7 +272,7 @@ mj_skills_examine() {
     heading="$(grep -m1 -E '^# ' "$MJ_ROOT/$p" || true)"
     [ -n "$heading" ] || "$report" "$p" "example has no level-one heading to be listed by" "head -1 $p"
   done < <(mj_skills_example_files)
-  rm -f "$cat"
+  rm -f "$cat" "$descs"
   MJ_SKILLS_N=$n; MJ_SKILLS_VALID=$valid; MJ_SKILLS_EXAMPLES=$exn; MJ_SKILLS_REFS=$refs
   return 0
 }
