@@ -1,0 +1,225 @@
+# The release — a changelog nobody writes, and one writer for the version
+
+What this project has shipped, what it would ship next, and the changelog that says so are
+one typed value, `release::Changelog`, composed by one module under
+[`apps/majordomus-cli/src/release/`](../apps/majordomus-cli/src/release/). Every surface
+that states any of it renders that value: `majordomus release` on the command line, the HTTP
+route `/api/v1/changelog`, the MCP tool `majordomus_changelog` and the resource
+`majordomus://changelog`, and the generated document under `docs/generated/`. Nothing in it
+is authored. There is no `CHANGELOG.md` in this repository and there is not meant to be.
+Behaviour as implemented and tested; where this document and the executable disagree, the
+document is wrong and changes in the same commit.
+
+The commands, their arguments and their executable examples are in the generated reference
+([`generated/cli.md`](generated/cli.md), under `majordomus release`); the capabilities, their
+routes and their benchmark cases in [`generated/capabilities.md`](generated/capabilities.md),
+module `release`. Neither is restated here.
+
+## The gap it closes
+
+Every other public fact in this repository has one canonical declaration and a set of
+projections derived from it — a command, a capability, a schema, a page. The release did
+not, and it failed in two different ways.
+
+**The changelog did not exist.** What changed in a version lived in GitHub's release notes,
+outside the repository that produced it, written by whoever cut the release and read by
+nobody afterwards. The facts it would have contained were already in the tree, unread:
+
+```text
+  .ai/repo/releases/*.yaml   what shipped, when, from which commit   (kind release-record)
+  .ai/repo/adrs/*.md         the decisions, dated                    (kind adr)
+  git log <commit>..<commit> everything that has no object of its own
+```
+
+**Nothing raised the version.** It is stated in two files — `apps/majordomus-cli/Cargo.toml`
+and `bin/majordomus` (`MJ_VERSION`) — and `scripts/release-version --check` compared them and
+exited 10 when they disagreed. A check with no writer behind it verifies a person's memory:
+it can say the two disagree, and it can say so only after someone has already edited one of
+them and forgotten the other.
+
+Neither gap needed a new source of truth. The changelog needed a join; the version needed a
+writer.
+
+## What a section is composed from
+
+One section per release record, newest first by the date the record carries, with the
+unreleased work leading:
+
+```text
+   release record  ──►  version, tag, date, commit, artifacts
+   adr objects     ──►  the decisions dated inside this release's window
+   git log A..B    ──►  the changes, as conventional commits
+```
+
+The window of a release is the same interval said in the two vocabularies its two sources
+have. An ADR carries a date and no commit; a commit carries no date the layer indexes. So
+the decisions of a release are those dated in `(previous release's date, this release's
+date]`, and its changes are the commits in `previous..this`. The first release's range is
+everything up to its commit — a clone that does not carry that history yields nothing, and
+says so rather than showing an empty section.
+
+Dates are compared as the strings they are: both sources write ISO-8601, where lexicographic
+order is chronological order. A record's `published_at` carries a time and an ADR's `date`
+does not, so the comparison is made on the day the two share.
+
+A section's artifacts are the record's own evidence — the target, the file name and the
+SHA-256 that `scripts/release-record` read off the file that was published. The changelog
+copies them; it does not compute them and it does not reach the network.
+
+### The unreleased section
+
+Everything after the newest record, as `<last release's commit>..HEAD`. It leads the
+document when it has any changes and is absent when it has none, because an empty
+"Unreleased" heading says nothing a reader can use. A repository that has never published
+has no records at all, and its whole history is one unreleased section — the right answer
+for a project before its first release rather than an error.
+
+## Conventional commits, read totally
+
+The parse is small and deliberately total:
+
+```text
+  feat(commands): one canonical command graph
+  ^^^^ ^^^^^^^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  kind scope      subject
+
+  feat(api)!: the route moved      `!` marks it breaking
+  BREAKING CHANGE: <why>           so does this trailer, in the body
+```
+
+A subject that does not parse is kind `Other` and still appears, with its subject kept
+whole rather than split at a colon that was part of the sentence. This is the one design
+decision in the parser worth arguing about, and it goes the other way from most changelog
+generators: a changelog that silently drops what it cannot classify lies by omission, and
+the commits it drops are exactly the ones nobody was paying attention to when they landed.
+`project.conventional-commits` is advisory, so a repository following it will always have
+some subjects that do not parse.
+
+The kinds and the headings they render under, in the order a reader of a changelog wants
+them — what is new, what is fixed, what is faster, then the rest:
+
+```text
+  feat      Added            docs           Documentation
+  fix       Fixed            test           Tests
+  perf      Performance      ci             Pipeline
+  refactor  Changed          chore          Housekeeping
+                             anything else  Other
+```
+
+A heading with no entries is absent; nothing is hidden. Merge commits are not read at all
+(`git log --no-merges`), because a merge's subject describes the integration and its
+contents are already in the range.
+
+## The version: two statements, one writer
+
+The version stays stated in two places, and should. `scripts/release-version` gives the
+reason and it is a real one: an installed tree has no `Cargo.toml`, and the crate is
+compiled before the shell tool exists, so neither program can read the other's copy at run
+time. [`DISTRIBUTION.md`](DISTRIBUTION.md#the-two-versions-and-why-there-are-two) is where
+that is argued. What was missing was not a single source — it was a single writer.
+
+`majordomus release version` answers what both files state, whether they agree, what the
+commits since the last release imply, and the commits themselves as the evidence for that
+implication. It exits 10 when the two disagree, which is the same verdict and the same exit
+code `scripts/release-version --check` gives, so a person and a pipeline get one answer.
+
+`majordomus release bump` is the writer. The bump defaults to what the commits imply:
+
+```text
+  any commit marked breaking   →  major
+  any feat                     →  minor
+  anything else                →  patch
+  no commits at all            →  none
+```
+
+It is a total function of the changes, which is what makes the answer arguable from the
+evidence rather than a judgement a reader has to trust. `--level major|minor|patch|none`
+overrides it and `--exact 1.2.3` bypasses it, for the cases where a maintainer means
+something the commits do not say. `--dry-run` prints what would change and writes nothing.
+
+Two properties of the write matter:
+
+- **It is byte-narrow.** Only the `version` line inside `[package]` of the manifest and the
+  `MJ_VERSION=` line of the shell tool are rewritten. A dependency pinned at the same
+  version, or the string in a comment, is untouched.
+- **It checks its own work.** After writing, the bump re-reads both files and reports a
+  disagreement with exit 10 — so a bump that half-applied is caught by the thing built to
+  catch it rather than by the release three commits later.
+
+Zero-major is not special-cased: a project at `0.x` that declares a breaking change gets
+`1.0.0`. Some projects hold the convention that it should not, and others do not; applying
+it silently would make the derived answer unarguable, so a maintainer who means otherwise
+names the bump.
+
+The version the crate declares is also the `current` field of the changelog, so a bump that
+was made and a changelog that was not regenerated disagree, and `generate --check` says so.
+
+## Which surface carries what
+
+| | command line | `generate` | HTTP · MCP | Cockpit |
+|---|---|---|---|---|
+| the changelog | `majordomus release [changelog [VERSION]]` | `docs/generated/changelog.{json,yaml,md}` | `GET /api/v1/changelog` · `majordomus_changelog` · `majordomus://changelog` | through the registry |
+| the version report | `majordomus release version` | — | `GET /api/v1/release/version` · `majordomus_release_version` | through the registry |
+| raising the version | `majordomus release bump` | — | withheld | withheld |
+
+Nothing configures that last row. `release bump` writes tracked files, which
+`command_graph/semantics.rs` annotates as `RepositoryMutation`, and the exposure policy of
+[ADR 0027](../.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md)
+keeps repository mutations off every machine surface. No capability declares it, and
+`majordomus commands explain executable.release.bump` prints the reason each surface
+withholds it. The read half is two capabilities, and the command line renders them by
+*executing* them rather than by calling the code underneath, so the terminal and the API
+cannot drift apart.
+
+The generated document is a generated artifact like any other — one value written as JSON
+for a program, YAML beside it and Markdown for a reader, each declaring its schema
+(`majordomus/changelog/v1`) and its source. That is the point of generating it at all:
+`generate --check`, run by `scripts/rust-check`, is what notices that the changelog has
+stopped describing the tree, so nobody has to remember.
+
+## What could not be read
+
+The changelog says what it could not read instead of hiding it. Every such finding appears
+in `diagnostics` and, in the Markdown, under a final "What could not be read" heading:
+
+| finding | cause |
+|---|---|
+| a release record names no commit | the record is malformed; its section cannot be composed and is omitted |
+| no commit was readable for a version | the clone does not carry that history — a shallow clone, or a rewritten range |
+
+A `git log` that fails is not an error here: it yields no commits, and the caller reports
+the gap. That is what lets the changelog render at all in a shallow CI checkout, where
+refusing would make the document unavailable exactly where it is read from a machine.
+
+## Releasing
+
+The release procedure itself — the tag, the pipeline, the build matrix, the record written
+from what was published, and recovery from a bad release — is
+[`DISTRIBUTION.md`](DISTRIBUTION.md#releasing). This document owns only the version and the
+changelog it produces. The first step of that procedure is now `majordomus release bump`
+rather than an editor over two files, and `scripts/release-version --check` still runs
+after it: the check proves the work of one writer instead of the memory of one person.
+
+## What proves it
+
+| | |
+|---|---|
+| `apps/majordomus-cli/src/release/commits.rs` | the parser: the conventional shapes, both spellings of breaking, an unknown lowercase type, and a subject that is not conventional kept whole |
+| `apps/majordomus-cli/src/release/version.rs` | the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, and writing touches only the two lines that state the version |
+| `apps/majordomus-cli/src/release/changelog.rs` | a decision belongs to the release whose window contains its date, the unreleased window opens after the last release, a timestamp and a date compare on the day they share, and the rendering groups by kind and marks what breaks |
+| `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, and every exit code above |
+| `scripts/ci/release-check` | the two declarations of where the version is stated have not drifted, the two sites agree on every plan rather than only at publication, no hand-kept changelog has appeared, and the tree is not behind the newest release the layer records |
+| `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog still describes the tree |
+| `scripts/release-version --check` | the two writers agree — the same verdict `majordomus release version` gives, with the same exit code |
+
+The behavioural case builds its own repository rather than reading this one, because every
+question it asks is a question about a history. A fixture whose history is real is the only
+thing those answers can be checked against.
+
+## Related
+
+- [ADR 0029](../.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md) — the decision behind this document, and the four alternatives it rejected
+- [`DISTRIBUTION.md`](DISTRIBUTION.md) — how the tool is packaged, published and installed, and the release pipeline that writes the records this reads
+- [`COMMANDS.md`](COMMANDS.md) — the effect model and the exposure policy that withhold `release bump`
+- [`CAPABILITIES.md`](CAPABILITIES.md) — the registry the two read capabilities are declared in
+- [`DYNAMICITY.md`](DYNAMICITY.md) — the ownership rule this is an instance of

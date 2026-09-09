@@ -1,0 +1,133 @@
+{% extends "page.html" %}
+{#- The changelog, from data/generated/changelog.json — the site's projection of the
+    majordomus/changelog/v1 document the release subsystem composes from the layer's own
+    release records, the decisions dated inside each release's window and the commits in its
+    range, and which `majordomus generate --check` refuses stale. Nothing on this page is
+    written here: a version, a decision, a change or a published artifact that is not in that
+    document does not exist on this page, and no heading below names one. The kinds a section
+    is grouped by are the kinds its own changes carry. -#}
+{% block body %}
+{%- set log = load_data(path="data/generated/changelog.json") -%}
+<div class="mt-6 min-w-0">
+
+  <article class="format max-w-3xl break-words dark:format-invert [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal">
+    <p>A release is a record of the layer, not a file somebody edits after the fact. <code>majordomus generate changelog</code> reads those records, pairs each one with the decisions dated inside its window and the commits in its range, and writes the result as one value in three encodings — <code>docs/generated/changelog.json</code> for a program, <code>.yaml</code> beside it, <code>.md</code> for a reader. This page is a fourth projection of the same value, so it cannot say anything the tool does not.</p>
+    <p>What that buys: a version cannot appear here without a release record, a change cannot appear without a commit that carries it, and an artifact cannot appear without the record's own evidence for it — the file name and the SHA-256 the record read off the file it published.</p>
+  </article>
+
+  <div class="mt-8 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs">
+    <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+    <dl class="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+      <dt class="text-body-subtle">current version</dt><dd class="min-w-0 break-all font-mono text-heading">{{ log.current }}</dd>
+      <dt class="text-body-subtle">document</dt><dd class="min-w-0 break-all font-mono text-heading">{{ log.source_schema }}</dd>
+      {%- if log.generator %}<dt class="text-body-subtle">generator</dt><dd class="min-w-0 break-all font-mono text-heading">{{ log.generator }}</dd>{% endif %}
+      <dt class="text-body-subtle">projected from</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="{{ project.repository_url }}/blob/master/{{ log.source }}" class="inline-block py-1 text-fg-brand hover:underline">{{ log.source }}</a></dd>
+      <dt class="text-body-subtle">for a reader</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="inline-block py-1 text-fg-brand hover:underline">{{ page.extra.source }}</a></dd>
+    </dl>
+  </div>
+
+  {%- if log.diagnostics | length > 0 %}
+  <h2 id="diagnostics" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">What could not be read</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">The generator says what it could not resolve rather than hiding it: a repository with no git history, a release record that names no commit, a tag that is not in this clone.</p>
+  <ul class="mt-4 space-y-2" role="list">
+    {%- for d in log.diagnostics %}
+    <li class="rounded-base border border-warning bg-warning-soft p-3 text-sm text-body">{{ d }}</li>
+    {%- endfor %}
+  </ul>
+  {%- endif %}
+
+  {%- if log.sections | length > 0 %}
+  <nav class="mt-10 flex flex-wrap gap-2" aria-label="Versions">
+    {%- for s in log.sections %}
+    <a href="#{{ s.version | slugify }}" class="rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-fg-brand hover:underline">{% if s.unreleased %}unreleased{% else %}{{ s.tag | default(value=s.version) }}{% endif %}</a>
+    {%- endfor %}
+  </nav>
+  {%- endif %}
+
+  {%- for s in log.sections %}
+  <section class="mt-12 border-t border-default pt-8">
+    <h2 id="{{ s.version | slugify }}" class="scroll-mt-24 break-words text-2xl font-bold tracking-tight text-heading">{% if s.unreleased %}Unreleased{% else %}{{ s.tag | default(value=s.version) }}{% endif %}</h2>
+    <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-body-subtle">
+      <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">{{ s.version }}</span>
+      {%- if s.date %}<span class="font-mono">{{ s.date | split(pat="T") | first }}</span>{% endif %}
+      {%- if s.commit %}<span class="break-all font-mono">{{ s.commit | truncate(length=9, end="") }}</span>{% endif %}
+      <span>{{ s.changes | length }} change(s)</span>
+      <span>{{ s.decisions | length }} decision(s)</span>
+      <span>{{ s.artifacts | length }} artifact(s)</span>
+    </div>
+    {%- if s.unreleased %}
+    <p class="mt-3 max-w-3xl text-sm text-body">Work committed since the last release. It has no tag and no date because nothing has been published from it yet.</p>
+    {%- endif %}
+
+    {%- if s.decisions | length > 0 %}
+    <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">Decisions</h3>
+    <p class="mt-1 max-w-3xl text-sm text-body-subtle">The architecture decisions the layer dates inside this version's window, each with the route the document records for it.</p>
+    <ul class="mt-4 space-y-3" role="list">
+      {%- for d in s.decisions %}
+      <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-sm font-medium text-heading">{{ d.id }}</span>
+          <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ d.status }}</span>
+          <span class="font-mono text-xs text-body-subtle">{{ d.date }}</span>
+          <span class="break-all font-mono text-xs text-body-subtle">{{ d.route }}</span>
+        </div>
+        <p class="mt-2 break-words text-sm leading-relaxed text-body">{{ d.title }}</p>
+      </li>
+      {%- endfor %}
+    </ul>
+    {%- endif %}
+
+    {%- if s.changes | length > 0 %}
+    <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">Changes</h3>
+    <p class="mt-1 max-w-3xl text-sm text-body-subtle">Every commit in this version's range that parses as a conventional commit, under the type word it carries; a subject that parses as nothing is grouped as <code class="font-mono">other</code>.</p>
+    {#- Grouped by the kinds this section's own changes carry, each once. The keys are
+        sorted because a map's iteration order is not stable across builds, and the same
+        document must produce the same page. The order is the neutral one: the document does
+        not carry the order the crate renders its own Markdown in (ChangeKind::rank), and a
+        template that repeated it would be a second declaration of it (ADR 0025). -#}
+    {%- set groups = s.changes | group_by(attribute="kind") -%}
+    {%- for kind in groups | keys | sort %}
+    {%- set entries = groups[kind] %}
+    <details class="mt-4 rounded-base border border-default bg-neutral-primary-soft"{% if s.unreleased %} open{% endif %}>
+      <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
+        <span class="font-mono">{{ kind }}</span>
+        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">{{ entries | length }}</span>
+      </summary>
+      <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+        {%- for c in entries %}
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            {%- if c.breaking %}<span class="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs font-semibold uppercase text-fg-danger">breaking</span>{% endif %}
+            {%- if c.scope %}<span class="font-mono text-xs font-medium text-fg-brand">{{ c.scope }}</span>{% endif %}
+            <span class="min-w-0 break-words text-body">{{ c.subject }}</span>
+            <code class="break-all font-mono text-xs text-body-subtle">{{ c.commit | truncate(length=9, end="") }}</code>
+          </div>
+        </li>
+        {%- endfor %}
+      </ul>
+    </details>
+    {%- endfor %}
+    {%- endif %}
+
+    {%- if s.artifacts | length > 0 %}
+    <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">Published</h3>
+    <p class="mt-1 max-w-3xl text-sm text-body-subtle">What this version put on the release, with the digest the record read off each file. The installer resolves the same names.</p>
+    <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[36rem] text-left text-sm">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">target</th><th class="px-3 py-2">file</th><th class="px-3 py-2">sha256</th></tr></thead>
+        <tbody>
+        {%- for a in s.artifacts %}
+        <tr class="border-t border-default align-top">
+          <td class="px-3 py-2"><code class="break-all font-mono text-heading">{{ a.target }}</code></td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body">{{ a.name }}</td>
+          <td class="px-3 py-2 break-all font-mono text-xs text-body-subtle">{{ a.sha256 }}</td>
+        </tr>
+        {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+    {%- endif %}
+  </section>
+  {%- endfor %}
+</div>
+{% endblock body %}

@@ -155,6 +155,16 @@ gates:
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
+  # The release's own declarations, which `generate --check` cannot reach: it proves the
+  # written changelog matches the tree, not that the two version sites the crate writes are
+  # the two the release script reads, nor that they still agree. Until this gate, the second
+  # question was asked only when a tag was cut, so a half-applied bump lived on the default
+  # branch until somebody tried to publish. File reads only; it belongs in the structure job.
+  - id: release-check
+    job: structure
+    runs: scripts/ci/release-check
+    summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, and the tree is not behind what was published
+
 classes:
   # the pipeline itself: a change here can only be validated by running everything
   - id: ci
@@ -225,3 +235,12 @@ classes:
   - id: inert
     paths: [.gitignore, .editorconfig, .github/ISSUE_TEMPLATE/**, .github/pull_request_template.md]
     gates: []
+
+  # the release as a projection: the module that composes the changelog and writes the two
+  # version sites, the sites themselves, and the records the changelog is composed from.
+  # Every path here is already in `rust`, `shell` or `layer`; the overlap is deliberate and
+  # can only widen a plan, and it is what keeps the class readable as one subject rather
+  # than as four edits to lists that are about something else.
+  - id: release
+    paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, bin/majordomus, .ai/repo/releases/**]
+    gates: [release-check]
