@@ -116,6 +116,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`b79363681`)
 - **derive**: the projections follow the merge with master (`44468dbc1`)
 - **order**: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are (`c72d294cc`)
 - **derive**: the projections follow the two adopted sessions (`4066bdf4f`)
