@@ -268,7 +268,6 @@ pub struct QualityReportArgs {
     pub write_baseline: bool,
 }
 
-
 #[derive(Debug, Args)]
 /// `majordomus run`. One capability, run as an execution in this process, followed to its
 /// end.
