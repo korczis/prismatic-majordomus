@@ -51,7 +51,11 @@
       <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">{{ s.version }}</span>
       {%- if s.date %}<span class="font-mono">{{ s.date | split(pat="T") | first }}</span>{% endif %}
       {%- if s.commit %}<span class="break-all font-mono">{{ s.commit | truncate(length=9, end="") }}</span>{% endif %}
-      <span>{{ s.changes | length }} change(s)</span>
+      {#- summed in the template because it is a count of a count; the groups are what the
+          document states, and a total is arithmetic over them rather than a fact of its own -#}
+      {%- set_global total = 0 -%}
+      {%- for g in s.groups %}{% set_global total = total + (g.changes | length) %}{% endfor -%}
+      <span>{{ total }} change(s)</span>
       <span>{{ s.decisions | length }} decision(s)</span>
       <span>{{ s.artifacts | length }} artifact(s)</span>
     </div>
@@ -69,7 +73,6 @@
           <span class="font-mono text-sm font-medium text-heading">{{ d.id }}</span>
           <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ d.status }}</span>
           <span class="font-mono text-xs text-body-subtle">{{ d.date }}</span>
-          <span class="break-all font-mono text-xs text-body-subtle">{{ d.route }}</span>
         </div>
         <p class="mt-2 break-words text-sm leading-relaxed text-body">{{ d.title }}</p>
       </li>
@@ -77,24 +80,22 @@
     </ul>
     {%- endif %}
 
-    {%- if s.changes | length > 0 %}
+    {%- if s.groups | length > 0 %}
     <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">Changes</h3>
-    <p class="mt-1 max-w-3xl text-sm text-body-subtle">Every commit in this version's range that parses as a conventional commit, under the type word it carries; a subject that parses as nothing is grouped as <code class="font-mono">other</code>.</p>
-    {#- Grouped by the kinds this section's own changes carry, each once. The keys are
-        sorted because a map's iteration order is not stable across builds, and the same
-        document must produce the same page. The order is the neutral one: the document does
-        not carry the order the crate renders its own Markdown in (ChangeKind::rank), and a
-        template that repeated it would be a second declaration of it (ADR 0025). -#}
-    {%- set groups = s.changes | group_by(attribute="kind") -%}
-    {%- for kind in groups | keys | sort %}
-    {%- set entries = groups[kind] %}
+    <p class="mt-1 max-w-3xl text-sm text-body-subtle">Every commit in this version's range that parses as a conventional commit, under the heading its type carries; a subject that parses as nothing is grouped as <code class="font-mono">other</code>.</p>
+    {#- The document carries its own groups, each with the heading it is shown under and the
+        rank that decides where it sorts, already in order. This template neither groups nor
+        sorts: doing either would be a second declaration of an order the crate already
+        states, which is what made this page disagree with the Markdown renderer before. -#}
+    {%- for g in s.groups %}
     <details class="mt-4 rounded-base border border-default bg-neutral-primary-soft"{% if s.unreleased %} open{% endif %}>
       <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
-        <span class="font-mono">{{ kind }}</span>
-        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">{{ entries | length }}</span>
+        <span class="font-medium">{{ g.heading }}</span>
+        <span class="ml-2 font-mono text-xs text-body-subtle">{{ g.kind }}</span>
+        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">{{ g.changes | length }}</span>
       </summary>
       <ul class="border-t border-default px-4 py-3 text-sm" role="list">
-        {%- for c in entries %}
+        {%- for c in g.changes %}
         <li class="border-b border-default py-2 last:border-0">
           <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             {%- if c.breaking %}<span class="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs font-semibold uppercase text-fg-danger">breaking</span>{% endif %}
