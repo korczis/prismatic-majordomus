@@ -11,10 +11,6 @@ use crate::capability::CapabilityError;
 use crate::cli::{OutputFormat, ScopeArgs};
 use crate::error::{Error, Result};
 
-/// The capability that judges one path. Named by its canonical identity: it is reached
-/// through this command and declares no command line of its own.
-pub const CLASSIFY: &str = "repository.scope_classify";
-
 /// The exit code when `--check` finds a path out of the scope.
 pub const EXIT_OUT_OF_SCOPE: u8 = 10;
 

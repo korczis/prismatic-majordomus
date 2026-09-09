@@ -10,7 +10,7 @@ pub mod mcp;
 pub mod openapi;
 pub mod router;
 pub mod server;
-pub mod surfaces;
+pub(crate) mod surfaces;
 pub mod swagger;
 
 pub use router::{Body, Request, Response, Router};

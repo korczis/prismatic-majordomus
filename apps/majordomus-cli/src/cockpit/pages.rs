@@ -11,10 +11,10 @@ use serde_json::{json, Value};
 
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DirectoryReport, DirectoryState,
-    GraphList, Health, HealthStatus, InstallabilityReport, ObjectList, ObjectSummary, Record,
-    RepositoryReport,
+    GraphList, Health, HealthStatus, InstallabilityReport, ObjectList, ObjectSummary,
+    QualityAnswer, Record, RepositoryReport,
 };
-use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
+use crate::capability::{Capability, CapabilityKind, Context, Provenance};
 use crate::command_graph::CommandNode;
 use crate::generate;
 use crate::graph::Graph;
@@ -2919,10 +2919,189 @@ pub fn not_found(path: &str) -> Page {
     .status(404)
 }
 
-/// Whether a registry holds a capability at all: used by the router to tell a missing
-/// page from a missing capability.
-pub fn exists(registry: &CapabilityRegistry, id: &str) -> bool {
-    registry.get(id).is_some()
+// --------------------------------------------------------------------- quality
+
+/// The crate's own public surface, as the rules hold it.
+///
+/// Every number and every finding on this page comes from one execution of
+/// `quality.report`, through the same executor the command line and the HTTP route use.
+/// Nothing is counted here, nothing is listed here, and a code added to the validator
+/// tomorrow appears on this page with no edit to it — which is the property the page is
+/// about, so it had better be true of the page.
+pub fn quality(ctx: &Context) -> Page {
+    let answer: QualityAnswer = match ask(ctx, "quality.report", json!({})) {
+        Ok(a) => a,
+        Err(e) => return failed(Area::Quality, "Quality", e),
+    };
+    if !answer.measured {
+        return Page::new(
+            Area::Quality,
+            "Quality",
+            el("div").child(alert("warn", answer.reason.unwrap_or_default())).child(
+                el("p").class("mj-empty").text(
+                    "This repository carries no Rust crate, so the public API rules do not apply to it. That is an answer and not a failure.",
+                ),
+            ),
+        )
+        .trail(vec![("Cockpit", Some("/cockpit")), ("Quality", None)]);
+    }
+    let r = &answer.report;
+    let ratio = |have: usize, of: usize| {
+        if of == 0 {
+            "—".to_string()
+        } else {
+            format!("{have} / {of}")
+        }
+    };
+    let verdict = if answer.passes { "ok" } else { "fail" };
+
+    let surface = card(
+        "Public API",
+        el("div")
+            .child(facts(vec![
+                (
+                    "Documented",
+                    Node::Element(el("span").text(ratio(r.public_api.documented, r.public_api.items))),
+                ),
+                (
+                    "Exampled",
+                    Node::Element(
+                        el("span").text(ratio(r.public_api.exampled, r.public_api.owe_example)),
+                    ),
+                ),
+            ]))
+            .child(
+                el("p").class("mj-note").text(
+                    "An item owes an example when it carries behaviour. What the policy does not ask of an item is derived from that item's kind and shape, and is listed below rather than kept in an exemption file.",
+                ),
+            )
+            .child(table(
+                &["Not asked of", "Items"],
+                r.public_api
+                    .exempt
+                    .iter()
+                    .map(|e| row(vec![text_cell(&e.reason), text_cell(e.items.to_string())]))
+                    .collect(),
+            )),
+    );
+
+    let modules = card(
+        "Modules",
+        facts(vec![
+            (
+                "Documented",
+                Node::Element(el("span").text(ratio(r.modules.documented, r.modules.modules))),
+            ),
+            (
+                "Exampled",
+                Node::Element(el("span").text(ratio(r.modules.exampled, r.modules.modules))),
+            ),
+            (
+                "Behaviourally tested",
+                Node::Element(
+                    el("span").text(ratio(r.modules.behaviourally_tested, r.modules.modules)),
+                ),
+            ),
+        ]),
+    );
+
+    let o = &r.operations;
+    let operations = card(
+        "Operations",
+        el("div")
+            .child(facts(vec![
+                ("Canonical", Node::Element(el("span").text(o.canonical.to_string()))),
+                ("HTTP", Node::Element(el("span").text(ratio(o.http, o.canonical)))),
+                ("OpenAPI", Node::Element(el("span").text(ratio(o.openapi, o.http)))),
+                ("MCP", Node::Element(el("span").text(ratio(o.mcp, o.canonical)))),
+                (
+                    "Command line",
+                    Node::Element(el("span").text(ratio(o.cli, o.canonical))),
+                ),
+            ]))
+            .child(el("p").class("mj-note").text(format!(
+                "{} runnable command(s): {} the projection of a capability, {} classified as belonging to the command line alone with a reason the parity check verifies.",
+                o.cli_commands, o.cli_from_capability, o.cli_local
+            ))),
+    );
+
+    // one card per code, because that is the unit somebody fixes: the reason and the
+    // remedy belong to the code, and repeating them per finding would be the duplication
+    // this whole subsystem is about
+    let mut by_code: std::collections::BTreeMap<&str, Vec<&crate::quality::Violation>> =
+        Default::default();
+    for v in &r.violations {
+        by_code.entry(v.code.as_str()).or_default().push(v);
+    }
+    let findings: Vec<El> = by_code
+        .into_iter()
+        .map(|(code, group)| {
+            let first = group[0];
+            card_with(
+                code.to_string(),
+                badge("fail", format!("{} finding(s)", group.len())),
+                el("div")
+                    .child(el("p").class("mj-prose").text(&first.why))
+                    .child(facts(vec![
+                        ("Rule", Node::Element(mono(first.rule.clone()))),
+                        ("Remedy", Node::Element(el("span").text(&first.remediation))),
+                    ]))
+                    .child(details(
+                        format!("{} occurrence(s)", group.len()),
+                        table(
+                            &["Where", "Symbol"],
+                            group
+                                .iter()
+                                .map(|v| {
+                                    let at = match v.line {
+                                        Some(l) => format!("{}:{l}", v.path),
+                                        None => v.path.clone(),
+                                    };
+                                    row(vec![cell(mono(at)), cell(mono(v.symbol.clone()))])
+                                })
+                                .collect(),
+                        ),
+                    )),
+            )
+        })
+        .collect();
+
+    let standing = card_with(
+        "Where this stands",
+        badge(
+            verdict,
+            if answer.passes {
+                "no finding outside the baseline".to_string()
+            } else {
+                format!("{} finding(s)", r.violations.len())
+            },
+        ),
+        el("div")
+            .child(facts(vec![
+                ("Target", Node::Element(mono(r.target.clone()))),
+                (
+                    "Accepted by the baseline",
+                    Node::Element(el("span").text(answer.baselined.to_string())),
+                ),
+            ]))
+            .child(el("p").class("mj-note").text(
+                "The baseline records the findings that stood when the rule landed. The gate fails for a finding that is not in it, so the debt can shrink and cannot grow.",
+            )),
+    );
+
+    Page::new(
+        Area::Quality,
+        "Quality",
+        el("div")
+            .class("mj-grid")
+            .child(standing)
+            .child(surface)
+            .child(modules)
+            .child(operations)
+            .children(findings),
+    )
+    .subtitle("The same measurement `majordomus quality report` prints and `/api/v1/quality` answers, read through one capability.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Quality", None)])
 }
 
 // ------------------------------------------------------------------------ commands

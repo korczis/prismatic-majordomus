@@ -14,8 +14,6 @@
 //! Note on the word: `share/` is the tool's data directory (see [`crate::share`]), and
 //! "the distribution model" here is about *shipping the tool*, not about that directory.
 
-use std::path::Path;
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -24,10 +22,10 @@ use crate::index::Index;
 use crate::metadata::yaml;
 use crate::share::Share;
 
-pub mod release;
-pub mod render;
+pub(crate) mod release;
+pub(crate) mod render;
 
-pub use release::{Release, ReleaseArtifact, Releases};
+pub use release::{Release, Releases};
 
 /// The model's file name inside the share directory.
 pub const FILE: &str = "distribution.yaml";
@@ -532,16 +530,6 @@ impl Model {
     pub fn release_url(&self, tag: &str) -> String {
         format!("{}/releases/{tag}.json", self.installer.base_url)
     }
-}
-
-/// The distribution model of a repository, or nothing when it declares none.
-pub fn model_path(share: &Share) -> std::path::PathBuf {
-    share.dir().join(FILE)
-}
-
-/// True when a path is the model.
-pub fn is_model_path(path: &Path) -> bool {
-    path.file_name().and_then(|f| f.to_str()) == Some(FILE)
 }
 
 #[cfg(test)]

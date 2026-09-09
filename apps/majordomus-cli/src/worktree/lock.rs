@@ -45,10 +45,10 @@ impl WorktreeLock {
         git_common_dir.join(LOCK_RELATIVE)
     }
 
-    /// Take the lock, waiting up to [`WAIT`] for another holder to finish.
+    /// Take the lock, waiting up to `WAIT` for another holder to finish.
     ///
     /// The primitive is `O_CREAT|O_EXCL`, which is atomic on every filesystem this runs on:
-    /// exactly one caller creates the file. A file older than [`STALE_AFTER`] is removed and
+    /// exactly one caller creates the file. A file older than `STALE_AFTER` is removed and
     /// the attempt repeats, so a killed process is recovered from without a person being
     /// asked to delete anything.
     pub fn acquire(git_common_dir: &Path) -> Result<Self> {

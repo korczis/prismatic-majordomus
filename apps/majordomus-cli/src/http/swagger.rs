@@ -57,3 +57,38 @@ window.ui = SwaggerUIBundle({{ url: "{spec}", dom_id: "#swagger-ui", deepLinking
 pub fn page() -> &'static str {
     PAGE.as_str()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_shell_points_at_the_generated_document_and_carries_none_of_its_own() {
+        // the whole claim this module makes: what a reader sees is whatever the server
+        // generated from the registry at the moment of the request, never a copy
+        let shell = page();
+        assert!(shell.contains(&format!("url: \"{SPEC_PATH}\"")));
+        for embedded in ["\"paths\"", "\"openapi\"", "\"components\""] {
+            assert!(
+                !shell.contains(embedded),
+                "the shell embeds {embedded}, so it can disagree with the registry"
+            );
+        }
+        // and it is rendered once: two calls hand back the same allocation, not two
+        assert!(std::ptr::eq(shell.as_ptr(), page().as_ptr()));
+    }
+
+    #[test]
+    fn the_pinned_distribution_is_the_one_both_asset_urls_name() {
+        // a half-upgraded pin loads a stylesheet from one version and a bundle from another,
+        // which fails in the browser and nowhere else
+        let shell = page();
+        assert_eq!(
+            shell
+                .matches(&format!("swagger-ui-dist@{SWAGGER_UI_VERSION}"))
+                .count(),
+            2,
+            "the stylesheet and the bundle both come from the pinned version"
+        );
+    }
+}
