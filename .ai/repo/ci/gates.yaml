@@ -128,6 +128,11 @@ gates:
   # so rather than passing when it has none: a projection gate that skips quietly is the
   # disease it was written to cure — --check has exited 11 on drift since the adapter was
   # written, and nothing ever called it.
+  - id: order-check
+    job: structure
+    runs: scripts/ci/order-check
+    summary: a collection has one order — no case-folded comparator outside order.rs, no sort key that renders markup, no locale-collated comparison, and the ordering debt does not grow
+
   - id: github-projection
     job: structure
     runs: scripts/ci/github-check
@@ -242,7 +247,7 @@ classes:
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check, github-projection]
+    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check, github-projection]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
