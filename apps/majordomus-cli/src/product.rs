@@ -344,6 +344,14 @@ pub struct SurfaceRef {
     pub category: String,
 }
 
+// `weight` is the ranking a feature declares; the canonical order takes it as the rank and
+// ends on the identity, so two features of equal weight keep one order everywhere.
+impl crate::order::Ordered for Feature {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id).ranked(i64::from(self.weight))
+    }
+}
+
 /// One operational moment the feature answers: derived from the moments that name any of
 /// the feature's commands, capabilities, claims or rules.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -699,7 +707,7 @@ impl ProductModel {
                 features.push(f);
             }
         }
-        features.sort_by(|a, b| a.weight.cmp(&b.weight).then(a.id.cmp(&b.id)));
+        crate::order::canonical(&mut features);
 
         m.adopt_diagnostics(index);
         let lookups = Lookups::new(index);

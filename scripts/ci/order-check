@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# order-check — the gate of project.canonical-order: a collection has one order, that order
+# is owned by one place, and it does not depend on who ran the command.
+#
+# Four things are held here. The first three are absolute, because the tree already
+# satisfies them and a new violation is always a mistake:
+#
+#   1. no comparator outside apps/majordomus-cli/src/order.rs folds case by hand. A
+#      case-folded comparison with a tiebreak is exactly what `order::natural_cmp` is; a
+#      second one in another module is the duplication this rule exists to prevent.
+#   2. no sort key renders. `sort_by_key(|r| r.render())` made every CSS class name part of
+#      the ordering of a table, so a rename nobody thought was visible reordered it.
+#   3. no `localeCompare` in a surface this repository generates or serves. It orders by
+#      the machine's locale, and every Rust and shell comparator here orders by code unit.
+#
+# The fourth is a ratchet, because the debt is real and predates the rule:
+#
+#   4. the number of sort sites in the crate outside order.rs, and the number of shell
+#      sorts not pinned with LC_ALL=C, may fall and may not rise. The counts live in
+#      .ai/repo/order-baseline.txt; lowering one is a commit that adopts the canonical
+#      order or pins a locale, and the gate then asks for the baseline to be lowered too.
+#
+#   scripts/ci/order-check              report every finding, exit 10 on any
+#   scripts/ci/order-check --update     rewrite the baseline from this tree (never in CI)
+#   MJ_ROOT=<dir> scripts/ci/order-check
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+BASELINE=.ai/repo/order-baseline.txt
+UPDATE=0
+[ "${1:-}" = "--update" ] && UPDATE=1
+
+findings=0
+ok()   { printf 'ok    %s\n' "$*"; }
+fail() { printf 'FAIL  %s\n' "$*"; findings=$((findings+1)); }
+
+# ---------------------------------------------------------------- 1. one case-folded comparator
+folded="$(grep -rn 'to_lowercase()\.cmp(\|to_ascii_lowercase()\.cmp(' \
+  apps/majordomus-cli/src --include='*.rs' 2>/dev/null | grep -v 'src/order\.rs:' || true)"
+if [ -n "$folded" ]; then
+  printf '%s\n' "$folded" | while IFS= read -r line; do
+    printf 'FAIL  a case-folded comparator outside order.rs: %s\n' "$line"
+  done
+  fail "$(printf '%s\n' "$folded" | wc -l | tr -d ' ') case-folded comparator(s) outside order.rs — call crate::order::natural_cmp"
+else
+  ok "no comparator outside order.rs folds case by hand"
+fi
+
+# ---------------------------------------------------------------- 2. no sort key renders
+rendered="$(grep -rn 'sort_by_key(.*\.render())\|sort_by(.*\.render()' \
+  apps/majordomus-cli/src --include='*.rs' 2>/dev/null || true)"
+if [ -n "$rendered" ]; then
+  printf '%s\n' "$rendered" | while IFS= read -r line; do
+    printf 'FAIL  a sort key that renders markup: %s\n' "$line"
+  done
+  fail "a collection is ordered by its own markup — order the values, then render them"
+else
+  ok "no sort key renders markup"
+fi
+
+# ---------------------------------------------------------------- 3. no locale-collated comparator
+# The call, not the word, and never this file: the gate carries the pattern it looks for.
+locale_cmp="$(grep -rn '\.localeCompare(' scripts share site 2>/dev/null \
+  | grep -v '^scripts/ci/order-check:' || true)"
+if [ -n "$locale_cmp" ]; then
+  printf '%s\n' "$locale_cmp" | while IFS= read -r line; do
+    printf 'FAIL  localeCompare in a generated or served surface: %s\n' "$line"
+  done
+  fail "a comparator orders by the reader's locale — compare code units"
+else
+  ok "no localeCompare in scripts/, share/ or site/"
+fi
+
+# ---------------------------------------------------------------- 4. the ratchets
+crate_sorts="$(grep -rn '\.sort_by(\|\.sort_by_key(\|\.sort()\|\.sort_unstable' \
+  apps/majordomus-cli/src --include='*.rs' 2>/dev/null | grep -vc 'src/order\.rs:' || true)"
+shell_sorts="$(grep -rn '| *sort\b\|| *sort -' lib scripts bin test 2>/dev/null \
+  | grep -vc 'LC_ALL=C' || true)"
+
+if [ "$UPDATE" = 1 ]; then
+  {
+    printf '# The two ordering debts of this tree, as counts. Written by\n'
+    printf '# `scripts/ci/order-check --update`; the gate refuses a rise.\n'
+    printf '#\n'
+    printf '# crate_sorts   sort sites under apps/majordomus-cli/src outside order.rs. Each is a\n'
+    printf '#               comparator that could be the canonical order and is not yet.\n'
+    printf '# shell_sorts   `sort` invocations under lib/, scripts/, bin/ and test/ that are not\n'
+    printf '#               pinned with LC_ALL=C. A glob or a sort collates by the locale, so an\n'
+    printf '#               unpinned one orders by whose machine ran it.\n'
+    printf 'crate_sorts=%s\n' "$crate_sorts"
+    printf 'shell_sorts=%s\n' "$shell_sorts"
+  } > "$BASELINE"
+  printf 'order-check: baseline written — crate_sorts=%s shell_sorts=%s\n' "$crate_sorts" "$shell_sorts"
+  exit 0
+fi
+
+[ -f "$BASELINE" ] || { echo "order-check: $BASELINE is missing; run scripts/ci/order-check --update" >&2; exit 12; }
+base_crate="$(sed -n 's/^crate_sorts=//p' "$BASELINE")"
+base_shell="$(sed -n 's/^shell_sorts=//p' "$BASELINE")"
+[ -n "$base_crate" ] && [ -n "$base_shell" ] \
+  || { echo "order-check: $BASELINE does not carry both counts" >&2; exit 12; }
+
+if [ "$crate_sorts" -gt "$base_crate" ]; then
+  fail "sort sites in the crate rose from $base_crate to $crate_sorts — a new collection was ordered beside its renderer; implement crate::order::Ordered and call canonical()"
+elif [ "$crate_sorts" -lt "$base_crate" ]; then
+  fail "sort sites in the crate fell from $base_crate to $crate_sorts — lower the baseline in $BASELINE (scripts/ci/order-check --update)"
+else
+  ok "sort sites in the crate outside order.rs: $crate_sorts, at the baseline"
+fi
+
+if [ "$shell_sorts" -gt "$base_shell" ]; then
+  fail "unpinned shell sorts rose from $base_shell to $shell_sorts — write LC_ALL=C sort, so the order does not depend on the machine"
+elif [ "$shell_sorts" -lt "$base_shell" ]; then
+  fail "unpinned shell sorts fell from $base_shell to $shell_sorts — lower the baseline in $BASELINE (scripts/ci/order-check --update)"
+else
+  ok "shell sorts not pinned with LC_ALL=C: $shell_sorts, at the baseline"
+fi
+
+if [ "$findings" -gt 0 ]; then
+  printf 'order-check: %s finding(s)\n' "$findings"
+  exit 10
+fi
+printf 'order-check: clean\n'

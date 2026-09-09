@@ -63,8 +63,12 @@ pub struct AreaInfo {
     pub area: Area,
 }
 
-/// The areas, in the order the sidebar shows them. Written here because they are concepts
-/// rather than entities; every catalogue under them is derived.
+/// The areas. Written here because they are concepts rather than entities; every catalogue
+/// under them is derived.
+///
+/// Not the order the sidebar shows them in: `build` puts every section through the
+/// canonical order, so this sequence reaches no reader. It is the set the product model
+/// validates against, and nothing more.
 pub fn areas() -> &'static [AreaInfo] {
     &[
         AreaInfo {
@@ -251,16 +255,21 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
     }
 }
 
-/// One section's entries by label: case-folded first, so `API` sits with `Artifacts` rather
-/// than ahead of every lowercase kind, then by the label itself to break the fold's ties.
+/// One section's entries in the canonical order: by label, case-folded so that `API` sits
+/// with `Artifacts` rather than ahead of every lowercase kind, digit runs by value, and the
+/// href behind it to break a tie between two entries a reader would call the same.
+///
+/// The comparator is `crate::order`'s, not this file's. It was this file's, it was the only
+/// case-folded comparator in the crate, and every other surface sorted by raw bytes instead.
 fn alphabetical(mut section: Section) -> Section {
-    section.items.sort_by(|a, b| {
-        a.label
-            .to_lowercase()
-            .cmp(&b.label.to_lowercase())
-            .then_with(|| a.label.cmp(&b.label))
-    });
+    crate::order::canonical(&mut section.items);
     section
+}
+
+impl crate::order::Ordered for Item {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.label, &self.href)
+    }
 }
 
 fn item(label: &str, href: &str, area: Area, count: Option<usize>, here: &str) -> Item {

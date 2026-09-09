@@ -55,7 +55,9 @@ export async function run(origin, surfaces, cssPath, { select, limit, onVisit } 
     visits: visits.length,
     seconds: Math.round((Date.now() - started) / 1000),
     concurrency,
-    rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))),
+    // `<` and `>` compare code units, the way every Rust and shell comparator here does.
+    // `localeCompare` would order this report by whoever's machine rendered it.
+    rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))),
     findings,
   };
 }

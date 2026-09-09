@@ -6,22 +6,22 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "253a5182b5909a16c76fb0d831f9e069c87f2923d542897e79a547e2dea46f9c",
+    "fingerprint": "105db1e7626bbb14a2dca4190df2af1553438b19fd0c68fc60acc629bb3cc9d4",
     "summary": {
-      "total": 1072,
+      "total": 1074,
       "builtin": 44,
-      "declarative": 1028,
+      "declarative": 1030,
       "by_kind": {
         "command": 1,
         "query": 43,
-        "resource": 1028
+        "resource": 1030
       },
       "by_stability": {
         "behaviorally_verified": 44,
-        "implemented": 1028
+        "implemented": 1030
       },
       "mcp_tools": 42,
-      "mcp_resources": 1044,
+      "mcp_resources": 1046,
       "http_routes": 44,
       "cli_commands": 24,
       "modules": 43,
@@ -10026,13 +10026,13 @@
                 "oneOf": [
                   {
                     "type": "string",
-                    "const": "error",
-                    "description": "The topology may not be served or published in this state."
+                    "const": "warning",
+                    "description": "Worth reading; serving is still coherent."
                   },
                   {
                     "type": "string",
-                    "const": "warning",
-                    "description": "Worth reading; serving is still coherent."
+                    "const": "error",
+                    "description": "The topology may not be served or published in this state."
                   }
                 ],
                 "description": "How much a finding matters."
@@ -14364,7 +14364,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 24,
+        "capabilities": 25,
         "capability_ids": []
       },
       {
@@ -14700,7 +14700,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 93,
+        "capabilities": 94,
         "capability_ids": []
       },
       {
@@ -14798,7 +14798,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f09642027ab7fff2412c34f7aba6f4bf6d58029d0916557dc484b9bee3b3cea5",
+    "fingerprint": "5bd99521de635ea23781bb4de427854cdd67441f6fcb128f051c888c77028a0c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14821,7 +14821,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 24,
+      "adr": 25,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -14841,7 +14841,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 93,
+      "rule": 94,
       "scope": 1,
       "session": 9,
       "skill": 3,
@@ -15229,6 +15229,23 @@
           "architecture",
           "provider",
           "worktree"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0025",
+        "kind": "adr",
+        "identity": "adr-0025",
+        "title": "Presentation order is one total order owned by the crate, not a decision each surface makes",
+        "description": "Presentation order is one total order owned by the crate, not a decision each surface makes",
+        "path": ".ai/repo/adrs/0025-presentation-order-is-one-total-order-owned-by-the-crate-not-a-decision-each-surface-makes.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7373,
+        "tags": [
+          "architecture",
+          "presentation",
+          "determinism",
+          "projections"
         ]
       },
       {
@@ -17778,7 +17795,7 @@
         "title": "Capabilities — one definition, every interface derived",
         "path": "docs/CAPABILITIES.md",
         "source_class": "document",
-        "bytes": 37372
+        "bytes": 39341
       },
       {
         "uri": "majordomus://document/docs/CATALOGUE.md",
@@ -23784,6 +23801,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.canonical-order@1",
+        "kind": "rule",
+        "identity": "project.canonical-order@1",
+        "title": "A collection has one order, owned by one place, and it does not depend on who ran the command",
+        "description": "Every collection this repository shows a person or a stable machine consumer is ordered by apps/majordomus-cli/src/order.rs — a total order over group, explicit rank, natural label and canonical identity — and no consumer holds an ordering opinion of its own; a comparator that folds case by hand, a sort key that renders markup, and a comparison that collates by the reader's locale are all refused.",
+        "path": ".ai/repo/rules/project/canonical-order.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5233,
+        "tags": [
+          "architecture",
+          "presentation",
+          "determinism",
+          "rust"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.clean-room@1",
         "kind": "rule",
         "identity": "project.clean-room@1",
@@ -26023,7 +26057,7 @@
       "identity": [
         "id"
       ],
-      "objects": 24
+      "objects": 25
     },
     {
       "name": "application",
@@ -26223,7 +26257,7 @@
         "id",
         "version"
       ],
-      "objects": 93
+      "objects": 94
     },
     {
       "name": "scope",
