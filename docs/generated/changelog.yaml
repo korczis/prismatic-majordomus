@@ -43,10 +43,25 @@ sections:
         rank: 0
         changes:
           - kind: feat
+            scope: context
+            subject: the board reaches the worker who never asked for it
+            breaking: false
+            commit: 8ad5bb6a7
+          - kind: feat
             scope: peers
             subject: "a session is told it has not announced, and doctor names the work that exists on one disk"
             breaking: false
             commit: 1487d729e
+          - kind: feat
+            scope: design
+            subject: "one declaration for the design, and every surface projects it"
+            breaking: false
+            commit: 2b3b9fffa
+          - kind: feat
+            scope: closure
+            subject: "a task owes obligations, and the evidence that discharges them goes stale"
+            breaking: false
+            commit: cf1ee94ca
           - kind: feat
             scope: peers
             subject: "an announcement outlives the connection that made it, and a claim is answered rather than merely recorded"
@@ -202,6 +217,11 @@ sections:
         rank: 1
         changes:
           - kind: fix
+            scope: runtime
+            subject: "a stale runtime says so, on the lease and on the way in"
+            breaking: false
+            commit: 53b21b4bb
+          - kind: fix
             scope: release
             subject: the module asserts the two projections it documents
             breaking: false
@@ -211,6 +231,11 @@ sections:
             subject: "a derivation refuses a degraded index, and one pass says everything a command still needs"
             breaking: false
             commit: f6b73b05a
+          - kind: fix
+            scope: "design,adr"
+            subject: "the three failures this session hit, each with the gate that would have caught it"
+            breaking: false
+            commit: 1cbb36869
           - kind: fix
             scope: commands
             subject: the module asserts the three projections it documents
@@ -475,6 +500,11 @@ sections:
         rank: 4
         changes:
           - kind: docs
+            scope: bootstrap
+            subject: "every worker is told it is not alone, and told to push before it is"
+            breaking: false
+            commit: e6571df53
+          - kind: docs
             scope: plan
             subject: "I1301 is done, and I1302 may not land its schema alone"
             breaking: false
@@ -613,6 +643,31 @@ sections:
         changes:
           - kind: chore
             scope: derive
+            subject: the projections follow the merge of origin/master
+            breaking: false
+            commit: 11fc8bf2b
+          - kind: chore
+            scope: derive
+            subject: the projections follow the final master merge
+            breaking: false
+            commit: cdc859654
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 5e6d324c1
+          - kind: chore
+            scope: "adr,test"
+            subject: renumber to the identities the board actually left free
+            breaking: false
+            commit: 50f276bc3
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 21a1203cc
+          - kind: chore
+            scope: derive
             subject: the projections follow the second master merge
             breaking: false
             commit: e94b760d1
@@ -626,6 +681,11 @@ sections:
             subject: the projections follow the master merge
             breaking: false
             commit: b79363681
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the master merge, with the ADR renumbered to 0030"
+            breaking: false
+            commit: f1c1b6556
           - kind: chore
             scope: derive
             subject: the projections follow the entry-point fixes
@@ -849,6 +909,11 @@ sections:
             subject: "uncommitted work found in the worktree at the topology migration, committed as it was"
             breaking: false
             commit: 6579f1978
+          - kind: other
+            scope: chore/derive-master
+            subject: "uncommitted work found in the worktree at the topology migration, committed as it was"
+            breaking: false
+            commit: 1410a0c79
     artifacts: []
   - version: "0.3.1"
     tag: v0.3.1
