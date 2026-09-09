@@ -54,12 +54,18 @@ schema_ok
 # The other direction: a file that describes something no kind reads and no allow-list is
 # read for. It is not an error in any single object, which is exactly why nothing else
 # catches it.
+#
+# The fixture sits where the real schemas sit — two directories down, because the identifier
+# `majordomus.nothing/v1` fixes the path — and that placement is the assertion. This case
+# used to drop the file directly in share/schemas/, the one depth the check's glob could
+# reach, so it went on passing while the check examined none of the schemas actually shipped.
+mkdir -p "$share/schemas/majordomus/nothing"
 printf '{"$schema":"https://json-schema.org/draft/2020-12/schema","title":"Nothing","type":"object"}\n' \
-  > "$share/schemas/nothing.schema.json"
+  > "$share/schemas/majordomus/nothing/nothing.v1.schema.json"
 expect_exit 10 "$MJ" doctor
-expect_grep 'named by no kind'
+expect_grep 'applied by nothing'
 expect_grep 'nothing'
-rm -f "$share/schemas/nothing.schema.json"
+rm -rf "$share/schemas/majordomus/nothing"
 schema_ok
 
 # ...and a schema applied through its allow-list rather than by a kind still counts, which is
@@ -72,10 +78,11 @@ for n in current session; do
 done
 
 # ---------------------------------------------------------------- a schema that is not JSON
-printf 'not json at all\n' > "$share/schemas/broken.schema.json"
+mkdir -p "$share/schemas/majordomus/broken"
+printf 'not json at all\n' > "$share/schemas/majordomus/broken/broken.v1.schema.json"
 expect_exit 10 "$MJ" doctor
 expect_grep 'do not parse as JSON'
-rm -f "$share/schemas/broken.schema.json"
+rm -rf "$share/schemas/majordomus/broken"
 schema_ok
 
 # ---------------------------------------------------------------- the order is total
