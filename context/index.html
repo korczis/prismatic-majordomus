@@ -182,8 +182,8 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
   <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Directories in the tree</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">34</dd></div>
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Carrying a contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">26</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Directories in the tree</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">35</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Carrying a contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">27</dd></div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Exempt, by their governing contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">8</dd></div>
   </dl><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The tree</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each row is a directory of <code class="font-mono">.ai</code>. A directory carries its own contract, or the contract that governs its subtree exempts it — instances of a kind, such as a skill and its examples, owe no contract of their own. What applies to a path is <code class="font-mono">majordomus context resolve &lt;path&gt;</code>; this page is the shape that resolution walks.</p>
@@ -426,6 +426,14 @@
       <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">ai.repo.workflows</code> — Workflows</p>
       <p class="mt-1 text-sm leading-relaxed text-body">The multi-step processes a worker follows here, and when each applies.</p>
       <p class="mt-2 text-xs text-body-subtle">tracks <code class="break-all font-mono">lib/start.sh</code>, <code class="break-all font-mono">lib/check.sh</code>, <code class="break-all font-mono">lib/finish.sh</code>, <code class="break-all font-mono">lib/handover.sh</code>, <code class="break-all font-mono">lib/plan.sh</code></p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-6">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">workspaces/</code>
+        <span class="font-mono text-xs text-body-subtle">.ai/repo/workspaces</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">subtree</span>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">extend</span></div>
+      <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">ai.repo.workspaces</code> — External workspaces</p>
+      <p class="mt-1 text-sm leading-relaxed text-body">One declaration per external workspace this repository is authorised to read; the content it names is this checkout&#39;s state and is never here.</p>
+      <p class="mt-2 text-xs text-body-subtle">tracks <code class="break-all font-mono">share/schemas/majordomus/workspace/workspace.v1.schema.json</code>, <code class="break-all font-mono">share/kinds.yaml</code></p>
     </li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">How a chain is composed</h2>
@@ -446,7 +454,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5dfa33c87ac930e2234eae7f0c30b6392e13e75f" class="font-mono underline">5dfa33c</a> · inputs <span class="font-mono">bab71f4abaed</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/f9bbc636aff04c3ac0ccc3615d42f5c6182748ba" class="font-mono underline">f9bbc63</a> · inputs <span class="font-mono">043e8736555d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
