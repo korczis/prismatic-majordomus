@@ -16,6 +16,8 @@ provenance:
     - file:share/providers.yaml
     - file:share/knowledge-sources.yaml
     - file:apps/majordomus-cli/Cargo.toml
+    - file:apps/majordomus-cli/src/discovery/mod.rs
+    - file:scripts/lib/ui-audit.mjs
 ---
 
 # 25. An external workspace is not a provider: the term, the dependency posture, and where synced content lives
@@ -60,6 +62,31 @@ store, holding content the repository did not write and may not be entitled to p
 ADR 0005 already draws the line it needs — `.ai/local/**` is checkout state, never a source —
 but nothing in the incoming design says which side of it the store is on.
 
+An audit taken before this record was accepted established two things that a first reading of
+the layer gets wrong, and both change the answer.
+
+`discovery: state` is not the shared mechanism it looks like. `share/knowledge-sources.yaml`
+has exactly one reader, `lib/knowledge.sh:30`, the shell knowledge compiler; the dispatch is
+`lib/knowledge.sh:99-103` and the reader `mj_kdisc_state` is a non-recursive `ls -1` over one
+directory (`lib/knowledge.sh:130-146`). The Rust index — the one that feeds `objects.list`,
+every MCP resource, every HTTP route, OpenAPI and the Cockpit — knows a single discovery,
+`DiscoveryKind::Vcs`, tracked files through the git index
+(`apps/majordomus-cli/src/discovery/mod.rs:33-37`), and excludes `.ai/local` at three
+independent points (`app.rs:82-84`, `repository.rs:176-178`, `discovery/mod.rs:283-285`). A
+state class therefore buys visibility in `majordomus knowledge` and nowhere else. `search` and
+`context` do not read it either: both hardcode their record kinds and paths
+(`lib/search.sh:44-51`, `lib/context.sh:176-262`). The one precedent for local state reaching
+a capability at all is `continuity`, a hand-written reader over a hardcoded `STATE_DIR`
+(`apps/majordomus-cli/src/capability/builtin/continuity.rs:51`) exposed as exactly one
+resource that is, in its own words, served and never published.
+
+The repository already drives a browser, and it is not Rust. `scripts/lib/ui-audit.mjs:262`
+and `scripts/lib/cockpit-probe.mjs:436` both call `chromium.launch({ channel: 'chrome' })` —
+Playwright over the system-installed Chrome, deliberately never a downloaded one — with
+`playwright` and `axe-core` as root devDependencies, wired into `validate.yml` for the `site`
+and `cockpit` jobs, and skipping cleanly with a defined exit code where Chrome is absent.
+Playwright's transport to that browser is CDP.
+
 ## Decision
 
 **A workspace is not a provider.** The external thing gets its own noun: a *workspace* is a
@@ -70,19 +97,38 @@ takes that word, no row in `share/providers.yaml`, and no field of the provider 
 Claude Code is a provider and a Claude Project would be a workspace is the distinction, not
 an ambiguity to be smoothed over.
 
-**The network code does not enter `majordomus-cli`.** `apps/` becomes a Cargo workspace and
-the subsystem is a second crate beside the first. `majordomus-cli` acquires no dependency
-from this work — not an async runtime, not an HTTP client, not TLS, not a CDP client — and a
-gate proves it. Where the CLI must cause a sync, it starts the other binary as a process; it
-never links it.
+**The network code does not enter `majordomus-cli`, and it is not a second crate either.**
+The transport and the sync live in the Node tooling layer that already drives Chrome:
+Playwright over the system browser, the posture `scripts/lib/*.mjs` established and CI already
+runs. `majordomus-cli` acquires no dependency from this work — not an async runtime, not an
+HTTP client, not TLS, not a CDP client — and a gate proves it. `apps/` stays a single crate.
+Writing a CDP client in Rust would reimplement, in the language with the strictest dependency
+budget in this repository, the one thing the repository already has a working, CI-wired
+implementation of.
+
+**The CLI's share of the subsystem is one read capability.** It is written in the shape
+`continuity` established: a hand-written reader over the state directory, one capability,
+served and never published, with no `docs/generated/` or site projection. There is no free
+ride: the kind pipeline reaches tracked files only, and nothing under `.ai/local` is indexed
+by construction and by three explicit guards.
 
 **Synced content is checkout state.** A workspace's content lands under
 `.ai/local/workspaces/<workspace>/`, which is what ADR 0005 already says it is: state, never
-a source. It is not an input to `derive`, not an input to the site, and never served on a
-public surface. Discovery reuses the mechanism that exists for exactly this shape — a state
-class in `share/knowledge-sources.yaml`, `discovery: state`, one directory, no recursive walk
-of anything that happens to exist — so the synced corpus is visible to `knowledge`, `search`
-and `context` on the day it lands without a second registry being invented for it.
+a source, git-ignored at `.gitignore:55` and gated by `mj_validate_ai_layout`
+(`lib/doctor.sh:431-436`) which fails the pre-commit hook if a file there is ever tracked. It
+is not an input to `derive`, not an input to the site, and never served on a public surface.
+
+It is deliberately **not** declared as a class in `share/knowledge-sources.yaml`. That would
+buy visibility in one shell command and charge for it in the worst possible currency: the
+knowledge compiler hashes the full content of every file it discovers (`lib/knowledge.sh:80`,
+`lib/common.sh:465-470`) and re-parses each one afterwards, so a synced corpus of thousands of
+conversations would make `majordomus knowledge` linear in the size of a body of text that
+command has no reason to read.
+
+Its retention is its own. `mj_validate_retention` (`lib/doctor.sh:303-316`) is three
+hand-written stanzas over the ledger, handovers and checkpoints; a new store gets no cap and
+no `doctor` line unless one is written for it. One is written for it, because an unbounded
+store that nothing measures is the defect this repository keeps finding in itself.
 
 Content becomes the repository's own statement only when a person promotes it into
 `.ai/repo/`, in the shape the layer already uses for a decision recorded while working and
@@ -106,6 +152,15 @@ it spends the property the crate was built around. Every agent session pays the 
 `doctor` run pays the link, and the argument in the manifest for refusing a YAML crate stops
 being true the moment a TLS stack is in the tree for an unrelated feature.
 
+**A second Rust crate in a Cargo workspace.** This record proposed it before the audit and
+the audit withdrew it. It keeps the dependency boundary but pays for it twice: a hand-written
+CDP client beside a working Playwright one, and a second binary to build, ship and explain,
+for a subsystem whose browser half the repository can already perform.
+
+**A `discovery: state` class for the synced corpus.** It reads as the reuse the doctrine
+demands and is not: one shell command gains it, no surface does, and the compiler behind that
+command hashes and re-parses every byte it is given.
+
 **Synced content under `.ai/repo/`.** It is not this repository's statement, it is
 machine-local, it is potentially large and potentially private, and ADR 0005 has already
 answered the question in general terms.
@@ -116,17 +171,23 @@ one.
 
 ## Consequences
 
-The incoming plan changes shape in two places. Its "canonical provider core" is a crate
-boundary rather than a trait inside the existing binary, and its "one application layer" for
-CLI, REST, OpenAPI, MCP and Cockpit is not a new service to be written: synced content that
-lands as declarative objects under a discovered state class is projected to every surface by
-the machinery that already exists. That is the cheaper design here and the one the doctrine
-demands; a session following the plan literally would have built a parallel one.
+The incoming plan changes shape in three places. Its "canonical provider core" is a Node
+module beside the existing browser tooling, not a trait inside the Rust binary and not a crate
+beside it. Its "one application layer" projecting the corpus through CLI, REST, OpenAPI, MCP
+and Cockpit is not available at all: the machinery that would have carried it reaches tracked
+files only, so the CLI's share is one `continuity`-shaped capability and the rest of the plan's
+surface list is a thing that would have to be built, deliberately, against the grain, for
+content the operator has not said should be public. Its sync engine gets a retention cap
+written by hand, because nothing generic would ever notice the store.
 
-`apps/` gains a workspace manifest, and the distribution model gains a question it does not
-yet have an answer to: whether the second binary ships with the tool or stays a developer
-artifact, and what `doctor` should say on a machine where it is absent. That is left open
-deliberately; it is decided when there is something to ship.
+The subsystem is therefore two halves in two languages with a directory between them: Node
+writes `.ai/local/workspaces/`, Rust reads it, and neither links the other. That boundary is
+the file system, which is the same boundary `continuity` already lives on.
+
+The distribution model gains a question it does not yet have an answer to: the Node tooling is
+a devDependency of this repository, not something the installed tool carries, so a workspace
+sync is an operator's instrument in a checkout rather than a feature of the released binary.
+Whether that changes is left open; it is decided when there is something to ship.
 
 A gate must assert that `majordomus-cli`'s dependency list did not grow, or the boundary is
 a sentence rather than a constraint.
