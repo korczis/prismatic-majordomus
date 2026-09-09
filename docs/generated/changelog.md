@@ -57,6 +57,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **ci**: the gate model parses again, and the gate a merge dropped is declared again (`d7f492294`)
 - **site-check**: a route is named on the API page whatever it is styled with (`9fcd06f8f`)
 - **runtime**: a stale runtime says so, on the lease and on the way in (`53b21b4bb`)
 - **tooling**: two failures of this session become refusals with tests (`b90e0dd47`)
@@ -153,6 +154,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`16cc159c7`)
 - **derive**: the projections follow the master merge (`91b4e8be6`)
 - **derive**: the projections follow the merge (`f2b018f26`)
 - **derive**: the projections follow the two merges, and the baseline records lib/doctor.sh (`501ea2d41`)

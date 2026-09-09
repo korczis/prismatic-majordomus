@@ -212,6 +212,11 @@ sections:
         rank: 1
         changes:
           - kind: fix
+            scope: ci
+            subject: "the gate model parses again, and the gate a merge dropped is declared again"
+            breaking: false
+            commit: d7f492294
+          - kind: fix
             scope: site-check
             subject: a route is named on the API page whatever it is styled with
             breaking: false
@@ -646,6 +651,11 @@ sections:
         heading: Housekeeping
         rank: 7
         changes:
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 16cc159c7
           - kind: chore
             scope: derive
             subject: the projections follow the master merge
