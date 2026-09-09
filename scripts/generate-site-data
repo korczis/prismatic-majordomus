@@ -861,7 +861,19 @@ GEN_T0="$(mj_phase_begin "gen:catalogue.json")"
 UC_DIR="$ROOT/$(mj_rel "$MJ_AI_DIR")/$(mj_man sections.use-cases)"; AP_DIR="$ROOT/$(mj_rel "$MJ_AI_DIR")/$(mj_man sections.applications)"
 [ -n "$(mj_man sections.use-cases)" ] && [ -d "$UC_DIR" ] || { echo "generate-site-data: the manifest names no use-cases section, or $(mj_rel "$UC_DIR") is absent" >&2; exit 10; }
 [ -n "$(mj_man sections.applications)" ] && [ -d "$AP_DIR" ] || { echo "generate-site-data: the manifest names no applications section, or $(mj_rel "$AP_DIR") is absent" >&2; exit 10; }
-"$ROOT/bin/majordomus" --repo "$ROOT" usecase validate > "$STAGE/uc-validate.txt" 2>&1 || { echo "generate-site-data: the use cases do not validate:" >&2; grep '^FAIL' "$STAGE/uc-validate.txt" >&2; exit 10; }
+"$ROOT/bin/majordomus" --repo "$ROOT" usecase validate > "$STAGE/uc-validate.txt" 2>&1 || {
+  # A grep for '^FAIL' lines that matches none exits non-zero and prints nothing, so a
+  # command that failed before writing any such line (a crash, a missing binary) must fall
+  # back to the full captured output rather than leave the headline with nothing under it.
+  UC_VALIDATE_RC=$?
+  echo "generate-site-data: the use cases do not validate (exit $UC_VALIDATE_RC):" >&2
+  UC_VALIDATE_FAIL="$(grep '^FAIL' "$STAGE/uc-validate.txt" || true)"
+  if [ -n "$UC_VALIDATE_FAIL" ]; then
+    printf '%s\n' "$UC_VALIDATE_FAIL" >&2
+  else
+    sed 's/^/  /' "$STAGE/uc-validate.txt" >&2
+  fi
+  exit 10; }
 # a flattened front matter as nested JSON: numeric segments become arrays, scalars stay
 # strings except the integers a template compares (exit codes, weights, order, limits)
 front_json() { # markdown file -> JSON object of its front matter
@@ -910,7 +922,10 @@ if [ "$SCENARIOS" = 0 ]; then
   echo '{"results":[],"scenarios":"skipped"}' > "$STAGE/uc-run.json"; : > "$STAGE/uc-run.err"
 else
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase run --json > "$STAGE/uc-run.json" 2> "$STAGE/uc-run.err" || {
-  echo "generate-site-data: a use-case scenario failed; the site does not show a demonstration that does not hold:" >&2
+  # The exit code distinguishes a refusal from a crash (10 vs. a signal or a panic), and
+  # that distinction is lost the moment this block runs another command — capture it first.
+  UC_RUN_RC=$?
+  echo "generate-site-data: a use-case scenario failed (exit $UC_RUN_RC); the site does not show a demonstration that does not hold:" >&2
   # Render the failures the run recorded; when that renders nothing — the run wrote no JSON,
   # or wrote a shape this does not match — show what the tool actually said. `jq -r` over an
   # empty or unmatched document exits 0 and prints nothing, so a `||` fallback never fired
@@ -1210,12 +1225,20 @@ jq -e '.openapi | startswith("3.1")' "$OA" >/dev/null 2>&1 || { echo "generate-s
 # every operation is documented in full: a tag with a description, every response described,
 # and an example for what takes input. An operation without an example is a capability
 # without a benchmark case, which the crate does not compile; this catches a stale document.
+#
+# The exception is an operation whose descriptor waived its benchmark, with a typed reason:
+# the waiver *is* the declaration that this capability has no case (an execution to read
+# cannot be staged by a benchmark host). The waiver is reported by `bench coverage` and the
+# reason is on the operation as `x-majordomus-benchmark`, so the exemption is read from the
+# document rather than from a list of operation ids here.
 jq -r '(.tags // [] | map(.name)) as $tags
        | .paths | to_entries[] | .key as $p | .value | to_entries[] | .key as $m | .value
+       | ((.["x-majordomus-benchmark"].policy // "required") == "waived") as $waived
        | (if ((.tags // []) | length) == 0 then "\($m) \($p): no tag"
           elif ((.tags // []) - $tags | length) > 0 then "\($m) \($p): tag \((.tags - $tags)[0]) is not declared with a description"
           elif ((.responses // {}) | length) == 0 then "\($m) \($p): no responses"
           elif ([.responses[] | select((.description // "") == "")] | length) > 0 then "\($m) \($p): a response without a description"
+          elif $waived then empty
           elif $m == "post" and ((.requestBody.content["application/json"].examples // {}) | length) == 0 then "\($m) \($p): a POST without a request body example"
           elif $m == "get" and ((.parameters // []) | length) > 0 and ([.parameters[] | select((.examples // {}) | length > 0)] | length) == 0 then "\($m) \($p): parameters without a single example"
           else empty end)' "$OA" | while read -r problem; do

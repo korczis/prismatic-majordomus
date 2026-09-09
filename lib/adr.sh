@@ -394,15 +394,54 @@ mj_adr_show() {
 # proposing in the same second get two identities rather than one. The file is written to a
 # temporary beside its destination and moved into place, so a reader never sees half a
 # record and an interrupted propose leaves nothing.
-mj_adr_next_id() {
-  local n max=0 num
-  for n in "$MJ_ADRS_DIR"/[0-9][0-9][0-9][0-9]-*.md; do
+# The highest number this repository has ever used, from three places rather than one.
+#
+# One directory is not enough, and this is not theoretical: a single session here proposed
+# 0028, found it held by a peer's uncommitted work, took 0029, and found that claimed by
+# master while the branch was being written. The lock below is exclusive over *this*
+# worktree; it says nothing about the thirty others, and nothing about a branch.
+#
+#   the working tree      what a person can see, and what the old implementation read
+#   every git ref         every number ever added under the decisions directory on any
+#                         branch, merged or not. One process. A number freed by a rename
+#                         stays spent, which is the conservative direction: allocation is
+#                         monotonic and two workers never meet.
+#   the sibling worktrees the case the refs cannot answer. Work that is authored but not
+#                         yet committed exists only on a filesystem, and with several
+#                         sessions in one repository that is exactly where the next number
+#                         is already taken.
+mj_adr_numbers_here() {
+  local n num
+  for n in "$1"/[0-9][0-9][0-9][0-9]-*.md; do
     [ -e "$n" ] || continue
-    num="${n##*/}"; num="${num%%-*}"
-    num="$(printf '%s' "$num" | sed 's/^0*//')"; [ -z "$num" ] && num=0
-    [ "$num" -gt "$max" ] && max="$num"
+    num="${n##*/}"; printf '%s\n' "${num%%-*}"
   done
-  printf '%04d' "$((max + 1))"
+}
+
+mj_adr_next_id() {
+  local max=0 num rel worktree
+  rel="${MJ_ADRS_DIR#$MJ_ROOT/}"
+  {
+    mj_adr_numbers_here "$MJ_ADRS_DIR"
+    # every path ever added under the decisions directory, on every ref
+    git -C "$MJ_ROOT" log --all --pretty=format: --name-only --diff-filter=A -- "$rel" 2>/dev/null \
+      | sed -n 's|.*/\([0-9][0-9][0-9][0-9]\)-.*\.md$|\1|p'
+    # every other worktree of this repository, as it stands on disk right now
+    git -C "$MJ_ROOT" worktree list --porcelain 2>/dev/null \
+      | sed -n 's/^worktree //p' \
+      | while IFS= read -r worktree; do
+          [ "$worktree" = "$MJ_REPO" ] && continue
+          [ -d "$worktree/$rel" ] || continue
+          mj_adr_numbers_here "$worktree/$rel"
+        done
+  } | while IFS= read -r num; do
+        num="$(printf '%s' "$num" | sed 's/^0*//')"; [ -z "$num" ] && num=0
+        printf '%s\n' "$num"
+      done | sort -n | tail -1 | {
+        read -r max || max=0
+        [ -n "${max:-}" ] || max=0
+        printf '%04d' "$((max + 1))"
+      }
 }
 
 mj_adr_slug() {

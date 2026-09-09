@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 40
+weight = 41
 [extra]
 source = "docs/MCP.md"
 +++
@@ -121,20 +121,50 @@ what it announced, before its first tool call.
 
 | tool | capability | arguments | answers |
 |---|---|---|---|
-| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, and each peer's announcement |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record with its announcement |
+| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, each peer's announcement, and every pair of claims that meet |
+| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
 
 </div>
 
 
 An announcement is one line of intent and the repository-relative paths the peer expects
-to touch. It is informational: other clients read it to avoid a collision; nothing here
-enforces it (the shell tool's `start --scope` and `check` do that, per worktree). The
-board lives in the server's memory and is gone with the process; `peers.announce` is the
-one capability of kind `command`, because it changes that memory, and it is announced to
-MCP clients as not read-only. Over plain HTTP there is no caller, so `POST
-/api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without a
-`caller`.
+to touch. The board lives in the server's memory and is gone with the process;
+`peers.announce` is the one capability of kind `command`, because it changes that memory,
+and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
+so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
+a `caller`.
+
+**A claim is answered, not merely recorded.** `peers.announce` compares the scope it is
+given against every other announcement and returns the peers whose claims meet it, with
+the pairs of paths that meet: two claims meet when they are equal or one is inside the
+other (`apps` contains `apps/majordomus-cli`; `app` does not, because a claim is a path
+and not a prefix of a string). `peers.list` reports the same collisions across the whole
+board, each pair once. It is still not enforcement — the shell tool's `start --scope` and
+`check --overlap` do that, per worktree, and they are what refuses a commit — but a
+collision is now known at the moment it is created rather than discovered afterwards in
+the history of a branch.
+
+**The board reaches a worker that never asks for it.** Reading it was voluntary, and
+voluntary co-operation failed: a session announced, its transport was re-established under a
+new peer id, and it was invisible to eight others for three hours; two sessions built the
+same subsystem because neither looked first. So `majordomus context` — the command the
+bootstrap tells every worker to run before working — carries a `PEERS` section between `GIT`
+and `TASK`: who else is attached, what each of them claims, and specifically which of those
+claims meets the current task's scope. It reads the lease of the shared server (which is
+repository-scoped, so a linked worktree finds it through `--git-common-dir` in the primary
+checkout) and asks `GET /api/v1/peers`. The hint is never load-bearing: no lease, no `jq` or
+`curl`, a server that does not answer within two seconds, or a board holding nobody leaves
+`context` exactly as it was, because a repository with one worker in it must not grow a
+section about being alone. `test/cases/106_context_peers.sh` holds all of it.
+
+**An announcement outlives the connection that made it.** A session that reconnects used
+to lose everything it had said, silently, to itself and to everyone else; the board now
+keeps a departed peer's announcement and lists it with `attached: false`, so what a
+session said it was working on survives a dropped socket. A peer that never announced
+leaves nothing behind, the newest 32 departed peers are kept so that a server which ran
+all day is not a museum, and an attached peer is never evicted to make room for one that
+left. `peers.list`'s `count` is the peers actually attached; the `peers` array is longer
+when the board is holding what somebody said before they went.
 
 ## What decides what is served
 

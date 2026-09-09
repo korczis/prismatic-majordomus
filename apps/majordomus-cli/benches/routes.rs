@@ -107,7 +107,7 @@ fn benches(c: &mut Criterion) {
 
     // the projection's own routes, for the same table
     let mut group = c.benchmark_group("infrastructure");
-    for target in ["/", "/openapi.json", "/docs"] {
+    for target in ["/", "/openapi.json", "/swagger"] {
         let request = Request::parse_target("GET", target, vec![]);
         let _ = router.handle(&request);
         group.bench_function(format!("GET {target}"), |b| {

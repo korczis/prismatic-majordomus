@@ -24,6 +24,7 @@ pub mod discovery;
 pub(crate) mod distribution;
 pub mod environment;
 pub(crate) mod error;
+pub mod execution;
 pub mod generate;
 pub mod git;
 pub mod graph;

@@ -30,6 +30,36 @@ mj_rust_bin() {
   printf '%s\n' "$mj_rb_root/apps/majordomus-cli/target/${MAJORDOMUS_BUILD_PROFILE:-debug}/majordomus"
 }
 
+# mj_rust_stale <repository-root> <executable>
+#
+# Is that executable missing, or older than any source, manifest or lock file of the crate?
+# True (0) for either. One question with two answers again: `bin/majordomus-cli` builds when
+# this is true, `bin/majordomus-env` only says so — but neither may decide it for itself,
+# because a checkout where the two disagree is a checkout where entering the repository
+# reports one thing and running a command does another.
+#
+# An explicit MAJORDOMUS_BIN is never judged stale: whoever named a particular executable
+# owns whether it is current, and it need not sit beside sources at all. Neither is a tree
+# without the crate — an installed release has no sources to be older than.
+#
+# Why this matters beyond a rebuild: every surface of this repository — the banner, the
+# workflow bridge, the completion, the shared MCP server — is a projection of this one
+# file. When it is old, all of them are old together, and nothing in their output says so.
+# Silence here reads as a feature that vanished.
+mj_rust_stale() {
+  mj_st_root="$1"
+  mj_st_bin="$2"
+  [ -x "$mj_st_bin" ] || return 0
+  [ -z "${MAJORDOMUS_BIN:-}" ] || return 1
+  mj_st_crate="$mj_st_root/apps/majordomus-cli"
+  [ -d "$mj_st_crate/src" ] || return 1
+  mj_st_newer="$(
+    find "$mj_st_crate/src" "$mj_st_crate/Cargo.toml" "$mj_st_crate/Cargo.lock" \
+      -type f -newer "$mj_st_bin" 2>/dev/null | head -n 1
+  )"
+  [ -n "$mj_st_newer" ]
+}
+
 # The data directory the executable reads kinds and schemas from at run time, when this
 # tree ships one. Empty when it does not, so a caller can leave MAJORDOMUS_SHARE unset and
 # let the executable find its own.

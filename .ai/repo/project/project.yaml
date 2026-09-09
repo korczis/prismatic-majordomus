@@ -5,6 +5,11 @@
 # set, the Mermaid diagrams, the GitHub issues and milestones, and the website's roadmap
 # all come from `majordomus plan`, which reads these files and nothing else.
 #
+# Downstream is not the same as current. GitHub receives the projection when somebody runs
+# `scripts/github-sync --apply`, which is a deliberate act and not a consequence of editing
+# a file here. What holds the two together is `scripts/ci/github-check`, the gate that
+# reads the remote and fails when it has stopped agreeing (project.github-projection-gated@1).
+#
 # No status is stored anywhere here. An issue records what happened to it — started_at,
 # verified_at, completed_at, evidence — and lib/project.awk derives BLOCKED, READY,
 # ACTIVE, VERIFY, DONE or CANCELLED from those facts and from its dependencies.

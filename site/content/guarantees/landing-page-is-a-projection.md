@@ -1,7 +1,7 @@
 +++
 title = "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed"
 description = "The website's homepage, its /features/ pages and its capability matrix name no feature, no"
-weight = 160
+weight = 161
 [extra]
 claim_id = "landing-page-is-a-projection"
 status = "guaranteed"
