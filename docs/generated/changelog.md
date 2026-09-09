@@ -122,6 +122,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the final master merge (`cdc859654`)
 - **derive**: the projections follow the master merge (`5e6d324c1`)
 - **derive**: the projections follow the master merge (`21a1203cc`)
 - **derive**: the projections follow the second master merge (`e94b760d1`)

@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "e43217caf08fa3c0498dcf4f201dad1af014417a51fa62025f31ea023d6f4f2a",
+    "fingerprint": "fb26161d3185b62ed6251f0e50d14ce657c7514521373a923fff0a739733d7fc",
     "summary": {
-      "total": 1115,
+      "total": 1117,
       "builtin": 52,
-      "declarative": 1063,
+      "declarative": 1065,
       "by_kind": {
         "command": 1,
         "query": 51,
-        "resource": 1063
+        "resource": 1065
       },
       "by_stability": {
         "behaviorally_verified": 47,
-        "implemented": 1068
+        "implemented": 1070
       },
       "mcp_tools": 50,
-      "mcp_resources": 1083,
+      "mcp_resources": 1085,
       "http_routes": 52,
       "cli_commands": 25,
       "modules": 47,
@@ -18697,7 +18697,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 101,
+        "capabilities": 103,
         "capability_ids": []
       },
       {
@@ -18795,7 +18795,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ee0c1ad4cab4a7b8d8cc15ac95c52b91e87dbacb6c26002435bb81bbc8cee4ec",
+    "fingerprint": "db17443dcd2c00a1dfff848004428b5674d6a81612a6026236f073d3106cd1cf",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -18838,7 +18838,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 101,
+      "rule": 103,
       "scope": 1,
       "session": 11,
       "skill": 3,
@@ -21833,7 +21833,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 3807
+        "bytes": 4275
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -21842,7 +21842,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 3096
+        "bytes": 3564
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -28093,6 +28093,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "rule",
+        "identity": "project.destructive-sweeps-fail-closed@1",
+        "title": "A sweep that deletes fails closed on what it could not read",
+        "description": "Any script that selects paths for deletion by a measured predicate — age, size, staleness — treats a predicate input it could not read as false, never as an extreme value; it names what it is about to delete and the measurement behind the verdict before deleting, and it reports how many candidates it skipped for want of a readable input.",
+        "path": ".ai/repo/rules/project/destructive-sweeps-fail-closed.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3552,
+        "tags": [
+          "safety",
+          "tooling"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "kind": "rule",
         "identity": "project.diagnostics-decide-the-exit@1",
@@ -28699,6 +28714,21 @@
           "catalogue",
           "projections",
           "documentation"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "rule",
+        "identity": "project.work-is-claimed-before-it-is-built@1",
+        "title": "What already claims a path is checked before that path is built",
+        "description": "Before implementing something that creates a new module, command group, document kind or generated artifact, a worker asks what already claims those paths across every local and remote branch (scripts/collision-check --new <paths>), not only who the peer board says is working now, and announces its own intent afterwards.",
+        "path": ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3141,
+        "tags": [
+          "coordination",
+          "process"
         ]
       },
       {
@@ -30640,7 +30670,7 @@
         "id",
         "version"
       ],
-      "objects": 101
+      "objects": 103
     },
     {
       "name": "scope",
