@@ -195,9 +195,9 @@
       <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">exposed through</dt>
         <dd><ul class="flex flex-wrap gap-1.5" aria-label="Interfaces this is exposed through">
   <li><a href="https://korczis.github.io/prismatic-majordomus/docs/cli/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>cli</a></li>
-  <li><span class="inline-flex items-center gap-1.5 rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-xs text-body-subtle" title="No module, command or kind this feature names is projected onto HTTP API."><span aria-hidden="true">·</span>api</span></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/docs/api/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>api</a></li>
   <li><a href="https://korczis.github.io/prismatic-majordomus/registry/mcp/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>mcp</a></li>
-  <li><span class="inline-flex items-center gap-1.5 rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-xs text-body-subtle" title="No module, command or kind this feature names is projected onto Cockpit."><span aria-hidden="true">·</span>cockpit</span></li>
+  <li><a href="https://korczis.github.io/prismatic-majordomus/docs/cockpit/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>cockpit</a></li>
   <li><a href="https://korczis.github.io/prismatic-majordomus/docs/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>docs</a></li>
 </ul>
 </dd></div>
@@ -209,12 +209,51 @@
 that breaks its schema; <code>plan next</code> answers which issues may be executed now; <code>plan roadmap</code>
 draws the milestone graph the website renders. A branch created for an issue is named after
 it, so the worktree topology can read the issue back from the branch, and an issue is done
-only with the evidence its contract requires.</p>
+only with the evidence its contract requires. Above the branch the same edge is read in
+both directions and stored nowhere: the <code>trace</code> capability module derives an issue's
+branches and commits from git, <code>scripts/traceability</code> joins the pull requests GitHub holds,
+and a commit no execution contract accounts for is reported as unattributed rather than
+quietly left out.</p>
 <h2 id="what-it-does-not-do"><a class="zola-anchor" href="#what-it-does-not-do" aria-label="Anchor link for: what-it-does-not-do">What it does not do</a></h2>
 <p>It does not talk to GitHub on its own: the projection of issues and milestones is rendered
 offline and applied only when a person runs the sync with a token. Nothing here estimates
 effort or schedules dates.</p>
 </article>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The capabilities behind it</h2>
+    <p class="mt-2 text-body">The capability modules of the executable this feature names, each with the capabilities it composes. The command line, the HTTP route, the MCP tool and the reference beside every row are projections of one declaration, not four registrations.</p>
+    <div class="mt-4 space-y-4">
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://korczis.github.io/prismatic-majordomus/registry/modules/trace/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Traceability</a>
+          <code class="font-mono text-xs text-body-subtle">trace</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/trace.commit/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What contract this commit served</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/trace/commit</span><span>majordomus_trace_commit</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/trace.issue/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What realised this issue</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/trace/issue</span><span>majordomus_trace_issue</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/trace.report/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The whole work graph above the branch</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/trace</span><span>majordomus_traceability</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/trace.rs</p>
+      </section>
+    </div>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
       <li class="p-4">
@@ -228,8 +267,8 @@ effort or schedules dates.</p>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The objects it is made of</h2>
     <p class="mt-2 text-body">Kinds of the layer. Each is a schema, a source class and a file on disk; the number beside it is what this repository holds today, counted at build time.</p>
     <ul class="mt-4 flex flex-wrap gap-2">
-      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">milestone</code><span class="font-mono text-xs text-body-subtle">15</span></li>
-      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">issue</code><span class="font-mono text-xs text-body-subtle">184</span></li>
+      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">milestone</code><span class="font-mono text-xs text-body-subtle">17</span></li>
+      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">issue</code><span class="font-mono text-xs text-body-subtle">202</span></li>
     </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What it answers</h2>
     <p class="mt-2 text-body">Operational moments from the Why catalogue that name one of this feature's mechanisms. Nothing here was assigned: a moment appears because it names a rule, a command, a capability or a claim this feature also names.</p>
@@ -294,7 +333,10 @@ effort or schedules dates.</p>
   </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">199</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">3</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">3</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">3</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">219</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">3</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">8</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">moments answered</dt><dd class="font-mono text-sm text-heading">6</dd></div>
@@ -325,7 +367,7 @@ effort or schedules dates.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5be30578b9f86c6898cfe412972f4c854e022add" class="font-mono underline">5be3057</a> · inputs <span class="font-mono">1d1844eed349</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c45621e4100e55e6863084cd9ef72aad5205cdfb" class="font-mono underline">c45621e</a> · inputs <span class="font-mono">a3b1674b0215</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

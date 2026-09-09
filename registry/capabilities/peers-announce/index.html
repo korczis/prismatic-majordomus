@@ -266,7 +266,7 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
   </details>
 </div>
 <div class="min-w-0">
-  <h3 class="font-mono text-sm font-semibold text-heading">output · Peer</h3><p class="mt-1 text-sm text-body">One peer as the board lists it.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · Announced</h3><p class="mt-1 text-sm text-body">What `announce` answers: the peer as recorded, and who else is on that ground.</p><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
@@ -274,6 +274,13 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
         <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
         <td class="px-3 py-2 text-body">Its announcement, when it made one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">attached</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">Whether the session is still attached. A peer that announced something and then
+went away is kept and listed with `attached: false`: what it said it was working on
+outlives the connection that said it, because the work does.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">client</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -294,6 +301,11 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
         <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">Seconds since its last message.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">overlaps</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body">Every other peer whose claimed scope meets this one. Empty is the ordinary case.</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">transport</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
@@ -356,6 +368,55 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;Overlap&quot;: {
+      &quot;description&quot;: &quot;Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch.&quot;,
+      &quot;properties&quot;: {
+        &quot;attached&quot;: {
+          &quot;description&quot;: &quot;Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it said it was doing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;The claims that meet: one line per pair, `yours` and `theirs`.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/OverlapPath&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;peer&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PeerId&quot;,
+          &quot;description&quot;: &quot;The other peer.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;peer&quot;,
+        &quot;attached&quot;,
+        &quot;intent&quot;,
+        &quot;paths&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;OverlapPath&quot;: {
+      &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
+      &quot;properties&quot;: {
+        &quot;theirs&quot;: {
+          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;yours&quot;: {
+          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;yours&quot;,
+        &quot;theirs&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;PeerId&quot;: {
       &quot;description&quot;: &quot;A peer&#39;s identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -376,7 +437,7 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
       ]
     }
   },
-  &quot;description&quot;: &quot;One peer as the board lists it.&quot;,
+  &quot;description&quot;: &quot;What `announce` answers: the peer as recorded, and who else is on that ground.&quot;,
   &quot;properties&quot;: {
     &quot;announcement&quot;: {
       &quot;anyOf&quot;: [
@@ -388,6 +449,10 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
         }
       ],
       &quot;description&quot;: &quot;Its announcement, when it made one.&quot;
+    },
+    &quot;attached&quot;: {
+      &quot;description&quot;: &quot;Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
     },
     &quot;client&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/ClientInfo&quot;,
@@ -407,6 +472,13 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
       &quot;minimum&quot;: 0,
       &quot;type&quot;: &quot;integer&quot;
     },
+    &quot;overlaps&quot;: {
+      &quot;description&quot;: &quot;Every other peer whose claimed scope meets this one. Empty is the ordinary case.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/Overlap&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
     &quot;transport&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/Transport&quot;,
       &quot;description&quot;: &quot;How it is attached.&quot;
@@ -417,9 +489,10 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
     &quot;client&quot;,
     &quot;transport&quot;,
     &quot;connected_at&quot;,
-    &quot;last_seen_seconds_ago&quot;
+    &quot;last_seen_seconds_ago&quot;,
+    &quot;attached&quot;
   ],
-  &quot;title&quot;: &quot;Peer&quot;,
+  &quot;title&quot;: &quot;Announced&quot;,
   &quot;type&quot;: &quot;object&quot;
 }</pre></div>
   </details>
@@ -450,8 +523,8 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
         <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/peers.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/peers.rs</a></dd></div>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::peers</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">AnnounceInput</dd></div>
-        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Peer</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">e43217caf08fa3c0498dcf4f201dad1af014417a51fa62025f31ea023d6f4f2a</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Announced</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">a2e73fd6186a26264f21c720df26f6fbc57f564d8d3295e59194bf94a1c986c0</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.4.0</dd></div>
       </dl>
     </div>
@@ -483,7 +556,7 @@ read it to avoid a collision; nothing here enforces it. <span class="font-mono t
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5be30578b9f86c6898cfe412972f4c854e022add" class="font-mono underline">5be3057</a> · inputs <span class="font-mono">1d1844eed349</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c45621e4100e55e6863084cd9ef72aad5205cdfb" class="font-mono underline">c45621e</a> · inputs <span class="font-mono">a3b1674b0215</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

@@ -277,6 +277,12 @@ that a projection reads a field instead of deciding for itself.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body">The one-paragraph description every projection shows.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">execution</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body">What running it as an execution means: classified from the kind, so that a client
+reads a fact rather than deciding for itself.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">exposure</td>
         <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -470,7 +476,7 @@ declarative object.</td>
       &quot;type&quot;: &quot;string&quot;
     },
     &quot;CapabilityKind&quot;: {
-      &quot;description&quot;: &quot;What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process&#39;s\nown memory, and something that is read. Nothing of any kind writes to the repository.&quot;,
+      &quot;description&quot;: &quot;What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process&#39;s\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].&quot;,
       &quot;oneOf&quot;: [
         {
           &quot;const&quot;: &quot;query&quot;,
@@ -592,6 +598,64 @@ declarative object.</td>
       },
       &quot;required&quot;: [
         &quot;path&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ExecutionConcurrency&quot;: {
+      &quot;description&quot;: &quot;Whether two executions of one capability may overlap.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;unrestricted&quot;,
+          &quot;description&quot;: &quot;Any number at once. Every read is one of these: the index and the registry are\nimmutable for the life of the process, so concurrent readers cannot interfere.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;serial&quot;,
+          &quot;description&quot;: &quot;One at a time. A second execution of the same capability waits for the first, which\nis what a capability that changes anything — this process&#39;s own memory included —\nneeds in order to be reasoned about at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ExecutionEffect&quot;: {
+      &quot;description&quot;: &quot;What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit&#39;s confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;read&quot;,
+          &quot;description&quot;: &quot;Nothing changes. Every query and every resource of this executable.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;process_state&quot;,
+          &quot;description&quot;: &quot;This process&#39;s own memory changes, and nothing outside it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;repository_mutation&quot;,
+          &quot;description&quot;: &quot;The repository changes.\n\nNothing classifies to this, and the doctrine of this tool is why: no capability of\nany kind writes to the repository. It is on the model so that the day one does, it\nsays so here — where a projection already reads it and a client already asks before\nrunning it — rather than in whichever page happens to render its button.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ExecutionPolicy&quot;: {
+      &quot;description&quot;: &quot;What running a capability as an execution means: what it changes, whether asking it to\nstop achieves anything, and whether two of them may overlap.\n\nThe effect and the concurrency are classified from the kind by\n[`ExecutionPolicy::classify`], for the same reason [`Availability`] is: the facts are\nalready on the declaration, and asking each `capability!` block to restate them would be\none more thing that can disagree with itself.\n\nCancellability is the one thing the kind cannot decide, because it is a fact about the\nhandler: whether it looks at its cancellation flag and stops. A handler that does says\nso with [`crate::capability::Executable::cancellable`], and a client is then told\nwhether a Cancel button will achieve anything instead of being given one that lies.&quot;,
+      &quot;properties&quot;: {
+        &quot;cancellable&quot;: {
+          &quot;description&quot;: &quot;Whether asking it to stop does anything. A task looks at its cancellation flag; a\nquery and a command do not, and a client is told so rather than being given a\nbutton that lies.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;concurrency&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionConcurrency&quot;,
+          &quot;description&quot;: &quot;Whether two of them may overlap.&quot;
+        },
+        &quot;effect&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ExecutionEffect&quot;,
+          &quot;description&quot;: &quot;What it changes.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;effect&quot;,
+        &quot;cancellable&quot;,
+        &quot;concurrency&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
@@ -760,6 +824,11 @@ declarative object.</td>
           &quot;const&quot;: &quot;external_dependency&quot;,
           &quot;description&quot;: &quot;The capability talks to something the benchmark host cannot provide.&quot;,
           &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;transient_state&quot;,
+          &quot;description&quot;: &quot;The capability starts, or answers about, work that exists only while it is running.\nA benchmark host cannot stage an execution to read, and running the operation in a\nloop would measure the work rather than the operation.&quot;,
+          &quot;type&quot;: &quot;string&quot;
         }
       ]
     }
@@ -781,6 +850,10 @@ declarative object.</td>
     &quot;description&quot;: {
       &quot;description&quot;: &quot;The one-paragraph description every projection shows.&quot;,
       &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;execution&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ExecutionPolicy&quot;,
+      &quot;description&quot;: &quot;What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself.&quot;
     },
     &quot;exposure&quot;: {
       &quot;$ref&quot;: &quot;#/$defs/Exposure&quot;,
@@ -844,7 +917,8 @@ declarative object.</td>
     &quot;visibility&quot;,
     &quot;stability&quot;,
     &quot;benchmark&quot;,
-    &quot;cache&quot;
+    &quot;cache&quot;,
+    &quot;execution&quot;
   ],
   &quot;title&quot;: &quot;Capability&quot;,
   &quot;type&quot;: &quot;object&quot;
@@ -878,7 +952,7 @@ declarative object.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::capabilities</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">DescribeInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Capability</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">e43217caf08fa3c0498dcf4f201dad1af014417a51fa62025f31ea023d6f4f2a</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/capabilities.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/capabilities.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">a2e73fd6186a26264f21c720df26f6fbc57f564d8d3295e59194bf94a1c986c0</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.4.0</dd></div>
       </dl>
     </div>
@@ -910,7 +984,7 @@ declarative object.</td>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5be30578b9f86c6898cfe412972f4c854e022add" class="font-mono underline">5be3057</a> · inputs <span class="font-mono">1d1844eed349</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c45621e4100e55e6863084cd9ef72aad5205cdfb" class="font-mono underline">c45621e</a> · inputs <span class="font-mono">a3b1674b0215</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

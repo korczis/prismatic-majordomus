@@ -299,9 +299,9 @@
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://korczis.github.io/prismatic-majordomus/features/planning/" class="text-heading hover:text-fg-brand hover:underline">Planning</a></th>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Planning is exposed on Command line">✓</span><span class="sr-only">on Command line</span></td>
-        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on HTTP API</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Planning is exposed on HTTP API">✓</span><span class="sr-only">on HTTP API</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Planning is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
-        <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on Cockpit</span></td>
+        <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Planning is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Planning is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
@@ -412,6 +412,13 @@
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Executions</span>
+      <code class="font-mono text-xs text-body-subtle">executions</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5">
+        <span class="rounded border border-warning-subtle bg-warning-soft px-1.5 py-0.5 font-mono text-xs text-fg-warning">no stable feature names it</span>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
       <span class="min-w-0 text-sm font-medium text-heading">Graphs</span>
       <code class="font-mono text-xs text-body-subtle">graph</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Knowledge</a>
@@ -465,6 +472,12 @@
       <span class="min-w-0 text-sm font-medium text-heading">Repository</span>
       <code class="font-mono text-xs text-body-subtle">repository</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/interfaces/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Interfaces</a><a href="https://korczis.github.io/prismatic-majordomus/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Context</a>
+      </span>
+    </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">Traceability</span>
+      <code class="font-mono text-xs text-body-subtle">trace</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Planning</a>
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
@@ -667,7 +680,7 @@
   <p class="mt-1 max-w-3xl text-sm text-body">Kinds of the layer, with the objects this repository holds of each.</p>
   <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">adr (30)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">adr (33)</span>
       <code class="font-mono text-xs text-body-subtle">adr</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Knowledge</a>
       </span>
@@ -691,7 +704,7 @@
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">claim (146)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">claim (147)</span>
       <code class="font-mono text-xs text-body-subtle">claim</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/declare-once/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Declare once</a>
       </span>
@@ -703,7 +716,7 @@
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">context (26)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">context (27)</span>
       <code class="font-mono text-xs text-body-subtle">context</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/context/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Context</a>
       </span>
@@ -728,7 +741,7 @@
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">issue (184)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">issue (202)</span>
       <code class="font-mono text-xs text-body-subtle">issue</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Planning</a>
       </span>
@@ -740,7 +753,7 @@
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">milestone (15)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">milestone (17)</span>
       <code class="font-mono text-xs text-body-subtle">milestone</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Planning</a>
       </span>
@@ -777,7 +790,7 @@
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">rule (101)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">rule (105)</span>
       <code class="font-mono text-xs text-body-subtle">rule</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doctrine</a>
       </span>
@@ -812,6 +825,13 @@
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://korczis.github.io/prismatic-majordomus/features/use-cases/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Use cases</a>
       </span>
     </li>
+    <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
+      <span class="min-w-0 text-sm font-medium text-heading">workspace (1)</span>
+      <code class="font-mono text-xs text-body-subtle">workspace</code>
+      <span class="ms-auto flex flex-wrap justify-end gap-1.5">
+        <span class="rounded border border-warning-subtle bg-warning-soft px-1.5 py-0.5 font-mono text-xs text-fg-warning">no stable feature names it</span>
+      </span>
+    </li>
   </ul>
 </section>
 
@@ -837,7 +857,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5be30578b9f86c6898cfe412972f4c854e022add" class="font-mono underline">5be3057</a> · inputs <span class="font-mono">1d1844eed349</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c45621e4100e55e6863084cd9ef72aad5205cdfb" class="font-mono underline">c45621e</a> · inputs <span class="font-mono">a3b1674b0215</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
