@@ -343,6 +343,45 @@ expect_grep 'above the machine ceiling'
 grep -qi 'api/v1/release/bump' "$S/bump.json" && { echo "    the writer is projected onto HTTP"; exit 1; }
 grep -qi 'majordomus_release_bump' "$S/bump.json" && { echo "    the writer is projected as an MCP tool"; exit 1; }
 
+# ---------------------------------------------------------------- the links are derived, or absent
+#
+# Every address on a changelog entry comes from the crate manifest's own repository URL, so a
+# fork carries them and nothing is written twice. This fixture's repository is not a forge the
+# tool understands, which makes it the interesting case: an unknown host must yield NO links
+# rather than a guessed one, because a wrong link cannot be told from a right one until it is
+# followed.
+"$RB" release changelog --format json > "$S/links.json" 2>/dev/null
+invented="$(jq -r '[.sections[].groups[].changes[].url // empty] | map(select(startswith("https://github.com/") | not)) | .[0] // empty' "$S/links.json")"
+[ -z "$invented" ] || { echo "    a commit link was invented for an unknown forge: $invented"; exit 1; }
+notbad="$(jq -r '[.sections[].notes_url // empty] | map(select(startswith("http") | not)) | .[0] // empty' "$S/links.json")"
+[ -z "$notbad" ] || { echo "    a notes_url was rewritten into something that is not a URL: $notbad"; exit 1; }
+
+# --- a reference is resolved against the layer, never merely matched
+#
+# The commit below names an issue the layer has and one it does not. Only the first may
+# appear: an id that matches the shape and names nothing is not a link, because a reader
+# cannot tell a dead link from a live one until they follow it.
+mkdir -p .ai/repo/project/issues
+printf '%s\n' \
+  'id: I4242' \
+  'milestone: M000' \
+  'title: An issue the changelog may link to' \
+  'slug: an-issue-the-changelog-may-link-to' \
+  'priority: p2' \
+  'profile: routine' \
+  'parallel_safe: true' \
+  'objective: "Exists so that a commit naming it produces a reference, and one naming I9999 does not."' \
+  > .ai/repo/project/issues/I4242.yaml
+git add -A >/dev/null 2>&1
+git commit -qm "fix(link): resolves I4242 and mentions I9999, which the layer does not have"
+"$RB" release changelog --format json > "$S/refs.json" 2>/dev/null
+jq -e '[.sections[].groups[].changes[].references[]? | select(.id == "I4242")] | length == 1' "$S/refs.json" >/dev/null \
+  || { echo "    an issue the layer holds produced no reference"; exit 1; }
+jq -e '[.sections[].groups[].changes[].references[]? | select(.id == "I9999")] | length == 0' "$S/refs.json" >/dev/null \
+  || { echo "    an id that names nothing was carried as a reference"; exit 1; }
+jq -e '[.sections[].groups[].changes[].references[]? | select(.id == "I4242" and .title == "An issue the changelog may link to")] | length == 1' "$S/refs.json" >/dev/null \
+  || { echo "    the reference does not carry the title from the record it resolved to"; exit 1; }
+
 # ---------------------------------------------------------------- no secret reaches a projection
 #
 # Nothing in the release reads the environment. The assertion is cheap and the proof is the

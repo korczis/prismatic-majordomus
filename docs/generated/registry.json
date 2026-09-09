@@ -12246,6 +12246,27 @@
                   "type": "boolean",
                   "description": "Whether this section is the work that has not been released."
                 },
+                "notes_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The release notes the record names — the published release itself."
+                },
+                "compare_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Every commit between the previous release and this one, as the forge renders it."
+                },
+                "tree_url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The tree at this release."
+                },
                 "decisions": {
                   "type": "array",
                   "items": {
@@ -12295,6 +12316,13 @@
                 "date": {
                   "type": "string",
                   "description": "The date the record carries."
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where the decision itself can be read: the file in the repository. The site has no\nper-ADR page, so this is the honest destination rather than an invented route."
                 }
               },
               "required": [
@@ -12414,6 +12442,20 @@
                 "commit": {
                   "type": "string",
                   "description": "The abbreviated commit."
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReleaseReference"
+                  },
+                  "description": "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
                 }
               },
               "required": [
@@ -12423,6 +12465,36 @@
                 "commit"
               ],
               "description": "One change, from one commit."
+            },
+            "ReleaseReference": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "`issue` or `milestone`."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "`I1305`, `M000`."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "What it is, from the record itself."
+                },
+                "route": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where it is published on this site, when it has a page."
+                }
+              },
+              "required": [
+                "kind",
+                "id",
+                "title"
+              ],
+              "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it."
             },
             "ReleaseChangelogArtifact": {
               "type": "object",
@@ -12465,6 +12537,12 @@
         "http": {
           "method": "GET",
           "path": "/api/v1/changelog"
+        },
+        "cli": {
+          "path": [
+            "release",
+            "changelog"
+          ]
         }
       },
       "availability": "runtime",
@@ -12575,6 +12653,20 @@
                 "commit": {
                   "type": "string",
                   "description": "The abbreviated commit."
+                },
+                "url": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReleaseReference"
+                  },
+                  "description": "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
                 }
               },
               "required": [
@@ -12634,6 +12726,36 @@
                 }
               ],
               "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+            },
+            "ReleaseReference": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "description": "`issue` or `milestone`."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "`I1305`, `M000`."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "What it is, from the record itself."
+                },
+                "route": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Where it is published on this site, when it has a page."
+                }
+              },
+              "required": [
+                "kind",
+                "id",
+                "title"
+              ],
+              "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it."
             }
           }
         }
@@ -12649,6 +12771,12 @@
         "http": {
           "method": "GET",
           "path": "/api/v1/release/version"
+        },
+        "cli": {
+          "path": [
+            "release",
+            "version"
+          ]
         }
       },
       "availability": "runtime",

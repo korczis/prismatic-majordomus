@@ -6,24 +6,24 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "895f4ed3c4b839d814378e1cda50b5e200c14b53fe9e7371eed0db7ca17c3a98",
+    "fingerprint": "88d5a086a39532224818837faa8920c666598e0aa53bd0b0974a5c6a4d15f56d",
     "summary": {
-      "total": 1105,
+      "total": 1107,
       "builtin": 52,
-      "declarative": 1053,
+      "declarative": 1055,
       "by_kind": {
         "command": 1,
         "query": 51,
-        "resource": 1053
+        "resource": 1055
       },
       "by_stability": {
         "behaviorally_verified": 47,
-        "implemented": 1058
+        "implemented": 1060
       },
       "mcp_tools": 50,
-      "mcp_resources": 1073,
+      "mcp_resources": 1075,
       "http_routes": 52,
-      "cli_commands": 25,
+      "cli_commands": 27,
       "modules": 47,
       "benchmark_required": 52,
       "benchmark_waived": 0,
@@ -12111,6 +12111,27 @@
                     "type": "boolean",
                     "description": "Whether this section is the work that has not been released."
                   },
+                  "notes_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The release notes the record names — the published release itself."
+                  },
+                  "compare_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Every commit between the previous release and this one, as the forge renders it."
+                  },
+                  "tree_url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The tree at this release."
+                  },
                   "decisions": {
                     "type": "array",
                     "items": {
@@ -12160,6 +12181,13 @@
                   "date": {
                     "type": "string",
                     "description": "The date the record carries."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where the decision itself can be read: the file in the repository. The site has no\nper-ADR page, so this is the honest destination rather than an invented route."
                   }
                 },
                 "required": [
@@ -12279,6 +12307,20 @@
                   "commit": {
                     "type": "string",
                     "description": "The abbreviated commit."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+                  },
+                  "references": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ReleaseReference"
+                    },
+                    "description": "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
                   }
                 },
                 "required": [
@@ -12288,6 +12330,36 @@
                   "commit"
                 ],
                 "description": "One change, from one commit."
+              },
+              "ReleaseReference": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "description": "`issue` or `milestone`."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "`I1305`, `M000`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "What it is, from the record itself."
+                  },
+                  "route": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where it is published on this site, when it has a page."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "id",
+                  "title"
+                ],
+                "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it."
               },
               "ReleaseChangelogArtifact": {
                 "type": "object",
@@ -12330,6 +12402,12 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/changelog"
+          },
+          "cli": {
+            "path": [
+              "release",
+              "changelog"
+            ]
           }
         },
         "availability": "runtime",
@@ -12440,6 +12518,20 @@
                   "commit": {
                     "type": "string",
                     "description": "The abbreviated commit."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+                  },
+                  "references": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ReleaseReference"
+                    },
+                    "description": "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
                   }
                 },
                 "required": [
@@ -12499,6 +12591,36 @@
                   }
                 ],
                 "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+              },
+              "ReleaseReference": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "description": "`issue` or `milestone`."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "`I1305`, `M000`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "What it is, from the record itself."
+                  },
+                  "route": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Where it is published on this site, when it has a page."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "id",
+                  "title"
+                ],
+                "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it."
               }
             }
           }
@@ -12514,6 +12636,12 @@
           "http": {
             "method": "GET",
             "path": "/api/v1/release/version"
+          },
+          "cli": {
+            "path": [
+              "release",
+              "version"
+            ]
           }
         },
         "availability": "runtime",
@@ -18697,7 +18825,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 99,
+        "capabilities": 100,
         "capability_ids": []
       },
       {
@@ -18737,7 +18865,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 119,
+        "capabilities": 120,
         "capability_ids": []
       },
       {
@@ -18795,7 +18923,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebb191782a8b8f8afc246e5fb1bfd5ff9a7b303dff1e3fe6c2a26c53bbd16c9b",
+    "fingerprint": "1106ee93b82199ce5f64331045aa6d4b7a29d50d94f96a236cab25084dc86b42",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -18838,12 +18966,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 99,
+      "rule": 100,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 119,
+      "test": 120,
       "use-case": 40
     },
     "diagnostics": {},
@@ -28131,6 +28259,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.land-and-publish@1",
+        "kind": "rule",
+        "identity": "project.land-and-publish@1",
+        "title": "Work lands often and small, and what is published is master and only master",
+        "description": "A branch merges to master as soon as it is green rather than waiting for a batch; master is merged into it locally first, so the derived merge driver resolves what GitHub cannot; the published site is built from master alone; the commit gh-pages names is an ancestor of master; and the person who merged is the person who checks that it reached the public.",
+        "path": ".ai/repo/rules/project/land-and-publish.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 7361,
+        "tags": [
+          "process",
+          "integration",
+          "deployment",
+          "evidence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.native-cli-documented@1",
         "kind": "rule",
         "identity": "project.native-cli-documented@1",
@@ -29036,7 +29181,15 @@
         "identity": "test/cases/103_release_projection.sh",
         "path": "test/cases/103_release_projection.sh",
         "source_class": "case",
-        "bytes": 18953
+        "bytes": 21578
+      },
+      {
+        "uri": "majordomus://test/test/cases/104_published_site.sh",
+        "kind": "test",
+        "identity": "test/cases/104_published_site.sh",
+        "path": "test/cases/104_published_site.sh",
+        "source_class": "case",
+        "bytes": 5438
       },
       {
         "uri": "majordomus://test/test/cases/10_site_data.sh",
@@ -30529,7 +30682,7 @@
         "id",
         "version"
       ],
-      "objects": 99
+      "objects": 100
     },
     {
       "name": "scope",
@@ -30584,7 +30737,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 119
+      "objects": 120
     },
     {
       "name": "use-case",

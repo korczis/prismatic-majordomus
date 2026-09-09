@@ -628,7 +628,8 @@
             "uri": "majordomus://changelog",
             "name": "changelog"
           }
-        }
+        },
+        "x-majordomus-cli": "release changelog"
       }
     },
     "/api/v1/command": {
@@ -3647,7 +3648,8 @@
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_release_version"
-        }
+        },
+        "x-majordomus-cli": "release version"
       }
     },
     "/api/v1/repository": {
@@ -12835,6 +12837,20 @@
           "commit": {
             "type": "string",
             "description": "The abbreviated commit."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseReference"
+            },
+            "description": "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
           }
         },
         "required": [
@@ -13004,6 +13020,13 @@
           "date": {
             "type": "string",
             "description": "The date the record carries."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the decision itself can be read: the file in the repository. The site has no\nper-ADR page, so this is the honest destination rather than an invented route."
           }
         },
         "required": [
@@ -13013,6 +13036,36 @@
           "date"
         ],
         "description": "One decision, as the layer's own ADR object states it."
+      },
+      "ReleaseReference": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`issue` or `milestone`."
+          },
+          "id": {
+            "type": "string",
+            "description": "`I1305`, `M000`."
+          },
+          "title": {
+            "type": "string",
+            "description": "What it is, from the record itself."
+          },
+          "route": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where it is published on this site, when it has a page."
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "title"
+        ],
+        "description": "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it."
       },
       "ReleaseSection": {
         "type": "object",
@@ -13045,6 +13098,27 @@
           "unreleased": {
             "type": "boolean",
             "description": "Whether this section is the work that has not been released."
+          },
+          "notes_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The release notes the record names — the published release itself."
+          },
+          "compare_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Every commit between the previous release and this one, as the forge renders it."
+          },
+          "tree_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The tree at this release."
           },
           "decisions": {
             "type": "array",

@@ -33,9 +33,14 @@ cd "$ROOT"
 
 OFFLINE=0
 URL=""
+# Publishing is two workflows and neither is instant. Without a wait this fails during every
+# deploy window and reports a mismatch that is merely young — and a gate that cries wolf is
+# a gate that gets waived. `installer-live` waits 300 for the same reason.
+WAIT="${PAGES_CHECK_WAIT:-300}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --offline) OFFLINE=1; shift ;;
+    --wait) WAIT="${2:?--wait needs seconds}"; shift 2 ;;
     --url) URL="${2:?--url needs a value}"; shift 2 ;;
     -h|--help) sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "pages-check: unknown option $1" >&2; exit 2 ;;
@@ -94,21 +99,53 @@ else
     say "pages-check: site/config.toml declares no base_url, so there is no site to ask"
     exit 12
   fi
+  # The site publishes its own identity at deploy.identity — a document written for exactly
+  # this question, carrying the full commit. That is the authority. The footer is asked as
+  # well, because the two are produced by different steps: build.json can be published while
+  # the pages themselves were not, and them disagreeing is a finding rather than noise.
+  # The path is declared once, in the publication model `scripts/pages` reads; naming it
+  # here would be a second declaration of where the site states its own identity.
+  identity="$(sed -n 's/^ *identity: *\(.*\)/\1/p' .ai/repo/ci/pages.yaml 2>/dev/null | head -1 || true)"
+  if [ -z "$identity" ]; then
+    say "pages-check: .ai/repo/ci/pages.yaml declares no deploy.identity"
+    exit 12
+  fi
+  # Poll until the site names the published commit, or the wait runs out. The cache is
+  # defeated on every attempt: a CDN that answers from cache would make a finished deploy
+  # look unfinished for as long as it holds the old copy.
+  t0=$(date +%s); served=""
+  while :; do
+    served="$(curl -fsSL --max-time 30 -H 'Cache-Control: no-cache' "${URL%/}/$identity?t=$(date +%s)" 2>/dev/null | jq -r '.commit // empty' 2>/dev/null || true)"
+    case "$served" in "$source_sha"*) break ;; esac
+    [ $(( $(date +%s) - t0 )) -lt "$WAIT" ] || break
+    sleep 5
+  done
+  waited=$(( $(date +%s) - t0 ))
   body="$(curl -fsSL --max-time 30 "$URL" 2>/dev/null || true)"
-  if [ -z "$body" ]; then
+
+  if [ -z "$served" ] && [ -z "$body" ]; then
     bad "the live site at $URL did not answer; it is published but not reachable"
+  elif [ -z "$served" ]; then
+    bad "the live site serves no $identity; it cannot say which commit it is"
+  elif [ "$served" = "$source_sha" ] || [ "${served#"$source_sha"}" != "$served" ]; then
+    ok "the live site's $identity names $source_sha, which is what $BRANCH published (after ${waited}s)"
   else
-    # The footer names the commit the site was generated from; site/templates/partials/footer.html
-    # renders it as a link into the repository.
-    live_sha="$(printf '%s' "$body" | sed -n 's|.*/commit/\([0-9a-f]\{7,40\}\).*|\1|p' | head -1)"
-    if [ -z "$live_sha" ]; then
-      bad "the live site names no commit in its footer; it cannot be matched to a tree"
-    elif [ "${live_sha#"$source_sha"}" != "$live_sha" ] || [ "${source_sha#"$live_sha"}" != "$source_sha" ]; then
-      ok "the live site is serving $source_sha, which is what $BRANCH published"
+    bad "after ${waited}s the live site's $identity names ${served:0:12}, not ${source_sha:0:12}"
+    say "      Pages did not rebuild. A push made with GITHUB_TOKEN starts no workflow;"
+    say "      re-run the pages workflow, or push the branch with a token that does."
+  fi
+
+  # The second, independent view. The footer of every page names the same commit; when the
+  # two disagree, one of the deploy's two steps ran and the other did not.
+  if [ -n "$body" ] && [ -n "$served" ]; then
+    footer="$(printf '%s' "$body" | sed -n 's|.*/commit/\([0-9a-f]\{7,40\}\).*|\1|p' | head -1)"
+    if [ -z "$footer" ]; then
+      bad "the pages name no commit in their footer, though $identity names one"
+    elif [ "${served#"$footer"}" = "$served" ]; then
+      bad "$identity names ${served:0:12} but the pages' footer names ${footer:0:12}"
+      say "      the two halves of one deploy disagree: one step published and the other did not"
     else
-      bad "the live site serves ${live_sha:0:12} but $BRANCH published ${source_sha:0:12}"
-      say "      Pages did not rebuild. A push made with GITHUB_TOKEN starts no workflow;"
-      say "      re-run the pages workflow, or push the branch with a token that does."
+      ok "the pages agree with $identity (${footer:0:12})"
     fi
   fi
 fi

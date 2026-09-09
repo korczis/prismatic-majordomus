@@ -26,6 +26,21 @@ use super::model::{
 };
 use super::version;
 
+/// The repository the links point into, as the crate manifest declares it.
+///
+/// Never a literal: `about::REPOSITORY` is `CARGO_PKG_REPOSITORY`, so a fork or a move
+/// carries every link with it and nothing here has to be told. A URL that is not a forge
+/// this understands yields no links at all rather than a guess — a wrong link is worse than
+/// no link, because a reader cannot tell it is wrong until they follow it.
+fn forge() -> Option<&'static str> {
+    let url = crate::about::REPOSITORY.trim_end_matches('/');
+    if url.starts_with("https://github.com/") && url.split('/').count() == 5 {
+        Some(url)
+    } else {
+        None
+    }
+}
+
 /// The kind the layer gives a published release.
 pub const RELEASE_KIND: &str = "release-record";
 /// The kind the layer gives a decision.
@@ -37,6 +52,7 @@ struct Record {
     tag: String,
     date: String,
     commit: String,
+    notes: Option<String>,
     artifacts: Vec<Artifact>,
 }
 
@@ -66,7 +82,7 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
         Some(r) => format!("{}..HEAD", r.commit),
         None => "HEAD".to_string(),
     };
-    let unreleased_changes = commits::in_range(root, &unreleased_range);
+    let unreleased_changes = commits::in_range(root, &unreleased_range, objects);
     if newest.is_some() && unreleased_changes.is_empty() {
         // nothing since the last release; no section rather than an empty one
     } else {
@@ -76,6 +92,13 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
             date: None,
             commit: None,
             unreleased: true,
+            // Nothing is published yet, so there are no notes; the range is what has landed
+            // since the last release, which is exactly what this section lists.
+            notes_url: None,
+            compare_url: forge()
+                .zip(newest)
+                .map(|(base, r)| format!("{base}/compare/{}...master", r.tag)),
+            tree_url: forge().map(|base| format!("{base}/tree/master")),
             decisions: decisions_after(&decisions, newest.map(|r| r.date.as_str())),
             groups: grouped(unreleased_changes),
             artifacts: Vec::new(),
@@ -90,7 +113,7 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
             // nothing, which the diagnostics below make visible rather than silent.
             None => r.commit.clone(),
         };
-        let changes = commits::in_range(root, &range);
+        let changes = commits::in_range(root, &range, objects);
         if changes.is_empty() {
             diagnostics.push(format!(
                 "no commit was readable for {} ({}); the clone may not carry that history",
@@ -103,6 +126,17 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
             date: Some(r.date.clone()),
             commit: Some(r.commit.clone()),
             unreleased: false,
+            // The record names its own notes; the range and the tree are the forge's own
+            // addresses for facts the record already carries, so neither is authored.
+            notes_url: r
+                .notes
+                .clone()
+                .or_else(|| forge().map(|base| format!("{base}/releases/tag/{}", r.tag))),
+            compare_url: forge().map(|base| match previous {
+                Some(p) => format!("{base}/compare/{}...{}", p.tag, r.tag),
+                None => format!("{base}/commits/{}", r.tag),
+            }),
+            tree_url: forge().map(|base| format!("{base}/tree/{}", r.tag)),
             decisions: decisions_between(&decisions, previous.map(|p| p.date.as_str()), &r.date),
             groups: grouped(changes),
             artifacts: r.artifacts.clone(),
@@ -121,7 +155,12 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
 ///
 /// Done here rather than in each renderer: the Markdown, the site and any other reader get
 /// the same order because they are given it, not because they each reimplemented it.
-fn grouped(changes: Vec<Change>) -> Vec<ChangeGroup> {
+fn grouped(mut changes: Vec<Change>) -> Vec<ChangeGroup> {
+    if let Some(base) = forge() {
+        for c in &mut changes {
+            c.url = Some(format!("{base}/commit/{}", c.commit));
+        }
+    }
     let mut kinds: Vec<_> = changes.iter().map(|c| c.kind).collect();
     kinds.sort_by_key(|k| k.rank());
     kinds.dedup();
@@ -179,6 +218,10 @@ fn record_of(metadata: &Value, diagnostics: &mut Vec<String>) -> Option<Record> 
         tag,
         date,
         commit: commit.to_string(),
+        notes: metadata
+            .get("notes_url")
+            .and_then(|v| v.as_str())
+            .map(|s| s.to_string()),
         artifacts,
     })
 }
@@ -213,6 +256,7 @@ fn decisions_of(objects: &[Object]) -> Vec<Decision> {
                     .and_then(|v| v.as_str())
                     .unwrap_or_default()
                     .to_string(),
+                url: forge().map(|base| format!("{base}/blob/master/{}", o.provenance.path)),
                 id,
             })
         })
@@ -348,6 +392,7 @@ mod tests {
             title: "t".into(),
             status: "accepted".into(),
             date: date.into(),
+            url: None,
         }
     }
 
@@ -398,6 +443,9 @@ mod tests {
                 date: None,
                 commit: None,
                 unreleased: true,
+                notes_url: None,
+                compare_url: None,
+                tree_url: None,
                 decisions: vec![decision("adr-0027", "2026-09-09")],
                 // Given in the order the commits arrived — a fix first — so that the
                 // grouping, not the input, is what decides the order the renderer shows.
@@ -408,6 +456,8 @@ mod tests {
                         subject: "the gate runs".into(),
                         breaking: false,
                         commit: "aaa1111".into(),
+                        url: None,
+                        references: Vec::new(),
                     },
                     Change {
                         kind: ChangeKind::Feat,
@@ -415,6 +465,8 @@ mod tests {
                         subject: "one graph".into(),
                         breaking: true,
                         commit: "bbb2222".into(),
+                        url: None,
+                        references: Vec::new(),
                     },
                 ]),
                 artifacts: Vec::new(),
