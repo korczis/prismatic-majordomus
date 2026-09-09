@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 52,
-    "schemas": 260,
+    "schemas": 263,
     "tags": 20
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -202,6 +202,86 @@
       "variants": []
     },
     {
+      "description": "What `announce` answers: the peer as recorded, and who else is on that ground.",
+      "is_enum": false,
+      "name": "Announced",
+      "properties": [
+        {
+          "description": "`p1`, `p2`, ...",
+          "name": "id",
+          "refs": [
+            "PeerId"
+          ],
+          "required": true,
+          "type": "PeerId"
+        },
+        {
+          "description": "The client behind it.",
+          "name": "client",
+          "refs": [
+            "ClientInfo"
+          ],
+          "required": true,
+          "type": "ClientInfo"
+        },
+        {
+          "description": "How it is attached.",
+          "name": "transport",
+          "refs": [
+            "Transport"
+          ],
+          "required": true,
+          "type": "Transport"
+        },
+        {
+          "description": "When it attached, RFC 3339, UTC.",
+          "name": "connected_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds since its last message.",
+          "name": "last_seen_seconds_ago",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Its announcement, when it made one.",
+          "name": "announcement",
+          "refs": [
+            "Announcement"
+          ],
+          "required": false,
+          "type": "Announcement | null"
+        },
+        {
+          "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case.",
+          "name": "overlaps",
+          "refs": [
+            "Overlap"
+          ],
+          "required": false,
+          "type": "array of Overlap"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "peers.announce"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What a peer said it is working on.",
       "is_enum": false,
       "name": "Announcement",
@@ -231,6 +311,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "Announced",
         "Peer"
       ],
       "values": [],
@@ -2111,6 +2192,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "Announced",
         "Peer"
       ],
       "values": [],
@@ -8583,6 +8665,81 @@
       "variants": []
     },
     {
+      "description": "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch.",
+      "is_enum": false,
+      "name": "Overlap",
+      "properties": [
+        {
+          "description": "The other peer.",
+          "name": "peer",
+          "refs": [
+            "PeerId"
+          ],
+          "required": true,
+          "type": "PeerId"
+        },
+        {
+          "description": "Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What it said it was doing.",
+          "name": "intent",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The claims that meet: one line per pair, `yours` and `theirs`.",
+          "name": "paths",
+          "refs": [
+            "OverlapPath"
+          ],
+          "required": true,
+          "type": "array of OverlapPath"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Announced",
+        "PeerList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One pair of claims that contain one another.",
+      "is_enum": false,
+      "name": "OverlapPath",
+      "properties": [
+        {
+          "description": "The path the announcing peer claimed.",
+          "name": "yours",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The path the other peer claimed.",
+          "name": "theirs",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Overlap"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One peer as the board lists it.",
       "is_enum": false,
       "name": "Peer",
@@ -8629,6 +8786,13 @@
           "type": "integer (uint64)"
         },
         {
+          "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
           "description": "Its announcement, when it made one.",
           "name": "announcement",
           "refs": [
@@ -8639,9 +8803,7 @@
         }
       ],
       "type": "object",
-      "used_by": [
-        "peers.announce"
-      ],
+      "used_by": [],
       "used_by_schemas": [
         "PeerList"
       ],
@@ -8656,6 +8818,8 @@
       "type": "string",
       "used_by": [],
       "used_by_schemas": [
+        "Announced",
+        "Overlap",
         "Peer",
         "PeerList"
       ],
@@ -8684,13 +8848,22 @@
           "type": "PeerId | null"
         },
         {
-          "description": "The peers, in attachment order; `p1` started the server.",
+          "description": "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`.",
           "name": "peers",
           "refs": [
             "Peer"
           ],
           "required": true,
           "type": "array of Peer"
+        },
+        {
+          "description": "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work.",
+          "name": "overlaps",
+          "refs": [
+            "Overlap"
+          ],
+          "required": false,
+          "type": "array of Overlap"
         }
       ],
       "type": "object",
@@ -13046,6 +13219,7 @@
       "type": "\"stdio\" | \"http\"",
       "used_by": [],
       "used_by_schemas": [
+        "Announced",
         "Peer"
       ],
       "values": [
@@ -15872,7 +16046,7 @@
           "responses": [
             {
               "description": "Announce what this peer is working on: the result.",
-              "schema": "Peer",
+              "schema": "Announced",
               "status": "200"
             },
             {
@@ -15901,7 +16075,7 @@
               "status": "default"
             }
           ],
-          "result_schema": "Peer",
+          "result_schema": "Announced",
           "stability": "behaviorally_verified",
           "summary": "Announce what this peer is working on"
         }

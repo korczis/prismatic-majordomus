@@ -164,6 +164,7 @@ Current version: **0.4.0**
 ### Other
 
 - **feature/graph-model**: uncommitted work found in the worktree at the topology migration, committed as it was (`034f334bf`)
+- **feature/deployment-core**: uncommitted work found in the worktree at the topology migration, committed as it was (`6579f1978`)
 
 
 ## v0.3.1 — 2026-09-08

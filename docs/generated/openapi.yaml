@@ -1738,7 +1738,7 @@ paths:
           content:
             "application/json":
               schema:
-                "$ref": "#/components/schemas/Peer"
+                "$ref": "#/components/schemas/Announced"
         "400":
           description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
           content:
@@ -3384,6 +3384,47 @@ components:
       required:
         - intent
       description: "The input of `peers.announce`: what the calling peer is working on."
+    Announced:
+      type: object
+      properties:
+        id:
+          "$ref": "#/components/schemas/PeerId"
+          description: "`p1`, `p2`, ..."
+        client:
+          "$ref": "#/components/schemas/ClientInfo"
+          description: The client behind it.
+        transport:
+          "$ref": "#/components/schemas/Transport"
+          description: How it is attached.
+        connected_at:
+          type: string
+          description: "When it attached, RFC 3339, UTC."
+        last_seen_seconds_ago:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds since its last message.
+        attached:
+          type: boolean
+          description: "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
+        announcement:
+          anyOf:
+            - "$ref": "#/components/schemas/Announcement"
+            - type: "null"
+          description: "Its announcement, when it made one."
+        overlaps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Overlap"
+          description: Every other peer whose claimed scope meets this one. Empty is the ordinary case.
+      required:
+        - id
+        - client
+        - transport
+        - connected_at
+        - last_seen_seconds_ago
+        - attached
+      description: "What `announce` answers: the peer as recorded, and who else is on that ground."
     Announcement:
       type: object
       properties:
@@ -8088,6 +8129,42 @@ components:
         - path
         - reason
       description: One tracked file that is out.
+    Overlap:
+      type: object
+      properties:
+        peer:
+          "$ref": "#/components/schemas/PeerId"
+          description: The other peer.
+        attached:
+          type: boolean
+          description: "Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is."
+        intent:
+          type: string
+          description: What it said it was doing.
+        paths:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OverlapPath"
+          description: "The claims that meet: one line per pair, `yours` and `theirs`."
+      required:
+        - peer
+        - attached
+        - intent
+        - paths
+      description: "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch."
+    OverlapPath:
+      type: object
+      properties:
+        yours:
+          type: string
+          description: The path the announcing peer claimed.
+        theirs:
+          type: string
+          description: The path the other peer claimed.
+      required:
+        - yours
+        - theirs
+      description: One pair of claims that contain one another.
     Peer:
       type: object
       properties:
@@ -8108,6 +8185,9 @@ components:
           format: uint64
           minimum: 0
           description: Seconds since its last message.
+        attached:
+          type: boolean
+          description: "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
         announcement:
           anyOf:
             - "$ref": "#/components/schemas/Announcement"
@@ -8119,6 +8199,7 @@ components:
         - transport
         - connected_at
         - last_seen_seconds_ago
+        - attached
       description: One peer as the board lists it.
     PeerId:
       type: string
@@ -8140,7 +8221,12 @@ components:
           type: array
           items:
             "$ref": "#/components/schemas/Peer"
-          description: "The peers, in attachment order; `p1` started the server."
+          description: "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`."
+        overlaps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Overlap"
+          description: "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work."
       required:
         - count
         - peers

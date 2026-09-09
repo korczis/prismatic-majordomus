@@ -6,7 +6,7 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "698487cb2d4ebf432772723a123f9fabbdf0236d47d8fd5563d15c78ad70a671",
+    "fingerprint": "2cb86124edd245a12d205448c4e99ab9708d271178f57291dfd1f3604f678c57",
     "summary": {
       "total": 1121,
       "builtin": 52,
@@ -8959,7 +8959,7 @@
           }
         },
         "output": {
-          "name": "Peer",
+          "name": "Announced",
           "schema": {
             "type": "object",
             "properties": {
@@ -8985,6 +8985,10 @@
                 "minimum": 0,
                 "description": "Seconds since its last message."
               },
+              "attached": {
+                "type": "boolean",
+                "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
+              },
               "announcement": {
                 "anyOf": [
                   {
@@ -8995,6 +8999,13 @@
                   }
                 ],
                 "description": "Its announcement, when it made one."
+              },
+              "overlaps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Overlap"
+                },
+                "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case."
               }
             },
             "required": [
@@ -9002,10 +9013,11 @@
               "client",
               "transport",
               "connected_at",
-              "last_seen_seconds_ago"
+              "last_seen_seconds_ago",
+              "attached"
             ],
-            "description": "One peer as the board lists it.",
-            "title": "Peer",
+            "description": "What `announce` answers: the peer as recorded, and who else is on that ground.",
+            "title": "Announced",
             "$defs": {
               "PeerId": {
                 "type": "string",
@@ -9076,6 +9088,55 @@
                   "at"
                 ],
                 "description": "What a peer said it is working on."
+              },
+              "Overlap": {
+                "type": "object",
+                "properties": {
+                  "peer": {
+                    "$ref": "#/$defs/PeerId",
+                    "description": "The other peer."
+                  },
+                  "attached": {
+                    "type": "boolean",
+                    "description": "Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is."
+                  },
+                  "intent": {
+                    "type": "string",
+                    "description": "What it said it was doing."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/OverlapPath"
+                    },
+                    "description": "The claims that meet: one line per pair, `yours` and `theirs`."
+                  }
+                },
+                "required": [
+                  "peer",
+                  "attached",
+                  "intent",
+                  "paths"
+                ],
+                "description": "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch."
+              },
+              "OverlapPath": {
+                "type": "object",
+                "properties": {
+                  "yours": {
+                    "type": "string",
+                    "description": "The path the announcing peer claimed."
+                  },
+                  "theirs": {
+                    "type": "string",
+                    "description": "The path the other peer claimed."
+                  }
+                },
+                "required": [
+                  "yours",
+                  "theirs"
+                ],
+                "description": "One pair of claims that contain one another."
               }
             }
           }
@@ -9150,7 +9211,14 @@
                 "items": {
                   "$ref": "#/$defs/Peer"
                 },
-                "description": "The peers, in attachment order; `p1` started the server."
+                "description": "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`."
+              },
+              "overlaps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Overlap"
+                },
+                "description": "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work."
               }
             },
             "required": [
@@ -9189,6 +9257,10 @@
                     "minimum": 0,
                     "description": "Seconds since its last message."
                   },
+                  "attached": {
+                    "type": "boolean",
+                    "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
+                  },
                   "announcement": {
                     "anyOf": [
                       {
@@ -9206,7 +9278,8 @@
                   "client",
                   "transport",
                   "connected_at",
-                  "last_seen_seconds_ago"
+                  "last_seen_seconds_ago",
+                  "attached"
                 ],
                 "description": "One peer as the board lists it."
               },
@@ -9275,6 +9348,55 @@
                   "at"
                 ],
                 "description": "What a peer said it is working on."
+              },
+              "Overlap": {
+                "type": "object",
+                "properties": {
+                  "peer": {
+                    "$ref": "#/$defs/PeerId",
+                    "description": "The other peer."
+                  },
+                  "attached": {
+                    "type": "boolean",
+                    "description": "Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is."
+                  },
+                  "intent": {
+                    "type": "string",
+                    "description": "What it said it was doing."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/OverlapPath"
+                    },
+                    "description": "The claims that meet: one line per pair, `yours` and `theirs`."
+                  }
+                },
+                "required": [
+                  "peer",
+                  "attached",
+                  "intent",
+                  "paths"
+                ],
+                "description": "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch."
+              },
+              "OverlapPath": {
+                "type": "object",
+                "properties": {
+                  "yours": {
+                    "type": "string",
+                    "description": "The path the announcing peer claimed."
+                  },
+                  "theirs": {
+                    "type": "string",
+                    "description": "The path the other peer claimed."
+                  }
+                },
+                "required": [
+                  "yours",
+                  "theirs"
+                ],
+                "description": "One pair of claims that contain one another."
               }
             }
           }
@@ -18803,7 +18925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5884f147f9c00f95032573ea336b1511828b5611516eb89472ededb853f4c699",
+    "fingerprint": "9db91196c40524588359519eaf8f5268130d98b83d74c68897cd495cb0450eca",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -22074,7 +22196,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 20871
+        "bytes": 22182
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -29895,7 +30017,7 @@
         "identity": "test/cases/90_mcp_shared_server.sh",
         "path": "test/cases/90_mcp_shared_server.sh",
         "source_class": "case",
-        "bytes": 10127
+        "bytes": 10713
       },
       {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -43572,7 +43694,7 @@
         "kind": "command",
         "read_only": false,
         "input": "AnnounceInput",
-        "output": "Peer"
+        "output": "Announced"
       },
       {
         "name": "majordomus_peers",
