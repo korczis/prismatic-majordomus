@@ -636,6 +636,40 @@
       "tool": "majordomus_verify_objects"
     },
     {
+      "api_anchor": "/docs/api/#op-obligations-closure",
+      "claims": [],
+      "cli": null,
+      "id": "obligations.closure",
+      "kind": "query",
+      "module": "obligations",
+      "module_route": "/registry/modules/obligations/",
+      "resource": "majordomus://obligations/closure",
+      "route": "/registry/capabilities/obligations-closure/",
+      "slug": "obligations-closure",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/obligations.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/obligations.rs",
+      "tests": [],
+      "title": "What this task still owes",
+      "tool": "majordomus_obligation_closure"
+    },
+    {
+      "api_anchor": "/docs/api/#op-obligations-vocabulary",
+      "claims": [],
+      "cli": null,
+      "id": "obligations.vocabulary",
+      "kind": "query",
+      "module": "obligations",
+      "module_route": "/registry/modules/obligations/",
+      "resource": "majordomus://obligations",
+      "route": "/registry/capabilities/obligations-vocabulary/",
+      "slug": "obligations-vocabulary",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/obligations.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/obligations.rs",
+      "tests": [],
+      "title": "Every obligation there is",
+      "tool": "majordomus_obligations"
+    },
+    {
       "api_anchor": "/docs/api/#op-peers-announce",
       "claims": [],
       "cli": null,
@@ -1363,9 +1397,9 @@
     ]
   },
   "counts": {
-    "capabilities": 63,
+    "capabilities": 65,
     "claims": 35,
-    "modules": 22
+    "modules": 23
   },
   "generator": "majordomus-cli 0.4.0",
   "modules": [
@@ -1683,6 +1717,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
       "title": "Objects"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "obligations.closure",
+          "route": "/registry/capabilities/obligations-closure/",
+          "slug": "obligations-closure"
+        },
+        {
+          "id": "obligations.vocabulary",
+          "route": "/registry/capabilities/obligations-vocabulary/",
+          "slug": "obligations-vocabulary"
+        }
+      ],
+      "claims": [],
+      "id": "obligations",
+      "route": "/registry/modules/obligations/",
+      "slug": "obligations",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/obligations.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/obligations.rs",
+      "title": "Obligations"
     },
     {
       "capabilities": [

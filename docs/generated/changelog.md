@@ -21,6 +21,7 @@ Current version: **0.4.0**
 
 ### Added
 
+- **obligations**: what a task owes, and whether its evidence still describes this tree, over every surface (`dc14dd0d3`)
 - **rules**: an empty result and a failed command must not look alike (`824223cb5`)
 - **ci**: three failures of one session, turned into checks (`1e96e91b7`)
 - **context**: the board reaches the worker who never asked for it (`8ad5bb6a7`)
@@ -158,6 +159,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the merge of #142 (`c1a3e7930`)
 - **derive**: the projections follow the master merge (`08348b0c1`)
 - **derive**: the projections follow the master merge (`c4b6d0715`)
 - **derive**: the projections follow master once more (`f36420c30`)

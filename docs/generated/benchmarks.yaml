@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.4.0
 coverage:
   - scope: direct
-    required: 63
-    covered: 60
+    required: 65
+    covered: 62
     missing: 0
     waived: 3
   - scope: http
-    required: 63
-    covered: 60
+    required: 65
+    covered: 62
     missing: 0
     waived: 3
   - scope: mcp
-    required: 61
-    covered: 58
+    required: 63
+    covered: 60
     missing: 0
     waived: 3
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 200
-    covered: 191
+    required: 206
+    covered: 197
     missing: 0
     waived: 9
 capabilities:
@@ -362,6 +362,24 @@ capabilities:
     http: covered
     cases:
       - bounded
+  - id: obligations.closure
+    module: obligations
+    kind: query
+    cache: "process, 2 entries, 2s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: obligations.vocabulary
+    module: obligations
+    kind: query
+    cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: peers.announce
     module: peers
     kind: command
