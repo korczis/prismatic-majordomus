@@ -75,16 +75,16 @@
       "description": "The declarative objects of the repository's AI layer: rules, prompts, profiles, policy, documents, milestones, issues, claims, and whatever kinds the repository adds; listed, read by URI, and searched."
     },
     {
-      "name": "obligations",
-      "description": "What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events."
-    },
-    {
       "name": "peers",
       "description": "The clients attached to this repository's shared server, named by their own initialize, and what each announced it is working on. In memory; gone with the process."
     },
     {
       "name": "perf",
       "description": "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence."
+    },
+    {
+      "name": "plan",
+      "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository."
     },
     {
       "name": "product",
@@ -3455,175 +3455,6 @@
         }
       }
     },
-    "/api/v1/obligations": {
-      "get": {
-        "operationId": "obligations.vocabulary",
-        "summary": "Every obligation there is",
-        "description": "The tokens a task may declare in `requires`: what each one asks of a worker, the command that discharges it, the pathspecs its evidence is hashed over, and whether its fact is remote and therefore bound to a commit rather than to a tree. Shipped data, identical in every clone, so this answers in a checkout that has never run the lifecycle.",
-        "tags": [
-          "obligations"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "Every obligation there is: the result.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vocabulary"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "`not_found`: The input names something the repository does not hold.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        },
-        "x-majordomus-id": "obligations.vocabulary",
-        "x-majordomus-kind": "query",
-        "x-majordomus-stability": "behaviorally_verified",
-        "x-majordomus-provenance": {
-          "source": "builtin",
-          "module": "majordomus_cli::capability::builtin::obligations"
-        },
-        "x-majordomus-benchmark": {
-          "policy": "required"
-        },
-        "x-majordomus-cache": {
-          "policy": "process",
-          "max_entries": 2
-        },
-        "x-majordomus-mcp": {
-          "tool": "majordomus_obligations",
-          "resource": {
-            "uri": "majordomus://obligations",
-            "name": "obligations"
-          }
-        }
-      }
-    },
-    "/api/v1/obligations/closure": {
-      "get": {
-        "operationId": "obligations.closure",
-        "summary": "What this task still owes",
-        "description": "Every obligation the active task declared, joined with what the vocabulary says about it and with the evidence that does or does not discharge it: what is owed, what is discharged, and what has gone stale — with the recorded input hash and the tree's current one, or the recorded commit and its label, so a reader can see against what. The judgement is the one `finish` applies, reproduced rather than re-decided, and the staleness words are the repository's only four. A checkout with no task reports that, rather than reporting nothing owed.",
-        "tags": [
-          "obligations"
-        ],
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "What this task still owes: the result.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Closure"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "`not_found`: The input names something the repository does not hold.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorBody"
-                }
-              }
-            }
-          }
-        },
-        "x-majordomus-id": "obligations.closure",
-        "x-majordomus-kind": "query",
-        "x-majordomus-stability": "behaviorally_verified",
-        "x-majordomus-provenance": {
-          "source": "builtin",
-          "module": "majordomus_cli::capability::builtin::obligations"
-        },
-        "x-majordomus-benchmark": {
-          "policy": "required"
-        },
-        "x-majordomus-cache": {
-          "policy": "process",
-          "max_entries": 2,
-          "ttl_seconds": 2
-        },
-        "x-majordomus-mcp": {
-          "tool": "majordomus_obligation_closure",
-          "resource": {
-            "uri": "majordomus://obligations/closure",
-            "name": "obligation-closure"
-          }
-        }
-      }
-    },
     "/api/v1/peers": {
       "get": {
         "operationId": "peers.list",
@@ -3888,6 +3719,745 @@
         },
         "x-majordomus-mcp": {
           "tool": "majordomus_perf"
+        }
+      }
+    },
+    "/api/v1/plan": {
+      "get": {
+        "operationId": "plan.model",
+        "summary": "The whole derived plan",
+        "description": "Every milestone and issue with its derived status, wave, rank, both directions of its graph and its counts; the execution waves; both dependency graphs as edges; every validation finding; and the plan's header with the active milestone derived. The one value every other capability of this module answers out of. Derived on every call: a transition writes a lifecycle marker into a record between two calls, and a plan answered from a snapshot would send two workers to one issue.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The whole derived plan: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Plan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.model",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan",
+          "resource": {
+            "uri": "majordomus://plan",
+            "name": "plan"
+          }
+        }
+      }
+    },
+    "/api/v1/plan/issues": {
+      "get": {
+        "operationId": "plan.issues",
+        "summary": "The issues, filtered by what the graph derived",
+        "description": "One record per issue with its derived status, its wave, the dependencies it declares, the ones that are not DONE (plus `milestone:<id>` when the gate holds the whole outcome back), the issues that depend on it, the paths it touches and its evidence tally. Filtering by `status: READY` is the ready set and by `status: BLOCKED` the blocked set; nothing here is a separate derivation.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [
+          {
+            "name": "milestone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only issues of this milestone. Default: every issue of the plan.",
+            "examples": {
+              "one-milestone": {
+                "value": "M000"
+              }
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only issues in this derived status — `READY` for the ready set, `BLOCKED` for the\nblocked set. The vocabulary travels with every answer, so a caller never has to know\nwhich statuses exist.",
+            "examples": {
+              "ready": {
+                "value": "READY"
+              }
+            }
+          },
+          {
+            "name": "wave",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            },
+            "description": "Only issues in this execution wave."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The issues, filtered by what the graph derived: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanIssueList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.issues",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_issues"
+        }
+      }
+    },
+    "/api/v1/plan/next": {
+      "get": {
+        "operationId": "plan.next",
+        "summary": "The one issue to take now",
+        "description": "The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [
+          {
+            "name": "milestone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback.",
+            "examples": {
+              "one-milestone": {
+                "value": "M000"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The one issue to take now: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanNextIssue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.next",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_next"
+        }
+      }
+    },
+    "/api/v1/plan/record": {
+      "get": {
+        "operationId": "plan.record",
+        "summary": "One milestone or issue, with everything derived about it",
+        "description": "A milestone with its issues in full, or an issue with the issues it waits on in full. The record's own prose stays where it has always been — `majordomus://issue/<id>` returns the file — and this answers what the file cannot say about itself: what its status is, where it sits in the graph, and what is between it and being executable.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The id of a milestone or an issue, as its file is named (`I0001`, `work-graph-github`).",
+            "examples": {
+              "issue": {
+                "value": "I0001"
+              },
+              "milestone": {
+                "value": "M000"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One milestone or issue, with everything derived about it: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRecord"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.record",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_record"
+        }
+      }
+    },
+    "/api/v1/plan/roadmap": {
+      "get": {
+        "operationId": "plan.roadmap",
+        "summary": "The milestones in derived order",
+        "description": "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The milestones in derived order: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanRoadmap"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.roadmap",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_roadmap"
+        }
+      }
+    },
+    "/api/v1/plan/status": {
+      "get": {
+        "operationId": "plan.status",
+        "summary": "Where the plan stands",
+        "description": "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [
+          {
+            "name": "milestone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback.",
+            "examples": {
+              "one-milestone": {
+                "value": "M000"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Where the plan stands: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanStatusReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.status",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_status"
+        }
+      }
+    },
+    "/api/v1/plan/validate": {
+      "get": {
+        "operationId": "plan.validate",
+        "summary": "What the model refuses",
+        "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "What the model refuses: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanValidation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.validate",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_validate"
+        }
+      }
+    },
+    "/api/v1/plan/waves": {
+      "get": {
+        "operationId": "plan.waves",
+        "summary": "What may run at the same time",
+        "description": "The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict.",
+        "tags": [
+          "plan"
+        ],
+        "parameters": [
+          {
+            "name": "milestone",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback.",
+            "examples": {
+              "one-milestone": {
+                "value": "M000"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What may run at the same time: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanWaveReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "plan.waves",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_plan_waves"
         }
       }
     },
@@ -6479,13 +7049,6 @@
             },
             "description": "The paths it claims."
           },
-          "requires": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The obligations it owes before the outcome `completed` is available.\n\nBeside `scope` and not inside it, because the two are different promises: scope is\ncontainment — where a worker may write — and this is delivery. A change can sit\nentirely inside its scope and still be uncommitted on a laptop (ADR 0030).\n[`super::obligations`] is what judges each of these against its evidence; here it\nis reported as declared."
-          },
           "started_at": {
             "type": "string",
             "description": "When it started."
@@ -8218,77 +8781,6 @@
           "version"
         ],
         "description": "What a client said about itself in `initialize`."
-      },
-      "Closure": {
-        "type": "object",
-        "properties": {
-          "present": {
-            "type": "boolean",
-            "description": "Whether this checkout has a task to report about at all. False in a clone that has\nnever run the lifecycle, which is not a fault and is not \"nothing owed\"."
-          },
-          "worktree": {
-            "type": "string",
-            "description": "The worktree this answer is about. Every reading below is scoped to it, and to no\nother checkout of the same repository."
-          },
-          "branch": {
-            "type": "string",
-            "description": "The branch, or `DETACHED`."
-          },
-          "head": {
-            "type": "string",
-            "description": "The commit this checkout is on."
-          },
-          "working_tree": {
-            "type": "string",
-            "description": "`clean` or `dirty`."
-          },
-          "task": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ActiveTask"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The active task, or `None`. Its `requires` is the list the entries below expand."
-          },
-          "closed": {
-            "type": "boolean",
-            "description": "True when the task declares obligations and every one of them is discharged and\ncurrent — that is, when `majordomus.obligation-closure` would not refuse\n`finish --outcome completed`. False when anything is owed, stale or undeclared, and\nfalse when there is no task: nothing that does not exist is closed."
-          },
-          "tallies": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "integer",
-              "format": "uint",
-              "minimum": 0
-            },
-            "description": "How many obligations stand where, by state word. Absent states are absent rather\nthan zero, so a reader never has to know the vocabulary to read the tallies."
-          },
-          "obligations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ObligationClosure"
-            },
-            "description": "Every obligation the task declared, in the order it declared them."
-          },
-          "findings": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "What a reader should know before trusting any of the above: an unreadable\nvocabulary, a ledger that could not be read, a task that declares nothing. Empty is\nthe ordinary case."
-          }
-        },
-        "required": [
-          "present",
-          "worktree",
-          "branch",
-          "closed",
-          "tallies"
-        ],
-        "description": "What this checkout's active task owes, and how much of it is still true.\n\nA clone that has never run the lifecycle answers this too, and answers it as absence:\n`present` false, no task, and a finding saying so. \"Nothing owed\" and \"nothing to owe\nit\" are different facts, and a served instance must not report the second as the first.\n\n```\nuse majordomus_cli::capability::builtin::obligations::Closure;\nlet fresh: Closure = serde_json::from_str(\n    r#\"{\"present\":false,\"worktree\":\"/srv/clone\",\"branch\":\"master\",\"closed\":false,\n        \"tallies\":{},\n        \"findings\":[\"no active task in this checkout (.ai/local/state/current.yaml); nothing owes anything here\"]}\"#,\n)\n.unwrap();\nassert!(!fresh.present && !fresh.closed, \"nothing that does not exist is closed\");\nassert!(fresh.task.is_none() && fresh.obligations.is_empty());\nassert_eq!(fresh.findings.len(), 1, \"absence is reported, not implied\");\n```"
       },
       "ClosureMatrix": {
         "type": "object",
@@ -10827,52 +11319,6 @@
           "truncated"
         ],
         "description": "The answer of `executions.events`: one page of an execution's retained history."
-      },
-      "Evidence": {
-        "type": "object",
-        "properties": {
-          "recorded_at": {
-            "type": "string",
-            "description": "When the line was appended."
-          },
-          "head": {
-            "type": "string",
-            "description": "The commit the ledger's envelope stamped on it."
-          },
-          "branch": {
-            "type": "string",
-            "description": "The branch it was recorded on."
-          },
-          "kind": {
-            "type": "string",
-            "description": "How it was taken: `test`, `build`, `ci`, `artifact` or `manual`."
-          },
-          "command": {
-            "type": "string",
-            "description": "The command that produced it. Narrative is not evidence, so one of this and\n`artifact` is always present."
-          },
-          "artifact": {
-            "type": "string",
-            "description": "The reference it points at, such as a published URL."
-          },
-          "result": {
-            "type": "string",
-            "description": "What the command said, when its output was the point."
-          },
-          "session": {
-            "type": "string",
-            "description": "The episode that recorded it, when one was open."
-          },
-          "inputs_hash": {
-            "type": "string",
-            "description": "The hash of the token's declared inputs at the moment it was taken. Empty for a\ntoken that declares none."
-          }
-        },
-        "required": [
-          "recorded_at",
-          "head"
-        ],
-        "description": "The `task.evidence` line that discharged an obligation, as the ledger holds it.\n\nNothing older is consulted: evidence is superseded by evidence, and the ledger keeps\nthe history for a reader that wants it.\n```\nuse majordomus_cli::capability::builtin::obligations::Evidence;\nlet e: Evidence = serde_json::from_str(\n    r#\"{\"recorded_at\":\"2026-09-09T21:01:00Z\",\"head\":\"f00ba7\",\"branch\":\"master\",\n        \"kind\":\"ci\",\"command\":\"scripts/ci/reference-check\",\"inputs_hash\":\"7f68b9\"}\"#,\n)\n.unwrap();\nassert_eq!(e.head, \"f00ba7\", \"the envelope's commit is what a remote fact is judged against\");\nassert!(e.artifact.is_empty(), \"one of command and artifact; narrative is not evidence\");\n```"
       },
       "Example": {
         "type": "object",
@@ -14275,166 +14721,6 @@
         ],
         "description": "One declarative object of the repository's layer, as a client reads it."
       },
-      "Obligation": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The token, as a task's `requires` names it."
-          },
-          "title": {
-            "type": "string",
-            "description": "The obligation as a heading."
-          },
-          "summary": {
-            "type": "string",
-            "description": "What a worker is being asked to have done."
-          },
-          "discharged_by": {
-            "type": "string",
-            "description": "The command that produces the evidence. `none` for a token held by another line of\nthe contract and listed so that a report can say it rather than leave a hole."
-          },
-          "inputs": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The pathspecs the evidence is hashed over. Empty for a token whose fact is remote,\nand empty for one bound to neither: see [`ObligationClosure::staleness`]."
-          },
-          "remote": {
-            "type": "boolean",
-            "description": "True when the fact cannot be established from the working tree alone — a push, a\npublication, a deployment. Such evidence is bound to a commit, not to a tree."
-          },
-          "note": {
-            "type": "string",
-            "description": "What the vocabulary says about the token beyond its summary."
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "summary",
-          "discharged_by",
-          "remote"
-        ],
-        "description": "One token a task may declare in `requires`, as the distribution ships it.\n\n`remote` and `inputs` are what decide how its evidence is judged, and they are the\nfile's decision rather than this reader's: a fact the working tree cannot establish is\nbound to the commit it was taken at, and everything else is bound to the bytes of the\nfiles its pathspecs select.\n\n```\nuse majordomus_cli::capability::builtin::obligations::Obligation;\nlet push: Obligation = serde_json::from_str(\n    r#\"{\"id\":\"push\",\"title\":\"The commit reached the remote\",\n        \"summary\":\"The branch's head exists on the remote it tracks.\",\n        \"discharged_by\":\"git\",\"remote\":true}\"#,\n)\n.unwrap();\nassert!(push.remote);\nassert!(push.inputs.is_empty(), \"a remote fact is bound to a commit, not to a tree\");\n```"
-      },
-      "ObligationClosure": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "The token, as the task's `requires` names it."
-          },
-          "title": {
-            "type": "string",
-            "description": "From the vocabulary; the token itself when it declares none."
-          },
-          "summary": {
-            "type": "string",
-            "description": "From the vocabulary."
-          },
-          "discharged_by": {
-            "type": "string",
-            "description": "From the vocabulary: the command that produces the evidence."
-          },
-          "remote": {
-            "type": "boolean",
-            "description": "From the vocabulary: whether the fact is remote."
-          },
-          "inputs": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "From the vocabulary: the pathspecs the evidence is hashed over."
-          },
-          "state": {
-            "$ref": "#/components/schemas/ObligationState",
-            "description": "Where it stands."
-          },
-          "staleness": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Divergence"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "How far the evidence is from this checkout, in the repository's one staleness\nvocabulary. `None` when there is no evidence to label.\n\nA remote fact is labelled against the commit it was taken at, because the site that\nserves a commit goes on serving it while the tree moves underneath. A tree-bound\nfact is labelled by re-hashing: equal hashes are `exact`, and a difference takes the\ncommit's label, which is `advanced` when the working tree has merely moved on and\n`diverged` when the history it named is gone. A token that declares neither inputs\nnor a remote fact is bound to nothing and stays `exact` once recorded — that is the\nvalidator's behaviour, and it is reproduced rather than tightened here."
-          },
-          "evidence": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Evidence"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The line that discharged it, or `None`."
-          },
-          "inputs_hash_now": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "What the token's inputs hash to in this tree now — the other half of \"stale against\nwhat\". `None` for a token that declares no inputs, and `None` when git could not be\nasked which files they select."
-          },
-          "inputs_files": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "format": "uint",
-            "minimum": 0,
-            "description": "How many tracked files that hash was taken over. Reported because the shell's\nselection and this one are not always the same set — see the module header — and a\ncount is the cheapest way for a reader to see it rather than be told it."
-          },
-          "detail": {
-            "type": "string",
-            "description": "One line: what this obligation's standing actually is, in the words the validator\nuses when it refuses."
-          },
-          "reproduce": {
-            "type": "string",
-            "description": "The command that would discharge it. Every finding here carries the way to act on\nit, as `project.finding-carries-reproduce` asks."
-          }
-        },
-        "required": [
-          "id",
-          "title",
-          "remote",
-          "state",
-          "detail",
-          "reproduce"
-        ],
-        "description": "One obligation the task declared, joined with what the vocabulary says about it and\nwith the evidence that does or does not discharge it.\n\nThe vocabulary's fields are repeated here on purpose: a client asking what this task\nowes gets the token's title, its summary and the command that would discharge it in the\nsame answer, and needs no second call to render a report.\n\n```\nuse majordomus_cli::capability::builtin::obligations::{ObligationClosure, ObligationState};\nlet owed: ObligationClosure = serde_json::from_str(\n    r#\"{\"id\":\"pages\",\"title\":\"The published site serves this commit\",\"remote\":true,\n        \"state\":\"owed\",\"detail\":\"owed, and no evidence was recorded\",\n        \"reproduce\":\"majordomus evidence --covers pages --command 'scripts/pages verify'\"}\"#,\n)\n.unwrap();\nassert_eq!(owed.state, ObligationState::Owed);\nassert!(owed.evidence.is_none() && owed.staleness.is_none(), \"nothing to label\");\nassert!(owed.reproduce.starts_with(\"majordomus evidence\"), \"a finding carries its repair\");\n```"
-      },
-      "ObligationState": {
-        "oneOf": [
-          {
-            "type": "string",
-            "const": "owed",
-            "description": "Declared, and no evidence for it was ever recorded."
-          },
-          {
-            "type": "string",
-            "const": "discharged",
-            "description": "Evidence exists and still describes this tree, or this commit."
-          },
-          {
-            "type": "string",
-            "const": "stale",
-            "description": "Evidence exists and no longer describes what it proved: the inputs changed, or the\ncommit it named is not this one."
-          },
-          {
-            "type": "string",
-            "const": "undeclared",
-            "description": "The task requires a token the shipped vocabulary does not declare. Nothing can\ndischarge it, because nothing knows what would."
-          }
-        ],
-        "description": "Where one obligation stands.\n\nThe words are the validator's verdicts, not a severity scale: `stale` is not a worse\n`owed`, it is evidence that was true and no longer describes what it proved.\n\n```\nuse majordomus_cli::capability::builtin::obligations::ObligationState;\n// only one of the four lets a task be called completed\nlet completable = |s: ObligationState| s == ObligationState::Discharged;\nassert!(completable(ObligationState::Discharged));\nassert!(!completable(ObligationState::Stale), \"evidence that no longer describes the tree\");\nassert!(!completable(ObligationState::Owed));\nassert!(!completable(ObligationState::Undeclared));\n```"
-      },
       "OpenSession": {
         "type": "object",
         "properties": {
@@ -14908,6 +15194,749 @@
           "total_nanos"
         ],
         "description": "A phase's totals."
+      },
+      "Plan": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/PlanProject",
+            "description": "The plan's header, with the active milestone derived."
+          },
+          "statuses": {
+            "$ref": "#/components/schemas/PlanVocabulary",
+            "description": "The declared status vocabularies."
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanMilestone"
+            },
+            "description": "Every milestone, in id order."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanIssue"
+            },
+            "description": "Every issue, in id order."
+          },
+          "waves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanWave"
+            },
+            "description": "The execution waves, lowest first."
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanEdge"
+            },
+            "description": "The issue dependency graph, sorted."
+          },
+          "milestone_edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanEdge"
+            },
+            "description": "The milestone dependency graph, sorted."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanFinding"
+            },
+            "description": "Every finding, in derivation order."
+          }
+        },
+        "required": [
+          "project",
+          "statuses",
+          "milestones",
+          "issues",
+          "waves",
+          "edges",
+          "milestone_edges",
+          "findings"
+        ],
+        "description": "The whole derived plan: what every plan capability answers out of."
+      },
+      "PlanCounts": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Every issue naming this milestone."
+          },
+          "required": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The denominator the milestone's own status derivation uses: total less cancelled, so\nno surface prints \"n of total\" for a milestone the engine calls DONE."
+          },
+          "by_status": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0
+            },
+            "description": "One entry per declared issue status, keyed by the vocabulary."
+          }
+        },
+        "required": [
+          "total",
+          "required",
+          "by_status"
+        ],
+        "description": "A milestone's issues counted: the two denominators, then one entry per declared status."
+      },
+      "PlanEdge": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "The record that must be real first."
+          },
+          "to": {
+            "type": "string",
+            "description": "The record that waits for it."
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "description": "One dependency edge, `from` before `to`."
+      },
+      "PlanFinding": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "description": "`FAIL` or `WARN`. A failure means the model is invalid."
+          },
+          "code": {
+            "type": "string",
+            "description": "The stable code a reader greps for (`unknown_dependency`, `scope_conflict`, …)."
+          },
+          "subject": {
+            "type": "string",
+            "description": "The record the finding is about, or `graph` when it is about the whole graph."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong, in one line."
+          }
+        },
+        "required": [
+          "level",
+          "code",
+          "subject",
+          "message"
+        ],
+        "description": "One validation finding, in the shape `project.finding-carries-reproduce` asks for."
+      },
+      "PlanIssue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity, which is also the file name."
+          },
+          "milestone": {
+            "type": "string",
+            "description": "The milestone it belongs to."
+          },
+          "status": {
+            "type": "string",
+            "description": "The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies."
+          },
+          "wave": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The execution wave: one past the longest path to it through the dependency graph."
+          },
+          "priority": {
+            "type": "string",
+            "description": "`p0` … `p3`."
+          },
+          "profile": {
+            "type": "string",
+            "description": "The execution profile the issue is worked under."
+          },
+          "parallel_safe": {
+            "type": "boolean",
+            "description": "Whether it may run beside another issue of its wave."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line naming the outcome."
+          },
+          "slug": {
+            "type": "string",
+            "description": "The slug, when the record carries one."
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission."
+          },
+          "blocked_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The dependencies that are not DONE, plus `milestone:<id>` when the milestone gate\nholds the whole outcome back."
+          },
+          "dependents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The issues that depend on this one."
+          },
+          "scope": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The paths it touches; two issues of one wave that share a path are serialised."
+          },
+          "objective": {
+            "type": "string",
+            "description": "One line: what the issue is for."
+          },
+          "evidence_have": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Evidence entries attached."
+          },
+          "evidence_need": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Evidence tokens the record requires before it may be DONE."
+          },
+          "started_at": {
+            "type": "string",
+            "description": "When execution began, when it did."
+          },
+          "verified_at": {
+            "type": "string",
+            "description": "When implementation was declared complete."
+          },
+          "completed_at": {
+            "type": "string",
+            "description": "When completion was recorded."
+          }
+        },
+        "required": [
+          "id",
+          "milestone",
+          "status",
+          "wave",
+          "priority",
+          "profile",
+          "parallel_safe",
+          "title",
+          "slug",
+          "depends_on",
+          "blocked_by",
+          "dependents",
+          "scope",
+          "objective",
+          "evidence_have",
+          "evidence_need",
+          "started_at",
+          "verified_at",
+          "completed_at"
+        ],
+        "description": "One issue, as its record declares it and as the graph derives it."
+      },
+      "PlanIssueList": {
+        "type": "object",
+        "properties": {
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanIssue"
+            },
+            "description": "The matching issues, in id order."
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many matched."
+          },
+          "statuses": {
+            "$ref": "#/components/schemas/PlanVocabulary",
+            "description": "The declared status vocabularies."
+          }
+        },
+        "required": [
+          "issues",
+          "total",
+          "statuses"
+        ],
+        "description": "Issues matching a filter, with the vocabulary that names their statuses."
+      },
+      "PlanMilestone": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity, which is also the file name; a stable slug, never a version."
+          },
+          "status": {
+            "type": "string",
+            "description": "The derived status."
+          },
+          "order": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Tie-break inside one rank; the roadmap is ordered by rank first."
+          },
+          "priority": {
+            "type": "string",
+            "description": "`p0` … `p3`."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line naming the outcome."
+          },
+          "slug": {
+            "type": "string",
+            "description": "The slug, when the record carries one."
+          },
+          "version": {
+            "type": "string",
+            "description": "The release the milestone belongs to, when it declares one."
+          },
+          "rank": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Its layer in the milestone graph: what orders the roadmap."
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The milestones it requires."
+          },
+          "blocked_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Those of them that are not DONE. Non-empty means the gate holds every issue of this\nmilestone back, whatever the issue graph says."
+          },
+          "dependents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The milestones that require it."
+          },
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The claims of the repository this outcome makes true."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/PlanCounts",
+            "description": "Its issues, counted by derived status."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its issues, in id order."
+          },
+          "outcome": {
+            "type": "string",
+            "description": "One line: what is true once the milestone is real."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "order",
+          "priority",
+          "title",
+          "slug",
+          "version",
+          "rank",
+          "depends_on",
+          "blocked_by",
+          "dependents",
+          "claims",
+          "counts",
+          "issues",
+          "outcome"
+        ],
+        "description": "One milestone, as its record declares it and as the two graphs derive it."
+      },
+      "PlanMilestoneProgress": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity."
+          },
+          "status": {
+            "type": "string",
+            "description": "The derived status."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line naming the outcome."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/PlanCounts",
+            "description": "Its issues, counted by derived status."
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "title",
+          "counts"
+        ],
+        "description": "One milestone's progress, without its prose."
+      },
+      "PlanNextIssue": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanIssue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The issue, when the plan has one that is executable."
+          },
+          "active_milestone": {
+            "type": "string",
+            "description": "The milestone the search started in."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there is none, when there is none: what to run to see what is in the way."
+          }
+        },
+        "required": [
+          "active_milestone"
+        ],
+        "description": "The one issue a worker should take now."
+      },
+      "PlanProject": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The project's name, from `project.yaml`."
+          },
+          "repository": {
+            "type": "string",
+            "description": "The repository it belongs to, `owner/name`."
+          },
+          "default_branch": {
+            "type": "string",
+            "description": "The branch the plan is executed on."
+          },
+          "active_milestone": {
+            "type": "string",
+            "description": "The milestone a worker is executing now: the lowest-ranked unblocked milestone that\nis ACTIVE, else the lowest-ranked unblocked one not finished. Derived on every read,\nstored nowhere, and never authored — the plan cannot nominate a milestone whose\nprerequisites are not real."
+          }
+        },
+        "required": [
+          "name",
+          "repository",
+          "default_branch",
+          "active_milestone"
+        ],
+        "description": "The plan's header: what this repository is, plus the one field nobody authors."
+      },
+      "PlanRecord": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "milestone": {
+                "$ref": "#/components/schemas/PlanMilestone",
+                "description": "The milestone, with its counts, its rank and both directions of its graph."
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PlanIssue"
+                },
+                "description": "Its issues in full, in id order."
+              }
+            },
+            "required": [
+              "milestone",
+              "issues"
+            ],
+            "description": "A milestone."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "issue": {
+                "$ref": "#/components/schemas/PlanIssue",
+                "description": "The issue, with its status, its wave and both directions of its graph."
+              },
+              "depends_on": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/PlanIssue"
+                },
+                "description": "The issues it waits on, in full."
+              }
+            },
+            "required": [
+              "issue",
+              "depends_on"
+            ],
+            "description": "An issue."
+          }
+        ],
+        "description": "One record of the plan, milestone or issue, with everything derived about it."
+      },
+      "PlanRoadmap": {
+        "type": "object",
+        "properties": {
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanMilestone"
+            },
+            "description": "The milestones ordered by rank, then order, then id. The sequence is derived from\nthe milestone graph; no list of versions is maintained anywhere."
+          },
+          "now": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The first unfinished, unblocked milestone in that sequence."
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The one after it, blocked or not."
+          }
+        },
+        "required": [
+          "milestones"
+        ],
+        "description": "The milestones in derived order, with the one being executed and the one after it."
+      },
+      "PlanStatusReport": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/components/schemas/PlanProject",
+            "description": "The plan's header, with the active milestone derived."
+          },
+          "statuses": {
+            "$ref": "#/components/schemas/PlanVocabulary",
+            "description": "The declared status vocabularies."
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanMilestoneProgress"
+            },
+            "description": "Every milestone, in id order."
+          },
+          "next_ready": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PlanIssue"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The next ready issue, when there is one."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/PlanCounts",
+            "description": "Every issue of the plan, counted by derived status."
+          }
+        },
+        "required": [
+          "project",
+          "statuses",
+          "milestones",
+          "counts"
+        ],
+        "description": "Where the plan stands: every milestone's progress, the milestone being executed, and the\none issue to take next."
+      },
+      "PlanValidation": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "description": "Whether the model is valid: no finding is a failure."
+          },
+          "milestones": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many milestones the plan holds."
+          },
+          "issues": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many issues."
+          },
+          "failures": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many findings are failures."
+          },
+          "warnings": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many are warnings."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanFinding"
+            },
+            "description": "Every finding, in derivation order."
+          }
+        },
+        "required": [
+          "valid",
+          "milestones",
+          "issues",
+          "failures",
+          "warnings",
+          "findings"
+        ],
+        "description": "The model's own validation: what the graph refuses and what it merely warns about."
+      },
+      "PlanVocabulary": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The issue statuses, in derivation order."
+          },
+          "milestone": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The milestone statuses, in derivation order."
+          }
+        },
+        "required": [
+          "issue",
+          "milestone"
+        ],
+        "description": "The status vocabularies, so a reader never has to know which statuses exist."
+      },
+      "PlanWave": {
+        "type": "object",
+        "properties": {
+          "wave": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The layer, from zero."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The issues in it, in id order."
+          }
+        },
+        "required": [
+          "wave",
+          "issues"
+        ],
+        "description": "One execution wave: the issues the graph allows to run at the same time."
+      },
+      "PlanWaveReport": {
+        "type": "object",
+        "properties": {
+          "waves": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanWaveView"
+            },
+            "description": "The waves, lowest first, with the issues of each."
+          },
+          "serialised_by_scope": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanFinding"
+            },
+            "description": "Scope overlaps between two issues of one wave. Two issues sharing a wave is a\nnecessary condition for running them at once, not a sufficient one: overlapping\nscope serialises them, and the overlap is reported here rather than left for two\nworkers to discover in a conflict."
+          }
+        },
+        "required": [
+          "waves",
+          "serialised_by_scope"
+        ],
+        "description": "The execution waves, with the overlaps that serialise issues the graph would let run\ntogether."
+      },
+      "PlanWaveView": {
+        "type": "object",
+        "properties": {
+          "wave": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The layer, from zero."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanIssue"
+            },
+            "description": "The issues in it, in id order."
+          }
+        },
+        "required": [
+          "wave",
+          "issues"
+        ],
+        "description": "One wave, with the issues in it."
       },
       "Port": {
         "type": "integer",
@@ -18956,41 +19985,6 @@
           }
         ],
         "description": "What is wrong, as a stable machine-readable code.\n\nThe codes are the contract between the validator and everything downstream: CI\nannotations, Cockpit filters, documentation anchors and an agent deciding what to fix.\nA code is never renamed once it has shipped; a rule that stops existing takes its code\nwith it."
-      },
-      "Vocabulary": {
-        "type": "object",
-        "properties": {
-          "version": {
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0,
-            "description": "The file's own format version. `1` is the only one this reader accepts."
-          },
-          "source": {
-            "type": "string",
-            "description": "Where it was read from, absolute: the distribution's share directory, which is not\nnecessarily inside the repository."
-          },
-          "count": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0,
-            "description": "How many tokens there are. No number anywhere is written down."
-          },
-          "obligations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Obligation"
-            },
-            "description": "Every token, in the order the file declares them."
-          }
-        },
-        "required": [
-          "version",
-          "source",
-          "count",
-          "obligations"
-        ],
-        "description": "The vocabulary the distribution ships: every token there is.\n\n`count` is measured from `obligations` rather than written down, so a token added to\nthe file is counted by the same act that declares it.\n\n```\nuse majordomus_cli::capability::builtin::obligations::Vocabulary;\nlet v: Vocabulary = serde_json::from_str(\n    r#\"{\"version\":1,\"source\":\"/opt/majordomus/share/obligations.yaml\",\"count\":1,\n        \"obligations\":[{\"id\":\"commit\",\"title\":\"The work is committed\",\n                        \"summary\":\"In the branch's history, not the working tree.\",\n                        \"discharged_by\":\"git\",\"remote\":false}]}\"#,\n)\n.unwrap();\nassert_eq!(v.count, v.obligations.len());\nassert_eq!(v.version, 1, \"the only shape this reader accepts\");\n```"
       },
       "WaiverReason": {
         "oneOf": [
