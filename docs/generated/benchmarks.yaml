@@ -1,23 +1,23 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.3.1
+# Generator: majordomus-cli 0.3.2
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.3.1
+generator: majordomus-cli 0.3.2
 coverage:
   - scope: direct
-    required: 49
-    covered: 49
+    required: 57
+    covered: 57
     missing: 0
     waived: 0
   - scope: http
-    required: 49
-    covered: 49
+    required: 57
+    covered: 57
     missing: 0
     waived: 0
   - scope: mcp
-    required: 47
-    covered: 47
+    required: 55
+    covered: 55
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 158
-    covered: 158
+    required: 182
+    covered: 182
     missing: 0
     waived: 0
 capabilities:
@@ -362,6 +362,83 @@ capabilities:
     module: product
     kind: query
     cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: release.changelog
+    module: release
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole
+      - published-version
+  - id: release.check
+    module: release
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: release.diff
+    module: release
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole-diff
+      - breaking-only
+      - capability-surface
+  - id: release.explain
+    module: release
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: release.manifest
+    module: release
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - target
+      - published-version
+  - id: release.plan
+    module: release
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - target
+      - explicit-target
+  - id: release.status
+    module: release
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: release.version
+    module: release
+    kind: query
+    cache: "—"
     direct: covered
     mcp: covered
     http: covered

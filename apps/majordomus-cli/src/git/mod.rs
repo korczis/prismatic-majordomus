@@ -142,6 +142,83 @@ pub fn is_ancestor(root: &Path, ancestor: &str, descendant: &str) -> Option<bool
     }
 }
 
+/// Every tag this clone holds, in the order git lists them.
+///
+/// The release subsystem's baseline is chosen among these, so this is deliberately the
+/// unfiltered set: which tags name a release is a question for the release policy, not for
+/// git, and answering it here would put the tag convention in two places.
+///
+/// An empty list and a clone with no tags are the same answer; git failing is `None`,
+/// which is the third answer a caller has to distinguish — "no release has ever been
+/// tagged" and "this process cannot see the tags" lead to different behaviour.
+pub fn tags(root: &Path) -> Option<Vec<String>> {
+    let out = run(root, &["tag", "--list"]).ok()?;
+    Some(
+        out.lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .map(str::to_string)
+            .collect(),
+    )
+}
+
+/// The content of one tracked file at one revision, or `None` when it is not there.
+///
+/// This is how a baseline contract snapshot is read: the committed projection as it stood
+/// at the release tag, without checking anything out and without a second work tree. A
+/// path that did not exist at that revision is `None` and not an error — a release older
+/// than an artifact is the ordinary case, and the caller decides what to do about it.
+pub fn show(root: &Path, revision: &str, path: &str) -> Option<String> {
+    run(root, &["show", &format!("{revision}:{path}")]).ok()
+}
+
+/// Whether a revision resolves in this clone.
+pub fn resolves(root: &Path, revision: &str) -> bool {
+    run(
+        root,
+        &[
+            "rev-parse",
+            "--verify",
+            "-q",
+            &format!("{revision}^{{commit}}"),
+        ],
+    )
+    .is_ok()
+}
+
+/// The full commit a revision resolves to.
+pub fn commit_of(root: &Path, revision: &str) -> Option<String> {
+    run(
+        root,
+        &[
+            "rev-parse",
+            "--verify",
+            "-q",
+            &format!("{revision}^{{commit}}"),
+        ],
+    )
+    .ok()
+    .map(|s| s.trim().to_string())
+    .filter(|s| !s.is_empty())
+}
+
+/// The subjects of the commits in `range`, oldest last, as git lists them.
+///
+/// Supplementary evidence only. The compatibility verdict comes from the contract and
+/// never from a commit message: a message says what somebody meant to do, and the contract
+/// says what they did.
+pub fn subjects(root: &Path, range: &str) -> Vec<String> {
+    run(root, &["log", "--no-merges", "--format=%s", range])
+        .map(|out| {
+            out.lines()
+                .map(str::trim)
+                .filter(|l| !l.is_empty())
+                .map(str::to_string)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 fn run(root: &Path, args: &[&str]) -> Result<String> {
     let out = Command::new("git")
         .arg("-C")

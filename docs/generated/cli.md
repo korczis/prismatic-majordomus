@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.3.1 -->
+     Generator: majordomus-cli 0.3.2 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -56,6 +56,16 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus distribution releases`](#majordomus-distribution-releases) | `/docs/cli/distribution/releases/` | Every recorded release, newest first, and the one an unpinned installation resolves to |
 | [`majordomus distribution metadata`](#majordomus-distribution-metadata) | `/docs/cli/distribution/metadata/` | The public metadata one release record publishes, rendered from the record alone |
 | [`majordomus distribution build`](#majordomus-distribution-build) | `/docs/cli/distribution/build/` | What this executable is: version, target triple, profile, commit |
+| [`majordomus release`](#majordomus-release) | `/docs/cli/release/` | Release identity: the four versions and where they disagree, why the next version must be what it must be, the public contract diff, the changelog every surface renders, and the preparation of a release |
+| [`majordomus release version`](#majordomus-release-version) | `/docs/cli/release/version/` | The four versions — what this tree would release, what is published, what this process is, what each deployment reports — and every disagreement between them |
+| [`majordomus release status`](#majordomus-release-status) | `/docs/cli/release/status/` | The whole release state: versions, baseline, compatibility, minimum version, readiness and every diagnostic |
+| [`majordomus release explain`](#majordomus-release-explain) | `/docs/cli/release/explain/` | Why the next version must be at least what it must be, step by step from the contract change to the policy |
+| [`majordomus release diff`](#majordomus-release-diff) | `/docs/cli/release/diff/` | Every difference between the public contract at the last published release and the contract this tree states |
+| [`majordomus release changelog`](#majordomus-release-changelog) | `/docs/cli/release/changelog/` | The changelog: the unreleased changes and every published version's, as CHANGELOG.md carries them |
+| [`majordomus release manifest`](#majordomus-release-manifest) | `/docs/cli/release/manifest/` | One release explained: compatibility, contract fingerprints, changes, migration documents and artifacts |
+| [`majordomus release plan`](#majordomus-release-plan) | `/docs/cli/release/plan/` | What `release prepare` would write and what it would publish, without writing anything |
+| [`majordomus release check`](#majordomus-release-check) | `/docs/cli/release/check/` | Every release invariant this repository can decide locally; exit 10 when one does not hold |
+| [`majordomus release prepare`](#majordomus-release-prepare) | `/docs/cli/release/prepare/` | Set the canonical version and regenerate everything derived from it, so that a release can be reviewed as a commit |
 | [`majordomus env`](#majordomus-env) | `/docs/cli/env/` | What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services |
 | [`majordomus env status`](#majordomus-env-status) | `/docs/cli/env/status/` | The whole snapshot, resolved in full: what the layer holds is counted, and the cache the banner reads is written |
 | [`majordomus env banner`](#majordomus-env-banner) | `/docs/cli/env/banner/` | Render the snapshot for a terminal. Goes to standard error, never standard output, because direnv reads standard output as the environment it is setting |
@@ -100,7 +110,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus release`](#majordomus-release), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product).
 
 ```text
 majordomus <COMMAND>
@@ -374,7 +384,7 @@ majordomus generate [OPTIONS] [TARGET]
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
-| `<TARGET>` | `all` \| `openapi` \| `docs` \| `benchmarks` \| `registry` \| `allow` \| `providers` \| `site` \| `manifest` \| `distribution` \| `web` | `all` | What to generate — `all`: Every target; `openapi`: `docs/generated/openapi.{json,yaml}`; `docs`: `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`; `benchmarks`: `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage; `registry`: `docs/generated/registry.{json,yaml}`: the builtin registry as data; `allow`: The shell tool's allow-lists under share/allow, derived from the schemas; `providers`: The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...); `site`: site/data/registry/registry.json, the registry dataset the site renders; `manifest`: docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact; `distribution`: The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/; `web`: `docs/generated/web.json`: the resolved web topology the site's route reference renders |
+| `<TARGET>` | `all` \| `openapi` \| `docs` \| `benchmarks` \| `registry` \| `allow` \| `providers` \| `site` \| `manifest` \| `distribution` \| `web` \| `release` | `all` | What to generate — `all`: Every target; `openapi`: `docs/generated/openapi.{json,yaml}`; `docs`: `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`; `benchmarks`: `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage; `registry`: `docs/generated/registry.{json,yaml}`: the builtin registry as data; `allow`: The shell tool's allow-lists under share/allow, derived from the schemas; `providers`: The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...); `site`: site/data/registry/registry.json, the registry dataset the site renders; `manifest`: docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact; `distribution`: The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/; `web`: `docs/generated/web.json`: the resolved web topology the site's route reference renders; `release`: The public contract snapshot, CHANGELOG.md, the release manifests and the version line the shell tool prints, from the release state |
 | `--check` | flag | — | Compare with what is on disk and exit 10 when stale; write nothing |
 | `--out` | `<DIR>` | — | Write under this directory instead of the repository root (docs/generated is appended) |
 
@@ -1417,6 +1427,282 @@ Examples:
   ```
 
   Verified: exits 0; prints version, target, commit.
+
+<a id="majordomus-release"></a>
+## `majordomus release`
+
+Release identity: the four versions and where they disagree, why the next version must be what it must be, the public contract diff, the changelog every surface renders, and the preparation of a release
+
+Subcommands: [`majordomus release version`](#majordomus-release-version), [`majordomus release status`](#majordomus-release-status), [`majordomus release explain`](#majordomus-release-explain), [`majordomus release diff`](#majordomus-release-diff), [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release manifest`](#majordomus-release-manifest), [`majordomus release plan`](#majordomus-release-plan), [`majordomus release check`](#majordomus-release-check), [`majordomus release prepare`](#majordomus-release-prepare).
+
+```text
+majordomus release [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Where this repository stands with its next release** — `release` with nothing after it reports the state, because the state is what a person wants when they ask about a release. Every value is derived: the baseline is the release an unpinned installation resolves to, the compatibility is the diff between the committed public contract and the same document at that baseline, and the minimum version is what the release policy makes of it.
+
+  ```console
+  $ majordomus release
+  ```
+
+  Verified: exits 0; prints source version, target version, readiness.
+
+<a id="majordomus-release-version"></a>
+## `majordomus release version`
+
+The four versions — what this tree would release, what is published, what this process is, what each deployment reports — and every disagreement between them
+
+```text
+majordomus release version [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The four versions, and every disagreement between them** — What this tree would release, what an unpinned installation resolves to, what this process is, and what each declared deployment reports. They are four different facts and this is the one answer that refuses to collapse them; no network is reached, so a deployment that has reported nothing says so rather than answering null.
+
+  ```console
+  $ majordomus release version
+  ```
+
+  Verified: exits 0; prints source, published, running.
+
+<a id="majordomus-release-status"></a>
+## `majordomus release status`
+
+The whole release state: versions, baseline, compatibility, minimum version, readiness and every diagnostic
+
+```text
+majordomus release status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The whole release state, as every surface reads it** — One domain model behind every projection: this document is what `GET /api/v1/release/status` returns, what the `majordomus_release_status` tool answers and what the Cockpit's release page renders. Nothing computes a release fact of its own.
+
+  ```console
+  $ majordomus release status --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /versions/source, /target_version, /readiness.
+
+<a id="majordomus-release-explain"></a>
+## `majordomus release explain`
+
+Why the next version must be at least what it must be, step by step from the contract change to the policy
+
+```text
+majordomus release explain [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Why the next version must be at least what it must be** — The chain, step by step: the release it was measured against, the contract changes that decided it, the impact they add up to, the policy sentence that maps that impact to a bump, and the version that comes out. A reader who disagrees with the verdict can see which step they disagree with.
+
+  ```console
+  $ majordomus release explain
+  ```
+
+  Verified: exits 0; prints Required bump, Policy, Baseline.
+
+<a id="majordomus-release-diff"></a>
+## `majordomus release diff`
+
+Every difference between the public contract at the last published release and the contract this tree states
+
+```text
+majordomus release diff [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--impact` | `<IMPACT>` | — | Only the changes carrying this impact |
+| `--surface` | `<SURFACE>` | — | Only the changes on this surface |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a release would cost a caller, entry by entry** — Every difference between the public contract at the last published release and the contract this tree states, narrowed here to the breaking ones. The contract is the capabilities with their input and output schemas and every projection they declare, the runnable commands with their arguments, the document schemas a repository's own files are validated against, and the platforms a release publishes for.
+
+  ```console
+  $ majordomus release diff --impact breaking
+  ```
+
+  Verified: exits 0.
+
+<a id="majordomus-release-changelog"></a>
+## `majordomus release changelog`
+
+The changelog: the unreleased changes and every published version's, as CHANGELOG.md carries them
+
+```text
+majordomus release changelog [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The changelog, from the records and from nothing else** — The same document `CHANGELOG.md` carries, rendered from the change records under `.ai/repo/changes/` and the release records beside them. The file, the release notes, the Cockpit, the site and this command are five renderings of those records; none of them is authored.
+
+  ```console
+  $ majordomus release changelog
+  ```
+
+  Verified: exits 0; prints # Changelog.
+
+<a id="majordomus-release-manifest"></a>
+## `majordomus release manifest`
+
+One release explained: compatibility, contract fingerprints, changes, migration documents and artifacts
+
+```text
+majordomus release manifest [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One release, explained** — The compatibility it carried, the release it succeeded, the contract fingerprints on both sides, the changes it published, the migration documents it requires and the artifacts it uploaded with their digests — enough to explain a release to somebody who was not there, and to prove that the tag, the version, the artifacts and the runtime describe one release.
+
+  ```console
+  $ majordomus release manifest
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /version, /tag, /compatibility, /contract/fingerprint.
+
+<a id="majordomus-release-plan"></a>
+## `majordomus release plan`
+
+What `release prepare` would write and what it would publish, without writing anything
+
+```text
+majordomus release plan [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What preparing a release would write, without writing it** — The target version, the bump that gets there, the change records it would stamp, every file it would rewrite and everything that would stop it. The planning and the doing read the same engine, so a plan is a description of the act rather than a simulation of it.
+
+  ```console
+  $ majordomus release plan
+  ```
+
+  Verified: exits 0; prints target version, Would write.
+
+<a id="majordomus-release-check"></a>
+## `majordomus release check`
+
+Every release invariant this repository can decide locally; exit 10 when one does not hold
+
+```text
+majordomus release check [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether a release may go out** — Every release invariant this repository can decide locally: that the version clears the minimum its contract change requires, that every breaking change is named by a change record, that a breaking change carries migration guidance, and that the committed contract is the contract this build states. Exits 10 when one does not hold, and each failure names the command that shows it and the one that fixes it.
+
+  ```console
+  $ majordomus release check
+  ```
+
+  Verified: exits 0.
+
+<a id="majordomus-release-prepare"></a>
+## `majordomus release prepare`
+
+Set the canonical version and regenerate everything derived from it, so that a release can be reviewed as a commit
+
+```text
+majordomus release prepare [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--bump` | `<BUMP>` | — | The bump to apply to the published release, which must be at least the one required |
+| `--dry-run` | flag | — | Report what would be written and write nothing |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Preparing a release, without touching the tree** — `--dry-run` reports exactly what `prepare` would write — the canonical version and the stamp on every unreleased change record — and writes nothing. Everything else a release moves is a projection, and `majordomus generate` is the one thing that writes a projection.
+
+  ```console
+  $ majordomus release prepare --dry-run
+  ```
+
+  Verified: exits 0; prints nothing was written.
 
 <a id="majordomus-env"></a>
 ## `majordomus env`

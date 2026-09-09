@@ -6,22 +6,25 @@
 #   scripts/release-version --check --tag v0.2.0
 #                                           also require the tag to be v followed by it
 #
-# The version is stated in exactly two places, because two programs are shipped from one
-# tree and each must be able to say what it is without reading the other:
+# The version is stated in exactly one place and projected into one other, because two
+# programs are shipped from one tree and each must be able to say what it is without
+# reading the other:
 #
 #   apps/majordomus-cli/Cargo.toml   the crate's version — the authority
-#   bin/majordomus                   MJ_VERSION, which `majordomus version` prints
+#   share/version.txt                its projection, which `majordomus version` prints
 #
-# Neither can derive the other at run time: an installed tree has no Cargo.toml, and the
-# crate is compiled before the shell tool exists. So they are checked instead, here, by CI
-# and by the release workflow before a single artifact is built.
+# The shell tool cannot read the manifest at run time — an installed tree has no
+# Cargo.toml — so `majordomus generate --target release` writes the projection and this
+# proves the two agree, here, in CI and in the release workflow before a single artifact is
+# built. It used to be a hand-edited literal in bin/majordomus; that literal was the
+# duplicate, and generating it is what removed the class (rule project.release-identity).
 #
 # Exit codes: 0 ok · 2 usage · 10 they disagree · 12 a file could not be read.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
-ENTRY="$ROOT/bin/majordomus"
+ENTRY="$ROOT/share/version.txt"
 
 check=0
 tag=""
@@ -35,11 +38,14 @@ while [ $# -gt 0 ]; do
 done
 
 [ -f "$MANIFEST" ] || { printf 'release-version: no %s\n' "$MANIFEST" >&2; exit 12; }
-[ -f "$ENTRY" ] || { printf 'release-version: no %s\n' "$ENTRY" >&2; exit 12; }
+[ -f "$ENTRY" ] || {
+  printf 'release-version: no %s; run `majordomus generate --target release`\n' "$ENTRY" >&2
+  exit 12
+}
 
 # the first `version = "..."` under [package]
 crate="$(awk '/^\[package\]/{p=1;next} /^\[/{p=0} p && /^version *=/{gsub(/[^0-9A-Za-z.+-]/,"",$3); print $3; exit}' "$MANIFEST")"
-shell_version="$(sed -n 's/^MJ_VERSION="\([^"]*\)".*/\1/p' "$ENTRY" | head -n 1)"
+shell_version="$(sed -n 's/^version=//p' "$ENTRY" | head -n 1)"
 
 if [ "$check" = 0 ]; then
   printf '%s\n' "$crate"
@@ -50,12 +56,13 @@ bad=0
 if [ -z "$crate" ]; then printf 'release-version: FAIL the crate states no version (%s)\n' "$MANIFEST" >&2; bad=1
 else printf 'release-version: OK   crate %s\n' "$crate"; fi
 if [ "$shell_version" != "$crate" ]; then
-  printf 'release-version: FAIL bin/majordomus states MJ_VERSION="%s" and the crate states "%s"\n' \
+  printf 'release-version: FAIL share/version.txt states "%s" and the crate states "%s"\n' \
     "$shell_version" "$crate" >&2
-  printf '                      one release has one version; edit bin/majordomus to match the crate\n' >&2
+  printf '                      one release has one version; share/version.txt is generated —\n' >&2
+  printf '                      run `majordomus generate --target release` rather than editing it\n' >&2
   bad=1
 else
-  printf 'release-version: OK   bin/majordomus %s\n' "$shell_version"
+  printf 'release-version: OK   share/version.txt %s\n' "$shell_version"
 fi
 if [ -n "$tag" ]; then
   if [ "$tag" != "v$crate" ]; then

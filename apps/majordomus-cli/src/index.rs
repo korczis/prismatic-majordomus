@@ -86,6 +86,12 @@ pub struct Index {
     /// distribution model, so that the product model can say which providers exist without
     /// a second discovery.
     pub providers: crate::share::ProviderDeclarations,
+    /// The JSON Schema of every document kind this process reads, by schema identity, as
+    /// the kind schema compiled it. Carried here because a kind's contract is part of the
+    /// repository's public surface — every repository's own files are validated against it
+    /// — and the release engine reads it from the one place it was already loaded rather
+    /// than reading the schema files a second time.
+    pub document_schemas: BTreeMap<String, Value>,
 }
 
 impl Index {
@@ -188,6 +194,10 @@ impl Index {
             scoped: Scoped { scope, tally },
             distribution: None,
             providers: Default::default(),
+            document_schemas: schema
+                .schemas()
+                .map(|(id, s)| (id.clone(), s.json.clone()))
+                .collect(),
         })
     }
 

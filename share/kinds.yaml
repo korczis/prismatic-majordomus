@@ -327,6 +327,21 @@ kinds:
       field: schema
       supported: [release/v1]
 
+  # One release change: the narrative half of a release, beside the contract diff that is
+  # the mechanical half. A record with no `released_in` is unreleased and belongs to
+  # whatever the next release turns out to be.
+  change:
+    format: markdown
+    front_matter: required
+    without_front_matter: document
+    schema: majordomus.change/v1
+    identity: [id]
+    title: title
+    description: title
+    schema_version:
+      field: schema
+      supported: [change/v1]
+
   implementation:
     format: text
     identity: []

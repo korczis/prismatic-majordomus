@@ -20,6 +20,7 @@ Each of these is rendered on the website as well, from this same Markdown.
 | [`DOGFOODING.md`](DOGFOODING.md) | contributors, AI workers | the one rule: Majordomus cannot recommend a development discipline it does not use itself — and what following it costs |
 | [`INSTALL.md`](INSTALL.md) | everyone | installing the tool: the one-line installer, pinning a version, choosing where it goes, the supported platforms, upgrading, uninstalling, CI use, the security model and troubleshooting |
 | [`DISTRIBUTION.md`](DISTRIBUTION.md) | contributors, AI workers | how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release |
+| [`RELEASE.md`](RELEASE.md) | maintainers, AI workers | how a release's version and changelog are derived from the public contract rather than typed by hand: the four versions, the compatibility policy, `majordomus release …`, writing a change record, the diagnostics, and recovery when something goes wrong |
 | [`CATALOGUE.md`](CATALOGUE.md) | everyone | the use-case and application registries: what they are for, how they differ from the why pages, the schema, and how to extend them |
 | [`ADOPTION.md`](ADOPTION.md) | teams | day one, week one, several workers, removal |
 | [`ADOPTION_FIRST_RUN.md`](ADOPTION_FIRST_RUN.md) | maintainers | forensic finding: what `doctor` reports in a repository that is not this one, why 109 of its findings cannot be satisfied there, and the decision that needs making |

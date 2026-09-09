@@ -15,6 +15,13 @@
       "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
     },
     {
+      "document": "changelog",
+      "format": "markdown",
+      "path": "CHANGELOG.md",
+      "schema": null,
+      "source": "the change records under .ai/repo/changes/ and the release records under .ai/repo/releases/"
+    },
+    {
       "document": "providers/claude-code",
       "format": "markdown",
       "path": "CLAUDE.md",
@@ -97,6 +104,20 @@
       "path": "docs/generated/cli.yaml",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it"
+    },
+    {
+      "document": "contract",
+      "format": "json",
+      "path": "docs/generated/contract.json",
+      "schema": "contract/v1",
+      "source": "the capability registry, the command graph, the document schemas and the distribution model, normalised"
+    },
+    {
+      "document": "contract",
+      "format": "yaml",
+      "path": "docs/generated/contract.yaml",
+      "schema": "contract/v1",
+      "source": "the capability registry, the command graph, the document schemas and the distribution model, normalised"
     },
     {
       "document": "distribution-matrix",
@@ -204,6 +225,13 @@
       "source": "the `product` module of the canonical Majordomus capability registry"
     },
     {
+      "document": "modules/release",
+      "format": "markdown",
+      "path": "docs/generated/modules/release.md",
+      "schema": null,
+      "source": "the `release` module of the canonical Majordomus capability registry"
+    },
+    {
       "document": "modules/repository",
       "format": "markdown",
       "path": "docs/generated/modules/repository.md",
@@ -281,6 +309,34 @@
       "source": "the canonical capability registry"
     },
     {
+      "document": "v0.3.1",
+      "format": "json",
+      "path": "docs/generated/releases/v0.3.1.json",
+      "schema": "release-manifest/v1",
+      "source": "the release state: the contract it was measured against, the changes it published and the artifacts it uploaded"
+    },
+    {
+      "document": "v0.3.1",
+      "format": "yaml",
+      "path": "docs/generated/releases/v0.3.1.yaml",
+      "schema": "release-manifest/v1",
+      "source": "the release state: the contract it was measured against, the changes it published and the artifacts it uploaded"
+    },
+    {
+      "document": "v0.3.2",
+      "format": "json",
+      "path": "docs/generated/releases/v0.3.2.json",
+      "schema": "release-manifest/v1",
+      "source": "the release state: the contract it was measured against, the changes it published and the artifacts it uploaded"
+    },
+    {
+      "document": "v0.3.2",
+      "format": "yaml",
+      "path": "docs/generated/releases/v0.3.2.yaml",
+      "schema": "release-manifest/v1",
+      "source": "the release state: the contract it was measured against, the changes it published and the artifacts it uploaded"
+    },
+    {
       "document": "web",
       "format": "json",
       "path": "docs/generated/web.json",
@@ -307,6 +363,13 @@
       "path": "share/allow/application.txt",
       "schema": null,
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    },
+    {
+      "document": "allow/change",
+      "format": "text",
+      "path": "share/allow/change.txt",
+      "schema": null,
+      "source": "the document schema `share/schemas/majordomus/change/change.v1.proto`"
     },
     {
       "document": "allow/context",
@@ -484,6 +547,13 @@
       "source": "the document schema `share/schemas/majordomus/capture/capture.v1.proto`"
     },
     {
+      "document": "schemas/majordomus.change/v1",
+      "format": "json",
+      "path": "share/schemas/majordomus/change/change.v1.schema.json",
+      "schema": null,
+      "source": "the document schema `share/schemas/majordomus/change/change.v1.proto`"
+    },
+    {
       "document": "schemas/majordomus.context/v1",
       "format": "json",
       "path": "share/schemas/majordomus/context/context.v1.schema.json",
@@ -540,6 +610,13 @@
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`"
     },
     {
+      "document": "sections/change",
+      "format": "text",
+      "path": "share/sections/change.txt",
+      "schema": null,
+      "source": "the document schema `share/schemas/majordomus/change/change.v1.proto`"
+    },
+    {
       "document": "sections/context",
       "format": "text",
       "path": "share/sections/context.txt",
@@ -580,6 +657,13 @@
       "path": "share/sections/use-case.txt",
       "schema": null,
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    },
+    {
+      "document": "tool-version",
+      "format": "text",
+      "path": "share/version.txt",
+      "schema": null,
+      "source": "the crate's version, which is the one authority"
     },
     {
       "document": "site-distribution",
@@ -659,6 +743,13 @@
       ],
       "id": "allow/application",
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "allow/change",
+      "source": "the document schema `share/schemas/majordomus/change/change.v1.proto`"
     },
     {
       "formats": [
@@ -843,6 +934,13 @@
     },
     {
       "formats": [
+        "markdown"
+      ],
+      "id": "changelog",
+      "source": "the change records under .ai/repo/changes/ and the release records under .ai/repo/releases/"
+    },
+    {
+      "formats": [
         "json",
         "markdown",
         "yaml"
@@ -850,6 +948,15 @@
       "id": "cli",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it"
+    },
+    {
+      "formats": [
+        "json",
+        "yaml"
+      ],
+      "id": "contract",
+      "schema": "contract/v1",
+      "source": "the capability registry, the command graph, the document schemas and the distribution model, normalised"
     },
     {
       "formats": [
@@ -974,6 +1081,13 @@
       "formats": [
         "markdown"
       ],
+      "id": "modules/release",
+      "source": "the `release` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
       "id": "modules/repository",
       "source": "the `repository` module of the canonical Majordomus capability registry"
     },
@@ -1085,6 +1199,13 @@
       "formats": [
         "json"
       ],
+      "id": "schemas/majordomus.change/v1",
+      "source": "the document schema `share/schemas/majordomus/change/change.v1.proto`"
+    },
+    {
+      "formats": [
+        "json"
+      ],
       "id": "schemas/majordomus.context/v1",
       "source": "the document schema `share/schemas/majordomus/context/context.v1.proto`"
     },
@@ -1136,6 +1257,13 @@
       ],
       "id": "sections/application",
       "source": "the document schema `share/schemas/majordomus/application/application.v1.proto`"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "sections/change",
+      "source": "the document schema `share/schemas/majordomus/change/change.v1.proto`"
     },
     {
       "formats": [
@@ -1226,6 +1354,31 @@
     },
     {
       "formats": [
+        "text"
+      ],
+      "id": "tool-version",
+      "source": "the crate's version, which is the one authority"
+    },
+    {
+      "formats": [
+        "json",
+        "yaml"
+      ],
+      "id": "v0.3.1",
+      "schema": "release-manifest/v1",
+      "source": "the release state: the contract it was measured against, the changes it published and the artifacts it uploaded"
+    },
+    {
+      "formats": [
+        "json",
+        "yaml"
+      ],
+      "id": "v0.3.2",
+      "schema": "release-manifest/v1",
+      "source": "the release state: the contract it was measured against, the changes it published and the artifacts it uploaded"
+    },
+    {
+      "formats": [
         "json",
         "yaml"
       ],
@@ -1235,7 +1388,7 @@
     }
   ],
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.3.1",
+  "generator": "majordomus-cli 0.3.2",
   "manifest_schema": "majordomus/generated-artifacts/v1",
   "schema": 1
 }

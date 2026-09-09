@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
     "description": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
@@ -81,6 +81,10 @@
     {
       "name": "product",
       "description": "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
+    },
+    {
+      "name": "release",
+      "description": "What this repository would publish next and why it must carry the version it carries: the four versions and where they disagree, the public contract measured against the last published release, the compatibility that change implies, the minimum version the policy makes of it, the changelog every projection renders, and every reason a release is not ready. One engine; the command line, the API, MCP and the Cockpit are four readings of it."
     },
     {
       "name": "repository",
@@ -3326,6 +3330,752 @@
         }
       }
     },
+    "/api/v1/release/changelog": {
+      "get": {
+        "operationId": "release.changelog",
+        "summary": "The changelog",
+        "description": "The changelog, as a model and as the Markdown CHANGELOG.md carries: the unreleased changes and every published version's, grouped by kind in the reader's order, with breaking changes marked and their migration documents linked. Every entry is one record under .ai/repo/changes/; this file, the release notes, the Cockpit, the site and this answer are five renderings of those records and of nothing else.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Version"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only this version's section; the whole changelog when absent.",
+            "examples": {
+              "published-version": {
+                "value": "0.3.1"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The changelog: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangelogReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.changelog",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_changelog"
+        },
+        "x-majordomus-cli": "release changelog"
+      }
+    },
+    "/api/v1/release/check": {
+      "get": {
+        "operationId": "release.check",
+        "summary": "Whether a release may go out",
+        "description": "Every release invariant this repository can decide locally: that the version clears the minimum its contract change requires, that every breaking change is named by a change record, that a breaking change carries migration guidance, that the change records agree with each other, that the release records agree with the distribution model, and that the committed contract is the contract this build states. Each failure names the command that shows it and the one that fixes it.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Whether a release may go out: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseCheckReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.check",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_check"
+        },
+        "x-majordomus-cli": "release check"
+      }
+    },
+    "/api/v1/release/diff": {
+      "get": {
+        "operationId": "release.diff",
+        "summary": "The public contract diff",
+        "description": "Every difference between the public contract at the last published release and the contract this tree states, with what each one costs a caller and why. Optionally narrowed to one impact or one surface. The contract is the capabilities with their input and output schemas and every projection they declare, the runnable commands with their arguments, the document schemas a repository's own files are validated against, and the platforms a release publishes for.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [
+          {
+            "name": "impact",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CompatibilityImpact"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only the changes carrying this impact: `none`, `patch`, `additive` or `breaking`.",
+            "examples": {
+              "breaking-only": {
+                "value": "breaking"
+              }
+            }
+          },
+          {
+            "name": "surface",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only the changes on this surface: `capability`, `command`, `document-kind`,\n`target`.",
+            "examples": {
+              "capability-surface": {
+                "value": "capability"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The public contract diff: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractDiffReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.diff",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_diff"
+        },
+        "x-majordomus-cli": "release diff"
+      }
+    },
+    "/api/v1/release/explain": {
+      "get": {
+        "operationId": "release.explain",
+        "summary": "Why this version",
+        "description": "The reasoning behind the required bump, step by step: the baseline it was measured against, the contract changes that decided it, the impact they add up to, the policy sentence that maps that impact to a bump, and the version that comes out. Derived from the contract diff and the policy table; no sentence here is written by hand for a particular case.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Why this version: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseExplanation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.explain",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_explain"
+        },
+        "x-majordomus-cli": "release explain"
+      }
+    },
+    "/api/v1/release/manifest": {
+      "get": {
+        "operationId": "release.manifest",
+        "summary": "A release manifest",
+        "description": "One release explained: the version it carried, the release it succeeded, the commit, the compatibility, the contract fingerprints on both sides, the changes it published, the migration documents it requires and the artifacts it uploaded with their digests. Generated from the release state; enough to explain a release to somebody who was not there and to prove that the tag, the version, the artifacts and the runtime describe one release.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Version"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "The version; the one this tree would publish when absent.",
+            "examples": {
+              "published-version": {
+                "value": "0.3.1"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A release manifest: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseManifest"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.manifest",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_manifest"
+        },
+        "x-majordomus-cli": "release manifest"
+      }
+    },
+    "/api/v1/release/plan": {
+      "get": {
+        "operationId": "release.plan",
+        "summary": "What a release would do",
+        "description": "What `majordomus release prepare` would write and what it would publish: the target version, the bump that gets there, the change records it would stamp, every file it would rewrite, and everything that would stop it. The planning and the doing read the same engine, so a plan is a description of the act and not a simulation of it.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Version"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "The version to plan for; the one this tree would publish when absent. A version\nbelow the minimum the change requires is refused here rather than described, so\nthat a plan is never a description of something that cannot happen.",
+            "examples": {
+              "explicit-target": {
+                "value": "0.3.2"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What a release would do: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleasePlanReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.plan",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_plan"
+        },
+        "x-majordomus-cli": "release plan"
+      }
+    },
+    "/api/v1/release/status": {
+      "get": {
+        "operationId": "release.status",
+        "summary": "Release state",
+        "description": "The whole release state: the four versions, the release the contract was measured against, the compatibility of the change, the minimum version it requires, the version this tree would publish, how far along the release is, and every diagnostic. This is the model the Cockpit's version display, the API and the release commands all read; none of them computes a release fact of its own.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Release state: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.status",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_status",
+          "resource": {
+            "uri": "majordomus://release",
+            "name": "release"
+          }
+        },
+        "x-majordomus-cli": "release status"
+      }
+    },
+    "/api/v1/release/version": {
+      "get": {
+        "operationId": "release.version",
+        "summary": "The four versions",
+        "description": "What this tree would release, what an unpinned installation resolves to, what this process is, and what each declared deployment reports — with every disagreement named. They are four different facts and this is the one place that refuses to collapse them: a page that shows one number while the machine serving it runs another is the failure this answer exists to make visible. No network is reached; a deployment that has reported nothing says so.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The four versions: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VersionReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.version",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_version"
+        },
+        "x-majordomus-cli": "release version"
+      }
+    },
     "/api/v1/repository": {
       "get": {
         "operationId": "repository.info",
@@ -6194,6 +6944,136 @@
         },
         "description": "One category of `out`: pathspecs and file-name patterns."
       },
+      "ChangelogGroup": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ReleaseChangeType",
+            "description": "The type."
+          },
+          "heading": {
+            "type": "string",
+            "description": "The heading a renderer prints."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseChange"
+            },
+            "description": "The changes, by id."
+          }
+        },
+        "required": [
+          "type",
+          "heading",
+          "changes"
+        ],
+        "description": "One type's worth of a section."
+      },
+      "ChangelogReport": {
+        "type": "object",
+        "properties": {
+          "records": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many change records the repository holds."
+          },
+          "unreleased": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChangelogSection"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The unreleased section, when there is one."
+          },
+          "releases": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChangelogSection"
+            },
+            "description": "Every published version's section, newest first. One section when a version was\nasked for."
+          },
+          "markdown": {
+            "type": "string",
+            "description": "The document as `CHANGELOG.md` carries it, so that a caller rendering it does not\nhave to know how a section becomes a heading."
+          }
+        },
+        "required": [
+          "records",
+          "releases",
+          "markdown"
+        ],
+        "description": "The changelog, and the Markdown a reader sees."
+      },
+      "ChangelogSection": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Version"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version, absent for the unreleased section."
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The tag, absent for the unreleased section."
+          },
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The day it was published, UTC, from the release record. Absent when the version has\nbeen stamped on records but no release was published for it — which is a state\nworth seeing rather than papering over with today's date."
+          },
+          "commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit it was built from, from the release record."
+          },
+          "yanked": {
+            "type": "boolean",
+            "description": "True when the record says the release was withdrawn."
+          },
+          "impact": {
+            "$ref": "#/components/schemas/CompatibilityImpact",
+            "description": "The strongest impact among this section's changes."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChangelogGroup"
+            },
+            "description": "The changes, grouped by type, in the reader's order. A type with no change is not\na key here: an empty ceremonial section is noise."
+          },
+          "migrations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The migration documents this section's breaking changes name, deduplicated."
+          }
+        },
+        "required": [
+          "yanked",
+          "impact",
+          "groups"
+        ],
+        "description": "One release's worth of changelog, or the unreleased one."
+      },
       "Channel": {
         "oneOf": [
           {
@@ -7320,6 +8200,31 @@
         ],
         "description": "Where a value for an argument comes from, when something in this repository knows the\nset.\n\nThis is the completion contract, and it is a property of the *argument*, not of a shell\nscript: the same source answers a shell's TAB, a generated form's select and a machine\nsurface's enumeration of what it will accept. Inference from the declaration comes\nfirst — a value-enum argument carries its own values, a `PATH` placeholder is a path —\nand only what cannot be inferred is annotated beside the command."
       },
+      "CompatibilityImpact": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "none",
+            "description": "Nothing a caller can observe changed."
+          },
+          {
+            "type": "string",
+            "const": "patch",
+            "description": "Behaviour changed within the contract: everything that compiled still compiles and\neverything that parsed still parses."
+          },
+          {
+            "type": "string",
+            "const": "additive",
+            "description": "The contract grew. Existing callers are unaffected; new callers can do more."
+          },
+          {
+            "type": "string",
+            "const": "breaking",
+            "description": "The contract shrank or moved. Something that worked stops working."
+          }
+        ],
+        "description": "What a change costs the people who already depend on this.\n\nDistinct from [`Bump`], and not collapsible into it: `Additive` and `Patch` map to\ndifferent bumps below 1.0.0 than above it, and an explanation that had only the bump\ncould not say why. The order is the strength order — a diff's impact is the strongest\nof its changes — which is what [`Ord`] is derived for."
+      },
       "Concurrency": {
         "type": "object",
         "additionalProperties": false,
@@ -7480,6 +8385,174 @@
           "tallies"
         ],
         "description": "What the lifecycle of this checkout is holding."
+      },
+      "ContractChange": {
+        "type": "object",
+        "properties": {
+          "surface": {
+            "$ref": "#/components/schemas/ContractSurface",
+            "description": "Which part of the surface."
+          },
+          "entry": {
+            "type": "string",
+            "description": "The entry: a capability id, a command id, a schema id, a target id."
+          },
+          "fact": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The fact within the entry, when the whole entry did not appear or disappear."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ContractChangeKind",
+            "description": "What happened."
+          },
+          "before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What it stated at the baseline."
+          },
+          "after": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What it states now."
+          },
+          "impact": {
+            "$ref": "#/components/schemas/CompatibilityImpact",
+            "description": "What it costs a caller."
+          },
+          "reason": {
+            "type": "string",
+            "description": "One sentence: why that impact, in the terms the policy is written in. This is what\n`version explain` prints; nothing composes a reason of its own from the fields\nabove."
+          }
+        },
+        "required": [
+          "surface",
+          "entry",
+          "kind",
+          "impact",
+          "reason"
+        ],
+        "description": "One difference between two snapshots, with the impact it carries and the reason."
+      },
+      "ContractChangeKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "added",
+            "description": "It did not exist at the baseline and exists now."
+          },
+          {
+            "type": "string",
+            "const": "removed",
+            "description": "It existed at the baseline and does not exist now."
+          },
+          {
+            "type": "string",
+            "const": "changed",
+            "description": "It exists in both and states something different."
+          }
+        ],
+        "description": "What happened to one entry or one fact."
+      },
+      "ContractDiff": {
+        "type": "object",
+        "properties": {
+          "baseline": {
+            "type": "string",
+            "description": "The fingerprint of the snapshot compared against."
+          },
+          "current": {
+            "type": "string",
+            "description": "The fingerprint of the snapshot compared."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractChange"
+            },
+            "description": "Every change, in a deterministic order: impact first, then surface, entry, fact."
+          },
+          "impact": {
+            "$ref": "#/components/schemas/CompatibilityImpact",
+            "description": "The strongest impact among the changes; `None` when there are none."
+          },
+          "uncompared": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractSurface"
+            },
+            "description": "Surfaces present in one snapshot and not the other, which were therefore not\ncompared. Empty in the ordinary case; non-empty means the verdict is partial and\nevery report says so rather than presenting it as complete."
+          }
+        },
+        "required": [
+          "baseline",
+          "current",
+          "changes",
+          "impact"
+        ],
+        "description": "Every difference between two snapshots, and the strongest impact among them."
+      },
+      "ContractDiffReport": {
+        "type": "object",
+        "properties": {
+          "baseline": {
+            "$ref": "#/components/schemas/ReleaseBaseline",
+            "description": "Which release the contract was measured against."
+          },
+          "diff": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContractDiff"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The diff, when a baseline contract could be read."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there is no diff, when there is none."
+          }
+        },
+        "required": [
+          "baseline"
+        ],
+        "description": "The contract diff, or the reason there is none."
+      },
+      "ContractSurface": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "capability",
+            "description": "A capability of the registry: the operation itself, whatever it is projected as."
+          },
+          {
+            "type": "string",
+            "const": "command",
+            "description": "A command of the command graph, from whichever program offers it."
+          },
+          {
+            "type": "string",
+            "const": "document-kind",
+            "description": "The schema of a declarative document kind a repository authors."
+          },
+          {
+            "type": "string",
+            "const": "target",
+            "description": "A platform a release publishes an artifact for."
+          }
+        ],
+        "description": "Which part of the public surface an entry belongs to.\n\nThe surface decides nothing on its own; it groups entries so that an explanation can\nsay *what* changed before it says *how*, and so that two entries with the same name on\ndifferent surfaces are two entries."
       },
       "ContractView": {
         "type": "object",
@@ -7771,6 +8844,45 @@
           "out"
         ],
         "description": "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema."
+      },
+      "DeployedVersion": {
+        "type": "object",
+        "properties": {
+          "deployment": {
+            "type": "string",
+            "description": "The deployment's id, as its record names it."
+          },
+          "environment": {
+            "type": "string",
+            "description": "The environment."
+          },
+          "status": {
+            "type": "string",
+            "description": "What the record says its state is."
+          },
+          "version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Version"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version the service reports, when a verification recorded one."
+          },
+          "agreement": {
+            "$ref": "#/components/schemas/VersionAgreement",
+            "description": "Whether the reported version is the published one, the source one, or neither."
+          }
+        },
+        "required": [
+          "deployment",
+          "environment",
+          "status",
+          "agreement"
+        ],
+        "description": "What one deployment reports it is running.\n\nThe version is `None` until something asks the service, which nothing in this process\ndoes: a version display must render from local state without a network call, and a\ndeployment whose version is unknown says `unknown` rather than `null`."
       },
       "DeploymentCheck": {
         "type": "object",
@@ -9799,6 +10911,21 @@
           }
         ],
         "description": "The HTTP methods a capability may be bound to."
+      },
+      "ImpactSource": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "contract",
+            "description": "Measured: the public contract at the baseline against the contract now."
+          },
+          {
+            "type": "string",
+            "const": "records",
+            "description": "Claimed: the strongest impact the unreleased change records state, used because the\ncontract could not be measured."
+          }
+        ],
+        "description": "Where the impact a version was computed from came from.\n\nKept beside the impact rather than folded into it, because a reader deciding whether to\ntrust a verdict needs to know which of the two it is: a measured contract diff is\nevidence, and a record's claim is a statement somebody made."
       },
       "InspectReport": {
         "type": "object",
@@ -12229,6 +13356,739 @@
         ],
         "description": "The artifact a target and a tag name, and the directory it unpacks into."
       },
+      "ReleaseBaseline": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "$ref": "#/components/schemas/Version",
+                "description": "The version."
+              },
+              "tag": {
+                "type": "string",
+                "description": "The tag."
+              },
+              "commit": {
+                "type": "string",
+                "description": "The commit the record says it was built from."
+              },
+              "fingerprint": {
+                "type": "string",
+                "description": "The fingerprint of the contract as it stood there."
+              },
+              "state": {
+                "type": "string",
+                "const": "resolved"
+              }
+            },
+            "required": [
+              "state",
+              "version",
+              "tag",
+              "commit",
+              "fingerprint"
+            ],
+            "description": "A stable, unwithdrawn release whose tag resolves in this clone and whose contract\nsnapshot is readable at that tag."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "$ref": "#/components/schemas/Version",
+                "description": "The version."
+              },
+              "tag": {
+                "type": "string",
+                "description": "The tag."
+              },
+              "state": {
+                "type": "string",
+                "const": "predates"
+              }
+            },
+            "required": [
+              "state",
+              "version",
+              "tag"
+            ],
+            "description": "A stable release is recorded, and it was published before this repository recorded\na contract at all. Nothing is wrong: a release is complete over the set of things\nthat existed on the day it went out, and no release before the contract snapshot\nexisted can be faulted for not carrying one.\n\nThe consequence is real and is reported: there is nothing to measure against, so\nthe *first* release after the snapshot appears carries no computed impact. Every\nrelease after that one does."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "version": {
+                "$ref": "#/components/schemas/Version",
+                "description": "The version."
+              },
+              "tag": {
+                "type": "string",
+                "description": "The tag."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Why the contract could not be read there."
+              },
+              "state": {
+                "type": "string",
+                "const": "unreadable"
+              }
+            },
+            "required": [
+              "state",
+              "version",
+              "tag",
+              "reason"
+            ],
+            "description": "A stable release is recorded and its contract cannot be read at its tag, for a\nreason that is not \"it predates the snapshot\": the tag is not in this clone, or the\ndocument there is not readable.\n\nThis one is wrong. The version is known, so a minimum version is still computable,\nbut the impact is not, and a report says so rather than reporting `none` and letting\na break through."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "state": {
+                "type": "string",
+                "const": "initial"
+              }
+            },
+            "required": [
+              "state"
+            ],
+            "description": "No stable release has ever been recorded. The first release is not compared against\nanything, carries no required bump, and is whatever the tree says it is."
+          }
+        ],
+        "description": "Which release a contract is compared against, and why that one.\n\nBaseline selection is stated here and nowhere else. A shell script that picked the\nlatest tag with `sort -V` would be a second policy, and the two would disagree on the\nday a pre-release was tagged."
+      },
+      "ReleaseChange": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity, allocated once and never reused."
+          },
+          "title": {
+            "type": "string",
+            "description": "One line, present tense, as the changelog prints it."
+          },
+          "type": {
+            "$ref": "#/components/schemas/ReleaseChangeType",
+            "description": "The section it appears under."
+          },
+          "impact": {
+            "$ref": "#/components/schemas/CompatibilityImpact",
+            "description": "What it costs a caller, as the record claims. Checked against the contract diff:\na record may not understate what the contract says."
+          },
+          "released_in": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Version"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version it was published in; absent means unreleased."
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The surfaces a reader cares about."
+          },
+          "contract": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The contract entries this record accounts for, `<surface>:<id>`."
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The issues it closes."
+          },
+          "pull_requests": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The pull requests that carried it."
+          },
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The commits that carried it."
+          },
+          "adrs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The decisions behind it."
+          },
+          "migration": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The migration guidance, repository-relative. Required for a breaking change."
+          },
+          "summary": {
+            "type": "string",
+            "description": "The summary section of the body."
+          },
+          "path": {
+            "type": "string",
+            "description": "The repository-relative path of the record itself."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "type",
+          "impact",
+          "summary",
+          "path"
+        ],
+        "description": "One authored release change."
+      },
+      "ReleaseChangeType": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "added",
+            "description": "Something that did not exist before."
+          },
+          {
+            "type": "string",
+            "const": "changed",
+            "description": "Something that existed and behaves differently."
+          },
+          {
+            "type": "string",
+            "const": "deprecated",
+            "description": "Something still here and on its way out."
+          },
+          {
+            "type": "string",
+            "const": "removed",
+            "description": "Something that is gone."
+          },
+          {
+            "type": "string",
+            "const": "fixed",
+            "description": "Something that was wrong and is not."
+          },
+          {
+            "type": "string",
+            "const": "security",
+            "description": "Something that was exploitable and is not."
+          }
+        ],
+        "description": "The section of a changelog a change appears under.\n\nThe six of *Keep a Changelog*, which every reader of a changelog already knows, and no\nseventh: a vocabulary a project invents for itself is a vocabulary its readers have to\nlearn."
+      },
+      "ReleaseCheckReport": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "True when nothing stands in the way of publishing the target version."
+          },
+          "target": {
+            "$ref": "#/components/schemas/Version",
+            "description": "The version this tree would publish."
+          },
+          "readiness": {
+            "type": "string",
+            "description": "How far along the release is."
+          },
+          "summary": {
+            "type": "string",
+            "description": "One line for a person."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseDiagnostic"
+            },
+            "description": "Everything wrong, in the order it matters."
+          }
+        },
+        "required": [
+          "ok",
+          "target",
+          "readiness",
+          "summary"
+        ],
+        "description": "The verdict of every release check, and every reason it did not hold."
+      },
+      "ReleaseDiagnostic": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "$ref": "#/components/schemas/Severity",
+            "description": "Whether this stops a release."
+          },
+          "code": {
+            "type": "string",
+            "description": "The stable code, `SCREAMING_SNAKE_CASE`."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong, in one line."
+          },
+          "reproduce": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The command that shows it in full, when there is one."
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The command or edit that would change it, when there is one."
+          }
+        },
+        "required": [
+          "severity",
+          "code",
+          "message"
+        ],
+        "description": "One thing wrong, with the command that would show it and the one that would fix it.\n\nThe codes are stable: a script may match on them, and a rule's failure message may\nquote one. Nothing else in the repository defines a release diagnostic code.\n\nThe severity is the layer's own three, and only `Error` stops a release. The\ndistinction earns its place immediately: a baseline published before this repository\nrecorded a contract is a fact about history that nothing can fix, and reporting it as a\nfailure would leave the gate red forever and teach everybody to ignore it."
+      },
+      "ReleaseExplanation": {
+        "type": "object",
+        "properties": {
+          "current": {
+            "$ref": "#/components/schemas/Version",
+            "description": "What this tree would release."
+          },
+          "baseline": {
+            "$ref": "#/components/schemas/ReleaseBaseline",
+            "description": "Which release the contract was measured against."
+          },
+          "impact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompatibilityImpact"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the change costs, when it could be computed."
+          },
+          "required_bump": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionBump"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The bump the policy makes of that impact."
+          },
+          "minimum": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Version"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lowest version a release may declare."
+          },
+          "target": {
+            "$ref": "#/components/schemas/Version",
+            "description": "The version this tree would publish."
+          },
+          "policy": {
+            "type": "string",
+            "description": "The policy sentence that produced the bump, in the policy's own words."
+          },
+          "deciding": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractChange"
+            },
+            "description": "The changes that decided it: every change carrying the strongest impact found."
+          },
+          "uncompared": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The surfaces of the contract a reader would otherwise take for compared, and which\nwere not."
+          },
+          "summary": {
+            "type": "string",
+            "description": "One line a person reads first."
+          }
+        },
+        "required": [
+          "current",
+          "baseline",
+          "target",
+          "policy",
+          "summary"
+        ],
+        "description": "Why a version has to be at least what it has to be.\n\nThe whole chain in one value: the baseline it was measured against, the changes that\nwere found, the impact they add up to, the policy sentence that maps that impact to a\nbump, and the version that comes out. A reader who disagrees with the verdict can see\nexactly which step they disagree with."
+      },
+      "ReleaseManifest": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "The document's schema."
+          },
+          "version": {
+            "$ref": "#/components/schemas/Version",
+            "description": "The version."
+          },
+          "tag": {
+            "type": "string",
+            "description": "The tag: `v` and the version."
+          },
+          "previous_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Version"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version this one succeeds, when there is one."
+          },
+          "commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit it was built from, when a release record says."
+          },
+          "published_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it was published, UTC, from the release record. Absent when it has not been."
+          },
+          "compatibility": {
+            "$ref": "#/components/schemas/CompatibilityImpact",
+            "description": "What the release costs a caller."
+          },
+          "required_bump": {
+            "$ref": "#/components/schemas/VersionBump",
+            "description": "The bump that compatibility required."
+          },
+          "minimum_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Version"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lowest version it could have declared."
+          },
+          "contract": {
+            "$ref": "#/components/schemas/ReleaseManifestContract",
+            "description": "What it was measured against."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The identities of the change records it published, sorted."
+          },
+          "documentation": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The migration documents its breaking changes name, sorted."
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseManifestArtifact"
+            },
+            "description": "The artifacts it published, by name, from the release record."
+          }
+        },
+        "required": [
+          "schema",
+          "version",
+          "tag",
+          "compatibility",
+          "required_bump",
+          "contract"
+        ],
+        "description": "One release, explained."
+      },
+      "ReleaseManifestArtifact": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "The target's id in the distribution model."
+          },
+          "name": {
+            "type": "string",
+            "description": "The archive's file name."
+          },
+          "sha256": {
+            "type": "string",
+            "description": "Its SHA-256."
+          }
+        },
+        "required": [
+          "target",
+          "name",
+          "sha256"
+        ],
+        "description": "One artifact, as the manifest names it.\n\nA narrowing of the release record's own artifact: the name and the digest, which is\nwhat proves an artifact is the one this release published. The URL and the size stay in\nthe release record, which is what the installer reads."
+      },
+      "ReleaseManifestContract": {
+        "type": "object",
+        "properties": {
+          "baseline_tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The baseline release's tag, when there was one."
+          },
+          "baseline_fingerprint": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The fingerprint of the contract at the baseline."
+          },
+          "fingerprint": {
+            "type": "string",
+            "description": "The fingerprint of the contract this release publishes."
+          },
+          "changes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many contract changes the diff found."
+          }
+        },
+        "required": [
+          "fingerprint",
+          "changes"
+        ],
+        "description": "What a release was measured against."
+      },
+      "ReleasePlanReport": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "$ref": "#/components/schemas/Version",
+            "description": "The version this tree would publish."
+          },
+          "bump": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionBump"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The bump that gets there from the published release, when there is one."
+          },
+          "impact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompatibilityImpact"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the release would cost a caller."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseChange"
+            },
+            "description": "The change records that would be stamped with the target version."
+          },
+          "writes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The files `majordomus release prepare` would rewrite itself, repository-relative:\nthe canonical version and the record of every unreleased change. This is the whole\nof what preparing a release edits."
+          },
+          "regenerates": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The projections `majordomus generate` would then rewrite, repository-relative. They\nare listed so that a reviewer knows what the release commit will contain; nothing\nhere is edited by hand, and `prepare` does not write them."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseDiagnostic"
+            },
+            "description": "Everything that would stop the release, from the same checks `release check` makes."
+          }
+        },
+        "required": [
+          "target",
+          "changes",
+          "writes",
+          "regenerates"
+        ],
+        "description": "The unreleased changes, as a person planning a release reads them."
+      },
+      "ReleaseReadiness": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "nothing-to-release",
+            "description": "The tree's version equals the published one and the contract has not moved: there\nis nothing to release."
+          },
+          {
+            "type": "string",
+            "const": "bump-required",
+            "description": "The contract moved and the tree's version does not yet clear the minimum the change\nrequires. `majordomus release prepare` is the next step."
+          },
+          {
+            "type": "string",
+            "const": "blocked",
+            "description": "The version clears the minimum and something the release needs is missing — a\nchange record for a break, a migration document, a stale generated artifact."
+          },
+          {
+            "type": "string",
+            "const": "ready-to-tag",
+            "description": "Everything the repository can check holds, and nothing has been tagged."
+          },
+          {
+            "type": "string",
+            "const": "tagged",
+            "description": "A tag exists for this version and no release record does: the pipeline has not\nfinished, or did not run."
+          },
+          {
+            "type": "string",
+            "const": "published",
+            "description": "A release record exists for this version. What is published is what the record says."
+          }
+        ],
+        "description": "How far along a release is.\n\nA state machine and not a set of booleans: `is_released` beside `has_tag` beside\n`is_deployed` admits combinations that cannot happen, and every reader of them has to\nknow which. Each state here is reached from exactly one predecessor, and a report says\nwhich state it is in and what would move it on."
+      },
+      "ReleaseState": {
+        "type": "object",
+        "properties": {
+          "versions": {
+            "$ref": "#/components/schemas/VersionReport",
+            "description": "The four versions."
+          },
+          "baseline": {
+            "$ref": "#/components/schemas/ReleaseBaseline",
+            "description": "Which release the contract was compared against."
+          },
+          "impact": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompatibilityImpact"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the change costs, when it could be decided."
+          },
+          "impact_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ImpactSource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether that impact was measured from the contract or claimed by the records."
+          },
+          "required_bump": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VersionBump"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The bump that impact requires under this project's policy."
+          },
+          "minimum_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Version"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lowest version a release carrying this change may declare."
+          },
+          "target_version": {
+            "$ref": "#/components/schemas/Version",
+            "description": "The version this tree would publish: the source version, once it clears the\nminimum, and the minimum otherwise."
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/ReleaseReadiness",
+            "description": "How far along the release is."
+          },
+          "contract_changes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many changes each impact accounts for."
+          },
+          "unreleased_changes": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many change records are unreleased."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseDiagnostic"
+            },
+            "description": "Everything wrong, in the order it matters."
+          }
+        },
+        "required": [
+          "versions",
+          "baseline",
+          "target_version",
+          "readiness",
+          "contract_changes",
+          "unreleased_changes"
+        ],
+        "description": "The whole release state, as every surface reads it."
+      },
       "ReleaseView": {
         "type": "object",
         "properties": {
@@ -14529,6 +16389,114 @@
         ],
         "description": "In or out."
       },
+      "Version": {
+        "type": "string",
+        "title": "Version",
+        "description": "A semantic version: major.minor.patch, with an optional pre-release and build metadata.",
+        "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?(\\+[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$",
+        "examples": [
+          "0.3.1",
+          "1.0.0-rc.1"
+        ]
+      },
+      "VersionAgreement": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "published",
+            "description": "It runs the published release."
+          },
+          {
+            "type": "string",
+            "const": "source",
+            "description": "It runs what this tree would release, which is not published."
+          },
+          {
+            "type": "string",
+            "const": "drift",
+            "description": "It runs something else: this is drift, and it is what the display must show."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "Nothing has reported a version. Not the same as drift, and not the same as agreement."
+          }
+        ],
+        "description": "How a deployed version stands against the repository's."
+      },
+      "VersionBump": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "none",
+            "description": "Nothing moves: the version stays as it is."
+          },
+          {
+            "type": "string",
+            "const": "patch",
+            "description": "The third component, and the pre-release and build metadata are dropped."
+          },
+          {
+            "type": "string",
+            "const": "minor",
+            "description": "The second component; the third becomes zero."
+          },
+          {
+            "type": "string",
+            "const": "major",
+            "description": "The first component; the others become zero."
+          }
+        ],
+        "description": "Which component a release moves.\n\nDistinct from [`super::diff::CompatibilityImpact`] on purpose: the impact is what was\nobserved in the contract, the bump is what the policy makes of it. Collapsing them\nwould lose the observation, and the observation is what an explanation is made of."
+      },
+      "VersionReport": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "$ref": "#/components/schemas/Version",
+            "description": "What this tree would release: the crate's version, compiled in."
+          },
+          "published": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Version"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What an unpinned installation resolves to, when a stable release is recorded."
+          },
+          "running": {
+            "$ref": "#/components/schemas/Version",
+            "description": "What the process answering this is."
+          },
+          "deployed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeployedVersion"
+            },
+            "description": "What each declared deployment reports, when anything says."
+          },
+          "unreleased": {
+            "type": "boolean",
+            "description": "True when the source version is ahead of the published one: the tree holds a\nrelease that has not gone out."
+          },
+          "divergences": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every disagreement worth a person's attention, in the order they matter."
+          }
+        },
+        "required": [
+          "source",
+          "running",
+          "unreleased"
+        ],
+        "description": "The four versions and whether they agree."
+      },
       "WaiverReason": {
         "oneOf": [
           {
@@ -14890,7 +16858,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 0.3.1",
+    "generator": "majordomus-cli 0.3.2",
     "infrastructure": [
       "/",
       "/openapi.json",
@@ -14923,5 +16891,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.3.1"
+  "x-majordomus-generator": "majordomus-cli 0.3.2"
 }

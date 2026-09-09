@@ -626,6 +626,142 @@
       "tool": "majordomus_product_validate"
     },
     {
+      "api_anchor": "/docs/api/#op-release-changelog",
+      "claims": [],
+      "cli": "majordomus release changelog",
+      "id": "release.changelog",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-changelog/",
+      "slug": "release-changelog",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "The changelog",
+      "tool": "majordomus_changelog"
+    },
+    {
+      "api_anchor": "/docs/api/#op-release-check",
+      "claims": [],
+      "cli": "majordomus release check",
+      "id": "release.check",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-check/",
+      "slug": "release-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Whether a release may go out",
+      "tool": "majordomus_release_check"
+    },
+    {
+      "api_anchor": "/docs/api/#op-release-diff",
+      "claims": [],
+      "cli": "majordomus release diff",
+      "id": "release.diff",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-diff/",
+      "slug": "release-diff",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "The public contract diff",
+      "tool": "majordomus_release_diff"
+    },
+    {
+      "api_anchor": "/docs/api/#op-release-explain",
+      "claims": [],
+      "cli": "majordomus release explain",
+      "id": "release.explain",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-explain/",
+      "slug": "release-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Why this version",
+      "tool": "majordomus_release_explain"
+    },
+    {
+      "api_anchor": "/docs/api/#op-release-manifest",
+      "claims": [],
+      "cli": "majordomus release manifest",
+      "id": "release.manifest",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-manifest/",
+      "slug": "release-manifest",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "A release manifest",
+      "tool": "majordomus_release_manifest"
+    },
+    {
+      "api_anchor": "/docs/api/#op-release-plan",
+      "claims": [],
+      "cli": "majordomus release plan",
+      "id": "release.plan",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-plan/",
+      "slug": "release-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "What a release would do",
+      "tool": "majordomus_release_plan"
+    },
+    {
+      "api_anchor": "/docs/api/#op-release-status",
+      "claims": [],
+      "cli": "majordomus release status",
+      "id": "release.status",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": "majordomus://release",
+      "route": "/registry/capabilities/release-status/",
+      "slug": "release-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Release state",
+      "tool": "majordomus_release_status"
+    },
+    {
+      "api_anchor": "/docs/api/#op-release-version",
+      "claims": [],
+      "cli": "majordomus release version",
+      "id": "release.version",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-version/",
+      "slug": "release-version",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "The four versions",
+      "tool": "majordomus_version"
+    },
+    {
       "api_anchor": "/docs/api/#op-repository-info",
       "claims": [],
       "cli": null,
@@ -1115,11 +1251,11 @@
     ]
   },
   "counts": {
-    "capabilities": 49,
+    "capabilities": 57,
     "claims": 35,
-    "modules": 18
+    "modules": 19
   },
-  "generator": "majordomus-cli 0.3.1",
+  "generator": "majordomus-cli 0.3.2",
   "modules": [
     {
       "capabilities": [
@@ -1457,6 +1593,57 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
       "title": "Product"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "release.changelog",
+          "route": "/registry/capabilities/release-changelog/",
+          "slug": "release-changelog"
+        },
+        {
+          "id": "release.check",
+          "route": "/registry/capabilities/release-check/",
+          "slug": "release-check"
+        },
+        {
+          "id": "release.diff",
+          "route": "/registry/capabilities/release-diff/",
+          "slug": "release-diff"
+        },
+        {
+          "id": "release.explain",
+          "route": "/registry/capabilities/release-explain/",
+          "slug": "release-explain"
+        },
+        {
+          "id": "release.manifest",
+          "route": "/registry/capabilities/release-manifest/",
+          "slug": "release-manifest"
+        },
+        {
+          "id": "release.plan",
+          "route": "/registry/capabilities/release-plan/",
+          "slug": "release-plan"
+        },
+        {
+          "id": "release.status",
+          "route": "/registry/capabilities/release-status/",
+          "slug": "release-status"
+        },
+        {
+          "id": "release.version",
+          "route": "/registry/capabilities/release-version/",
+          "slug": "release-version"
+        }
+      ],
+      "claims": [],
+      "id": "release",
+      "route": "/registry/modules/release/",
+      "slug": "release",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "title": "Release"
     },
     {
       "capabilities": [

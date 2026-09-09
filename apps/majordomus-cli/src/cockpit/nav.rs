@@ -46,6 +46,8 @@ pub enum Area {
     Artifacts,
     /// The HTTP and MCP surfaces.
     Api,
+    /// What this repository would publish next, and what it published.
+    Release,
     /// A page that belongs to no area (search results, an error).
     None,
 }
@@ -134,6 +136,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "API",
             href: "/cockpit/api",
             area: Area::Api,
+        },
+        AreaInfo {
+            id: "release",
+            label: "Release",
+            href: "/cockpit/release",
+            area: Area::Release,
         },
     ]
 }

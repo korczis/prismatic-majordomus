@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.3.1
+# Generator: majordomus-cli 0.3.2
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.3.1
-version: "0.3.1"
+generator: majordomus-cli 0.3.2
+version: "0.3.2"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -891,6 +891,8 @@ cli:
               help: "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/"
             - name: web
               help: "`docs/generated/web.json`: the resolved web topology the site's route reference renders"
+            - name: release
+              help: "The public contract snapshot, CHANGELOG.md, the release manifests and the version line the shell tool prints, from the release state"
           defaults:
             - all
         - name: check
@@ -4810,6 +4812,860 @@ cli:
               command: majordomus distribution build
               setup: []
               expectation: "exits 0; prints version, target, commit"
+          subcommands: []
+    - path:
+        - majordomus
+        - release
+      route: /docs/cli/release/
+      executable: true
+      usage: "majordomus release [OPTIONS] [COMMAND]"
+      about: "Release identity: the four versions and where they disagree, why the next version must be what it must be, the public contract diff, the changelog every surface renders, and the preparation of a release"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: release-default-status
+          title: Where this repository stands with its next release
+          description: "`release` with nothing after it reports the state, because the state is what a person wants when they ask about a release. Every value is derived: the baseline is the release an unpinned installation resolves to, the compatibility is the diff between the committed public contract and the same document at that baseline, and the minimum version is what the release policy makes of it."
+          argv:
+            - release
+          command: majordomus release
+          setup: []
+          expectation: "exits 0; prints source version, target version, readiness"
+      subcommands:
+        - path:
+            - majordomus
+            - release
+            - version
+          route: /docs/cli/release/version/
+          executable: true
+          usage: "majordomus release version [OPTIONS]"
+          about: "The four versions — what this tree would release, what is published, what this process is, what each deployment reports — and every disagreement between them"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-version
+              title: "The four versions, and every disagreement between them"
+              description: "What this tree would release, what an unpinned installation resolves to, what this process is, and what each declared deployment reports. They are four different facts and this is the one answer that refuses to collapse them; no network is reached, so a deployment that has reported nothing says so rather than answering null."
+              argv:
+                - release
+                - version
+              command: majordomus release version
+              setup: []
+              expectation: "exits 0; prints source, published, running"
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - status
+          route: /docs/cli/release/status/
+          executable: true
+          usage: "majordomus release status [OPTIONS]"
+          about: "The whole release state: versions, baseline, compatibility, minimum version, readiness and every diagnostic"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-status-json
+              title: "The whole release state, as every surface reads it"
+              description: "One domain model behind every projection: this document is what `GET /api/v1/release/status` returns, what the `majordomus_release_status` tool answers and what the Cockpit's release page renders. Nothing computes a release fact of its own."
+              argv:
+                - release
+                - status
+                - "--format"
+                - json
+              command: majordomus release status --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /versions/source, /target_version, /readiness"
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - explain
+          route: /docs/cli/release/explain/
+          executable: true
+          usage: "majordomus release explain [OPTIONS]"
+          about: "Why the next version must be at least what it must be, step by step from the contract change to the policy"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-explain
+              title: Why the next version must be at least what it must be
+              description: "The chain, step by step: the release it was measured against, the contract changes that decided it, the impact they add up to, the policy sentence that maps that impact to a bump, and the version that comes out. A reader who disagrees with the verdict can see which step they disagree with."
+              argv:
+                - release
+                - explain
+              command: majordomus release explain
+              setup: []
+              expectation: "exits 0; prints Required bump, Policy, Baseline"
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - diff
+          route: /docs/cli/release/diff/
+          executable: true
+          usage: "majordomus release diff [OPTIONS]"
+          about: Every difference between the public contract at the last published release and the contract this tree states
+          args:
+            - name: impact
+              long: impact
+              positional: false
+              help: Only the changes carrying this impact
+              value_name: IMPACT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: Only the changes on this surface
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-diff-breaking
+              title: "What a release would cost a caller, entry by entry"
+              description: "Every difference between the public contract at the last published release and the contract this tree states, narrowed here to the breaking ones. The contract is the capabilities with their input and output schemas and every projection they declare, the runnable commands with their arguments, the document schemas a repository's own files are validated against, and the platforms a release publishes for."
+              argv:
+                - release
+                - diff
+                - "--impact"
+                - breaking
+              command: majordomus release diff --impact breaking
+              setup: []
+              expectation: exits 0
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - changelog
+          route: /docs/cli/release/changelog/
+          executable: true
+          usage: "majordomus release changelog [OPTIONS]"
+          about: "The changelog: the unreleased changes and every published version's, as CHANGELOG.md carries them"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-changelog
+              title: "The changelog, from the records and from nothing else"
+              description: "The same document `CHANGELOG.md` carries, rendered from the change records under `.ai/repo/changes/` and the release records beside them. The file, the release notes, the Cockpit, the site and this command are five renderings of those records; none of them is authored."
+              argv:
+                - release
+                - changelog
+              command: majordomus release changelog
+              setup: []
+              expectation: "exits 0; prints # Changelog"
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - manifest
+          route: /docs/cli/release/manifest/
+          executable: true
+          usage: "majordomus release manifest [OPTIONS]"
+          about: "One release explained: compatibility, contract fingerprints, changes, migration documents and artifacts"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-manifest
+              title: "One release, explained"
+              description: "The compatibility it carried, the release it succeeded, the contract fingerprints on both sides, the changes it published, the migration documents it requires and the artifacts it uploaded with their digests — enough to explain a release to somebody who was not there, and to prove that the tag, the version, the artifacts and the runtime describe one release."
+              argv:
+                - release
+                - manifest
+              command: majordomus release manifest
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /version, /tag, /compatibility, /contract/fingerprint"
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - plan
+          route: /docs/cli/release/plan/
+          executable: true
+          usage: "majordomus release plan [OPTIONS]"
+          about: "What `release prepare` would write and what it would publish, without writing anything"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-plan
+              title: "What preparing a release would write, without writing it"
+              description: "The target version, the bump that gets there, the change records it would stamp, every file it would rewrite and everything that would stop it. The planning and the doing read the same engine, so a plan is a description of the act rather than a simulation of it."
+              argv:
+                - release
+                - plan
+              command: majordomus release plan
+              setup: []
+              expectation: "exits 0; prints target version, Would write"
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - check
+          route: /docs/cli/release/check/
+          executable: true
+          usage: "majordomus release check [OPTIONS]"
+          about: Every release invariant this repository can decide locally; exit 10 when one does not hold
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-check
+              title: Whether a release may go out
+              description: "Every release invariant this repository can decide locally: that the version clears the minimum its contract change requires, that every breaking change is named by a change record, that a breaking change carries migration guidance, and that the committed contract is the contract this build states. Exits 10 when one does not hold, and each failure names the command that shows it and the one that fixes it."
+              argv:
+                - release
+                - check
+              command: majordomus release check
+              setup: []
+              expectation: exits 0
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - prepare
+          route: /docs/cli/release/prepare/
+          executable: true
+          usage: "majordomus release prepare [OPTIONS]"
+          about: "Set the canonical version and regenerate everything derived from it, so that a release can be reviewed as a commit"
+          args:
+            - name: bump
+              long: bump
+              positional: false
+              help: "The bump to apply to the published release, which must be at least the one required"
+              value_name: BUMP
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: dry_run
+              long: dry-run
+              positional: false
+              help: Report what would be written and write nothing
+              value_name: DRY_RUN
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-prepare-dry-run
+              title: "Preparing a release, without touching the tree"
+              description: "`--dry-run` reports exactly what `prepare` would write — the canonical version and the stamp on every unreleased change record — and writes nothing. Everything else a release moves is a projection, and `majordomus generate` is the one thing that writes a projection."
+              argv:
+                - release
+                - prepare
+                - "--dry-run"
+              command: majordomus release prepare --dry-run
+              setup: []
+              expectation: exits 0; prints nothing was written
           subcommands: []
     - path:
         - majordomus

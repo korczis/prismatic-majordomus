@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# generation-converges — generating twice changes nothing the second time.
+#
+# `derive-check` asks whether the committed artifacts match what the generator would write
+# *now*. That is not the same question as whether the generator has a fixpoint, and the
+# difference is a real defect this repository shipped: a release manifest carried the
+# fingerprint of the contract snapshot, and the snapshot was written by the same run — so
+# every generation produced a manifest describing the contract as it stood *before* that
+# generation. `derive-check` passed on a tree nobody had touched and failed on a tree that
+# had just been generated, which reads as flakiness and is not.
+#
+# The property that catches it in one line: generate, then check. If the generator is a
+# fixpoint the check passes; if any artifact reads an artifact the same run writes, it does
+# not.
+#
+#   scripts/ci/generation-converges              prove it here
+#   MJ_ROOT=<dir> scripts/ci/generation-converges  prove it in another tree (the case does)
+#
+# It writes: generation is what it does. Run it where a dirty tree is acceptable — CI on a
+# fresh checkout, or a worktree whose generated files are already current. The tree is left
+# generated, which is the state `derive` would have left it in anyway.
+#
+# Exit: 0 the generator is a fixpoint · 10 it is not · 12 the executable is unusable.
+set -eu
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+
+MJ="$ROOT/bin/majordomus-cli"
+[ -x "$MJ" ] || { printf 'generation-converges: no %s\n' "$MJ" >&2; exit 12; }
+
+# MAJORDOMUS_SHARE inherited from another checkout points the generator at that tree's
+# data directory, which makes this tree's projections look stale for a reason that has
+# nothing to do with convergence.
+run() { env -u MAJORDOMUS_SHARE "$MJ" "$@"; }
+
+printf 'generation-converges: generating once\n'
+run generate --repo "$ROOT" >/dev/null || {
+  printf 'generation-converges: FAIL the generator did not run\n' >&2
+  exit 10
+}
+
+printf 'generation-converges: generating again and comparing\n'
+if run generate --repo "$ROOT" --check >/dev/null 2>&1; then
+  printf 'generation-converges: OK   the generator is a fixpoint\n'
+  exit 0
+fi
+
+printf 'generation-converges: FAIL generating twice did not converge:\n' >&2
+run generate --repo "$ROOT" --check 2>&1 | sed 's/^/  /' >&2
+cat >&2 <<'WHY'
+
+  An artifact that differs here is written from a value that another artifact of the same
+  run also writes. The fix is not to generate a third time: it is to build that value once
+  and hand it to both, the way `release_artifacts` hands the contract snapshot it just
+  built to the engine that renders the manifests instead of letting the engine read the
+  snapshot back off disk.
+WHY
+exit 10

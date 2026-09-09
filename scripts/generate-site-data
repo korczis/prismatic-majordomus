@@ -2,7 +2,7 @@
 # generate-site-data — normalise canonical repository data into a stable site data schema.
 #
 #   canonical                              derived (site/data/generated/)
-#   bin/majordomus (MJ_VERSION)        ->  project.json
+#   share/version.txt (generated)      ->  project.json
 #   share/skeleton/profiles/*.yaml     ->  profiles.json
 #   share/skeleton/policy.yaml         ->  policy.json
 #   docs/CLAIMS.yaml                   ->  capabilities.json
@@ -197,7 +197,10 @@ jq_inplace() {
 mj_phase_end "gen:inputs" "$GEN_T0"
 # ---------------------------------------------------------------- project.json
 GEN_T0="$(mj_phase_begin "gen:project.json")"
-VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus" | head -1)"
+# The version the site shows, from the one place it is written: share/version.txt, which
+# `majordomus generate --target release` projects from the crate's manifest. The navbar and
+# the API reference now descend from the same authority; they used to descend from two.
+VERSION="$(sed -n 's/^version=//p' "$ROOT/share/version.txt" | head -1)"
 TAGLINE="$(grep -m1 -E '^\*\*A lightweight' "$ROOT/README.md" | sed 's/\*\*//g')"
 LICENSE_NAME="$(head -1 "$ROOT/LICENSE" | sed 's/ License$//')"
 COMMANDS="$(sed -n '/^usage: majordomus <command>/,/^global options:/p' "$ROOT/bin/majordomus" \

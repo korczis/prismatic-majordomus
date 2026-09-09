@@ -1,0 +1,3008 @@
+# GENERATED FILE — DO NOT EDIT DIRECTLY
+# Source: the capability registry, the command graph, the document schemas and the distribution model, normalised; regenerate with `majordomus generate`
+# Generator: majordomus-cli 0.3.2
+schema: contract/v1
+generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry, the command graph, the document schemas and the distribution model, normalised; regenerate with `majordomus generate`"
+generator: majordomus-cli 0.3.2
+entries:
+  - surface: capability
+    id: artifacts.list
+    facts:
+      "exposure.http": GET /api/v1/artifacts
+      "exposure.mcp.resource": majordomus://artifacts
+      "exposure.mcp.tool": majordomus_artifacts
+      "input.document": "null|string optional"
+      "input.format": "const:json|const:markdown|const:text|const:yaml|null optional"
+      kind: query
+      "output.artifacts": "array<object> required"
+      "output.documents": "array<object> required"
+      "output.manifest": string required
+      "output.present": boolean required
+      "output.regenerate": string required
+      "output.schema": string required
+      "output.tallies": object required
+      "output.tallies.artifacts": integer required
+      "output.tallies.current": integer required
+      "output.tallies.documents": integer required
+      "output.tallies.missing": integer required
+      "output.tallies.present": integer required
+      "output.tallies.stale": integer required
+      "output.verify": string required
+  - surface: capability
+    id: capabilities.describe
+    facts:
+      "exposure.cli": capabilities describe
+      "exposure.http": GET /api/v1/capability
+      "exposure.mcp.tool": majordomus_capability
+      "input.id": string required
+      kind: query
+      "output.availability": "const:always|const:authenticated|const:build_time|const:runtime required"
+      "output.benchmark": object required
+      "output.cache": object required
+      "output.description": string required
+      "output.exposure": object required
+      "output.exposure.cli": "null|object optional"
+      "output.exposure.http": "null|object optional"
+      "output.exposure.mcp": "null|object optional"
+      "output.id": string required
+      "output.input": object required
+      "output.input.name": "null|string optional"
+      "output.input.schema": any required
+      "output.kind": "const:command|const:query|const:resource required"
+      "output.module": string required
+      "output.output": object required
+      "output.output.name": "null|string optional"
+      "output.output.schema": any required
+      "output.provenance": object required
+      "output.stability": "const:behaviorally_verified|const:experimental|const:implemented|const:planned|const:unsupported required"
+      "output.tags": "array<string> optional"
+      "output.title": string required
+      "output.visibility": "const:developer|const:internal|const:public required"
+  - surface: capability
+    id: capabilities.list
+    facts:
+      "exposure.cli": capabilities list
+      "exposure.http": GET /api/v1/capabilities
+      "exposure.mcp.tool": majordomus_capabilities
+      "input.exposure": "null|string optional"
+      "input.kind": "null|string optional"
+      kind: query
+      "output.capabilities": "array<object> required"
+      "output.count": integer required
+      "output.summary": object required
+      "output.summary.benchmark_required": integer required
+      "output.summary.benchmark_waived": integer required
+      "output.summary.builtin": integer required
+      "output.summary.by_kind": object required
+      "output.summary.by_stability": object required
+      "output.summary.cached": integer required
+      "output.summary.cli_commands": integer required
+      "output.summary.declarative": integer required
+      "output.summary.http_routes": integer required
+      "output.summary.mcp_resources": integer required
+      "output.summary.mcp_tools": integer required
+      "output.summary.modules": integer required
+      "output.summary.total": integer required
+  - surface: capability
+    id: capabilities.projections
+    facts:
+      "exposure.cli": capabilities projections
+      "exposure.http": GET /api/v1/capabilities/projections
+      "exposure.mcp.tool": majordomus_projections
+      "input.module": "null|string optional"
+      "input.unmet": boolean optional
+      kind: query
+      "output.rows": "array<object> required"
+      "output.unbacked": "array<string> required"
+  - surface: capability
+    id: commands.get
+    facts:
+      "exposure.http": GET /api/v1/command
+      "exposure.mcp.tool": majordomus_command
+      "input.id": string required
+      kind: query
+      "output.aliases": "array<string> optional"
+      "output.arguments": "array<object> required"
+      "output.availability": object required
+      "output.availability.available": boolean required
+      "output.availability.reason": "null|string optional"
+      "output.availability.requires": "array<const:executable|const:layer|const:repository|const:rust_toolchain|const:site|const:task|const:workflow_runner> optional"
+      "output.deprecation": "null|object optional"
+      "output.description": "null|string optional"
+      "output.effect": "const:destructive|const:local_mutation|const:network_mutation|const:read_only|const:repository_mutation required"
+      "output.entrypoint": "boolean|null optional"
+      "output.execution": object required
+      "output.execution.argv": "array<string> required"
+      "output.execution.origin": "const:executable|const:tool|const:workflow required"
+      "output.group": "null|string optional"
+      "output.id": string required
+      "output.interactivity": "const:interactive|const:long_running|const:non_interactive required"
+      "output.invocation": string required
+      "output.origin": "const:executable|const:tool|const:workflow required"
+      "output.path": "array<string> required"
+      "output.projections": object required
+      "output.projections.cli": "null|string optional"
+      "output.projections.cockpit": "null|string optional"
+      "output.projections.docs": string required
+      "output.projections.http": "null|string optional"
+      "output.projections.mcp": "null|string optional"
+      "output.projections.withheld": "null|string optional"
+      "output.projections.workflow": "null|string optional"
+      "output.provenance": object required
+      "output.provenance.capability": "null|string optional"
+      "output.provenance.declared_in": string required
+      "output.provenance.read_by": "null|string optional"
+      "output.runnable": boolean required
+      "output.stability": "const:behaviorally_verified|const:experimental|const:implemented|const:planned|const:unsupported required"
+      "output.summary": string required
+      "output.tags": "array<string> optional"
+  - surface: capability
+    id: commands.graph
+    facts:
+      "exposure.http": GET /api/v1/commands/graph
+      "exposure.mcp.tool": majordomus_command_graph
+      kind: query
+      "output.errors": integer required
+      "output.graph": object required
+      "output.graph.commands": "array<object> required"
+      "output.graph.diagnostics": "array<object> required"
+      "output.graph.fingerprint": string required
+      "output.graph.schema": string required
+  - surface: capability
+    id: commands.list
+    facts:
+      "exposure.http": GET /api/v1/commands
+      "exposure.mcp.tool": majordomus_commands
+      "input.effect": "null|string optional"
+      "input.origin": "null|string optional"
+      "input.search": "null|string optional"
+      kind: query
+      "output.commands": "array<object> required"
+      "output.fingerprint": string required
+      "output.schema": string required
+      "output.total": integer required
+  - surface: capability
+    id: continuity.state
+    facts:
+      "exposure.http": GET /api/v1/continuity
+      "exposure.mcp.resource": majordomus://continuity
+      "exposure.mcp.tool": majordomus_continuity
+      kind: query
+      "output.blockers": "array<string> optional"
+      "output.branch": string required
+      "output.checkpoint": "null|object optional"
+      "output.findings": "array<string> optional"
+      "output.handover": "null|object optional"
+      "output.head": string optional
+      "output.present": boolean required
+      "output.session": "null|object optional"
+      "output.tallies": object required
+      "output.task": "null|object optional"
+      "output.working_tree": string optional
+      "output.worktree": string required
+  - surface: capability
+    id: deploy.check
+    facts:
+      "exposure.http": GET /api/v1/deployments/check
+      "exposure.mcp.tool": majordomus_deploy_check
+      kind: query
+      "output.decided": integer required
+      "output.ok": boolean required
+      "output.refusals": "array<object> required"
+  - surface: capability
+    id: deploy.get
+    facts:
+      "exposure.http": GET /api/v1/deployment
+      "exposure.mcp.tool": majordomus_deployment
+      "input.id": string required
+      kind: query
+      "output.application": string required
+      "output.budgets": object optional
+      "output.budgets.binary_bytes": "integer|null optional"
+      "output.budgets.blocking_check_ms": "integer|null optional"
+      "output.budgets.build_context_bytes": "integer|null optional"
+      "output.budgets.cold_start_ms": "integer|null optional"
+      "output.budgets.image_bytes": "integer|null optional"
+      "output.budgets.request_p99_ms": "integer|null optional"
+      "output.budgets.resident_memory_mb": "integer|null optional"
+      "output.build": object required
+      "output.build.binary": string required
+      "output.build.inputs": "array<string> required"
+      "output.build.package": string required
+      "output.build.profile": string required
+      "output.build.site": "null|string optional"
+      "output.created_at": "null|string optional"
+      "output.description": "null|string optional"
+      "output.file": string required
+      "output.health": object required
+      "output.health.grace_seconds": "integer|null optional"
+      "output.health.interval_seconds": "integer|null optional"
+      "output.health.liveness": string required
+      "output.health.readiness": string required
+      "output.health.timeout_seconds": "integer|null optional"
+      "output.id": string required
+      "output.kind": string required
+      "output.listen": object required
+      "output.listen.interface": "const:all|const:loopback required"
+      "output.listen.port": integer required
+      "output.machines": object required
+      "output.machines.autostart": boolean required
+      "output.machines.autostop": boolean required
+      "output.machines.count": integer required
+      "output.machines.min_running": integer required
+      "output.provider": object required
+      "output.provider.fly": "null|object optional"
+      "output.provider.name": const:fly required
+      "output.region": string required
+      "output.resources": object required
+      "output.resources.cpu_kind": "const:performance|const:shared required"
+      "output.resources.cpus": integer required
+      "output.resources.memory_mb": integer required
+      "output.schema": string required
+      "output.status": "const:active|const:declared|const:retired|null optional"
+      "output.title": string required
+      "output.updated_at": "null|string optional"
+  - surface: capability
+    id: deploy.list
+    facts:
+      "exposure.http": GET /api/v1/deployments
+      "exposure.mcp.resource": majordomus://deployments
+      "exposure.mcp.tool": majordomus_deployments
+      kind: query
+      "output.count": integer required
+      "output.deployments": "array<object> required"
+      "output.unreadable": "array<object> optional"
+  - surface: capability
+    id: directories.list
+    facts:
+      "exposure.http": GET /api/v1/directories
+      "exposure.mcp.resource": majordomus://directories
+      "exposure.mcp.tool": majordomus_directories
+      "input.effective": "boolean|null optional"
+      "input.path": "null|string optional"
+      "input.state": "const:documented|const:exempt|const:owed|null optional"
+      kind: query
+      "output.directories": "array<object> required"
+      "output.root": string required
+      "output.tallies": object required
+      "output.tallies.directories": integer required
+      "output.tallies.documented": integer required
+      "output.tallies.exempt": integer required
+      "output.tallies.owed": integer required
+  - surface: capability
+    id: distribution.artifact
+    facts:
+      "exposure.cli": distribution artifact
+      "exposure.http": GET /api/v1/distribution/artifact
+      "exposure.mcp.tool": majordomus_artifact
+      "input.tag": string required
+      "input.target": string required
+      kind: query
+      "output.name": string required
+      "output.root": string required
+      "output.rust_target": string required
+      "output.tag": string required
+      "output.target": string required
+      "output.url": string required
+  - surface: capability
+    id: distribution.build
+    facts:
+      "exposure.cli": distribution build
+      "exposure.http": GET /api/v1/distribution/build
+      "exposure.mcp.tool": majordomus_build
+      kind: query
+      "output.commit": string required
+      "output.distribution_target": "null|string optional"
+      "output.profile": string required
+      "output.target": string required
+      "output.version": string required
+  - surface: capability
+    id: distribution.model
+    facts:
+      "exposure.cli": distribution show
+      "exposure.http": GET /api/v1/distribution
+      "exposure.mcp.tool": majordomus_distribution
+      kind: query
+      "output.binary": string required
+      "output.checksum": string required
+      "output.install_and_init_command": string required
+      "output.install_command": string required
+      "output.install_dir": string required
+      "output.installer_url": string required
+      "output.latest_url": string required
+      "output.next_command": string required
+      "output.prefix": string required
+      "output.repository": string required
+      "output.supported": integer required
+      "output.targets": "array<object> required"
+  - surface: capability
+    id: distribution.releases
+    facts:
+      "exposure.cli": distribution releases
+      "exposure.http": GET /api/v1/distribution/releases
+      "exposure.mcp.tool": majordomus_releases
+      kind: query
+      "output.count": integer required
+      "output.latest": "null|object optional"
+      "output.releases": "array<object> required"
+  - surface: capability
+    id: distribution.status
+    facts:
+      "exposure.cli": distribution status
+      "exposure.http": GET /api/v1/distribution/status
+      "exposure.mcp.tool": majordomus_install_status
+      kind: query
+      "output.checks": "array<object> required"
+      "output.install_command": string required
+      "output.installable": boolean required
+      "output.installer_url": string required
+      "output.latest_url": string required
+      "output.local_version": string required
+      "output.published_artifacts": integer required
+      "output.required_targets": integer required
+      "output.stable_tag": "null|string optional"
+      "output.summary": string required
+  - surface: capability
+    id: environment.explain
+    facts:
+      "exposure.http": GET /api/v1/environment/explain
+      "exposure.mcp.tool": majordomus_environment_explain
+      "input.field": "null|string optional"
+      kind: query
+      "output.fields": "array<object> required"
+      "output.resolution": "const:fast|const:full required"
+  - surface: capability
+    id: environment.status
+    facts:
+      "exposure.http": GET /api/v1/environment
+      "exposure.mcp.resource": majordomus://environment
+      "exposure.mcp.tool": majordomus_environment
+      "input.probe_services": boolean optional
+      kind: query
+      "output.diagnostics": "array<object> required"
+      "output.generated_at": string required
+      "output.layer": object required
+      "output.layer.capabilities": "integer|null optional"
+      "output.layer.degraded": "boolean|null optional"
+      "output.layer.invalid": "integer|null optional"
+      "output.layer.kinds": "array<object> optional"
+      "output.layer.objects": "integer|null optional"
+      "output.layer.state": "const:cached|const:resolved|const:unavailable required"
+      "output.project": object required
+      "output.project.commit": string required
+      "output.project.license": string required
+      "output.project.name": string required
+      "output.project.profile": string required
+      "output.project.repository": string required
+      "output.project.summary": string required
+      "output.project.target": string required
+      "output.project.version": string required
+      "output.provenance": "array<object> required"
+      "output.providers": "array<object> required"
+      "output.repository": object required
+      "output.repository.layer_schema": string required
+      "output.repository.linked_worktree": boolean required
+      "output.repository.local_path": string required
+      "output.repository.name": string required
+      "output.repository.root": string required
+      "output.repository.sections": object required
+      "output.resolution": "const:fast|const:full required"
+      "output.schema": string required
+      "output.services": "array<object> required"
+      "output.toolchains": "array<object> required"
+      "output.vcs": object required
+      "output.workflows": object required
+      "output.workflows.entrypoints": "array<object> optional"
+      "output.workflows.source": "null|string optional"
+      "output.workflows.state": "const:cached|const:resolved|const:unavailable required"
+      "output.workflows.workflows": "array<object> optional"
+  - surface: capability
+    id: graph.get
+    facts:
+      "exposure.http": GET /api/v1/graph
+      "exposure.mcp.tool": majordomus_graph
+      "input.id": string required
+      kind: query
+      "output.description": string required
+      "output.edge_kinds": object required
+      "output.edges": "array<object> required"
+      "output.id": string required
+      "output.metadata": object required
+      "output.metadata.acyclic": boolean required
+      "output.metadata.edges": integer required
+      "output.metadata.nodes": integer required
+      "output.metadata.truncated": boolean required
+      "output.node_kinds": object required
+      "output.nodes": "array<object> required"
+      "output.source": string required
+      "output.title": string required
+  - surface: capability
+    id: graph.list
+    facts:
+      "exposure.http": GET /api/v1/graphs
+      "exposure.mcp.resource": majordomus://graphs
+      "exposure.mcp.tool": majordomus_graphs
+      kind: query
+      "output.count": integer required
+      "output.graphs": "array<object> required"
+  - surface: capability
+    id: health.live
+    facts:
+      "exposure.http": GET /api/v1/live
+      kind: query
+      "output.alive": boolean required
+      "output.version": string required
+  - surface: capability
+    id: health.ready
+    facts:
+      "exposure.http": GET /api/v1/ready
+      kind: query
+      "output.capabilities": integer required
+      "output.layer": "const:fail|const:ok|const:unknown|const:warn required"
+      "output.objects": integer required
+      "output.ready": boolean required
+      "output.version": string required
+  - surface: capability
+    id: health.report
+    facts:
+      "exposure.http": GET /api/v1/health
+      "exposure.mcp.resource": majordomus://health
+      "exposure.mcp.tool": majordomus_health
+      kind: query
+      "output.checks": "array<object> required"
+      "output.status": "const:fail|const:ok|const:unknown|const:warn required"
+      "output.tallies": object required
+  - surface: capability
+    id: objects.get
+    facts:
+      "exposure.http": GET /api/v1/object
+      "exposure.mcp.tool": majordomus_get
+      "input.uri": string required
+      kind: query
+  - surface: capability
+    id: objects.list
+    facts:
+      "exposure.http": GET /api/v1/objects
+      "exposure.mcp.tool": majordomus_list
+      "input.kind": "null|string optional"
+      "input.tag": "null|string optional"
+      kind: query
+      "output.count": integer required
+      "output.objects": "array<object> required"
+  - surface: capability
+    id: objects.search
+    facts:
+      "exposure.http": GET /api/v1/search
+      "exposure.mcp.tool": majordomus_search
+      "input.kind": "null|string optional"
+      "input.limit": "integer|null optional"
+      "input.query": string required
+      kind: query
+      "output.count": integer required
+      "output.hits": "array<object> required"
+      "output.limit": integer required
+      "output.query": string required
+  - surface: capability
+    id: peers.announce
+    facts:
+      "exposure.http": POST /api/v1/peers/announce
+      "exposure.mcp.tool": majordomus_announce
+      "input.intent": string required
+      "input.scope": "array<string> optional"
+      kind: command
+      "output.announcement": "null|object optional"
+      "output.client": object required
+      "output.client.name": string required
+      "output.client.title": "null|string optional"
+      "output.client.version": string required
+      "output.connected_at": string required
+      "output.id": string required
+      "output.last_seen_seconds_ago": integer required
+      "output.transport": "const:http|const:stdio required"
+  - surface: capability
+    id: peers.list
+    facts:
+      "exposure.http": GET /api/v1/peers
+      "exposure.mcp.tool": majordomus_peers
+      kind: query
+      "output.caller": "null|string optional"
+      "output.count": integer required
+      "output.peers": "array<object> required"
+  - surface: capability
+    id: perf.counters
+    facts:
+      "exposure.http": GET /api/v1/perf
+      "exposure.mcp.tool": majordomus_perf
+      kind: query
+      "output.cache_evictions": integer required
+      "output.cache_hits": integer required
+      "output.cache_misses": integer required
+      "output.executions": integer required
+      "output.graph_builds": integer required
+      "output.handler_invocations": integer required
+      "output.http_projection_builds": integer required
+      "output.index_builds": integer required
+      "output.mcp_projection_builds": integer required
+      "output.openapi_builds": integer required
+      "output.phases": object required
+      "output.registry_builds": integer required
+      "output.repository_scans": integer required
+      "output.schema_generations": integer required
+  - surface: capability
+    id: product.feature
+    facts:
+      "exposure.cli": product show
+      "exposure.http": GET /api/v1/product/feature
+      "exposure.mcp.tool": majordomus_feature
+      "input.id": string required
+      kind: query
+      "output.adr_refs": "array<object> required"
+      "output.adrs": "array<string> optional"
+      "output.areas": "array<string> optional"
+      "output.audiences": "array<string> optional"
+      "output.backlinks": "array<string> required"
+      "output.body": string optional
+      "output.claim_refs": "array<object> required"
+      "output.claims": "array<string> optional"
+      "output.cockpit": "array<string> optional"
+      "output.cockpit_refs": "array<object> required"
+      "output.command_refs": "array<object> required"
+      "output.commands": "array<string> optional"
+      "output.counts": object required
+      "output.counts.adrs": integer required
+      "output.counts.capabilities": integer required
+      "output.counts.claims": integer required
+      "output.counts.cli_paths": integer required
+      "output.counts.commands": integer required
+      "output.counts.docs": integer required
+      "output.counts.enforced_rules": integer required
+      "output.counts.http_routes": integer required
+      "output.counts.mcp_resources": integer required
+      "output.counts.mcp_tools": integer required
+      "output.counts.moments": integer required
+      "output.counts.objects": integer required
+      "output.counts.rules": integer required
+      "output.counts.use_cases": integer required
+      "output.doc_refs": "array<object> required"
+      "output.docs": "array<string> optional"
+      "output.evidence": object required
+      "output.evidence.claims": object required
+      "output.evidence.modules": object required
+      "output.featured": boolean optional
+      "output.headline": string required
+      "output.id": string required
+      "output.kind_refs": "array<object> required"
+      "output.kinds": "array<string> optional"
+      "output.module_refs": "array<object> required"
+      "output.modules": "array<string> optional"
+      "output.moments": "array<object> required"
+      "output.related": "array<string> optional"
+      "output.route": string optional
+      "output.rule_refs": "array<object> required"
+      "output.rules": "array<string> optional"
+      "output.short_title": "null|string optional"
+      "output.source": string optional
+      "output.status": string required
+      "output.summary": string required
+      "output.surfaces": object required
+      "output.surfaces.api": boolean required
+      "output.surfaces.cli": boolean required
+      "output.surfaces.cockpit": boolean required
+      "output.surfaces.docs": boolean required
+      "output.surfaces.mcp": boolean required
+      "output.tags": "array<string> optional"
+      "output.title": string required
+      "output.use_case_refs": "array<object> required"
+      "output.use_cases": "array<string> optional"
+      "output.web": "array<string> optional"
+      "output.web_refs": "array<object> required"
+      "output.weight": integer optional
+  - surface: capability
+    id: product.features
+    facts:
+      "exposure.cli": product list
+      "exposure.http": GET /api/v1/product/features
+      "exposure.mcp.resource": majordomus://product
+      "exposure.mcp.tool": majordomus_features
+      "input.area": "null|string optional"
+      "input.command": "null|string optional"
+      "input.featured": "boolean|null optional"
+      "input.module": "null|string optional"
+      "input.q": "null|string optional"
+      "input.status": "null|string optional"
+      "input.surface": "null|string optional"
+      kind: query
+      "output.counts": object required
+      "output.counts.commands": integer required
+      "output.counts.commands_covered": integer required
+      "output.counts.featured": integer required
+      "output.counts.features": integer required
+      "output.counts.features_all": integer required
+      "output.counts.kinds": integer required
+      "output.counts.kinds_covered": integer required
+      "output.counts.modules": integer required
+      "output.counts.modules_covered": integer required
+      "output.counts.providers": integer required
+      "output.features": "array<object> required"
+      "output.fingerprint": string required
+      "output.schema": string required
+      "output.surfaces": "array<object> required"
+  - surface: capability
+    id: product.matrix
+    facts:
+      "exposure.cli": product matrix
+      "exposure.http": GET /api/v1/product/matrix
+      "exposure.mcp.resource": majordomus://product/matrix
+      "exposure.mcp.tool": majordomus_product_matrix
+      kind: query
+      "output.commands": "array<object> required"
+      "output.kinds": "array<object> required"
+      "output.modules": "array<object> required"
+      "output.rows": "array<object> required"
+      "output.schema": string required
+      "output.surfaces": "array<object> required"
+  - surface: capability
+    id: product.providers
+    facts:
+      "exposure.cli": product providers
+      "exposure.http": GET /api/v1/product/providers
+      "exposure.mcp.resource": majordomus://product/providers
+      "exposure.mcp.tool": majordomus_providers
+      kind: query
+      "output.count": integer required
+      "output.providers": "array<object> required"
+  - surface: capability
+    id: product.validate
+    facts:
+      "exposure.cli": product validate
+      "exposure.http": GET /api/v1/product/validate
+      "exposure.mcp.tool": majordomus_product_validate
+      kind: query
+      "output.counts": object required
+      "output.counts.commands": integer required
+      "output.counts.commands_covered": integer required
+      "output.counts.featured": integer required
+      "output.counts.features": integer required
+      "output.counts.features_all": integer required
+      "output.counts.kinds": integer required
+      "output.counts.kinds_covered": integer required
+      "output.counts.modules": integer required
+      "output.counts.modules_covered": integer required
+      "output.counts.providers": integer required
+      "output.errors": integer required
+      "output.findings": "array<object> required"
+      "output.valid": boolean required
+      "output.warnings": integer required
+  - surface: capability
+    id: release.changelog
+    facts:
+      "exposure.cli": release changelog
+      "exposure.http": GET /api/v1/release/changelog
+      "exposure.mcp.tool": majordomus_changelog
+      "input.version": "null|string optional"
+      kind: query
+      "output.markdown": string required
+      "output.records": integer required
+      "output.releases": "array<object> required"
+      "output.unreleased": "null|object optional"
+  - surface: capability
+    id: release.check
+    facts:
+      "exposure.cli": release check
+      "exposure.http": GET /api/v1/release/check
+      "exposure.mcp.tool": majordomus_release_check
+      kind: query
+      "output.diagnostics": "array<object> optional"
+      "output.ok": boolean required
+      "output.readiness": string required
+      "output.summary": string required
+      "output.target": string required
+  - surface: capability
+    id: release.diff
+    facts:
+      "exposure.cli": release diff
+      "exposure.http": GET /api/v1/release/diff
+      "exposure.mcp.tool": majordomus_release_diff
+      "input.impact": "const:additive|const:breaking|const:none|const:patch|null optional"
+      "input.surface": "null|string optional"
+      kind: query
+      "output.baseline": object required
+      "output.diff": "null|object optional"
+      "output.reason": "null|string optional"
+  - surface: capability
+    id: release.explain
+    facts:
+      "exposure.cli": release explain
+      "exposure.http": GET /api/v1/release/explain
+      "exposure.mcp.tool": majordomus_release_explain
+      kind: query
+      "output.baseline": object required
+      "output.current": string required
+      "output.deciding": "array<object> optional"
+      "output.impact": "const:additive|const:breaking|const:none|const:patch|null optional"
+      "output.minimum": "null|string optional"
+      "output.policy": string required
+      "output.required_bump": "const:major|const:minor|const:none|const:patch|null optional"
+      "output.summary": string required
+      "output.target": string required
+      "output.uncompared": "array<string> optional"
+  - surface: capability
+    id: release.manifest
+    facts:
+      "exposure.cli": release manifest
+      "exposure.http": GET /api/v1/release/manifest
+      "exposure.mcp.tool": majordomus_release_manifest
+      "input.version": "null|string optional"
+      kind: query
+      "output.artifacts": "array<object> optional"
+      "output.changes": "array<string> optional"
+      "output.commit": "null|string optional"
+      "output.compatibility": "const:additive|const:breaking|const:none|const:patch required"
+      "output.contract": object required
+      "output.contract.baseline_fingerprint": "null|string optional"
+      "output.contract.baseline_tag": "null|string optional"
+      "output.contract.changes": integer required
+      "output.contract.fingerprint": string required
+      "output.documentation": "array<string> optional"
+      "output.minimum_version": "null|string optional"
+      "output.previous_version": "null|string optional"
+      "output.published_at": "null|string optional"
+      "output.required_bump": "const:major|const:minor|const:none|const:patch required"
+      "output.schema": string required
+      "output.tag": string required
+      "output.version": string required
+  - surface: capability
+    id: release.plan
+    facts:
+      "exposure.cli": release plan
+      "exposure.http": GET /api/v1/release/plan
+      "exposure.mcp.tool": majordomus_release_plan
+      "input.version": "null|string optional"
+      kind: query
+      "output.bump": "const:major|const:minor|const:none|const:patch|null optional"
+      "output.changes": "array<object> required"
+      "output.diagnostics": "array<object> optional"
+      "output.impact": "const:additive|const:breaking|const:none|const:patch|null optional"
+      "output.regenerates": "array<string> required"
+      "output.target": string required
+      "output.writes": "array<string> required"
+  - surface: capability
+    id: release.status
+    facts:
+      "exposure.cli": release status
+      "exposure.http": GET /api/v1/release/status
+      "exposure.mcp.resource": majordomus://release
+      "exposure.mcp.tool": majordomus_release_status
+      kind: query
+      "output.baseline": object required
+      "output.contract_changes": integer required
+      "output.diagnostics": "array<object> optional"
+      "output.impact": "const:additive|const:breaking|const:none|const:patch|null optional"
+      "output.impact_source": "const:contract|const:records|null optional"
+      "output.minimum_version": "null|string optional"
+      "output.readiness": "const:blocked|const:bump-required|const:nothing-to-release|const:published|const:ready-to-tag|const:tagged required"
+      "output.required_bump": "const:major|const:minor|const:none|const:patch|null optional"
+      "output.target_version": string required
+      "output.unreleased_changes": integer required
+      "output.versions": object required
+      "output.versions.deployed": "array<object> optional"
+      "output.versions.divergences": "array<string> optional"
+      "output.versions.published": "null|string optional"
+      "output.versions.running": string required
+      "output.versions.source": string required
+      "output.versions.unreleased": boolean required
+  - surface: capability
+    id: release.version
+    facts:
+      "exposure.cli": release version
+      "exposure.http": GET /api/v1/release/version
+      "exposure.mcp.tool": majordomus_version
+      kind: query
+      "output.deployed": "array<object> optional"
+      "output.divergences": "array<string> optional"
+      "output.published": "null|string optional"
+      "output.running": string required
+      "output.source": string required
+      "output.unreleased": boolean required
+  - surface: capability
+    id: repository.info
+    facts:
+      "exposure.http": GET /api/v1/repository
+      "exposure.mcp.resource": majordomus://repository
+      "exposure.mcp.tool": majordomus_repository
+      kind: query
+      "output.capabilities": object required
+      "output.capabilities.benchmark_required": integer required
+      "output.capabilities.benchmark_waived": integer required
+      "output.capabilities.builtin": integer required
+      "output.capabilities.by_kind": object required
+      "output.capabilities.by_stability": object required
+      "output.capabilities.cached": integer required
+      "output.capabilities.cli_commands": integer required
+      "output.capabilities.declarative": integer required
+      "output.capabilities.http_routes": integer required
+      "output.capabilities.mcp_resources": integer required
+      "output.capabilities.mcp_tools": integer required
+      "output.capabilities.modules": integer required
+      "output.capabilities.total": integer required
+      "output.diagnostics": "array<object> required"
+      "output.kinds": object required
+      "output.objects": integer required
+      "output.repository": object required
+      "output.repository.discovery": string required
+      "output.repository.git": object required
+      "output.repository.kind_sources": "array<string> required"
+      "output.repository.layer_schema": string required
+      "output.repository.root": string required
+      "output.repository.scope_origin": "const:distribution|const:repository required"
+      "output.repository.scope_path": string required
+      "output.repository.sections": object required
+      "output.repository.source_classes": "array<array<any>> required"
+      "output.state": "const:degraded|const:ok required"
+  - surface: capability
+    id: repository.scope
+    facts:
+      "exposure.cli": scope
+      "exposure.http": GET /api/v1/scope
+      "exposure.mcp.resource": majordomus://scope
+      "exposure.mcp.tool": majordomus_scope
+      kind: query
+      "output.declaration": object required
+      "output.declaration.in": "array<string> required"
+      "output.declaration.out": object required
+      "output.declaration.out.archive": "null|object optional"
+      "output.declaration.out.binary": boolean optional
+      "output.declaration.out.database_dump": "null|object optional"
+      "output.declaration.out.fixtures": "null|object optional"
+      "output.declaration.out.generated": "null|object optional"
+      "output.declaration.out.image": "null|object optional"
+      "output.declaration.out.max_bytes": "integer|null optional"
+      "output.declaration.out.paths": "array<string> optional"
+      "output.declaration.out.pdf": "null|object optional"
+      "output.declaration.out.secret": "null|object optional"
+      "output.declaration.out.video": "null|object optional"
+      "output.declaration.version": integer required
+      "output.origin": "const:distribution|const:repository required"
+      "output.path": string required
+      "output.tracked": object required
+      "output.tracked.by_reason": object required
+      "output.tracked.files": integer required
+      "output.tracked.in": integer required
+      "output.tracked.out": integer required
+      "output.tracked.out_files": "array<object> required"
+  - surface: capability
+    id: repository.scope_classify
+    facts:
+      "exposure.http": GET /api/v1/scope/classify
+      "exposure.mcp.tool": majordomus_scope_classify
+      "input.path": string required
+      kind: query
+      "output.bytes": "integer|null optional"
+      "output.directory": boolean required
+      "output.exists": boolean required
+      "output.path": string required
+      "output.reason": "const:archive|const:binary|const:database_dump|const:fixture_over_limit|const:generated|const:image|const:over_limit|const:path|const:pdf|const:secret|const:undeclared|const:video|null optional"
+      "output.rule": "null|string optional"
+      "output.verdict": "const:in|const:out required"
+  - surface: capability
+    id: web.surfaces
+    facts:
+      "exposure.http": GET /api/v1/web/surfaces
+      "exposure.mcp.resource": majordomus://web
+      "exposure.mcp.tool": majordomus_web_surfaces
+      kind: query
+      "output.findings": "array<object> required"
+      "output.public": "array<string> required"
+      "output.published": "array<string> required"
+      "output.served": "array<string> required"
+      "output.surfaces": "array<object> required"
+  - surface: capability
+    id: why.areas
+    facts:
+      "exposure.cli": why areas
+      "exposure.http": GET /api/v1/why/areas
+      "exposure.mcp.resource": majordomus://why/areas
+      "exposure.mcp.tool": majordomus_why_areas
+      kind: query
+      "output.areas": "array<object> required"
+      "output.count": integer required
+  - surface: capability
+    id: why.audiences
+    facts:
+      "exposure.cli": why audiences
+      "exposure.http": GET /api/v1/why/audiences
+      "exposure.mcp.resource": majordomus://why/audiences
+      "exposure.mcp.tool": majordomus_why_audiences
+      kind: query
+      "output.audiences": "array<object> required"
+      "output.count": integer required
+  - surface: capability
+    id: why.diagnose
+    facts:
+      "exposure.cli": why diagnose
+      "exposure.http": GET /api/v1/why/diagnose
+      "exposure.mcp.tool": majordomus_why_diagnose
+      "input.signals": string optional
+      kind: query
+      "output.also_worth_reading": "array<string> required"
+      "output.areas": "array<object> required"
+      "output.audiences": "array<object> required"
+      "output.capabilities": "array<object> required"
+      "output.claims": "array<object> required"
+      "output.commands": "array<object> required"
+      "output.doctrines": "array<object> required"
+      "output.moments": "array<string> required"
+      "output.unresolved": "array<string> required"
+      "output.use_cases": "array<object> required"
+  - surface: capability
+    id: why.list
+    facts:
+      "exposure.cli": why list
+      "exposure.http": GET /api/v1/why
+      "exposure.mcp.resource": majordomus://why
+      "exposure.mcp.tool": majordomus_why
+      "input.area": "null|string optional"
+      "input.audience": "null|string optional"
+      "input.capability": "null|string optional"
+      "input.command": "null|string optional"
+      "input.featured": "boolean|null optional"
+      "input.frequency": "null|string optional"
+      "input.lifecycle": "null|string optional"
+      "input.q": "null|string optional"
+      "input.severity": "null|string optional"
+      "input.status": "null|string optional"
+      "input.tag": "null|string optional"
+      kind: query
+      "output.areas": "array<object> required"
+      "output.audiences": "array<object> required"
+      "output.counts": object required
+      "output.counts.areas": integer required
+      "output.counts.audiences": integer required
+      "output.counts.examples": integer required
+      "output.counts.moments": integer required
+      "output.counts.moments_all": integer required
+      "output.counts.signals": integer required
+      "output.facets": object required
+      "output.facets.areas": "array<object> required"
+      "output.facets.audiences": "array<object> required"
+      "output.facets.capabilities": "array<object> required"
+      "output.facets.commands": "array<object> required"
+      "output.facets.frequencies": "array<object> required"
+      "output.facets.lifecycle": "array<object> required"
+      "output.facets.severities": "array<object> required"
+      "output.facets.tags": "array<object> required"
+      "output.fingerprint": string required
+      "output.moments": "array<object> required"
+      "output.schema": string required
+  - surface: capability
+    id: why.moment
+    facts:
+      "exposure.cli": why show
+      "exposure.http": GET /api/v1/why/moment
+      "exposure.mcp.tool": majordomus_why_moment
+      "input.id": string required
+      kind: query
+      "output.aliases": "array<string> optional"
+      "output.areas": "array<string> required"
+      "output.audiences": "array<string> required"
+      "output.backlinks": "array<string> required"
+      "output.body": string optional
+      "output.capabilities": "array<string> optional"
+      "output.claims": "array<string> optional"
+      "output.commands": "array<string> optional"
+      "output.doctrines": "array<string> optional"
+      "output.examples": "array<object> required"
+      "output.featured": boolean optional
+      "output.frequency": string required
+      "output.hook": string required
+      "output.id": string required
+      "output.lifecycle": "array<string> optional"
+      "output.neighbours": "array<string> required"
+      "output.related": "array<string> optional"
+      "output.related_detail": "array<object> required"
+      "output.responsibilities": "array<string> required"
+      "output.route": string optional
+      "output.severity": string required
+      "output.short_title": "null|string optional"
+      "output.signals": "array<object> required"
+      "output.similar": "array<string> required"
+      "output.source": string optional
+      "output.status": string required
+      "output.summary": string required
+      "output.tags": "array<string> optional"
+      "output.title": string required
+      "output.use_cases": "array<string> optional"
+      "output.weight": integer optional
+  - surface: capability
+    id: why.validate
+    facts:
+      "exposure.cli": why validate
+      "exposure.http": GET /api/v1/why/validate
+      "exposure.mcp.tool": majordomus_why_validate
+      kind: query
+      "output.counts": object required
+      "output.counts.areas": integer required
+      "output.counts.audiences": integer required
+      "output.counts.examples": integer required
+      "output.counts.moments": integer required
+      "output.counts.moments_all": integer required
+      "output.counts.signals": integer required
+      "output.errors": integer required
+      "output.findings": "array<object> required"
+      "output.valid": boolean required
+      "output.warnings": integer required
+  - surface: capability
+    id: worktree.inspect
+    facts:
+      "exposure.cli": worktree inspect
+      "exposure.http": GET /api/v1/worktrees/inspect
+      "exposure.mcp.tool": majordomus_worktree_inspect
+      "input.branch": string required
+      kind: query
+      "output.branch": string required
+      "output.branch_exists": boolean required
+      "output.canonical": boolean required
+      "output.destination_exists": boolean required
+      "output.diagnostics": "array<object> required"
+      "output.expected_path": string required
+      "output.worktree": "null|object optional"
+  - surface: capability
+    id: worktree.migration_plan
+    facts:
+      "exposure.cli": worktree migrate
+      "exposure.http": GET /api/v1/worktrees/migration
+      "exposure.mcp.tool": majordomus_worktree_migration_plan
+      kind: query
+      "output.applied": boolean required
+      "output.blocked": integer required
+      "output.container": string required
+      "output.exceptions": "array<object> required"
+      "output.failed": integer required
+      "output.movable": integer required
+      "output.moved": integer required
+      "output.moved_current": "null|string optional"
+      "output.schema": string required
+      "output.steps": "array<object> required"
+  - surface: capability
+    id: worktree.status
+    facts:
+      "exposure.cli": worktree status
+      "exposure.http": GET /api/v1/worktrees/status
+      "exposure.mcp.tool": majordomus_worktree_status
+      "input.path": "null|string optional"
+      kind: query
+      "output.canonical": boolean required
+      "output.container": object required
+      "output.container.exists": boolean required
+      "output.container.path": string required
+      "output.container.suffix": string required
+      "output.repository": object required
+      "output.repository.git_common_dir": string required
+      "output.repository.name": string required
+      "output.repository.primary_worktree": string required
+      "output.repository_errors": integer required
+      "output.schema": string required
+      "output.trunk": object required
+      "output.trunk.branch": "null|string optional"
+      "output.trunk.checked_out_at": "null|string optional"
+      "output.trunk.source": "const:conventional_name|const:default_branch_config|const:primary_checkout|const:remote_head|const:unknown required"
+      "output.worktree": object required
+      "output.worktree.branch": "null|string optional"
+      "output.worktree.current": boolean required
+      "output.worktree.detached": boolean required
+      "output.worktree.diagnostics": "array<object> required"
+      "output.worktree.dirty": "null|object optional"
+      "output.worktree.exists": boolean required
+      "output.worktree.expected_path": "null|string optional"
+      "output.worktree.head": "null|string optional"
+      "output.worktree.issue": "null|string optional"
+      "output.worktree.kind": "const:linked|const:primary required"
+      "output.worktree.label": string required
+      "output.worktree.locked": "null|string optional"
+      "output.worktree.path": string required
+      "output.worktree.prunable": "null|string optional"
+      "output.worktree.standing": "const:canonical|const:detached|const:ephemeral|const:misplaced|const:missing|const:primary required"
+      "output.worktree.upstream": "null|object optional"
+  - surface: capability
+    id: worktree.topology
+    facts:
+      "exposure.cli": worktree topology
+      "exposure.http": GET /api/v1/worktrees
+      "exposure.mcp.resource": majordomus://worktrees
+      "exposure.mcp.tool": majordomus_worktrees
+      kind: query
+      "output.branches": "array<object> required"
+      "output.container": object required
+      "output.container.exists": boolean required
+      "output.container.path": string required
+      "output.container.suffix": string required
+      "output.diagnostics": "array<object> required"
+      "output.observed_from": string required
+      "output.repository": object required
+      "output.repository.git_common_dir": string required
+      "output.repository.name": string required
+      "output.repository.primary_worktree": string required
+      "output.schema": string required
+      "output.tallies": object required
+      "output.tallies.branches": integer required
+      "output.tallies.branches_without_worktree": integer required
+      "output.tallies.canonical": integer required
+      "output.tallies.cleanup_eligible": integer required
+      "output.tallies.detached": integer required
+      "output.tallies.dirty": integer required
+      "output.tallies.ephemeral": integer required
+      "output.tallies.errors": integer required
+      "output.tallies.locked": integer required
+      "output.tallies.misplaced": integer required
+      "output.tallies.missing": integer required
+      "output.tallies.warnings": integer required
+      "output.tallies.worktrees": integer required
+      "output.trunk": object required
+      "output.trunk.branch": "null|string optional"
+      "output.trunk.checked_out_at": "null|string optional"
+      "output.trunk.source": "const:conventional_name|const:default_branch_config|const:primary_checkout|const:remote_head|const:unknown required"
+      "output.valid": boolean required
+      "output.worktrees": "array<object> required"
+  - surface: command
+    id: executable.bench
+    facts:
+      "argument.check": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.id": positional optional open
+      "argument.no_write": flag optional open
+      "argument.profile": "option optional [ci,full,quick]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.transport": "option optional [all,direct,http,mcp,system]"
+      invocation: majordomus bench
+  - surface: command
+    id: executable.bench.baseline.update
+    facts:
+      "argument.allow_dirty": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.profile": "option optional [ci,full,quick]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus bench baseline update
+  - surface: command
+    id: executable.bench.coverage
+    facts:
+      "argument.check": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus bench coverage
+  - surface: command
+    id: executable.capabilities.describe
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.id": positional required open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus capabilities describe
+  - surface: command
+    id: executable.capabilities.list
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exposure": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.kind": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus capabilities list
+  - surface: command
+    id: executable.capabilities.projections
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.module": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.unmet": flag optional open
+      invocation: majordomus capabilities projections
+  - surface: command
+    id: executable.capabilities.schema
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.id": positional required open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.side": "option optional [input,output]"
+      "argument.strict": flag optional open
+      invocation: majordomus capabilities schema
+  - surface: command
+    id: executable.capabilities.validate
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus capabilities validate
+  - surface: command
+    id: executable.commands
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus commands
+  - surface: command
+    id: executable.commands.bridge
+    facts:
+      "argument.check": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus commands bridge
+  - surface: command
+    id: executable.commands.explain
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.id": positional required open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus commands explain
+  - surface: command
+    id: executable.commands.graph
+    facts:
+      "argument.check": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus commands graph
+  - surface: command
+    id: executable.commands.list
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.effect": "option optional [destructive,local-mutation,network-mutation,read-only,repository-mutation]"
+      "argument.format": "option optional [json,text]"
+      "argument.origin": "option optional [executable,tool,workflow]"
+      "argument.repo": option optional open
+      "argument.search": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus commands list
+  - surface: command
+    id: executable.commands.show
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.id": positional required open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus commands show
+  - surface: command
+    id: executable.completion
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus completion
+  - surface: command
+    id: executable.completion.init
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.shell": "option optional [bash,fish,zsh]"
+      "argument.strict": flag optional open
+      invocation: majordomus completion init
+  - surface: command
+    id: executable.completion.install
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.dry_run": flag optional open
+      "argument.rc": option optional open
+      "argument.remove": flag optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.shell": "option optional [bash,fish,zsh]"
+      "argument.strict": flag optional open
+      invocation: majordomus completion install
+  - surface: command
+    id: executable.completion.query
+    facts:
+      "argument.cursor": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.surface": "option optional [cli,workflow]"
+      "argument.words": positional optional open
+      invocation: majordomus completion query
+  - surface: command
+    id: executable.distribution
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution
+  - surface: command
+    id: executable.distribution.artifact
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.tag": option required open
+      "argument.target": option required open
+      invocation: majordomus distribution artifact
+  - surface: command
+    id: executable.distribution.build
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution build
+  - surface: command
+    id: executable.distribution.matrix
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution matrix
+  - surface: command
+    id: executable.distribution.metadata
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.record": option required open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution metadata
+  - surface: command
+    id: executable.distribution.releases
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution releases
+  - surface: command
+    id: executable.distribution.show
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution show
+  - surface: command
+    id: executable.distribution.status
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution status
+  - surface: command
+    id: executable.distribution.targets
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution targets
+  - surface: command
+    id: executable.distribution.validate
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus distribution validate
+  - surface: command
+    id: executable.env
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus env
+  - surface: command
+    id: executable.env.banner
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.mode": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.width": option optional open
+      invocation: majordomus env banner
+  - surface: command
+    id: executable.env.explain
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.field": positional optional open
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus env explain
+  - surface: command
+    id: executable.env.export
+    facts:
+      "argument.banner": flag optional open
+      "argument.bridge": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.mode": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.shell": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus env export
+  - surface: command
+    id: executable.env.status
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus env status
+  - surface: command
+    id: executable.generate
+    facts:
+      "argument.check": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.out": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.target": "positional optional [all,allow,benchmarks,distribution,docs,manifest,openapi,providers,registry,release,site,web]"
+      invocation: majordomus generate
+  - surface: command
+    id: executable.mcp
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.http_host": option optional open
+      "argument.http_port": option optional open
+      "argument.inspect": flag optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.standalone": flag optional open
+      "argument.strict": flag optional open
+      "argument.transport": "option optional [stdio]"
+      invocation: majordomus mcp
+  - surface: command
+    id: executable.product
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.module": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.surface": option optional open
+      invocation: majordomus product
+  - surface: command
+    id: executable.product.list
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.module": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.surface": option optional open
+      invocation: majordomus product list
+  - surface: command
+    id: executable.product.matrix
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.module": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.surface": option optional open
+      invocation: majordomus product matrix
+  - surface: command
+    id: executable.product.providers
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.module": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.surface": option optional open
+      invocation: majordomus product providers
+  - surface: command
+    id: executable.product.show
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.id": positional required open
+      "argument.module": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.surface": option optional open
+      invocation: majordomus product show
+  - surface: command
+    id: executable.product.validate
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.module": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.surface": option optional open
+      invocation: majordomus product validate
+  - surface: command
+    id: executable.release
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release
+  - surface: command
+    id: executable.release.changelog
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release changelog
+  - surface: command
+    id: executable.release.check
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release check
+  - surface: command
+    id: executable.release.diff
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.impact": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.surface": option optional open
+      invocation: majordomus release diff
+  - surface: command
+    id: executable.release.explain
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release explain
+  - surface: command
+    id: executable.release.manifest
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release manifest
+  - surface: command
+    id: executable.release.plan
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release plan
+  - surface: command
+    id: executable.release.prepare
+    facts:
+      "argument.bump": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.dry_run": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release prepare
+  - surface: command
+    id: executable.release.status
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release status
+  - surface: command
+    id: executable.release.version
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus release version
+  - surface: command
+    id: executable.scope
+    facts:
+      "argument.check": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.paths": positional optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus scope
+  - surface: command
+    id: executable.serve
+    facts:
+      "argument.deployment": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.host": option optional open
+      "argument.port": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus serve
+  - surface: command
+    id: executable.web
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus web
+  - surface: command
+    id: executable.web.compose
+    facts:
+      "argument.destination": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus web compose
+  - surface: command
+    id: executable.web.explain
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.id": positional optional open
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus web explain
+  - surface: command
+    id: executable.web.list
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus web list
+  - surface: command
+    id: executable.web.manifest
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus web manifest
+  - surface: command
+    id: executable.web.report.benchmarks
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.from": option required open
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus web report benchmarks
+  - surface: command
+    id: executable.web.report.tests
+    facts:
+      "argument.crate_output": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.suite": option required open
+      invocation: majordomus web report tests
+  - surface: command
+    id: executable.web.report.ui
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.from": option required open
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus web report ui
+  - surface: command
+    id: executable.web.validate
+    facts:
+      "argument.artifacts": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.exclude": option optional open
+      "argument.format": "option optional [json,text]"
+      "argument.only": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus web validate
+  - surface: command
+    id: executable.why
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.audience": option optional open
+      "argument.capability": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.frequency": option optional open
+      "argument.lifecycle": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.severity": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.tag": option optional open
+      invocation: majordomus why
+  - surface: command
+    id: executable.why.areas
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.audience": option optional open
+      "argument.capability": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.frequency": option optional open
+      "argument.lifecycle": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.severity": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.tag": option optional open
+      invocation: majordomus why areas
+  - surface: command
+    id: executable.why.audiences
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.audience": option optional open
+      "argument.capability": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.frequency": option optional open
+      "argument.lifecycle": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.severity": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.tag": option optional open
+      invocation: majordomus why audiences
+  - surface: command
+    id: executable.why.diagnose
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.audience": option optional open
+      "argument.capability": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.frequency": option optional open
+      "argument.lifecycle": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.severity": option optional open
+      "argument.share": option optional open
+      "argument.signals": option optional open
+      "argument.strict": flag optional open
+      "argument.tag": option optional open
+      invocation: majordomus why diagnose
+  - surface: command
+    id: executable.why.list
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.audience": option optional open
+      "argument.capability": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.frequency": option optional open
+      "argument.lifecycle": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.severity": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.tag": option optional open
+      invocation: majordomus why list
+  - surface: command
+    id: executable.why.show
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.audience": option optional open
+      "argument.capability": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.frequency": option optional open
+      "argument.id": positional required open
+      "argument.lifecycle": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.severity": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.tag": option optional open
+      invocation: majordomus why show
+  - surface: command
+    id: executable.why.validate
+    facts:
+      "argument.all": flag optional open
+      "argument.area": option optional open
+      "argument.audience": option optional open
+      "argument.capability": option optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.featured": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.frequency": option optional open
+      "argument.lifecycle": option optional open
+      "argument.names_command": option optional open
+      "argument.query": option optional open
+      "argument.repo": option optional open
+      "argument.severity": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.tag": option optional open
+      invocation: majordomus why validate
+  - surface: command
+    id: executable.worktree
+    facts:
+      aliases: wt
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree
+  - surface: command
+    id: executable.worktree.branches
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      "argument.without_worktree": flag optional open
+      invocation: majordomus worktree branches
+  - surface: command
+    id: executable.worktree.cleanup
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree cleanup
+  - surface: command
+    id: executable.worktree.create
+    facts:
+      "argument.base": option optional open
+      "argument.branch": positional optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.issue": option optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree create
+  - surface: command
+    id: executable.worktree.doctor
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree doctor
+  - surface: command
+    id: executable.worktree.ensure
+    facts:
+      "argument.base": option optional open
+      "argument.branch": positional required open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree ensure
+  - surface: command
+    id: executable.worktree.guard
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.quiet": flag optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree guard
+  - surface: command
+    id: executable.worktree.inspect
+    facts:
+      "argument.branch": positional required open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree inspect
+  - surface: command
+    id: executable.worktree.list
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree list
+  - surface: command
+    id: executable.worktree.migrate
+    facts:
+      "argument.allow_copy": flag optional open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.dry_run": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.include_ephemeral": flag optional open
+      "argument.only": option optional open
+      "argument.plan": flag optional open
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree migrate
+  - surface: command
+    id: executable.worktree.path
+    facts:
+      "argument.branch": positional required open
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree path
+  - surface: command
+    id: executable.worktree.remove
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.force": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.selector": positional required open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree remove
+  - surface: command
+    id: executable.worktree.repair
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.dry_run": flag optional open
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree repair
+  - surface: command
+    id: executable.worktree.root
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree root
+  - surface: command
+    id: executable.worktree.status
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree status
+  - surface: command
+    id: executable.worktree.topology
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree topology
+  - surface: command
+    id: executable.worktree.validate
+    facts:
+      "argument.discovery": "option optional [filesystem,vcs]"
+      "argument.format": "option optional [json,text]"
+      "argument.repo": option optional open
+      "argument.share": option optional open
+      "argument.strict": flag optional open
+      invocation: majordomus worktree validate
+  - surface: command
+    id: tool.adr
+    facts:
+      invocation: majordomus adr
+  - surface: command
+    id: tool.bench
+    facts:
+      invocation: majordomus bench
+  - surface: command
+    id: tool.capture
+    facts:
+      invocation: majordomus capture
+  - surface: command
+    id: tool.check
+    facts:
+      invocation: majordomus check
+  - surface: command
+    id: tool.checkpoint
+    facts:
+      invocation: majordomus checkpoint
+  - surface: command
+    id: tool.context
+    facts:
+      invocation: majordomus context
+  - surface: command
+    id: tool.decision
+    facts:
+      invocation: majordomus decision
+  - surface: command
+    id: tool.doctor
+    facts:
+      invocation: majordomus doctor
+  - surface: command
+    id: tool.doctrine
+    facts:
+      invocation: majordomus doctrine
+  - surface: command
+    id: tool.finish
+    facts:
+      invocation: majordomus finish
+  - surface: command
+    id: tool.handover
+    facts:
+      invocation: majordomus handover
+  - surface: command
+    id: tool.history
+    facts:
+      invocation: majordomus history
+  - surface: command
+    id: tool.init
+    facts:
+      invocation: majordomus init
+  - surface: command
+    id: tool.knowledge
+    facts:
+      invocation: majordomus knowledge
+  - surface: command
+    id: tool.migrate
+    facts:
+      invocation: majordomus migrate
+  - surface: command
+    id: tool.plan
+    facts:
+      invocation: majordomus plan
+  - surface: command
+    id: tool.prompt
+    facts:
+      invocation: majordomus prompt
+  - surface: command
+    id: tool.question
+    facts:
+      invocation: majordomus question
+  - surface: command
+    id: tool.rules
+    facts:
+      invocation: majordomus rules
+  - surface: command
+    id: tool.search
+    facts:
+      invocation: majordomus search
+  - surface: command
+    id: tool.session
+    facts:
+      invocation: majordomus session
+  - surface: command
+    id: tool.skills
+    facts:
+      invocation: majordomus skills
+  - surface: command
+    id: tool.start
+    facts:
+      invocation: majordomus start
+  - surface: command
+    id: tool.update
+    facts:
+      invocation: majordomus update
+  - surface: command
+    id: tool.usecase
+    facts:
+      invocation: majordomus usecase
+  - surface: command
+    id: tool.version
+    facts:
+      invocation: majordomus version
+  - surface: command
+    id: tool.watch
+    facts:
+      invocation: majordomus watch
+  - surface: document-kind
+    id: majordomus.adr/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.date": string required
+      "field.header.id": string required
+      "field.header.kind": const:adr required
+      "field.header.provenance": object optional
+      "field.header.provenance.derived_from": "array<string> optional"
+      "field.header.provenance.origin": "enum:authored,extracted required"
+      "field.header.related": "array<string> optional"
+      "field.header.schema": const:adr/v1 required
+      "field.header.status": "enum:accepted,proposed,rejected,superseded required"
+      "field.header.superseded_by": string optional
+      "field.header.supersedes": "array<string> optional"
+      "field.header.tags": "array<string> optional"
+      "field.header.title": string required
+  - surface: document-kind
+    id: majordomus.application/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.doctrines": "array<string> optional"
+      "field.header.does_not_fit_when": "array<string> required"
+      "field.header.fits_when": "array<string> required"
+      "field.header.id": string required
+      "field.header.kind": const:application required
+      "field.header.responsibilities": "array<string> optional"
+      "field.header.status": "enum:active,deprecated,draft optional"
+      "field.header.summary": string required
+      "field.header.title": string required
+      "field.header.use_cases": "array<string> required"
+      "field.header.weight": integer optional
+  - surface: document-kind
+    id: majordomus.area/v1
+    facts:
+      closed: "true"
+      "field.id": string required
+      "field.kind": const:area required
+      "field.schema": const:area/v1 required
+      "field.status": "enum:deprecated,draft,stable required"
+      "field.summary": string required
+      "field.tags": "array<string> optional"
+      "field.title": string required
+      "field.weight": integer optional
+  - surface: document-kind
+    id: majordomus.audience/v1
+    facts:
+      closed: "true"
+      "field.id": string required
+      "field.kind": const:audience required
+      "field.schema": const:audience/v1 required
+      "field.short_title": string optional
+      "field.status": "enum:deprecated,draft,stable required"
+      "field.summary": string required
+      "field.tags": "array<string> optional"
+      "field.title": string required
+      "field.weight": integer optional
+      "field.workflow": string optional
+  - surface: document-kind
+    id: majordomus.capture/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.branch": string optional
+      "field.header.cwd": string optional
+      "field.header.duration_ms": integer optional
+      "field.header.effort": string optional
+      "field.header.event": string required
+      "field.header.finished_at": string optional
+      "field.header.head": string optional
+      "field.header.id": string required
+      "field.header.meta": string optional
+      "field.header.model": string optional
+      "field.header.provider": string required
+      "field.header.record": string required
+      "field.header.repository": string optional
+      "field.header.schema": const:majordomus.capture/v1 required
+      "field.header.session": string optional
+      "field.header.source": string optional
+      "field.header.started_at": string required
+      "field.header.tokens": integer optional
+  - surface: document-kind
+    id: majordomus.change/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.adrs": "array<string> optional"
+      "field.header.commits": "array<string> optional"
+      "field.header.contract": "array<string> optional"
+      "field.header.id": string required
+      "field.header.impact": "enum:additive,breaking,none,patch required"
+      "field.header.issues": "array<string> optional"
+      "field.header.kind": const:change required
+      "field.header.migration": string optional
+      "field.header.pull_requests": "array<string> optional"
+      "field.header.released_in": string optional
+      "field.header.schema": const:change/v1 required
+      "field.header.scopes": "array<string> optional"
+      "field.header.title": string required
+      "field.header.type": "enum:added,changed,deprecated,fixed,removed,security required"
+  - surface: document-kind
+    id: majordomus.claim/v1
+    facts:
+      closed: "true"
+      "field.claim": string required
+      "field.id": string required
+      "field.implementation": string required
+      "field.note": string optional
+      "field.responsibility": string optional
+      "field.source": string required
+      "field.status": string required
+      "field.test": string required
+  - surface: document-kind
+    id: majordomus.command/v1
+    facts:
+      closed: "true"
+      "field.category": "enum:context,continuity,memory,plan,rules,system,task required"
+      "field.class": "enum:generated-output-mutating,read-only,state-mutating required"
+      "field.demo": string optional
+      "field.exit_codes": "array<integer> required"
+      "field.id": string required
+      "field.json": boolean required
+      "field.note": string required
+      "field.reads": "array<string> required"
+      "field.requires_installed": boolean required
+      "field.requires_repository": boolean required
+      "field.requires_task": "enum:none,optional,required required"
+      "field.stage": "enum:begin,conclude,inspect,setup,verify,work required"
+      "field.summary": string required
+      "field.syntax": string required
+      "field.title": string required
+      "field.visibility": "enum:internal,public required"
+      "field.writes": "array<string> required"
+  - surface: document-kind
+    id: majordomus.context/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.audience": "array<string> optional"
+      "field.header.children": object optional
+      "field.header.children.exempt": "array<string> optional"
+      "field.header.children.require_contract": boolean optional
+      "field.header.composition": "enum:extend,final,replace required"
+      "field.header.description": string required
+      "field.header.id": string required
+      "field.header.kind": const:context required
+      "field.header.order": integer required
+      "field.header.paths": "array<string> optional"
+      "field.header.providers": "array<string> required"
+      "field.header.schema": const:context/v1 required
+      "field.header.scope": "enum:directory,explicit,subtree required"
+      "field.header.status": "enum:active,deprecated required"
+      "field.header.supersedes": "array<string> optional"
+      "field.header.title": string required
+      "field.header.tracks": "array<string> optional"
+  - surface: document-kind
+    id: majordomus.current/v1
+    facts:
+      closed: "true"
+      "field.branch": string optional
+      "field.checkpoint_at": string optional
+      "field.head": string optional
+      "field.id": string required
+      "field.outcome": "enum:active,blocked,completed,failed,handed_over,no_match,partial required"
+      "field.owner": string optional
+      "field.profile": string required
+      "field.repository_id": string optional
+      "field.scope": "array<string> required"
+      "field.started_at": string required
+      "field.task": string required
+      "field.working_tree": "enum:clean,dirty optional"
+      "field.worktree": string optional
+  - surface: document-kind
+    id: majordomus.deployment/v1
+    facts:
+      closed: "true"
+      "field.application": string required
+      "field.budgets": object optional
+      "field.budgets.binary_bytes": integer optional
+      "field.budgets.blocking_check_ms": integer optional
+      "field.budgets.build_context_bytes": integer optional
+      "field.budgets.cold_start_ms": integer optional
+      "field.budgets.image_bytes": integer optional
+      "field.budgets.request_p99_ms": integer optional
+      "field.budgets.resident_memory_mb": integer optional
+      "field.build": object required
+      "field.build.binary": string required
+      "field.build.inputs": "array<string> required"
+      "field.build.package": string required
+      "field.build.profile": string required
+      "field.build.site": string optional
+      "field.created_at": string optional
+      "field.description": string optional
+      "field.health": object required
+      "field.health.grace_seconds": integer optional
+      "field.health.interval_seconds": integer optional
+      "field.health.liveness": string required
+      "field.health.readiness": string required
+      "field.health.timeout_seconds": integer optional
+      "field.id": string required
+      "field.kind": const:deployment required
+      "field.listen": object required
+      "field.listen.interface": "enum:all,loopback required"
+      "field.listen.port": integer required
+      "field.machines": object required
+      "field.machines.autostart": boolean required
+      "field.machines.autostop": boolean required
+      "field.machines.count": integer required
+      "field.machines.min_running": integer required
+      "field.provider": object required
+      "field.provider.fly": object optional
+      "field.provider.fly.concurrency": object optional
+      "field.provider.fly.concurrency.hard_limit": integer optional
+      "field.provider.fly.concurrency.soft_limit": integer optional
+      "field.provider.fly.force_https": boolean optional
+      "field.provider.fly.org": string optional
+      "field.provider.name": enum:fly required
+      "field.region": string required
+      "field.resources": object required
+      "field.resources.cpu_kind": "enum:performance,shared required"
+      "field.resources.cpus": integer required
+      "field.resources.memory_mb": integer required
+      "field.schema": const:deployment/v1 required
+      "field.status": "enum:active,declared,retired optional"
+      "field.title": string required
+      "field.updated_at": string optional
+  - surface: document-kind
+    id: majordomus.distribution/v1
+    facts:
+      closed: "true"
+      "field.archive": object required
+      "field.archive.checksum": const:sha256 required
+      "field.archive.checksums_file": string required
+      "field.archive.extension": string required
+      "field.archive.format": "enum:tar.gz,zip required"
+      "field.archive.name": "const:{binary}-{tag}-{target}.{extension} required"
+      "field.installer": object required
+      "field.installer.base_url": string required
+      "field.installer.download_command": string required
+      "field.installer.install_dir": string required
+      "field.installer.prefix": string required
+      "field.installer.script": string required
+      "field.installer.shell": string required
+      "field.project": object required
+      "field.project.binary": string required
+      "field.project.license": string required
+      "field.project.repository": string required
+      "field.schema": const:majordomus-distribution/v1 required
+      "field.targets": "array<any> required"
+      "field.titles": object required
+      "field.titles.arch": object required
+      "field.titles.arch.aarch64": string required
+      "field.titles.arch.x86_64": string required
+      "field.titles.libc": object required
+      "field.titles.libc.gnu": string required
+      "field.titles.libc.musl": string required
+      "field.titles.os": object required
+      "field.titles.os.linux": string required
+      "field.titles.os.macos": string required
+      "field.titles.os.windows": string required
+  - surface: document-kind
+    id: majordomus.document/v1
+    facts:
+      closed: "true"
+      "field.description": string optional
+      "field.kind": string optional
+      "field.status": "enum:active,deprecated,draft,superseded optional"
+      "field.superseded_by": string optional
+      "field.tags": "array<string> optional"
+      "field.title": string optional
+      "field.updated": string optional
+  - surface: document-kind
+    id: majordomus.feature/v1
+    facts:
+      closed: "true"
+      "field.adrs": "array<string> optional"
+      "field.areas": "array<string> optional"
+      "field.audiences": "array<string> optional"
+      "field.claims": "array<string> optional"
+      "field.cockpit": "array<string> optional"
+      "field.commands": "array<string> optional"
+      "field.docs": "array<string> optional"
+      "field.featured": boolean optional
+      "field.headline": string required
+      "field.id": string required
+      "field.kind": const:feature required
+      "field.kinds": "array<string> optional"
+      "field.modules": "array<string> optional"
+      "field.related": "array<string> optional"
+      "field.rules": "array<string> optional"
+      "field.schema": const:feature/v1 required
+      "field.short_title": string optional
+      "field.status": "enum:deprecated,draft,stable required"
+      "field.summary": string required
+      "field.tags": "array<string> optional"
+      "field.title": string required
+      "field.use_cases": "array<string> optional"
+      "field.web": "array<string> optional"
+      "field.weight": integer optional
+  - surface: document-kind
+    id: majordomus.issue/v1
+    facts:
+      closed: "true"
+      "field.acceptance_criteria": "array<string> required"
+      "field.cancelled": boolean optional
+      "field.completed_at": string optional
+      "field.completion": string optional
+      "field.created_at": string optional
+      "field.current_state": string optional
+      "field.depends_on": "array<string> optional"
+      "field.desired_state": string optional
+      "field.evidence": "array<object> optional"
+      "field.evidence_required": "array<string> required"
+      "field.id": string required
+      "field.milestone": string required
+      "field.non_scope": "array<string> optional"
+      "field.objective": string required
+      "field.owner": string optional
+      "field.parallel_safe": boolean optional
+      "field.priority": string required
+      "field.profile": string required
+      "field.risk": string optional
+      "field.scope": "array<string> required"
+      "field.slug": string required
+      "field.started_at": string optional
+      "field.title": string required
+      "field.updated_at": string optional
+      "field.validation": "array<string> required"
+      "field.verified_at": string optional
+      "field.why": string optional
+  - surface: document-kind
+    id: majordomus.knowledge/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.class": "enum:constraint,convention,fact,lesson,memory required"
+      "field.header.date": string required
+      "field.header.description": string required
+      "field.header.epistemics": "enum:decided,inferred,observed required"
+      "field.header.id": string required
+      "field.header.kind": const:knowledge required
+      "field.header.provenance": object optional
+      "field.header.provenance.derived_from": "array<string> optional"
+      "field.header.provenance.origin": "enum:authored,extracted required"
+      "field.header.relations": "array<object> optional"
+      "field.header.schema": const:knowledge/v1 required
+      "field.header.status": "enum:candidate,superseded,verified required"
+      "field.header.superseded_by": string optional
+      "field.header.tags": "array<string> optional"
+      "field.header.title": string required
+  - surface: document-kind
+    id: majordomus.manifest/v1
+    facts:
+      closed: "true"
+      "field.context": object optional
+      "field.context.documents": "array<string> optional"
+      "field.local": object required
+      "field.local.implicit_context": boolean required
+      "field.local.path": string required
+      "field.local.tracked": boolean required
+      "field.repo": object required
+      "field.repo.path": string required
+      "field.schema": const:ai-repository/v1 required
+      "field.sections": object required
+      "field.sections.adrs": string optional
+      "field.sections.applications": string optional
+      "field.sections.deployments": string optional
+      "field.sections.features": string optional
+      "field.sections.knowledge": string optional
+      "field.sections.policy": string optional
+      "field.sections.profiles": string optional
+      "field.sections.project": string optional
+      "field.sections.prompts": string optional
+      "field.sections.releases": string optional
+      "field.sections.rules": string optional
+      "field.sections.scope": string optional
+      "field.sections.sessions": string optional
+      "field.sections.skills": string optional
+      "field.sections.use-cases": string optional
+      "field.sections.why": string optional
+      "field.sections.workflows": string optional
+  - surface: document-kind
+    id: majordomus.milestone/v1
+    facts:
+      closed: "true"
+      "field.acceptance_criteria": "array<string> required"
+      "field.cancelled": boolean optional
+      "field.claims": "array<string> optional"
+      "field.created_at": string optional
+      "field.current_state": string optional
+      "field.depends_on": "array<string> optional"
+      "field.desired_state": string optional
+      "field.evidence": "array<object> optional"
+      "field.evidence_required": "array<string> required"
+      "field.id": string required
+      "field.non_scope": "array<string> optional"
+      "field.order": integer required
+      "field.outcome": string required
+      "field.priority": string required
+      "field.problem": string required
+      "field.risks": "array<string> optional"
+      "field.scope": "array<string> optional"
+      "field.slug": string required
+      "field.superseded_by": string optional
+      "field.title": string required
+      "field.updated_at": string optional
+      "field.validation": "array<string> required"
+      "field.version": string optional
+  - surface: document-kind
+    id: majordomus.moment/v1
+    facts:
+      closed: "true"
+      "field.aliases": "array<string> optional"
+      "field.areas": "array<string> required"
+      "field.audiences": "array<string> required"
+      "field.capabilities": "array<string> optional"
+      "field.claims": "array<string> optional"
+      "field.commands": "array<string> optional"
+      "field.doctrines": "array<string> optional"
+      "field.examples": "array<object> required"
+      "field.featured": boolean optional
+      "field.frequency": "enum:common,constant,occasional,rare required"
+      "field.hook": string required
+      "field.id": string required
+      "field.kind": const:moment required
+      "field.lifecycle": "array<enum:handover,implementation,maintenance,onboarding,operations,planning,review> optional"
+      "field.related": "array<string> optional"
+      "field.schema": const:moment/v1 required
+      "field.severity": "enum:high,low,medium required"
+      "field.short_title": string optional
+      "field.signals": "array<object> required"
+      "field.status": "enum:deprecated,draft,stable required"
+      "field.summary": string required
+      "field.tags": "array<string> optional"
+      "field.title": string required
+      "field.use_cases": "array<string> optional"
+      "field.weight": integer optional
+  - surface: document-kind
+    id: majordomus.policy/v1
+    facts:
+      closed: "true"
+      "field.benchmark": object optional
+      "field.benchmark.budget": object optional
+      "field.benchmark.budget.doctor_ms": integer optional
+      "field.benchmark.budget.watch_ms": integer optional
+      "field.benchmark.regression": object optional
+      "field.benchmark.regression.p50": number optional
+      "field.benchmark.regression.p95": number optional
+      "field.benchmark.regression.p99": number optional
+      "field.benchmark.samples": integer optional
+      "field.benchmark.warmup": integer optional
+      "field.checkpoint": object optional
+      "field.checkpoint.max_body_lines": integer optional
+      "field.checkpoint.retention_max_files": integer optional
+      "field.context": object optional
+      "field.context.always_loaded_budget_lines": integer optional
+      "field.context.builder_budget_lines": integer optional
+      "field.context.max_list_items": integer optional
+      "field.context.recent_decisions": integer optional
+      "field.context.strategy": string optional
+      "field.context.transcript_is_state": boolean optional
+      "field.enforcement": "array<object> optional"
+      "field.handover": object optional
+      "field.handover.required_sections": "array<string> optional"
+      "field.handover.retention_max_files": integer optional
+      "field.ledger": object optional
+      "field.ledger.retention_max_lines": integer optional
+      "field.profiles": object optional
+      "field.profiles.checkpoint_interval_default": string optional
+      "field.profiles.default": string optional
+      "field.projections": "array<object> optional"
+      "field.session": object optional
+      "field.session.briefing_budget_lines": integer optional
+      "field.session.briefing_on_start": boolean optional
+      "field.session.checkpoint_on_compact": boolean optional
+      "field.session.handover_on_end": boolean optional
+      "field.use_cases": object optional
+      "field.use_cases.coverage": object optional
+      "field.use_cases.coverage.claims": "enum:advisory,off,required optional"
+      "field.use_cases.coverage.commands": "enum:advisory,off,required optional"
+      "field.use_cases.coverage.mcp_tools": "enum:advisory,off,required optional"
+      "field.verification": object optional
+      "field.verification.finish_requires": "array<string> optional"
+      "field.verification.required_for_changes": boolean optional
+      "field.version": any required
+  - surface: document-kind
+    id: majordomus.profile/v1
+    facts:
+      closed: "true"
+      "field.capability": "enum:fast,standard,strong,strongest required"
+      "field.checkpoint_interval": string required
+      "field.context": object optional
+      "field.context.architecture_notes": boolean optional
+      "field.context.current_state": boolean optional
+      "field.context.decisions": boolean optional
+      "field.context.failing_output": boolean optional
+      "field.context.recent_history_depth": integer optional
+      "field.context.relevant_files": boolean optional
+      "field.context.task": boolean optional
+      "field.description": string required
+      "field.effort": "enum:high,low,max,medium,xhigh required"
+      "field.effort_escalation": object optional
+      "field.effort_escalation.after_blocked_attempts": integer optional
+      "field.effort_escalation.to": "enum:high,low,max,medium,xhigh optional"
+      "field.name": string required
+      "field.output_contract": "array<string> optional"
+      "field.presentation": "enum:engineering,machine,summary required"
+      "field.verbosity": "enum:concise,detailed,terse required"
+      "field.verification": object optional
+      "field.verification.decision_record_required": boolean optional
+      "field.verification.regression_test_required": boolean optional
+      "field.verification.verify_command_required": "boolean|const:if_files_changed optional"
+  - surface: document-kind
+    id: majordomus.project/v1
+    facts:
+      closed: "true"
+      "field.default_branch": string required
+      "field.name": string required
+      "field.repository": string required
+      "field.schema_version": any required
+  - surface: document-kind
+    id: majordomus.prompt/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.description": string required
+      "field.header.name": string required
+      "field.header.profile": string optional
+  - surface: document-kind
+    id: majordomus.release/v1
+    facts:
+      closed: "true"
+      "field.artifacts": "array<object> required"
+      "field.channel": "enum:prerelease,stable required"
+      "field.commit": string required
+      "field.notes_url": string optional
+      "field.published_at": string required
+      "field.schema": const:release/v1 required
+      "field.tag": string required
+      "field.version": string required
+      "field.yanked": boolean optional
+  - surface: document-kind
+    id: majordomus.rule/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.class": "enum:advisory,blocking required"
+      "field.header.depends_on": "array<string> optional"
+      "field.header.description": string required
+      "field.header.id": string required
+      "field.header.kind": const:rule required
+      "field.header.statement": string required
+      "field.header.status": "enum:active,deprecated required"
+      "field.header.tags": "array<string> optional"
+      "field.header.title": string required
+      "field.header.version": integer required
+      "field.header.x-majordomus": object optional
+      "field.header.x-majordomus.category": string optional
+      "field.header.x-majordomus.claims": "array<string> optional"
+      "field.header.x-majordomus.enforced_by": "array<string> optional"
+      "field.header.x-majordomus.exit_code": integer optional
+      "field.header.x-majordomus.policy_key": string optional
+      "field.header.x-majordomus.tests": "array<string> optional"
+      "field.header.x-majordomus.validator": string optional
+  - surface: document-kind
+    id: majordomus.scope/v1
+    facts:
+      closed: "true"
+      "field.in": "array<string> required"
+      "field.out": object required
+      "field.out.archive": object optional
+      "field.out.archive.names": "array<string> optional"
+      "field.out.archive.paths": "array<string> optional"
+      "field.out.binary": boolean optional
+      "field.out.database_dump": object optional
+      "field.out.database_dump.names": "array<string> optional"
+      "field.out.database_dump.paths": "array<string> optional"
+      "field.out.fixtures": object optional
+      "field.out.fixtures.max_bytes": integer required
+      "field.out.fixtures.names": "array<string> optional"
+      "field.out.fixtures.paths": "array<string> optional"
+      "field.out.generated": object optional
+      "field.out.generated.names": "array<string> optional"
+      "field.out.generated.paths": "array<string> optional"
+      "field.out.image": object optional
+      "field.out.image.names": "array<string> optional"
+      "field.out.image.paths": "array<string> optional"
+      "field.out.max_bytes": integer optional
+      "field.out.paths": "array<string> optional"
+      "field.out.pdf": object optional
+      "field.out.pdf.names": "array<string> optional"
+      "field.out.pdf.paths": "array<string> optional"
+      "field.out.secret": object optional
+      "field.out.secret.names": "array<string> optional"
+      "field.out.secret.paths": "array<string> optional"
+      "field.out.video": object optional
+      "field.out.video.names": "array<string> optional"
+      "field.out.video.paths": "array<string> optional"
+      "field.version": any required
+  - surface: document-kind
+    id: majordomus.session-context/v1
+    facts:
+      closed: "true"
+      "field.branch": string required
+      "field.head": string required
+      "field.kind": const:session-context required
+      "field.opened_at": string required
+      "field.opened_by": "enum:hand,hook required"
+      "field.profile": string required
+      "field.provider": string optional
+      "field.provider_session": string optional
+      "field.schema": const:session-context/v1 required
+      "field.session_id": string required
+      "field.task_id": string required
+      "field.worker": string optional
+  - surface: document-kind
+    id: majordomus.session-record/v1
+    facts:
+      closed: "true"
+      "field.branch": string optional
+      "field.changed_files": "array<string> optional"
+      "field.checkpoints": "array<string> optional"
+      "field.closed_at": string required
+      "field.commits": "array<string> optional"
+      "field.created_at": string optional
+      "field.decisions": "array<string> optional"
+      "field.evidence": "array<string> optional"
+      "field.handovers": "array<string> optional"
+      "field.head": string optional
+      "field.issues": "array<string> optional"
+      "field.kind": const:session required
+      "field.milestones": "array<string> optional"
+      "field.outcome": "enum:closed,interrupted required"
+      "field.profile": string optional
+      "field.questions": "array<string> optional"
+      "field.repository_id": string optional
+      "field.schema": const:session/v1 required
+      "field.schema_version": integer optional
+      "field.session_id": string required
+      "field.start_head": string optional
+      "field.start_working_tree": "enum:clean,dirty optional"
+      "field.started_at": string required
+      "field.task_id": string optional
+      "field.tasks": "array<string> optional"
+      "field.title": string optional
+      "field.worker": string optional
+      "field.working_tree": "enum:clean,dirty optional"
+      "field.worktree_id": string optional
+  - surface: document-kind
+    id: majordomus.session/v1
+    facts:
+      closed: "true"
+      "field.branch": string optional
+      "field.owner": string optional
+      "field.repository_id": string optional
+      "field.session_id": string required
+      "field.start_head": string optional
+      "field.start_working_tree": "enum:clean,dirty optional"
+      "field.started_at": string required
+      "field.worker": string optional
+      "field.worktree": string optional
+  - surface: document-kind
+    id: majordomus.skill/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.description": string required
+      "field.header.id": string required
+      "field.header.inputs": "array<string> optional"
+      "field.header.outputs": "array<string> optional"
+      "field.header.related": "array<string> optional"
+      "field.header.schema": const:skill/v1 required
+      "field.header.status": "enum:active,deprecated,draft required"
+      "field.header.tags": "array<string> optional"
+      "field.header.title": string required
+      "field.header.version": integer required
+  - surface: document-kind
+    id: majordomus.taxonomy/v1
+    facts:
+      closed: "true"
+      "field.categories": "array<object> required"
+      "field.version": any required
+  - surface: document-kind
+    id: majordomus.use-case/v1
+    facts:
+      closed: "true"
+      "field.body": object required
+      "field.body.sections": "array<object> required"
+      "field.header": object required
+      "field.header.actors": "array<enum:agent,contributor,maintainer,operator,reviewer> optional"
+      "field.header.applications": "array<string> optional"
+      "field.header.category": string required
+      "field.header.claims": "array<string> optional"
+      "field.header.commands": "array<string> required"
+      "field.header.difficulty": "enum:advanced,basic,intermediate optional"
+      "field.header.doctrines": "array<string> optional"
+      "field.header.id": string required
+      "field.header.kind": const:use-case required
+      "field.header.mcp_tools": "array<string> optional"
+      "field.header.performance": object optional
+      "field.header.performance.budget_ms": integer required
+      "field.header.related": object optional
+      "field.header.related.boost": "array<string> optional"
+      "field.header.related.suppress": "array<string> optional"
+      "field.header.responsibilities": "array<string> optional"
+      "field.header.status": "enum:active,deprecated,draft required"
+      "field.header.summary": string required
+      "field.header.tags": "array<string> optional"
+      "field.header.target": "enum:advisory,guaranteed optional"
+      "field.header.title": string required
+      "field.header.weight": integer optional
+  - surface: target
+    id: linux-aarch64-gnu
+    facts:
+      rust-target: aarch64-unknown-linux-gnu
+      status: supported
+  - surface: target
+    id: linux-aarch64-musl
+    facts:
+      rust-target: aarch64-unknown-linux-musl
+      status: supported
+  - surface: target
+    id: linux-x86_64-gnu
+    facts:
+      rust-target: x86_64-unknown-linux-gnu
+      status: supported
+  - surface: target
+    id: linux-x86_64-musl
+    facts:
+      rust-target: x86_64-unknown-linux-musl
+      status: supported
+  - surface: target
+    id: macos-aarch64
+    facts:
+      rust-target: aarch64-apple-darwin
+      status: supported
+  - surface: target
+    id: macos-x86_64
+    facts:
+      rust-target: x86_64-apple-darwin
+      status: supported
+  - surface: target
+    id: windows-x86_64
+    facts:
+      rust-target: x86_64-pc-windows-msvc
+      status: unavailable
+fingerprint: cc1ad26cb79eb9335a01ae19d04f80d34b556eb6e10de414ec9e6121647ba6a0

@@ -9,6 +9,7 @@
 
 use serde_json::{json, Value};
 
+use crate::capability::builtin::ChangelogReport;
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DirectoryReport, DirectoryState,
     GraphList, Health, HealthStatus, InstallabilityReport, ObjectList, ObjectSummary, Record,
@@ -19,6 +20,8 @@ use crate::command_graph::CommandNode;
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
+use crate::release::diff::CompatibilityImpact;
+use crate::release::{Agreement, ReleaseState};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,
@@ -3219,6 +3222,318 @@ fn param(query: &[(String, String)], key: &str) -> Option<String> {
         .find(|(k, _)| k == key)
         .map(|(_, v)| v.clone())
         .filter(|v| !v.is_empty())
+}
+
+/// `/cockpit/release`: what this repository would publish next, and what it published.
+///
+/// The page the version in the topbar leads to. Every value comes from `release.status`
+/// and `release.changelog` — the same two capabilities the command line, the HTTP API and
+/// MCP answer from — so a number here is a number nothing else computed a second time.
+pub fn release(ctx: &Context) -> Page {
+    let state: ReleaseState = match ask(ctx, "release.status", json!({})) {
+        Ok(s) => s,
+        Err(e) => return failed(Area::Release, "Release", e),
+    };
+    let log: ChangelogReport = match ask(ctx, "release.changelog", json!({})) {
+        Ok(l) => l,
+        Err(e) => return failed(Area::Release, "Release", e),
+    };
+
+    let versions = version_card(&state);
+    let readiness = readiness_card(&state);
+    let unreleased = state
+        .versions
+        .unreleased
+        .then(|| unreleased_card(&state, &log));
+    let history = history_card(&log);
+    let diagnostics = (!state.diagnostics.is_empty()).then(|| diagnostics_card(&state));
+
+    Page::new(
+        Area::Release,
+        "Release",
+        el("div")
+            .class("mj-grid")
+            .child(versions)
+            .child(readiness)
+            .when(unreleased.is_some(), |d| {
+                d.child(unreleased.expect("checked just above"))
+            })
+            .when(diagnostics.is_some(), |d| {
+                d.child(diagnostics.expect("checked just above"))
+            })
+            .child(history),
+    )
+    .subtitle(
+        "The source version, the published release, and every change between them — one \
+         model, read here and by `majordomus release status`, /api/v1/release/status and \
+         the MCP tool.",
+    )
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Release", None)])
+}
+
+/// The four versions, and which of them disagree.
+fn version_card(state: &ReleaseState) -> El {
+    let v = &state.versions;
+    let mut rows = vec![
+        ("Source", Node::Element(mono(v.source.to_string()))),
+        (
+            "Published",
+            Node::Element(match &v.published {
+                Some(p) => mono(p.to_string()),
+                None => nothing("no stable release is recorded"),
+            }),
+        ),
+        ("Running", Node::Element(mono(v.running.to_string()))),
+    ];
+    for d in &v.deployed {
+        rows.push((
+            // one row per deployment; the environment names it for a reader, the record's
+            // id names it for a machine and is on the release page's history instead
+            "Deployed",
+            Node::Element(
+                el("span")
+                    .child(match &d.version {
+                        Some(version) => mono(version.to_string()),
+                        None => nothing("nothing has reported"),
+                    })
+                    .child(badge(
+                        match d.agreement {
+                            Agreement::Published | Agreement::Source => "ok",
+                            Agreement::Drift => "fail",
+                            Agreement::Unknown => "warn",
+                        },
+                        match d.agreement {
+                            Agreement::Published => "published",
+                            Agreement::Source => "source",
+                            Agreement::Drift => "drift",
+                            Agreement::Unknown => "unknown",
+                        },
+                    )),
+            ),
+        ));
+    }
+    let body = el("div").child(facts(rows));
+    let body = if v.divergences.is_empty() {
+        body.child(
+            el("p")
+                .class("mj-prose")
+                .text("Every version this repository can see agrees."),
+        )
+    } else {
+        v.divergences
+            .iter()
+            .fold(body, |d, line| d.child(alert("warn", line.clone())))
+    };
+    card_with(
+        "Versions",
+        version_badge(state),
+        body.child(el("p").class("mj-empty").text(
+            "Four different facts. They are allowed to differ; what is not allowed is for a \
+             page to show one of them as if it were all four.",
+        )),
+    )
+}
+
+/// What the release state is, and what would move it on.
+fn readiness_card(state: &ReleaseState) -> El {
+    let rows = vec![
+        (
+            "Baseline",
+            Node::Element(mono(match state.baseline.tag() {
+                Some(tag) => tag.to_string(),
+                None => "none".into(),
+            })),
+        ),
+        (
+            "Compatibility",
+            Node::Element(match state.impact {
+                Some(impact) => badge(
+                    match impact {
+                        CompatibilityImpact::Breaking => "fail",
+                        CompatibilityImpact::Additive => "warn",
+                        _ => "ok",
+                    },
+                    impact.as_str(),
+                ),
+                None => nothing("not computed"),
+            }),
+        ),
+        (
+            "Required bump",
+            Node::Element(match state.required_bump {
+                Some(bump) => mono(bump.as_str()),
+                None => nothing("none"),
+            }),
+        ),
+        (
+            "Minimum version",
+            Node::Element(match &state.minimum_version {
+                Some(v) => mono(v.to_string()),
+                None => nothing("none required"),
+            }),
+        ),
+        (
+            "Target version",
+            Node::Element(mono(state.target_version.to_string())),
+        ),
+        (
+            "Contract changes",
+            Node::Element(mono(state.contract_changes.to_string())),
+        ),
+    ];
+    card_with(
+        "Readiness",
+        badge(
+            if state.readiness.is_blocking() {
+                "fail"
+            } else {
+                "ok"
+            },
+            state.readiness.as_str(),
+        ),
+        el("div")
+            .child(facts(rows))
+            .child(el("p").class("mj-prose").text(
+                "The minimum version is derived from the public contract diff, not from the \
+                 commit messages. `majordomus release explain` shows which change decided it.",
+            )),
+    )
+}
+
+/// The changes that would go out in the next release.
+fn unreleased_card(state: &ReleaseState, log: &ChangelogReport) -> El {
+    let body = match &log.unreleased {
+        Some(section) if !section.groups.is_empty() => {
+            section.groups.iter().fold(el("div"), |d, group| {
+                d.child(el("h3").class("mj-subheading").text(&group.heading))
+                    .child(
+                        el("ul").class("mj-checklist").children(
+                            group
+                                .changes
+                                .iter()
+                                .map(|c| {
+                                    el("li")
+                                        .class("mj-checklist-item")
+                                        .child(badge(
+                                            match c.impact {
+                                                CompatibilityImpact::Breaking => "fail",
+                                                CompatibilityImpact::Additive => "warn",
+                                                _ => "ok",
+                                            },
+                                            c.impact.as_str(),
+                                        ))
+                                        .child(
+                                            el("span").class("mj-checklist-title").text(&c.title),
+                                        )
+                                        .child(el("span").class("mj-checklist-detail").text(&c.id))
+                                })
+                                .collect::<Vec<_>>(),
+                        ),
+                    )
+            })
+        }
+        _ => el("div").child(nothing(
+            "no change record is unreleased; the version moved without one",
+        )),
+    };
+    card_with(
+        format!("Unreleased — would publish as {}", state.target_version),
+        badge("warn", "unreleased"),
+        body,
+    )
+}
+
+/// Every release, newest first.
+fn history_card(log: &ChangelogReport) -> El {
+    if log.releases.is_empty() {
+        return card("History", nothing("no release has been recorded"));
+    }
+    let rows: Vec<El> = log
+        .releases
+        .iter()
+        .map(|s| {
+            row(vec![
+                {
+                    let version = s
+                        .version
+                        .as_ref()
+                        .map(ToString::to_string)
+                        .unwrap_or_default();
+                    id_cell(format!("/cockpit/release#{version}"), version)
+                },
+                text_cell(s.date.clone().unwrap_or_else(|| "unpublished".into())),
+                cell(badge(
+                    match s.impact {
+                        CompatibilityImpact::Breaking => "fail",
+                        CompatibilityImpact::Additive => "warn",
+                        _ => "ok",
+                    },
+                    s.impact.as_str(),
+                )),
+                text_cell(s.len().to_string()),
+                cell(match &s.commit {
+                    Some(c) => mono(c[..c.len().min(12)].to_string()),
+                    None => nothing("none"),
+                }),
+            ])
+        })
+        .collect();
+    card(
+        "History",
+        table(
+            &["Version", "Published", "Compatibility", "Changes", "Commit"],
+            rows,
+        ),
+    )
+}
+
+/// Everything standing in the way, with the command that fixes each.
+fn diagnostics_card(state: &ReleaseState) -> El {
+    card(
+        "Diagnostics",
+        el("ul").class("mj-checklist").children(
+            state
+                .diagnostics
+                .iter()
+                .map(|d| {
+                    el("li")
+                        .class("mj-checklist-item")
+                        .child(badge(
+                            if d.is_blocking() { "fail" } else { "warn" },
+                            d.severity.as_str(),
+                        ))
+                        .child(el("span").class("mj-checklist-title").text(&d.code))
+                        .child(el("span").class("mj-checklist-detail").text(&d.message))
+                        .when(d.next.is_some(), |li| {
+                            li.child(mono(d.next.clone().unwrap_or_default()))
+                        })
+                })
+                .collect::<Vec<_>>(),
+        ),
+    )
+}
+
+/// The badge the version card and the topbar share: what state the release is in, in one
+/// word.
+///
+/// Declared here, beside the page that explains it, so that the topbar and this card
+/// cannot say two different things about the same state.
+pub fn version_badge(state: &ReleaseState) -> El {
+    let drifting = state
+        .versions
+        .deployed
+        .iter()
+        .any(|d| d.agreement == Agreement::Drift);
+    if drifting {
+        return badge("fail", "drift");
+    }
+    if state.readiness.is_blocking() {
+        return badge("fail", state.readiness.as_str());
+    }
+    if state.versions.unreleased {
+        return badge("warn", "unreleased");
+    }
+    badge("ok", "released")
 }
 
 #[cfg(test)]

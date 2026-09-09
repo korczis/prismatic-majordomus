@@ -19,6 +19,7 @@ pub mod objects;
 pub mod peers;
 pub mod perf;
 pub mod product;
+pub mod release;
 pub mod repository;
 mod scope;
 mod views;
@@ -57,6 +58,10 @@ pub use objects::{
     SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
 };
 pub use peers::{AnnounceInput, PeerList};
+pub use release::{
+    ChangelogInput, ChangelogReport, ContractDiffInput, ContractDiffReport, ReleaseCheckReport,
+    ReleaseExplanation, ReleaseManifestInput, ReleasePlanInput, ReleasePlanReport, RELEASE_URI,
+};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
 pub mod why;
@@ -86,6 +91,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         artifacts,
         environment,
         distribution,
+        release,
         why,
         web,
         worktree,

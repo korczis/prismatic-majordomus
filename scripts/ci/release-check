@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# release-check — a release has one identity, and its version was earned.
+#
+# The gate behind `project.release-identity`. It orchestrates; it decides nothing. Every
+# verdict here comes from the executable, because the release semantics belong to one
+# engine and a second implementation in shell is exactly what this subsystem exists to
+# remove. What this script owns is the order the checks are made in and the exit code.
+#
+#   1. the crate, the shell tool and (optionally) a tag state one version
+#   2. the committed projections of the release state are current
+#   3. every release invariant the repository can decide locally holds
+#
+# `scripts/release-version --check` is step 1 and predates this; it is called rather than
+# reimplemented. Steps 2 and 3 are `majordomus generate --target release --check` and
+# `majordomus release check`.
+#
+#   scripts/ci/release-check                 report, and fail on any violation
+#   scripts/ci/release-check --tag v0.4.0    also require the tag to match the version
+#   MJ_ROOT=<dir> scripts/ci/release-check   measure another tree (the case does)
+#
+# Exit: 0 every check holds · 10 one does not · 12 the executable is unusable.
+set -eu
+
+# MJ_ROOT lets the behavioural case point this at a fixture; without it the repository the
+# script lives in is the subject, which is what CI wants.
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+
+tag=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --tag) tag="${2:-}"; shift 2 ;;
+    -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
+    *) printf 'release-check: unknown option: %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
+
+# The executable, built if it must be. `bin/majordomus-cli` is the one launcher every
+# caller shares, and MAJORDOMUS_SHARE is unset because a share directory inherited from
+# another checkout makes this tree's own projections look stale.
+MJ="$ROOT/bin/majordomus-cli"
+[ -x "$MJ" ] || { printf 'release-check: no %s\n' "$MJ" >&2; exit 12; }
+
+rc=0
+say() { printf 'release-check: %s\n' "$*"; }
+fail() { printf 'release-check: FAIL %s\n' "$*" >&2; rc=10; }
+
+# 1. one version, in every place that states one.
+if [ -n "$tag" ]; then
+  "$ROOT/scripts/release-version" --check --tag "$tag" || fail "the version is stated inconsistently"
+else
+  "$ROOT/scripts/release-version" --check || fail "the version is stated inconsistently"
+fi
+
+# 2. the projections of the release state are current. A stale contract snapshot makes
+#    every compatibility verdict below it quietly wrong, so this runs before the verdict.
+if env -u MAJORDOMUS_SHARE "$MJ" generate --repo "$ROOT" release --check >/dev/null 2>&1; then
+  say "OK   the contract snapshot, the changelog, the manifests and share/version.txt are current"
+else
+  env -u MAJORDOMUS_SHARE "$MJ" generate --repo "$ROOT" release --check || true
+  fail "a projection of the release state is stale (run: majordomus generate --target release)"
+fi
+
+# 3. every release invariant the repository can decide without a network.
+out="$(env -u MAJORDOMUS_SHARE "$MJ" release --repo "$ROOT" check 2>&1)" || rc=10
+printf '%s\n' "$out"
+case "$rc" in
+  0) say "OK   every release invariant holds" ;;
+  *) fail "a release invariant does not hold (run: majordomus release check)" ;;
+esac
+
+exit "$rc"

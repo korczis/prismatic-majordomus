@@ -70,6 +70,11 @@ gates:
     runs: scripts/ci/rust-command-check --strict
     summary: every composed command module asserts, in the file that declares it, that it is what it claims
 
+  - id: release-identity
+    job: structure
+    runs: scripts/ci/release-check
+    summary: one version in every place that states one, the projections of the release state current, and every release invariant the repository can decide locally
+
   - id: rust-coverage
     job: coverage
     runs: just coverage
@@ -154,13 +159,13 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data]
+    gates: [rust-check, rust-command, projection-closure, rust-coverage, rust-bench, command-graph, release-identity, shell-suite, macos, cockpit-probe, worktree-topology, providers-data]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
   - id: rust-generated
     paths: [docs/generated/**, site/data/registry/**, share/allow/**, AGENTS.md, CLAUDE.md]
-    gates: [rust-integration, shell-suite, site-build, site-probe, providers-data]
+    gates: [rust-integration, release-identity, shell-suite, site-build, site-probe, providers-data]
 
   # the Cockpit's own assets: its stylesheet source, its compiled stylesheet, its scripts.
   # Read from disk by the served executable, so the crate's suites see them; the compiled
@@ -176,18 +181,18 @@ classes:
   # the site generator
   - id: share
     paths: [share/**]
-    gates: [rust-check, rust-coverage, rust-bench, command-graph, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit, providers-data]
+    gates: [rust-check, rust-coverage, rust-bench, command-graph, release-identity, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit, providers-data]
 
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit]
+    gates: [shell-suite, rust-integration, command-graph, release-identity, site-build, site-probe, macos, worktree-topology, ui-audit]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
   - id: layer
     paths: [.ai/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data]
+    gates: [shell-suite, rust-integration, release-identity, site-build, site-probe, worktree-topology, ui-audit, providers-data]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
@@ -203,8 +208,8 @@ classes:
   # and they ask the executable for every name they use, so the crate's registry checks and
   # the behavioural cases are what decide whether they still work
   - id: distribution
-    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture]
-    gates: [shell-suite, rust-integration, macos]
+    paths: [scripts/release-package, scripts/release-verify, scripts/release-version, scripts/release-record, scripts/release-fixture, scripts/ci/release-check, CHANGELOG.md]
+    gates: [shell-suite, rust-integration, release-identity, macos]
 
   # the MCP client configurations and the launcher they name; case 90 reads them
   - id: clients

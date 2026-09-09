@@ -97,6 +97,15 @@ pub enum Target {
     /// release build matrix, the installer, the installation guide, the site's dataset,
     /// and the public metadata of every recorded release.
     Distribution,
+    /// Everything derived from the release state (see [`crate::release`]): the public
+    /// contract snapshot every future release is measured against, `CHANGELOG.md`, one
+    /// manifest per recorded release, and the version line the shell tool prints.
+    ///
+    /// The version line is here rather than hand-edited because the crate's version is the
+    /// authority and the shell tool cannot read a manifest at run time: an installed tree
+    /// has no `Cargo.toml`. Generating it is what turns "two writers who must be kept in
+    /// step" into one writer and one projection.
+    Release,
     /// `docs/generated/artifacts.{json,yaml,md}`: every artifact of every other target,
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
     /// that a manifest naming half the artifacts cannot exist.
@@ -117,6 +126,7 @@ impl Target {
         Target::Site,
         Target::Web,
         Target::Distribution,
+        Target::Release,
         Target::Manifest,
     ];
 
@@ -147,6 +157,7 @@ impl Target {
             Target::Site => "site",
             Target::Web => "web",
             Target::Distribution => "distribution",
+            Target::Release => "release",
             Target::Manifest => "manifest",
         }
     }
@@ -168,6 +179,12 @@ pub enum ArtifactFormat {
     /// provenance as `#` comments.
     Text,
 }
+
+/// Where the version the shell tool prints is projected.
+///
+/// Under `share/`, which a release archive carries in full, so that an installed tree can
+/// read it exactly as a checkout does.
+pub const VERSION_PATH: &str = "share/version.txt";
 
 /// The schema of `web.json`.
 pub const WEB_SCHEMA: &str = "majordomus/web-topology/v1";
@@ -536,6 +553,7 @@ pub fn artifacts(
             | Target::Site
             | Target::Web
             | Target::Distribution
+            | Target::Release
             | Target::Manifest => {}
         }
     }
@@ -643,6 +661,129 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     if targets.contains(&Target::Distribution) {
         out.extend(distribution_artifacts(app)?);
     }
+    if targets.contains(&Target::Release) {
+        out.extend(release_artifacts(app)?);
+    }
+    Ok(out)
+}
+
+/// Every artifact the release state produces.
+///
+/// The contract snapshot is built here and nowhere else, because here is the one place
+/// that has all four of its inputs at once: the capability registry, the command graph,
+/// the document schemas and the distribution model. Everything downstream — the diff, the
+/// required bump, the release manifests — reads the committed snapshot, so a snapshot
+/// built with a surface missing would narrow every verdict that follows it. That is why
+/// this refuses rather than writing a partial one.
+pub fn release_artifacts(app: &App) -> Result<Vec<Artifact>> {
+    use crate::release::{contract, manifest::ReleaseManifest, Engine};
+
+    // Built here rather than taken from a cache or a full load: the contract must be the
+    // same on every machine that reads the same commit, and the workflow runner is not on
+    // every machine. `workflows: None` is what makes this deterministic; the contract
+    // carries no workflow anyway.
+    let graph = crate::command_graph::build(&crate::command_graph::Inputs {
+        registry: Some(&app.context.registry),
+        share: Some(app.share.dir()),
+        workflows: None,
+        bridged: Default::default(),
+    });
+    let snapshot = contract::ContractSnapshot::build(
+        Some(&app.context.registry),
+        Some(&graph),
+        &app.context.index.document_schemas,
+        app.context.index.distribution.as_ref(),
+    );
+    let covered = snapshot.surfaces();
+    let missing: Vec<&str> = crate::release::REQUIRED_SURFACES
+        .iter()
+        .filter(|s| !covered.contains(s))
+        .map(|s| s.noun())
+        .collect();
+    if !missing.is_empty() {
+        return Err(Error::Protocol {
+            reason: format!(
+                "the public contract would be written without its {} surface(s); a partial \
+                 snapshot narrows every compatibility verdict measured against it",
+                missing.join(", ")
+            ),
+        });
+    }
+
+    // A document of this repository's own, so it is written in both encodings the layer
+    // commits every document in. The JSON is what the release engine reads back at a tag;
+    // the YAML is what a person reads.
+    let mut out = Document::new(
+        "contract",
+        crate::release::contract::SCHEMA,
+        "the capability registry, the command graph, the document schemas and the \
+         distribution model, normalised",
+        serde_json::to_value(&snapshot).unwrap_or_default(),
+    )
+    .artifacts(crate::VERSION);
+
+    // Over the snapshot just built, not the committed one: a manifest carries the
+    // contract's fingerprint, and one built against the previous contract would make the
+    // next generation see it as stale forever.
+    let engine = Engine::load_with(
+        app.repository.root(),
+        &app.context.index,
+        Some(&app.context.registry),
+        Some(snapshot.clone()),
+    )
+    .map_err(|reason| Error::Protocol { reason })?;
+    let changelog = engine.changelog();
+    out.push(Artifact::markdown(
+        crate::release::CHANGELOG_PATH,
+        "changelog",
+        "the change records under .ai/repo/changes/ and the release records under .ai/repo/releases/",
+        crate::VERSION,
+        &changelog.to_markdown(),
+    ));
+
+    // One manifest per release that has one, plus the one this tree would publish. A
+    // manifest for a version nothing published yet is what `release prepare` leaves for a
+    // reviewer to read.
+    let mut versions: Vec<crate::release::version::Version> = engine
+        .releases
+        .releases
+        .iter()
+        .filter_map(|r| r.version.parse().ok())
+        .collect();
+    let target = engine.target_version();
+    if !versions.contains(&target) {
+        versions.push(target);
+    }
+    versions.sort();
+    versions.dedup();
+    for version in versions {
+        let manifest = ReleaseManifest::build(&engine, &version, &changelog);
+        out.extend(
+            Document {
+                id: version.tag(),
+                dir: crate::release::MANIFEST_DIR.to_string(),
+                schema: Some(crate::release::manifest::SCHEMA.to_string()),
+                source: "the release state: the contract it was measured against, the \
+                         changes it published and the artifacts it uploaded"
+                    .to_string(),
+                style: HeaderStyle::Members,
+                value: serde_json::to_value(&manifest).unwrap_or_default(),
+            }
+            .artifacts(crate::VERSION),
+        );
+    }
+
+    // The version the shell tool prints. It cannot read the crate's manifest at run time —
+    // an installed tree has none — and a hand-kept second literal is a second version. So
+    // the crate's version is projected into the data directory the tool already reads, and
+    // `generate --check` refuses a tree where the two disagree.
+    out.push(Artifact::text(
+        VERSION_PATH,
+        "tool-version",
+        "the crate's version, which is the one authority",
+        crate::VERSION,
+        &format!("version={}\n", crate::VERSION),
+    ));
     Ok(out)
 }
 

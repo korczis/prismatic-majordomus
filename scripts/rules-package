@@ -12,7 +12,10 @@
 # without rewriting the manifest fails `check`, which the test suite runs.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MJ_VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
+# The version, from the one place it is written: share/version.txt, generated from the
+# crate's manifest. It used to be read out of a literal in bin/majordomus, which was that
+# version written a second time (rule project.release-identity).
+MJ_VERSION="$(sed -n 's/^version=//p' "$ROOT/share/version.txt" | head -n 1)"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
 export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/common.sh
 . "$ROOT/lib/common.sh"

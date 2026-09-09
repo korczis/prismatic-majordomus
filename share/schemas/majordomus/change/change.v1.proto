@@ -1,0 +1,140 @@
+// One release change under .ai/repo/changes/.
+//
+// The canonical record of something a release did that its contract diff cannot say on
+// its own. A capability that appeared is visible in the contract and needs nothing here; a
+// bug that was fixed, a behaviour that moved inside the contract, or a break that needs a
+// migration is not visible there and is written here once. Every changelog, release note,
+// release page and API answer is a projection of these records and of the contract diff —
+// no release fact is written twice.
+//
+// Canonical. `majordomus generate` projects this file into share/allow/change.txt, into
+// share/sections/change.txt and into change.v1.schema.json beside it; none of those three
+// is written by hand, and `scripts/derive-check` fails when any has drifted from this file.
+
+syntax = "proto3";
+
+package majordomus.change.v1;
+
+import "majordomus/options.proto";
+
+option (majordomus.schema_id) = "majordomus.change/v1";
+option (majordomus.allow_list) = "change";
+option (majordomus.document_format) = "markdown";
+
+// The whole record: the YAML front matter, then the Markdown body.
+message Document {
+  Header header = 1 [(majordomus.required) = true];
+  Body body = 2 [(majordomus.required) = true];
+}
+
+// The front matter. Every field is read by the release engine or by the changelog
+// projection; none is decoration.
+message Header {
+  option (majordomus.closed) = true;
+
+  // The format version of this record. A version the tool does not know is refused,
+  // never guessed.
+  string schema = 1 [(majordomus.required) = true, (majordomus.const) = "change/v1"];
+
+  // The identity, allocated once and never reused. It fixes the file name and survives a
+  // retitle, so a changelog entry can be pointed at from a commit or an issue.
+  string id = 2 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  string kind = 3 [(majordomus.required) = true, (majordomus.const) = "change"];
+
+  // One line, in the present tense, as it appears in the changelog. What changed for the
+  // reader, not what was done to the code.
+  string title = 4 [(majordomus.required) = true, (majordomus.min_length) = 1];
+
+  // Which section of a changelog it belongs under.
+  Type type = 5 [(majordomus.required) = true];
+
+  // What it costs the people who already depend on this. It must not understate the
+  // contract: a record claiming `patch` for an entry the contract diff calls breaking is
+  // refused, because the changelog would then promise something the artifact does not.
+  Impact impact = 6 [(majordomus.required) = true];
+
+  // The version this change was published in. Absent means unreleased: the change belongs
+  // to whatever the next release turns out to be, and `majordomus release prepare` stamps
+  // it. Written by the release pipeline, and by nothing else.
+  string released_in = 7 [(majordomus.pattern) = "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$"];
+
+  // The surfaces a reader of this change cares about: `cli`, `api`, `mcp`, `cockpit`,
+  // `site`, `installer`, `layer`, `docs`. A projection groups by them; nothing validates
+  // that a scope exists, because a change may be about something the tool does not model.
+  repeated string scopes = 8 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+
+  // The contract entries this record accounts for, as `<surface>:<id>` —
+  // `capability:release.status`, `command:executable.release.status`,
+  // `document-kind:majordomus.change/v1`, `target:linux-x86_64-musl`. This is what makes
+  // coverage checkable: a breaking contract change no record names is a release the
+  // changelog does not explain, and `majordomus release check` refuses it.
+  repeated string contract = 9 [(majordomus.pattern) = "^(capability|command|document-kind|target):.+$"];
+
+  // The issues this change closes, as the work graph names them.
+  repeated string issues = 10 [(majordomus.pattern) = "^[A-Za-z0-9][A-Za-z0-9_/.-]*$"];
+
+  // The pull requests that carried it, as numbers.
+  repeated string pull_requests = 11 [(majordomus.pattern) = "^[0-9]+$"];
+
+  // The commits that carried it, full forty-character shas.
+  repeated string commits = 12 [(majordomus.pattern) = "^[0-9a-f]{40}$"];
+
+  // The decisions behind it. Each must resolve to a record under .ai/repo/adrs/.
+  repeated string adrs = 13 [(majordomus.pattern) = "^adr-[0-9]{4}$"];
+
+  // The migration guidance, repository-relative. Required for a breaking change: a break
+  // without a way through it is a break nobody can follow, and `majordomus release check`
+  // refuses a release that has one.
+  string migration = 14 [(majordomus.pattern) = "^[^/].*\\.md$"];
+}
+
+// The changelog section this change appears under. The six of "Keep a Changelog", which
+// every reader of a changelog already knows, and no seventh.
+enum Type {
+  TYPE_UNSPECIFIED = 0;
+  TYPE_ADDED = 1 [(majordomus.value) = "added"];
+  TYPE_CHANGED = 2 [(majordomus.value) = "changed"];
+  TYPE_DEPRECATED = 3 [(majordomus.value) = "deprecated"];
+  TYPE_REMOVED = 4 [(majordomus.value) = "removed"];
+  TYPE_FIXED = 5 [(majordomus.value) = "fixed"];
+  TYPE_SECURITY = 6 [(majordomus.value) = "security"];
+}
+
+// What the change costs a caller. The same four the contract diff reaches, because a
+// record and a diff that disagreed about the word would give a reader two answers.
+enum Impact {
+  IMPACT_UNSPECIFIED = 0;
+  IMPACT_NONE = 1 [(majordomus.value) = "none"];
+  IMPACT_PATCH = 2 [(majordomus.value) = "patch"];
+  IMPACT_ADDITIVE = 3 [(majordomus.value) = "additive"];
+  IMPACT_BREAKING = 4 [(majordomus.value) = "breaking"];
+}
+
+// The Markdown body: what the front matter cannot say.
+message Body {
+  option (majordomus.body) = true;
+
+  // What changed and why it mattered, for somebody reading the changelog months later
+  // with no memory of the work.
+  Section summary = 1 [
+    (majordomus.heading) = "Summary",
+    (majordomus.level) = 2,
+    (majordomus.required) = true,
+    (majordomus.non_empty) = true
+  ];
+
+  // What a reader has to do about it. Required in substance for a breaking change — the
+  // `migration` field names the document, and this section is the short form of it.
+  Section migration = 2 [
+    (majordomus.heading) = "Migration",
+    (majordomus.level) = 2
+  ];
+}
+
+// One section of the body, as the reader of a Markdown document meets it.
+message Section {
+  string heading = 1;
+  uint32 level = 2;
+  bool empty = 3;
+}

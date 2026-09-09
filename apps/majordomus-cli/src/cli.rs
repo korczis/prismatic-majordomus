@@ -47,6 +47,8 @@ pub enum Command {
     Why(WhyArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
+    /// Release identity: the four versions and where they disagree, why the next version must be what it must be, the public contract diff, the changelog every surface renders, and the preparation of a release
+    Release(ReleaseArgs),
     /// What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
     Env(EnvArgs),
     /// Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it
@@ -58,6 +60,71 @@ pub enum Command {
     Worktree(WorktreeArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
     Product(ProductArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus release`. The output shape is global so that `release status --json` reads
+/// the way a person writes it, and is declared once.
+pub struct ReleaseArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to ask of the release state; none reports the status.
+    pub command: Option<ReleaseCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus release`.
+pub enum ReleaseCommand {
+    /// The four versions — what this tree would release, what is published, what this process is, what each deployment reports — and every disagreement between them
+    Version,
+    /// The whole release state: versions, baseline, compatibility, minimum version, readiness and every diagnostic
+    Status,
+    /// Why the next version must be at least what it must be, step by step from the contract change to the policy
+    Explain,
+    /// Every difference between the public contract at the last published release and the contract this tree states
+    Diff {
+        /// Only the changes carrying this impact
+        #[arg(long, value_name = "IMPACT")]
+        impact: Option<String>,
+        /// Only the changes on this surface
+        #[arg(long, value_name = "SURFACE")]
+        surface: Option<String>,
+    },
+    /// The changelog: the unreleased changes and every published version's, as CHANGELOG.md carries them
+    Changelog {
+        /// Only this version's section, as its release notes
+        #[arg(long, value_name = "VERSION")]
+        version: Option<String>,
+    },
+    /// One release explained: compatibility, contract fingerprints, changes, migration documents and artifacts
+    Manifest {
+        /// The version; the one this tree would publish when absent
+        #[arg(long, value_name = "VERSION")]
+        version: Option<String>,
+    },
+    /// What `release prepare` would write and what it would publish, without writing anything
+    Plan,
+    /// Every release invariant this repository can decide locally; exit 10 when one does not hold
+    Check,
+    /// Set the canonical version and regenerate everything derived from it, so that a release can be reviewed as a commit
+    Prepare {
+        /// The version to prepare, which must clear the minimum the contract change requires
+        #[arg(long, value_name = "VERSION")]
+        version: Option<String>,
+        /// The bump to apply to the published release, which must be at least the one required
+        #[arg(long, value_name = "BUMP")]
+        bump: Option<String>,
+        /// Report what would be written and write nothing
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -831,6 +898,9 @@ pub enum GenerateTarget {
     Distribution,
     /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
     Web,
+    /// The public contract snapshot, CHANGELOG.md, the release manifests and the version
+    /// line the shell tool prints, from the release state
+    Release,
 }
 
 #[derive(Debug, Args)]
@@ -2108,6 +2178,116 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["completion", "query", "--surface", "cli", "--", "majordomus", "work"],
             setup: &[],
             expect: Expect::StdoutContains(&["worktree"]),
+        }],
+    },
+    CommandExamples {
+        command: "release",
+        examples: &[ExampleDoc {
+            id: "release-default-status",
+            title: "Where this repository stands with its next release",
+            description: "`release` with nothing after it reports the state, because the state is what a person wants when they ask about a release. Every value is derived: the baseline is the release an unpinned installation resolves to, the compatibility is the diff between the committed public contract and the same document at that baseline, and the minimum version is what the release policy makes of it.",
+            argv: &["release"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["source version", "target version", "readiness"]),
+        }],
+    },
+    CommandExamples {
+        command: "release version",
+        examples: &[ExampleDoc {
+            id: "release-version",
+            title: "The four versions, and every disagreement between them",
+            description: "What this tree would release, what an unpinned installation resolves to, what this process is, and what each declared deployment reports. They are four different facts and this is the one answer that refuses to collapse them; no network is reached, so a deployment that has reported nothing says so rather than answering null.",
+            argv: &["release", "version"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["source", "published", "running"]),
+        }],
+    },
+    CommandExamples {
+        command: "release status",
+        examples: &[ExampleDoc {
+            id: "release-status-json",
+            title: "The whole release state, as every surface reads it",
+            description: "One domain model behind every projection: this document is what `GET /api/v1/release/status` returns, what the `majordomus_release_status` tool answers and what the Cockpit's release page renders. Nothing computes a release fact of its own.",
+            argv: &["release", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/versions/source", "/target_version", "/readiness"]),
+        }],
+    },
+    CommandExamples {
+        command: "release explain",
+        examples: &[ExampleDoc {
+            id: "release-explain",
+            title: "Why the next version must be at least what it must be",
+            description: "The chain, step by step: the release it was measured against, the contract changes that decided it, the impact they add up to, the policy sentence that maps that impact to a bump, and the version that comes out. A reader who disagrees with the verdict can see which step they disagree with.",
+            argv: &["release", "explain"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["Required bump", "Policy", "Baseline"]),
+        }],
+    },
+    CommandExamples {
+        command: "release diff",
+        examples: &[ExampleDoc {
+            id: "release-diff-breaking",
+            title: "What a release would cost a caller, entry by entry",
+            description: "Every difference between the public contract at the last published release and the contract this tree states, narrowed here to the breaking ones. The contract is the capabilities with their input and output schemas and every projection they declare, the runnable commands with their arguments, the document schemas a repository's own files are validated against, and the platforms a release publishes for.",
+            argv: &["release", "diff", "--impact", "breaking"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "release changelog",
+        examples: &[ExampleDoc {
+            id: "release-changelog",
+            title: "The changelog, from the records and from nothing else",
+            description: "The same document `CHANGELOG.md` carries, rendered from the change records under `.ai/repo/changes/` and the release records beside them. The file, the release notes, the Cockpit, the site and this command are five renderings of those records; none of them is authored.",
+            argv: &["release", "changelog"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["# Changelog"]),
+        }],
+    },
+    CommandExamples {
+        command: "release manifest",
+        examples: &[ExampleDoc {
+            id: "release-manifest",
+            title: "One release, explained",
+            description: "The compatibility it carried, the release it succeeded, the contract fingerprints on both sides, the changes it published, the migration documents it requires and the artifacts it uploaded with their digests — enough to explain a release to somebody who was not there, and to prove that the tag, the version, the artifacts and the runtime describe one release.",
+            argv: &["release", "manifest"],
+            setup: &[],
+            expect: Expect::Json(&["/version", "/tag", "/compatibility", "/contract/fingerprint"]),
+        }],
+    },
+    CommandExamples {
+        command: "release plan",
+        examples: &[ExampleDoc {
+            id: "release-plan",
+            title: "What preparing a release would write, without writing it",
+            description: "The target version, the bump that gets there, the change records it would stamp, every file it would rewrite and everything that would stop it. The planning and the doing read the same engine, so a plan is a description of the act rather than a simulation of it.",
+            argv: &["release", "plan"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["target version", "Would write"]),
+        }],
+    },
+    CommandExamples {
+        command: "release check",
+        examples: &[ExampleDoc {
+            id: "release-check",
+            title: "Whether a release may go out",
+            description: "Every release invariant this repository can decide locally: that the version clears the minimum its contract change requires, that every breaking change is named by a change record, that a breaking change carries migration guidance, and that the committed contract is the contract this build states. Exits 10 when one does not hold, and each failure names the command that shows it and the one that fixes it.",
+            argv: &["release", "check"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "release prepare",
+        examples: &[ExampleDoc {
+            id: "release-prepare-dry-run",
+            title: "Preparing a release, without touching the tree",
+            description: "`--dry-run` reports exactly what `prepare` would write — the canonical version and the stamp on every unreleased change record — and writes nothing. Everything else a release moves is a projection, and `majordomus generate` is the one thing that writes a projection.",
+            argv: &["release", "prepare", "--dry-run"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["nothing was written"]),
         }],
     },
 ];

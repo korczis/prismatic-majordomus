@@ -32,6 +32,13 @@ the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profil
 `{{DEFAULT_PROFILE}}`. `AGENTS.md` carries the same bootstrap for every
 other worker, and a rule that exists in one of these files and not in `.ai/` is a bug.
 
+Before implementing something new — a module, a command group, a document kind, a
+generated artifact — run `scripts/collision-check --new <paths>` to see which other
+branches already carry those paths, not only who the peer board says is working now: a
+branch pushed before this session started carries no announcement and no less of a claim.
+Announce with `majordomus_announce` once the paths are clear. The rule is
+`project.work-is-claimed-before-it-is-built`.
+
 Linked git worktrees of this repository live at `<repository>-wt/<branch>` — the primary
 checkout's sibling named with `-wt`, then the branch name with its hierarchy kept — derived
 from git and never chosen or registered; the primary checkout hosts the trunk. Before
