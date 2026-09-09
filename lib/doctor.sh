@@ -776,11 +776,16 @@ mj_validate_catalogue() {
 # no metadata to validate, and says so by declaring no schema. A kind of any other format
 # without one is a gap.
 #
-# A schema has two ways to be applied, because the layer has two halves. The tracked half is
-# indexed, so a kind names the schema and the index enforces it. The local half is not
-# indexed at all, so no kind can name one; there the schema is applied through the allow-list
-# `generate allow` derives from it, read by the command that loads the file. Either counts.
-# Neither, and the file describes nothing.
+# A schema is applied in one of four ways, because the layer does not have one shape. The
+# tracked half is indexed, so a kind names the schema and the index enforces it. The local
+# half is not indexed at all, so no kind can name one; there the schema is applied through
+# the allow-list `generate allow` derives from it, read by the command that loads the file.
+# A third is read by a validator written for that one schema, which names the identifier
+# directly (lib/capture.sh and majordomus.capture/v1). The fourth is a generated document's
+# contract under share/schemas/generated/, applied by the generator, which reads the
+# directory rather than any file by name (apps/majordomus-cli/src/generate.rs), and asked
+# from the other side by test/cases/52_generated_artifact_typing.sh. Any of the four counts.
+# None of them, and the file describes nothing.
 mj_validate_schema_integrity() {
   local kinds="$MJ_SHARE_DIR/kinds.yaml" sdir="$MJ_SHARE_DIR/schemas" flat
   [ -f "$kinds" ] || { mj_doctrine_fail schema "share/kinds.yaml" "absent; nothing declares what the tool reads" "ls $MJ_SHARE_DIR"; return 0; }
@@ -819,27 +824,98 @@ mj_validate_schema_integrity() {
     mj_doctrine_ok schema "share/kinds.yaml" "$n kind(s); every one that carries metadata declares a schema"
   fi
 
-  local f base orphan="" bad="" m=0
-  for f in "$sdir"/*.schema.json; do
-    [ -e "$f" ] || break
+  # Every schema, wherever it sits. The files are two directories deep — the identifier
+  # `majordomus.adr/v1` fixes the path share/schemas/majordomus/adr/adr.v1.schema.json — so
+  # a one-level glob here examined nothing and reported it as a clean bill of health.
+  local f base id allow orphan="" bad="" m=0 gen=0
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
     base="$(basename "$f" .schema.json)"; m=$((m + 1))
-    mj_json_ok "$f" || bad="$bad $base"
-    case "$named" in
-      *" $base "*) ;;
-      *) mj_allow_applied "$base" || orphan="$orphan $base" ;;
+    mj_json_ok "$f" || { bad="$bad $base"; continue; }
+    # The contracts of the generated documents are applied by the generator, which reads the
+    # whole directory (apps/majordomus-cli/src/generate.rs) rather than any file by name, and
+    # test/cases/52_generated_artifact_typing.sh asks the same question from the other side:
+    # every generated document has a contract here. No kind can name one.
+    case "$f" in
+      "$sdir"/generated/*) gen=$((gen + 1)); continue ;;
     esac
-  done
+    id="$(mj_schema_identifier "$f")"
+    case "$named" in
+      *" $id "*) continue ;;
+    esac
+    allow="$(mj_schema_allow "$f")"
+    # `if`, not `a && b && continue`: bin/majordomus runs under `set -e`, where an && list
+    # that fails as a whole ends the run rather than falling through to the next test.
+    if [ -n "$allow" ] && mj_allow_applied "$allow"; then continue; fi
+    # Or the tool names the identifier itself, which is what a validator written for one
+    # schema looks like (lib/capture.sh names majordomus.capture/v1). Matched against the
+    # source rather than a list kept here, so wiring one up is what makes it count.
+    if mj_schema_named_in_source "$id"; then continue; fi
+    orphan="$orphan $base"
+  done <<SCHEMAS
+$(find "$sdir" -name '*.schema.json' 2>/dev/null | LC_ALL=C sort)
+SCHEMAS
 
   if [ -n "$bad" ]; then
-    mj_doctrine_fail schema "share/schemas" "$(printf '%s' "$bad" | wc -w | tr -d ' ') schema(s) do not parse as JSON:$bad" "python3 -m json.tool share/schemas/${bad# }.schema.json"
+    mj_doctrine_fail schema "share/schemas" "$(printf '%s' "$bad" | wc -w | tr -d ' ') schema(s) do not parse as JSON:$bad" "python3 -m json.tool share/schemas/*/*/${bad# }.schema.json"
   elif [ -n "$orphan" ]; then
     mj_doctrine_fail schema "share/schemas" \
-      "$(printf '%s' "$orphan" | wc -w | tr -d ' ') schema(s) are named by no kind, so nothing applies them:$orphan" \
+      "$(printf '%s' "$orphan" | wc -w | tr -d ' ') schema(s) are applied by nothing — no kind names them and no allow-list the tool reads is derived from them:$orphan" \
       "grep -n 'schema:' share/kinds.yaml   # wire it to a kind, or delete the file"
   else
-    mj_doctrine_ok schema "share/schemas" "$m schema(s), each valid JSON and each applied — by a kind, or through its allow-list where the layer is not indexed"
+    mj_doctrine_ok schema "share/schemas" "$m schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document's contract ($gen)"
   fi
   return 0
+}
+
+# The schema identifier a file declares, `<vendor>.<name>/v<n>`. Its own `x-majordomus-schema`
+# is the answer where it carries one; where it does not, the identity fixes the path and the
+# path gives the identity back — share/schemas/majordomus/adr/adr.v1.schema.json is
+# majordomus.adr/v1 — so the file is read first and the path is the fallback, never the
+# other way round.
+mj_schema_identifier() {
+  local id vendor name ver
+  id="$(mj_json_string "$1" x-majordomus-schema)"
+  if [ -n "$id" ]; then printf '%s' "$id"; return 0; fi
+  name="$(basename "$(dirname "$1")")"
+  vendor="$(basename "$(dirname "$(dirname "$1")")")"
+  ver="$(basename "$1" .schema.json)"; ver="${ver##*.}"
+  printf '%s.%s/%s' "$vendor" "$name" "$ver"
+}
+
+# The allow-list a schema is the source of, by name. Declared as `x-majordomus-allow`; where
+# it is not, the directory the schema sits in is the name, because that is what
+# `generate allow` writes.
+mj_schema_allow() {
+  local a
+  a="$(mj_json_string "$1" x-majordomus-allow)"
+  [ -n "$a" ] || a="$(basename "$(dirname "$1")")"
+  printf '%s' "$a"
+}
+
+# Does the tool name this schema identifier anywhere in its own source? lib/ and the crate
+# only, for the reason mj_allow_applied gives: a walk from the repository root would descend
+# into the Rust build directory, which is large, changes constantly, and can tell nobody
+# what the tool reads.
+mj_schema_named_in_source() {
+  [ -n "$1" ] || return 1
+  grep -rqF "$1" "$MJ_LIB_DIR" "$MJ_HOME/apps/majordomus-cli/src" 2>/dev/null
+}
+
+# One top-level string field of a JSON file, or nothing. A parser being absent is not a
+# reason to invent an answer: with neither python3 nor jq the field is unknown, and an
+# unknown identifier falls back to the path.
+mj_json_string() {
+  if command -v python3 >/dev/null 2>&1; then
+    python3 -c 'import json,sys
+try:
+    v = json.load(open(sys.argv[1])).get(sys.argv[2], "")
+except Exception:
+    v = ""
+sys.stdout.write(v if isinstance(v, str) else "")' "$1" "$2" 2>/dev/null
+  elif command -v jq >/dev/null 2>&1; then
+    jq -r --arg k "$2" 'if (.[$k]? | type) == "string" then .[$k] else "" end' "$1" 2>/dev/null
+  fi
 }
 
 # Is this schema applied through its generated allow-list? True when something in the tool
