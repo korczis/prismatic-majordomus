@@ -77,28 +77,62 @@ expect_grep "no record 'I9999'"
 #     on a title is how an adapter loses a renamed issue and then creates a second one for
 #     the same canonical record, which is the one mistake a projection may not make.
 FX_I=/tmp/fx_issues.$$; FX_M=/tmp/fx_ms.$$
-b64() { base64 | tr -d '\n'; }
-managed_body() { printf '<!-- majordomus:begin %s -->\n<!-- majordomus:record %s -->\nstale\n<!-- majordomus:end -->' "$1" "$2"; }
 printf '1\tM000 — Milestone M000\topen\n' > "$FX_M"
+# one remote row, from a body on stdin: number, title, state, body, milestone, identity
+row() {
+  b="$(cat | base64 | tr -d '\n')"
+  printf '%s\t%s\topen\t%s\tM000 — Milestone M000\t%s\n' "$1" "$2" "$b" "$3"
+}
+check_fx() { MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" "$SYNC" --check; }
 
-# the remote holds I0002 under a title nobody would match, but it carries its identity
-printf '7\tRenamed by a person entirely\topen\t%s\tM000 — Milestone M000\tI0002\n' \
-  "$(managed_body deadbeefdeadbeef I0002 | b64)" > "$FX_I"
-MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" expect_exit 11 "$SYNC" --check
-expect_grep 'DRIFT +body +issue I0002 \(#7\)'
-expect_no_grep 'DRIFT +missing +issue I0002'
+# the region exactly as the adapter would post it: nothing has drifted
+"$SYNC" --render I0002 | row 7 'Renamed by a person entirely' I0002 > "$FX_I"
+expect_exit 11 check_fx
+expect_grep 'OK +insync +issue I0002 \(#7\)'
+expect_no_grep 'DRIFT +(missing|behind|edited|conflict) +issue I0002'
+
+# the same region after the canonical record moves: behind, and safe to rewrite
+"$SYNC" --render I0002 | row 7 'Renamed by a person entirely' I0002 > "$FX_I"
+sed 's/^objective: .*/objective: "A different objective entirely."/' \
+  .ai/repo/project/issues/I0002.yaml > /tmp/i2.$$ && mv /tmp/i2.$$ .ai/repo/project/issues/I0002.yaml
+expect_exit 11 check_fx
+expect_grep 'DRIFT +behind +issue I0002 \(#7\)'
+
+# a person rewrote the region while the canonical record also moved. The marker still
+# claims the hash it was written with, so the edit is visible even though the plan moved —
+# the case the old comparison against the canonical hash could not see, and would have
+# spliced straight over.
+"$SYNC" --render I0002 | sed 's/^| status |.*/| status | somebody typed this |/' \
+  | row 7 'Renamed by a person entirely' I0002 > "$FX_I"
+sed 's/^objective: .*/objective: "Moved once more."/' \
+  .ai/repo/project/issues/I0002.yaml > /tmp/i2.$$ && mv /tmp/i2.$$ .ai/repo/project/issues/I0002.yaml
+expect_exit 11 check_fx
+expect_grep 'DRIFT +conflict +issue I0002 \(#7\)'
+
+# a person rewrote the region and the canonical record has not moved: edited, not conflict
+"$SYNC" --render I0002 | sed 's/^| status |.*/| status | somebody typed this |/' \
+  | row 7 'Renamed by a person entirely' I0002 > "$FX_I"
+expect_exit 11 check_fx
+expect_grep 'DRIFT +edited +issue I0002 \(#7\)'
+expect_no_grep 'DRIFT +conflict'
 
 # an issue projected before the marker existed is adopted by its title, once, and said so
-printf '8\tI0002 — Issue I0002\topen\t%s\tM000 — Milestone M000\t\n' \
-  "$(printf '<!-- majordomus:begin deadbeefdeadbeef -->\nstale\n<!-- majordomus:end -->' | b64)" > "$FX_I"
-MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" expect_exit 11 "$SYNC" --check
+"$SYNC" --render I0002 | grep -v '^<!-- majordomus:record ' \
+  | row 8 'I0002 — Issue I0002' '' > "$FX_I"
+expect_exit 11 check_fx
 expect_grep 'DRIFT +adopt +issue I0002 \(#8\)'
 
-# a title that merely looks canonical never captures a record that carries its own identity
-printf '9\tI0002 — Issue I0002\topen\t%s\tM000 — Milestone M000\tI0100\n' \
-  "$(managed_body deadbeefdeadbeef I0100 | b64)" > "$FX_I"
-MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" expect_exit 11 "$SYNC" --check
+# a title that merely looks canonical never captures a record carrying another identity
+"$SYNC" --render I0100 | row 9 'I0002 — Issue I0002' I0100 > "$FX_I"
+expect_exit 11 check_fx
 expect_grep 'DRIFT +missing +issue I0002 is not on GitHub'
+
+# a remote issue claiming a record this repository does not have is drift, and is counted:
+# it used to be printed from inside a pipeline, where the count could never see it
+"$SYNC" --render I0002 | sed 's/majordomus:record I0002/majordomus:record I9999/' \
+  | row 10 'I9999 — Gone from the model' I9999 > "$FX_I"
+expect_exit 11 check_fx
+expect_grep 'DRIFT +unmanaged +issue #10 claims to be I9999'
 
 # a fixture is a remote to read, never one to write
 MJ_GH_FIXTURE_ISSUES="$FX_I" expect_exit 15 "$SYNC" --apply

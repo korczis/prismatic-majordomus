@@ -32,6 +32,19 @@
 # before the marker existed is matched by its title once, reported as an adoption, and given
 # a marker by --apply.
 #
+# States. Every finding about a body is one of six, from two independent questions: has a
+# person rewritten the region since it was posted, and has the canonical record moved since?
+#
+#   insync    intact and current
+#   behind    intact, and the canonical record has moved; --apply rewrites it
+#   edited    a person rewrote the region; --apply refuses without --force
+#   conflict  a person rewrote it and the canonical record has moved; --apply refuses
+#   adopt     no identity marker; matched by title this once, and --apply writes one
+#   missing   no counterpart on GitHub at all
+#
+# and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
+# canonical id this repository does not have.
+#
 #   MJ_GH_FIXTURE_ISSUES=<tsv> MJ_GH_FIXTURE_MILESTONES=<tsv> scripts/github-sync --check
 #     read the remote from files instead of the network, so reconciliation is provable
 #     offline. --apply refuses a fixture.
@@ -54,7 +67,7 @@ while [ $# -gt 0 ]; do
     --render) [ $# -ge 2 ] || { echo "github-sync: --render needs an id" >&2; exit 2; }; MODE=render; RENDER="$2"; shift 2 ;;
     --milestone) [ $# -ge 2 ] || { echo "github-sync: --milestone needs an id" >&2; exit 2; }; ONLY="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
-    -h|--help) sed -n '2,37p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,50p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "github-sync: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -179,10 +192,6 @@ remote_issue_line() {
     $6 == "" && index($2,p)==1 && !legacy { legacy = $0 }
     END { if (!found && legacy != "") print legacy }' "$REMOTE_IS"
 }
-# True when the record was matched by its title because it carries no identity marker: the
-# state that --apply resolves by writing one, and that --check reports so it is not mistaken
-# for a projection that is current.
-remote_issue_is_legacy() { [ -n "$(remote_issue_line "$1")" ] && [ -z "$(remote_issue_line "$1" | cut -f6)" ]; }
 remote_milestone_number() { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_MS"; }
 remote_issue_number()     { remote_issue_line "$1" | cut -f1; }
 remote_issue_state()      { remote_issue_line "$1" | cut -f3; }
@@ -192,22 +201,54 @@ remote_issue_milestone()  { remote_issue_line "$1" | cut -f5; }
 # region hash recorded in a remote body, empty when the body carries no generated region
 remote_region_hash() { printf '%s\n' "$1" | sed -n 's/^<!-- majordomus:begin \([0-9a-f]*\) -->$/\1/p' | head -1; }
 
-# Has a person edited the generated region? The remote body still claims the hash it was
-# generated from, but its content no longer matches what that hash generates.
-region_edited() {
-  local id="$1" body="$2" rh cur tmp_r tmp_c
+# Has a person edited the generated region since it was written? The marker records the
+# hash of the body that was posted, so the question is answered against the marker and not
+# against the canonical record: hash the region back and compare it to what the marker
+# claims. Comparing to the canonical hash instead — which is what this did — makes the
+# check blind exactly when the plan has also moved, so a canonical change would splice
+# straight over somebody's edit. The two questions are independent and both are needed:
+# "did a person touch this?" and "has the plan moved since?".
+#
+#   region_intact   the region still hashes to what its marker says it was written as
+#   region_edited   it does not; somebody rewrote text inside the markers
+#   (no marker)     neither; the record is adopted rather than compared
+region_intact() {
+  local body="$1" rh tmp_r tmp_c h
   rh="$(remote_region_hash "$body")"
   [ -n "$rh" ] || return 1
-  cur="$(canonical_hash "$id")"
-  [ "$rh" = "$cur" ] || return 1
   tmp_r="$(mktemp "${TMPDIR:-/tmp}/mj.rr.XXXXXX")"; tmp_c="$(mktemp "${TMPDIR:-/tmp}/mj.rc.XXXXXX")"
   printf '%s\n' "$body" > "$tmp_r"
   mj_region_extract "$tmp_r" 2>/dev/null | grep -v '^<!-- majordomus:record ' > "$tmp_c" \
     || { rm -f "$tmp_r" "$tmp_c"; return 1; }
-  local h; h="$(mj_sha256 "$tmp_c" | cut -c1-16)"
+  h="$(mj_sha256 "$tmp_c" | cut -c1-16)"
   rm -f "$tmp_r" "$tmp_c"
-  # the region content hashes differently from the body the recorded hash was taken over
-  [ "$h" != "$(canonical_hash "$id")" ]
+  [ "$h" = "$rh" ]
+}
+
+# The state of one projected record, from the two independent questions above plus whether
+# the remote exists at all. Every finding this adapter reports about a body is one of these,
+# and --apply treats them differently: it writes `behind` and `adopt`, and refuses `edited`
+# and `conflict` without --force, because in those two a person's text is at stake.
+#
+#   absent    the canonical record has no counterpart on GitHub
+#   adopt     a counterpart exists but carries no identity; matched by title, this once
+#   insync    the region is intact and current
+#   behind    the region is intact and the canonical record has moved since it was written
+#   edited    a person rewrote the region; the canonical record has not moved
+#   conflict  a person rewrote the region and the canonical record has moved
+record_state() {
+  local id="$1" body="$2" rh cur
+  rh="$(remote_region_hash "$body")"
+  cur="$(canonical_hash "$id")"
+  # No identity of its own: projected before the marker existed, or its region was wiped.
+  # Either way it is adopted rather than compared, and --apply gives it a marker.
+  case "$body" in *'<!-- majordomus:record '*) ;; *) printf 'adopt'; return 0 ;; esac
+  [ -n "$rh" ] || { printf 'adopt'; return 0; }
+  if region_intact "$body"; then
+    [ "$rh" = "$cur" ] && printf 'insync' || printf 'behind'
+  else
+    [ "$rh" = "$cur" ] && printf 'edited' || printf 'conflict'
+  fi
 }
 
 # ---------------------------------------------------------------- labels
@@ -296,27 +337,26 @@ for id in $(selected_issues); do
   fi
   remote="$(remote_issue_body "$id")"
   have_state="$(remote_issue_state "$id")"
-  edited=0
-  legacy=0
-  if remote_issue_is_legacy "$id"; then
-    legacy=1
-    note DRIFT adopt "issue $id (#$num) carries no identity marker; matched by title, and --apply writes one"
-  fi
-  if region_edited "$id" "$remote"; then
-    note DRIFT edited "issue $id (#$num) has a hand-edited generated region; not overwriting"
-    [ "$FORCE" = 1 ] || continue
-    # --force means the canonical text wins. The marker hash still matches, so nothing else
-    # below would call this changed; say so explicitly rather than silently doing nothing.
-    edited=1
-  fi
-  changed=$edited
-  [ "$legacy" = 1 ] && changed=1
+  changed=0
+  st="$(record_state "$id" "$remote")"
+  case "$st" in
+    insync)   ;;
+    adopt)    changed=1
+              note DRIFT adopt "issue $id (#$num) carries no identity marker; matched by title, and --apply writes one" ;;
+    behind)   changed=1
+              note DRIFT behind "issue $id (#$num) body is behind the canonical record" ;;
+    edited)   note DRIFT edited "issue $id (#$num) has a hand-edited generated region; not overwriting"
+              [ "$FORCE" = 1 ] || continue
+              changed=1 ;;
+    conflict) note DRIFT conflict "issue $id (#$num) has a hand-edited generated region and the canonical record has moved since; not overwriting"
+              [ "$FORCE" = 1 ] || continue
+              changed=1 ;;
+  esac
   want_ms="$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")"
   if [ -n "$want_ms" ] && [ "$(remote_issue_milestone "$id")" != "$want_ms" ]; then
     note DRIFT milestone "issue $id (#$num) is not on GitHub milestone $ms"
     [ "$MODE" = apply ] && gh issue edit "$num" --repo "$REPO" --milestone "$want_ms" >/dev/null && note OK updated "issue $id milestone"
   fi
-  [ "$(remote_region_hash "$remote")" = "$(canonical_hash "$id")" ] || { changed=1; note DRIFT body "issue $id (#$num) body is behind the canonical record"; }
   [ "$have_state" = "$want_state" ] || { changed=1; note DRIFT state "issue $id (#$num) is $have_state on GitHub, canonically $want_state"; }
   if [ "$have_state" = closed ] && [ "$(mj_pj_i_status "$id")" != DONE ] && [ "$(mj_pj_i_status "$id")" != CANCELLED ]; then
     note DRIFT closed "issue $id (#$num) is closed on GitHub but is $(mj_pj_i_status "$id") canonically"
@@ -338,14 +378,20 @@ for id in $(selected_issues); do
 done
 
 # ---------------------------------------------------------------- extra managed issues
-awk -F'\t' '{ print $1 "\t" ($6 != "" ? $6 : $2) }' "$REMOTE_IS" | while IFS="$(printf '\t')" read -r n t; do
+# A remote issue claiming a canonical record this repository does not have. This ran through
+# a pipe, so it ran in a subshell, so every finding it made was lost before the count was
+# printed and --check could never fail on one. It reads from a file now.
+UNMANAGED="$(mktemp "${TMPDIR:-/tmp}/mj.un.XXXXXX")"
+awk -F'\t' '{ print $1 "\t" ($6 != "" ? $6 : $2) }' "$REMOTE_IS" > "$UNMANAGED"
+while IFS="$(printf '\t')" read -r n t; do
   case "$t" in
     *' — '*) cid="$(printf '%s' "$t" | sed -n 's/^\([MI][0-9][0-9]*\) — .*/\1/p')" ;;
     *)       cid="$t" ;;
   esac
   [ -n "$cid" ] || continue
-  [ -f "$(mj_pj_flat "$cid")" ] || printf '%-6s %-7s %s\n' DRIFT extra "issue #$n claims to be $cid, which is not in the canonical model"
-done
+  [ -f "$(mj_pj_flat "$cid")" ] || note DRIFT unmanaged "issue #$n claims to be $cid, which is not in the canonical model"
+done < "$UNMANAGED"
+rm -f "$UNMANAGED"
 
 printf '\ngithub-sync %s: %s drift finding(s)\n' "$MODE" "$DRIFT"
 [ "$MODE" = check ] && [ "$DRIFT" -gt 0 ] && exit 11
