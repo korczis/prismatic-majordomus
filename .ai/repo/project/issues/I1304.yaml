@@ -1,0 +1,35 @@
+id: I1304
+milestone: work-graph-github
+title: The drift check is a gate, so a projection that stops being applied cannot stay silent
+slug: projection-drift-gated
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Run `scripts/github-sync --check` from CI on every change that can move the canonical model or the adapter, and fail the build on drift with the record and the remedy named."
+why: "This is the root cause of the milestone. The adapter has exited 11 on drift since it was written and nothing has ever called it, so the projection decayed from complete to 10 per cent without one red build. `core-check` runs --plan and --render, which prove the adapter runs, not that the projection is current."
+current_state: "scripts/ci/core-check lines 67 and 69 run --plan and --render. .ai/repo/ci/gates.yaml line 178 already lists scripts/github-sync in the paths that trigger the core gate, so the trigger exists and the check does not."
+desired_state: "A drift finding is a build failure. The gate needs a token to read the remote, so it declares what it needs and says so when it is absent rather than passing quietly."
+scope:
+  - scripts/ci
+  - .ai/repo/ci/gates.yaml
+  - .github/workflows
+  - .ai/repo/rules/project
+  - test/cases
+non_scope:
+  - Applying the projection from CI, which stays a deliberate human act
+depends_on:
+  - I1303
+acceptance_criteria:
+  - The gate runs the drift check on every change to the model or the adapter and fails on any finding
+  - A missing or unauthorised token is reported as an unusable gate, never as a passing one
+  - A rule states that the projection is gated, and doctor verifies the gate is wired rather than merely present
+  - Introducing a canonical issue without projecting it turns the gate red, proved by a case
+validation:
+  - scripts/ci/core-check
+  - majordomus doctrine
+  - bash test/run.sh
+evidence_required:
+  - drift_gated
+risk: "Wiring this before I1303 makes master red. The dependency is the mitigation."
+created_at: 2026-09-09
+updated_at: 2026-09-09

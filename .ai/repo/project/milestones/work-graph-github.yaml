@@ -1,0 +1,53 @@
+id: work-graph-github
+title: The projection to GitHub is gated, identified and traversable, and a merged pull request leads back to the outcome it served
+slug: work-graph-github
+order: 95
+priority: p1
+problem: "This repository already models work once: milestones are outcomes, issues are execution contracts, no status is stored, and `scripts/github-sync` projects both onto GitHub with a hash-marked region that protects what a human wrote. The model is not the defect. The defect is that nothing runs the detector: `core-check` runs `github-sync --plan` and `--render`, never `--check`, so the adapter's exit 11 has never fired in CI. The projection was applied once on 2026-09-04 and has not been applied since. Measured on 2026-09-09 at 867f3a9: 191 drift findings, of which 172 are canonical issues that have never existed on GitHub and 19 are bodies whose canonical text has moved on. All 8 milestones are in sync, which is exactly what makes the rot invisible: the surface a person looks at is the surface that still agrees. Underneath that, the adapter identifies a remote record by parsing its title for an `I0001 — ` prefix and reads the remote through a 200-item page that already holds 19 issues and 117 pull requests, so the mapping breaks when a person renames a title and the read truncates as soon as the backfill runs."
+outcome: "The projection cannot rot silently: a gate runs the drift check on every change that can move the model or the adapter, and drift is a CI failure with the record named. Identity is data rather than a parsed title, so renaming a GitHub title moves nothing and creates no duplicate, and the remote read is paginated to completion rather than to a page. The reconciliation vocabulary distinguishes the states it currently conflates, so `missing` no longer stands for both a record never created and a record a person deleted, and a remote edit is reported as a remote edit. Above the projection, a pull request names the issue it realises and the edge is derived from git and GitHub rather than remembered, so a merged commit leads back to the acceptance criteria it satisfied and an outcome leads forward to the evidence that it holds. The derivations the shell already computes — ready, blocked, waves, next, status — are readable through the same capability surface as every other thing this repository knows, rather than only from a terminal."
+current_state: "The canonical model is 15 milestones and 184 issues, validated by `majordomus plan validate` (0 failures, 4 scope warnings) and enforced by `lib/doctor.sh` and `scripts/ci/core-check`. `scripts/github-sync` implements plan, check, apply and render with field ownership and a marker hash. GitHub holds 8 milestones and 19 issues. `--check` exits 11 on drift and no gate calls it. Issues and milestones are served as documents through `objects.get`, and none of the plan's derivations is a capability: `lib/plan.sh` computes them and the Rust executable reads `.ai/repo/project/issues/` for filenames only. Evidence carries an optional `commit` string and no pull request, check run or branch."
+desired_state: "A contributor moves an issue, runs the gates, and CI tells them the projection is behind before a reviewer does. A person renames an issue on GitHub and the next sync updates it rather than duplicating it. A reader asks which pull request realised an issue, or which outcome a merged commit served, and one command answers from derived edges. The plan's readiness is answerable over MCP and HTTP because it is a capability, not a shell function."
+scope:
+  - scripts/github-sync
+  - scripts/ci
+  - .ai/repo/ci/gates.yaml
+  - .ai/repo/project
+  - .ai/repo/rules/project
+  - .ai/repo/adrs
+  - apps/majordomus-cli/src
+  - lib/plan.sh
+  - lib/project.sh
+  - docs
+  - site
+  - test/cases
+non_scope:
+  - Replacing the canonical model, which is not the defect
+  - Importing GitHub semantics into canonical records; GitHub stays a projection
+  - Moving network calls into the tool itself, which test/cases/08_no_forbidden_constructs.sh forbids
+  - A GraphQL client, or any provider abstraction beyond the one GitHub host this repository publishes to
+  - Assignees, reactions, projects boards or discussions
+acceptance_criteria:
+  - A gate runs the drift check on every change that can move the model or the adapter, and a drift finding fails CI naming the record and the remedy
+  - Identity is canonical data: renaming a title on GitHub moves the mapping with it and creates no duplicate record
+  - The remote read is paginated to exhaustion, proved by a test whose fixture exceeds one page
+  - The reconciliation vocabulary distinguishes never-created, deleted-remotely, edited-remotely, canonically-moved and conflicting, and each state names what would change before anything changes
+  - A pull request is related to the issue it realises by a derived edge, and the relation is traversable in both directions
+  - The plan's derivations are readable through the capability surface, and adding one requires no edit to a transport registry
+  - Every claim this milestone makes about GitHub is backed by a test that runs offline against a fixture
+validation:
+  - scripts/github-sync --check
+  - scripts/ci/core-check
+  - bash test/run.sh
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - drift_gated
+  - identity_stable
+  - pagination_proved
+  - traceability_both_ways
+depends_on: []
+risks:
+  - "The backfill is an outward-facing mutation: applying the projection creates 172 public issues in one run. It must be a deliberate, confirmed act, not a side effect of wiring a gate."
+  - "Wiring the gate before the backfill makes CI red on master until the backfill lands. The order matters and is part of the work."
+created_at: 2026-09-09
+updated_at: 2026-09-09

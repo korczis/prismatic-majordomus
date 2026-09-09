@@ -1,0 +1,36 @@
+id: I1305
+milestone: work-graph-github
+title: A pull request names the issue it realises, and the edge is derived rather than remembered
+slug: pull-request-issue-edge
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Derive the relation between an issue and the pull requests, branches and commits that realised it, from git and from GitHub, and make it traversable in both directions."
+why: "The model reaches as far as a branch: `worktree/state.rs` reads an issue id out of a branch name and the topology gate enforces it. Above the branch there is nothing. A merged pull request does not lead back to the acceptance criteria it satisfied, and an outcome does not lead forward to the code that reached it, which is the question the whole model exists to answer."
+current_state: "Evidence carries an optional `commit` string written by hand. No canonical record names a pull request, a check run or a branch. `issue_of()` in apps/majordomus-cli/src/worktree/state.rs infers the issue from a branch path component and is the only edge that exists."
+desired_state: "Given an issue, the branches, commits and pull requests that realised it are derivable. Given a merged commit or a pull request, the issue and the outcome it served are derivable. Nothing is stored that git or GitHub already knows."
+scope:
+  - apps/majordomus-cli/src/worktree
+  - apps/majordomus-cli/src/git
+  - apps/majordomus-cli/src/graph.rs
+  - scripts/github-sync
+  - test/cases
+  - docs
+non_scope:
+  - Requiring a branch to encode an issue id where doctrine does not already require it
+  - Storing a commit list in a canonical record; git owns commits
+depends_on:
+  - I1301
+acceptance_criteria:
+  - Given an issue id, the branches, commits and pull requests that realised it are listed, derived from git and GitHub
+  - Given a commit or a pull request, the issue and the milestone it served are named, or it is reported as unattributed
+  - Work with no execution contract is reported as unattributed rather than silently omitted
+  - The derivation reads no stored edge that git or GitHub already holds
+validation:
+  - cargo test --workspace --all-features
+  - bash test/run.sh
+evidence_required:
+  - traceability_both_ways
+risk: "A commit-to-issue edge inferred from a branch name is only as good as the branch discipline; unattributed must be a reported state, not an assumption."
+created_at: 2026-09-09
+updated_at: 2026-09-09

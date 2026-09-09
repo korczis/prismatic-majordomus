@@ -1,0 +1,32 @@
+id: I1308
+milestone: work-graph-github
+title: The documents stop claiming a projection nobody runs
+slug: projection-claims-true
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Bring the prose in line with what the gates prove, and keep it there by citing the gate rather than the intention."
+why: ".ai/repo/project/README.md states that the GitHub issues and milestones come from `majordomus plan`, and docs/claims/github-projection.md states the projection is generated from the canonical model. Both were true on 2026-09-04 and neither has been true since, because nothing ran the detector. A claim whose evidence is a script that exists rather than a gate that runs is the failure mode this repository names in its own why catalogue."
+current_state: "docs/CLAIMS.yaml line 798 and docs/claims/github-projection.md cite scripts/github-sync and test/cases/45_github_projection.sh as the evidence for a claim about live GitHub state. The test proves the adapter renders; it does not prove the remote agrees."
+desired_state: "Each claim about the projection cites the gate that would fail if it stopped being true, and the site says what is projected and what is not."
+scope:
+  - docs
+  - site
+  - .ai/repo/project/README.md
+  - .ai/repo/project/project.yaml
+non_scope:
+  - Weakening a claim that the gates do support
+depends_on:
+  - I1304
+acceptance_criteria:
+  - Every claim about the projection cites a gate that runs against the remote, not a script that exists
+  - The project README states what GitHub carries and what it does not
+  - No document states that a projection is current where no gate could detect that it is not
+validation:
+  - scripts/ci/reference-check
+  - majordomus doctrine
+evidence_required:
+  - claims_cite_gates
+risk: "Low."
+created_at: 2026-09-09
+updated_at: 2026-09-09

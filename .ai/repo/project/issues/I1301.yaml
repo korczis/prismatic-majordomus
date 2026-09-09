@@ -1,0 +1,39 @@
+id: I1301
+milestone: work-graph-github
+title: The remote read is paginated to exhaustion and the identity of a record is data, not a parsed title
+slug: projection-identity-and-pagination
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Replace the two mechanisms that make the projection unsafe to run at the size the model has already reached: a remote lookup that matches an `I0001 — ` prefix in a GitHub title, and a remote read capped at 200 items on an endpoint that returns issues and pull requests together."
+why: "Both fail silently and both fail worse the more the projection is used. The title match loses a record the moment a person edits the title on GitHub, and the adapter's next --apply creates a second issue for the same canonical id. The 200-item page already holds 19 issues and 117 pull requests; creating the 172 missing issues crosses it, after which the adapter reads a truncated remote and reports records as missing that exist. Fixing the gate before these would gate a detector that lies."
+current_state: "scripts/github-sync line 134 and 135 identify a remote record with `awk -F'\\t' -v p=\"$1 — \" 'index($2,p)==1'`, and lines 129 and 131 read the remote with `--jq` over a single `gh api` call with no pagination. Line 240 recovers a number after creation by searching the title again."
+desired_state: "The canonical record carries the GitHub number it was projected onto, under an explicitly external-identity field that no canonical semantics reads, and the adapter resolves by that number. A record with no number is resolved once by the marker in its body, never by its title. The remote read follows pages until the remote says there are no more, and a fixture with more than one page proves it."
+scope:
+  - scripts/github-sync
+  - share/schemas/majordomus/issue
+  - share/schemas/majordomus/milestone
+  - share/allow/project.txt
+  - lib/project.sh
+  - test/cases/45_github_projection.sh
+  - docs/PLANNING.md
+non_scope:
+  - Any change to what the projection renders
+  - Reading a GitHub value into a field canonical semantics consult
+depends_on: []
+acceptance_criteria:
+  - A canonical record holds its GitHub number as external identity, and the schema and the allow-list accept it
+  - No canonical derivation reads that field; plan status, waves, ready and next are identical with it present and absent, proved by a test
+  - Renaming a record's title on GitHub leaves the mapping intact and --apply updates rather than duplicates, proved against a fixture
+  - The remote read is exhausted by pagination, proved by a fixture of more than one page
+  - A record with no stored number is adopted by its marker, and only then, with the title never consulted
+validation:
+  - bash test/cases/45_github_projection.sh
+  - scripts/github-sync --plan
+  - majordomus plan validate
+evidence_required:
+  - identity_stable
+  - pagination_proved
+risk: "The adoption path for the 19 existing issues runs through the marker; if a marker was lost the record must be reported, never re-created."
+created_at: 2026-09-09
+updated_at: 2026-09-09

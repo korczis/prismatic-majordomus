@@ -1,0 +1,32 @@
+id: I1303
+milestone: work-graph-github
+title: Backfill the projection once, deliberately, and record what it created
+slug: projection-backfill
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Apply the projection so that every canonical record exists on GitHub exactly once, adopt the 19 records that already exist rather than duplicating them, and record the run as evidence."
+why: "The gate that follows is only honest against a projection that has been applied. This is the one outward-facing mutation in the milestone: it creates roughly 172 public issues, and it must be a confirmed act with a dry run read first, not a side effect of any other issue."
+current_state: "GitHub holds 8 milestones and 19 issues against 15 milestones and 184 issues canonically. `scripts/github-sync --check` reports 191 findings at 867f3a9."
+desired_state: "`scripts/github-sync --check` exits 0. Every canonical record holds the number it was projected onto. The run is recorded as evidence with its date and the count it created."
+scope:
+  - .ai/repo/project
+non_scope:
+  - Any change to the adapter, which I1301 and I1302 own
+  - Closing or reopening a GitHub issue by hand
+depends_on:
+  - I1301
+  - I1302
+acceptance_criteria:
+  - The dry run is read and its counts agree with the check before anything is applied
+  - The 19 existing issues are adopted, not duplicated, and the issue count after the run equals the canonical count
+  - scripts/github-sync --check exits 0 immediately after the run
+  - The run is recorded as evidence naming the date, the counts and the commit
+validation:
+  - scripts/github-sync --plan
+  - scripts/github-sync --check
+evidence_required:
+  - backfill_applied
+risk: "High and outward-facing. It publishes 172 issues to a public repository in one run and cannot be undone cheaply. It requires the operator's explicit confirmation and must run after I1301, or the pagination ceiling will corrupt it."
+created_at: 2026-09-09
+updated_at: 2026-09-09

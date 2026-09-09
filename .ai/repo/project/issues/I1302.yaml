@@ -1,0 +1,33 @@
+id: I1302
+milestone: work-graph-github
+title: The reconciliation vocabulary distinguishes the five states it currently calls two
+slug: reconciliation-states
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give the adapter a typed reconciliation state per record, so that a finding says which of never-created, deleted-remotely, edited-remotely, canonically-moved or conflicting it found, and what applying would do about it."
+why: "The check reports 172 `missing` and 19 `body` findings. `missing` conflates a record that was never created with one a person deleted on purpose, and the two deserve opposite treatments. `body` conflates the canonical text having moved with a person having edited the generated region, which the adapter already distinguishes internally through the marker hash but discards in its output."
+current_state: "The marker hash already separates a canonical move from a human edit — that logic is in the adapter and is the reason --apply refuses without --force — but the check prints one word for both."
+desired_state: "Each finding carries a state, the state is derived from the marker hash and the remote's existence, and the plan output says what --apply would do for each state before it does anything."
+scope:
+  - scripts/github-sync
+  - test/cases/45_github_projection.sh
+  - docs/PLANNING.md
+non_scope:
+  - Resolving a conflict automatically
+  - A state that describes a GitHub concept this repository does not project
+depends_on:
+  - I1301
+acceptance_criteria:
+  - Every finding carries one state and the states are exhaustive over what the adapter can observe
+  - A record deleted on GitHub is reported as deleted, not as never created
+  - A generated region a person edited is reported as such and --apply refuses it without --force, proved by a fixture
+  - The plan output names, per state, what applying would change
+validation:
+  - bash test/cases/45_github_projection.sh
+  - scripts/github-sync --plan
+evidence_required:
+  - states_distinguished
+risk: "Low. The information already exists inside the adapter."
+created_at: 2026-09-09
+updated_at: 2026-09-09
