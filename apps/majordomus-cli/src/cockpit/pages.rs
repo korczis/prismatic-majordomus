@@ -2199,10 +2199,21 @@ pub fn artifacts(ctx: &Context) -> Page {
 /// The surfaces: every HTTP route the registry projects, the projection's own routes, and
 /// the way into Swagger UI.
 pub fn api(ctx: &Context) -> Page {
-    let mut rows: Vec<El> = ctx
+    // Ordered as routes, before anything is rendered. Sorting the finished markup instead
+    // made every CSS class name part of the sort key: a rename nobody thought was visible
+    // reordered the table.
+    let mut routes: Vec<_> = ctx
         .registry
         .iter()
         .filter_map(|c| c.exposure.http.as_ref().map(|h| (c, h)))
+        .collect();
+    routes.sort_by(|(a, ha), (b, hb)| {
+        crate::order::natural_cmp(&ha.path, &hb.path)
+            .then_with(|| crate::order::natural_cmp(ha.method.as_str(), hb.method.as_str()))
+            .then_with(|| crate::order::natural_cmp(a.id.as_str(), b.id.as_str()))
+    });
+    let rows: Vec<El> = routes
+        .into_iter()
         .map(|(c, h)| {
             row(vec![
                 cell(mono(h.method.as_str())),
@@ -2216,7 +2227,6 @@ pub fn api(ctx: &Context) -> Page {
             ])
         })
         .collect();
-    rows.sort_by_key(|r| r.render());
 
     // the projection's own routes and what each one is, read off the surfaces that declare
     // them: this table has never held a path of its own and must not start

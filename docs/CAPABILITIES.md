@@ -273,6 +273,45 @@ only. One shared server serves a repository: the first `majordomus mcp` or `serv
 it, every later `majordomus mcp` bridges its stdio to it, and the peers see each other
 through `peers.list`; the lifecycle is in [`MCP.md`](MCP.md).
 
+## Order is a projection too
+
+A collection has one order, and every surface renders the sequence it was handed. The order
+is `apps/majordomus-cli/src/order.rs`: a total order over four parts, most significant
+first — the semantic **group** (none sorts last), an explicit **rank** for the collections
+whose domain declares one (`weight` on a moment, an audience, an area, a feature), the
+**label** compared naturally (digit runs by value, so `item-2` precedes `item-10`; ASCII
+case folded, so `Alpha` and `alpha` stay adjacent), and the canonical **identity**.
+
+The identity is what makes the order total rather than merely tidy. Two items with the same
+label must not exchange places because an unrelated item was added, because a different
+iterator was used, or because another machine enumerated differently.
+
+**To join it**, implement `order::Ordered` on the type — beside the type, not beside a
+renderer — and call `order::canonical()`. Nothing else is edited: every projection that
+shows the collection shows the new sequence.
+
+**To validate it**, run `scripts/ci/order-check`. Three of its checks are absolute — no
+case-folded comparator outside `order.rs`, no sort key that calls `render()`, no
+`.localeCompare(` under `scripts/`, `share/` or `site/` — and one is a ratchet over the debt
+that predates the rule, held as two counts in `.ai/repo/order-baseline.txt`: sort sites in
+the crate outside `order.rs`, and shell `sort` invocations not pinned with `LC_ALL=C`. Both
+may fall and may not rise; a commit that adopts the canonical order lowers the baseline with
+`scripts/ci/order-check --update`.
+
+**Grouping** is the order's first part, and it is derived too. A capability module's area is
+the areas of the features that name it in `modules:`, resolved by the catalogue's own
+`weight` — lowest first, ties by id. No module declares an area and no file lists the pairs;
+the Cockpit's sidebar asks the product model. Two features that name one module and share no
+area disagree about what it is for: the resolution stays deterministic and the disagreement
+is reported as `contested_area` by `majordomus product validate`, to be settled in the
+feature file rather than by a tiebreak. ADR 0026 records why the parent is derived rather
+than declared.
+
+**To diagnose an unexpected sequence**, read the key rather than the output. A collection
+ordered somewhere other than `order.rs` has an opinion of its own; a collection whose key
+ends before its identity has ties, and a tie is where an order looks like a race when there
+is none. The rule is `project.canonical-order`; ADR 0025 records the decision.
+
 ## The one projection that can drift
 
 Every projection in the table above is built by walking the registry. An MCP tool, an HTTP

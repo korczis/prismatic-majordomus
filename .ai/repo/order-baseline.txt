@@ -1,0 +1,10 @@
+# The two ordering debts of this tree, as counts. Written by
+# `scripts/ci/order-check --update`; the gate refuses a rise.
+#
+# crate_sorts   sort sites under apps/majordomus-cli/src outside order.rs. Each is a
+#               comparator that could be the canonical order and is not yet.
+# shell_sorts   `sort` invocations under lib/, scripts/, bin/ and test/ that are not
+#               pinned with LC_ALL=C. A glob or a sort collates by the locale, so an
+#               unpinned one orders by whose machine ran it.
+crate_sorts=75
+shell_sorts=154

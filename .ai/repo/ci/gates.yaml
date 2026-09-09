@@ -100,6 +100,11 @@ gates:
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
 
+  - id: order-check
+    job: structure
+    runs: scripts/ci/order-check
+    summary: a collection has one order — no case-folded comparator outside order.rs, no sort key that renders markup, no locale-collated comparison, and the ordering debt does not grow
+
   - id: providers-data
     job: structure
     runs: scripts/ci/providers-check
@@ -154,7 +159,7 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data]
+    gates: [rust-check, rust-command, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
@@ -169,7 +174,7 @@ classes:
   # union of every matching class, so both apply.
   - id: cockpit
     paths: [share/cockpit/**, scripts/cockpit-assets, scripts/cockpit-probe, scripts/lib/cockpit-probe.mjs]
-    gates: [cockpit-assets, cockpit-probe, rust-check, site-build]
+    gates: [cockpit-assets, cockpit-probe, rust-check, site-build, order-check]
 
   # the distribution: the skeleton, the schemas, the kinds, the command and event registries;
   # read by both implementations at run time, embedded in the crate at build, and inputs of
@@ -181,7 +186,7 @@ classes:
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit]
+    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
@@ -197,7 +202,7 @@ classes:
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
     paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and
