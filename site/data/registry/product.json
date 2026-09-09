@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.3.1"
   },
-  "fingerprint": "b66fd571a25dd556e3c78aeca6671cc2e4d2cd086e8ccfe854750e340a5ce365",
+  "fingerprint": "afe721fc8a1c73f0b96849c917b6ba7b79b5287e762843933185ae5ae0fe152c",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 16,
+    "modules": 18,
     "modules_covered": 15,
     "commands": 27,
     "commands_covered": 27,
@@ -1924,7 +1924,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 9
+          "objects": 11
         },
         {
           "name": "prompt",
@@ -2257,11 +2257,11 @@
       "counts": {
         "capabilities": 1,
         "mcp_tools": 1,
-        "mcp_resources": 14,
+        "mcp_resources": 16,
         "http_routes": 1,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 13,
+        "objects": 15,
         "rules": 8,
         "enforced_rules": 6,
         "docs": 2,
@@ -2431,7 +2431,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 24
+          "objects": 25
         },
         {
           "name": "knowledge",
@@ -2439,7 +2439,7 @@
         },
         {
           "name": "document",
-          "objects": 203
+          "objects": 205
         }
       ],
       "rule_refs": [
@@ -2688,11 +2688,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 229,
+        "mcp_resources": 232,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 228,
+        "objects": 231,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2857,7 +2857,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 94
+          "objects": 96
         }
       ],
       "rule_refs": [
@@ -3178,11 +3178,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 95,
+        "mcp_resources": 97,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 94,
+        "objects": 96,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -4399,7 +4399,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 9
+          "objects": 11
         }
       ],
       "rule_refs": [
@@ -4625,11 +4625,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 9,
+        "mcp_resources": 11,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 9,
+        "objects": 11,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7305,6 +7305,11 @@
         ]
       },
       {
+        "id": "commands",
+        "title": "Command graph",
+        "features": []
+      },
+      {
         "id": "continuity",
         "title": "Continuity",
         "features": [
@@ -7329,6 +7334,11 @@
         "features": [
           "install"
         ]
+      },
+      {
+        "id": "environment",
+        "title": "Repository environment",
+        "features": []
       },
       {
         "id": "graph",
@@ -7614,7 +7624,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (24)",
+        "title": "adr (25)",
         "features": [
           "knowledge"
         ]
@@ -7736,7 +7746,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (94)",
+        "title": "rule (96)",
         "features": [
           "doctrine"
         ]
@@ -7750,7 +7760,7 @@
       },
       {
         "id": "session",
-        "title": "session (9)",
+        "title": "session (11)",
         "features": [
           "continuity",
           "provenance"
@@ -8457,6 +8467,11 @@
       "route": "/cockpit/capabilities"
     },
     {
+      "id": "commands",
+      "title": "Commands",
+      "route": "/cockpit/commands"
+    },
+    {
       "id": "objects",
       "title": "Objects",
       "route": "/cockpit/objects"
@@ -8498,19 +8513,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1085,
-    "builtin": 44,
-    "declarative": 1041,
-    "modules": 16,
-    "mcp_tools": 42,
-    "mcp_resources": 1057,
-    "http_routes": 44,
-    "cli_commands": 61,
+    "capabilities": 1102,
+    "builtin": 49,
+    "declarative": 1053,
+    "modules": 18,
+    "mcp_tools": 47,
+    "mcp_resources": 1070,
+    "http_routes": 49,
+    "cli_commands": 76,
     "shell_commands": 27,
     "kinds": 27,
-    "objects": 1041,
+    "objects": 1053,
     "by_kind": {
-      "adr": 24,
+      "adr": 25,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8519,9 +8534,9 @@
       "context": 26,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 203,
+      "document": 205,
       "feature": 20,
-      "implementation": 42,
+      "implementation": 44,
       "issue": 192,
       "knowledge": 1,
       "milestone": 16,
@@ -8530,12 +8545,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 94,
+      "rule": 96,
       "scope": 1,
-      "session": 9,
+      "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 114,
+      "test": 117,
       "use-case": 40
     },
     "providers": 6,

@@ -2,22 +2,9 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://majordomus.dev/schemas/generated/site-why.schema.json",
   "title": "Site why dataset",
-  "description": "site/data/registry/why.json: the operational moments this tool is a response to, with the audiences and areas that classify them, the signals a person recognises, and the facets the catalogue reports — the dataset the website's /why/ pages are rendered from, derived from the objects of kind `moment`, `audience` and `area` (ADR 0018). Written by `majordomus generate site`.",
+  "description": "site/data/registry/why.json: the dataset the website's /why/ pages are rendered from — the operational moments, the audiences and areas they are read by, the facets they are filtered on and the signals that name them — written by `majordomus generate site` from the Why catalogue.",
   "type": "object",
-  "required": [
-    "schema",
-    "generated",
-    "generator",
-    "fingerprint",
-    "route",
-    "counts",
-    "facets",
-    "audiences",
-    "areas",
-    "signals",
-    "moments",
-    "valid"
-  ],
+  "required": ["schema", "generated", "generator", "fingerprint", "route", "counts", "facets", "audiences", "areas", "signals", "moments", "valid"],
   "properties": {
     "schema": { "const": "majordomus-site-why/v1" },
     "generated": { "type": "string", "pattern": "^GENERATED FILE" },
@@ -34,21 +21,21 @@
     "counts": {
       "type": "object",
       "required": ["areas", "audiences", "examples", "moments", "moments_all", "signals"],
-      "description": "The tallies the pages show; computed, never written down."
+      "additionalProperties": { "type": "integer", "minimum": 0 }
     },
     "facets": {
       "type": "object",
-      "description": "Every facet the catalogue reports, with the values present in it."
+      "description": "What the catalogue can be filtered by; each facet is derived from the moments, never listed.",
+      "required": ["areas", "audiences", "capabilities", "commands", "frequencies", "lifecycle", "severities", "tags"]
     },
     "audiences": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "title", "summary", "route", "status", "moments", "count"],
+        "required": ["id", "title", "route", "status", "moments", "count"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "route": { "type": "string", "pattern": "^/" },
-          "moments": { "type": "array", "items": { "type": "string" } },
           "count": { "type": "integer", "minimum": 0 }
         }
       }
@@ -57,45 +44,37 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "title", "summary", "route", "status", "moments", "count"],
+        "required": ["id", "title", "route", "status", "moments", "count"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "route": { "type": "string", "pattern": "^/" },
-          "moments": { "type": "array", "items": { "type": "string" } },
           "count": { "type": "integer", "minimum": 0 }
         }
       }
     },
     "signals": {
       "type": "array",
-      "description": "What a person recognises, each pointing at the moment it belongs to.",
+      "description": "What a reader notices, each naming the moment it belongs to.",
       "items": {
         "type": "object",
         "required": ["id", "moment", "text"],
-        "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "moment": { "type": "string", "minLength": 1 },
-          "text": { "type": "string", "minLength": 1 }
-        }
+        "properties": { "moment": { "type": "string", "minLength": 1 } }
       }
     },
     "moments": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "hook", "audiences", "areas"],
+        "required": ["id", "title", "route", "status", "areas", "audiences"],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
-          "hook": { "type": "string", "minLength": 1 },
-          "audiences": { "type": "array", "items": { "type": "string" } },
-          "areas": { "type": "array", "items": { "type": "string" } },
-          "featured": { "type": "boolean" }
+          "route": { "type": "string", "pattern": "^/" }
         }
       }
     },
     "valid": {
       "type": "boolean",
-      "description": "Whether every reference the catalogue makes resolved when it was derived."
+      "description": "Whether the catalogue validated when it was written; a false here is a rendered warning, not a hidden one."
     }
   }
 }

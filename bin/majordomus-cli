@@ -2,8 +2,9 @@
 # majordomus-cli — run the Rust executable for the repository you are in, building it first
 # when it is missing or older than its sources. The one launcher every caller that needs the
 # executable shares: bin/majordomus-mcp starts the MCP server through it, the git hooks ask
-# the worktree guard through it, .envrc prints the worktree banner through it, and a person
-# types `bin/majordomus-cli worktree status`. Every argument is passed through.
+# the worktree guard through it, and a person types `bin/majordomus-cli worktree status`.
+# Every argument is passed through. The one caller that may not build is .envrc, which goes
+# through bin/majordomus-env instead; both find the executable through lib/rust_bin.sh.
 #
 # stdout belongs to the command: nothing here writes to it. Build output goes to stderr.
 #
@@ -19,18 +20,14 @@ root="$(cd "$here/.." && pwd)"
 crate="$root/apps/majordomus-cli"
 profile="${MAJORDOMUS_BUILD_PROFILE:-debug}"
 
-# An installed release carries the built executable beside this script, under libexec/;
-# there is no crate to build there and nothing to be stale against. A checkout has no
-# libexec/ and falls back to the crate's target directory, which is what a contributor has.
-shipped="$root/libexec/majordomus-cli"
-if [ -z "${MAJORDOMUS_BIN:-}" ] && [ -x "$shipped" ]; then
-  MAJORDOMUS_BIN="$shipped"; export MAJORDOMUS_BIN
-fi
-bin="${MAJORDOMUS_BIN:-$crate/target/$profile/majordomus}"
-
-# The kinds and schemas the executable reads at run time ship beside this script.
-if [ -z "${MAJORDOMUS_SHARE:-}" ] && [ -f "$root/share/kinds.yaml" ]; then
-  MAJORDOMUS_SHARE="$root/share"; export MAJORDOMUS_SHARE
+# Where the executable is, and where its data is: one answer, shared with bin/majordomus-env,
+# which asks the same question and then decides differently about building it.
+# shellcheck source=../lib/rust_bin.sh
+. "$root/lib/rust_bin.sh"
+bin="$(mj_rust_bin "$root")"
+share="$(mj_rust_share "$root")"
+if [ -n "$share" ]; then
+  MAJORDOMUS_SHARE="$share"; export MAJORDOMUS_SHARE
 fi
 
 # Is the executable missing, or older than any source, manifest or lock file?
