@@ -128,8 +128,16 @@ for sh in dash bash ksh /bin/sh /bin/ash busybox; do
   out="$(env HOME="$T/home" PATH="$fake:$PATH" \
           MAJORDOMUS_RELEASE_BASE_URL="http://127.0.0.1:1/nothing" MAJORDOMUS_INSECURE_BASE_URL=1 \
           $runner "$INSTALLER" --dry-run 2>&1 || true)"
-  printf '%s\n' "$out" | grep -q 'does not provide a prebuilt binary' \
-    || { echo "    under $runner the installer did not refuse cleanly: $out"; exit 1; }
+  # What this proves is that the installer *runs* under the shell, not merely parses. Which
+  # decision it reaches depends on whether the shell honoured the fake `uname` on PATH: a
+  # standalone busybox resolves `uname` to its own applet and never consults PATH, so it sees
+  # the real machine and resolves a release instead of refusing. Both are the installer
+  # working; a shell that cannot run the script at all reaches neither.
+  printf '%s\n' "$out" | grep -qE 'does not provide a prebuilt binary|Resolving the release' \
+    || { echo "    under $runner the installer reached no decision: $out"; exit 1; }
+  if printf '%s\n' "$out" | grep -qiE 'syntax error|unexpected|not expected'; then
+    echo "    under $runner the installer did not parse: $out"; exit 1
+  fi
 done
 
 # --- an unknown option is refused, not ignored -------------------------------------------
