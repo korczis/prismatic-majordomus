@@ -45,6 +45,7 @@ pub(crate) mod peers;
 pub(crate) mod perf;
 pub(crate) mod product;
 pub mod quality;
+pub mod release;
 pub mod repository;
 mod scope;
 mod views;
@@ -99,6 +100,7 @@ pub use worktree::{
 /// capability in an existing module is no line here.
 pub fn modules() -> Vec<ModuleDescriptor> {
     compose_modules![
+        release,
         repository,
         objects,
         capabilities,

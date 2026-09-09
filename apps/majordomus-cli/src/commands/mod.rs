@@ -39,6 +39,7 @@ pub(crate) mod generate;
 pub(crate) mod mcp;
 pub(crate) mod product;
 pub(crate) mod quality;
+pub(crate) mod release;
 pub(crate) mod scope;
 pub(crate) mod serve;
 pub(crate) mod web;
@@ -65,6 +66,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
         Command::Product(args) => product::run(args),
+        Command::Release(args) => release::run(args),
         Command::Quality(args) => quality::run(args),
     }
 }

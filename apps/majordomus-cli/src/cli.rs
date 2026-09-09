@@ -58,6 +58,8 @@ pub enum Command {
     Worktree(WorktreeArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
     Product(ProductArgs),
+    /// What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both
+    Release(ReleaseArgs),
     /// What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
     Quality(QualityArgs),
 }
@@ -169,6 +171,48 @@ pub enum EnvCommand {
         /// One field in dotted form (`vcs.branch`, `layer.objects`), or a prefix; every field when absent
         #[arg(value_name = "FIELD")]
         field: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus release`. The read half is derived and the write half is one command, so
+/// that raising a version is a thing that happens once rather than in two files by hand.
+pub struct ReleaseArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to answer; none prints the changelog.
+    pub command: Option<ReleaseCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// How to render the answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus release`.
+pub enum ReleaseCommand {
+    /// The changelog, composed from the layer's release records, the decisions dated inside each release's window, and the conventional commits in its range
+    Changelog {
+        /// One version or `unreleased`; every section when absent
+        #[arg(value_name = "VERSION")]
+        version: Option<String>,
+    },
+    /// The version the two writers state, whether they agree, and the bump the commits since the last release imply
+    Version,
+    /// Raise the version in both places at once, to the bump the commits imply or to one you name
+    Bump {
+        /// Raise by this much instead of by what the commits imply
+        #[arg(long, value_name = "LEVEL")]
+        level: Option<String>,
+        /// Set exactly this version, instead of raising the current one
+        #[arg(long, value_name = "VERSION", conflicts_with = "level")]
+        exact: Option<String>,
+        /// Say what would change and write nothing
+        #[arg(long)]
+        dry_run: bool,
     },
 }
 
@@ -881,6 +925,9 @@ pub enum GenerateTarget {
     Distribution,
     /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
     Web,
+    /// `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's
+    /// release records, its decisions and the repository's commits
+    Changelog,
 }
 
 #[derive(Debug, Args)]
@@ -1266,6 +1313,50 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["product", "validate"],
             setup: &[],
             expect: Expect::StdoutContains(&["feature(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "release",
+        examples: &[ExampleDoc {
+            id: "release-changelog",
+            title: "What has shipped, and what has not",
+            description: "`release` with nothing after it renders the changelog. Every line of it is derived — a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range — so there is no file anyone can forget to update.",
+            argv: &["release"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["Changelog"]),
+        }],
+    },
+    CommandExamples {
+        command: "release changelog",
+        examples: &[ExampleDoc {
+            id: "release-changelog-json",
+            title: "The same document every other surface answers with",
+            description: "What `GET /api/v1/changelog` returns, what the MCP resource `majordomus://changelog` carries, and what `majordomus generate changelog` writes into the reference. One value, four renderings.",
+            argv: &["release", "changelog", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/current", "/sections"]),
+        }],
+    },
+    CommandExamples {
+        command: "release version",
+        examples: &[ExampleDoc {
+            id: "release-version",
+            title: "The version, and the one the commits imply",
+            description: "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state, whether they agree, and what the conventional commits since the last release imply the next one should be.",
+            argv: &["release", "version", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/declared", "/agree", "/bump"]),
+        }],
+    },
+    CommandExamples {
+        command: "release bump",
+        examples: &[ExampleDoc {
+            id: "release-bump-dry-run",
+            title: "Raising it, in both places, once",
+            description: "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person.",
+            argv: &["release", "bump", "--dry-run"],
+            setup: &[],
+            expect: Expect::Success,
         }],
     },
     CommandExamples {

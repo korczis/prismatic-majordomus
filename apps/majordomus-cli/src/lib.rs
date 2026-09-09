@@ -42,6 +42,7 @@ pub mod product;
 pub mod proto;
 pub mod providers;
 pub mod quality;
+pub mod release;
 pub mod repository;
 pub mod scope;
 pub mod share;

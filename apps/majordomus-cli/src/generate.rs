@@ -93,6 +93,14 @@ pub enum Target {
     /// topology reaches the published documentation without the site shelling out to this
     /// executable, and how `generate --check` notices when it has gone stale.
     Web,
+    /// `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's
+    /// release records, the decisions dated inside each release's window and the
+    /// conventional commits in its range (see [`crate::release`]).
+    ///
+    /// A generated document like any other, which is the point: `generate --check` is what
+    /// notices that the changelog has stopped describing the tree, so nobody has to
+    /// remember to update it.
+    Changelog,
     /// Everything derived from the distribution model (see `crate::distribution`): the
     /// release build matrix, the installer, the installation guide, the site's dataset,
     /// and the public metadata of every recorded release.
@@ -116,6 +124,7 @@ impl Target {
         Target::Providers,
         Target::Site,
         Target::Web,
+        Target::Changelog,
         Target::Distribution,
         Target::Manifest,
     ];
@@ -146,6 +155,7 @@ impl Target {
             Target::Providers => "providers",
             Target::Site => "site",
             Target::Web => "web",
+            Target::Changelog => "changelog",
             Target::Distribution => "distribution",
             Target::Manifest => "manifest",
         }
@@ -535,6 +545,7 @@ pub fn artifacts(
             | Target::Providers
             | Target::Site
             | Target::Web
+            | Target::Changelog
             | Target::Distribution
             | Target::Manifest => {}
         }
@@ -608,6 +619,32 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             ));
         }
     }
+    if targets.contains(&Target::Changelog) {
+        // The changelog is composed from the layer's own release records, the decisions
+        // dated inside each release's window, and the repository's commits — the same value
+        // `release.changelog` answers with, so the reference and the API never disagree.
+        // The Markdown is the rendering a person reads; the JSON and YAML are the document
+        // every other reader gets, and all three are compared by `generate --check`.
+        let log = crate::release::compose(app.repository.root(), &app.context.index.objects);
+        let value = serde_json::to_value(&log).unwrap_or(serde_json::Value::Null);
+        out.extend(
+            Document::new(
+                "changelog",
+                crate::release::model::CHANGELOG_SCHEMA,
+                "the layer's release records, the decisions dated in each release's window, and the commits in its range",
+                value,
+            )
+            .artifacts(crate::VERSION),
+        );
+        out.push(Artifact::markdown(
+            format!("{OUT_DIR}/changelog.md"),
+            "changelog",
+            "the layer's release records, the decisions dated in each release's window, and the commits in its range",
+            crate::VERSION,
+            &crate::release::changelog::render(&log),
+        ));
+    }
+
     let needs_policy = targets.contains(&Target::Providers) || targets.contains(&Target::Site);
     if needs_policy {
         let policy = LoadedPolicy::load(&app.repository)?;
