@@ -155,6 +155,11 @@ sections:
             breaking: false
             commit: 98f6606ce
           - kind: fix
+            scope: gates
+            subject: "a derivation refuses a degraded index, and one pass says everything a command still needs"
+            breaking: false
+            commit: f6b73b05a
+          - kind: fix
             scope: commands
             subject: the module asserts the three projections it documents
             breaking: false
@@ -465,6 +470,16 @@ sections:
         heading: Housekeeping
         rank: 7
         changes:
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 5fe8f2ec8
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: b79363681
           - kind: chore
             scope: derive
             subject: the projections follow the merge with master
