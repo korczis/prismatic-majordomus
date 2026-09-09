@@ -106,6 +106,13 @@ succeeded, the drift check passed, every gate stayed green, and one surface lost
 stack. `test/cases/104_design_tokens.sh` holds that mutation and the other one, where a
 comment stripper ate `#fff` and wrote a custom property with no value at all.
 
+The gate asks a third question the first version did not: is every `--mj-` token a surface
+reads one that something declares? It found `--mj-text-faint` immediately — read by the
+Cockpit's stylesheet since the day it was written, declared nowhere, and therefore always
+resolving to its fallback. That is the same failure as `site/graph.js`, one namespace
+along, and it is invisible by construction: an undeclared custom property is the empty
+string, never an error, so no build and no browser has anything to report.
+
 What this does **not** do: it does not restyle the inside of Swagger UI. The page's frame —
 its type, its accent, its links — is now this repository's; the operation blocks and schema
 tables are a third party's stylesheet at a pinned version, and reskinning somebody else's

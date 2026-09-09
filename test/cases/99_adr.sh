@@ -260,3 +260,41 @@ expect_exit 0 "$MJ" adr check
 expect_grep 'every identity unique'
 "$MJ" adr check --json | grep -q '"ok":true'
 "$MJ" doctor 2>&1 | grep -q '^OK   adr'
+
+# ---------------------------------------------------------------- identity across the repository
+# One directory is not the repository. A number is taken when any branch has ever used it,
+# and when any other worktree holds it right now — including work that is authored and not
+# yet committed, which no ref can answer for.
+#
+# This is a regression. A session here proposed 0028, found it held by a peer's uncommitted
+# record, took 0029, and found that one claimed by master while the branch was being
+# written; both had to be renumbered by hand. The allocator read one directory and the lock
+# it holds is exclusive over one worktree, which says nothing about the thirty others.
+git add -A >/dev/null; git commit -qm "before the branch" >/dev/null 2>&1 || true
+
+# a number used on another branch and not present here at all
+git checkout -q -b other-branch
+"$MJ" adr propose "Decided on a branch" >/dev/null
+branch_adr="$(ls .ai/repo/adrs/ | grep -c '' )"
+git add -A >/dev/null && git commit -qm "a decision on a branch" >/dev/null
+high="$(ls .ai/repo/adrs/[0-9][0-9][0-9][0-9]-*.md | sed 's|.*/||; s|-.*||' | sort -n | tail -1)"
+git checkout -q -
+# the record is gone from this tree; the number is not free
+test ! -e ".ai/repo/adrs/$high-decided-on-a-branch.md"
+expect_exit 0 "$MJ" adr propose "After the branch"
+next="$(printf '%04d' "$((10#$high + 1))")"
+test -e ".ai/repo/adrs/$next-after-the-branch.md" \
+  || { echo "    a number used on another branch was handed out again: wanted $next"; ls .ai/repo/adrs/; exit 1; }
+git add -A >/dev/null && git commit -qm "after the branch" >/dev/null
+
+# a number held by a sibling worktree, uncommitted: the case a ref cannot see
+git worktree add -q "$T/sibling" -b sibling >/dev/null 2>&1
+sib="$(printf '%04d' "$((10#$next + 7))")"
+printf -- '---\nschema: adr/v1\nid: adr-%s\nkind: adr\ntitle: Held in a sibling\nstatus: proposed\n---\n' "$sib" \
+  > "$T/sibling/.ai/repo/adrs/$sib-held-in-a-sibling.md"
+expect_exit 0 "$MJ" adr propose "After the sibling"
+after="$(printf '%04d' "$((10#$sib + 1))")"
+test -e ".ai/repo/adrs/$after-after-the-sibling.md" \
+  || { echo "    a number held uncommitted in a sibling worktree was handed out again: wanted $after"; ls .ai/repo/adrs/; exit 1; }
+rm -f ".ai/repo/adrs/$after-after-the-sibling.md"
+git worktree remove --force "$T/sibling" >/dev/null 2>&1 || true

@@ -96,5 +96,34 @@ if [ "$found" = 1 ]; then
   status=10
 fi
 
+echo "== every token a surface reads is a token something declares"
+# The bug this exists for: site/graph.js read seven `--mj-graph-*` properties, no stylesheet
+# had ever declared one of them, so every lookup returned the empty string and every drawing
+# was painted from the fallback table in its own source — under a comment saying the palette
+# came from the page. Nothing failed. Nothing could fail: an undeclared custom property is
+# the empty string, not an error, and the fallback is right there to make the result look
+# deliberate.
+#
+# Only the `--mj-` namespace is asked. `--tw-`, `--color-`, `--spacing-` and the rest belong
+# to Tailwind and are declared by a build, not by this repository; asking about them would
+# make this check noisy, and a noisy check is a check nobody reads.
+declared="$(git ls-files -- '*.css' | xargs grep -ho -- '--mj-[a-z0-9][a-z0-9-]*[[:space:]]*:' 2>/dev/null \
+  | sed 's/[[:space:]]*:$//' | LC_ALL=C sort -u)"
+undeclared=0
+for file in $(git ls-files -- '*.js' '*.mjs' '*.css' '*.rs' '*.html' '*.tera' 2>/dev/null); do
+  case "$file" in */vendor/*|node_modules/*) continue ;; esac
+  for token in $(grep -ho -- '--mj-[a-z0-9][a-z0-9-]*' "$file" 2>/dev/null | LC_ALL=C sort -u); do
+    printf '%s\n' "$declared" | grep -qx -- "$token" && continue
+    echo "FAIL $file  reads $token, which no stylesheet declares"
+    undeclared=1
+  done
+done
+if [ "$undeclared" = 1 ]; then
+  echo "design-check: a surface reads a token nothing declares. It will read the empty" >&2
+  echo "design-check: string for ever, silently, and use whatever fallback stands beside" >&2
+  echo "design-check: it. Declare it in share/design/tokens.yaml, or stop reading it." >&2
+  status=10
+fi
+
 [ "$status" = 0 ] && echo "==> design-check: one declaration, and every surface projects it"
 exit "$status"

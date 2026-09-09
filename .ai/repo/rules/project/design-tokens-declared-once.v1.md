@@ -3,7 +3,7 @@ id: project.design-tokens-declared-once
 version: 1
 kind: rule
 title: A design value is chosen once and every stylesheet is a projection of it
-description: Type, palette and accent are declared in one canonical file and generated into the Tailwind theme both builds import, the surface block the Cockpit is written against, and the custom properties compiled into the executable; a file that puts a colour on a screen may name a token and may not invent one.
+description: Type, palette and accent are declared in one canonical file and generated into the Tailwind theme both builds import, the surface block the Cockpit is written against, and the custom properties compiled into the executable; a file that puts a colour on a screen may name a token and may not invent one, and a token it names is one something declares.
 statement: A design value is chosen in one place and every surface derives it; a surface that carries a colour of its own is a bug, and an exemption is a reason rather than a path.
 status: active
 class: blocking
@@ -61,6 +61,14 @@ reach a custom property; and colour arithmetic — a contrast library searching 
 black and pure white paints nothing and cannot go stale. A path added to that list without a
 reason is the defect this rule replaces, wearing a different hat.
 
+**A token that is read is a token something declares.** An undeclared custom property is
+not an error in CSS; it is the empty string. A surface that reads one gets nothing, uses
+whatever fallback stands beside it, and looks deliberate for ever. The gate asks the
+`--mj-` namespace — this repository's own — and refuses a read nothing answers. It found
+`--mj-text-faint` on its first run: the Cockpit's stylesheet had asked for it since the
+day it was written, nothing had ever declared it, and every element wearing it had
+rendered as muted.
+
 **The generator validates what it writes.** A stale projection fails loudly; a *malformed*
 one is dropped by the CSS parser in silence, with every check downstream still green. The
 generator refuses to emit a declaration with an unbalanced quote or no value, because both
@@ -79,9 +87,10 @@ accent should be blue is intent; a person states it, in the one file that holds 
 `test/cases/104_design_tokens.sh` proves it by mutation: a hand-edited projection is
 refused; a value changed canonically reaches every projection; an alias pointing at
 nothing is refused; a stylesheet with a literal fails and the same stylesheet naming a
-token passes; `color-mix()` over tokens passes and a literal inside one does not; and
-`href="#features"` is not mistaken for a colour, because a gate that cries wolf is a gate
-somebody turns off. Two of its assertions are regressions for real bugs in the generator —
+token passes; `color-mix()` over tokens passes and a literal inside one does not; a read of a token
+nothing declares fails and the same read passes once it is declared; and neither
+`href="#features"` nor `Merge pull request #117` is mistaken for a colour, because a gate
+that cries wolf is a gate somebody turns off. Two of its assertions are regressions for real bugs in the generator —
 a quote stripper that broke a font stack, and a comment stripper that ate `#fff` — both of
 which produced CSS that failed in silence. ADR 0030 records the decision and what it left
 undone.

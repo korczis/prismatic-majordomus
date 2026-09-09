@@ -165,3 +165,28 @@ expect_exit 0 "$DC" --root "$T"
 printf '.x { background: color-mix(in oklch, #123456 40%%, transparent); }\n' > site/mix.css
 git add -A >/dev/null 2>&1
 expect_exit 10 "$DC" --root "$T"
+rm -f site/mix.css
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+
+# ---------------------------------------------------------------- a token nothing declares
+# The bug this is a regression for: a view read seven `--mj-graph-*` properties, nothing
+# declared one of them, every lookup returned the empty string, and every drawing used the
+# literal beside it. An undeclared custom property is not an error in CSS — it is the empty
+# string — so nothing anywhere could have failed.
+printf '.a { color: var(--mj-invented); }\n' > site/reads.css
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+expect_grep 'reads --mj-invented, which no stylesheet declares'
+
+# declaring it is what makes the read true
+printf ':root { --mj-invented: var(--fg); }\n.a { color: var(--mj-invented); }\n' > site/reads.css
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+rm -f site/reads.css
+git add -A >/dev/null 2>&1
+
+# a prefix in prose is not a token: `--mj-*` in a comment must not be asked about
+printf '/* the --mj-* names are aliases */\n' > site/prose.css
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
