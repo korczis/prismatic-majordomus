@@ -11,8 +11,14 @@ sed -i.bak -E 's/^MJ_VERSION="[^"]*"/MJ_VERSION="9.9.9"/' "$T/bin/majordomus"; r
 grep -q '^MJ_VERSION="9.9.9"$' "$T/bin/majordomus" || { echo "    the version mutation did not apply"; exit 1; }
 # 2. a profile description and effort
 sed -i.bak 's/^description: .*/description: CHANGED DESCRIPTION/; s/^effort: low$/effort: max/' "$T/share/skeleton/profiles/routine.yaml"; rm -f "$T/share/skeleton/profiles/routine.yaml.bak"
-# 3. a principle label (the title of the rule tagged principle in the standard package)
+# 3. a principle label (the title of the rule tagged principle in the standard package).
+#    The package is hash-pinned: its manifest carries the hash of every rule file and a hand
+#    edit is refused until the package is rewritten. Editing the rule and stopping there made
+#    every scenario that reads the rules fail, and the generator refused with eight of them
+#    named — which is the package integrity doctrine working, not this mutation failing. So
+#    re-pin, the way the maintainer of the package would.
 sed -i.bak 's/^title: Sessions are workers, not memory$/title: Sessions are CHANGED PRINCIPLE/' "$T/share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md"; rm -f "$T/share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md.bak"
+( cd "$T" && ./scripts/rules-package write >/dev/null ) || { echo "    the rule package could not be re-pinned after the edit"; exit 1; }
 # 4. a policy value
 sed -i.bak 's/always_loaded_budget_lines: 150/always_loaded_budget_lines: 42/' "$T/share/skeleton/policy.yaml"; rm -f "$T/share/skeleton/policy.yaml.bak"
 # 5. a claim status

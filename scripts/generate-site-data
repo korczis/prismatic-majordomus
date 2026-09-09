@@ -894,7 +894,22 @@ jq -R -n '
 # the tool did, and --check proves it again; timings are dropped so the data is stable
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase run --json > "$STAGE/uc-run.json" 2> "$STAGE/uc-run.err" || {
   echo "generate-site-data: a use-case scenario failed; the site does not show a demonstration that does not hold:" >&2
-  jq -r '.results[] | select(.result != "pass") | "  \(.use_case): \(.steps | map(select(.result != "pass")) | .[0].reason // .reason // "setup failed")"' "$STAGE/uc-run.json" 2>/dev/null >&2 || cat "$STAGE/uc-run.err" >&2
+  # Render the failures the run recorded; when that renders nothing — the run wrote no JSON,
+  # or wrote a shape this does not match — show what the tool actually said. `jq -r` over an
+  # empty or unmatched document exits 0 and prints nothing, so a `||` fallback never fired
+  # and the message was a header followed by silence: a finding with nothing to act on.
+  UC_FAILED="$(jq -r '.results[] | select(.result != "pass")
+        | . as $r | (($r.steps // []) | map(select(.result != "pass")) | (.[0].reason? // empty)) as $step
+        | "  \($r.use_case): \($step // $r.reason? // "setup failed")"' \
+        "$STAGE/uc-run.json" 2>/dev/null || true)"
+  if [ -z "$UC_FAILED" ]; then
+    echo "  the run recorded no failure it could name; what the tool reported:" >&2
+    sed 's/^/    /' "$STAGE/uc-run.err" >&2 2>/dev/null || true
+    [ -s "$STAGE/uc-run.json" ] || echo "    (usecase run wrote no JSON at all)" >&2
+  else
+    printf '%s\n' "$UC_FAILED" >&2
+  fi
+  echo "  reproduce: majordomus usecase run --json" >&2
   exit 10; }
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
 jq -n \
