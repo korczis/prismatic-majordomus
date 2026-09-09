@@ -1,0 +1,32 @@
+# The shell scripts that pipe under `set -e` without `set -o pipefail`, so a
+# pipeline's failure is reported as its last command's success.
+#
+# Written by scripts/ci/pipefail-check --write-baseline; never by hand. The set may
+# only shrink: adding pipefail to one of these is the deliberate act of having
+# checked that its pipelines still mean what they meant.
+bin/majordomus-cli
+scripts/ci-baseline
+scripts/ci-plan
+scripts/ci/core-check
+scripts/ci/install-check
+scripts/ci/projection-check
+scripts/ci/providers-check
+scripts/ci/reference-check
+scripts/ci/rust-command-check
+scripts/ci/shell-lint
+scripts/ci/summary
+scripts/ci/verdict
+scripts/ci/worktree-check
+scripts/cockpit-assets
+scripts/cockpit-probe
+scripts/generate-site-data
+scripts/github-sync
+scripts/pages
+scripts/rules-package
+scripts/rust-check
+scripts/site-basepath-check
+scripts/site-build
+scripts/site-check
+scripts/site-deploy
+scripts/site-probe
+scripts/ui

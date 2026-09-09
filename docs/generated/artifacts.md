@@ -180,8 +180,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `bdba56212ef6061e` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 59514 | `ce9cbca63ac77d25` |
-| `site/data/registry/product.json` | `site-product` | json | 300468 | `61b6501cc4621f1d` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1805286 | `bbf08b320e15cca9` |
+| `site/data/registry/product.json` | `site-product` | json | 300468 | `7fd55c6adeb98e1a` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1805561 | `36d44a2d5f6993af` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `fb5f4204da2c1cea` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `a655ee48696ea407` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |
