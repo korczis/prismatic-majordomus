@@ -9,11 +9,17 @@
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
 //!
-//! Every section is presented alphabetically by label. The order a section is *built* in is
-//! an accident of its source — the order the modules were composed in, the order the graph
-//! derivations are declared in — and an accident is not a reading order. Sorted by name, an
-//! entry is found under the name the reader already has. The sort is applied to the
-//! sections as a whole, so a section added later is ordered without being told to be.
+//! Every section is presented in the canonical order (`crate::order`). The order a section
+//! is *built* in is an accident of its source — the order the modules were composed in, the
+//! order the graph derivations are declared in — and an accident is not a reading order.
+//! The order is applied to the sections as a whole, so a section added later is ordered
+//! without being told to be.
+//!
+//! One section is grouped rather than flat: the capability modules sit under the
+//! operational area they serve. That area is not written here either. A feature declares
+//! the modules it is built from and the areas it serves; the product model resolves the two
+//! into an area per module, and this file asks for it. A module no feature places is shown
+//! under no heading, which the canonical order puts last, and the product model reports it.
 
 use crate::capability::registry::ModuleSource;
 use crate::capability::Context;
@@ -143,6 +149,10 @@ pub struct Item {
     pub href: String,
     /// The area it belongs to.
     pub area: Area,
+    /// The heading it sits under inside its section, when the section is grouped. Derived,
+    /// never written here: the capability modules are grouped by the operational area the
+    /// features that name them serve.
+    pub group: Option<String>,
     /// How many things are behind it, when the number is a fact and not decoration.
     pub count: Option<usize>,
     /// Whether this is the page being shown.
@@ -209,6 +219,14 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                     percent_encode(m.id.as_str())
                 ),
                 area: Area::Capabilities,
+                // The module's own area, derived by the product model from the features
+                // that name it, shown under the name the Why catalogue gives it. Neither
+                // the grouping nor the heading is written in this file.
+                group: ctx
+                    .product
+                    .module_area(m.id.as_str())
+                    .and_then(|id| ctx.why.areas().iter().find(|a| a.id == id))
+                    .map(|a| a.title.clone()),
                 count: Some(m.capabilities),
                 current: false,
             })
@@ -226,6 +244,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 label: kind.to_string(),
                 href: format!("/cockpit/objects?kind={}", percent_encode(kind)),
                 area: Area::Objects,
+                group: None,
                 count: Some(count),
                 current: false,
             })
@@ -240,6 +259,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 label: id.to_string(),
                 href: format!("/cockpit/graphs/{id}"),
                 area: Area::Graphs,
+                group: None,
                 count: None,
                 current: here == format!("/cockpit/graphs/{id}"),
             })
@@ -268,7 +288,10 @@ fn alphabetical(mut section: Section) -> Section {
 
 impl crate::order::Ordered for Item {
     fn order_key(&self) -> crate::order::OrderKey<'_> {
-        crate::order::OrderKey::plain(&self.label, &self.href)
+        match &self.group {
+            Some(group) => crate::order::OrderKey::grouped(group, &self.label, &self.href),
+            None => crate::order::OrderKey::plain(&self.label, &self.href),
+        }
     }
 }
 
@@ -277,6 +300,7 @@ fn item(label: &str, href: &str, area: Area, count: Option<usize>, here: &str) -
         label: label.into(),
         href: href.into(),
         area,
+        group: None,
         count,
         current: here == href,
     }
@@ -309,6 +333,39 @@ mod tests {
             .count();
         assert_eq!(labels.len(), expected);
         assert!(expected > 0, "the builtin registry composes modules");
+    }
+
+    #[test]
+    fn a_grouped_section_keeps_its_groups_contiguous_and_the_ungrouped_last() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build(&ctx, "/cockpit");
+        for section in nav.sections() {
+            let mut seen: Vec<&str> = Vec::new();
+            let mut ungrouped = false;
+            for item in &section.items {
+                match item.group.as_deref() {
+                    Some(g) => {
+                        assert!(
+                            !ungrouped,
+                            "a grouped entry follows an ungrouped one in '{}': the canonical \
+                             order puts the ungrouped tail last",
+                            section.title
+                        );
+                        if seen.last().copied() != Some(g) {
+                            assert!(
+                                !seen.contains(&g),
+                                "the group '{g}' appears twice in '{}': its members are not \
+                                 contiguous, so one pass cannot render its heading once",
+                                section.title
+                            );
+                            seen.push(g);
+                        }
+                    }
+                    None => ungrouped = true,
+                }
+            }
+        }
     }
 
     #[test]

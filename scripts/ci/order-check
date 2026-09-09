@@ -61,8 +61,10 @@ else
 fi
 
 # ---------------------------------------------------------------- 3. no locale-collated comparator
-# The call, not the word, and never this file: the gate carries the pattern it looks for.
-locale_cmp="$(grep -rn '\.localeCompare(' scripts share site 2>/dev/null \
+# The call, not the word; in code, not in prose. Markdown is excluded because the
+# documentation of this very rule quotes the pattern, and the site carries a copy of it.
+locale_cmp="$(grep -rn '\.localeCompare(' scripts share site \
+  --include='*.js' --include='*.mjs' --include='*.ts' --include='*.html' 2>/dev/null \
   | grep -v '^scripts/ci/order-check:' || true)"
 if [ -n "$locale_cmp" ]; then
   printf '%s\n' "$locale_cmp" | while IFS= read -r line; do

@@ -317,6 +317,15 @@ the crate outside `order.rs`, and shell `sort` invocations not pinned with `LC_A
 may fall and may not rise; a commit that adopts the canonical order lowers the baseline with
 `scripts/ci/order-check --update`.
 
+**Grouping** is the order's first part, and it is derived too. A capability module's area is
+the areas of the features that name it in `modules:`, resolved by the catalogue's own
+`weight` — lowest first, ties by id. No module declares an area and no file lists the pairs;
+the Cockpit's sidebar asks the product model. Two features that name one module and share no
+area disagree about what it is for: the resolution stays deterministic and the disagreement
+is reported as `contested_area` by `majordomus product validate`, to be settled in the
+feature file rather than by a tiebreak. ADR 0026 records why the parent is derived rather
+than declared.
+
 **To diagnose an unexpected sequence**, read the key rather than the output. A collection
 ordered somewhere other than `order.rs` has an opinion of its own; a collection whose key
 ends before its identity has ties, and a tie is where an order looks like a race when there
