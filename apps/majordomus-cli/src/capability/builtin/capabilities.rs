@@ -375,7 +375,7 @@ mod tests {
             fingerprint: String::new(),
             scoped: Default::default(),
             distribution: None,
-            providers: Vec::new(),
+            providers: Default::default(),
         };
         let registry = Arc::new(
             CapabilityRegistry::builder()

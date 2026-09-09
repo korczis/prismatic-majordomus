@@ -123,7 +123,7 @@ impl App {
     ) -> Result<Self> {
         let mut index = index;
         index.distribution = crate::distribution::Model::locate(&share)?;
-        index.providers = share.providers()?.providers;
+        index.providers = share.providers()?;
         let registry = CapabilityRegistry::builder()
             .with_modules(builtin::modules())
             .with_index(&index)

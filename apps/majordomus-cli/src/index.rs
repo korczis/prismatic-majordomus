@@ -85,7 +85,7 @@ pub struct Index {
     /// from the tool's data directory beside the kinds and the schemas, like the
     /// distribution model, so that the product model can say which providers exist without
     /// a second discovery.
-    pub providers: Vec<crate::share::ProviderDeclaration>,
+    pub providers: crate::share::ProviderDeclarations,
 }
 
 impl Index {
@@ -187,7 +187,7 @@ impl Index {
             fingerprint,
             scoped: Scoped { scope, tally },
             distribution: None,
-            providers: Vec::new(),
+            providers: Default::default(),
         })
     }
 

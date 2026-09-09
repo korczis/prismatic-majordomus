@@ -505,12 +505,15 @@ value came from: [`docs/WEB.md`](docs/WEB.md),
 [`.gemini/settings.json`](.gemini/settings.json) (Gemini CLI) and
 [`.codex/config.toml`](.codex/config.toml) (Codex) name [`bin/majordomus-mcp`](bin/majordomus-mcp),
 which builds the executable when it must and runs `majordomus mcp`. Open the repository in
-any of them and the server is there; open it in two and they share one.
+any of them and the server is there; open it in two and they share one. Which tools the
+distribution has an adapter for, what each reads and where each keeps its scratch
+checkouts is one generated table, [`docs/generated/providers.md`](docs/generated/providers.md),
+never a list written here.
 
 **Peers see each other.** Every attached client is a peer, named by what it said in
 `initialize`; `majordomus_peers` lists them and `majordomus_announce` tells the others what
-a client is working on and which paths it expects to touch, so Claude, Codex and Gemini in
-one checkout can avoid colliding, out of the box.
+a client is working on and which paths it expects to touch, so several clients in one
+checkout can avoid colliding, out of the box.
 
 **Every use case is executed, not described.** What a person does with the tool is one
 file under `.ai/repo/use-cases/`, naming the commands, rules and claims it relies on and

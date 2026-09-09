@@ -4,7 +4,7 @@ id: policy
 kind: feature
 title: One policy, projected into every tool's instruction file
 short_title: Policy
-headline: Claude Code, Codex, Gemini CLI, bb and any tool that reads AGENTS.md get the same rules from the same place, because their instruction files are generated from one policy and never written by hand.
+headline: Every provider the tool declares — an agent, an orchestrator that runs agents, any tool that reads AGENTS.md — gets the same rules from the same place, because their instruction files are generated from one policy and never written by hand; the providers are the table in docs/generated/providers.md.
 summary: A provider-neutral policy and four execution profiles are the one source; majordomus update renders each provider bootstrap from its template, stamps it with the policy hash and the hash of its own content, and doctor fails a bootstrap that was hand-edited, that carries a rule corpus of its own, or that exceeds the always-loaded budget.
 status: stable
 weight: 90

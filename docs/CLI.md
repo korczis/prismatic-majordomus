@@ -991,11 +991,12 @@ discovering that the hook meant to keep their prompts had been discarding them.
 A repository holds itself to this by declaring an `enforcement` entry with
 `wired_by: provider-hook:<provider>`; `doctor` then fails unless the state is `verified`,
 and because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.
-Only Claude Code has an adapter today. Codex and Gemini are reported `unsupported` rather
-than assumed, and no other surface — the web, the desktop app, another machine — is
-observable from here at all. An orchestrator such as bb has no adapter by design: it hands
-no prompt to a command before the model, and the agent it runs keeps its own hooks, so a
-Claude Code thread under bb is captured as `claude-code` (ADR 0024).
+Only Claude Code has an adapter today; every other provider the distribution declares
+(`docs/generated/providers.md`) is reported `unsupported` rather than assumed, and no other
+surface — the web, the desktop app, another machine — is observable from here at all. An
+orchestrator such as bb has no adapter by design: it hands no prompt to a command before the
+model, and the agent it runs keeps its own hooks, so a Claude Code thread under bb is
+captured as `claude-code` (ADR 0024).
 
 ### `capture session` — the episode boundary
 

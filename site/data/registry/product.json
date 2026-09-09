@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.3.1"
   },
-  "fingerprint": "d566c14e778331a6269c71d5795c281580a1134c23aa0cdac83d6287a71fc2e1",
+  "fingerprint": "d133991e436590ca08421420f50349c4563b93951971423df0a60e40dd57017c",
   "route": "/features/",
   "counts": {
     "features": 19,
@@ -2857,7 +2857,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 92
+          "objects": 93
         }
       ],
       "rule_refs": [
@@ -3178,11 +3178,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 93,
+        "mcp_resources": 94,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 92,
+        "objects": 93,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -3580,7 +3580,7 @@
       "id": "policy",
       "title": "One policy, projected into every tool's instruction file",
       "short_title": "Policy",
-      "headline": "Claude Code, Codex, Gemini CLI, bb and any tool that reads AGENTS.md get the same rules from the same place, because their instruction files are generated from one policy and never written by hand.",
+      "headline": "Every provider the tool declares — an agent, an orchestrator that runs agents, any tool that reads AGENTS.md — gets the same rules from the same place, because their instruction files are generated from one policy and never written by hand; the providers are the table in docs/generated/providers.md.",
       "summary": "A provider-neutral policy and four execution profiles are the one source; majordomus update renders each provider bootstrap from its template, stamps it with the policy hash and the hash of its own content, and doctor fails a bootstrap that was hand-edited, that carries a rule corpus of its own, or that exceeds the always-loaded budget.",
       "status": "stable",
       "weight": 90,
@@ -7736,7 +7736,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (92)",
+        "title": "rule (93)",
         "features": [
           "doctrine"
         ]
@@ -8498,17 +8498,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1071,
+    "capabilities": 1072,
     "builtin": 44,
-    "declarative": 1027,
+    "declarative": 1028,
     "modules": 16,
     "mcp_tools": 42,
-    "mcp_resources": 1043,
+    "mcp_resources": 1044,
     "http_routes": 44,
     "cli_commands": 61,
     "shell_commands": 27,
     "kinds": 27,
-    "objects": 1027,
+    "objects": 1028,
     "by_kind": {
       "adr": 24,
       "application": 5,
@@ -8530,7 +8530,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 92,
+      "rule": 93,
       "scope": 1,
       "session": 9,
       "skill": 3,

@@ -647,8 +647,8 @@ v0.1 ships exactly:
 - the subcommands `majordomus --help` lists, in portable shell, with behavioural tests
 - `doctor` dispatching every doctrine the effective rule set declares, including enforcement wiring reconciliation and the vendored package's integrity
 - `watch` with the drift table above
-- `update` producing projections for Claude Code, Codex, Gemini, bb and generic Markdown,
-  each stamped with its provenance
+- `update` producing the projection the policy declares for each provider the
+  distribution ships (`docs/generated/providers.md`), each stamped with its provenance
 - a README that lists, in equal prominence, what v0.1 guarantees, what it only
   observes, and what it refuses to do
 

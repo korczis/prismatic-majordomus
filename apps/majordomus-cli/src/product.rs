@@ -719,7 +719,7 @@ impl ProductModel {
             m.by_id.insert(r.feature.id.clone(), i);
         }
         m.providers = providers(index);
-        for decl in &index.providers {
+        for decl in &index.providers.providers {
             if !decl.template {
                 m.findings.push(ProductFinding {
                     severity: Severity::Error,
@@ -1467,6 +1467,7 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
         .unwrap_or_default();
     let root = Path::new(&index.repository.root);
     let mut out: Vec<ProductProvider> = index
+        .providers
         .providers
         .iter()
         .map(|decl| {

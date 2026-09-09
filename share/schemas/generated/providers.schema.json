@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/providers.schema.json",
+  "title": "Providers",
+  "description": "docs/generated/providers.json: every provider the tool ships an adapter for — the templates under share/providers/ joined with share/providers.yaml — decorated with what this repository does with each: the bootstraps its policy renders, the client configuration at its root, the hooks the policy wires; and the tool's own scratch roots. The same value `majordomus product providers` answers (ADR 0024). Written by `majordomus generate providers`.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "scratch_roots", "count", "providers"],
+  "properties": {
+    "schema": { "const": "majordomus/providers/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "minLength": 1 },
+    "scratch_roots": {
+      "type": "array",
+      "description": "The tool's own scratch roots, unexpanded: `<primary>/`, `~`, `${NAME:-default}` and `$NAME` are the only expansions.",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "count": { "type": "integer", "minimum": 0 },
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "bootstraps", "hooks", "scratch_roots"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "bootstraps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["target", "mode", "always_loaded"],
+              "properties": {
+                "target": { "type": "string", "minLength": 1 },
+                "mode": { "type": "string", "minLength": 1 },
+                "always_loaded": { "type": "boolean" }
+              }
+            }
+          },
+          "client_config": { "type": "string", "minLength": 1 },
+          "hooks": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+          "scratch_roots": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    }
+  }
+}

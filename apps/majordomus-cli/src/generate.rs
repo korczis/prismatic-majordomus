@@ -76,7 +76,10 @@ pub enum Target {
     /// [`crate::proto::project`]).
     Documents,
     /// The provider bootstraps the policy's `projections[]` declare, rendered from the
-    /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]).
+    /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]), and
+    /// `docs/generated/providers.{md,json,yaml}`: every provider the distribution declares,
+    /// with what this repository does with it — the one table the documents point at
+    /// instead of enumerating providers by hand.
     Providers,
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
@@ -165,6 +168,10 @@ pub enum ArtifactFormat {
 
 /// The schema of `web.json`.
 pub const WEB_SCHEMA: &str = "majordomus/web-topology/v1";
+
+/// The schema id of `docs/generated/providers.{json,yaml}`: every provider the distribution
+/// ships, as `share/providers.yaml` and the repository's policy describe it.
+pub const PROVIDERS_SCHEMA: &str = "majordomus/providers/v1";
 
 impl ArtifactFormat {
     /// The file suffix, without the dot.
@@ -786,7 +793,106 @@ pub fn context_artifacts(
             .artifacts(version),
         );
     }
+    if targets.contains(&Target::Providers) {
+        let source = "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy";
+        let value = providers_document(ctx)?;
+        out.push(Artifact::markdown(
+            format!("{OUT_DIR}/providers.md"),
+            "providers",
+            source,
+            version,
+            &providers_markdown(&value),
+        ));
+        out.extend(Document::new("providers", PROVIDERS_SCHEMA, source, value).artifacts(version));
+    }
     Ok(out)
+}
+
+/// Every provider as data: the product model's providers — the declaration decorated with
+/// what this repository's policy renders through it, the client configuration it carries and
+/// the hooks the policy wires — and the tool's own scratch roots. Answered by the same
+/// capability `majordomus product providers`, `majordomus_providers` and
+/// `GET /api/v1/product/providers` answer, so the file and the interfaces cannot disagree.
+pub fn providers_document(ctx: &Context) -> Result<Value> {
+    let id = ctx
+        .registry
+        .by_cli(&["product".to_string(), "providers".to_string()])
+        .map(|c| c.id.to_string())
+        .ok_or_else(|| Error::Protocol {
+            reason: "no capability is exposed as `majordomus product providers`".into(),
+        })?;
+    let answer = ctx
+        .execute(&id, serde_json::json!({}))
+        .map_err(|e| Error::Protocol {
+            reason: e.to_string(),
+        })?;
+    Ok(serde_json::json!({
+        "scratch_roots": ctx.index.providers.scratch_roots,
+        "count": answer["count"],
+        "providers": answer["providers"],
+    }))
+}
+
+/// `docs/generated/providers.md`: the same value as a table a person reads, with the
+/// grammar of a scratch root beside it.
+pub fn providers_markdown(value: &Value) -> String {
+    let cell = |v: &Value| -> String {
+        let items: Vec<String> = v
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|x| match x {
+                Value::String(s) => format!("`{s}`"),
+                other => other
+                    .get("target")
+                    .and_then(Value::as_str)
+                    .map(|t| {
+                        if other.get("always_loaded") == Some(&Value::Bool(true)) {
+                            format!("`{t}` (always loaded)")
+                        } else {
+                            format!("`{t}`")
+                        }
+                    })
+                    .unwrap_or_default(),
+            })
+            .collect();
+        if items.is_empty() {
+            "—".to_string()
+        } else {
+            items.join(", ")
+        }
+    };
+    let mut s = String::new();
+    s.push_str("# Providers\n\n");
+    s.push_str("Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).\n\n");
+    s.push_str("| provider | title | bootstraps | client configuration | hooks | scratch roots |\n|---|---|---|---|---|---|\n");
+    for p in value["providers"].as_array().into_iter().flatten() {
+        let str_of = |k: &str| p.get(k).and_then(Value::as_str).unwrap_or_default().to_string();
+        s.push_str(&format!(
+            "| `{}` | {} | {} | {} | {} | {} |\n",
+            str_of("id"),
+            str_of("title"),
+            cell(&p["bootstraps"]),
+            p.get("client_config")
+                .and_then(Value::as_str)
+                .map(|c| format!("`{c}`"))
+                .unwrap_or_else(|| "—".to_string()),
+            cell(&p["hooks"]),
+            cell(&p["scratch_roots"]),
+        ));
+    }
+    s.push_str(&format!(
+        "\n{} provider(s).\n\n## The tool's own scratch roots\n\n",
+        value["count"].as_u64().unwrap_or(0)
+    ));
+    s.push_str("A checkout under any of these, or under a provider's root above, is a session's scratch checkout to the worktree topology: reported, never migrated unasked, never cleaned up by the tool, refused by the commit guard with the remedy of continuing in the canonical worktree. A root the primary checkout itself lives under is skipped.\n\n");
+    for r in value["scratch_roots"].as_array().into_iter().flatten() {
+        if let Some(r) = r.as_str() {
+            s.push_str(&format!("- `{r}`\n"));
+        }
+    }
+    s.push_str("\nA root is expanded before it is compared: `<primary>/` is the primary checkout, `~` the home directory, `${NAME:-default}` an environment variable with a default, `$NAME` one without — a root whose variable is unset is skipped.\n");
+    s
 }
 
 /// The resolved web topology as data: every surface with its mount, category, visibility,

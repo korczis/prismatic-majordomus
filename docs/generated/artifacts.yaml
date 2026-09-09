@@ -207,6 +207,13 @@ documents:
     formats:
       - json
       - yaml
+  - id: providers
+    schema: majordomus/providers/v1
+    source: "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    formats:
+      - json
+      - markdown
+      - yaml
   - id: providers/agents
     source: "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
     formats:
@@ -536,6 +543,26 @@ artifacts:
     source: the canonical Majordomus capability registry
     bytes: 331378
     sha256: 25c5f2ed66a4c77849c3b2a21f488d2574b04d7997fb54c160910e16c7f606ab
+  - path: docs/generated/providers.json
+    document: providers
+    format: json
+    schema: majordomus/providers/v1
+    source: "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    bytes: 2008
+    sha256: 8785ceccb0b2131d11b03329f83dd081b5852bc7bd8994f1d5587c9e1edb536b
+  - path: docs/generated/providers.md
+    document: providers
+    format: markdown
+    source: "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    bytes: 2301
+    sha256: 6e5de1d9df98227b9c65c91544e07a456877c485eb80f5fac27f4022185c70d9
+  - path: docs/generated/providers.yaml
+    document: providers
+    format: yaml
+    schema: majordomus/providers/v1
+    source: "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    bytes: 1753
+    sha256: ee95e249aa7246cad28dc83dcd2bf4a066fea2e42b6157ac6c201915bcb07bf7
   - path: docs/generated/registry.json
     document: registry
     format: json
@@ -821,21 +848,21 @@ artifacts:
     format: json
     source: "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
     bytes: 59513
-    sha256: 66cbd5940fd9693c28aba9b3a8079740e8ef79abd790a8fc0224646cfa8d3639
+    sha256: 738cf8bce978967348810a065dc597f1fe5014371c5c4209ca0c5f94215b6d0d
   - path: site/data/registry/product.json
     document: site-product
     format: json
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
-    bytes: 300044
-    sha256: 334717d759c32e2e11a4721d9cd3459a5457cadd31c53417630877865c4dd084
+    bytes: 300151
+    sha256: 77ff49f2a8ae0ebdb648d3b23b2e788ad6bd472e20fa477d56e7bb7b1367ac64
   - path: site/data/registry/registry.json
     document: site-registry
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 1592723
-    sha256: 24f27da17cfcbe0b96185cea435762765b7bf3b0d6f02b49aaac462ea52445b3
+    bytes: 1593714
+    sha256: 3af7342a90791ee74d9f400dc8d4f066f7d881d6cd86ac2b2ccae6e7beced829
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json
@@ -848,7 +875,7 @@ artifacts:
     schema: majordomus-site-why/v1
     source: "the operational moments, audiences and areas of this repository's layer"
     bytes: 349951
-    sha256: 4a758ed225ba49cbb93f9e90641fb2b0df483cb5176e7c0a9bc4f0a3e913d746
+    sha256: a655ee48696ea40773cc226f926c759d93be6920a46ea4e2cdf3da118bf5e7c2
   - path: site/static/install.sh
     document: installer
     format: text

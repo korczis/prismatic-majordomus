@@ -82,6 +82,15 @@ others attach:
 | Gemini CLI | [`.gemini/settings.json`](../.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
 | Codex | [`.codex/config.toml`](../.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
 | bb | nothing of its own | an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024) |
+
+</div>
+
+
+The rows are the providers whose declaration names a client configuration; the whole set,
+with what each reads and where it keeps its scratch checkouts, is
+[`docs/generated/providers.md`](generated/providers.md), generated from the same declaration.
+<div class="overflow-x-auto" tabindex="0">
+
 | anything speaking Streamable HTTP | the running server's `/mcp` | `initialize` answers with an `Mcp-Session-Id`; every later request carries it; `DELETE /mcp` ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |
 
 </div>
