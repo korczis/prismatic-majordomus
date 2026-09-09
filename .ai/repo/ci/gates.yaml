@@ -33,6 +33,12 @@ gates:
     runs: scripts/ui check
     summary: the static half of UI conformance — every scrolling box this repository writes is reachable from the keyboard
 
+  - id: pipefail-check
+    job: structure
+    always: true
+    runs: scripts/ci/pipefail-check
+    summary: a script that pipes under `set -e` may not report its pipeline's failure as its last command's success; a ratchet over the scripts that still can
+
   - id: core-check
     job: structure
     always: true
