@@ -1,0 +1,39 @@
+id: I1304
+milestone: external-workspaces
+title: The browser transport is the one this repository already drives
+slug: browser-transport
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Implement the authenticated browser transport in the Node tooling layer beside scripts/lib/ui-audit.mjs: Playwright over the system Chrome, an explicitly named profile, observation scoped to the vendor's own origins, and sanitisation before anything is persisted."
+why: "ADR 0025 withdrew the second Rust crate for this reason: scripts/lib/ui-audit.mjs:262 and scripts/lib/cockpit-probe.mjs:436 already launch Chrome through Playwright's CDP transport, deliberately the system browser and never a downloaded one, wired into CI and skipping cleanly where Chrome is absent. A hand-written CDP client would reimplement that in the language with the strictest dependency budget in the repository."
+current_state: "The two existing consumers each inline their own chromium.launch; no shared launcher was factored out. Neither targets an authenticated third-party session."
+desired_state: "One launcher, shared by the existing consumers and the new transport, takes the profile by explicit configuration outside the tree. The transport observes only requests whose origin matches the workspace declaration, redacts authorisation headers and cookies before any value leaves memory, and refuses to run against a profile it was not told to use."
+scope:
+  - scripts/lib
+  - scripts
+  - package.json
+non_scope:
+  - Any credential written to disk, including a copied cookie jar or a profile archive
+  - Any interaction with authentication, multi-factor prompts or anti-abuse controls
+  - DOM scraping where a network observation answers the same question
+depends_on:
+  - I1302
+acceptance_criteria:
+  - The transport attaches to an explicitly configured, already-authenticated browser profile and refuses to guess one
+  - Observation is scoped to the origins the workspace declaration names; traffic to any other origin is never recorded
+  - Authorisation headers, cookies and set-cookie values are redacted before an observation is written anywhere
+  - The existing UI and cockpit consumers use the same launcher, so the repository has one answer to how it starts a browser
+  - Absent Chrome or absent node_modules, the command skips with the defined exit code the repository already uses rather than failing
+validation:
+  - bash test/run.sh
+  - scripts/ui audit
+evidence_required:
+  - profile_explicit
+  - origin_scoped
+  - redaction_before_persistence
+  - one_launcher
+  - skips_cleanly
+risk: "Refactoring the two existing consumers onto a shared launcher can break the site and cockpit gates, which are the slowest to run and the ones a laptop skips. The refactor lands with its own green run of both."
+created_at: 2026-09-09
+updated_at: 2026-09-09

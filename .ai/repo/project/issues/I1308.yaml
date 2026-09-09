@@ -1,0 +1,38 @@
+id: I1308
+milestone: external-workspaces
+title: The executable's share is one capability, shaped like continuity
+slug: workspaces-capability
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Add one capability to majordomus-cli that reads the store and reports what is declared, what is synced, how fresh each workspace is and at what support level — served, never published, with no site or documentation projection."
+why: "The only precedent for local state reaching a capability is continuity: a hand-written reader over a hardcoded state directory, exposed as exactly one resource that is served and never published. That is the shape, and its restraint is the point — a corpus of private conversation must not acquire a public projection because the machinery made one cheap."
+current_state: "No capability reads .ai/local/workspaces/. continuity reads .ai/local/state/ and is the model to follow."
+desired_state: "One capability lists workspaces with declaration, sync freshness, record counts, support levels and the last checkpoint. It appears on the command line, HTTP and MCP as any capability does, and in no generated document, no site data and no public projection."
+scope:
+  - apps/majordomus-cli/src/capability/builtin
+  - docs
+  - test/cases
+non_scope:
+  - Any new dependency in majordomus-cli; ADR 0025 forbids it and I1309 gates it
+  - Any site, docs/generated or public projection of workspace content
+  - Serving conversation bodies over HTTP before a person has decided that is wanted
+depends_on:
+  - I1303
+acceptance_criteria:
+  - The capability is declared once and reaches CLI, HTTP and MCP through the existing registry with no second registration
+  - No generated document, site dataset or published projection carries workspace content
+  - A missing store is reported as absent, not as an empty success
+  - majordomus-cli gains no dependency
+validation:
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+  - bash test/run.sh
+evidence_required:
+  - one_declaration
+  - not_published
+  - absence_honest
+  - no_new_dependency
+risk: "The registry makes surfaces cheap, which is exactly the hazard here. The default for this capability is the narrowest exposure that answers the question, and widening it is a separate decision."
+created_at: 2026-09-09
+updated_at: 2026-09-09

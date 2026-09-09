@@ -6,22 +6,22 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "952169fe2a5241daaf70ab6c6f5f2ecb71e2cf9b65fd26dc1156c1122e40edb2",
+    "fingerprint": "a14251ce6b53dc07907afcfdf15183ce054d454eef807fb8c83c1e918eae644a",
     "summary": {
-      "total": 1073,
+      "total": 1084,
       "builtin": 44,
-      "declarative": 1029,
+      "declarative": 1040,
       "by_kind": {
         "command": 1,
         "query": 43,
-        "resource": 1029
+        "resource": 1040
       },
       "by_stability": {
         "behaviorally_verified": 44,
-        "implemented": 1029
+        "implemented": 1040
       },
       "mcp_tools": 42,
-      "mcp_resources": 1045,
+      "mcp_resources": 1056,
       "http_routes": 44,
       "cli_commands": 24,
       "modules": 43,
@@ -14567,7 +14567,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 184,
+        "capabilities": 194,
         "capability_ids": []
       },
       {
@@ -14583,7 +14583,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 15,
+        "capabilities": 16,
         "capability_ids": []
       },
       {
@@ -14798,7 +14798,7 @@
     ]
   },
   "index": {
-    "fingerprint": "447b82c4a28a89b58c7453f925d56017ed97ab36694819523854bf9906e4fabd",
+    "fingerprint": "7d14aeb4ec1979eb0e67b949446b12947ba049bff8eba8271d0013c10663efa0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14833,9 +14833,9 @@
       "document": 202,
       "feature": 20,
       "implementation": 42,
-      "issue": 184,
+      "issue": 194,
       "knowledge": 1,
-      "milestone": 15,
+      "milestone": 16,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -17991,7 +17991,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 43074
+        "bytes": 46348
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -22084,6 +22084,116 @@
         "bytes": 2092
       },
       {
+        "uri": "majordomus://issue/I1301",
+        "kind": "issue",
+        "identity": "I1301",
+        "title": "A workspace is a declared object of the layer; only its content is local",
+        "description": "Register `workspace` as a kind — allowed keys, schema, directory contract — and declare the first workspace under .ai/repo/workspaces/, so that the catalogue of what may be synced is the repository's own tracked statement while the synced content stays out of the tracked tree.",
+        "path": ".ai/repo/project/issues/I1301.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2781
+      },
+      {
+        "uri": "majordomus://issue/I1302",
+        "kind": "issue",
+        "identity": "I1302",
+        "title": "Identity, provenance and support level are typed fields, not prose",
+        "description": "Define the record model every synced item carries: upstream identity, local identity, content hash, the transport that produced it, the acquisition mode, the support level and the tombstone, as a schema with a version, before any adapter writes a byte.",
+        "path": ".ai/repo/project/issues/I1302.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2501
+      },
+      {
+        "uri": "majordomus://issue/I1303",
+        "kind": "issue",
+        "identity": "I1303",
+        "title": "The store is bounded, measured and invisible to every published projection",
+        "description": "Declare the layout of .ai/local/workspaces/, its checkpoint file, its retention cap in policy and the doctor stanza that measures it, and prove with a gate that nothing published ever reaches it.",
+        "path": ".ai/repo/project/issues/I1303.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2470
+      },
+      {
+        "uri": "majordomus://issue/I1304",
+        "kind": "issue",
+        "identity": "I1304",
+        "title": "The browser transport is the one this repository already drives",
+        "description": "Implement the authenticated browser transport in the Node tooling layer beside scripts/lib/ui-audit.mjs: Playwright over the system Chrome, an explicitly named profile, observation scoped to the vendor's own origins, and sanitisation before anything is persisted.",
+        "path": ".ai/repo/project/issues/I1304.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2840
+      },
+      {
+        "uri": "majordomus://issue/I1305",
+        "kind": "issue",
+        "identity": "I1305",
+        "title": "An observed contract has a fingerprint, a compatibility state and a fixture",
+        "description": "Record what the browser observed as a versioned contract: a fingerprint of the shape, a compatibility state, and a sanitised fixture that CI replays — so that a private surface changing is a diagnosable event rather than a silent wrong answer.",
+        "path": ".ai/repo/project/issues/I1305.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2195
+      },
+      {
+        "uri": "majordomus://issue/I1306",
+        "kind": "issue",
+        "identity": "I1306",
+        "title": "A sync resumes, repeats itself without harm, and says how fresh it is",
+        "description": "Implement the sync: incremental from a durable checkpoint, idempotent on replay, bounded in what one run may fetch, and honest about how each change was acquired.",
+        "path": ".ai/repo/project/issues/I1306.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1920
+      },
+      {
+        "uri": "majordomus://issue/I1307",
+        "kind": "issue",
+        "identity": "I1307",
+        "title": "The ChatGPT shape is mapped from evidence and never becomes the canonical model",
+        "description": "Map what a ChatGPT Project actually exposes — the project, its conversations, the message graph, content parts, attachment metadata, project instructions — onto the canonical record model, mapping only what an observation supports.",
+        "path": ".ai/repo/project/issues/I1307.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2172
+      },
+      {
+        "uri": "majordomus://issue/I1308",
+        "kind": "issue",
+        "identity": "I1308",
+        "title": "The executable's share is one capability, shaped like continuity",
+        "description": "Add one capability to majordomus-cli that reads the store and reports what is declared, what is synced, how fresh each workspace is and at what support level — served, never published, with no site or documentation projection.",
+        "path": ".ai/repo/project/issues/I1308.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2340
+      },
+      {
+        "uri": "majordomus://issue/I1309",
+        "kind": "issue",
+        "identity": "I1309",
+        "title": "The boundaries this milestone asserts are gates, not sentences",
+        "description": "Add the gates that make ADR 0025 enforceable: the dependency boundary of majordomus-cli, the credential leak check over the store and the fixtures, the retention cap, and the publication boundary.",
+        "path": ".ai/repo/project/issues/I1309.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2158
+      },
+      {
+        "uri": "majordomus://issue/I1310",
+        "kind": "issue",
+        "identity": "I1310",
+        "title": "The subsystem is documented where a person looks, and the plan is closed against the repository",
+        "description": "Write docs/WORKSPACES.md, add the row to the documentation index, and re-audit the repository against this milestone: what was reinvented, what legacy duplication survives, and which of the pack's phases turned out not to apply here.",
+        "path": ".ai/repo/project/issues/I1310.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2119
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -22185,6 +22295,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1392
+      },
+      {
+        "uri": "majordomus://milestone/external-workspaces",
+        "kind": "milestone",
+        "identity": "external-workspaces",
+        "title": "An external workspace is read the way this repository reads anything else, and its content never becomes public by accident",
+        "description": "A workspace is a declared object of the layer — vendor, identity, what the operator authorised, which browser profile reaches it, which capabilities it is expected to have — and rides the existing kind pipeline onto every surface with no code that special-cases it. Its content is synced by the Node tooling layer that already drives the system browser, lands under `.ai/local/workspaces/`, carries provenance and a support level on every record, and is read back through exactly one capability shaped like `continuity`: served, never published. A sync is incremental from a durable checkpoint, idempotent on replay, fails closed when an observed contract breaks, and never writes a credential anywhere.",
+        "path": ".ai/repo/project/milestones/external-workspaces.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 6152
       },
       {
         "uri": "majordomus://milestone/fly-deployment",
@@ -26151,7 +26272,7 @@
       "identity": [
         "id"
       ],
-      "objects": 184
+      "objects": 194
     },
     {
       "name": "knowledge",
@@ -26171,7 +26292,7 @@
       "identity": [
         "id"
       ],
-      "objects": 15
+      "objects": 16
     },
     {
       "name": "moment",
