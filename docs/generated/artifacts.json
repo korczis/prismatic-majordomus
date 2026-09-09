@@ -350,8 +350,25 @@
       ]
     },
     {
+      "id": "providers",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
+      "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ]
+    },
+    {
       "id": "providers/agents",
       "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself",
+      "formats": [
+        "markdown"
+      ]
+    },
+    {
+      "id": "providers/bb",
+      "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself",
       "formats": [
         "markdown"
       ]
@@ -562,12 +579,20 @@
   ],
   "artifacts": [
     {
+      "path": ".bb/AGENTS.md",
+      "document": "providers/bb",
+      "format": "markdown",
+      "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself",
+      "bytes": 1476,
+      "sha256": "bed894c9c26ecce4bb5f010751637e80f05fa15091ab5e1a2f969665a2739a95"
+    },
+    {
       "path": "AGENTS.md",
       "document": "providers/agents",
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself",
       "bytes": 3807,
-      "sha256": "16a6f6fcc6869fb990d76a9ff6c763035b907b6a6c6f3024b0990d017bc2376b"
+      "sha256": "07a824ca015cb1b55a8ea6f8657ca8a07faf12e300454177dc45310574216969"
     },
     {
       "path": "CLAUDE.md",
@@ -575,7 +600,7 @@
       "format": "markdown",
       "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself",
       "bytes": 3096,
-      "sha256": "c3ce98decbfc03c00b2eeb4072403b79ab2a3d4da9b40a64e7f416e170ee06e7"
+      "sha256": "bee76a617c719f0b0a69571f791b55c66146d91aab7b1930b44c90d488675842"
     },
     {
       "path": "docs/INSTALL.md",
@@ -809,16 +834,42 @@
       "document": "openapi",
       "format": "json",
       "source": "the canonical Majordomus capability registry",
-      "bytes": 428092,
-      "sha256": "cd9cf5fb4e6d43212ea0c396781169df522606707e544391cbcf280e691f085e"
+      "bytes": 428481,
+      "sha256": "29f7cc7e982a4578cb74409c27d0e9978413acc82c247fe57c3e72eec0b3766c"
     },
     {
       "path": "docs/generated/openapi.yaml",
       "document": "openapi",
       "format": "yaml",
       "source": "the canonical Majordomus capability registry",
-      "bytes": 331051,
-      "sha256": "e0e9e5f1311b4b036b64bff656cb92205c76c335fb75a1ff92d1f371c0384f56"
+      "bytes": 331378,
+      "sha256": "25c5f2ed66a4c77849c3b2a21f488d2574b04d7997fb54c160910e16c7f606ab"
+    },
+    {
+      "path": "docs/generated/providers.json",
+      "document": "providers",
+      "format": "json",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
+      "bytes": 2008,
+      "sha256": "8785ceccb0b2131d11b03329f83dd081b5852bc7bd8994f1d5587c9e1edb536b"
+    },
+    {
+      "path": "docs/generated/providers.md",
+      "document": "providers",
+      "format": "markdown",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
+      "bytes": 2301,
+      "sha256": "6e5de1d9df98227b9c65c91544e07a456877c485eb80f5fac27f4022185c70d9"
+    },
+    {
+      "path": "docs/generated/providers.yaml",
+      "document": "providers",
+      "format": "yaml",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy",
+      "bytes": 1753,
+      "sha256": "ee95e249aa7246cad28dc83dcd2bf4a066fea2e42b6157ac6c201915bcb07bf7"
     },
     {
       "path": "docs/generated/registry.json",
@@ -826,8 +877,8 @@
       "format": "json",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry",
-      "bytes": 522855,
-      "sha256": "a2f7b39449e98eebdc27ba84121a39ac5eb952dfba3efa4c43760810aa3a49e0"
+      "bytes": 523292,
+      "sha256": "494bded48866a3a5cdb294580633f4276a374880fb5076f46fcff2ad2d16c922"
     },
     {
       "path": "docs/generated/registry.yaml",
@@ -835,8 +886,8 @@
       "format": "yaml",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry",
-      "bytes": 399239,
-      "sha256": "78085b113e0b778cb7abc2c6efd03be6fa814cd40eb4179ed1f6aa947f9932e3"
+      "bytes": 399602,
+      "sha256": "bcf9027e5522b3e485c354156a8b21864c83a2a63d06d149f03bf55cb2ce4bd2"
     },
     {
       "path": "docs/generated/web.json",
@@ -1198,7 +1249,7 @@
       "format": "json",
       "source": "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
       "bytes": 59513,
-      "sha256": "fc98548ca00250953006c95802288de869cc0fc6f2c38af3fb60991f55f11f2c"
+      "sha256": "738cf8bce978967348810a065dc597f1fe5014371c5c4209ca0c5f94215b6d0d"
     },
     {
       "path": "site/data/registry/product.json",
@@ -1206,8 +1257,8 @@
       "format": "json",
       "schema": "majordomus-site-product/v1",
       "source": "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology",
-      "bytes": 299524,
-      "sha256": "c35984fcf8ec31e5fcde1de7d1dba0e44bffbce767148ff97b34c16683fcc4a8"
+      "bytes": 300151,
+      "sha256": "77ff49f2a8ae0ebdb648d3b23b2e788ad6bd472e20fa477d56e7bb7b1367ac64"
     },
     {
       "path": "site/data/registry/registry.json",
@@ -1215,8 +1266,8 @@
       "format": "json",
       "schema": "majordomus-site-registry/v2",
       "source": "the capability registry and the index of this repository's layer",
-      "bytes": 1591509,
-      "sha256": "3249bc3b77ccc26ce103afd0c9c1b5da179648c998a5edbc0ee0582dbc5819e1"
+      "bytes": 1593714,
+      "sha256": "4481441e9bad73e61ef9763730d1f3591968986dbaa69de71fb8ef6f72513683"
     },
     {
       "path": "site/data/registry/why-graph.json",
@@ -1233,7 +1284,7 @@
       "schema": "majordomus-site-why/v1",
       "source": "the operational moments, audiences and areas of this repository's layer",
       "bytes": 349951,
-      "sha256": "4a758ed225ba49cbb93f9e90641fb2b0df483cb5176e7c0a9bc4f0a3e913d746"
+      "sha256": "a655ee48696ea40773cc226f926c759d93be6920a46ea4e2cdf3da118bf5e7c2"
     },
     {
       "path": "site/static/install.sh",

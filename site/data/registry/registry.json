@@ -6,22 +6,22 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "0e8800fc5856e3ceb93cd3e2cf9ac789a5369414625d6f133bc8ab9523b6d16d",
+    "fingerprint": "5fda4b70652b467866b2521dfa6aebade51e7a9e1d923190b47be8e47d3952ff",
     "summary": {
-      "total": 1070,
+      "total": 1072,
       "builtin": 44,
-      "declarative": 1026,
+      "declarative": 1028,
       "by_kind": {
         "command": 1,
         "query": 43,
-        "resource": 1026
+        "resource": 1028
       },
       "by_stability": {
         "behaviorally_verified": 44,
-        "implemented": 1026
+        "implemented": 1028
       },
       "mcp_tools": 42,
-      "mcp_resources": 1042,
+      "mcp_resources": 1044,
       "http_routes": 44,
       "cli_commands": 24,
       "modules": 43,
@@ -8260,6 +8260,14 @@
                       "type": "string"
                     },
                     "description": "The enforcement entries of the policy wired by this provider's hooks."
+                  },
+                  "scratch_roots": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The scratch roots this provider creates checkouts of its own under, as declared:\nthe worktree topology reports a checkout there as a session's scratch checkout and\nnever moves it (ADR 0024).",
+                    "default": []
                   }
                 },
                 "required": [
@@ -14356,7 +14364,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 23,
+        "capabilities": 24,
         "capability_ids": []
       },
       {
@@ -14692,7 +14700,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 92,
+        "capabilities": 93,
         "capability_ids": []
       },
       {
@@ -14790,7 +14798,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3f8923dfb465fa1469d1d43f22cd65b32c667201a39882f363440d27eaf4f279",
+    "fingerprint": "ba1ef3f2719f69a51c8b71ff66d3eb703b5c303367b3cc7f4b0e4354dd2a8cc9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14813,7 +14821,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 23,
+      "adr": 24,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -14833,7 +14841,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 92,
+      "rule": 93,
       "scope": 1,
       "session": 9,
       "skill": 3,
@@ -15208,6 +15216,22 @@
         ]
       },
       {
+        "uri": "majordomus://adr/adr-0024",
+        "kind": "adr",
+        "identity": "adr-0024",
+        "title": "An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts",
+        "description": "An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts",
+        "path": ".ai/repo/adrs/0024-an-orchestrator-is-a-provider-only-at-the-bootstrap-level-an.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9952,
+        "tags": [
+          "architecture",
+          "provider",
+          "worktree"
+        ]
+      },
+      {
         "uri": "majordomus://application/ci-gated-project",
         "kind": "application",
         "identity": "ci-gated-project",
@@ -15234,11 +15258,11 @@
         "kind": "application",
         "identity": "repository-opened-in-ai-clients",
         "title": "A repository opened in AI clients, not only by people",
-        "description": "Claude Code, Codex, Gemini CLI or another MCP client is a regular reader of the repository, and what it reads should be the layer, served, rather than files it happens to find.",
+        "description": "Any AI client the tool declares as a provider (docs/generated/providers.md), or any other MCP client, is a regular reader of the repository, and what it reads should be the layer, served, rather than files it happens to find.",
         "path": ".ai/repo/applications/repository-opened-in-ai-clients.md",
         "section": "applications",
         "source_class": "application",
-        "bytes": 1854
+        "bytes": 1903
       },
       {
         "uri": "majordomus://application/repository-with-authored-governance",
@@ -17718,7 +17742,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 32595
+        "bytes": 32881
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -17772,7 +17796,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 13189
+        "bytes": 14260
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -17781,7 +17805,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 93895
+        "bytes": 94176
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -17826,7 +17850,7 @@
         "title": "Prismatic Majordomus",
         "path": "docs/DESIGN.md",
         "source_class": "document",
-        "bytes": 34626
+        "bytes": 34743
       },
       {
         "uri": "majordomus://document/docs/DISTRIBUTION.md",
@@ -17916,7 +17940,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 20158
+        "bytes": 20871
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -18069,7 +18093,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 20845
+        "bytes": 21780
       },
       {
         "uri": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -19553,7 +19577,7 @@
         "path": ".ai/repo/features/interfaces.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2788,
+        "bytes": 2835,
         "tags": [
           "mcp",
           "http",
@@ -19602,7 +19626,7 @@
         "path": ".ai/repo/features/policy.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2640,
+        "bytes": 2751,
         "tags": [
           "policy",
           "providers",
@@ -22876,7 +22900,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 4504
+        "bytes": 4547
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -24107,6 +24131,22 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.providers-are-data@1",
+        "kind": "rule",
+        "identity": "project.providers-are-data@1",
+        "title": "What the tool knows about a provider is declared once and projected everywhere",
+        "description": "A provider's title, the client configuration it reads and the scratch roots it creates checkouts under are declared in share/providers.yaml beside its template and nowhere else; the table a person reads is docs/generated/providers.md, generated from the same value the product, the site and the worktree topology answer from; no document enumerates providers by hand.",
+        "path": ".ai/repo/rules/project/providers-are-data.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4709,
+        "tags": [
+          "documentation",
+          "provider",
+          "derivation"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.rule-is-a-doctrine@1",
         "kind": "rule",
         "identity": "project.rule-is-a-doctrine@1",
@@ -24858,7 +24898,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 11520
+        "bytes": 12506
       },
       {
         "uri": "majordomus://test/test/cases/27_foreign_task.sh",
@@ -25933,11 +25973,11 @@
         "kind": "use-case",
         "identity": "serve-the-layer-to-ai-clients",
         "title": "Serve the repository's AI layer to every AI client through one shared server",
-        "description": "Open the repository in Claude Code, Codex or Gemini CLI and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other.",
+        "description": "Open the repository in any client the tool declares a provider for (docs/generated/providers.md) and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other.",
         "path": ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md",
         "section": "use-cases",
         "source_class": "use_case",
-        "bytes": 2644
+        "bytes": 2685
       },
       {
         "uri": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
@@ -25983,7 +26023,7 @@
       "identity": [
         "id"
       ],
-      "objects": 23
+      "objects": 24
     },
     {
       "name": "application",
@@ -26183,7 +26223,7 @@
         "id",
         "version"
       ],
-      "objects": 92
+      "objects": 93
     },
     {
       "name": "scope",
@@ -26261,6 +26301,12 @@
     {
       "provider": "claude-code",
       "target": "CLAUDE.md",
+      "mode": "file",
+      "always_loaded": false
+    },
+    {
+      "provider": "bb",
+      "target": ".bb/AGENTS.md",
       "mode": "file",
       "always_loaded": false
     }

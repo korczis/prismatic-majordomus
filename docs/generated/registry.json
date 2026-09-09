@@ -8363,6 +8363,14 @@
                     "type": "string"
                   },
                   "description": "The enforcement entries of the policy wired by this provider's hooks."
+                },
+                "scratch_roots": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The scratch roots this provider creates checkouts of its own under, as declared:\nthe worktree topology reports a checkout there as a session's scratch checkout and\nnever moves it (ADR 0024).",
+                  "default": []
                 }
               },
               "required": [

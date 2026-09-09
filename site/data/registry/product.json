@@ -5,13 +5,13 @@
     "id": "majordomus-cli",
     "version": "0.3.1"
   },
-  "fingerprint": "42c0ad2f2be6b64e9e34e928e28e9436d61ec4cbbc77743e105ed2b96bec55dc",
+  "fingerprint": "d133991e436590ca08421420f50349c4563b93951971423df0a60e40dd57017c",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
-    "providers": 5,
+    "providers": 6,
     "modules": 16,
     "modules_covered": 15,
     "commands": 27,
@@ -2431,7 +2431,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 23
+          "objects": 24
         },
         {
           "name": "knowledge",
@@ -2688,11 +2688,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 227,
+        "mcp_resources": 228,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 226,
+        "objects": 227,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2857,7 +2857,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 92
+          "objects": 93
         }
       ],
       "rule_refs": [
@@ -3178,11 +3178,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 93,
+        "mcp_resources": 94,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 92,
+        "objects": 93,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -3580,7 +3580,7 @@
       "id": "policy",
       "title": "One policy, projected into every tool's instruction file",
       "short_title": "Policy",
-      "headline": "Claude Code, Codex, Gemini CLI and any tool that reads AGENTS.md get the same rules from the same place, because their instruction files are generated from one policy and never written by hand.",
+      "headline": "Every provider the tool declares — an agent, an orchestrator that runs agents, any tool that reads AGENTS.md — gets the same rules from the same place, because their instruction files are generated from one policy and never written by hand; the providers are the table in docs/generated/providers.md.",
       "summary": "A provider-neutral policy and four execution profiles are the one source; majordomus update renders each provider bootstrap from its template, stamps it with the policy hash and the hash of its own content, and doctor fails a bootstrap that was hand-edited, that carries a rule corpus of its own, or that exceeds the always-loaded budget.",
       "status": "stable",
       "weight": 90,
@@ -7614,7 +7614,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (23)",
+        "title": "adr (24)",
         "features": [
           "knowledge"
         ]
@@ -7736,7 +7736,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (92)",
+        "title": "rule (93)",
         "features": [
           "doctrine"
         ]
@@ -7790,7 +7790,23 @@
           "always_loaded": true
         }
       ],
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
+    },
+    {
+      "id": "bb",
+      "title": "bb",
+      "bootstraps": [
+        {
+          "target": ".bb/AGENTS.md",
+          "mode": "file",
+          "always_loaded": false
+        }
+      ],
+      "hooks": [],
+      "scratch_roots": [
+        "${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees"
+      ]
     },
     {
       "id": "claude-code",
@@ -7806,6 +7822,9 @@
       "hooks": [
         "prompt-capture",
         "session-lifecycle"
+      ],
+      "scratch_roots": [
+        "<primary>/.claude/worktrees"
       ]
     },
     {
@@ -7813,20 +7832,23 @@
       "title": "Codex",
       "bootstraps": [],
       "client_config": ".codex/config.toml",
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     },
     {
       "id": "gemini",
       "title": "Gemini CLI",
       "bootstraps": [],
       "client_config": ".gemini/settings.json",
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     },
     {
       "id": "generic",
       "title": "A worker with no convention of its own",
       "bootstraps": [],
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     }
   ],
   "rules": [
@@ -8476,19 +8498,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1070,
+    "capabilities": 1072,
     "builtin": 44,
-    "declarative": 1026,
+    "declarative": 1028,
     "modules": 16,
     "mcp_tools": 42,
-    "mcp_resources": 1042,
+    "mcp_resources": 1044,
     "http_routes": 44,
     "cli_commands": 61,
     "shell_commands": 27,
     "kinds": 27,
-    "objects": 1026,
+    "objects": 1028,
     "by_kind": {
-      "adr": 23,
+      "adr": 24,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8508,7 +8530,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 92,
+      "rule": 93,
       "scope": 1,
       "session": 9,
       "skill": 3,
@@ -8516,7 +8538,7 @@
       "test": 113,
       "use-case": 40
     },
-    "providers": 5,
+    "providers": 6,
     "features": 19,
     "web_surfaces": 8
   },

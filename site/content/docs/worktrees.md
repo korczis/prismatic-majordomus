@@ -113,7 +113,7 @@ Every registered worktree has one standing:
 | `canonical` | a linked worktree at exactly its branch's path |
 | `misplaced` | a linked worktree somewhere else; migration brings it home |
 | `detached` | no branch, so no canonical path; never moved |
-| `ephemeral` | a session's scratch checkout, under the temporary directory or `<primary>/.claude/worktrees/`; reported, refused for commits, moved only on request |
+| `ephemeral` | a session's scratch checkout, under a declared scratch root — the temporary directory, `<primary>/.claude/worktrees/` for Claude Code, bb's thread directory under its data directory — as `share/providers.yaml` declares them; reported, refused for commits, moved only on request |
 | `missing` | a registration whose directory is gone; `repair` drops it |
 
 </div>
@@ -147,6 +147,16 @@ and every condition has a stable code, the same on every surface, each with a re
 
 The topology is *valid* when no error-level diagnostic stands. Detached and ephemeral
 worktrees do not make it invalid; the guard still refuses a commit from an ephemeral one.
+
+Which directories make a checkout ephemeral is data, not a list in the executable:
+`share/providers.yaml` declares the tool's own scratch roots (the temporary directory) and
+each provider's — `<primary>/.claude/worktrees` for Claude Code, and for bb, an
+orchestrator that keeps a worktree per thread, `${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees`.
+A root is expanded against the primary checkout and the environment; a root the primary
+checkout itself lives under is skipped, so a test fixture in the temporary directory has
+ordinary siblings. The diagnostic names the provider whose root it matched. Somebody
+else's checkout is never migrated unasked and never cleaned up by the tool: the remedy the
+guard offers is to continue in the canonical worktree (ADR 0024).
 
 ## Commands
 

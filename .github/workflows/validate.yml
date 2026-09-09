@@ -44,6 +44,8 @@ jobs:
       shell_suite: ${{ steps.plan.outputs.shell_suite }}
       rust_check: ${{ steps.plan.outputs.rust_check }}
       rust_integration: ${{ steps.plan.outputs.rust_integration }}
+      projection_closure: ${{ steps.plan.outputs.projection_closure }}
+      web_topology: ${{ steps.plan.outputs.web_topology }}
       rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
@@ -102,15 +104,16 @@ jobs:
         run: |
           curl -sSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin actionlint
           actionlint -version
-      - name: shell-lint
-        run: scripts/ci/shell-lint
-      # The static half of UI conformance: no browser, no built site, no dependency beyond
-      # the Node the runner already has. It reads markup — templates and rendered pages —
-      # and refuses a scrolling box a keyboard cannot reach.
-      - name: ui-check
-        run: scripts/ui check
-      - name: core-check
-        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/core-check
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-plan
+      # Every gate the model assigns to this job, in its order, as the plan selected them:
+      # shell-lint, ui-check and core-check on every plan, and the structural gates a change
+      # needs — site-basepath, rust-command, worktree-topology, providers-data. Dispatched
+      # from the plan rather than listed here, so a gate declared in the model cannot be
+      # reported as run and never executed, which is what happened to four of them.
+      - name: the structure gates of the plan
+        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job structure
       - if: always()
         run: scripts/ci/summary --job structure --timings timings.tsv
       - if: always()
@@ -169,7 +172,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -181,6 +184,15 @@ jobs:
         env:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: ci-plan
+      # The other gates the model assigns to this job — the ones that need the executable
+      # the step above built: projection-closure, web-topology. rust-check and
+      # rust-integration are the step above, with the mode and the artifact argument the
+      # model's line does not carry, so they are the only two skipped here.
+      - name: the rust gates of the plan
+        run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         run: |
           echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"

@@ -453,3 +453,46 @@ findings:
     priority: 3
     status: fixed
     resolved_by: "scripts/ci/worktree-check reads the constant and holds every document and template to it"
+  - id: provider-declarations
+    path: apps/majordomus-cli/src/product.rs
+    lines: "KNOWN_PROVIDERS, temp_roots, the `.claude/worktrees` literal"
+    concept: what the tool knows about a provider beyond its template — its title, the client configuration it reads, the scratch roots it creates checkouts under — and which providers exist
+    authority: "share/providers.yaml, joined with share/providers/*.tmpl"
+    duplicated_in:
+      - "a table compiled into product.rs (title, client configuration) and a list compiled into the worktree topology (scratch roots), both removed"
+      - "a dozen documents that named the providers by hand: README.md, docs/DESIGN.md, docs/MCP.md, docs/CLI.md, a feature headline, a use case summary, an application summary"
+    risk: high
+    detail: >-
+      Every provider was known in three places and none was data. Adding one (bb, ADR 0024)
+      would have been a code change in two modules that have nothing to do with it and an
+      edit in every document that listed the others. The declaration is one file beside the
+      templates; the table a person reads is docs/generated/providers.md, generated from the
+      same value the product, the site and the topology answer from; and
+      scripts/ci/providers-check refuses a declaration without a template, a template without
+      a declaration, a projected bootstrap outside the derived merge driver, and a document
+      that lists three or more providers without pointing at the generated table.
+    recommended: MOVE_TO_CANONICAL_DATA
+    target: share/providers.yaml
+    priority: 1
+    status: fixed
+    resolved_by: "share/providers.yaml read by product.rs and worktree/service.rs; docs/generated/providers.{md,json,yaml} written by generate; scripts/ci/providers-check as the gate of project.providers-are-data"
+  - id: workflow-lists-its-gates
+    path: .github/workflows/validate.yml
+    lines: "the structure job's steps"
+    concept: which gates a CI job runs
+    authority: ".ai/repo/ci/gates.yaml, through scripts/ci-plan"
+    duplicated_in:
+      - "the workflow's structure job, which listed three steps by hand while the model assigned it eight gates"
+    risk: high
+    detail: >-
+      Four gates the model assigned to the structure job — site-basepath, rust-command,
+      projection-closure, worktree-topology — were reported as "run" in every plan summary
+      and executed by nothing, because the job's steps were a second declaration of the
+      model. A job now dispatches its gates from the written plan through
+      scripts/ci/run-plan --plan plan.json --job <job>; the one gate a job runs in a step of
+      its own is named beside that step with --skip.
+    recommended: DERIVE
+    target: scripts/ci/run-plan
+    priority: 1
+    status: fixed
+    resolved_by: "scripts/ci/run-plan --plan --job dispatches every gate of a job from the plan; the structure and rust jobs of validate.yml call it"

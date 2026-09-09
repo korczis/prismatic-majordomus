@@ -1,6 +1,6 @@
 +++
 title = "Serve the repository's AI layer to every AI client through one shared server"
-description = "Open the repository in Claude Code, Codex or Gemini CLI and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other."
+description = "Open the repository in any client the tool declares a provider for (docs/generated/providers.md) and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other."
 weight = 9
 [extra]
 id = "serve-the-layer-to-ai-clients"

@@ -94,9 +94,21 @@ if grep -rqE "MJ\" nosuchcommand( |$)" "$ROOT"/test/cases/*.sh; then
 fi
 
 # 6. the continuity commands are reached by CI in this checkout, not only in fixtures: the
-#    structure job runs scripts/ci/core-check on every plan, and that script runs them
-grep -qE '^\s+run: scripts/ci/shell-lint$' "$W" || { echo "    validate.yml does not run scripts/ci/shell-lint"; exit 1; }
-grep -qE '^\s+run: (MJ_CI_TIMINGS=[^ ]+ )?scripts/ci/core-check$' "$W" || { echo "    validate.yml does not run scripts/ci/core-check"; exit 1; }
+#    structure job dispatches every gate the model assigns to it from the written plan,
+#    the model assigns shell-lint and core-check to it on every plan (`always: true`), and
+#    core-check runs them. The workflow names no gate itself: a job that listed its steps
+#    was a second declaration of the model, and four gates it did not list never ran.
+grep -qE '^\s+run: (MJ_CI_TIMINGS=[^ ]+ )?scripts/ci/run-plan --plan plan.json --job structure$' "$W" \
+  || { echo "    validate.yml's structure job does not dispatch its gates from the plan (scripts/ci/run-plan --plan plan.json --job structure)"; exit 1; }
+G="$ROOT/.ai/repo/ci/gates.yaml"
+for g in shell-lint core-check; do
+  awk -v g="$g" '$0 ~ "^  - id: " g "$" {f=1; next} f && /^  - id: / {f=0} f' "$G" | grep -qE '^\s+job: structure$' \
+    || { echo "    gates.yaml does not assign $g to the structure job"; exit 1; }
+  awk -v g="$g" '$0 ~ "^  - id: " g "$" {f=1; next} f && /^  - id: / {f=0} f' "$G" | grep -qE '^\s+always: true$' \
+    || { echo "    gates.yaml does not mark $g as run on every plan (always: true)"; exit 1; }
+done
+grep -qE '^\s+runs: scripts/ci/shell-lint$' "$G" || { echo "    gates.yaml does not run scripts/ci/shell-lint"; exit 1; }
+grep -qE '^\s+runs: scripts/ci/core-check$' "$G" || { echo "    gates.yaml does not run scripts/ci/core-check"; exit 1; }
 for c in context history handover checkpoint decision question prompt; do
   grep -qE "majordomus $c" "$CORE" || { echo "    core-check never runs majordomus $c"; exit 1; }
 done
