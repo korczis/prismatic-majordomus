@@ -236,6 +236,40 @@
       <span class="rounded border border-default px-1 text-body">cli</span>
       <span class="rounded border border-default px-1 text-body">cached</span>
     </span>
+  </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/registry/modules/commands/" class="font-mono hover:underline">commands</a> <span class="text-base font-normal text-body">Command graph</span></h2>
+<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/commands-get/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">commands.get</code>
+    <span class="mt-1 break-words text-sm text-body">One command by its canonical identity: its arguments with the source of each one&#39;s values, what running it changes, what it needs, where it came from, and every surface that carries it — with the reason a machine surface withholds it when one does.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">implemented</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      
+    </span>
+  </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/commands-graph/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">commands.graph</code>
+    <span class="mt-1 break-words text-sm text-body">The graph as one document, with its fingerprint and every diagnostic its build found: a duplicate identity, a recipe name two commands would take, an annotation that names a command which no longer exists. Deterministic — two builds over one tree produce the same document — so a client may cache against the fingerprint.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">implemented</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      
+    </span>
+  </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/commands-list/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">commands.list</code>
+    <span class="mt-1 break-words text-sm text-body">The commands this repository offers, filtered by the program that runs them, by what running them changes, or by text. A summary rather than the whole graph: enough to choose a command, and never so much that a client has to read every argument of every command to find one.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">implemented</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      
+    </span>
   </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/registry/modules/continuity/" class="font-mono hover:underline">continuity</a> <span class="text-base font-normal text-body">Continuity</span></h2>
 <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/continuity-state/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <code class="break-all font-mono font-semibold text-heading">continuity.state</code>
@@ -349,6 +383,29 @@
       <span class="rounded border border-default px-1 text-body">http</span>
       <span class="rounded border border-default px-1 text-body">cli</span>
       
+    </span>
+  </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/registry/modules/environment/" class="font-mono hover:underline">environment</a> <span class="text-base font-normal text-body">Repository environment</span></h2>
+<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/environment-explain/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">environment.explain</code>
+    <span class="mt-1 break-words text-sm text-body">The provenance of the snapshot: for each field, what decided it — a compile-time constant, a file, a command, or the cache — which resolver read it, and how far it can be trusted. Narrow it to one field, or to a prefix, by name.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">behaviorally_verified</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      
+    </span>
+  </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/environment-status/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">environment.status</code>
+    <span class="mt-1 break-words text-sm text-body">One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services with the address a running server published. Every value carries where it came from.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">behaviorally_verified</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      <span class="rounded border border-default px-1 text-body">cached</span>
     </span>
   </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/registry/modules/graph/" class="font-mono hover:underline">graph</a> <span class="text-base font-normal text-body">Graphs</span></h2>
 <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/graph-get/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
@@ -706,7 +763,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3d9c929a5b962817b0383c4bf2f991e1725932da" class="font-mono underline">3d9c929</a> · inputs <span class="font-mono">c0c209e4d71c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1529143d42aea7a6746d6068c5be5c3c93ff7b10" class="font-mono underline">1529143</a> · inputs <span class="font-mono">d68839b41ee4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
