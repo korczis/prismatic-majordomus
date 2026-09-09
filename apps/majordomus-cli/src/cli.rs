@@ -968,6 +968,8 @@ pub enum CompletionCommand {
     Query(CompletionQueryArgs),
     /// The shell integration to load once, which carries no command of its own and asks this executable for every candidate
     Init(CompletionInitArgs),
+    /// Put that integration into the shell's startup file, between managed markers, so that no one maintains it by hand
+    Install(CompletionInstallArgs),
 }
 
 #[derive(Debug, Args)]
@@ -996,6 +998,23 @@ pub struct CompletionInitArgs {
     /// Which shell to print the integration for
     #[arg(long, value_enum, default_value_t = CompletionShell::Zsh)]
     pub shell: CompletionShell,
+}
+
+/// The arguments of `completion install`.
+#[derive(Debug, clap::Args)]
+pub struct CompletionInstallArgs {
+    /// Which shell to install for; decides the startup file when --rc is not given
+    #[arg(long, value_enum, default_value_t = CompletionShell::Zsh)]
+    pub shell: CompletionShell,
+    /// The startup file to write, instead of the shell's usual one
+    #[arg(long, value_name = "PATH")]
+    pub rc: Option<std::path::PathBuf>,
+    /// Take the block out again, leaving the rest of the file as it was
+    #[arg(long)]
+    pub remove: bool,
+    /// Say what would change and write nothing
+    #[arg(long)]
+    pub dry_run: bool,
 }
 
 /// The surface a completion request is spelled for.
@@ -1196,6 +1215,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["product", "validate"],
             setup: &[],
             expect: Expect::StdoutContains(&["feature(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "completion install",
+        examples: &[ExampleDoc {
+            id: "completion-install-dry-run",
+            title: "The one line a person adds to their shell, added for them",
+            description: "Writes the integration into the shell's startup file between `# >>> MAJORDOMUS >>>` markers: nothing outside them is touched, running it twice changes nothing, and `--remove` takes it out again. It is never a side effect of anything else — installing into a person's home directory is its own decision, so it is its own command. `--dry-run` says what would change and writes nothing.",
+            argv: &["completion", "install", "--shell", "zsh", "--dry-run"],
+            setup: &[],
+            expect: Expect::Success,
         }],
     },
     CommandExamples {

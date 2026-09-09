@@ -92,6 +92,15 @@ pub const SEMANTICS: &[Semantics] = &[
         interactivity: Interactivity::NonInteractive,
         requires: &[Requirement::Repository, Requirement::Layer],
     },
+    // The one command here that writes outside the repository: a person's shell startup
+    // file. It needs no repository and no layer — a shell is installed once and serves every
+    // checkout — and nothing declares a capability for it, so no machine surface carries it.
+    Semantics {
+        path: &["completion", "install"],
+        effect: Effect::LocalMutation,
+        interactivity: Interactivity::NonInteractive,
+        requires: &[],
+    },
     // Packaging writes into the build directory.
     Semantics {
         path: &["distribution", "build"],

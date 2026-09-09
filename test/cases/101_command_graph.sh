@@ -140,6 +140,27 @@ grep -q '^completion-query \*args:' "$BRIDGE" || {
 "$RB" completion query --surface workflow -- just completion-que | grep -q 'completion-query' || {
   echo "    a command declared only in clap did not reach the completion"; exit 1; }
 
+# --- the shell integration installs itself, idempotently and reversibly
+#
+# The one command here that writes outside the repository, so it is exercised against a real
+# file: what it writes, that a second run writes nothing, that removing restores the original
+# byte for byte, and that a person's own lines are never touched.
+RC="$T/rc-probe"; printf 'export PERSONAL=1\nalias mine=yours\n' > "$RC"
+ORIGINAL="$(cat "$RC")"
+expect_exit 0 "$RB" completion install --shell zsh --rc "$RC"
+grep -q '>>> MAJORDOMUS >>>' "$RC" || { echo "    the install wrote no managed block"; exit 1; }
+grep -q 'completion init --shell zsh' "$RC" || { echo "    the block does not load the integration"; exit 1; }
+grep -q 'export PERSONAL=1' "$RC" || { echo "    the install ate the person's own lines"; exit 1; }
+BEFORE="$(cat "$RC")"
+expect_exit 0 "$RB" completion install --shell zsh --rc "$RC"
+[ "$BEFORE" = "$(cat "$RC")" ] || { echo "    a second install changed the file"; exit 1; }
+expect_exit 0 "$RB" completion install --shell zsh --rc "$RC" --remove
+[ "$ORIGINAL" = "$(cat "$RC")" ] || {
+  echo "    removing did not restore the file:"; diff <(printf '%s\n' "$ORIGINAL") "$RC" | head -5; exit 1; }
+# it never writes without being asked: --dry-run leaves the file alone
+expect_exit 0 "$RB" completion install --shell zsh --rc "$RC" --dry-run
+[ "$ORIGINAL" = "$(cat "$RC")" ] || { echo "    --dry-run wrote to the file"; exit 1; }
+
 # --- no secret ever reaches a projection
 #
 # Nothing in the graph reads the environment, so the assertion is cheap and the proof is

@@ -106,9 +106,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/benchmarks.md` | `benchmarks` | markdown | 7558 | `2847fe7806f231bf` |
 | `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 11012 | `c6992fa0afb6b174` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 12512 | `b0bc19a2c220448e` |
-| `docs/generated/cli.json` | `cli` | json | 433987 | `6094ac33e70752b2` |
-| `docs/generated/cli.md` | `cli` | markdown | 181280 | `54d87d999a76f15a` |
-| `docs/generated/cli.yaml` | `cli` | yaml | 337417 | `74982b5f2717d60d` |
+| `docs/generated/cli.json` | `cli` | json | 440020 | `bca46c126d5f8d10` |
+| `docs/generated/cli.md` | `cli` | markdown | 183664 | `577106a5dbec855b` |
+| `docs/generated/cli.yaml` | `cli` | yaml | 342105 | `b50897a954d04d50` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `b900b116d861813a` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `6b5db1a51c39bbba` |
@@ -180,8 +180,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `bdba56212ef6061e` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 59513 | `1519fe35d81f1472` |
-| `site/data/registry/product.json` | `site-product` | json | 300462 | `0b4354f8e5a9c9eb` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1798291 | `fa30c426eac2ac88` |
+| `site/data/registry/product.json` | `site-product` | json | 300462 | `c04f5f8babd26c06` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1804325 | `f2ac7cca8461ef44` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `fb5f4204da2c1cea` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `a655ee48696ea407` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |

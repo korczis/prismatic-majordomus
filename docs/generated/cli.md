@@ -70,6 +70,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus completion`](#majordomus-completion) | `/docs/cli/completion/` | Completion for any surface, answered from the command graph: the candidates a shell asks for, and the one-time integration that asks |
 | [`majordomus completion query`](#majordomus-completion-query) | `/docs/cli/completion/query/` | The candidates for one command line, from the command graph. What a shell adapter calls on every TAB |
 | [`majordomus completion init`](#majordomus-completion-init) | `/docs/cli/completion/init/` | The shell integration to load once, which carries no command of its own and asks this executable for every candidate |
+| [`majordomus completion install`](#majordomus-completion-install) | `/docs/cli/completion/install/` | Put that integration into the shell's startup file, between managed markers, so that no one maintains it by hand |
 | [`majordomus worktree`](#majordomus-worktree) | `/docs/cli/worktree/` | The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard |
 | [`majordomus worktree status`](#majordomus-worktree-status) | `/docs/cli/worktree/status/` | Where this call is — branch, worktree, canonical or not, uncommitted work — and how many errors the whole topology carries; exit 10 when this worktree is out of place |
 | [`majordomus worktree list`](#majordomus-worktree-list) | `/docs/cli/worktree/list/` | Every registered worktree with its standing, one line each; exit 10 when the topology has an error |
@@ -1737,7 +1738,7 @@ Examples:
 
 Completion for any surface, answered from the command graph: the candidates a shell asks for, and the one-time integration that asks
 
-Subcommands: [`majordomus completion query`](#majordomus-completion-query), [`majordomus completion init`](#majordomus-completion-init).
+Subcommands: [`majordomus completion query`](#majordomus-completion-query), [`majordomus completion init`](#majordomus-completion-init), [`majordomus completion install`](#majordomus-completion-install).
 
 ```text
 majordomus completion [OPTIONS] [COMMAND]
@@ -1816,6 +1817,36 @@ Examples:
   ```
 
   Verified: exits 0; prints completion query, complete -F.
+
+<a id="majordomus-completion-install"></a>
+## `majordomus completion install`
+
+Put that integration into the shell's startup file, between managed markers, so that no one maintains it by hand
+
+```text
+majordomus completion install [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--shell` | `zsh` \| `bash` \| `fish` | `zsh` | Which shell to install for; decides the startup file when --rc is not given — `zsh`: zsh; `bash`: bash; `fish`: fish |
+| `--rc` | `<PATH>` | — | The startup file to write, instead of the shell's usual one |
+| `--remove` | flag | — | Take the block out again, leaving the rest of the file as it was |
+| `--dry-run` | flag | — | Say what would change and write nothing |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **The one line a person adds to their shell, added for them** — Writes the integration into the shell's startup file between `# >>> MAJORDOMUS >>>` markers: nothing outside them is touched, running it twice changes nothing, and `--remove` takes it out again. It is never a side effect of anything else — installing into a person's home directory is its own decision, so it is its own command. `--dry-run` says what would change and writes nothing.
+
+  ```console
+  $ majordomus completion install --shell zsh --dry-run
+  ```
+
+  Verified: exits 0.
 
 <a id="majordomus-worktree"></a>
 ## `majordomus worktree`

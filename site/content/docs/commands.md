@@ -192,9 +192,30 @@ follows. There is no second completion implementation to disagree.
 Install it once, for every repository:
 
 ```sh
-# ~/.zshrc                                    # or --shell bash, --shell fish
+majordomus completion install --shell zsh     # or --shell bash, --shell fish
+```
+
+That writes the integration into the shell's startup file between `# >>> MAJORDOMUS >>>`
+markers. Nothing outside them is read or rewritten, running it again changes nothing, and
+`--remove` takes it out and leaves the file as it was; `--dry-run` says what would change
+and writes nothing. The first write keeps a `.majordomus.bak` beside the original.
+
+It is its own command, and nothing else calls it. `majordomus init` initialises a
+*repository's* `.ai/` layer, and writing into a person's home directory as a side effect of
+that would be a second, unasked-for act. Installing a shell integration is a decision, so it
+is a command.
+
+The line it writes is the one you would have written by hand:
+
+```sh
 eval "$(majordomus completion init --shell zsh)"
 ```
+
+`majordomus`, not a path into a build directory: the integration is generic and outlives any
+one checkout. Inside a repository, `.envrc` exports `MAJORDOMUS_COMPLETION_BIN` and the
+adapter asks *that* executable instead — which is how the completion works in this
+repository, where the name `majordomus` on the path is the shell tool and has no
+`completion query` of its own.
 
 ### What it will not do
 

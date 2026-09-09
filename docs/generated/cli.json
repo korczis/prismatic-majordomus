@@ -8241,6 +8241,165 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "completion",
+              "install"
+            ],
+            "route": "/docs/cli/completion/install/",
+            "executable": true,
+            "usage": "majordomus completion install [OPTIONS]",
+            "about": "Put that integration into the shell's startup file, between managed markers, so that no one maintains it by hand",
+            "args": [
+              {
+                "name": "shell",
+                "long": "shell",
+                "positional": false,
+                "help": "Which shell to install for; decides the startup file when --rc is not given",
+                "value_name": "SHELL",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "zsh",
+                    "help": "zsh"
+                  },
+                  {
+                    "name": "bash",
+                    "help": "bash"
+                  },
+                  {
+                    "name": "fish",
+                    "help": "fish"
+                  }
+                ],
+                "defaults": [
+                  "zsh"
+                ]
+              },
+              {
+                "name": "rc",
+                "long": "rc",
+                "positional": false,
+                "help": "The startup file to write, instead of the shell's usual one",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "remove",
+                "long": "remove",
+                "positional": false,
+                "help": "Take the block out again, leaving the rest of the file as it was",
+                "value_name": "REMOVE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "dry_run",
+                "long": "dry-run",
+                "positional": false,
+                "help": "Say what would change and write nothing",
+                "value_name": "DRY_RUN",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              }
+            ],
+            "examples": [
+              {
+                "id": "completion-install-dry-run",
+                "title": "The one line a person adds to their shell, added for them",
+                "description": "Writes the integration into the shell's startup file between `# >>> MAJORDOMUS >>>` markers: nothing outside them is touched, running it twice changes nothing, and `--remove` takes it out again. It is never a side effect of anything else — installing into a person's home directory is its own decision, so it is its own command. `--dry-run` says what would change and writes nothing.",
+                "argv": [
+                  "completion",
+                  "install",
+                  "--shell",
+                  "zsh",
+                  "--dry-run"
+                ],
+                "command": "majordomus completion install --shell zsh --dry-run",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },

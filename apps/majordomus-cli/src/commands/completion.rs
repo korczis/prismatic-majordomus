@@ -9,8 +9,8 @@
 use std::io::Write;
 
 use crate::cli::{
-    CompletionArgs, CompletionCommand, CompletionInitArgs, CompletionQueryArgs, CompletionShell,
-    CompletionSurface, OutputFormat,
+    CompletionArgs, CompletionCommand, CompletionInitArgs, CompletionInstallArgs,
+    CompletionQueryArgs, CompletionShell, CompletionSurface, OutputFormat,
 };
 use crate::command_graph::complete::{self, NoValues, Request, ValueResolver};
 use crate::command_graph::{load, shell, Surface, ValueSource};
@@ -24,7 +24,157 @@ pub fn run(args: CompletionArgs) -> Result<u8> {
         }),
         Some(CompletionCommand::Init(ref init_args)) => init(init_args),
         Some(CompletionCommand::Query(ref query_args)) => query(&args, query_args),
+        Some(CompletionCommand::Install(ref install_args)) => install(install_args),
     }
+}
+
+/// The markers the managed block is written between.
+///
+/// Everything outside them belongs to the person whose file this is and is never read,
+/// rewritten or reordered. Everything between them belongs to this command and is replaced
+/// wholesale, which is what makes installing twice the same as installing once.
+const BEGIN: &str = "# >>> MAJORDOMUS >>>";
+const END: &str = "# <<< MAJORDOMUS <<<";
+
+/// `completion install`.
+///
+/// The only thing in this executable that writes outside the repository, and it is its own
+/// command for that reason: putting a line into somebody's shell startup file is a decision
+/// a person makes, never a side effect of initialising a repository.
+fn install(args: &CompletionInstallArgs) -> Result<u8> {
+    let path = match &args.rc {
+        Some(p) => p.clone(),
+        None => default_rc(args.shell)?,
+    };
+
+    let existing = std::fs::read_to_string(&path).unwrap_or_default();
+    let wanted = if args.remove {
+        None
+    } else {
+        Some(format!(
+            "{BEGIN}\n\
+             # Written by `majordomus completion install`. Everything between these markers is\n\
+             # replaced when it runs again, and removed by `--remove`; nothing outside them is read.\n\
+             # The integration carries no command of its own — it asks the executable for every\n\
+             # candidate — so it serves every repository and never goes stale.\n\
+             eval \"$({} completion init --shell {})\"\n\
+             {END}",
+            program(),
+            shell_name(args.shell),
+        ))
+    };
+
+    let updated = splice(&existing, wanted.as_deref());
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+
+    if updated == existing {
+        writeln!(
+            out,
+            "completion: {} is already as asked; nothing written",
+            path.display()
+        )
+        .map_err(Error::Transport)?;
+        return Ok(0);
+    }
+    if args.dry_run {
+        writeln!(
+            out,
+            "completion: would {} the managed block in {}",
+            if args.remove { "remove" } else { "write" },
+            path.display()
+        )
+        .map_err(Error::Transport)?;
+        return Ok(0);
+    }
+
+    // A backup only when there was something to lose, and only the first time: a person who
+    // runs this twice does not want two copies of their shell configuration lying about.
+    if !existing.is_empty() {
+        let backup = path.with_extension("majordomus.bak");
+        if !backup.exists() {
+            std::fs::write(&backup, &existing).map_err(|e| Error::io(backup.clone(), e))?;
+            writeln!(out, "completion: kept {}", backup.display()).map_err(Error::Transport)?;
+        }
+    }
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    std::fs::write(&path, &updated).map_err(|e| Error::io(path.clone(), e))?;
+    writeln!(
+        out,
+        "completion: {} the managed block in {}\ncompletion: open a new shell, or `source {}`",
+        if args.remove { "removed" } else { "wrote" },
+        path.display(),
+        path.display()
+    )
+    .map_err(Error::Transport)?;
+    Ok(0)
+}
+
+/// The program name the installed line calls.
+///
+/// `majordomus` rather than this executable's path: the integration is generic and outlives
+/// any one build directory, and inside a repository the environment names the executable
+/// that answers through `MAJORDOMUS_COMPLETION_BIN`.
+fn program() -> &'static str {
+    "majordomus"
+}
+
+/// The shell's own name, as its `--shell` value spells it.
+fn shell_name(shell: CompletionShell) -> &'static str {
+    match shell {
+        CompletionShell::Zsh => "zsh",
+        CompletionShell::Bash => "bash",
+        CompletionShell::Fish => "fish",
+    }
+}
+
+/// Where a shell reads its startup from, when the caller does not say.
+fn default_rc(shell: CompletionShell) -> Result<std::path::PathBuf> {
+    let home = std::env::var_os("HOME")
+        .map(std::path::PathBuf::from)
+        .ok_or_else(|| Error::Refused {
+            code: 12,
+            reason:
+                "HOME is not set, so there is no startup file to install into; name one with --rc"
+                    .into(),
+        })?;
+    Ok(match shell {
+        CompletionShell::Zsh => home.join(".zshrc"),
+        CompletionShell::Bash => home.join(".bashrc"),
+        CompletionShell::Fish => home.join(".config/fish/config.fish"),
+    })
+}
+
+/// Replace the managed block with `block`, or remove it when `block` is `None`.
+///
+/// Pure, so the whole of the decision is testable without a filesystem: the caller compares
+/// the answer with what the file already held and writes only on a difference, which is why
+/// running this twice is not two writes.
+fn splice(existing: &str, block: Option<&str>) -> String {
+    let (before, after) = match (existing.find(BEGIN), existing.find(END)) {
+        (Some(b), Some(e)) if e > b => {
+            let end = e + END.len();
+            let after = existing[end..]
+                .strip_prefix('\n')
+                .unwrap_or(&existing[end..]);
+            (&existing[..b], after)
+        }
+        // No block, or one whose markers are damaged: leave every byte alone and append.
+        _ => (existing, ""),
+    };
+    let mut out = String::new();
+    out.push_str(before);
+    if let Some(block) = block {
+        if !out.is_empty() && !out.ends_with('\n') {
+            out.push('\n');
+        }
+        out.push_str(block);
+        out.push('\n');
+    }
+    out.push_str(after);
+    out
 }
 
 /// `completion init`.
@@ -230,5 +380,58 @@ mod tests {
     fn a_description_is_one_line_without_control_characters() {
         assert_eq!(one_line("a\nb"), "a");
         assert_eq!(one_line("a\tb"), "ab");
+    }
+}
+
+#[cfg(test)]
+mod install_tests {
+    use super::*;
+
+    const BLOCK: &str = "# >>> MAJORDOMUS >>>\nline\n# <<< MAJORDOMUS <<<";
+
+    #[test]
+    fn an_empty_file_gains_the_block() {
+        assert_eq!(splice("", Some(BLOCK)), format!("{BLOCK}\n"));
+    }
+
+    #[test]
+    fn installing_twice_writes_the_same_bytes() {
+        let once = splice("export FOO=1\n", Some(BLOCK));
+        let twice = splice(&once, Some(BLOCK));
+        assert_eq!(once, twice, "a second install changed the file");
+    }
+
+    #[test]
+    fn nothing_outside_the_markers_is_touched() {
+        let before = "export FOO=1\nalias x=y\n";
+        let after = "unset BAR\n";
+        let installed = splice(&format!("{before}{BLOCK}\n{after}"), Some(BLOCK));
+        assert!(
+            installed.starts_with(before),
+            "the head was rewritten: {installed:?}"
+        );
+        assert!(
+            installed.ends_with(after),
+            "the tail was rewritten: {installed:?}"
+        );
+    }
+
+    #[test]
+    fn removing_leaves_the_file_as_it_was() {
+        let original = "export FOO=1\nunset BAR\n";
+        let installed = splice(original, Some(BLOCK));
+        assert_eq!(splice(&installed, None), original);
+    }
+
+    #[test]
+    fn a_file_with_damaged_markers_keeps_every_byte() {
+        // Only the opening marker: the block cannot be located, so nothing is replaced and
+        // the person's own text survives. Appending is the safe answer, never a rewrite.
+        let odd = "# >>> MAJORDOMUS >>>\nsomething a person edited\n";
+        let out = splice(odd, Some(BLOCK));
+        assert!(
+            out.starts_with(odd),
+            "a damaged block ate the file: {out:?}"
+        );
     }
 }

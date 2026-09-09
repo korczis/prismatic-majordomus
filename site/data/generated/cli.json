@@ -9140,6 +9140,12 @@
           "command": "majordomus completion init",
           "name": "init",
           "route": "/docs/cli/completion/init/"
+        },
+        {
+          "about": "Put that integration into the shell's startup file, between managed markers, so that no one maintains it by hand",
+          "command": "majordomus completion install",
+          "name": "install",
+          "route": "/docs/cli/completion/install/"
         }
       ],
       "command": "majordomus completion",
@@ -9482,6 +9488,182 @@
       ],
       "route": "/docs/cli/completion/init/",
       "usage": "majordomus completion init [OPTIONS]"
+    },
+    {
+      "about": "Put that integration into the shell's startup file, between managed markers, so that no one maintains it by hand",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus completion",
+          "name": "completion",
+          "route": "/docs/cli/completion/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "zsh"
+          ],
+          "global": false,
+          "help": "Which shell to install for; decides the startup file when --rc is not given",
+          "long": "shell",
+          "name": "shell",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "zsh",
+              "name": "zsh"
+            },
+            {
+              "help": "bash",
+              "name": "bash"
+            },
+            {
+              "help": "fish",
+              "name": "fish"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SHELL"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The startup file to write, instead of the shell's usual one",
+          "long": "rc",
+          "name": "rc",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Take the block out again, leaving the rest of the file as it was",
+          "long": "remove",
+          "name": "remove",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "REMOVE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Say what would change and write nothing",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        }
+      ],
+      "children": [],
+      "command": "majordomus completion install",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "completion",
+            "install",
+            "--shell",
+            "zsh",
+            "--dry-run"
+          ],
+          "command": "majordomus completion install --shell zsh --dry-run",
+          "description": "Writes the integration into the shell's startup file between `# >>> MAJORDOMUS >>>` markers: nothing outside them is touched, running it twice changes nothing, and `--remove` takes it out again. It is never a side effect of anything else — installing into a person's home directory is its own decision, so it is its own command. `--dry-run` says what would change and writes nothing.",
+          "expectation": "exits 0",
+          "id": "completion-install-dry-run",
+          "setup": [],
+          "title": "The one line a person adds to their shell, added for them"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "install",
+      "parent_route": "/docs/cli/completion/",
+      "path": [
+        "majordomus",
+        "completion",
+        "install"
+      ],
+      "route": "/docs/cli/completion/install/",
+      "usage": "majordomus completion install [OPTIONS]"
     },
     {
       "about": "The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard",
@@ -13380,10 +13562,10 @@
     }
   ],
   "counts": {
-    "arguments": 596,
-    "commands": 79,
-    "examples": 87,
-    "runnable": 75
+    "arguments": 604,
+    "commands": 80,
+    "examples": 88,
+    "runnable": 76
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.3.1",
