@@ -1,7 +1,7 @@
 +++
 title = "The repository scope"
 description = "the repository scope: what a worker reads and what it never reads, declared once in `.ai/repo/scope.yaml`, how a path is judged (name, size, content), what the executable does with it, and `majordomus scope`"
-weight = 31
+weight = 35
 [extra]
 source = "docs/SCOPE.md"
 +++
@@ -80,7 +80,7 @@ the shell tool's allow-list `share/allow/scope.txt` is generated from it by
 
 In this order, and the first rule that decides wins:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | step | what is consulted | verdict |
 |---|---|---|

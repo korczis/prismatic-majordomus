@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# projection-check — the command line may become more derived, and may not become less.
+#
+# Every interface of the executable but one is built by walking the capability registry, so
+# it cannot carry an entry the registry does not have. The command line is declared a second
+# time, in clap, and `capabilities validate` already refuses a capability that claims a
+# command the clap declaration does not answer. That is the half that can be decided
+# outright.
+#
+# The other half cannot. A runnable command that no capability claims is not wrong: `serve`
+# and `mcp` start processes, `generate` writes files, and the worktree verbs call a service
+# directly. Some of those will never be capabilities. But the set of them is the measure of
+# how much of the command line is still hand-written rather than derived, and it should only
+# ever shrink.
+#
+# So this is a ratchet, the same shape as scripts/ci/rust-command-check. The commands that
+# no capability claims today are recorded in the baseline; the check fails when a command
+# appears that is not in it, and reports — without failing — every baseline entry that has
+# since become derived, so the baseline can be tightened deliberately.
+#
+# The denominator is read from the executable, never written here: `capabilities projections`
+# derives it from the registry and the clap declaration, so a command added tomorrow is
+# measured tomorrow and this script never carries a list of what exists.
+#
+#   scripts/ci/projection-check                   report, and fail on a new hand-written command
+#   scripts/ci/projection-check --write-baseline  record today's set (a deliberate act)
+#   scripts/ci/projection-check --strict          fail on any hand-written command at all
+#
+# Exit: 0 clean or unchanged, 10 a command the baseline does not have (or any under
+# --strict), 12 unusable.
+set -eu
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+BASELINE=".ai/repo/projection-baseline.txt"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  --strict) MODE="strict"; shift ;;
+  *) echo "projection-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+command -v jq >/dev/null 2>&1 || { echo "projection-check: jq is required" >&2; exit 12; }
+
+# The one launcher every caller shares; it builds the executable when it must.
+RB="$ROOT/bin/majordomus-cli"
+[ -x "$RB" ] || { echo "projection-check: $RB is not executable" >&2; exit 12; }
+
+tmp="$(mktemp "${TMPDIR:-/tmp}/mj.proj.XXXXXX")"
+trap 'rm -f "$tmp" "$tmp.now" "$tmp.new" "$tmp.gone"' EXIT
+
+if ! "$RB" capabilities projections --format json 2>/dev/null > "$tmp"; then
+  echo "projection-check: the executable could not answer capabilities projections" >&2
+  exit 12
+fi
+jq -e '(.rows | type) == "array" and (.unbacked | type) == "array"' "$tmp" >/dev/null 2>&1 \
+  || { echo "projection-check: capabilities projections did not answer the expected shape" >&2; exit 12; }
+
+# A capability claiming a command the clap declaration does not answer is decided by
+# `capabilities validate`, not here; if one slipped through, say so rather than measuring
+# the debt of a tree that is already broken.
+unmet="$(jq -r '[.rows[] | select(.closed == false) | .id] | join(" ")' "$tmp")"
+if [ -n "$unmet" ]; then
+  echo "projection-check: a capability claims a command line that does not exist: $unmet" >&2
+  echo "                  reproduce: majordomus capabilities projections --unmet" >&2
+  exit 10
+fi
+
+jq -r '.unbacked[]' "$tmp" | LC_ALL=C sort > "$tmp.now"
+
+if [ "$MODE" = write ]; then
+  {
+    echo "# The runnable commands of the native command line that no capability claims."
+    echo "#"
+    echo "# Written by scripts/ci/projection-check --write-baseline; never by hand. A command"
+    echo "# here is hand-written rather than derived from a capability declaration, which is"
+    echo "# allowed — a process command has nothing to derive from — but the set may only"
+    echo "# shrink. Removing a line is the deliberate act of having made a command derived."
+    cat "$tmp.now"
+  } > "$BASELINE"
+  echo "projection-check: baseline written, $(grep -cv '^#' "$BASELINE") command(s)"
+  exit 0
+fi
+
+total="$(wc -l < "$tmp.now" | tr -d ' ')"
+
+if [ "$MODE" = strict ] && [ "$total" -gt 0 ]; then
+  echo "projection-check: $total command(s) are claimed by no capability (--strict)"
+  sed 's/^/  /' "$tmp.now"
+  exit 10
+fi
+
+[ -f "$BASELINE" ] || { echo "projection-check: $BASELINE is absent; run --write-baseline" >&2; exit 12; }
+grep -v '^#' "$BASELINE" | grep -v '^$' | LC_ALL=C sort > "$tmp.base"
+
+LC_ALL=C comm -23 "$tmp.now" "$tmp.base" > "$tmp.new"
+LC_ALL=C comm -13 "$tmp.now" "$tmp.base" > "$tmp.gone"
+
+if [ -s "$tmp.gone" ]; then
+  echo "projection-check: $(wc -l < "$tmp.gone" | tr -d ' ') baseline command(s) are now derived or gone; tighten the baseline"
+  sed 's/^/  - /' "$tmp.gone"
+  echo "  remedy: scripts/ci/projection-check --write-baseline"
+fi
+
+if [ -s "$tmp.new" ]; then
+  echo "projection-check: $(wc -l < "$tmp.new" | tr -d ' ') command(s) are claimed by no capability and are not in the baseline" >&2
+  sed 's/^/  + /' "$tmp.new" >&2
+  echo "  a command of the executable is declared once, as a capability, and the command line" >&2
+  echo "  is a projection of that declaration (rule project.interfaces-are-projections@1)." >&2
+  echo "  reproduce: scripts/ci/projection-check" >&2
+  exit 10
+fi
+
+echo "projection-check: $total command(s) claimed by no capability, none new (baseline $BASELINE)"
+exit 0

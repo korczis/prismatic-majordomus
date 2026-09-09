@@ -61,7 +61,10 @@ pub enum Target {
     OpenApi,
     /// `docs/generated/capabilities.md` (the index), `docs/generated/modules/<id>.md`,
     /// `docs/generated/cli.md` and `docs/generated/cli.{json,yaml}` (the command line as
-    /// clap declares it, with the examples declared beside it).
+    /// clap declares it, with the examples declared beside it), and
+    /// `docs/generated/providers.{md,json,yaml}`: every provider the distribution declares,
+    /// with what this repository does with it — the one table the documents point at
+    /// instead of enumerating providers by hand (ADR 0024).
     Docs,
     /// `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the
     /// coverage, from the projection.
@@ -76,7 +79,10 @@ pub enum Target {
     /// [`crate::proto::project`]).
     Documents,
     /// The provider bootstraps the policy's `projections[]` declare, rendered from the
-    /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]).
+    /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]). The
+    /// provider *table* is a document of [`Target::Docs`]: a repository that projects no
+    /// bootstrap still has providers, and a fixture that checks its bootstraps alone is not
+    /// asked for a document it never wrote.
     Providers,
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
@@ -87,7 +93,15 @@ pub enum Target {
     /// topology reaches the published documentation without the site shelling out to this
     /// executable, and how `generate --check` notices when it has gone stale.
     Web,
-    /// Everything derived from the distribution model (see [`crate::distribution`]): the
+    /// `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's
+    /// release records, the decisions dated inside each release's window and the
+    /// conventional commits in its range (see [`crate::release`]).
+    ///
+    /// A generated document like any other, which is the point: `generate --check` is what
+    /// notices that the changelog has stopped describing the tree, so nobody has to
+    /// remember to update it.
+    Changelog,
+    /// Everything derived from the distribution model (see `crate::distribution`): the
     /// release build matrix, the installer, the installation guide, the site's dataset,
     /// and the public metadata of every recorded release.
     Distribution,
@@ -95,6 +109,9 @@ pub enum Target {
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
     /// that a manifest naming half the artifacts cannot exist.
     Manifest,
+    /// The provider artifacts of every deployment object: `deploy/Dockerfile`,
+    /// `.dockerignore` and `fly.toml` (see [`crate::deploy::render`]).
+    Deployment,
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
     Graph,
@@ -113,8 +130,10 @@ impl Target {
         Target::Providers,
         Target::Site,
         Target::Web,
+        Target::Changelog,
         Target::Distribution,
         Target::Graph,
+        Target::Deployment,
         Target::Manifest,
     ];
 
@@ -144,8 +163,10 @@ impl Target {
             Target::Providers => "providers",
             Target::Site => "site",
             Target::Web => "web",
+            Target::Changelog => "changelog",
             Target::Distribution => "distribution",
             Target::Manifest => "manifest",
+            Target::Deployment => "deployment",
             Target::Graph => "graph",
         }
     }
@@ -170,6 +191,10 @@ pub enum ArtifactFormat {
 
 /// The schema of `web.json`.
 pub const WEB_SCHEMA: &str = "majordomus/web-topology/v1";
+
+/// The schema id of `docs/generated/providers.{json,yaml}`: every provider the distribution
+/// ships, as `share/providers.yaml` and the repository's policy describe it.
+pub const PROVIDERS_SCHEMA: &str = "majordomus/providers/v1";
 
 impl ArtifactFormat {
     /// The file suffix, without the dot.
@@ -530,9 +555,11 @@ pub fn artifacts(
             | Target::Providers
             | Target::Site
             | Target::Web
+            | Target::Changelog
             | Target::Distribution
-            | Target::Manifest
-            | Target::Graph => {}
+            | Target::Deployment
+            | Target::Graph
+            | Target::Manifest => {}
         }
     }
     Ok(out)
@@ -604,6 +631,32 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             ));
         }
     }
+    if targets.contains(&Target::Changelog) {
+        // The changelog is composed from the layer's own release records, the decisions
+        // dated inside each release's window, and the repository's commits — the same value
+        // `release.changelog` answers with, so the reference and the API never disagree.
+        // The Markdown is the rendering a person reads; the JSON and YAML are the document
+        // every other reader gets, and all three are compared by `generate --check`.
+        let log = crate::release::compose(app.repository.root(), &app.context.index.objects);
+        let value = serde_json::to_value(&log).unwrap_or(serde_json::Value::Null);
+        out.extend(
+            Document::new(
+                "changelog",
+                crate::release::model::CHANGELOG_SCHEMA,
+                "the layer's release records, the decisions dated in each release's window, and the commits in its range",
+                value,
+            )
+            .artifacts(crate::VERSION),
+        );
+        out.push(Artifact::markdown(
+            format!("{OUT_DIR}/changelog.md"),
+            "changelog",
+            "the layer's release records, the decisions dated in each release's window, and the commits in its range",
+            crate::VERSION,
+            &crate::release::changelog::render(&log),
+        ));
+    }
+
     let needs_policy = targets.contains(&Target::Providers) || targets.contains(&Target::Site);
     if needs_policy {
         let policy = LoadedPolicy::load(&app.repository)?;
@@ -630,10 +683,33 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             // so the two `generate` passes of the derivation graph agree byte for byte
             // even though the pass between them adds documents to the index.
             out.extend(crate::site::why_artifacts(&app.context)?);
+            // The product model as the site reads it: the features with everything
+            // derived, the matrix, the providers. Index-independent like the catalogue,
+            // so both `generate` passes of the derivation graph agree byte for byte.
+            out.extend(crate::site::product_artifacts(&app.context)?);
         }
     }
     if targets.contains(&Target::Distribution) {
         out.extend(distribution_artifacts(app)?);
+    }
+    if targets.contains(&Target::Deployment) {
+        for object in app
+            .context
+            .index
+            .objects
+            .iter()
+            .filter(|o| o.kind == crate::deploy::KIND)
+        {
+            let deployment = crate::deploy::Deployment::parse(object).map_err(|refusal| {
+                Error::InvalidDeployment {
+                    reason: refusal.to_string(),
+                }
+            })?;
+            out.extend(crate::deploy::render::artifacts(
+                &deployment,
+                &object.provenance.path,
+            ));
+        }
     }
     Ok(out)
 }
@@ -788,6 +864,18 @@ pub fn context_artifacts(
             .artifacts(version),
         );
     }
+    if targets.contains(&Target::Docs) {
+        let source = "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy";
+        let value = providers_document(ctx)?;
+        out.push(Artifact::markdown(
+            format!("{OUT_DIR}/providers.md"),
+            "providers",
+            source,
+            version,
+            &providers_markdown(&value),
+        ));
+        out.extend(Document::new("providers", PROVIDERS_SCHEMA, source, value).artifacts(version));
+    }
     if targets.contains(&Target::Graph) {
         out.push(Artifact::verbatim(
             format!("{OUT_DIR}/graph.json"),
@@ -807,6 +895,98 @@ pub fn context_artifacts(
         ));
     }
     Ok(out)
+}
+
+/// Every provider as data: the product model's providers — the declaration decorated with
+/// what this repository's policy renders through it, the client configuration it carries and
+/// the hooks the policy wires — and the tool's own scratch roots. Answered by the same
+/// capability `majordomus product providers`, `majordomus_providers` and
+/// `GET /api/v1/product/providers` answer, so the file and the interfaces cannot disagree.
+pub fn providers_document(ctx: &Context) -> Result<Value> {
+    let id = ctx
+        .registry
+        .by_cli(&["product".to_string(), "providers".to_string()])
+        .map(|c| c.id.to_string())
+        .ok_or_else(|| Error::Protocol {
+            reason: "no capability is exposed as `majordomus product providers`".into(),
+        })?;
+    let answer = ctx
+        .execute(&id, serde_json::json!({}))
+        .map_err(|e| Error::Protocol {
+            reason: e.to_string(),
+        })?;
+    Ok(serde_json::json!({
+        "scratch_roots": ctx.index.providers.scratch_roots,
+        "count": answer["count"],
+        "providers": answer["providers"],
+    }))
+}
+
+/// `docs/generated/providers.md`: the same value as a table a person reads, with the
+/// grammar of a scratch root beside it.
+pub fn providers_markdown(value: &Value) -> String {
+    let cell = |v: &Value| -> String {
+        let items: Vec<String> = v
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|x| match x {
+                Value::String(s) => format!("`{s}`"),
+                other => other
+                    .get("target")
+                    .and_then(Value::as_str)
+                    .map(|t| {
+                        if other.get("always_loaded") == Some(&Value::Bool(true)) {
+                            format!("`{t}` (always loaded)")
+                        } else {
+                            format!("`{t}`")
+                        }
+                    })
+                    .unwrap_or_default(),
+            })
+            .collect();
+        if items.is_empty() {
+            "—".to_string()
+        } else {
+            items.join(", ")
+        }
+    };
+    let mut s = String::new();
+    s.push_str("# Providers\n\n");
+    s.push_str("Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).\n\n");
+    s.push_str("| provider | title | bootstraps | client configuration | hooks | scratch roots |\n|---|---|---|---|---|---|\n");
+    for p in value["providers"].as_array().into_iter().flatten() {
+        let str_of = |k: &str| {
+            p.get(k)
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string()
+        };
+        s.push_str(&format!(
+            "| `{}` | {} | {} | {} | {} | {} |\n",
+            str_of("id"),
+            str_of("title"),
+            cell(&p["bootstraps"]),
+            p.get("client_config")
+                .and_then(Value::as_str)
+                .map(|c| format!("`{c}`"))
+                .unwrap_or_else(|| "—".to_string()),
+            cell(&p["hooks"]),
+            cell(&p["scratch_roots"]),
+        ));
+    }
+    s.push_str(&format!(
+        "\n{} provider(s).\n\n## The tool's own scratch roots\n\n",
+        value["count"].as_u64().unwrap_or(0)
+    ));
+    s.push_str("A checkout under any of these, or under a provider's root above, is a session's scratch checkout to the worktree topology: reported, never migrated unasked, never cleaned up by the tool, refused by the commit guard with the remedy of continuing in the canonical worktree. A root the primary checkout itself lives under is skipped.\n\n");
+    for r in value["scratch_roots"].as_array().into_iter().flatten() {
+        if let Some(r) = r.as_str() {
+            s.push_str(&format!("- `{r}`\n"));
+        }
+    }
+    s.push_str("\nA root is expanded before it is compared: `<primary>/` is the primary checkout, `~` the home directory, `${NAME:-default}` an environment variable with a default, `$NAME` one without — a root whose variable is unset is skipped.\n");
+    s
 }
 
 /// The resolved web topology as data: every surface with its mount, category, visibility,
@@ -1931,7 +2111,7 @@ fn reference(registry: &CapabilityRegistry) -> String {
     s.push_str(
         &openapi::infrastructure_routes()
             .iter()
-            .map(|r| format!("`{r}`"))
+            .map(|r| format!("`{}`", r.path))
             .collect::<Vec<_>>()
             .join(", "),
     );

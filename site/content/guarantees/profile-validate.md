@@ -1,7 +1,7 @@
 +++
 title = "Every profile is parsed, its unknown keys rejected, and the default profile proven to exist"
 description = "Each file under .ai/repo/profiles/ must parse, must carry only known keys, must have a name equal to its filename, and the profile the policy names as default must exist as a file. A policy that points at a profile nobody wrote is a failure, not a fallback to something else."
-weight = 20
+weight = 22
 [extra]
 claim_id = "profile-validate"
 status = "guaranteed"

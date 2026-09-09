@@ -1,7 +1,7 @@
 +++
 title = "Executable use cases"
 description = "executable use cases: one file each under `.ai/repo/use-cases/`, the scenario that proves it against the tool, evidence, observed maturity, coverage gated by policy, impact analysis, scaffolding, and what the site derives from it"
-weight = 29
+weight = 32
 [extra]
 source = "docs/USE_CASES.md"
 +++
@@ -25,7 +25,7 @@ canonical home; anything claimed as guaranteed is backed by executable evidence.
 
 ## Where things live
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | what | where | who owns it |
 |---|---|---|
@@ -142,7 +142,7 @@ go.
 (`guaranteed`, `advisory`). What the use case *is* is computed when the site data is
 generated, from the evidence and from what it names:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | observed | when |
 |---|---|
@@ -230,7 +230,7 @@ resolve. Nothing on a page was typed into a template.
 
 ## The gates, in one place
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | gate | where | what it refuses |
 |---|---|---|

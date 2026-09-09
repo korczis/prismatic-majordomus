@@ -1,7 +1,7 @@
 +++
 title = "An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does"
 description = ".ai/local/state/open-questions.md is read by the gate that refuses completion while something is unresolved. If an entry in it does not parse, the gate cannot see it — so a malformed entry is treated as a blocking failure, not as a formatting problem."
-weight = 31
+weight = 33
 [extra]
 claim_id = "blocker-store"
 status = "guaranteed"

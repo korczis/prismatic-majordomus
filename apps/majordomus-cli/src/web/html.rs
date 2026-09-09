@@ -55,9 +55,13 @@ h2 {{ font-size: 1.1rem; margin: 2rem 0 .5rem; }}
 p.lede {{ color: var(--muted); margin: 0 0 1.5rem; }}
 dl.summary {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
               gap: .75rem; margin: 0 0 1.5rem; padding: 0; }}
-dl.summary > div {{ border: 1px solid var(--line); border-radius: .5rem; padding: .75rem; background: var(--soft); }}
+/* min-width: 0 because a grid item does not shrink below its content by default, and a
+   summary value is whatever the run measured — one long unbreakable figure widens its track,
+   the track widens the grid, and the page scrolls sideways at every width the track does not
+   fit. The wrap on the value is the other half: the figure gives way before the layout does. */
+dl.summary > div {{ min-width: 0; border: 1px solid var(--line); border-radius: .5rem; padding: .75rem; background: var(--soft); }}
 dl.summary dt {{ color: var(--muted); font-size: .8rem; margin: 0; }}
-dl.summary dd {{ margin: .25rem 0 0; font-size: 1.35rem; font-variant-numeric: tabular-nums; }}
+dl.summary dd {{ margin: .25rem 0 0; font-size: 1.35rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }}
 .scroll {{ overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: .5rem; }}
 table {{ border-collapse: collapse; width: 100%; font-size: .9rem; }}
 th, td {{ text-align: left; padding: .5rem .65rem; border-bottom: 1px solid var(--line); white-space: nowrap; }}
@@ -68,7 +72,7 @@ tr:last-child td {{ border-bottom: 0; }}
 .fail {{ color: var(--bad); font-weight: 600; }}
 code, .mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em; }}
 footer {{ margin-top: 2.5rem; color: var(--muted); font-size: .8rem; border-top: 1px solid var(--line); padding-top: .75rem; }}
-a {{ color: inherit; }}
+a {{ color: inherit; text-decoration: underline; }}
 </style>
 </head>
 <body>
@@ -85,7 +89,9 @@ a {{ color: inherit; }}
 
 /// A table inside its own scrolling box: wide evidence never pushes the page sideways.
 pub fn table(headers: &[&str], rows: &[Vec<String>]) -> String {
-    let mut out = String::from("<div class=\"scroll\"><table><thead><tr>");
+    // the box scrolls, so it is reachable from the keyboard: a scrollable region that only
+    // a pointer can reach is the accessibility defect the site audit refuses (WCAG 2.1.1)
+    let mut out = String::from("<div class=\"scroll\" tabindex=\"0\"><table><thead><tr>");
     for header in headers {
         out.push_str(&format!("<th>{}</th>", escape(header)));
     }
@@ -165,7 +171,10 @@ mod tests {
     #[test]
     fn a_table_scrolls_inside_its_own_box() {
         let html = table(&["a"], &[vec!["1".into()]]);
-        assert!(html.starts_with("<div class=\"scroll\">"));
+        assert!(
+            html.starts_with("<div class=\"scroll\" tabindex=\"0\">"),
+            "{html}"
+        );
     }
 
     #[test]

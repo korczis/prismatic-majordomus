@@ -1,6 +1,6 @@
 +++
 title = "A repository opened in AI clients, not only by people"
-description = "Claude Code, Codex, Gemini CLI or another MCP client is a regular reader of the repository, and what it reads should be the layer, served, rather than files it happens to find."
+description = "Any AI client the tool declares as a provider (docs/generated/providers.md), or any other MCP client, is a regular reader of the repository, and what it reads should be the layer, served, rather than files it happens to find."
 weight = 5
 [extra]
 id = "repository-opened-in-ai-clients"

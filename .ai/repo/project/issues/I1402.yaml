@@ -1,0 +1,49 @@
+id: I1402
+milestone: work-graph-github
+title: A finding says which of six states it found, and the state that could hide a person's edit is no longer one of them
+slug: reconciliation-states
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Derive a typed state for every projected record from two independent questions — has a person rewritten the generated region since it was posted, and has the canonical record moved since — and report the answer instead of collapsing both into one word."
+why: "The check reported `missing` and `body` and nothing else, and the second word hid a defect. The adapter advertises that it will not overwrite what a person wrote inside the generated region, and it decided that by comparing the remote's marker hash to the canonical hash: if they differed it returned early. So the protection was blind in exactly the case it is for. A person edits the region, the plan then moves, and the next --apply splices canonical text over their words without --force and without a word of warning. The marker records what the body was posted as, so the question was always answerable against the marker rather than against the canonical record."
+current_state: "region_edited() returned false whenever the canonical record had moved, so `edited` was unreachable in the common case. Findings about a remote record claiming an unknown canonical id were printed from inside a pipeline, therefore from a subshell, so the drift count never saw them and --check could not fail on one."
+desired_state: "insync, behind, edited, conflict, adopt and missing for a canonical record, and unmanaged for a remote one. --apply rewrites behind and adopt, and refuses edited and conflict without --force. Every finding counts toward the exit code."
+scope:
+  - scripts/github-sync
+  - test/cases/45_github_projection.sh
+non_scope:
+  - Distinguishing a record never created from one deleted on GitHub, which is not derivable from either side without a second store of what was created; `missing` states what is observable, which is that there is no counterpart now
+  - Resolving a conflict automatically
+depends_on:
+  - I1401
+acceptance_criteria:
+  - A person's edit is detected whether or not the canonical record has moved since, proved by a case for each
+  - A record whose region was edited and whose canonical record also moved is reported as conflict, and --apply refuses it without --force
+  - An issue claiming a canonical id this repository does not have is reported and counted, so --check fails on it
+  - Every state is proved by a case that builds the remote as a fixture, offline
+validation:
+  - bash test/run.sh 45_github_projection
+  - scripts/github-sync --check
+evidence_required:
+  - states_distinguished
+  - edit_protection_holds
+risk: "Low. Every distinction is derived from bytes both sides already carry."
+created_at: 2026-09-09
+updated_at: 2026-09-09T17:20:44Z
+started_at: 2026-09-09T17:20:34Z
+verified_at: 2026-09-09T17:20:41Z
+completed_at: 2026-09-09T17:20:44Z
+evidence:
+  - covers: states_distinguished
+    type: test
+    command: "bash test/run.sh 45_github_projection"
+    result: "six states proved against fixture remotes: insync, behind, edited, conflict, adopt, missing, plus unmanaged for a remote record claiming an unknown id; the unmanaged finding now counts toward the exit code"
+    commit: 3db47f7d6081cad387f91fc33eddb67773d8da8d
+    recorded_at: 2026-09-09T17:20:38Z
+  - covers: edit_protection_holds
+    type: test
+    command: "bash test/run.sh 45_github_projection"
+    result: "an edited region is detected both when the canonical record is unchanged (edited) and when it has moved since (conflict); the second was unreachable before, so --apply would have overwritten a person's text without --force"
+    commit: 3db47f7d6081cad387f91fc33eddb67773d8da8d
+    recorded_at: 2026-09-09T17:20:39Z

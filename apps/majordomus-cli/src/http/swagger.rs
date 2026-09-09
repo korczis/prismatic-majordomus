@@ -57,3 +57,57 @@ window.ui = SwaggerUIBundle({{ url: "{spec}", dom_id: "#swagger-ui", deepLinking
 pub fn page() -> &'static str {
     PAGE.as_str()
 }
+
+/// Whether this shell may be offered as a link a reader can follow, in an environment
+/// where the surfaces are what [`crate::web::projection_routes`] resolved.
+///
+/// The console is served by a running process and nothing publishes it, so a published
+/// page must name it rather than link it. The answer comes from the surface's declared
+/// availability and from nowhere else: not from the page's own address, not from a build
+/// flag, not from a template that happens to know which site it is rendering.
+///
+/// ```
+/// use majordomus_cli::http::swagger;
+/// assert!(!swagger::offered_by_a_publication(), "a console needs the server behind it");
+/// ```
+pub fn offered_by_a_publication() -> bool {
+    crate::web::projection_routes()
+        .iter()
+        .find(|r| r.path == SWAGGER_PATH)
+        .is_some_and(|r| r.linkable())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_shell_points_at_the_generated_document_and_carries_none_of_its_own() {
+        // the whole claim this module makes: what a reader sees is whatever the server
+        // generated from the registry at the moment of the request, never a copy
+        let shell = page();
+        assert!(shell.contains(&format!("url: \"{SPEC_PATH}\"")));
+        for embedded in ["\"paths\"", "\"openapi\"", "\"components\""] {
+            assert!(
+                !shell.contains(embedded),
+                "the shell embeds {embedded}, so it can disagree with the registry"
+            );
+        }
+        // and it is rendered once: two calls hand back the same allocation, not two
+        assert!(std::ptr::eq(shell.as_ptr(), page().as_ptr()));
+    }
+
+    #[test]
+    fn the_pinned_distribution_is_the_one_both_asset_urls_name() {
+        // a half-upgraded pin loads a stylesheet from one version and a bundle from another,
+        // which fails in the browser and nowhere else
+        let shell = page();
+        assert_eq!(
+            shell
+                .matches(&format!("swagger-ui-dist@{SWAGGER_UI_VERSION}"))
+                .count(),
+            2,
+            "the stylesheet and the bundle both come from the pinned version"
+        );
+    }
+}

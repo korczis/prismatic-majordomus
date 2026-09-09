@@ -1,10 +1,10 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.2.0
+# Generator: majordomus-cli 0.4.0
 schema: majordomus/cli/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.2.0
-version: "0.2.0"
+generator: majordomus-cli 0.4.0
+version: "0.4.0"
 source: apps/majordomus-cli/src/cli.rs
 route_prefix: /docs/cli
 cli:
@@ -630,6 +630,120 @@ cli:
         - path:
             - majordomus
             - capabilities
+            - projections
+          route: /docs/cli/capabilities/projections/
+          executable: true
+          usage: "majordomus capabilities projections [OPTIONS]"
+          about: "Where each capability is projected, and every claim its surface does not answer"
+          args:
+            - name: module
+              long: module
+              positional: false
+              help: Only capabilities composed in this module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: unmet
+              long: unmet
+              positional: false
+              help: Only the capabilities whose declared exposures are not all answered
+              value_name: UNMET
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: capabilities-projections-unmet
+              title: Every exposure a capability claims that its surface does not answer
+              description: "`rows: 0` is the closure `project.interfaces-are-projections` asks for: every declared command line, route and tool is answered by the surface that carries it. The commands no capability claims are reported beside it, as the measure of how much of the command line is still hand-written."
+              argv:
+                - capabilities
+                - projections
+                - "--unmet"
+              command: majordomus capabilities projections --unmet
+              setup: []
+              expectation: exits 0
+            - id: capabilities-projections-module
+              title: "Where one module's capabilities appear"
+              description: "A row per capability with the command line, HTTP route and MCP tool it reaches, so a capability that exists but is reachable from nowhere is visible as one."
+              argv:
+                - capabilities
+                - projections
+                - "--module"
+                - worktree
+              command: majordomus capabilities projections --module worktree
+              setup: []
+              expectation: "exits 0; prints worktree.topology, majordomus worktree topology"
+          subcommands: []
+        - path:
+            - majordomus
+            - capabilities
             - validate
           route: /docs/cli/capabilities/validate/
           executable: true
@@ -777,6 +891,10 @@ cli:
               help: "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/"
             - name: web
               help: "`docs/generated/web.json`: the resolved web topology the site's route reference renders"
+            - name: changelog
+              help: "`docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's release records, its decisions and the repository's commits"
+            - name: deployment
+              help: "deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects"
             - name: graph
               help: "docs/generated/graph.json and its schema: the composed graph as data"
           defaults:
@@ -2211,6 +2329,121 @@ cli:
                     - "--from"
                     - .ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json
                   command: majordomus web report benchmarks --from .ai/repo/benchmarks/rust/baseline.macos-aarch64-debug.json
+                  setup: []
+                  expectation: exits 13
+              subcommands: []
+            - path:
+                - majordomus
+                - web
+                - report
+                - ui
+              route: /docs/cli/web/report/ui/
+              executable: true
+              usage: "majordomus web report ui [OPTIONS]"
+              about: "The UI conformance audit, rendered as a section of the test surface (/tests/ui)"
+              args:
+                - name: from
+                  long: from
+                  positional: false
+                  help: "A results document from `scripts/ui audit`"
+                  value_name: FROM
+                  takes_value: true
+                  required: true
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract)"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: Output shape
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+                - name: only
+                  long: only
+                  positional: false
+                  help: "Only these surfaces, by discovered id (repeat or separate with commas)"
+                  value_name: ONLY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: exclude
+                  long: exclude
+                  positional: false
+                  help: "Every surface except these, by discovered id"
+                  value_name: EXCLUDE
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+              examples:
+                - id: web-report-ui
+                  title: Render the UI conformance audit into /tests/ui
+                  description: "`scripts/ui audit` drives a browser over every page of the built site at every width the compiled stylesheet's breakpoints imply, and writes one results document; this renders it. The rendering is a section of the test surface rather than a surface of its own, because a conformance run is a test run and the topology refuses a surface mounted inside another's subtree. Without that document there is nothing to render and the command says so."
+                  argv:
+                    - web
+                    - report
+                    - ui
+                    - "--from"
+                    - target/web/run-ui.json
+                  command: majordomus web report ui --from target/web/run-ui.json
                   setup: []
                   expectation: exits 13
               subcommands: []
@@ -3901,6 +4134,87 @@ cli:
         - path:
             - majordomus
             - distribution
+            - status
+          route: /docs/cli/distribution/status/
+          executable: true
+          usage: "majordomus distribution status [OPTIONS]"
+          about: "Whether the advertised one-line installation works right now, and what is missing when it does not"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: distribution-status
+              title: Whether the published one-line installation works right now
+              description: "The operator's question — *can a machine that has never seen this project install it with the advertised command?* — answered from the distribution model and the release records, without touching the network. Each check names what was observed; a failing one names its cause and the command that changes it. Shown here in a repository that has published nothing, where the answer is no and the exit code is 10, which is what makes it usable as a check rather than as prose. `distribution validate` is the gate over the model itself; this is the gate over the state a user meets."
+              argv:
+                - distribution
+                - status
+              command: majordomus distribution status
+              setup: []
+              expectation: exits 10
+          subcommands: []
+        - path:
+            - majordomus
+            - distribution
             - validate
           route: /docs/cli/distribution/validate/
           executable: true
@@ -4505,6 +4819,1453 @@ cli:
           subcommands: []
     - path:
         - majordomus
+        - env
+      route: /docs/cli/env/
+      executable: true
+      usage: "majordomus env [OPTIONS] [COMMAND]"
+      about: "What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: env-status
+          title: What this checkout is
+          description: "`env` with nothing after it resolves the whole snapshot: the project and its version, the repository and its layer, version control, the toolchains the repository declares, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services. This is the resolution that counts the layer, so it builds the index and writes the cache the banner reads."
+          argv:
+            - env
+          command: majordomus env
+          setup: []
+          expectation: "exits 0; prints project, repository, resolution"
+      subcommands:
+        - path:
+            - majordomus
+            - env
+            - status
+          route: /docs/cli/env/status/
+          executable: true
+          usage: "majordomus env status [OPTIONS]"
+          about: "The whole snapshot, resolved in full: what the layer holds is counted, and the cache the banner reads is written"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: env-status-json
+              title: The snapshot as one document
+              description: "The same value the HTTP route `/api/v1/environment` and the MCP resource `majordomus://environment` answer with, and the value the banner renders. Every field carries where it came from under `provenance`, and a value nothing could resolve is absent rather than zero."
+              argv:
+                - env
+                - status
+                - "--format"
+                - json
+              command: majordomus env status --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /schema, /project/version, /repository/name, /provenance"
+          subcommands: []
+        - path:
+            - majordomus
+            - env
+            - banner
+          route: /docs/cli/env/banner/
+          executable: true
+          usage: "majordomus env banner [OPTIONS]"
+          about: "Render the snapshot for a terminal. Goes to standard error, never standard output, because direnv reads standard output as the environment it is setting"
+          args:
+            - name: mode
+              long: mode
+              positional: false
+              help: "How much to show: `auto`, `full`, `compact` or `off`. Without it, MAJORDOMUS_BANNER decides, and without that, `auto` — which is silent when nothing is watching, shows the whole box when the repository has something new to say, and the two-line form when it does not"
+              value_name: MODE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: width
+              long: width
+              positional: false
+              help: "Draw as if the terminal were this wide, whatever it is"
+              value_name: COLUMNS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: env-banner-compact
+              title: "The two-line form, at a width you choose"
+              description: "What `direnv` renders on entering the repository. It resolves fast — it never builds the index — and it writes to standard error, because direnv reads the standard output of a `.envrc` as the environment it is applying. `--width` renders as if the terminal were that wide, which is what makes the layout testable."
+              argv:
+                - env
+                - banner
+                - "--mode"
+                - compact
+                - "--width"
+                - "80"
+              command: majordomus env banner --mode compact --width 80
+              setup: []
+              expectation: exits 0
+          subcommands: []
+        - path:
+            - majordomus
+            - env
+            - export
+          route: /docs/cli/env/export/
+          executable: true
+          usage: "majordomus env export [OPTIONS]"
+          about: "The variable assignments a shell in this repository benefits from, for `eval`. Assignments only: no command, no side effect"
+          args:
+            - name: shell
+              long: shell
+              positional: false
+              help: "The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`"
+              value_name: SHELL
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - direnv
+            - name: banner
+              long: banner
+              positional: false
+              help: "Also draw the banner, to standard error, from the same snapshot. What an adapter asks for: one process on the path a shell takes on every entry, rather than two that each pay for a `git status`"
+              value_name: BANNER
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: mode
+              long: mode
+              positional: false
+              help: "With --banner, how much to show; MAJORDOMUS_BANNER decides without it"
+              value_name: MODE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: bridge
+              long: bridge
+              positional: false
+              help: "Also refresh the workflow bridge under .ai/local/cache/ when a declaration behind it has changed. A few `stat` calls when nothing has; never a build, never a network call"
+              value_name: BRIDGE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: env-export-direnv
+              title: The assignments a shell in this repository wants
+              description: "Assignments and nothing else, safe to `eval`: no command runs, no file is touched, and every value is quoted so that a repository path holding a quote or a `$(...)` cannot become shell code. This is the whole of what `.envrc` needs from Majordomus."
+              argv:
+                - env
+                - export
+                - "--shell"
+                - direnv
+              command: majordomus env export --shell direnv
+              setup: []
+              expectation: exits 0; prints export MAJORDOMUS_ROOT=
+          subcommands: []
+        - path:
+            - majordomus
+            - env
+            - explain
+          route: /docs/cli/env/explain/
+          executable: true
+          usage: "majordomus env explain [OPTIONS] [FIELD]"
+          about: "Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted"
+          args:
+            - name: field
+              positional: true
+              help: "One field in dotted form (`vcs.branch`, `layer.objects`), or a prefix; every field when absent"
+              value_name: FIELD
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: env-explain-field
+              title: Where one value came from
+              description: "An inferred system without provenance is magic. Every field of the snapshot can name the file, command or compile-time constant that decided it, the resolver that read it, and whether it was read now, taken from the cache, or not resolved at all."
+              argv:
+                - env
+                - explain
+                - project.version
+              command: majordomus env explain project.version
+              setup: []
+              expectation: "exits 0; prints project.version, source, resolver"
+          subcommands: []
+    - path:
+        - majordomus
+        - commands
+      route: /docs/cli/commands/
+      executable: true
+      usage: "majordomus commands [OPTIONS] [COMMAND]"
+      about: "Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: commands-list
+          title: Every command this repository offers
+          description: "The command graph, composed from the three declarations that already exist: the clap tree of this executable, the shipped command registry of the shell tool, and the recipes the workflow runner describes. One line per command, with the program that runs it and what running it changes."
+          argv:
+            - commands
+          command: majordomus commands
+          setup: []
+          expectation: "exits 0; prints commands, executable, read-only"
+      subcommands:
+        - path:
+            - majordomus
+            - commands
+            - list
+          route: /docs/cli/commands/list/
+          executable: true
+          usage: "majordomus commands list [OPTIONS]"
+          about: "Every command, one line each: what it is, what running it changes, and where it is projected"
+          args:
+            - name: origin
+              long: origin
+              positional: false
+              help: Only the commands of this program
+              value_name: ORIGIN
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: executable
+                  help: This executable
+                - name: tool
+                  help: "The shell tool, bin/majordomus"
+                - name: workflow
+                  help: A workflow the repository declares
+              defaults: []
+            - name: effect
+              long: effect
+              positional: false
+              help: Only the commands whose effect is at most this
+              value_name: EFFECT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: read-only
+                  help: Reads and answers
+                - name: local-mutation
+                  help: Writes only what no commit carries
+                - name: repository-mutation
+                  help: Writes tracked files
+                - name: network-mutation
+                  help: Reaches the network with an effect
+                - name: destructive
+                  help: Removes something
+              defaults: []
+            - name: search
+              long: search
+              positional: false
+              help: "Only the commands matching this text, in their invocation, summary, tags or identity"
+              value_name: TEXT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: commands-list-filtered
+              title: Only what reads
+              description: "The filters are the graph's own vocabulary rather than a search over text: `--effect read-only` is every command that changes nothing anywhere, which is the same predicate the exposure policy uses to decide what a machine surface may call."
+              argv:
+                - commands
+                - list
+                - "--effect"
+                - read-only
+              command: majordomus commands list --effect read-only
+              setup: []
+              expectation: exits 0; prints read-only
+          subcommands: []
+        - path:
+            - majordomus
+            - commands
+            - show
+          route: /docs/cli/commands/show/
+          executable: true
+          usage: "majordomus commands show [OPTIONS] <ID>"
+          about: "One command in full: its arguments, its effect, what it needs, and every surface that carries it"
+          args:
+            - name: id
+              positional: true
+              help: "The command's identity, `executable.worktree.status`"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: commands-show
+              title: "One command, and every surface that carries it"
+              description: "The arguments with the source of each one's values, the effect, and the projections: the command line, the workflow recipe, the MCP tool, the HTTP route, the Cockpit and the page. A surface that withholds it says why."
+              argv:
+                - commands
+                - show
+                - executable.worktree.status
+              command: majordomus commands show executable.worktree.status
+              setup: []
+              expectation: "exits 0; prints executable.worktree.status, projections"
+          subcommands: []
+        - path:
+            - majordomus
+            - commands
+            - explain
+          route: /docs/cli/commands/explain/
+          executable: true
+          usage: "majordomus commands explain [OPTIONS] <ID>"
+          about: "Why one command appears where it does: the declaration it came from, the policy that placed it, and the reason for every surface that withholds it"
+          args:
+            - name: id
+              positional: true
+              help: "The command's identity, `executable.worktree.status`"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: commands-explain
+              title: Why a command appears where it does
+              description: "The same command with its provenance: the file that declares it, the reader that found it, the capability behind it when there is one, what it requires, and the file the exposure policy lives in. Nothing about a command's placement is a mystery a grep has to solve."
+              argv:
+                - commands
+                - explain
+                - executable.serve
+              command: majordomus commands explain executable.serve
+              setup: []
+              expectation: "exits 0; prints declared in, policy"
+          subcommands: []
+        - path:
+            - majordomus
+            - commands
+            - graph
+          route: /docs/cli/commands/graph/
+          executable: true
+          usage: "majordomus commands graph [OPTIONS]"
+          about: "The whole graph as one document, with its fingerprint and every diagnostic"
+          args:
+            - name: check
+              long: check
+              positional: false
+              help: Exit 10 when the graph carries an error
+              value_name: CHECK
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: commands-graph-json
+              title: The whole graph as one document
+              description: "Deterministic and fingerprinted: two builds over one tree produce the same bytes, which is what lets the workflow bridge, the completion index and the Cockpit all key on the fingerprint instead of regenerating."
+              argv:
+                - commands
+                - graph
+                - "--format"
+                - json
+              command: majordomus commands graph --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /schema, /fingerprint, /commands"
+          subcommands: []
+        - path:
+            - majordomus
+            - commands
+            - bridge
+          route: /docs/cli/commands/bridge/
+          executable: true
+          usage: "majordomus commands bridge [OPTIONS]"
+          about: "Materialise the workflow bridge from the graph, and refresh the cache the completion reads; writes nothing when the graph has not changed"
+          args:
+            - name: check
+              long: check
+              positional: false
+              help: Exit 10 when the materialised bridge is not the one this graph projects; write nothing
+              value_name: CHECK
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: commands-bridge
+              title: "The workflow runner's recipes, derived"
+              description: "Every command of both programs, written as a recipe that runs the canonical program with the caller's own arguments. It goes under .ai/local/cache/, which no commit carries, and it is rewritten only when the graph's fingerprint changes."
+              argv:
+                - commands
+                - bridge
+              command: majordomus commands bridge
+              setup: []
+              expectation: "exits 0; prints bridge, recipe"
+          subcommands: []
+    - path:
+        - majordomus
+        - completion
+      route: /docs/cli/completion/
+      executable: true
+      usage: "majordomus completion [OPTIONS] [COMMAND]"
+      about: "Completion for any surface, answered from the command graph: the candidates a shell asks for, and the one-time integration that asks"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+      examples:
+        - id: completion-default
+          title: The integration a person installs once
+          description: "With no subcommand, the shell integration for zsh. It contains no command, no flag and no identifier: every candidate comes from a query against the command graph of the repository the shell is in, so one integration serves every checkout and never goes stale."
+          argv:
+            - completion
+          command: majordomus completion
+          setup: []
+          expectation: "exits 0; prints completion query, compdef"
+      subcommands:
+        - path:
+            - majordomus
+            - completion
+            - query
+          route: /docs/cli/completion/query/
+          executable: true
+          usage: "majordomus completion query [OPTIONS] [WORD]"
+          about: "The candidates for one command line, from the command graph. What a shell adapter calls on every TAB"
+          args:
+            - name: surface
+              long: surface
+              positional: false
+              help: Which surface the words are spelled for
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: cli
+                  help: The command line of either program
+                - name: workflow
+                  help: The workflow runner
+              defaults:
+                - cli
+            - name: cursor
+              long: cursor
+              positional: false
+              help: The index of the word the cursor is in; the default is a new word after the last
+              value_name: N
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: words
+              positional: true
+              help: "The words of the command line, the program's own name first"
+              value_name: WORD
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: completion-query
+              title: What a shell asks on every TAB
+              description: "The words of the command line and the position of the cursor; back come the candidates with their descriptions. The same call answers the workflow runner's completion with `--surface workflow`, resolving the recipe name to the command it bridges and then completing that command's own arguments."
+              argv:
+                - completion
+                - query
+                - "--surface"
+                - cli
+                - "--"
+                - majordomus
+                - work
+              command: majordomus completion query --surface cli -- majordomus work
+              setup: []
+              expectation: exits 0; prints worktree
+          subcommands: []
+        - path:
+            - majordomus
+            - completion
+            - init
+          route: /docs/cli/completion/init/
+          executable: true
+          usage: "majordomus completion init [OPTIONS]"
+          about: "The shell integration to load once, which carries no command of its own and asks this executable for every candidate"
+          args:
+            - name: shell
+              long: shell
+              positional: false
+              help: Which shell to print the integration for
+              value_name: SHELL
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: zsh
+                  help: zsh
+                - name: bash
+                  help: bash
+                - name: fish
+                  help: fish
+              defaults:
+                - zsh
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: completion-init-bash
+              title: "The same, for bash"
+              description: "A different shell's protocol, the same question. Both adapters read the words being completed, find the cursor, ask this executable and print what comes back."
+              argv:
+                - completion
+                - init
+                - "--shell"
+                - bash
+              command: majordomus completion init --shell bash
+              setup: []
+              expectation: "exits 0; prints completion query, complete -F"
+          subcommands: []
+        - path:
+            - majordomus
+            - completion
+            - install
+          route: /docs/cli/completion/install/
+          executable: true
+          usage: "majordomus completion install [OPTIONS]"
+          about: "Put that integration into the shell's startup file, between managed markers, so that no one maintains it by hand"
+          args:
+            - name: shell
+              long: shell
+              positional: false
+              help: Which shell to install for; decides the startup file when --rc is not given
+              value_name: SHELL
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: zsh
+                  help: zsh
+                - name: bash
+                  help: bash
+                - name: fish
+                  help: fish
+              defaults:
+                - zsh
+            - name: rc
+              long: rc
+              positional: false
+              help: "The startup file to write, instead of the shell's usual one"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: remove
+              long: remove
+              positional: false
+              help: "Take the block out again, leaving the rest of the file as it was"
+              value_name: REMOVE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: dry_run
+              long: dry-run
+              positional: false
+              help: Say what would change and write nothing
+              value_name: DRY_RUN
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: completion-install-dry-run
+              title: "The one line a person adds to their shell, added for them"
+              description: "Writes the integration into the shell's startup file between `# >>> MAJORDOMUS >>>` markers: nothing outside them is touched, running it twice changes nothing, and `--remove` takes it out again. It is never a side effect of anything else — installing into a person's home directory is its own decision, so it is its own command. `--dry-run` says what would change and writes nothing."
+              argv:
+                - completion
+                - install
+                - "--shell"
+                - zsh
+                - "--dry-run"
+              command: majordomus completion install --shell zsh --dry-run
+              setup: []
+              expectation: exits 0
+          subcommands: []
+    - path:
+        - majordomus
         - worktree
       route: /docs/cli/worktree/
       executable: true
@@ -4581,6 +6342,8 @@ cli:
           command: majordomus worktree
           setup: []
           expectation: "exits 0; prints branch, worktree, container"
+      aliases:
+        - wt
       subcommands:
         - path:
             - majordomus
@@ -6077,4 +7840,1463 @@ cli:
               command: majordomus worktree branches
               setup: []
               expectation: exits 0
+          subcommands: []
+    - path:
+        - majordomus
+        - product
+      route: /docs/cli/product/
+      executable: true
+      usage: "majordomus product [OPTIONS] [COMMAND]"
+      about: "The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+        - name: featured
+          long: featured
+          positional: false
+          help: Only the features the homepage shows
+          value_name: FEATURED
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: all
+          long: all
+          positional: false
+          help: "Include drafts and deprecated features, not only the stable ones"
+          value_name: ALL
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: area
+          long: area
+          positional: false
+          help: Only features serving this operational area of the why catalogue
+          value_name: AREA
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: module
+          long: module
+          positional: false
+          help: Only features made of this capability module
+          value_name: MODULE
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: names_command
+          long: names-command
+          positional: false
+          help: Only features made of this shell command
+          value_name: NAMES_COMMAND
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: surface
+          long: surface
+          positional: false
+          help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+          value_name: SURFACE
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: query
+          long: query
+          short: q
+          positional: false
+          help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+          value_name: QUERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+      examples:
+        - id: product-default-list
+          title: "What the product does, as the layer declares it"
+          description: "`product` with nothing after it lists the features, because listing is what a person wants when they ask what the tool is for. Every column is derived: the surfaces a feature is exposed through come from the modules, commands and kinds it names, never from the file."
+          argv:
+            - product
+          command: majordomus product
+          setup: []
+          expectation: "exits 0; prints SLUG, SURFACES, feature(s)"
+      subcommands:
+        - path:
+            - majordomus
+            - product
+            - list
+          route: /docs/cli/product/list/
+          executable: true
+          usage: "majordomus product list [OPTIONS]"
+          about: "Every feature, narrowed by any filter, with the surfaces derived for each"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-list
+              title: "Every stable feature, in presentation order"
+              description: "Drafts are excluded unless `--all` is given; `--featured` narrows to the features the homepage shows. The filters are the facets the model derives — an area, a module, a command, a surface — so a module added to the executable is a filter without anything being registered."
+              argv:
+                - product
+                - list
+              command: majordomus product list
+              setup: []
+              expectation: "exits 0; prints SLUG, fixture-feature"
+            - id: product-list-json
+              title: "The same, as the shape the API and MCP answer with"
+              description: "One domain model behind every projection: this document is what `GET /api/v1/product/features` returns and what the `majordomus_features` tool answers, with the counts, the fingerprint and the surfaces of every feature."
+              argv:
+                - product
+                - list
+                - "--format"
+                - json
+              command: majordomus product list --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /counts/features, /features/0/surfaces, /fingerprint"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - show
+          route: /docs/cli/product/show/
+          executable: true
+          usage: "majordomus product show [OPTIONS] <ID>"
+          about: "One feature in full: what it is made of, resolved, and everything derived from that"
+          args:
+            - name: id
+              positional: true
+              help: "The feature's id, which is also its slug and its route"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-show
+              title: "One feature, with everything derived from what it names"
+              description: "The record as its file declares it, then what nobody authored: the capabilities of its modules with their tools and routes, the commands with their summaries, the objects of its kinds counted, the rules with their class, the documents, the decisions, the claims with their status, the moments it answers, and the interfaces all of that adds up to."
+              argv:
+                - product
+                - show
+                - fixture-feature
+              command: majordomus product show fixture-feature
+              setup: []
+              expectation: "exits 0; prints fixture-feature, surfaces, derived"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - matrix
+          route: /docs/cli/product/matrix/
+          executable: true
+          usage: "majordomus product matrix [OPTIONS]"
+          about: "Every feature against every interface, and every module, command and kind against the features that name it"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-matrix
+              title: "Every feature against every interface, and what no feature names"
+              description: "One row per feature with a mark per surface, then every module of the executable, every public command and every kind of the layer with the features that name it. A row with no feature is a gap the product page cannot hide."
+              argv:
+                - product
+                - matrix
+              command: majordomus product matrix
+              setup: []
+              expectation: "exits 0; prints FEATURE, cli, MODULE"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - providers
+          route: /docs/cli/product/providers/
+          executable: true
+          usage: "majordomus product providers [OPTIONS]"
+          about: "Every provider the tool has an adapter for, with what this repository does with it"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-providers
+              title: Every provider the tool has an adapter for
+              description: "One line per template the distribution ships, with the bootstraps this repository's policy renders through it, the client configuration it carries for the shared MCP server, and the hooks the policy wires. The set is the templates; nothing here is a list of vendors."
+              argv:
+                - product
+                - providers
+              command: majordomus product providers
+              setup: []
+              expectation: "exits 0; prints PROVIDER, agents"
+          subcommands: []
+        - path:
+            - majordomus
+            - product
+            - validate
+          route: /docs/cli/product/validate/
+          executable: true
+          usage: "majordomus product validate [OPTIONS]"
+          about: Every finding over the model; exit 10 when any is an error
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: featured
+              long: featured
+              positional: false
+              help: Only the features the homepage shows
+              value_name: FEATURED
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: all
+              long: all
+              positional: false
+              help: "Include drafts and deprecated features, not only the stable ones"
+              value_name: ALL
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: area
+              long: area
+              positional: false
+              help: Only features serving this operational area of the why catalogue
+              value_name: AREA
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: module
+              long: module
+              positional: false
+              help: Only features made of this capability module
+              value_name: MODULE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: names_command
+              long: names-command
+              positional: false
+              help: Only features made of this shell command
+              value_name: NAMES_COMMAND
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: surface
+              long: surface
+              positional: false
+              help: "Only features exposed through this surface: cli, api, mcp, cockpit or docs"
+              value_name: SURFACE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: query
+              long: query
+              short: q
+              positional: false
+              help: "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies"
+              value_name: QUERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+          examples:
+            - id: product-validate
+              title: Check the model before anything projects it
+              description: "A reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind no feature names. Exit 10 on any error."
+              argv:
+                - product
+                - validate
+              command: majordomus product validate
+              setup: []
+              expectation: "exits 0; prints feature(s), valid"
+          subcommands: []
+    - path:
+        - majordomus
+        - release
+      route: /docs/cli/release/
+      executable: true
+      usage: "majordomus release [OPTIONS] [COMMAND]"
+      about: "What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: How to render the answer
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: release-changelog
+          title: "What has shipped, and what has not"
+          description: "`release` with nothing after it renders the changelog. Every line of it is derived — a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range — so there is no file anyone can forget to update."
+          argv:
+            - release
+          command: majordomus release
+          setup: []
+          expectation: exits 0; prints Changelog
+      subcommands:
+        - path:
+            - majordomus
+            - release
+            - changelog
+          route: /docs/cli/release/changelog/
+          executable: true
+          usage: "majordomus release changelog [OPTIONS]"
+          about: "The changelog, composed from the layer's release records, the decisions dated inside each release's window, and the conventional commits in its range"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: How to render the answer
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-changelog-json
+              title: The same document every other surface answers with
+              description: "What `GET /api/v1/changelog` returns, what the MCP resource `majordomus://changelog` carries, and what `majordomus generate changelog` writes into the reference. One value, four renderings."
+              argv:
+                - release
+                - changelog
+                - "--format"
+                - json
+              command: majordomus release changelog --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /schema, /current, /sections"
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - version
+          route: /docs/cli/release/version/
+          executable: true
+          usage: "majordomus release version [OPTIONS]"
+          about: "The version the two writers state, whether they agree, and the bump the commits since the last release imply"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: How to render the answer
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-version
+              title: "The version, and the one the commits imply"
+              description: "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state, whether they agree, and what the conventional commits since the last release imply the next one should be."
+              argv:
+                - release
+                - version
+                - "--format"
+                - json
+              command: majordomus release version --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /declared, /agree, /bump"
+          subcommands: []
+        - path:
+            - majordomus
+            - release
+            - bump
+          route: /docs/cli/release/bump/
+          executable: true
+          usage: "majordomus release bump [OPTIONS]"
+          about: "Raise the version in both places at once, to the bump the commits imply or to one you name"
+          args:
+            - name: level
+              long: level
+              positional: false
+              help: Raise by this much instead of by what the commits imply
+              value_name: LEVEL
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: exact
+              long: exact
+              positional: false
+              help: "Set exactly this version, instead of raising the current one"
+              value_name: VERSION
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: dry_run
+              long: dry-run
+              positional: false
+              help: Say what would change and write nothing
+              value_name: DRY_RUN
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: How to render the answer
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: release-bump-dry-run
+              title: "Raising it, in both places, once"
+              description: "The bump defaults to what the commits imply — a breaking change is major, a feature is minor, anything else is patch — and `--level` or `--exact` overrides that when a person means something the commits do not say. It writes both files and nothing else; `scripts/release-version --check` then proves the work of one writer rather than the memory of one person."
+              argv:
+                - release
+                - bump
+                - "--dry-run"
+              command: majordomus release bump --dry-run
+              setup: []
+              expectation: exits 0
+          subcommands: []
+    - path:
+        - majordomus
+        - quality
+      route: /docs/cli/quality/
+      executable: false
+      usage: "majordomus quality <COMMAND>"
+      about: "What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry"
+      args: []
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - quality
+            - report
+          route: /docs/cli/quality/report/
+          executable: true
+          usage: "majordomus quality report [OPTIONS]"
+          about: "Measure the crate and report every finding, with the rule it breaks and what to do about it"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: code
+              long: code
+              positional: false
+              help: "Only findings carrying this code, e.g. RUST_PUBLIC_MISSING_EXAMPLE"
+              value_name: CODE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: path
+              long: path
+              positional: false
+              help: Only findings under this repository-relative path prefix
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: summary
+              long: summary
+              positional: false
+              help: Print the counts and leave the findings out
+              value_name: SUMMARY
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: include_baselined
+              long: include-baselined
+              positional: false
+              help: "Show the findings the baseline already accepts, which are left out by default"
+              value_name: INCLUDE_BASELINED
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: write_baseline
+              long: write-baseline
+              positional: false
+              help: "Record today's findings as the accepted baseline, so the debt can shrink and cannot grow"
+              value_name: WRITE_BASELINE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+          examples:
+            - id: quality-summary
+              title: "Where the crate's public surface stands"
+              description: "The counts alone: how much of the exported surface is documented and exampled, how many modules something exercises, and how the canonical operations stand against the command line, HTTP, OpenAPI and MCP. Exits 10 when any finding stands outside the recorded baseline."
+              argv:
+                - quality
+                - report
+                - "--summary"
+              command: majordomus quality report --summary
+              setup: []
+              expectation: exits 0
+            - id: quality-code-json
+              title: "One kind of finding, with the rule and the remedy"
+              description: "Filtered to one violation code. Every finding carries the rule that requires it, where it is, why it matters and what to do — which is what lets a person and an agent act on the same report."
+              argv:
+                - quality
+                - report
+                - "--code"
+                - RUST_MODULE_MISSING_EXAMPLE
+                - "--format"
+                - json
+              command: majordomus quality report --code RUST_MODULE_MISSING_EXAMPLE --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /measured, /passes, /report/schema"
           subcommands: []

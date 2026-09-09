@@ -6,31 +6,104 @@
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 {#- Everything on this page is read from the catalogue the executable derived from
-    .ai/repo/why/. There is no list of moments, no list of filter values and no mapping
-    from a symptom to a recommendation anywhere in this template or in any script: adding
-    one file under the layer changes every part of what follows. -#}
+    .ai/repo/why/. There is no list of moments, no list of audiences or areas, no list of
+    filter values and no mapping from a symptom to a recommendation anywhere in this template
+    or in any script: adding one file under the layer changes every part of what follows.
+
+    The page is organised for a reader who arrives not knowing the vocabulary: first by who
+    they are (the audiences, as tabs that need no JavaScript), then by the part of operations
+    a problem falls under (the areas), then the questionnaire, then every moment with the
+    filters. Each of the three ways in shows the same objects; only the grouping differs. -#}
 {%- set catalogue = load_data(path="data/registry/why.json") -%}
 {%- set public = [m for m in catalogue.moments if m.status == "stable"] -%}
+{%- set audiences = [a for a in catalogue.audiences if a.count > 0] -%}
+{%- set areas = [a for a in catalogue.areas if a.count > 0] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 
-<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
   {% include "partials/breadcrumb.html" %}
-  <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">You need this if, this week, you have…</h1>
-  <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
-  <p class="mt-4 max-w-3xl text-base font-medium text-heading">None of these are model problems. They are operations problems, and operations is what Majordomus does.</p>
-  <nav aria-label="Ways into the catalogue" class="mt-6 flex flex-wrap gap-2 text-sm">
-    <a href="#moments" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse {{ public | length }} problems</a>
-    <a href="{{ get_url(path='/why/audiences/', trailing_slash=true) }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse by who you are</a>
-    <a href="{{ get_url(path='/why/areas/', trailing_slash=true) }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-3 py-1.5 font-medium text-heading hover:bg-neutral-secondary-medium">Browse by operational area</a>
-    <a href="#diagnose" class="rounded-base border border-brand bg-brand-softer px-3 py-1.5 font-medium text-fg-brand-strong hover:bg-neutral-secondary-medium">Diagnose your week</a>
+  <p class="mt-4 font-mono text-xs uppercase tracking-widest text-fg-brand">why · {{ public | length }} operational failure modes</p>
+  <h1 class="mt-2 break-words text-3xl font-extrabold tracking-tight text-heading sm:text-4xl lg:text-5xl">You need this if, this week, you have…</h1>
+  <p class="mt-4 max-w-3xl break-words text-lg leading-relaxed text-body">{{ section.description }}</p>
+  <p class="mt-3 max-w-3xl text-base font-medium text-heading">None of these are model problems. They are operations problems, and operations is what Majordomus does.</p>
+  <nav aria-label="Ways into the catalogue" class="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+    <a href="#who" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">start here</span><span class="mt-1 text-base font-semibold text-heading">Who you are</span><span class="mt-1 text-sm text-body">{{ audiences | length }} kinds of team, the problems each meets first</span></a>
+    <a href="#areas" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">by category</span><span class="mt-1 text-base font-semibold text-heading">What part of operations</span><span class="mt-1 text-sm text-body">{{ areas | length }} areas, from context to cost</span></a>
+    <a href="#diagnose" class="flex flex-col rounded-base border border-brand bg-brand-softer px-4 py-3 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-fg-brand">interactive</span><span class="mt-1 text-base font-semibold text-fg-brand-strong">Diagnose your week</span><span class="mt-1 text-sm text-body">tick what you recognise; the profile is counted, not scored</span></a>
+    <a href="#all" class="flex flex-col rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">everything</span><span class="mt-1 text-base font-semibold text-heading">All {{ public | length }} moments</span><span class="mt-1 text-sm text-body">searchable, filterable, one card each</span></a>
   </nav>
 </div></div>
 
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
+  {#- ------------------------------------------------------------------ who you are -#}
+  {#- The audiences as tabs without a runtime: one radio per audience, the labels as pills,
+      and the panel of the checked radio shown by a stylesheet rule generated from the same
+      data. A browser with no JavaScript gets the whole thing; a browser with no CSS gets every
+      panel in order, which is the right degradation. -#}
+  <section id="who" class="scroll-mt-24">
+    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Start with who you are</h2>
+    <p class="mt-2 max-w-3xl text-base text-body">Every audience below names the moments it recognises first. Pick yours; the six that weigh most for it are shown, and the audience page holds them all.</p>
+    <style>
+      .why-who-panel { display: none; }
+      {%- for a in audiences %}
+      #who-{{ a.id }}:checked ~ .why-who-panels .why-who-panel[data-who="{{ a.id }}"] { display: block; }
+      #who-{{ a.id }}:checked ~ .why-who-pills label[for="who-{{ a.id }}"] { border-color: var(--color-brand, currentColor); background: var(--color-brand-softer, transparent); }
+      {%- endfor %}
+    </style>
+    {%- for a in audiences %}
+    <input type="radio" id="who-{{ a.id }}" name="why-who" class="sr-only"{% if loop.first %} checked{% endif %}>
+    {%- endfor %}
+    <div class="why-who-pills mt-5 flex flex-wrap gap-2" role="radiogroup" aria-label="Who you are">
+      {%- for a in audiences %}
+      <label for="who-{{ a.id }}" class="cursor-pointer rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm font-semibold text-heading hover:bg-neutral-secondary-medium">{{ a.title }} <span class="font-mono text-xs font-normal text-body">{{ a.count }}</span></label>
+      {%- endfor %}
+    </div>
+    <div class="why-who-panels mt-5">
+      {%- for a in audiences %}
+      <div class="why-who-panel rounded-base border border-brand-subtle bg-neutral-primary p-5 sm:p-6" data-who="{{ a.id }}">
+        <div class="flex flex-wrap items-baseline justify-between gap-3">
+          <h3 class="text-xl font-bold tracking-tight text-heading">{{ a.title }}</h3>
+          <a href="{{ base }}{{ a.route }}" class="text-sm font-medium text-fg-brand hover:underline">All {{ a.count }} for this audience &rarr;</a>
+        </div>
+        {%- if a.summary %}<p class="mt-2 max-w-3xl text-base leading-relaxed text-body">{{ a.summary }}</p>{% endif %}
+        <ol class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {%- for id in a.moments %}{% if loop.index <= 6 %}{% set m = [x for x in catalogue.moments if x.id == id][0] %}
+          <li class="min-w-0">{{ <moment_card m={m} base={base} /> }}</li>
+          {%- endif %}{% endfor %}
+        </ol>
+      </div>
+      {%- endfor %}
+    </div>
+  </section>
+
+  {#- ------------------------------------------------------------------ by area -#}
+  <section id="areas" class="mt-14 scroll-mt-24">
+    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">By what part of operations breaks</h2>
+    <p class="mt-2 max-w-3xl text-base text-body">Every moment falls under one or more areas. Each card names the area, what it covers, and the three moments that weigh most in it; the area page holds the rest.</p>
+    <ol class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {%- for a in areas %}
+      <li class="min-w-0 flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5">
+        <div class="flex items-baseline justify-between gap-3">
+          <h3 class="text-lg font-semibold tracking-tight text-heading"><a href="{{ base }}{{ a.route }}" class="hover:underline">{{ a.title }}</a></h3>
+          <span class="shrink-0 font-mono text-xs text-body-subtle">{{ a.count }}</span>
+        </div>
+        {%- if a.summary %}<p class="mt-2 text-sm leading-relaxed text-body">{{ a.summary }}</p>{% endif %}
+        <ul class="mt-4 space-y-2 border-t border-default pt-3">
+          {%- for id in a.moments %}{% if loop.index <= 3 %}{% set m = [x for x in catalogue.moments if x.id == id][0] %}
+          <li class="min-w-0"><a href="{{ base }}{{ m.route }}" class="flex gap-2 py-0.5 text-sm font-medium text-heading hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0 break-words">{{ m.hook }}</span></a></li>
+          {%- endif %}{% endfor %}
+        </ul>
+        <a href="{{ base }}{{ a.route }}" class="mt-auto pt-4 text-sm font-medium text-fg-brand hover:underline">All {{ a.count }} in this area &rarr;</a>
+      </li>
+      {%- endfor %}
+    </ol>
+  </section>
+
   {#- ------------------------------------------------------------------ diagnosis -#}
-  <section id="diagnose" class="scroll-mt-24" x-data="whyDiagnosis()">
-    <h2 class="text-2xl font-bold tracking-tight text-heading">Which of these happened to you this week?</h2>
+  <section id="diagnose" class="mt-14 scroll-mt-24" x-data="whyDiagnosis()">
+    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Diagnose your week</h2>
+    <p class="mt-2 max-w-3xl text-base text-body">Which of these happened to you this week?</p>
     <p class="mt-2 max-w-3xl text-body">Every line below is a signal one of the moments declares. Tick what you recognise; the profile that appears is counted from the metadata of the moments you picked, not scored by anything.</p>
     <noscript><p class="mt-3 max-w-3xl rounded-base border border-default bg-neutral-primary-soft p-4 text-sm text-body">This questionnaire needs JavaScript to add up. The same answer, without it: <code class="font-mono text-heading">majordomus why diagnose --signal &lt;id&gt;</code>, or read the moments below.</p></noscript>
 
@@ -100,8 +173,8 @@
   </section>
 
   {#- ------------------------------------------------------------------ the moments -#}
-  <section id="moments" class="mt-14 scroll-mt-24" x-data="whyFilter()">
-    <h2 class="text-2xl font-bold tracking-tight text-heading">The moments</h2>
+  <section id="all" class="mt-14 scroll-mt-24" x-data="whyFilter()">
+    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">All the moments</h2>
     <p class="mt-2 max-w-3xl text-body">Every filter below is a value some moment declares, counted over the catalogue. Nothing here is a list somebody keeps.</p>
 
     {#- Filtering is a progressive enhancement: without Alpine every moment is shown, which
@@ -151,19 +224,16 @@
           x-show="shows($el)">
         <article class="flex h-full min-w-0 flex-col rounded-base border border-brand-subtle bg-neutral-primary-soft p-5">
           <a href="{{ base }}{{ m.route }}" class="group">
-            <p class="flex gap-3 text-base font-medium text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="group-hover:underline">{{ m.hook }}</span></p>
+            <p class="flex gap-3 text-lg font-semibold leading-snug text-heading"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0 break-words group-hover:underline">{{ m.hook }}</span></p>
           </a>
-          <p class="mt-3 min-w-0 break-words text-sm text-body">{{ m.summary }}</p>
-          <dl class="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-default pt-3 text-xs">
-            <div class="flex flex-wrap items-baseline gap-x-2">
-              <dt class="font-mono uppercase tracking-wide text-body-subtle">area</dt>
-              {%- for a in m.areas %}<dd><a href="{{ get_url(path='/why/areas/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a></dd>{% endfor %}
-            </div>
-            <div class="flex flex-wrap items-baseline gap-x-2">
-              <dt class="font-mono uppercase tracking-wide text-body-subtle">cost</dt><dd class="text-body">{{ m.severity }}</dd>
-              <dt class="font-mono uppercase tracking-wide text-body-subtle">how often</dt><dd class="text-body">{{ m.frequency }}</dd>
-            </div>
-          </dl>
+          <p class="mt-3 min-w-0 break-words text-sm leading-relaxed text-body">{{ m.summary }}</p>
+          <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-default pt-3 text-xs">
+            {{ <moment_marks severity={m.severity} frequency={m.frequency} /> }}
+            <span class="flex flex-wrap items-baseline gap-x-2 font-mono">
+              <span class="uppercase tracking-wide text-body-subtle">area</span>
+              {%- for a in m.areas %}<a href="{{ get_url(path='/why/areas/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a>{% endfor %}
+            </span>
+          </div>
           <p class="mt-4 pt-1"><a href="{{ base }}{{ m.route }}" class="text-sm font-medium text-fg-brand hover:underline">Why it happens, and what to do &rarr;</a></p>
         </article>
       </li>
@@ -212,7 +282,7 @@ function whyDiagnosis() {
       const by = {};
       for (const id of this.matched) for (const v of (byId[id] || {})[field] || []) (by[v] = by[v] || []).push(id);
       return Object.entries(by).map(([id, why]) => ({ id, n: why.length, why }))
-        .sort((a, b) => b.n - a.n || a.id.localeCompare(b.id));
+        .sort((a, b) => b.n - a.n || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     },
     share() {
       const url = location.origin + location.pathname + '#diagnose?signals=' + this.picked.join(',');

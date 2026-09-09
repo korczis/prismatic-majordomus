@@ -68,6 +68,7 @@ mj_require_repo() {
   export MJ_ROOT
   # hooks inherited from a parent process must never redirect our git calls
   unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
+  mj_require_share_is_ours
   mj_resolve_layout
 }
 mj_require_installed() {
@@ -104,6 +105,36 @@ MJ_STD_RULES_DIR="$MJ_SHARE_DIR/standard/majordomus"
 MJ_PROVIDERS_DEFAULT_DIR="$MJ_SHARE_DIR/providers"
 export MJ_SHARE_DIR MJ_SKELETON_DIR MJ_ALLOW_DIR MJ_STD_RULES_DIR MJ_PROVIDERS_DEFAULT_DIR
 
+# MAJORDOMUS_SHARE is inherited, and a shell that entered another checkout exports that
+# checkout's share/. Carried into a linked worktree it makes this distribution's code read
+# another distribution's schemas, allow-lists and skeleton, and the difference between the
+# two is then reported as drift in the repository: a pre-commit hook refusing a commit over
+# generated artifacts that are not stale is what that looks like from the outside, and it
+# has cost whole sessions.
+# Only what is decidable is refused: the named share lies in a working tree of *this*
+# repository that is not this working tree, and since every worktree carries its own
+# share/, nothing about that can be intended. A share under no working tree at all is an
+# installed distribution — a package, a PATH install, a test fixture — which is what the
+# variable is for; a share in some other repository's working tree is the same case, a tool
+# checkout serving a repository elsewhere. Neither is distinguishable from a legitimate
+# installation, so neither is refused. Two worktrees of one repository are told apart from
+# two repositories by the git common directory, which every worktree of one repository
+# shares and no two repositories do.
+# Cheap where it always runs: the variable unset, or naming a directory under this
+# repository, costs one string comparison and no process.
+mj_require_share_is_ours() {
+  [ -n "${MAJORDOMUS_SHARE:-}" ] || return 0
+  local share root wt mine theirs
+  share="$(cd "$MJ_SHARE_DIR" 2>/dev/null && pwd -P)" || return 0   # absent: the reader that needs it says so
+  root="$(cd "$MJ_ROOT" 2>/dev/null && pwd -P)" || return 0
+  case "$share" in "$root"|"$root"/*) return 0 ;; esac
+  wt="$(git -C "$share" rev-parse --show-toplevel 2>/dev/null)" || return 0
+  [ -n "$wt" ] || return 0
+  mine="$(mj_git_repo_id)"; theirs="$(mj_git_repo_id "$wt")"
+  [ -n "$mine" ] && [ "$mine" = "$theirs" ] || return 0
+  mj_die "$MJ_EX_REFUSED" "MAJORDOMUS_SHARE names $MJ_SHARE_DIR, the distribution of $wt — another worktree of this repository, not this one ($root). Its schemas and allow-lists are not this checkout's, and what they disagree about is reported as drift here. Run with: env -u MAJORDOMUS_SHARE (or re-enter this directory, so that direnv exports the share beside the tool it also puts on the path)"
+}
+
 MJ_LAYOUT=""; MJ_AI_DIR=""; MJ_AI_MANIFEST=""; MJ_AI_REPO_DIR=""; MJ_AI_LOCAL_DIR=""
 MJ_STATE_DIR=""; MJ_POLICY_FILE=""; MJ_SCOPE_FILE=""; MJ_PROFILES_DIR=""; MJ_PROMPTS_DIR=""; MJ_PROJECT_DIR=""
 MJ_RULES_DIR=""; MJ_KNOWLEDGE_DIR=""; MJ_ADRS_DIR=""; MJ_SKILLS_DIR=""; MJ_WORKFLOWS_DIR=""
@@ -113,7 +144,7 @@ MJ_PROVIDERS_DIR=""; MJ_TEMPLATES_DIR=""; MJ_CACHE_DIR=""
 # a repository path, relative to the repository root, for messages and records
 mj_rel() { printf '%s' "${1#"$MJ_ROOT/"}"; }
 # is repository-relative path $1 inside the AI layer (the tool's own files)?
-mj_is_ai_path() { case "$1" in "$(mj_rel "$MJ_AI_DIR")"|"$(mj_rel "$MJ_AI_DIR")"/*) return 0 ;; esac; return 1; }
+mj_is_ai_path() { local ai="${MJ_AI_DIR#"$MJ_ROOT/"}"; case "$1" in "$ai"|"$ai"/*) return 0 ;; esac; return 1; }
 
 # Resolve the repository layout. Never fails: a repository with no AI layer resolves to
 # the paths init would create, so init and doctor can name them.
@@ -222,7 +253,10 @@ mj_layout_table() {
 }
 
 mj_git() { mj_count git; git -C "$MJ_ROOT" "$@"; }
-mj_git_repo_id() { mj_git rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$MJ_ROOT" "$d" ;; esac; }; }
+# The repository a checkout belongs to, as an absolute path: the git common directory,
+# which every worktree of one repository shares and no two repositories do. $1 names the
+# checkout to ask; the default is MJ_ROOT, and the value records write is that one.
+mj_git_repo_id() { local r="${1:-$MJ_ROOT}"; mj_count git; git -C "$r" rev-parse --git-common-dir 2>/dev/null | { read -r d; case "$d" in /*) printf '%s' "$d" ;; *) printf '%s/%s' "$r" "$d" ;; esac; }; }
 mj_git_branch()  { mj_git symbolic-ref --short HEAD 2>/dev/null || printf 'DETACHED'; }
 # --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
 # literal string "HEAD" on stdout and *then* fails. The fallback would append to that,
@@ -326,16 +360,33 @@ mj_policy_cat() {
 }
 
 # normalise a repo-relative path: strip ./ and trailing /, collapse //, refuse escapes
-mj_norm_path() {
-  local p="$1"
-  p="$(printf '%s' "$p" | sed -e 's#^\./##' -e 's#//*#/#g' -e 's#/$##')"
+# Normalise a repository-relative path into the variable named by $1 — no subprocess. The
+# context scan asks this question once per document per tracked file, tens of thousands of
+# times in a repository this size, and a `sed` per question was most of the two minutes
+# `majordomus context` took: the answer is parameter expansion, and the value goes into a
+# variable rather than through a pipe, so a hot caller pays neither a fork nor an exec.
+# Returns 1 when the path is empty, absolute, or escapes the repository.
+mj_norm_path_into() {
+  local p="$2"
+  p="${p#./}"
+  while [[ "$p" == *//* ]]; do p="${p//\/\//\/}"; done
+  p="${p%/}"
   case "$p" in ""|/*|../*|*/../*|*/..|..) return 1 ;; esac
-  printf '%s' "$p"
+  printf -v "$1" '%s' "$p"
+}
+# The same, printed: for a caller that reads it with $(...). One fork for the substitution,
+# none inside it.
+mj_norm_path() {
+  local out
+  mj_norm_path_into out "$1" || return 1
+  printf '%s' "$out"
 }
 # does path a contain path b (or equal)? Both sides are normalised first: state files can be
 # hand-edited, so a trailing slash or ./ in a scope entry must not silently exclude everything.
 mj_path_contains() {
-  local a b; a="$(mj_norm_path "$1" 2>/dev/null || printf '%s' "$1")"; b="$(mj_norm_path "$2" 2>/dev/null || printf '%s' "$2")"
+  local a b
+  mj_norm_path_into a "$1" || a="$1"
+  mj_norm_path_into b "$2" || b="$2"
   case "$b" in "$a"|"$a"/*) return 0 ;; esac; return 1
 }
 

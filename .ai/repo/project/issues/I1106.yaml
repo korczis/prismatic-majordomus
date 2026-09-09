@@ -1,0 +1,32 @@
+id: I1106
+milestone: two-folder-integration
+title: The registries are views of the model, not separate discoveries
+slug: typed-registries-as-views
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the typed registries — skills, rules, decisions, workflows, use cases, providers, capabilities — views over the one repository model, so that adding a valid artifact under a discoverable namespace registers it everywhere with no second edit."
+why: "Registration by hand is the defect this repository has removed once per subsystem. Doing it once over one model is what stops the next subsystem from reinventing it."
+current_state: "Kinds are discovered by source classes and indexed; capabilities are declared and projected. The two are joined only in the composed graph, and other consumers still enumerate."
+desired_state: "Every registry is a projection of the model, and a new artifact appears in the CLI, the API, MCP, the Cockpit, the documentation and search without anything being listed."
+scope:
+  - apps/majordomus-cli/src/capability/registry.rs
+non_scope:
+  - A registry file that enumerates what discovery finds
+  - Changing what any kind means; this changes where it is read from
+depends_on:
+  - I1105
+acceptance_criteria:
+  - Each registry is derived from the model, and no consumer builds its own
+  - Adding a schema-valid artifact under a discoverable namespace exposes it to every applicable consumer with no further registration, proved by a synthetic artifact in a test
+  - A malformed artifact fails loudly with its path and its schema violation rather than vanishing from a listing
+  - Ordering is deterministic, so two runs over one tree produce one answer
+validation:
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - registries_derived
+  - zero_registration
+risk: "Silent omission is the failure mode: an artifact that fails validation and simply does not appear is indistinguishable from one nobody wrote. It has to fail, not disappear."
+created_at: 2026-09-06
+updated_at: 2026-09-06

@@ -199,17 +199,19 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
     let json: Vec<&Artifact> = artifacts
         .iter()
         .filter(|a| a.format == ArtifactFormat::Json && !a.document.starts_with("providers/"))
-        // Documents whose only reader is a program are committed as JSON alone: the three
-        // the website loads, the matrix the release workflow reads, the public metadata
-        // of each release, and the composed graph with its schema — a megabyte of nodes
-        // and edges the site and the coverage matrix read. A YAML twin of any of them
-        // would be a file nobody opens.
+        // Documents whose only reader is a program are committed as JSON alone: the ones the
+        // website loads, the matrix the release workflow reads, the public metadata of each
+        // release, and the composed graph with its schema — a megabyte of nodes and edges the
+        // site and the coverage matrix read. A YAML twin of any of them would be a file
+        // nobody opens.
         .filter(|a| {
             !matches!(
                 a.document.as_str(),
                 "site-registry"
                     | "site-why"
                     | "site-why-graph"
+                    | "site-product"
+                    | "site-product-graph"
                     | "site-distribution"
                     | "distribution-matrix"
                     | "graph"

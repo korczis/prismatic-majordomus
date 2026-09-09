@@ -1,0 +1,62 @@
+# The providers the tool ships an adapter for, as data. One entry per template under
+# share/providers/, keyed by the template's file stem, which is the provider id everywhere:
+# the policy's projections, the capture adapters, the product table, the site.
+#
+# What a provider *is* comes from three places and this file holds the third. The template
+# beside it is the bootstrap the provider reads; the repository's policy says which
+# providers it projects and where; and this file says what cannot be discovered from any
+# tree: the name a person knows the tool by, the file it reads a project-scoped MCP client
+# configuration from (decided by the vendor), and the scratch roots it creates worktrees
+# under. Before this file the first two were a table compiled into the executable and the
+# third was a list compiled into the worktree topology (ADR 0024).
+#
+# A template with no entry here is still a provider, named by its file; `product validate`
+# reports the gap. An entry with no template is an error there, because a provider with no
+# bootstrap is a name and nothing else.
+#
+# scratch_roots — directories under which this provider creates a checkout of its own that
+# the worktree topology must not claim: reported as a session's scratch checkout, never
+# migrated unasked, never cleaned up by the tool, refused by the commit guard with the
+# remedy of continuing in the canonical worktree. A root is a path with these expansions:
+#   <primary>/…        the primary checkout of the repository
+#   ~/…                the home directory
+#   ${NAME:-default}   an environment variable, or the default when it is unset
+#   $NAME              an environment variable; the root is skipped when it is unset
+# Nothing else is interpreted. A root that does not exist is not an error: the question is
+# only ever asked about a path that does.
+version: 1
+
+# The tool's own scratch roots: the operating system's temporary directory, where test
+# fixtures and throwaway checkouts live. Skipped for a repository that itself lives there.
+scratch_roots:
+  - $TMPDIR
+  - /tmp
+  - /private/tmp
+  - /var/tmp
+  - /var/folders
+  - /private/var/folders
+
+providers:
+  agents:
+    title: Any tool that reads AGENTS.md
+  bb:
+    title: bb
+    # An orchestrator (getbb.app): it runs Claude Code, Codex and ACP agents as processes
+    # over one repository and reads `.bb/AGENTS.md` itself, never the root `AGENTS.md`.
+    # No client configuration of its own and no hook: the agent it runs keeps both
+    # (ADR 0024). Its managed worktrees live under its data directory, by thread id.
+    scratch_roots:
+      - ${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees
+  claude-code:
+    title: Claude Code
+    client_config: .mcp.json
+    scratch_roots:
+      - <primary>/.claude/worktrees
+  codex:
+    title: Codex
+    client_config: .codex/config.toml
+  gemini:
+    title: Gemini CLI
+    client_config: .gemini/settings.json
+  generic:
+    title: A worker with no convention of its own

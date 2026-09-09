@@ -252,3 +252,254 @@ pub fn differences(before: &WorktreeFingerprint, after: &WorktreeFingerprint) ->
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A fingerprint whose every field is set, so that a test can change exactly one and
+    /// know that the line it reads back is about that one.
+    fn full() -> WorktreeFingerprint {
+        WorktreeFingerprint {
+            branch: Some("feature/x".into()),
+            head: Some("abc123".into()),
+            index_digest: "i".into(),
+            staged_diff_digest: "s".into(),
+            unstaged_diff_digest: "u".into(),
+            untracked_manifest_digest: "n".into(),
+            untracked_files: 2,
+            ignored_manifest_digest: "g".into(),
+            in_progress: None,
+            tree_manifest_digest: Some("t".into()),
+        }
+    }
+
+    /// Write a small tree: a nested directory, a file of known size, a symbolic link, and
+    /// the `.git` file a linked worktree carries, which the manifest must not attest.
+    fn tree(root: &std::path::Path, order_reversed: bool) {
+        std::fs::create_dir_all(root.join("src/deep")).unwrap();
+        let files: Vec<&str> = if order_reversed {
+            vec!["src/deep/z.rs", "src/deep/a.rs"]
+        } else {
+            vec!["src/deep/a.rs", "src/deep/z.rs"]
+        };
+        for f in files {
+            std::fs::write(root.join(f), "fn main() {}").unwrap();
+        }
+        std::fs::write(root.join(".git"), "gitdir: /elsewhere").unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink("../elsewhere", root.join("link")).unwrap();
+    }
+
+    #[test]
+    fn the_manifest_attests_every_entry_and_never_the_worktrees_own_git_file() {
+        let dir = tempfile::tempdir().unwrap();
+        tree(dir.path(), false);
+        let manifest = tree_manifest(dir.path()).unwrap();
+
+        assert!(
+            manifest.contains("src\u{0}dir"),
+            "a directory is attested as one"
+        );
+        assert!(
+            manifest.contains("src/deep/a.rs\u{0}file\u{0}12"),
+            "a file is attested with its size: {manifest}"
+        );
+        assert!(
+            !manifest.contains(".git\u{0}"),
+            "the .git file is rewritten by the move on purpose and must not be compared: {manifest}"
+        );
+        #[cfg(unix)]
+        assert!(
+            manifest.contains("link\u{0}link\u{0}../elsewhere"),
+            "a symbolic link is attested as a link and its target, never followed: {manifest}"
+        );
+    }
+
+    #[test]
+    fn the_manifest_does_not_depend_on_the_order_the_directory_was_written_in() {
+        let one = tempfile::tempdir().unwrap();
+        let other = tempfile::tempdir().unwrap();
+        tree(one.path(), false);
+        tree(other.path(), true);
+        assert_eq!(
+            tree_manifest(one.path()).unwrap(),
+            tree_manifest(other.path()).unwrap(),
+            "read_dir order reached the manifest, so two equal trees would compare unequal"
+        );
+    }
+
+    #[test]
+    fn a_manifest_notices_a_file_that_changed_size_and_a_link_that_changed_target() {
+        let dir = tempfile::tempdir().unwrap();
+        tree(dir.path(), false);
+        let before = tree_manifest(dir.path()).unwrap();
+        std::fs::write(dir.path().join("src/deep/a.rs"), "fn main() { todo!() }").unwrap();
+        assert_ne!(
+            before,
+            tree_manifest(dir.path()).unwrap(),
+            "a longer file is a difference"
+        );
+    }
+
+    #[test]
+    fn two_equal_fingerprints_differ_in_nothing() {
+        assert!(differences(&full(), &full()).is_empty());
+    }
+
+    #[test]
+    fn every_field_of_the_fingerprint_is_compared_and_named() {
+        // The whole point of this type: it decides whether a migration may delete the
+        // original directory. A field it stopped comparing would be a field a move could
+        // lose silently, so each is changed alone and read back by name.
+        /// One field changed, and the line the reader must get back for it.
+        type Change = (&'static str, fn(&mut WorktreeFingerprint));
+        let cases: Vec<Change> = vec![
+            ("branch changed", |f| f.branch = Some("other".into())),
+            ("HEAD changed", |f| f.head = Some("def456".into())),
+            ("the index differs", |f| f.index_digest = "other".into()),
+            ("the staged changes differ", |f| {
+                f.staged_diff_digest = "other".into()
+            }),
+            ("the unstaged changes differ", |f| {
+                f.unstaged_diff_digest = "other".into()
+            }),
+            ("the untracked files differ", |f| {
+                f.untracked_manifest_digest = "other".into()
+            }),
+            ("the ignored entries differ", |f| {
+                f.ignored_manifest_digest = "other".into()
+            }),
+            ("the operation in progress differs", |f| {
+                f.in_progress = Some("rebase".into())
+            }),
+            ("the directory tree differs", |f| {
+                f.tree_manifest_digest = Some("other".into())
+            }),
+        ];
+        for (expected, change) in cases {
+            let mut after = full();
+            change(&mut after);
+            let found = differences(&full(), &after);
+            assert_eq!(found.len(), 1, "changing one field reported {found:?}");
+            assert!(
+                found[0].starts_with(expected),
+                "expected a line beginning {expected:?}, got {:?}",
+                found[0]
+            );
+        }
+    }
+
+    #[test]
+    fn a_tree_manifest_absent_on_either_side_is_not_a_difference() {
+        // `capture` takes the manifest only when asked. Comparing a fingerprint that has one
+        // with a fingerprint that does not must not read as a lost directory.
+        let (mut before, mut after) = (full(), full());
+        after.tree_manifest_digest = None;
+        assert!(
+            differences(&before, &after).is_empty(),
+            "absent is unknown, not different"
+        );
+        before.tree_manifest_digest = None;
+        after.tree_manifest_digest = Some("t".into());
+        assert!(differences(&before, &after).is_empty());
+    }
+
+    #[test]
+    fn an_unborn_head_and_a_detached_one_are_named_rather_than_left_blank() {
+        let (mut before, mut after) = (full(), full());
+        before.head = None;
+        after.branch = None;
+        let found = differences(&before, &after);
+        assert!(found.iter().any(|l| l.contains("(unborn)")), "{found:?}");
+        assert!(found.iter().any(|l| l.contains("(detached)")), "{found:?}");
+    }
+
+    /// A directory tree, for the manifest: the half of a fingerprint that needs no git.
+    fn tree_of(files: &[(&str, &str)]) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        for (path, content) in files {
+            let p = dir.path().join(path);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, content).unwrap();
+        }
+        dir
+    }
+
+    #[test]
+    fn the_manifest_notices_a_file_that_changed_size_and_one_that_went_missing() {
+        // the property a migration depends on: a tree that lost something cannot produce
+        // the manifest of the tree that had it
+        let dir = tree_of(&[("a.txt", "one"), ("deep/b.txt", "two")]);
+        let before = tree_manifest(dir.path()).unwrap();
+
+        std::fs::write(dir.path().join("a.txt"), "one and more").unwrap();
+        assert_ne!(
+            tree_manifest(dir.path()).unwrap(),
+            before,
+            "size is attested"
+        );
+
+        std::fs::write(dir.path().join("a.txt"), "one").unwrap();
+        assert_eq!(tree_manifest(dir.path()).unwrap(), before, "and only that");
+
+        std::fs::remove_file(dir.path().join("deep/b.txt")).unwrap();
+        assert_ne!(tree_manifest(dir.path()).unwrap(), before);
+    }
+
+    #[test]
+    fn the_manifest_is_the_same_whatever_order_the_filesystem_hands_entries_back_in() {
+        // two trees with the same content built in opposite orders: a manifest that
+        // depended on readdir order would call a faithful copy a difference
+        let one = tree_of(&[("a", "1"), ("b", "2"), ("c/d", "3")]);
+        let two = tree_of(&[("c/d", "3"), ("b", "2"), ("a", "1")]);
+        assert_eq!(
+            tree_manifest(one.path()).unwrap(),
+            tree_manifest(two.path()).unwrap()
+        );
+    }
+
+    #[test]
+    fn the_git_file_of_a_linked_worktree_is_left_out_because_the_move_rewrites_it() {
+        let dir = tree_of(&[("a", "1")]);
+        let before = tree_manifest(dir.path()).unwrap();
+        std::fs::write(dir.path().join(".git"), "gitdir: /somewhere/else").unwrap();
+        assert_eq!(
+            tree_manifest(dir.path()).unwrap(),
+            before,
+            "a move rewrites .git on purpose, so attesting it would fail every migration"
+        );
+    }
+
+    #[test]
+    fn two_equal_fingerprints_differ_in_nothing_and_each_change_is_named() {
+        let base = WorktreeFingerprint {
+            branch: Some("feature/x".into()),
+            head: Some("abc123".into()),
+            index_digest: "i".into(),
+            staged_diff_digest: "s".into(),
+            unstaged_diff_digest: "u".into(),
+            untracked_manifest_digest: "n".into(),
+            untracked_files: 2,
+            ignored_manifest_digest: "g".into(),
+            in_progress: None,
+            tree_manifest_digest: None,
+        };
+        assert!(differences(&base, &base).is_empty(), "equal is equal");
+
+        let mut moved = base.clone();
+        moved.branch = Some("feature/y".into());
+        let found = differences(&base, &moved);
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert!(found[0].contains("feature/x") && found[0].contains("feature/y"));
+
+        // the one a migration exists to catch: work that was there and is not
+        let mut lost = base.clone();
+        lost.untracked_manifest_digest = "different".into();
+        lost.untracked_files = 1;
+        assert!(
+            !differences(&base, &lost).is_empty(),
+            "a lost untracked file is a difference, or the guarantee is worthless"
+        );
+    }
+}

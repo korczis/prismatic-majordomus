@@ -55,10 +55,7 @@ impl SharedServer {
         lease.publish(&url)?;
         // what it serves is read off the resolution, so this line cannot name a route the
         // process does not have or miss one it does
-        let surfaces = match router.served() {
-            Ok(served) => served.summary(&url),
-            Err(e) => return Err(e),
-        };
+        let surfaces = router.served()?.summary(&url);
         let running = bound.start(router);
         tracing::info!(
             url = %url,

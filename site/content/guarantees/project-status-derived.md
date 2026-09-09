@@ -1,7 +1,7 @@
 +++
 title = "Issue and milestone status is derived from recorded facts and is stored nowhere"
 description = "There is no status: field in an issue or a milestone. Writing one is an unknown key. An issue records what happened to it — started_at, verified_at, completed_at, cancelled, and its evidence — and BLOCKED, READY, ACTIVE, VERIFY, DONE or CANCELLED follows from those facts together with the state of the issues it depends on. A milestone's status follows from its issues and its own evidence."
-weight = 95
+weight = 97
 [extra]
 claim_id = "project-status-derived"
 status = "guaranteed"

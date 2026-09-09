@@ -66,6 +66,11 @@ others attach:
 | Claude Code | [`.mcp.json`](../.mcp.json) | a stdio server, `bin/majordomus-mcp`; Claude Code asks once whether to trust a project server |
 | Gemini CLI | [`.gemini/settings.json`](../.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
 | Codex | [`.codex/config.toml`](../.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
+| bb | nothing of its own | an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with `settingSources: project`, which loads `.mcp.json`; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it `pending` at init and connected afterwards |
+
+The rows are the providers whose declaration names a client configuration; the whole set,
+with what each reads and where it keeps its scratch checkouts, is
+[`docs/generated/providers.md`](generated/providers.md), generated from the same declaration.
 | anything speaking Streamable HTTP | the running server's `/mcp` | `initialize` answers with an `Mcp-Session-Id`; every later request carries it; `DELETE /mcp` ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |
 
 `bin/majordomus-mcp` builds the executable when it is missing or older than its sources
@@ -91,17 +96,34 @@ what it announced, before its first tool call.
 
 | tool | capability | arguments | answers |
 |---|---|---|---|
-| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, and each peer's announcement |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record with its announcement |
+| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, each peer's announcement, and every pair of claims that meet |
+| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
 
 An announcement is one line of intent and the repository-relative paths the peer expects
-to touch. It is informational: other clients read it to avoid a collision; nothing here
-enforces it (the shell tool's `start --scope` and `check` do that, per worktree). The
-board lives in the server's memory and is gone with the process; `peers.announce` is the
-one capability of kind `command`, because it changes that memory, and it is announced to
-MCP clients as not read-only. Over plain HTTP there is no caller, so `POST
-/api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without a
-`caller`.
+to touch. The board lives in the server's memory and is gone with the process;
+`peers.announce` is the one capability of kind `command`, because it changes that memory,
+and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
+so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
+a `caller`.
+
+**A claim is answered, not merely recorded.** `peers.announce` compares the scope it is
+given against every other announcement and returns the peers whose claims meet it, with
+the pairs of paths that meet: two claims meet when they are equal or one is inside the
+other (`apps` contains `apps/majordomus-cli`; `app` does not, because a claim is a path
+and not a prefix of a string). `peers.list` reports the same collisions across the whole
+board, each pair once. It is still not enforcement — the shell tool's `start --scope` and
+`check --overlap` do that, per worktree, and they are what refuses a commit — but a
+collision is now known at the moment it is created rather than discovered afterwards in
+the history of a branch.
+
+**An announcement outlives the connection that made it.** A session that reconnects used
+to lose everything it had said, silently, to itself and to everyone else; the board now
+keeps a departed peer's announcement and lists it with `attached: false`, so what a
+session said it was working on survives a dropped socket. A peer that never announced
+leaves nothing behind, the newest 32 departed peers are kept so that a server which ran
+all day is not a museum, and an attached peer is never evicted to make room for one that
+left. `peers.list`'s `count` is the peers actually attached; the `peers` array is longer
+when the board is holding what somebody said before they went.
 
 ## What decides what is served
 
@@ -115,7 +137,7 @@ how each kind is read from the tool distribution at run time. The rest is data:
 | which sections exist | `sections:` in the manifest |
 | which files are sources, of which kind | `.ai/repo/knowledge/sources.yaml`, one pathspec and kind per class, through the git index |
 | how a kind is read and which keys it may carry | `share/kinds.yaml` and `share/schemas/<kind>.schema.json` in the distribution, plus a repository's own under `.ai/repo/knowledge/` |
-| which tools exist | the executable capabilities with an MCP tool exposure, composed in `apps/majordomus-cli/src/capability/builtin.rs` |
+| which tools exist | the executable capabilities with an MCP tool exposure, composed under `apps/majordomus-cli/src/capability/builtin/` |
 
 Consequences a repository can rely on:
 

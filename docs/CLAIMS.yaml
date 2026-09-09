@@ -64,6 +64,24 @@ claims:
     responsibility: projection
     note: The build matrix stops at the first failure, publication begins only when every build succeeded, and the recorder refuses to write a record missing a target the model marks supported.
 
+  - id: advertised-install-command-works
+    claim: The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/ci/install-check
+    test: test/cases/97_install_gate.sh
+    status: guaranteed
+    responsibility: projection
+    note: The line is run as it is written, pipe included, on Linux and macOS, into a home directory of the run's own. It proves the metadata resolves, the tool reports the version that was resolved, the MCP launcher runs with no toolchain, and a repository can be initialised. A release proves the same thing once at publication; this keeps proving it afterwards.
+
+  - id: release-archive-shape
+    claim: A release archive carries every path once and carries nothing but files and directories
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/release-package
+    test: test/cases/87b_release_archive_shape.sh
+    status: guaranteed
+    responsibility: projection
+    note: The packer reads back what it wrote and deletes an archive carrying a repeated path or an entry that is not a file or a directory; the verifier checks the same two properties again on the runner that built it. There is no fallback packer, because an archive packed another way is not the one that was verified.
+
   - id: policy-parse
     claim: The canonical policy is parsed and rejected if it contains an unknown key
     source: docs/SCHEMAS.md
@@ -783,7 +801,16 @@ claims:
     test: test/cases/45_github_projection.sh
     status: guaranteed
     responsibility: plan
-    note: The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit.
+    note: The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit; a second marker carries the record's identity, so a title a person rewrites cannot orphan it. This claim is about what the adapter renders and refuses. Whether the remote has actually received it is a different question, and github-projection-gated is the claim that answers it.
+
+  - id: github-projection-gated
+    claim: A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing
+    source: docs/PLANNING.md
+    implementation: scripts/ci/github-check
+    test: test/cases/97_github_gate.sh
+    status: guaranteed
+    responsibility: plan
+    note: The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise.
 
   - id: mcp-stdio-surface
     claim: The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout
@@ -1124,7 +1151,7 @@ claims:
     test: test/cases/95_skills.sh
     status: guaranteed
     responsibility: doctor
-    note: `skills check` and the doctrine majordomus.skill-integrity (dispatched by doctor and watch) run one examination — unknown keys, schema version, integer version, closed status set, id equal to the directory, non-empty Purpose, Procedure and Output sections, duplicate ids, related ids that resolve, examples with a heading — and print the counts of what they examined. The site generator refuses to build from a skill that does not validate.
+    note: `skills check` and the doctrine majordomus.skill-integrity (dispatched by doctor and watch) run one examination — unknown keys, schema version, integer version, closed status set, id equal to the directory, non-empty Purpose, Procedure and Output sections, duplicate ids, descriptions that do not tell two skills apart, related ids that resolve, examples with a heading — and print the counts of what they examined. The site generator refuses to build from a skill that does not validate.
 
   - id: skill-site-projection
     claim: The website's skills section is rendered from the skills catalogue, one page per skill carrying the skill's own body and examples, and a removed or renamed skill leaves no page, entry or link behind
@@ -1251,3 +1278,48 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The plan changes nothing and is recomputed under the repository lock before it is applied. Git moves the directory in one rename; the container's occupant goes out to a staging path and then in; a move across filesystems is refused unless a copy is permitted, and then verified against a manifest of every entry before the original is removed. Nothing is reset, stashed, cleaned, checked out or overwritten: a destination that exists is a named conflict, a locked worktree waits, a detached one is never moved, and a session's scratch checkout is reported and moved only on request.
+
+  - id: product-features-discovered
+    claim: A product feature is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph, the capability matrix and the website's homepage and feature pages with nothing else changed
+    source: docs/PRODUCT.md
+    implementation: apps/majordomus-cli/src/product.rs
+    test: test/cases/97_product_features.sh
+    status: guaranteed
+    responsibility: layer
+    note: Removing the file removes it from all of them, which is what a hidden registry would fail. The kind, its schema and its source class are declarations, so discovery, validation, identity, the index and the MCP resource needed no code of their own.
+
+  - id: product-surfaces-derived
+    claim: Which interfaces a feature is exposed through, what stands behind it and what it answers are derived from the registries that own those facts, never authored, and a source file that writes one down is refused by its schema
+    source: docs/PRODUCT.md
+    implementation: apps/majordomus-cli/src/product.rs
+    test: apps/majordomus-cli/tests/product.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: A feature file holds references and editorial decisions only. The surfaces come from what its modules, commands and kinds are projected onto, the counts from the registry and the index, the moments from the why catalogue, the route from the id. The schema sets additionalProperties false, so `surfaces:` or `route:` in a feature is a validation error rather than a claim a page believes.
+
+  - id: product-references-resolve
+    claim: Every reference a feature makes resolves against the registry that owns it, and one that does not is an error naming the file, the key and the nearest candidate rather than a page linking to nothing
+    source: docs/PRODUCT.md
+    implementation: apps/majordomus-cli/src/product.rs
+    test: apps/majordomus-cli/tests/product.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: A capability module, a public command or an object kind that no stable feature names is reported as a gap and shown on the matrix rather than refused: a thing the product does that the product page does not mention is what the model exists to make visible.
+
+  - id: product-projection-public-safe
+    claim: The dataset the website is rendered from carries only fields an allow-list names, so a feature's prose, a machine path or a field nobody allowed cannot reach a published page
+    source: docs/PRODUCT.md
+    implementation: apps/majordomus-cli/src/site.rs
+    test: apps/majordomus-cli/tests/product.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The boundary is a field-by-field copy through PUBLIC_FEATURE_FIELDS, not an exclusion that could be forgotten: a field added to the model is absent from the site until somebody names it. The test asserts no un-allow-listed key, no body, no fixture root and no temporary path; scripts/generate-site-data refuses the artifact again before rendering anything from it.
+
+  - id: landing-page-is-a-projection
+    claim: The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed
+    source: docs/GITHUB_PAGES_ARCHITECTURE.md
+    implementation: site/templates/index.html
+    test: test/cases/12_site_build.sh
+    status: guaranteed
+    responsibility: none      # the site's projection of apps/majordomus-cli, not a supervised responsibility
+    note: scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository.

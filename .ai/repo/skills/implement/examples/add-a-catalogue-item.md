@@ -1,7 +1,7 @@
 # Add a declarative catalogue item
 
 ```text
-Apply the implement skill to add a use case to share/use-cases.yaml. Touch canonical
+Apply the implement skill to add a use case under .ai/repo/use-cases/. Touch canonical
 data only; then validate, regenerate, and prove that the command line, MCP and the site
 show the new item with no code or registry edited; finish with the drift checks.
 ```

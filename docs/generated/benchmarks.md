@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.2.0 -->
+     Generator: majordomus-cli 0.4.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 38 | 38 | 0 | 0 |
-| http | 38 | 38 | 0 | 0 |
-| mcp | 36 | 36 | 0 | 0 |
+| direct | 56 | 56 | 0 | 0 |
+| http | 56 | 56 | 0 | 0 |
+| mcp | 54 | 54 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 125 | 125 | 0 | 0 |
+| total | 179 | 179 | 0 | 0 |
 
 ## Capabilities
 
@@ -22,6 +22,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `artifacts.list` | artifacts | query | process, 8 entries, 5s | covered | covered | covered | `all`, `one-encoding` |
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
+| `capabilities.projections` | capabilities | query | process, 8 entries | covered | covered | covered | `all`, `unmet` |
+| `commands.get` | commands | query | — | covered | covered | covered | `worktree-status` |
+| `commands.graph` | commands | query | — | covered | covered | covered | `default` |
+| `commands.list` | commands | query | — | covered | covered | covered | `all`, `read-only`, `one-program` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
@@ -31,7 +35,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
-| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `composed` |
+| `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
+| `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
+| `environment.status` | environment | query | process, 4 entries, 3s | covered | covered | covered | `default` |
+| `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.coverage` | health | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
@@ -43,9 +50,20 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
+| `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
+| `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area` |
+| `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |
+| `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
+| `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
+| `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
+| `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
+| `release.version` | release | query | — | covered | covered | covered | `default` |
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `trace.commit` | trace | query | — | covered | covered | covered | `head` |
+| `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
+| `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |
 | `web.surfaces` | web | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `why.areas` | why | query | process, 4 entries | covered | covered | covered | `default` |
 | `why.audiences` | why | query | process, 4 entries | covered | covered | covered | `default` |

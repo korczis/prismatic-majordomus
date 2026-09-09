@@ -47,7 +47,7 @@ done < "$S/out.txt"
 # the log names the shared server and its Swagger UI, with the URL
 grep -q 'shared server listening on http://127\.0\.0\.1:[0-9]*' "$S/err.txt" || { echo "    no listening line with a URL on stderr"; cat "$S/err.txt"; exit 1; }
 url="$(sed -n 's/.*listening on \(http:\/\/127\.0\.0\.1:[0-9]*\).*/\1/p' "$S/err.txt" | head -n 1)"
-grep -qF "$url/docs" "$S/err.txt" || { echo "    the log does not name Swagger UI at $url/docs"; exit 1; }
+grep -qF "$url/swagger" "$S/err.txt" || { echo "    the log does not name Swagger UI at $url/swagger"; exit 1; }
 grep -qF "$url/mcp" "$S/err.txt" || { echo "    the log does not name MCP over HTTP at $url/mcp"; exit 1; }
 # the client learns the URL and its peer id from initialize, and the board lists it
 sed -n 1p "$S/out.txt" | jq -e --arg url "$url" '.result.instructions | contains($url) and contains("You are peer p1")' >/dev/null \
@@ -72,6 +72,7 @@ printf '%s' "$(req 1 initialize "$init")" >&3; printf '\n' >&3
   printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
   req 2 tools/call '{"name":"majordomus_announce","arguments":{"intent":"case 90 is running","scope":["test/cases"]}}'
   req 3 tools/call '{"name":"majordomus_peers","arguments":{}}'
+  req 4 tools/call '{"name":"majordomus_announce","arguments":{"intent":"case 90 claims ground p1 already holds","scope":["test/cases/90_mcp_shared_server.sh"]}}'
 } > "$S/session2.in"
 rc=0; "$LAUNCHER" < "$S/session2.in" > "$S/out2.txt" 2> "$S/err2.txt" || rc=$?
 [ "$rc" = 0 ] || { echo "    the second client exited $rc"; cat "$S/err2.txt"; exit 1; }
@@ -83,6 +84,13 @@ sed -n 2p "$S/out2.txt" | jq -e '.result.isError == false and .result.structured
   || { echo "    the announcement was not recorded"; sed -n 2p "$S/out2.txt"; exit 1; }
 sed -n 3p "$S/out2.txt" | jq -e '.result.structuredContent.count == 2 and ([.result.structuredContent.peers[].client.name] | sort == ["case90-first","case90-second"])' >/dev/null \
   || { echo "    the board does not list both clients"; sed -n 3p "$S/out2.txt"; exit 1; }
+# a claim inside a claim is answered when it is made, not discovered later: the first
+# client announced nothing, so the only holder here is this session's own earlier claim
+sed -n 4p "$S/out2.txt" | jq -e '
+  .result.isError == false
+  and (.result.structuredContent.overlaps | length) == 0
+' >/dev/null \
+  || { echo "    a second announcement from the same peer collided with itself"; sed -n 4p "$S/out2.txt"; exit 1; }
 # the first client goes: the server ends, the lease is gone
 exec 3>&-
 rc=0; wait "$p1" || rc=$?

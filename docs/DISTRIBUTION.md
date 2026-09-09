@@ -179,6 +179,82 @@ smoke    the published installer, from its published URL, installing the release
 
 Only `publish` has `contents: write`. Nothing else in the run can write anything.
 
+A runner label the model names must be a standard, currently offered GitHub-hosted label.
+This is not a style rule. A retired label does not fail: the job is accepted and queues for
+a runner that will never arrive, so the run neither publishes nor goes red — it simply never
+ends, and `fail-fast` cancels it when a sibling fails, which makes it look like collateral
+damage rather than the cause. `macos-13` sat that way through two release attempts. The list
+is GitHub's, at `actions/runner-images`; a `-large` or `-xlarge` suffix means a billed larger
+runner rather than a standard one.
+
+A run that fails in `build` publishes nothing, which is the intended behaviour and also the
+one that is easy to walk away from: the tag still exists, pointing at the commit the build
+failed on, and no release is behind it. Fixing the cause on the default branch does not fix
+the tag. Finish the release — a new version, bumped and tagged, is the ordinary way; moving
+a tag that has no release behind it is the other, and only before anyone can have pinned it.
+Until one of those happens the advertised install command is broken for everyone, and
+`installer-live` below is what says so.
+
+### When a release fails partway
+
+A release changes things the world can see, and it can fail after some of them have changed.
+Rerunning the workflow for the same tag is the supported recovery, and it is safe at every
+stage. What "safe" means is declared in [`.ai/repo/ci/release.yaml`](../.ai/repo/ci/release.yaml)
+under `rerun:` and implemented in the publish job:
+
+* **the assets on an existing release are the release.** If the tag already has a GitHub
+  release, the rerun downloads its published assets and discards its own rebuild. The record
+  is evidence of what a user downloads, and rebuilds are not bit-identical (see
+  *Reproducibility* below), so recording this run's bytes would state digests nothing serves.
+* **the metadata commit is idempotent.** A rerun that finds the record and its projections
+  already committed pushes nothing and succeeds.
+* **smoke is never skipped.** Both paths end in the same public installation test, so a
+  rerun proves the same external contract a first run does.
+
+Stage by stage:
+
+| Failed at | Visible outside? | Rerun | Cleanup |
+|---|---|---|---|
+| `plan` | no | yes | none — no artifact was built |
+| `build` | no | yes | none — nothing was uploaded |
+| `publish`, before the release exists | no | yes | none |
+| `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
+| `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
+| `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
+| `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
+
+#### Why the release asks Pages to publish
+
+The publish job ends by running `gh workflow run pages.yml`, and that step is not a
+belt-and-braces addition: without it the release is structurally unable to reach a user.
+
+GitHub does not start a workflow from a push made with `GITHUB_TOKEN`. It is a deliberate
+loop-breaker and it cannot be disabled for a token. The commit the publish job makes — the
+only thing that carries `site/static/releases/latest.json` — therefore starts no `pages`
+run, so the site keeps serving a build from before the release existed, and the smoke phase
+waits fifteen minutes for a file nothing is going to write.
+
+Release `v0.3.1` spent its entire smoke phase in exactly that state: six green builds, a
+published GitHub Release, a committed record, and `latest.json` returning 404 to anyone who
+ran the advertised command. Every observable pointed at the packer, and the packer was fine;
+the last link of the chain simply did not exist. The dispatch is that link. It runs with
+`if: always()`, because a rerun after a failed deploy is precisely the case with nothing to
+commit and everything to publish.
+
+`workflow_dispatch` is the entry point a person uses, so this starts the one deploy path
+rather than adding a second one (see the `site-deploy-one-path` guarantee).
+
+The one case a rerun cannot repair is a release that exists and publishes no archive — the
+assets cannot be reconstructed from a tag. The run stops and names the command that clears
+the way:
+
+```bash
+gh release delete v0.3.0 --yes    # then rerun the workflow
+```
+
+Nothing here needs the tag to be moved. A tag that points at the wrong commit is a different
+problem, and the answer to it is a new version, not a moved tag.
+
 ### Testing it without publishing
 
 ```bash
@@ -191,6 +267,54 @@ MAJORDOMUS_RELEASE_BASE_URL=http://127.0.0.1:8099 MAJORDOMUS_INSECURE_BASE_URL=1
 That is what `test/cases/85_installer.sh` does, and it is the whole stack: a real archive
 built from the tree you are in, real metadata rendered by the renderer the site publishes,
 a real HTTP download, a real digest check, a real atomic install.
+
+### Proving the advertised command still works
+
+A release pipeline proves the advertised command works *once*, in its smoke phase, at the
+moment of publication. That is not the same promise as the one the front page makes, which
+is in the present tense, and the difference has been real: a build that failed on one
+platform publishes nothing, the tag stays where it is, the fix lands on the default branch
+and is never tagged again — and the URL every document points at keeps serving an installer
+that resolves no release. Every gate over the tree stayed green throughout, because none of
+them can see the published site.
+
+`scripts/ci/install-check` is the gate that can. It reads the addresses from
+`site/data/registry/distribution.json` — states none of its own — and then, from the
+published site:
+
+```text
+1  the metadata the installer resolves is served, and names a release
+2  the installer is served, and this machine's /bin/sh parses it
+3  the advertised line, run as it is written, pipe included, into a home of its own
+4  the installed tool reports the version the metadata resolved
+5  the installed MCP launcher runs with MAJORDOMUS_NO_BUILD=1 — an archive that left a
+   launcher out passes every check that only reads the archive's file list, and fails here
+6  the installed tool initialises a repository that has none
+```
+
+Nothing outside its temporary tree is written: the install goes to a `HOME` of the run's
+own, so the prefix, the launchers and the PATH hint all land inside it.
+
+CI runs it as `--wait 300`. Publishing a release and deploying the site are two workflows and
+the second is not instant, so a push landing between them would be told the promise is broken
+when it is merely a few minutes old. Run by hand the wait is zero, because a person asking
+whether the command works wants the answer now. A site that cannot serve the metadata inside
+the window is broken either way, and the finding stands.
+
+It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](../.ai/repo/ci/gates.yaml),
+job `install`, on Linux and macOS. No path class selects it, deliberately: no change to a
+tree can make it true or false — only a deployment can. It runs in the full plan, which is
+every push to the default branch, the weekly schedule, a dispatch, and a pull request
+labelled `ci:full`. So the default branch goes red while the advertised command is broken,
+which is the only condition under which anyone was going to find out.
+
+Against a local fixture rather than the published site:
+
+```bash
+scripts/release-fixture --out /tmp/rel --base-url http://127.0.0.1:8099
+(cd /tmp/rel && python3 -m http.server 8099 --bind 127.0.0.1) &
+scripts/ci/install-check --base http://127.0.0.1:8099
+```
 
 ### Recovering from a bad release
 
@@ -213,6 +337,17 @@ The inputs to an artifact are recorded rather than claimed: the tag, the target 
 commit and the build time go into `RELEASE.json` inside every archive, and the commit is
 compiled into the executable by `build.rs`. The archive itself is packed with entries in
 sorted order.
+
+Every archive carries each path exactly once, and carries nothing but regular files and
+directories: no hard link, no symlink, no device node. `scripts/release-package` checks that
+of the archive it has just written and deletes it rather than return a violating one, and
+`scripts/release-verify` checks it again of the archive it is handed. Both exist because
+release `v0.2.0` was never published: the packer passed a complete file list to a `tar` that
+also recursed into it, every path was archived twice, GNU tar wrote the second copy of each
+as a hard link, and the verifier — correctly — refused all 931 of them. There is deliberately
+no fallback in the packer: an archive packed differently from the one that was asked for is
+not the archive anything verified. `test/cases/87b_release_archive_shape.sh` reproduces that
+packer with a `tar` shim and proves the guard stops it.
 
 Bit-identical rebuilds are not claimed: that needs a reproducible compiler invocation
 (`SOURCE_DATE_EPOCH`, a pinned toolchain version, no absolute paths in debug info), and the

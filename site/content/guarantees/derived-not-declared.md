@@ -1,7 +1,7 @@
 +++
 title = "What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure"
 description = "A number, a list, or a vocabulary that appears in two places will disagree in one of them, and the disagreement is silent until it costs someone an afternoon. So each of these facts has exactly one home, every other reader computes it, and a second copy fails a test."
-weight = 81
+weight = 83
 [extra]
 claim_id = "derived-not-declared"
 status = "guaranteed"

@@ -1,7 +1,7 @@
 +++
 title = "A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name"
 description = "The dependency graph is validated, not trusted. Each malformed shape produces its own finding with the issue that caused it: cycle, self_dependency, unknown_dependency, duplicate_dependency, unknown_milestone, premature_execution. A failing finding makes majordomus plan validate and majordomus doctor exit non-zero; majordomus watch reports the same violation as drift."
-weight = 96
+weight = 98
 [extra]
 claim_id = "dag-validation"
 status = "guaranteed"

@@ -34,7 +34,7 @@
         <ul class="space-y-1 text-sm">{% for k, v in p.verification %}<li class="flex flex-wrap justify-between gap-x-3"><span class="min-w-0 break-all font-mono text-heading">{{ k }}</span><span class="font-mono {% if v == true %}text-fg-success-strong{% elif v == false %}text-body-subtle{% else %}text-heading{% endif %}">{{ v }}</span></li>{% endfor %}</ul></div>
     </div>
   </div>
-  <p class="mt-4 break-all text-xs text-body-subtle">Source: <a href="{{ project.repository_url }}/blob/master/share/skeleton/profiles/{{ p.slug }}.yaml" class="font-mono hover:underline">share/skeleton/profiles/{{ p.slug }}.yaml</a></p>
+  <p class="mt-4 break-all text-xs text-body-subtle">Source: <a href="{{ project.repository_url }}/blob/master/share/skeleton/profiles/{{ p.slug }}.yaml" class="font-mono underline">share/skeleton/profiles/{{ p.slug }}.yaml</a></p>
 </section>
 {%- endfor -%}
 </div>

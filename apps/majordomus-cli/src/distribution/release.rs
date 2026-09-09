@@ -10,7 +10,7 @@ use std::path::Path;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{Archive, Model, Project};
+use super::Model;
 use crate::error::{Error, Result};
 use crate::index::Index;
 use crate::metadata::yaml;
@@ -78,6 +78,19 @@ pub struct Release {
     /// True when the release must no longer be resolved.
     #[serde(default)]
     pub yanked: bool,
+    /// The target ids the model published when this release was made — the set the release
+    /// had to be complete over, recorded rather than recomputed.
+    ///
+    /// This is a historical snapshot and the only field here that could in principle be
+    /// derived, which is exactly why it is not. Judging a record against the *current*
+    /// model means adding a platform retroactively makes every release ever published
+    /// incomplete, and `v0.3.1` cannot grow a `riscv64` artifact however the model changes.
+    /// Written by `scripts/release-record` from the model it was published against.
+    ///
+    /// Absent on records written before the field existed; those are judged on internal
+    /// consistency alone, and `.ai/repo/releases/README.md` says so.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub required_targets: Option<Vec<String>>,
     /// One entry per built target.
     pub artifacts: Vec<ReleaseArtifact>,
 }
@@ -114,12 +127,24 @@ impl Release {
     pub fn findings(&self, model: &Model) -> Vec<String> {
         let mut out = Vec::new();
         let prefix = model.project.download_prefix();
-        for t in model.published() {
-            if self.artifact(&t.id).is_none() {
-                out.push(format!(
-                    "{}: no artifact for `{}`, which the model publishes; a partial release is not a release",
-                    self.tag, t.id
-                ));
+        // Completeness is judged against the set this release was published against, not
+        // against the model as it stands now. A target added to the model is a promise about
+        // the *next* release; it cannot be a finding against one that is already published,
+        // whose artifacts are immutable and whose tag someone may have pinned. The check that
+        // a release is complete when it is made lives in `scripts/release-record`, which
+        // writes the record from the artifacts that were actually uploaded and refuses a
+        // partial one — that is the enforcement point, and it sees the model of its own day.
+        //
+        // A record written before this field existed carries no set, and is judged on
+        // internal consistency alone rather than against a model it never saw.
+        if let Some(required) = &self.required_targets {
+            for id in required {
+                if self.artifact(id).is_none() {
+                    out.push(format!(
+                        "{}: no artifact for `{}`, which it was published against; a partial release is not a release",
+                        self.tag, id
+                    ));
+                }
             }
         }
         let mut seen: Vec<&str> = Vec::new();
@@ -274,7 +299,7 @@ impl Releases {
     }
 
     pub(crate) fn ordered(mut releases: Vec<Release>) -> Self {
-        releases.sort_by(|a, b| version_key(&b.version).cmp(&version_key(&a.version)));
+        releases.sort_by_key(|r| std::cmp::Reverse(version_key(&r.version)));
         Releases { releases }
     }
 
@@ -284,8 +309,12 @@ impl Releases {
         self.releases.iter().find(|r| r.is_stable_candidate())
     }
 
-    /// A release by tag.
-    pub fn by_tag(&self, tag: &str) -> Option<&Release> {
+    /// A release by tag; `None` when no record carries it.
+    ///
+    /// Test support, and compiled only for tests: this module's own suite names one record
+    /// among several with it, and nothing in the shipped binary asks the question that way.
+    #[cfg(test)]
+    pub(crate) fn by_tag(&self, tag: &str) -> Option<&Release> {
         self.releases.iter().find(|r| r.tag == tag)
     }
 
@@ -330,13 +359,4 @@ fn version_key(version: &str) -> (u64, u64, u64, u8, String) {
 /// pinned release's metadata, so that the installer has one parser and not two.
 pub fn latest_json(release: &Release, model: &Model) -> String {
     release.public_json(model)
-}
-
-/// The conventional aggregate digest file, in `sha256sum -c` order.
-pub fn checksums(release: &Release, _project: &Project, _archive: &Archive) -> String {
-    let mut s = String::new();
-    for a in &release.artifacts {
-        s.push_str(&format!("{}  {}\n", a.sha256, a.name));
-    }
-    s
 }

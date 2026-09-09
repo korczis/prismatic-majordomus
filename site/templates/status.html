@@ -11,5 +11,5 @@
     <p class="mt-2 break-all font-mono text-xs text-body-subtle">{{ c.implementation or "—" }}{% if c.test %} · {{ c.test }}{% endif %}</p></a></li>
   {%- endfor -%}
 </ul>
-<p class="mt-8 text-sm"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">← The full matrix</a></p>
+<p class="mt-8 text-sm"><a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">← The full matrix</a></p>
 {% endblock body %}

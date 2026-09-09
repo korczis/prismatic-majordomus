@@ -283,6 +283,22 @@ kinds:
       field: schema
       supported: [area/v1]
 
+  # A product feature: one thing the product does for a person, made of things the other
+  # registries already own (modules, commands, kinds, rules, documents, decisions, claims,
+  # use cases, Cockpit areas, web surfaces), each a typed reference. What the feature is
+  # exposed through, how much stands behind it and which moments it answers are derived
+  # from those references by the executable and authored nowhere (ADR 0022).
+  feature:
+    format: markdown
+    front_matter: required
+    schema: majordomus.feature/v1
+    identity: [id]
+    title: title
+    description: summary
+    schema_version:
+      field: schema
+      supported: [feature/v1]
+
   deployment:
     format: yaml
     # the identity fixes the path: share/schemas/majordomus/deployment/deployment.v1.schema.json
@@ -293,6 +309,17 @@ kinds:
     schema_version:
       field: schema
       supported: [deployment/v1]
+
+  workspace:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/workspace/workspace.v1.schema.json
+    schema: majordomus.workspace/v1
+    identity: [id]
+    title: title
+    description: description
+    schema_version:
+      field: schema
+      supported: [workspace/v1]
 
   distribution-model:
     format: yaml

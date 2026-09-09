@@ -1,7 +1,7 @@
 +++
 title = "Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish"
 description = "A capability that nobody has written a use case for is a named gap, not a silence. For"
-weight = 130
+weight = 133
 [extra]
 claim_id = "use-case-coverage"
 status = "guaranteed"

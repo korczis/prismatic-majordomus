@@ -1,0 +1,69 @@
+// The audit runner: the plan, a browser, a running server, and one results document.
+//
+// It holds no route, no width and no threshold. The pages and the widths come from
+// ui-discover.mjs, the invariants from ui-audit.mjs, and the verdict is arithmetic over
+// what those two produced. What this file owns is the shape of the evidence — `ui-audit/v1`
+// — because that document is what the report renders and what CI compares, and a shape
+// invented at each call site is a shape that drifts.
+
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+
+import { planSurfaces } from './ui-discover.mjs';
+import { audit, jobs } from './ui-audit.mjs';
+
+/** The contract of the results document, read back by `majordomus web report ui`. */
+export const RESULTS_SCHEMA = 'ui-audit/v1';
+
+/**
+ * Run the plan against a running origin and return the results document.
+ *
+ * `surfaces` is what the topology says the executable serves: `[{ id, mount, dir }]`. The
+ * mount matters — a built directory does not know where it is served from, and a plan that
+ * assumed the root would visit paths nobody answers.
+ *
+ * `select` narrows the pages for local iteration; a narrowed run says so in the document,
+ * so a partial run can never be read as a clean full one.
+ */
+export async function run(origin, surfaces, cssPath, { select, limit, onVisit } = {}) {
+  const target = planSurfaces(surfaces, cssPath);
+  let pages = target.pages;
+  if (select) pages = pages.filter((page) => page.route.includes(select));
+  if (limit) pages = pages.slice(0, limit);
+
+  const started = Date.now();
+  const concurrency = jobs();
+  const visits = await audit(origin, pages, { onVisit, concurrency });
+  const findings = [];
+  for (const visit of visits) {
+    for (const finding of visit.findings) {
+      findings.push({ route: visit.route, width: visit.width, tier: visit.tier, ...finding });
+    }
+  }
+  const rules = {};
+  for (const finding of findings) rules[finding.rule] = (rules[finding.rule] ?? 0) + 1;
+
+  return {
+    schema: RESULTS_SCHEMA,
+    origin,
+    complete: pages.length === target.pages.length,
+    source: target.source,
+    breakpoints: target.breakpoints,
+    viewports: target.viewports,
+    surfaces: target.surfaces,
+    pages: pages.length,
+    visits: visits.length,
+    seconds: Math.round((Date.now() - started) / 1000),
+    concurrency,
+    // `<` and `>` compare code units, the way every Rust and shell comparator here does.
+    // `localeCompare` would order this report by whoever's machine rendered it.
+    rules: Object.fromEntries(Object.entries(rules).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))),
+    findings,
+  };
+}
+
+/** Write a results document where the report renderer expects to read it. */
+export function write(path, results) {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, `${JSON.stringify(results, null, 2)}\n`);
+}

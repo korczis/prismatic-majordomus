@@ -4,10 +4,22 @@
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
 //!
-//! What *is* written here is the ten areas: Overview, Capabilities, Objects,
-//! Directories, Graphs, Continuity, Worktrees, Health, Artifacts, API. Those are concepts rather than
+//! What *is* written here is the twelve areas: Overview, Capabilities, Commands, Objects,
+//! Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
+//!
+//! Every section is presented in the canonical order (`crate::order`). The order a section
+//! is *built* in is an accident of its source — the order the modules were composed in, the
+//! order the graph derivations are declared in — and an accident is not a reading order.
+//! The order is applied to the sections as a whole, so a section added later is ordered
+//! without being told to be.
+//!
+//! One section is grouped rather than flat: the capability modules sit under the
+//! operational area they serve. That area is not written here either. A feature declares
+//! the modules it is built from and the areas it serves; the product model resolves the two
+//! into an area per module, and this file asks for it. A module no feature places is shown
+//! under no heading, which the canonical order puts last, and the product model reports it.
 
 use crate::capability::registry::ModuleSource;
 use crate::capability::Context;
@@ -22,6 +34,8 @@ pub enum Area {
     Overview,
     /// The capability explorer and the runner.
     Capabilities,
+    /// Every command of every program here, and where each one is projected.
+    Commands,
     /// The declarative objects of the layer.
     Objects,
     /// The layer's directory contracts and their hierarchy.
@@ -34,12 +48,106 @@ pub enum Area {
     Worktrees,
     /// The health report.
     Health,
+    /// What the crate's own public surface is held to.
+    Quality,
     /// What the generator writes.
     Artifacts,
     /// The HTTP and MCP surfaces.
     Api,
     /// A page that belongs to no area (search results, an error).
     None,
+}
+
+/// One of the Cockpit's areas as data: what a person sees, where it goes, and the area it
+/// marks. The one list of areas there is; [`build`] reads it for the sidebar and the
+/// product model reads it to validate the areas a feature names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AreaInfo {
+    /// The id a feature names it by: the last segment of its route.
+    pub id: &'static str,
+    /// What the reader sees.
+    pub label: &'static str,
+    /// Where it goes.
+    pub href: &'static str,
+    /// The area it marks.
+    pub area: Area,
+}
+
+/// The areas. Written here because they are concepts rather than entities; every catalogue
+/// under them is derived.
+///
+/// Not the order the sidebar shows them in: `build` puts every section through the
+/// canonical order, so this sequence reaches no reader. It is the set the product model
+/// validates against, and nothing more.
+pub fn areas() -> &'static [AreaInfo] {
+    &[
+        AreaInfo {
+            id: "overview",
+            label: "Overview",
+            href: "/cockpit",
+            area: Area::Overview,
+        },
+        AreaInfo {
+            id: "capabilities",
+            label: "Capabilities",
+            href: "/cockpit/capabilities",
+            area: Area::Capabilities,
+        },
+        AreaInfo {
+            id: "commands",
+            label: "Commands",
+            href: "/cockpit/commands",
+            area: Area::Commands,
+        },
+        AreaInfo {
+            id: "objects",
+            label: "Objects",
+            href: "/cockpit/objects",
+            area: Area::Objects,
+        },
+        AreaInfo {
+            id: "directories",
+            label: "Directories",
+            href: "/cockpit/directories",
+            area: Area::Directories,
+        },
+        AreaInfo {
+            id: "graphs",
+            label: "Graphs",
+            href: "/cockpit/graphs",
+            area: Area::Graphs,
+        },
+        AreaInfo {
+            id: "continuity",
+            label: "Continuity",
+            href: "/cockpit/continuity",
+            area: Area::Continuity,
+        },
+        AreaInfo {
+            id: "worktrees",
+            label: "Worktrees",
+            href: "/cockpit/worktrees",
+            area: Area::Worktrees,
+        },
+        AreaInfo {
+            id: "health",
+            label: "Health",
+            href: "/cockpit/health",
+            area: Area::Health,
+        },
+        AreaInfo {
+            id: "artifacts",
+            label: "Artifacts",
+            href: "/cockpit/artifacts",
+            area: Area::Artifacts,
+        },
+        AreaInfo {
+            id: "api",
+            label: "API",
+            href: "/cockpit/api",
+            area: Area::Api,
+        },
+    ]
 }
 
 /// One entry.
@@ -51,6 +159,10 @@ pub struct Item {
     pub href: String,
     /// The area it belongs to.
     pub area: Area,
+    /// The heading it sits under inside its section, when the section is grouped. Derived,
+    /// never written here: the capability modules are grouped by the operational area the
+    /// features that name them serve.
+    pub group: Option<String>,
     /// How many things are behind it, when the number is a fact and not decoration.
     pub count: Option<usize>,
     /// Whether this is the page being shown.
@@ -84,68 +196,23 @@ impl Navigation {
 /// current entry can be marked without a page saying which it is.
 pub fn build(ctx: &Context, here: &str) -> Navigation {
     let summary = ctx.registry.summary();
+    // the counts are facts of this context, decided per area: how many things are behind
+    // an entry is not part of what an area is
+    let count = |a: Area| -> Option<usize> {
+        match a {
+            Area::Capabilities => Some(summary.total),
+            Area::Objects => Some(ctx.index.objects.len()),
+            Area::Graphs => Some(graph::ids().len()),
+            Area::Api => Some(summary.http_routes),
+            _ => None,
+        }
+    };
     let areas = Section {
         title: "Cockpit".into(),
-        items: vec![
-            item("Overview", "/cockpit", Area::Overview, None, here),
-            item(
-                "Capabilities",
-                "/cockpit/capabilities",
-                Area::Capabilities,
-                Some(summary.total),
-                here,
-            ),
-            item(
-                "Objects",
-                "/cockpit/objects",
-                Area::Objects,
-                Some(ctx.index.objects.len()),
-                here,
-            ),
-            item(
-                "Directories",
-                "/cockpit/directories",
-                Area::Directories,
-                None,
-                here,
-            ),
-            item(
-                "Graphs",
-                "/cockpit/graphs",
-                Area::Graphs,
-                Some(graph::ids().len()),
-                here,
-            ),
-            item(
-                "Continuity",
-                "/cockpit/continuity",
-                Area::Continuity,
-                None,
-                here,
-            ),
-            item(
-                "Worktrees",
-                "/cockpit/worktrees",
-                Area::Worktrees,
-                None,
-                here,
-            ),
-            item("Health", "/cockpit/health", Area::Health, None, here),
-            item(
-                "Artifacts",
-                "/cockpit/artifacts",
-                Area::Artifacts,
-                None,
-                here,
-            ),
-            item(
-                "API",
-                "/cockpit/api",
-                Area::Api,
-                Some(summary.http_routes),
-                here,
-            ),
-        ],
+        items: areas()
+            .iter()
+            .map(|a| item(a.label, a.href, a.area, count(a.area), here))
+            .collect(),
     };
 
     // the executable's own modules: what a capability belongs to, from the registry
@@ -162,6 +229,14 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                     percent_encode(m.id.as_str())
                 ),
                 area: Area::Capabilities,
+                // The module's own area, derived by the product model from the features
+                // that name it, shown under the name the Why catalogue gives it. Neither
+                // the grouping nor the heading is written in this file.
+                group: ctx
+                    .product
+                    .module_area(m.id.as_str())
+                    .and_then(|id| ctx.why.areas().iter().find(|a| a.id == id))
+                    .map(|a| a.title.clone()),
                 count: Some(m.capabilities),
                 current: false,
             })
@@ -179,6 +254,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 label: kind.to_string(),
                 href: format!("/cockpit/objects?kind={}", percent_encode(kind)),
                 area: Area::Objects,
+                group: None,
                 count: Some(count),
                 current: false,
             })
@@ -193,6 +269,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                 label: id.to_string(),
                 href: format!("/cockpit/graphs/{id}"),
                 area: Area::Graphs,
+                group: None,
                 count: None,
                 current: here == format!("/cockpit/graphs/{id}"),
             })
@@ -203,7 +280,28 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
         sections: [areas, modules, kinds, graphs]
             .into_iter()
             .filter(|s| !s.items.is_empty())
+            .map(alphabetical)
             .collect(),
+    }
+}
+
+/// One section's entries in the canonical order: by label, case-folded so that `API` sits
+/// with `Artifacts` rather than ahead of every lowercase kind, digit runs by value, and the
+/// href behind it to break a tie between two entries a reader would call the same.
+///
+/// The comparator is `crate::order`'s, not this file's. It was this file's, it was the only
+/// case-folded comparator in the crate, and every other surface sorted by raw bytes instead.
+fn alphabetical(mut section: Section) -> Section {
+    crate::order::canonical(&mut section.items);
+    section
+}
+
+impl crate::order::Ordered for Item {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        match &self.group {
+            Some(group) => crate::order::OrderKey::grouped(group, &self.label, &self.href),
+            None => crate::order::OrderKey::plain(&self.label, &self.href),
+        }
     }
 }
 
@@ -212,6 +310,7 @@ fn item(label: &str, href: &str, area: Area, count: Option<usize>, here: &str) -
         label: label.into(),
         href: href.into(),
         area,
+        group: None,
         count,
         current: here == href,
     }
@@ -247,6 +346,39 @@ mod tests {
     }
 
     #[test]
+    fn a_grouped_section_keeps_its_groups_contiguous_and_the_ungrouped_last() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build(&ctx, "/cockpit");
+        for section in nav.sections() {
+            let mut seen: Vec<&str> = Vec::new();
+            let mut ungrouped = false;
+            for item in &section.items {
+                match item.group.as_deref() {
+                    Some(g) => {
+                        assert!(
+                            !ungrouped,
+                            "a grouped entry follows an ungrouped one in '{}': the canonical \
+                             order puts the ungrouped tail last",
+                            section.title
+                        );
+                        if seen.last().copied() != Some(g) {
+                            assert!(
+                                !seen.contains(&g),
+                                "the group '{g}' appears twice in '{}': its members are not \
+                                 contiguous, so one pass cannot render its heading once",
+                                section.title
+                            );
+                            seen.push(g);
+                        }
+                    }
+                    None => ungrouped = true,
+                }
+            }
+        }
+    }
+
+    #[test]
     fn the_current_page_is_marked_once() {
         let repo = repository();
         let ctx = repo.context().expect("a context");
@@ -259,6 +391,39 @@ mod tests {
             .collect();
         assert_eq!(current.len(), 1);
         assert_eq!(current[0].label, "Health");
+    }
+
+    #[test]
+    fn every_section_reads_alphabetically() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build(&ctx, "/cockpit");
+        assert!(!nav.sections().is_empty(), "there is something to order");
+        for section in nav.sections() {
+            let labels: Vec<String> = section
+                .items
+                .iter()
+                .map(|i| i.label.to_lowercase())
+                .collect();
+            let mut sorted = labels.clone();
+            sorted.sort();
+            assert_eq!(labels, sorted, "section {} is out of order", section.title);
+        }
+    }
+
+    #[test]
+    fn the_areas_are_ordered_by_name_and_not_by_the_order_they_are_written_in() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build(&ctx, "/cockpit");
+        let areas = nav
+            .sections()
+            .iter()
+            .find(|s| s.title == "Cockpit")
+            .expect("the area section");
+        let labels: Vec<&str> = areas.items.iter().map(|i| i.label.as_str()).collect();
+        assert_eq!(labels.first(), Some(&"API"));
+        assert_eq!(labels.last(), Some(&"Worktrees"));
     }
 
     #[test]

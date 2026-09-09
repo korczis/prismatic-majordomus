@@ -1,7 +1,7 @@
 +++
 title = "The context that applies to a path is composed from the layer's scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing"
 description = "The AI layer is hierarchical. A directory under .ai/ may carry a context document: a"
-weight = 70
+weight = 72
 [extra]
 claim_id = "context-documents"
 status = "guaranteed"

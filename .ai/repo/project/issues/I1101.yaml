@@ -1,0 +1,33 @@
+id: I1101
+milestone: two-folder-integration
+title: What this tool leaves behind, established by inspection rather than by memory
+slug: adoption-footprint-forensics
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Establish, from the repository rather than from recollection, every path Majordomus writes, generates or mutates when a project adopts it — where each lands, which subsystem writes it, whether anything records it, and which are canonical, derived or accidental."
+why: "The two-folder contract is a claim about a footprint nobody has measured. Every later phase — the layout, the reconciler, the ledger, the migration — is a decision about paths, and a decision about paths made from memory will be wrong in the way that only shows up in a foreign repository."
+current_state: "`.ai/` and `.majordomus/` both exist. Provider bootstraps are generated to the root, root documents carry generated blocks, and no inventory says what else a subsystem writes or under what circumstances."
+desired_state: "One document records the actual footprint with its writer, its lifecycle and its justification, and names which of them the target architecture keeps, moves or removes."
+scope:
+  - docs/INTEGRATION.md
+  - .ai/repo/adrs
+non_scope:
+  - Moving anything; this issue changes no path
+  - A rewrite of a subsystem discovered along the way
+depends_on: []
+acceptance_criteria:
+  - Every path written or mutated outside `.ai/` and `.majordomus/` is listed with the code that writes it, found by inspection rather than by assumption
+  - Each is classified as canonical, derived, generated, cache, runtime or accidental, with the reason
+  - The classification says which paths the two-folder contract keeps as bridges, which move into a namespace and which stop existing
+  - Where an existing mechanism already does what a later phase would add, it is named so the phase extends it rather than replacing it
+  - The architectural decision is recorded in the repository's own ADR mechanism, not in prose beside it
+validation:
+  - bin/majordomus doctor
+  - bash test/run.sh
+evidence_required:
+  - footprint_inventory
+  - decision_recorded
+risk: "A forensic phase can become a rewrite the moment it finds something ugly. It records; the phases that follow change."
+created_at: 2026-09-06
+updated_at: 2026-09-06

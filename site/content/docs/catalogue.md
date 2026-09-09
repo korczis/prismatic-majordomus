@@ -1,7 +1,7 @@
 +++
 title = "The catalogue"
 description = "the use-case and application registries: what they are for, how they differ from the why pages, the schema, and how to extend them"
-weight = 23
+weight = 24
 [extra]
 source = "docs/CATALOGUE.md"
 +++
@@ -11,7 +11,7 @@ source = "docs/CATALOGUE.md"
 Three lists say what the tool is for, from three angles, and every one of them is data
 the tool checks:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | list | the question it answers | where |
 |---|---|---|

@@ -108,7 +108,7 @@ executable is missing or older than its sources, sets `MAJORDOMUS_SHARE`, and `e
 Nothing about kinds or keys is compiled in. On every start the executable locates a share
 directory and reads `kinds.yaml` and `schemas/<name>.schema.json` from it, in this order:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | source | when |
 |---|---|
@@ -120,8 +120,8 @@ directory and reads `kinds.yaml` and `schemas/<name>.schema.json` from it, in th
 </div>
 
 
-None found: exit 12, every directory tried named. A repository adds kinds under
-`.ai/repo/knowledge/kinds.yaml` and schemas under `.ai/repo/knowledge/schemas/`; a name the
+None found: exit 12, every directory tried named. A repository adds kinds in its own
+`kinds.yaml` under `.ai/repo/knowledge/` and schemas under `.ai/repo/knowledge/schemas/`; a name the
 distribution already declares is an error naming both files.
 
 ## Command reference
@@ -155,7 +155,7 @@ declare it in clap, declare at least one example beside it, implement it, `just 
 
 The same contract as `docs/CLI.md`:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | code | meaning | examples |
 |---|---|---|
@@ -170,7 +170,7 @@ The same contract as `docs/CLI.md`:
 
 ### Side-effect table
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | command | filesystem mutation | git mutation | network | stdout |
 |---|---|---|---|---|
@@ -282,7 +282,7 @@ layer itself documents, `.ai/manifest.yaml` and `sources.yaml` under the manifes
 `knowledge` section, and the file names of the distribution (`kinds.yaml`,
 `schemas/*.schema.json`). Everything else is read from data at run time:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | decides | read from | owner |
 |---|---|---|
@@ -290,7 +290,7 @@ layer itself documents, `.ai/manifest.yaml` and `sources.yaml` under the manifes
 | which sections exist | `sections:` in the manifest | repository |
 | which file names must carry the context contract | `context.documents:` in the manifest | repository |
 | which files carry which kind | `.ai/repo/knowledge/sources.yaml` | repository |
-| how a kind is read | `share/kinds.yaml`, plus `.ai/repo/knowledge/kinds.yaml` | distribution, repository |
+| how a kind is read | `share/kinds.yaml`, plus a `kinds.yaml` under `.ai/repo/knowledge/` | distribution, repository |
 | which keys and values a kind may carry | `share/schemas/<kind>.schema.json`, plus `.ai/repo/knowledge/schemas/` | distribution, repository |
 
 </div>
@@ -330,7 +330,7 @@ session.
 
 ## Stability
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | | status |
 |---|---|

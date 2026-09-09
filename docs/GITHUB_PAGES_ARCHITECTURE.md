@@ -22,9 +22,10 @@ being maintained separately from the repository that backs it.
 | registry dataset | everything the site renders about the executable: descriptors, modules, command line, MCP and HTTP surfaces, benchmarks, the index | `site/data/registry/registry.json` | never — `majordomus generate site` |
 | public narrative | what it is, why, how, what it refuses | `README.md`, `docs/*.md` | yes |
 | claims | every capability with status, source, implementation, test | `docs/CLAIMS.yaml` | yes |
-| marketing copy | the hero's three propositions, section leads, button labels; no claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
-| navigation | five intents, their dropdown items and hrefs | `site/data/nav.toml` | yes |
+| marketing copy | the hero's positioning sentences, section leads, button labels; no capability claims, no numbers, 60-line budget | `site/data/marketing.toml` | yes |
+| navigation | the intents, their dropdown items and hrefs, and the routes that moved (`[[redirects]]`, rendered as Zola aliases) | `site/data/nav.toml` | yes |
 | claim detail | what each claim means, how it works, how to see it, what it does not cover, why it exists | `docs/claims/<id>.md` | yes |
+| product features | one file per feature: the references naming what it is made of, and the editorial decisions nothing can infer; every surface, count and route beside it is derived (`docs/PRODUCT.md`, ADR 23) | `.ai/repo/features/<id>.md` | yes |
 | case studies | the recognition moments, each with its homepage hook in front matter | `site/content-src/why/*.md` | yes |
 | skills | the repository's skills, one directory each; the site reads the catalogue `lib/skills.sh` derives from the source class `skill` | `.ai/repo/skills/<id>/SKILL.md` | yes |
 | rendering reference | representative Markdown for visual validation | `site/content-src/render-test.md` | yes |
@@ -111,7 +112,7 @@ which `test/cases/51_derived_artifacts_committed.sh` and the release criterion r
 | `policy.json` | `share/skeleton/policy.yaml` | the policy as structure, plus the raw text |
 | `capabilities.json` | `docs/CLAIMS.yaml` | every claim; the generator fails on a missing path or an untested guaranteed claim |
 | `commands.json` | `share/commands.yaml`, `docs/CLI.md`, the test cases | every shell command with its semantics, narrative and evidence |
-| `catalogue.json` | `share/use-cases.yaml`, `share/applications.yaml` | the use cases and applications, cross-referenced |
+| `catalogue.json` | `.ai/repo/use-cases/`, `.ai/repo/applications/` | the use cases and applications, cross-referenced |
 | `doctrines.json` | the rule packages | every doctrine with its enforcement chain |
 | `plan.json` | `.ai/repo/project/` | milestones, issues, the dependency graph, derived status |
 | `openapi.json` | `docs/generated/openapi.json` | the HTTP API in the shape `api.html` renders (`scripts/lib/openapi-site.jq`) |
@@ -152,7 +153,7 @@ projection.
 | an accepted baseline | `majordomus bench baseline update` on the platform it measures | the baseline JSON by hand |
 | what the executable is, owns, refuses; discovery; transports; side effects | `apps/majordomus-cli/README.md` | `/registry/executable/` |
 | a shell command's category, stage, reads, writes, syntax, exit codes | `share/commands.yaml` (semantics) and `docs/CLI.md` (narrative) | `commands.json`, `/commands/<name>/` |
-| a use case or an application | `share/use-cases.yaml`, `share/applications.yaml` | `catalogue.json`, its route |
+| a use case or an application | `.ai/repo/use-cases/`, `.ai/repo/applications/` | `catalogue.json`, its route |
 | a claim | `docs/CLAIMS.yaml` and `docs/claims/<id>.md` | `capabilities.json`, `docs/SITE_CLAIMS.md`, `/guarantees/` |
 | a doctrine | the rule file under `.ai/repo/rules/` or the vendored package | `doctrines.json`, `/doctrines/` |
 | a milestone or an issue | `.ai/repo/project/**` | `plan.json`, `docs/PLAN_STATUS.md`, `/plan/` |
@@ -240,19 +241,27 @@ does not call it (verified in `node_modules/flowbite/dist/flowbite.js`), so `bas
 it once on `DOMContentLoaded`. The navbar uses `data-collapse-toggle`; nothing else needs
 Flowbite JS yet.
 
-The homepage hero holds three business propositions (`[hero].propositions` in
-`marketing.toml`): one complete message per outcome, the first being the page's `h1` and the
-default. The selector is a radio group rather than Flowbite's tabs or carousel, because both of
-those hide the other panels with a class until JavaScript runs: arrow keys move between the
-outcomes natively, every message is in the HTML, and the checked input drives the visible
-message through Tailwind's `peer-checked` (the labels) and `group-has-[#id:checked]` (the
-messages) variants. The three messages share one grid cell and the inactive ones are
-`invisible`, not removed, so the block keeps the height of the longest message and choosing
-another never moves the buttons below it. The first message is visible unless another input
-is checked, so a browser without `:has()` still shows the `h1`. The ids are positional
-(`hero-p-1..3`) because Tailwind compiles only class names it can read in the template.
-`scripts/site-check` proves every proposition is on the page, the first is the `h1` and the
-checked default, and the hero's in-page link lands on a section.
+The homepage is a projection of `site/data/registry/product.json`, which the executable
+writes from the features of the layer, the capability registry and the web topology. Every
+chapter, mark, count, provider, kind and rule on it is read from that dataset; the template
+names none of them, and `scripts/site-check` fails a template, a generator or a navigation
+file that names a feature route or a provider's own file. The hero's second column is the
+answer `majordomus product matrix` prints, rendered as a table rather than padded text so
+the columns align at every width and a screen reader reads a table rather than a picture of
+one. The words around it — the title, the mantra, the section leads and the button labels —
+are `marketing.toml`'s, which carries no number and no capability claim and is held to a
+sixty-line budget.
+
+The one thing a person decides is which features are chapters and in what order, and that
+decision lives in the feature files themselves (`featured` and `weight`), not here: a
+feature becomes a chapter by declaring itself one. `docs/PRODUCT.md` is the contract, ADR 23
+is the decision, and `project.product-surface-derived` is the rule.
+
+Routes that moved are declared once, in `nav.toml` under `[[redirects]]`, beside the routes
+that did not. The generator turns each into a Zola alias on the page it points at, so the
+old address answers with a redirect; a redirect whose target the generator did not produce
+fails the build rather than publishing a link into nothing. An alias page is a redirect and
+not a page, so `scripts/lib/site-pages.awk` exempts it from the contract a page is held to.
 
 Alpine.js is vendored and used for two things: the copy button on code snippets (`x-data`,
 `x-on:click`, `x-text`) and the raw-policy disclosure on `/policy/`. Both degrade: the code
@@ -278,9 +287,9 @@ and Open Graph metadata. The route classes and their sources:
 
 | route | source | template |
 |---|---|---|
-| `/` | `readme.json`, `marketing.toml`, `lifecycle.json`, `capabilities.json`, `diagrams.json`, the `why` section | `index.html` |
+| `/` | `site/data/registry/product.json` and `product-graph.json` (chapters, interfaces, matrix, providers, kinds, doctrine), `marketing.toml` (the words), `readme.json` (the finish contract), `distribution.json` (the install command), the `why` section | `index.html` |
 | `/why/`, `/why/<slug>/` | `site/content-src/why/*.md` | `why-section.html`, `why.html` |
-| `/outcomes/`, `/outcomes/<slug>/` | the hero's propositions in `marketing.toml`, one hand-written page each in `site/content-src/outcomes/*.md`; moments, commands and claims from the front matter | `outcomes-section.html`, `outcome.html` |
+| `/features/`, `/features/<id>/`, `/features/matrix/` | `site/data/registry/product.json` and `product-graph.json`, with each page's prose read from the feature's own file | `features-section.html`, `feature.html`, `features-matrix.html` |
 | `/getting-started/` | `project.json`, `policy.json`, `lifecycle.json` | `getting-started.html` |
 | `/supervises/`, `/supervises/<slug>/` | `readme.json` (What it does rows, cross-linked to commands and claims by keyword) | `supervises-section.html`, `responsibility.html` |
 | `/commands/`, `/commands/<name>/` | `commands.json` (each command's section of `docs/CLI.md`) | `commands-section.html`, `command.html` |

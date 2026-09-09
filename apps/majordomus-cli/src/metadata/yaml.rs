@@ -6,6 +6,31 @@
 //! refuses it, which is the stricter reading of the same contract). A scalar is a string unless it is an unquoted integer or
 //! `true`/`false`; nothing else is interpreted.
 //!
+//! ```
+//! use majordomus_cli::metadata::yaml;
+//!
+//! let text = "\
+//! version: 1
+//! sources:
+//!   - id: policy
+//!     kind: policy
+//!     required: true
+//! tags: [rust, quality]
+//! ";
+//! let map = yaml::parse_mapping(text).unwrap();
+//! assert_eq!(map["version"], 1, "an unquoted integer is a number");
+//! assert_eq!(map["sources"][0]["kind"], "policy");
+//! assert_eq!(map["sources"][0]["required"], true);
+//! assert_eq!(map["tags"][1], "quality", "an inline list is a list");
+//!
+//! // every key path, which is how an unknown key is found and reported
+//! assert!(yaml::key_paths(&map).contains(&"sources.0.kind".to_string()));
+//!
+//! // what the subset refuses, it refuses with the line named rather than guessing
+//! assert!(yaml::parse_mapping("a: &anchor 1\n").is_err());
+//! assert!(yaml::parse_mapping("a:\n\tb: 1\n").is_err(), "tabs are not indentation");
+//! ```
+//!
 //! This is not a general YAML parser and does not try to be: the repository's files are
 //! written in this subset so that a person, an awk script and this executable read them
 //! identically, and a construct outside it is a mistake in the file, not a gap here.

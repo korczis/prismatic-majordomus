@@ -1,7 +1,7 @@
 +++
 title = "Economics"
 description = "the claim it refuses to make, what v0.1 controls without measuring, where the cost actually is, what the ledger alone can measure, and what honest measurement would take"
-weight = 25
+weight = 27
 [extra]
 source = "docs/ECONOMICS.md"
 +++
@@ -22,7 +22,7 @@ them, and every one of those figures was later found to be invented.
 The policy and profiles fix four things that, in the environments studied, were the
 main sources of waste:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Lever | Waste it addresses | How v0.1 handles it |
 |---|---|---|
@@ -68,7 +68,7 @@ rather than cost.
 
 Without any provider telemetry, `state/ledger.jsonl` already yields per task:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | metric | from |
 |---|---|

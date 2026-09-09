@@ -1,7 +1,7 @@
 +++
 title = "A declared provider hook captures the person's raw prompts below the model, and doctor proves it by running it"
 description = ".ai/local/prompts/ holds the prompts a person actually submitted, written by the provider's own hook before the model was invoked, each one kept twice under a single stem: a .json record and the .md rendering of it. A repository that declares the enforcement is held to it: if the hook stops capturing, doctor fails, and because doctor runs on pre-commit, the commit stops with it. A provider whose prompts cannot be observed is reported as unsupported, not treated as one that had nothing to say."
-weight = 32
+weight = 34
 [extra]
 claim_id = "prompt-capture"
 status = "guaranteed"
@@ -55,5 +55,5 @@ Nor is the archive knowledge. Nothing loads it into a context, no command retrie
 
 ## Why it exists
 
-The directory was declared by the `.ai` protocol and stayed empty, which reads as a feature that does not work. The obvious repair — a line in `AGENTS.md` telling the worker to record its prompts — cannot be one: the model never sees the bytes the person typed, the write depends on it choosing to make a tool call, no behavioural test can prove it happened, and the instruction is loaded only after the session's first prompt has already been submitted. `.ai/repo/adrs/0007-prompt-capture-happens-below-the-model.md` records the decision that followed.
+The directory was declared by the `.ai` protocol and stayed empty, which reads as a feature that does not work. The obvious repair — a line in `AGENTS.md` telling the worker to record its prompts — cannot be one: the model never sees the bytes the person typed, the write depends on it choosing to make a tool call, no behavioural test can prove it happened, and the instruction is loaded only after the session's first prompt has already been submitted. `.ai/repo/adrs/0009-prompt-capture-happens-below-the-model.md` records the decision that followed.
 {% endraw %}

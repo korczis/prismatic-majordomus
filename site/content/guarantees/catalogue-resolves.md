@@ -1,7 +1,7 @@
 +++
 title = "A use case or application cannot name a command, doctrine or claim that does not exist, and the two catalogues cannot disagree about which applies to which"
 description = "The use cases under .ai/repo/use-cases/ and the applications under .ai/repo/applications/ describe what Majordomus is for. Every command a use case walks through, every rule it relies on, and every promise it makes is a reference to something else in the repository — and every one of those references is checked. So is the relationship between the two files: a use case naming an application that does not name it back is a failure, not an asymmetry somebody will notice later."
-weight = 34
+weight = 36
 [extra]
 claim_id = "catalogue-resolves"
 status = "guaranteed"

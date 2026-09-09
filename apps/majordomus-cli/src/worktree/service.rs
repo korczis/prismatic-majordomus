@@ -87,10 +87,24 @@ pub struct WorktreeService {
     identity: RepositoryIdentity,
     container: ResolvedPath,
     issue_ids: Vec<String>,
+    scratch_roots: Vec<ScratchRoot>,
+}
+
+/// A directory a checkout of somebody else's lives under: the tool's own temporary roots
+/// or a provider's, as `share/providers.yaml` declares them (ADR 0024).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScratchRoot {
+    /// The provider that creates checkouts there; `None` for the tool's own roots.
+    pub provider: Option<String>,
+    /// The root, expanded.
+    pub path: PathBuf,
 }
 
 impl WorktreeService {
-    /// Resolve the repository from `start`.
+    /// Resolve the repository from `start`. The scratch roots come from the distribution's
+    /// provider declarations, located the way every command locates the share; a checkout
+    /// with no share in reach declares none, and a temporary checkout is then what its path
+    /// says it is.
     pub fn open(start: &Path) -> Result<Self> {
         let identity = RepositoryIdentity::discover(start)?;
         Self::over(identity)
@@ -98,13 +112,30 @@ impl WorktreeService {
 
     /// The service over an identity already resolved.
     pub fn over(identity: RepositoryIdentity) -> Result<Self> {
+        let primary = identity.primary_worktree().path.clone();
+        let current = identity.current_worktree().path.clone();
+        let scratch_roots = declared_scratch_roots(&current, &primary);
+        Self::over_with(identity, scratch_roots)
+    }
+
+    /// The service over an identity, with the scratch roots given rather than located.
+    pub fn over_with(
+        identity: RepositoryIdentity,
+        scratch_roots: Vec<ScratchRoot>,
+    ) -> Result<Self> {
         let container = ResolvedPath::of(path::container_root(&identity.primary_worktree().path)?);
         let issue_ids = state::issue_ids(&identity.primary_worktree().path);
         Ok(WorktreeService {
             identity,
             container,
             issue_ids,
+            scratch_roots,
         })
+    }
+
+    /// The scratch roots in force, expanded.
+    pub fn scratch_roots(&self) -> &[ScratchRoot] {
+        &self.scratch_roots
     }
 
     /// The repository this service speaks for.
@@ -255,7 +286,7 @@ impl WorktreeService {
                 remedy: "git switch -c <branch> there, then majordomus worktree migrate".into(),
             });
             Standing::Detached
-        } else if let Some(root) = self.ephemeral_root_of(&resolved) {
+        } else if let Some(root) = self.scratch_root_of(&resolved) {
             diagnostics.push(TopologyDiagnostic {
                 code: DiagnosticCode::Ephemeral,
                 severity: Severity::Warning,
@@ -263,8 +294,12 @@ impl WorktreeService {
                 branch: record.branch.clone(),
                 expected: expected_text.clone(),
                 message: format!(
-                    "a session's scratch checkout under {}, holding branch '{}' which belongs at {}; nothing moves it while the session that made it may be running",
-                    display(&root),
+                    "a session's scratch checkout under {}{}, holding branch '{}' which belongs at {}; nothing moves it while the session that made it may be running",
+                    display(&root.path),
+                    root.provider
+                        .as_deref()
+                        .map(|p| format!(" (created by {p})"))
+                        .unwrap_or_default(),
                     label,
                     expected_text.as_deref().unwrap_or("-")
                 ),
@@ -410,26 +445,33 @@ impl WorktreeService {
         }
     }
 
-    /// The scratch root a path lies under, when it does: the operating system's temporary
-    /// directory (unless the primary checkout itself lives there, as a test fixture does), or
-    /// the primary checkout's `.claude/worktrees/`, which Claude Code creates and removes
-    /// with the session that asked for it.
-    pub fn ephemeral_root_of(&self, path: &ResolvedPath) -> Option<PathBuf> {
+    /// The scratch root a path lies under, when it does. The roots are the declarations'
+    /// (`share/providers.yaml`): the tool's own temporary directories and every provider's,
+    /// such as `.claude/worktrees/` under the primary checkout, which Claude Code creates and
+    /// removes with the session that asked for it, or the thread directory an orchestrator
+    /// keeps under its data directory. A root the primary checkout itself lives under is
+    /// skipped, as a test fixture's temporary directory is: nothing beside the repository
+    /// is a scratch checkout of it.
+    pub fn scratch_root_of(&self, path: &ResolvedPath) -> Option<ScratchRoot> {
         let primary = self.identity.primary_worktree();
-        let agent_dir = ResolvedPath::of(primary.path.join(".claude/worktrees"));
-        if path.is_inside(&agent_dir) {
-            return Some(agent_dir.path);
-        }
-        for root in temp_roots() {
-            let root = ResolvedPath::of(root);
-            if primary.is_inside(&root) || primary.same_as(&root) {
+        for root in &self.scratch_roots {
+            let resolved = ResolvedPath::of(root.path.clone());
+            if primary.is_inside(&resolved) || primary.same_as(&resolved) {
                 continue;
             }
-            if path.is_inside(&root) {
-                return Some(root.path);
+            if path.is_inside(&resolved) {
+                return Some(ScratchRoot {
+                    provider: root.provider.clone(),
+                    path: resolved.path,
+                });
             }
         }
         None
+    }
+
+    /// [`Self::scratch_root_of`], the path alone.
+    pub fn ephemeral_root_of(&self, path: &ResolvedPath) -> Option<PathBuf> {
+        self.scratch_root_of(path).map(|r| r.path)
     }
 
     /// What occupies `expected`, when something other than `own` does.
@@ -1004,22 +1046,45 @@ fn is_in_place(w: &WorktreeState, trunk_source: TrunkSource) -> bool {
     }
 }
 
-/// The directories a session's scratch checkout lives under: the temporary directory the
-/// standard library answers, and the places the operating system keeps one.
-fn temp_roots() -> Vec<PathBuf> {
-    let mut roots = vec![std::env::temp_dir()];
-    for p in [
-        "/tmp",
-        "/private/tmp",
-        "/var/tmp",
-        "/var/folders",
-        "/private/var/folders",
-    ] {
-        roots.push(PathBuf::from(p));
+/// The scratch roots the distribution declares, expanded against `primary`, in declaration
+/// order: the tool's own first, then each provider's. Located the way every command locates
+/// the share (`--share` excepted, which this path does not carry), from `current` — the
+/// checkout the command runs in, so that a repository supervising itself reads the
+/// declarations of the branch it is on rather than the primary checkout's; a checkout with
+/// no share in reach declares none. The standard library's answer for the temporary
+/// directory is added when the declarations name `$TMPDIR` and the environment does not, so
+/// that what the tool itself creates under `std::env::temp_dir()` is recognised on every
+/// platform.
+pub fn declared_scratch_roots(current: &Path, primary: &Path) -> Vec<ScratchRoot> {
+    let Ok(share) = crate::share::Share::locate(None, current) else {
+        return Vec::new();
+    };
+    let Ok(decls) = share.providers() else {
+        return Vec::new();
+    };
+    scratch_roots_from(&decls, primary)
+}
+
+/// [`declared_scratch_roots`] over declarations already read.
+pub fn scratch_roots_from(
+    decls: &crate::share::ProviderDeclarations,
+    primary: &Path,
+) -> Vec<ScratchRoot> {
+    let mut out: Vec<ScratchRoot> = decls
+        .scratch_roots(primary)
+        .into_iter()
+        .map(|(provider, path)| ScratchRoot { provider, path })
+        .collect();
+    if decls.scratch_roots.iter().any(|r| r == "$TMPDIR") {
+        let temp = std::env::temp_dir();
+        if !out.iter().any(|r| r.provider.is_none() && r.path == temp) {
+            out.push(ScratchRoot {
+                provider: None,
+                path: temp,
+            });
+        }
     }
-    roots.sort();
-    roots.dedup();
-    roots
+    out
 }
 
 fn lines_of(bytes: &[u8]) -> Vec<String> {
@@ -1041,14 +1106,241 @@ pub(crate) fn display(p: &Path) -> String {
 mod tests {
     use super::*;
 
+    /// The distribution beside this crate, as the shipped declarations.
+    fn dist_declarations() -> crate::share::ProviderDeclarations {
+        let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        crate::share::Share::locate(Some(&dir), &dir)
+            .unwrap()
+            .providers()
+            .unwrap()
+    }
+
+    /// A repository with a primary checkout and whatever linked worktrees a test asks for.
+    /// Under the temporary directory on purpose: `ephemeral_root_of` disables the temporary
+    /// roots for a repository that is itself inside one, so a worktree outside the container
+    /// is `Misplaced` rather than `Ephemeral`.
+    struct Repo {
+        _home: tempfile::TempDir,
+        primary: PathBuf,
+    }
+
+    impl Repo {
+        fn new() -> Self {
+            let home = tempfile::tempdir().expect("tempdir");
+            let primary = home.path().join("dev/repo");
+            std::fs::create_dir_all(&primary).expect("mkdir");
+            let r = Repo {
+                _home: home,
+                primary,
+            };
+            r.git(&["init", "-q", "-b", "master", "."]);
+            r.git(&["config", "user.email", "t@example.com"]);
+            r.git(&["config", "user.name", "t"]);
+            r.git(&["commit", "-q", "--allow-empty", "-m", "root"]);
+            r
+        }
+
+        fn git(&self, args: &[&str]) {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&self.primary)
+                .args(args)
+                .output()
+                .expect("git runs")
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        }
+
+        fn worktree(&self, branch: &str, at: &Path) {
+            if let Some(parent) = at.parent() {
+                std::fs::create_dir_all(parent).expect("mkdir");
+            }
+            self.git(&["worktree", "add", "-q", "-b", branch, &at.to_string_lossy()]);
+        }
+
+        fn service(&self) -> WorktreeService {
+            WorktreeService::open(&self.primary).expect("a service")
+        }
+    }
+
     #[test]
-    fn the_temporary_roots_are_known_and_sorted() {
-        let roots = temp_roots();
-        assert!(roots.contains(&std::env::temp_dir()));
-        assert!(roots.contains(&PathBuf::from("/tmp")));
-        let mut sorted = roots.clone();
-        sorted.sort();
-        assert_eq!(roots, sorted);
+    fn a_worktree_resolves_by_branch_or_by_path_and_says_so_when_it_is_neither() {
+        let repo = Repo::new();
+        let svc = repo.service();
+        let home = svc.expected_path_of("feature/x").expect("a path");
+        repo.worktree("feature/x", &home);
+        let svc = repo.service();
+
+        // by branch
+        let by_branch = svc.resolve("feature/x").expect("resolved by branch");
+        assert_eq!(by_branch.branch.as_deref(), Some("feature/x"));
+        // by path, which is the same record
+        let by_path = svc
+            .resolve(&home.to_string_lossy())
+            .expect("resolved by path");
+        assert_eq!(by_path.path, by_branch.path);
+        // and a selector that is neither names itself in the refusal
+        let err = svc.resolve("feature/never").expect_err("no such worktree");
+        assert!(err.to_string().contains("feature/never"), "{err}");
+    }
+
+    #[test]
+    fn a_branch_whose_worktree_is_home_passes_the_guard_and_one_that_is_not_does_not() {
+        let repo = Repo::new();
+        let home = repo
+            .service()
+            .expected_path_of("feature/home")
+            .expect("path");
+        repo.worktree("feature/home", &home);
+
+        // the guard is asked from inside a worktree; open the service there
+        let inside = WorktreeService::open(&home).expect("a service inside the worktree");
+        let verdict = inside.guard().expect("a verdict");
+        assert!(verdict.ok, "{verdict:?}");
+        assert!(verdict.reason.is_none());
+        assert_eq!(verdict.branch.as_deref(), Some("feature/home"));
+
+        // and one that is misplaced fails it, with the reason and the destination
+        let away = repo.primary.parent().unwrap().join("elsewhere");
+        repo.worktree("feature/away", &away);
+        let outside = WorktreeService::open(&away).expect("a service inside the worktree");
+        let verdict = outside.guard().expect("a verdict");
+        assert!(!verdict.ok, "{verdict:?}");
+        assert!(verdict.reason.is_some(), "a refusal carries its reason");
+        assert!(verdict.expected_path.is_some(), "and where it belongs");
+    }
+
+    #[test]
+    fn the_expected_path_of_a_branch_is_under_the_container_and_a_bad_name_is_refused() {
+        let repo = Repo::new();
+        let svc = repo.service();
+        let container = svc.container().path.clone();
+
+        let path = svc.expected_path_of("feature/nested/deep").expect("a path");
+        assert!(path.starts_with(&container), "{path:?}");
+        assert!(path.ends_with("feature/nested/deep"), "{path:?}");
+
+        // a name that would climb out of the container is refused rather than resolved
+        for bad in ["../escape", "..", "feature/../../escape"] {
+            assert!(
+                svc.expected_path_of(bad).is_err(),
+                "{bad} resolved to a path"
+            );
+        }
+    }
+
+    #[test]
+    fn inspecting_a_branch_reports_where_it_belongs_whether_or_not_it_is_there() {
+        let repo = Repo::new();
+        let svc = repo.service();
+
+        // a branch with no worktree still has a canonical path
+        let absent = svc.inspect("feature/absent").expect("a report");
+        assert!(
+            absent.expected_path.contains("feature/absent"),
+            "{}",
+            absent.expected_path
+        );
+
+        let home = svc.expected_path_of("feature/there").expect("a path");
+        repo.worktree("feature/there", &home);
+        let present = repo.service().inspect("feature/there").expect("a report");
+        assert_eq!(present.expected_path, display(&home));
+    }
+
+    #[test]
+    fn the_declared_scratch_roots_name_the_temporary_directory_and_every_providers_own() {
+        let primary = Path::new("/srv/repo");
+        let roots = scratch_roots_from(&dist_declarations(), primary);
+        let own: Vec<&PathBuf> = roots
+            .iter()
+            .filter(|r| r.provider.is_none())
+            .map(|r| &r.path)
+            .collect();
+        assert!(
+            own.contains(&&std::env::temp_dir()),
+            "the tool's own roots hold the temporary directory: {own:?}"
+        );
+        assert!(own.contains(&&PathBuf::from("/tmp")));
+        let claude = roots
+            .iter()
+            .find(|r| r.provider.as_deref() == Some("claude-code"))
+            .expect("claude-code declares a root");
+        assert_eq!(
+            claude.path,
+            PathBuf::from("/srv/repo/.claude/worktrees"),
+            "expanded against the primary checkout"
+        );
+        let bb = roots
+            .iter()
+            .find(|r| r.provider.as_deref() == Some("bb"))
+            .expect("bb declares a root");
+        assert!(
+            bb.path
+                .ends_with("plugins/environment-git-worktree/host-data/worktrees"),
+            "{}",
+            bb.path.display()
+        );
+        let home = std::env::var("HOME").unwrap();
+        assert!(
+            bb.path
+                .starts_with(std::env::var("BB_DATA_DIR").unwrap_or(format!("{home}/.bb"))),
+            "the data directory defaults to ~/.bb: {}",
+            bb.path.display()
+        );
+    }
+
+    #[test]
+    fn a_checkout_under_an_orchestrators_root_is_a_scratch_checkout_named_after_it() {
+        let home = tempfile::tempdir().unwrap();
+        let primary = home.path().join("elsewhere/repo");
+        std::fs::create_dir_all(&primary).unwrap();
+        let run = |args: &[&str]| {
+            assert!(std::process::Command::new("git")
+                .arg("-C")
+                .arg(&primary)
+                .args(args)
+                .status()
+                .unwrap()
+                .success());
+        };
+        run(&["init", "-q", "."]);
+        run(&[
+            "-c",
+            "user.email=t@example.com",
+            "-c",
+            "user.name=t",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "i",
+        ]);
+        let identity = RepositoryIdentity::discover(&primary).unwrap();
+        // the declarations expanded with bb's data directory pointed into the fixture, so
+        // that nothing about this machine's own installation is read
+        let data = home.path().join("bb-data");
+        let roots: Vec<ScratchRoot> = scratch_roots_from(&dist_declarations(), &primary)
+            .into_iter()
+            .map(|r| match r.provider.as_deref() {
+                Some("bb") => ScratchRoot {
+                    provider: r.provider,
+                    path: data.join("plugins/environment-git-worktree/host-data/worktrees"),
+                },
+                _ => r,
+            })
+            .collect();
+        let svc = WorktreeService::over_with(identity, roots).unwrap();
+        let thread = ResolvedPath::of(
+            data.join("plugins/environment-git-worktree/host-data/worktrees/thr_1/repo"),
+        );
+        let root = svc
+            .scratch_root_of(&thread)
+            .expect("a thread's checkout is a scratch checkout");
+        assert_eq!(root.provider.as_deref(), Some("bb"));
+        let sibling = ResolvedPath::of(home.path().join("sibling"));
+        assert!(svc.scratch_root_of(&sibling).is_none());
     }
 
     #[test]
@@ -1079,11 +1371,19 @@ mod tests {
             "-m",
             "i",
         ]);
-        let svc = WorktreeService::open(&primary).unwrap();
+        let identity = RepositoryIdentity::discover(&primary).unwrap();
+        let svc = WorktreeService::over_with(
+            identity,
+            scratch_roots_from(&dist_declarations(), &primary),
+        )
+        .unwrap();
         // the fixture itself lives under the temporary directory, so the temporary roots are
         // disabled for it, and only the agent directory rule applies
         let agent = ResolvedPath::of(primary.join(".claude/worktrees/x"));
-        assert!(svc.ephemeral_root_of(&agent).is_some());
+        assert_eq!(
+            svc.scratch_root_of(&agent).unwrap().provider.as_deref(),
+            Some("claude-code")
+        );
         let sibling = ResolvedPath::of(home.path().join("sibling"));
         assert!(svc.ephemeral_root_of(&sibling).is_none(), "the repository lives in the temporary directory, so nothing beside it is a scratch checkout");
     }

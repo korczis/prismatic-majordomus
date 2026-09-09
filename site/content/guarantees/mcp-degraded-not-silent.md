@@ -1,7 +1,7 @@
 +++
 title = "A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller"
 description = "A rule with a key the allow-list does not know, a front matter that never closes, a policy declaring a version the executable does not read, a symlink, a file that is not UTF-8: each is excluded from what is served, and each produces one diagnostic with a stable code and the repository-relative path, on stderr at startup and in majordomus://repository for the client. The index reports degraded, initialize says so in its instructions, mcp --inspect exits 10, and mcp --strict refuses to serve at all. Two files of one kind claiming one identity are both excluded and both named."
-weight = 103
+weight = 106
 [extra]
 claim_id = "mcp-degraded-not-silent"
 status = "guaranteed"

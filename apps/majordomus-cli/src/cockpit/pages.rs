@@ -10,10 +10,12 @@
 use serde_json::{json, Value};
 
 use crate::capability::builtin::{
-    ArtifactReport, Continuity, DirectoryReport, DirectoryState, GraphList, Health, HealthStatus,
-    ObjectList, ObjectSummary, Record, RepositoryReport,
+    ArtifactReport, CheckState, CommandIndex, Continuity, DirectoryReport, DirectoryState,
+    GraphList, Health, HealthStatus, InstallabilityReport, ObjectList, ObjectSummary,
+    QualityAnswer, Record, RepositoryReport,
 };
-use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Context, Provenance};
+use crate::capability::{Capability, CapabilityKind, Context, Provenance};
+use crate::command_graph::CommandNode;
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
@@ -288,10 +290,70 @@ pub fn overview(ctx: &Context) -> Page {
             .child(statistics)
             .child(identity)
             .child(health_card)
+            .children(distribution_card(ctx).into_iter().collect::<Vec<_>>())
             .child(kinds)
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
+}
+
+/// The distribution card: whether the command the README advertises works right now.
+///
+/// It asks `distribution.status`, which is the same capability the command line, the HTTP
+/// route and the MCP tool answer from, so no number here is computed twice and none is
+/// written down. A repository that carries no distribution model gets no card rather than
+/// a card full of dashes.
+fn distribution_card(ctx: &Context) -> Option<El> {
+    let report: InstallabilityReport = ask(ctx, "distribution.status", json!({})).ok()?;
+    let verdict = if report.installable {
+        badge("ok", "healthy")
+    } else {
+        badge("fail", "blocked")
+    };
+    let mut rows = vec![
+        (
+            "Local version",
+            Node::Element(mono(format!("v{}", report.local_version))),
+        ),
+        (
+            "Stable release",
+            Node::Element(mono(
+                report.stable_tag.clone().unwrap_or_else(|| "none".into()),
+            )),
+        ),
+        (
+            "Artifacts",
+            Node::Element(mono(format!(
+                "{}/{}",
+                report.published_artifacts, report.required_targets
+            ))),
+        ),
+        ("Public install", Node::Element(verdict)),
+    ];
+    // Why, and what to do about it — the same cause and next action every other projection
+    // of this capability shows, rather than a second wording of them here.
+    if !report.installable {
+        if let Some(c) = report.checks.iter().find(|c| c.state == CheckState::Failed) {
+            if let Some(cause) = &c.cause {
+                rows.push(("Reason", Node::Element(el("span").text(cause))));
+            }
+            if let Some(next) = &c.next {
+                rows.push(("Next", Node::Element(mono(next))));
+            }
+        }
+    }
+    Some(card_with(
+        "Distribution",
+        link(
+            "/cockpit/capabilities/distribution.status",
+            "distribution.status",
+        ),
+        el("div").child(facts(rows)).child(
+            el("p")
+                .class("mj-note")
+                .child(mono(&report.install_command)),
+        ),
+    ))
 }
 
 fn health_badge(status: HealthStatus) -> El {
@@ -880,6 +942,7 @@ fn runner_form(c: &Capability, http: &crate::capability::HttpExposure) -> El {
                     el("code")
                         .class("mj-mono mj-preview")
                         .attr("data-mj-preview", "")
+                        .attr("tabindex", "0")
                         .text(format!("{} {}", http.method.as_str(), http.path)),
                 ),
         )
@@ -2136,10 +2199,21 @@ pub fn artifacts(ctx: &Context) -> Page {
 /// The surfaces: every HTTP route the registry projects, the projection's own routes, and
 /// the way into Swagger UI.
 pub fn api(ctx: &Context) -> Page {
-    let mut rows: Vec<El> = ctx
+    // Ordered as routes, before anything is rendered. Sorting the finished markup instead
+    // made every CSS class name part of the sort key: a rename nobody thought was visible
+    // reordered the table.
+    let mut routes: Vec<_> = ctx
         .registry
         .iter()
         .filter_map(|c| c.exposure.http.as_ref().map(|h| (c, h)))
+        .collect();
+    routes.sort_by(|(a, ha), (b, hb)| {
+        crate::order::natural_cmp(&ha.path, &hb.path)
+            .then_with(|| crate::order::natural_cmp(ha.method.as_str(), hb.method.as_str()))
+            .then_with(|| crate::order::natural_cmp(a.id.as_str(), b.id.as_str()))
+    });
+    let rows: Vec<El> = routes
+        .into_iter()
         .map(|(c, h)| {
             row(vec![
                 cell(mono(h.method.as_str())),
@@ -2153,18 +2227,24 @@ pub fn api(ctx: &Context) -> Page {
             ])
         })
         .collect();
-    rows.sort_by_key(|r| r.render());
 
-    // the projection's own routes and what each one is, read off the surfaces that declare
-    // them: this table has never held a path of its own and must not start
+    // the projection's own routes, and where each one answers: the same resolved surfaces
+    // the OpenAPI document and the published site read, so a description written once here
+    // cannot disagree with the one written there. This table has never held a path of its
+    // own and must not start.
     let infrastructure = table(
-        &["Path", "What it is"],
-        crate::web::discover::native_all()
+        &["Path", "What it is", "Answered by"],
+        crate::web::projection_routes()
             .into_iter()
-            .map(|surface| {
+            .map(|r| {
                 row(vec![
-                    cell(mono(surface.mount.as_str())),
-                    text_cell(&surface.title),
+                    cell(mono(&r.path)),
+                    text_cell(&r.what),
+                    text_cell(if r.linkable() {
+                        "a running server, and a publication"
+                    } else {
+                        "a running server"
+                    }),
                 ])
             })
             .collect(),
@@ -2179,7 +2259,7 @@ pub fn api(ctx: &Context) -> Page {
                 "Swagger UI",
                 link(crate::http::swagger::SWAGGER_PATH, "Open"),
                 el("p").class("mj-prose").text(
-                    "Swagger UI is served from this process and reads /openapi.json, which is generated from the registry at first request. Nothing about an operation is written twice: the descriptions, the schemas and the examples are the capability's own.",
+                    format!("Swagger UI is served from this process and reads {}, which is generated from the registry at first request. Nothing about an operation is written twice: the descriptions, the schemas and the examples are the capability's own.", crate::http::swagger::SPEC_PATH),
                 ),
             ))
             .child(card(
@@ -2846,10 +2926,495 @@ pub fn not_found(path: &str) -> Page {
     .status(404)
 }
 
-/// Whether a registry holds a capability at all: used by the router to tell a missing
-/// page from a missing capability.
-pub fn exists(registry: &CapabilityRegistry, id: &str) -> bool {
-    registry.get(id).is_some()
+// --------------------------------------------------------------------- quality
+
+/// The crate's own public surface, as the rules hold it.
+///
+/// Every number and every finding on this page comes from one execution of
+/// `quality.report`, through the same executor the command line and the HTTP route use.
+/// Nothing is counted here, nothing is listed here, and a code added to the validator
+/// tomorrow appears on this page with no edit to it — which is the property the page is
+/// about, so it had better be true of the page.
+pub fn quality(ctx: &Context) -> Page {
+    let answer: QualityAnswer = match ask(ctx, "quality.report", json!({})) {
+        Ok(a) => a,
+        Err(e) => return failed(Area::Quality, "Quality", e),
+    };
+    if !answer.measured {
+        return Page::new(
+            Area::Quality,
+            "Quality",
+            el("div").child(alert("warn", answer.reason.unwrap_or_default())).child(
+                el("p").class("mj-empty").text(
+                    "This repository carries no Rust crate, so the public API rules do not apply to it. That is an answer and not a failure.",
+                ),
+            ),
+        )
+        .trail(vec![("Cockpit", Some("/cockpit")), ("Quality", None)]);
+    }
+    let r = &answer.report;
+    let ratio = |have: usize, of: usize| {
+        if of == 0 {
+            "—".to_string()
+        } else {
+            format!("{have} / {of}")
+        }
+    };
+    let verdict = if answer.passes { "ok" } else { "fail" };
+
+    let surface = card(
+        "Public API",
+        el("div")
+            .child(facts(vec![
+                (
+                    "Documented",
+                    Node::Element(el("span").text(ratio(r.public_api.documented, r.public_api.items))),
+                ),
+                (
+                    "Exampled",
+                    Node::Element(
+                        el("span").text(ratio(r.public_api.exampled, r.public_api.owe_example)),
+                    ),
+                ),
+            ]))
+            .child(
+                el("p").class("mj-note").text(
+                    "An item owes an example when it carries behaviour. What the policy does not ask of an item is derived from that item's kind and shape, and is listed below rather than kept in an exemption file.",
+                ),
+            )
+            .child(table(
+                &["Not asked of", "Items"],
+                r.public_api
+                    .exempt
+                    .iter()
+                    .map(|e| row(vec![text_cell(&e.reason), text_cell(e.items.to_string())]))
+                    .collect(),
+            )),
+    );
+
+    let modules = card(
+        "Modules",
+        facts(vec![
+            (
+                "Documented",
+                Node::Element(el("span").text(ratio(r.modules.documented, r.modules.modules))),
+            ),
+            (
+                "Exampled",
+                Node::Element(el("span").text(ratio(r.modules.exampled, r.modules.modules))),
+            ),
+            (
+                "Behaviourally tested",
+                Node::Element(
+                    el("span").text(ratio(r.modules.behaviourally_tested, r.modules.modules)),
+                ),
+            ),
+        ]),
+    );
+
+    let o = &r.operations;
+    let operations = card(
+        "Operations",
+        el("div")
+            .child(facts(vec![
+                ("Canonical", Node::Element(el("span").text(o.canonical.to_string()))),
+                ("HTTP", Node::Element(el("span").text(ratio(o.http, o.canonical)))),
+                ("OpenAPI", Node::Element(el("span").text(ratio(o.openapi, o.http)))),
+                ("MCP", Node::Element(el("span").text(ratio(o.mcp, o.canonical)))),
+                (
+                    "Command line",
+                    Node::Element(el("span").text(ratio(o.cli, o.canonical))),
+                ),
+            ]))
+            .child(el("p").class("mj-note").text(format!(
+                "{} runnable command(s): {} the projection of a capability, {} classified as belonging to the command line alone with a reason the parity check verifies.",
+                o.cli_commands, o.cli_from_capability, o.cli_local
+            ))),
+    );
+
+    // one card per code, because that is the unit somebody fixes: the reason and the
+    // remedy belong to the code, and repeating them per finding would be the duplication
+    // this whole subsystem is about
+    let mut by_code: std::collections::BTreeMap<&str, Vec<&crate::quality::Violation>> =
+        Default::default();
+    for v in &r.violations {
+        by_code.entry(v.code.as_str()).or_default().push(v);
+    }
+    let findings: Vec<El> = by_code
+        .into_iter()
+        .map(|(code, group)| {
+            let first = group[0];
+            card_with(
+                code.to_string(),
+                badge("fail", format!("{} finding(s)", group.len())),
+                el("div")
+                    .child(el("p").class("mj-prose").text(&first.why))
+                    .child(facts(vec![
+                        ("Rule", Node::Element(mono(first.rule.clone()))),
+                        ("Remedy", Node::Element(el("span").text(&first.remediation))),
+                    ]))
+                    .child(details(
+                        format!("{} occurrence(s)", group.len()),
+                        table(
+                            &["Where", "Symbol"],
+                            group
+                                .iter()
+                                .map(|v| {
+                                    let at = match v.line {
+                                        Some(l) => format!("{}:{l}", v.path),
+                                        None => v.path.clone(),
+                                    };
+                                    row(vec![cell(mono(at)), cell(mono(v.symbol.clone()))])
+                                })
+                                .collect(),
+                        ),
+                    )),
+            )
+        })
+        .collect();
+
+    let standing = card_with(
+        "Where this stands",
+        badge(
+            verdict,
+            if answer.passes {
+                "no finding outside the baseline".to_string()
+            } else {
+                format!("{} finding(s)", r.violations.len())
+            },
+        ),
+        el("div")
+            .child(facts(vec![
+                ("Target", Node::Element(mono(r.target.clone()))),
+                (
+                    "Accepted by the baseline",
+                    Node::Element(el("span").text(answer.baselined.to_string())),
+                ),
+            ]))
+            .child(el("p").class("mj-note").text(
+                "The baseline records the findings that stood when the rule landed. The gate fails for a finding that is not in it, so the debt can shrink and cannot grow.",
+            )),
+    );
+
+    Page::new(
+        Area::Quality,
+        "Quality",
+        el("div")
+            .class("mj-grid")
+            .child(standing)
+            .child(surface)
+            .child(modules)
+            .child(operations)
+            .children(findings),
+    )
+    .subtitle("The same measurement `majordomus quality report` prints and `/api/v1/quality` answers, read through one capability.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Quality", None)])
+}
+
+// ------------------------------------------------------------------------ commands
+
+/// Every command this repository offers, from whichever program offers it.
+///
+/// The page carries no command of its own: it asks `commands.list`, which is the same
+/// capability the MCP tool and the HTTP route answer with, over the same graph the
+/// generated workflow bridge and the shell completion are derived from. The filters are the
+/// graph's vocabulary — the program, and what running a command changes — so a chip here and
+/// a `--effect` on the command line select the same set.
+pub fn commands(ctx: &Context, query: &[(String, String)]) -> Page {
+    let origin = param(query, "origin");
+    let effect = param(query, "effect");
+    let search = param(query, "q");
+    let mut input = json!({});
+    if let Some(o) = &origin {
+        input["origin"] = json!(o);
+    }
+    if let Some(e) = &effect {
+        input["effect"] = json!(e);
+    }
+    if let Some(s) = &search {
+        input["search"] = json!(s);
+    }
+    let index: CommandIndex = match ask(ctx, "commands.list", input) {
+        Ok(v) => v,
+        Err(e) => return failed(Area::Commands, "Commands", e),
+    };
+
+    let here = |key: &str, value: Option<&str>| -> String {
+        let mut parts: Vec<String> = Vec::new();
+        for (k, v) in [
+            ("origin", origin.as_deref()),
+            ("effect", effect.as_deref()),
+            ("q", search.as_deref()),
+        ] {
+            let v = if k == key { value } else { v };
+            if let Some(v) = v {
+                parts.push(format!("{k}={}", percent_encode(v)));
+            }
+        }
+        if parts.is_empty() {
+            "/cockpit/commands".into()
+        } else {
+            format!("/cockpit/commands?{}", parts.join("&"))
+        }
+    };
+
+    let programs = chips(
+        [
+            ("every program", None),
+            ("executable", Some("executable")),
+            ("shell tool", Some("tool")),
+            ("workflow", Some("workflow")),
+        ]
+        .into_iter()
+        .map(|(label, value)| {
+            (
+                label.to_string(),
+                here("origin", value),
+                index
+                    .commands
+                    .iter()
+                    .filter(|c| value.is_none_or(|v| c.origin == v))
+                    .count(),
+                origin.as_deref() == value,
+            )
+        })
+        .collect(),
+    );
+
+    let effects = chips(
+        [
+            ("any effect", None),
+            ("read-only", Some("read_only")),
+            ("up to local", Some("local_mutation")),
+            ("up to repository", Some("repository_mutation")),
+        ]
+        .into_iter()
+        .map(|(label, value)| {
+            (
+                label.to_string(),
+                here("effect", value),
+                0,
+                effect.as_deref() == value,
+            )
+        })
+        .collect(),
+    );
+
+    let rows = index
+        .commands
+        .iter()
+        .map(|c| {
+            row(vec![
+                cell(link(
+                    format!("/cockpit/commands/{}", percent_encode(&c.id)),
+                    c.invocation.clone(),
+                )),
+                cell(badge(effect_status(&c.effect), c.effect.replace('_', " "))),
+                text_cell(c.origin.clone()),
+                cell(match &c.projections.workflow {
+                    Some(w) => mono(format!("just {w}")),
+                    None => el("span").class("mj-note").text("—"),
+                }),
+                cell(match &c.projections.mcp {
+                    Some(t) => mono(t.clone()),
+                    None => el("span").class("mj-note").text("—"),
+                }),
+                text_cell(c.summary.clone()),
+            ])
+        })
+        .collect::<Vec<_>>();
+
+    Page::new(
+        Area::Commands,
+        "Commands",
+        el("div")
+            .class("mj-grid")
+            .child(card_with(
+                "What this repository offers",
+                badge("ok", index.fingerprint.clone()),
+                el("div")
+                    .child(
+                        el("div")
+                            .class("mj-stats")
+                            .child(statistic(
+                                index.total.to_string(),
+                                "commands",
+                                "the command graph",
+                            ))
+                            .child(statistic(
+                                index.commands.len().to_string(),
+                                "shown",
+                                "this filter",
+                            )),
+                    )
+                    .child(programs)
+                    .child(effects)
+                    .child(el("p").class("mj-note").text(
+                        "Composed from the three declarations that already exist: the clap tree of the Rust executable, the shipped command registry of the shell tool, and the recipes the workflow runner describes. Where a command appears is derived from what running it changes, never declared.",
+                    )),
+            ))
+            .child(card("Every command", table(
+                &["command", "effect", "program", "workflow", "mcp tool", "summary"],
+                rows,
+            ))),
+    )
+    .subtitle("Every command of every program here, and every surface that carries it.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Commands", None)])
+}
+
+/// One command: what it takes, what running it changes, and every surface that carries it.
+pub fn command(ctx: &Context, id: &str) -> Page {
+    let node: CommandNode = match ask(ctx, "commands.get", json!({ "id": id })) {
+        Ok(v) => v,
+        Err(e) => {
+            return failed(Area::Commands, "Command", e).status(404).trail(vec![
+                ("Cockpit", Some("/cockpit")),
+                ("Commands", Some("/cockpit/commands")),
+                (id, None),
+            ])
+        }
+    };
+
+    let arguments = table(
+        &["argument", "values from", "required", "help"],
+        node.arguments
+            .iter()
+            .map(|a| {
+                let spelling = match &a.long {
+                    Some(long) => format!("--{long}"),
+                    None => format!("<{}>", a.name.to_uppercase()),
+                };
+                row(vec![
+                    cell(mono(spelling)),
+                    cell(tag(word(&a.source).replace('_', " "))),
+                    text_cell(if a.required { "yes" } else { "—" }),
+                    text_cell(a.help.clone()),
+                ])
+            })
+            .collect(),
+    );
+
+    let p = &node.projections;
+    let surfaces = facts(vec![
+        (
+            "Command line",
+            Node::Element(match &p.cli {
+                Some(v) => mono(v.clone()),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+        (
+            "Workflow",
+            Node::Element(match &p.workflow {
+                Some(v) => mono(format!("just {v}")),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+        (
+            "MCP tool",
+            Node::Element(match &p.mcp {
+                Some(v) => mono(v.clone()),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+        (
+            "HTTP",
+            Node::Element(match &p.http {
+                Some(v) => mono(v.clone()),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+        (
+            "Declared in",
+            Node::Element(mono(node.provenance.declared_in.clone())),
+        ),
+        (
+            "Capability",
+            Node::Element(match &node.provenance.capability {
+                Some(c) => link(
+                    format!("/cockpit/capabilities/{}", percent_encode(c.as_str())),
+                    c.to_string(),
+                ),
+                None => el("span").class("mj-note").text("—"),
+            }),
+        ),
+    ]);
+
+    let effect_word = word(&node.effect).replace('_', " ");
+    Page::new(
+        Area::Commands,
+        node.invocation.clone(),
+        el("div")
+            .class("mj-grid")
+            .child(card_with(
+                "What it is",
+                badge(effect_status(&word(&node.effect)), effect_word),
+                el("div")
+                    .child(el("p").text(node.summary.clone()))
+                    .child(facts(vec![
+                        ("Identity", Node::Element(mono(node.id.to_string()))),
+                        ("Program", Node::Element(tag(word(&node.origin)))),
+                        (
+                            "Runs",
+                            Node::Element(tag(word(&node.interactivity).replace('_', " "))),
+                        ),
+                        (
+                            "Requires",
+                            Node::Element(
+                                el("span").class("mj-marks").children(
+                                    node.availability
+                                        .requires
+                                        .iter()
+                                        .map(|r| tag(word(r).replace('_', " ")))
+                                        .collect::<Vec<_>>(),
+                                ),
+                            ),
+                        ),
+                    ]))
+                    .when(p.withheld.is_some(), |d| {
+                        d.child(alert(
+                            "warn",
+                            format!(
+                                "No machine surface carries this command: {}",
+                                p.withheld.clone().unwrap_or_default()
+                            ),
+                        ))
+                    }),
+            ))
+            .child(card("Where it appears", surfaces))
+            .when(!node.arguments.is_empty(), |d| {
+                d.child(card("Arguments", arguments))
+            }),
+    )
+    .subtitle(
+        node.description
+            .clone()
+            .unwrap_or_else(|| node.summary.clone()),
+    )
+    .trail(vec![
+        ("Cockpit", Some("/cockpit")),
+        ("Commands", Some("/cockpit/commands")),
+        (node.id.as_str(), None),
+    ])
+}
+
+/// The badge status for an effect: what a reader should feel about running it.
+fn effect_status(effect: &str) -> &'static str {
+    match effect {
+        "read_only" => "ok",
+        "local_mutation" => "info",
+        "repository_mutation" | "network_mutation" => "warn",
+        _ => "fail",
+    }
+}
+
+/// One query parameter, when it carries something.
+fn param(query: &[(String, String)], key: &str) -> Option<String> {
+    query
+        .iter()
+        .find(|(k, _)| k == key)
+        .map(|(_, v)| v.clone())
+        .filter(|v| !v.is_empty())
 }
 
 #[cfg(test)]

@@ -19,7 +19,7 @@ CRATE="$ROOT/apps/majordomus-cli"
 RC="$ROOT/scripts/rust-check"
 TH="$ROOT/scripts/rust-coverage-threshold"
 WF="$ROOT/.github/workflows/validate.yml"
-JF="$ROOT/justfile"
+JF="$(just_declaration)"   # the root file plus the modules it imports
 RULE="$ROOT/.ai/repo/rules/project/rust-cli-evidence.v1.md"
 CLAIMS="$ROOT/docs/CLAIMS.yaml"
 
@@ -38,6 +38,7 @@ cargo build
 capabilities validate
 generate --check
 bench coverage --check
+web validate
 bench --profile ci --check
 cargo llvm-cov --fail-under-lines $threshold
 artifact $ARTIFACT'
@@ -85,13 +86,33 @@ printf '%s\n' "$bench_job" | grep -qF 'cargo run --quiet -- bench --profile ci -
 awk '/^on:/{f=1} /^jobs:/{f=0} f' "$WF" | grep -qE '^  (push|pull_request):' || { echo "    validate.yml does not run on push"; exit 1; }
 
 # --- a person is routed to the same gates
-expect_grep '^test:.* rust-check( |$)' "$JF"
-expect_grep '^rust-check:' "$JF"
-grep -A1 '^rust-check:' "$JF" | grep -q 'scripts/rust-check' || { echo "    just rust-check does not run scripts/rust-check"; exit 1; }
-expect_grep '^coverage:' "$JF"
-grep -A1 '^coverage:' "$JF" | grep -q 'rust-coverage-threshold' || { echo "    just coverage does not read scripts/rust-coverage-threshold"; exit 1; }
-expect_grep '^test-rust \*args:' "$JF"
-expect_grep '^bench \*name:' "$JF"
+#
+# The recipes are declared across the justfile and the files it imports, so which file a
+# recipe is written in is not a fact this case may assert: `just --dump` is the whole set
+# after the imports are spliced, and it carries the dependencies and the body. Grepping one
+# file would be a justfile parser, and a second one at that.
+[ -f "$JF" ] || { echo "    the justfile is missing"; exit 1; }
+dump="$(cd "$ROOT" && just --dump --dump-format json 2>/dev/null)"
+[ -n "$dump" ] || { echo "    just --dump produced nothing; the justfile does not parse"; exit 1; }
+
+recipe_exists() {
+  printf '%s' "$dump" | jq -e --arg r "$1" '.recipes | has($r)' >/dev/null 2>&1 \
+    || { echo "    just $1 is not a recipe"; exit 1; }
+}
+recipe_body() {
+  printf '%s' "$dump" | jq -r --arg r "$1" '[.recipes[$r].body // [] | .. | strings] | join(" ")'
+}
+
+printf '%s' "$dump" | jq -e '[.recipes.test.dependencies[]?.recipe] | index("rust-check")' >/dev/null 2>&1 \
+  || { echo "    just test does not depend on rust-check"; exit 1; }
+recipe_exists rust-check
+recipe_body rust-check | grep -q 'scripts/rust-check' \
+  || { echo "    just rust-check does not run scripts/rust-check"; exit 1; }
+recipe_exists coverage
+recipe_body coverage | grep -q 'rust-coverage-threshold' \
+  || { echo "    just coverage does not read scripts/rust-coverage-threshold"; exit 1; }
+recipe_exists test-rust
+recipe_exists bench
 
 # --- the hot paths carry benchmarks: every file under benches/ is a declared criterion
 #     target without the default harness, and every path the rule names is measured

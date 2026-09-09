@@ -79,7 +79,7 @@ Adding a milestone file puts it in the roadmap.
 
 The same refusals the work graph has, one level up, each by name:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | finding | means |
 |---|---|

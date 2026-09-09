@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 39
+weight = 46
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](@/docs/github-pages-performance.md).
 
-Generated from canonical inputs `00a77a1fc55f`.
+Generated from canonical inputs `8e78d6d99ceb`.
 
 ## Controlled budget
 
@@ -21,7 +21,7 @@ Seconds of repository-controlled latency on a GitHub-hosted Linux runner. The Ac
 runner allocation and the "pages build and deployment" run GitHub does itself are measured
 and reported beside these and never budgeted: they belong to GitHub, not to this repository.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | phase | warm budget |
 |---|---|
@@ -44,52 +44,13 @@ Derived from `.ai/repo/ci/gates.yaml`: the classes that name the `site-build` ga
 publication path itself. `scripts/pages paths` prints this list and the workflow trigger is
 held to it.
 
-- `.ai/**`
-- `.envrc`
-- `.githooks/**`
-- `.github/workflows/pages.yml`
-- `.nojekyll`
-- `AGENTS.md`
-- `CLAUDE.md`
-- `CONTRIBUTING.md`
-- `LICENSE`
-- `README.md`
-- `SECURITY.md`
-- `assets/**`
-- `bin/**`
-- `docs/**`
-- `docs/generated/**`
-- `examples/**`
-- `lib/**`
-- `package-lock.json`
-- `package.json`
-- `scripts/cockpit-assets`
-- `scripts/cockpit-probe`
-- `scripts/generate-site-data`
-- `scripts/github-sync`
-- `scripts/lib/**`
-- `scripts/lib/cockpit-probe.mjs`
-- `scripts/pages`
-- `scripts/rules-package`
-- `scripts/site-basepath-check`
-- `scripts/site-build`
-- `scripts/site-check`
-- `scripts/site-deploy`
-- `scripts/site-probe`
-- `scripts/site-serve`
-- `share/**`
-- `share/allow/**`
-- `share/cockpit/**`
-- `site/**`
-- `site/data/registry/**`
-- `test/**`
 
 ## Measured
 
 The controlled build-and-check path, milliseconds, from `scripts/pages benchmark`. A baseline
 belongs to the machine that measured it; a value from one platform says nothing about another.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | platform | samples | routes | fingerprint | build | check | controlled |
 |---|---|---|---|---|---|---|

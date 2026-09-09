@@ -789,8 +789,11 @@ majordomus skills check [--json]       validate every skill and every reference 
 - `check` validates every skill against the allow-list generated from the schema (no
   unknown key), `schema: skill/v1`, an integer `version`, a `status` from the closed
   set, an `id` equal to the directory name, non-empty `# Purpose`, `# Procedure` and
-  `# Output` sections; refuses two skills claiming one id, a `related` id that names no
-  skill, and an example without a level-one heading. Every finding names the file and
+  `# Output` sections; refuses two skills claiming one id, two skills whose descriptions
+  do not tell them apart, a `related` id that names no skill, and an example without a
+  level-one heading. Descriptions are compared folded to lower case, with runs of
+  whitespace collapsed and trailing sentence punctuation dropped, so the difference has
+  to be in what a description says rather than in how it is typed. Every finding names the file and
   every reason. It ends with the counts of what it examined — skills, examples,
   references — and exits `10` on any failure. A repository with no skills is a `WARN`,
   never a pass over nothing. An absent allow-list (`share/allow/skill.txt`, a distribution
@@ -991,9 +994,12 @@ discovering that the hook meant to keep their prompts had been discarding them.
 A repository holds itself to this by declaring an `enforcement` entry with
 `wired_by: provider-hook:<provider>`; `doctor` then fails unless the state is `verified`,
 and because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.
-Only Claude Code has an adapter today. Codex and Gemini are reported `unsupported` rather
-than assumed, and no other surface — the web, the desktop app, another machine — is
-observable from here at all.
+Only Claude Code has an adapter today; every other provider the distribution declares
+(`docs/generated/providers.md`) is reported `unsupported` rather than assumed, and no other
+surface — the web, the desktop app, another machine — is observable from here at all. An
+orchestrator such as bb has no adapter by design: it hands no prompt to a command before the
+model, and the agent it runs keeps its own hooks, so a Claude Code thread under bb is
+captured as `claude-code` (ADR 0024).
 
 ### `capture session` — the episode boundary
 
@@ -1217,14 +1223,14 @@ and `version`, never the file name. `docs/DOCTRINE.md` describes the format, the
 ```
 $ majordomus rules list
 majordomus.scope-integrity                 v1  blocking  vendor:majordomus enforced by check,finish,watch
-majordomus.sessions-are-workers            v1  advisory  vendor:majordomus not machine-enforced
-project.english-only                       v1  blocking  project          not machine-enforced
+majordomus.sessions-are-workers            v1  advisory  vendor:majordomus no validator; see the rule
+project.english-only                       v1  blocking  project          no validator; see the rule
 ```
 
 - `list [--json]` prints the effective set in resolved order: identity, class, provenance
   (`vendor:<name>` or `project`), and whether the tool enforces it. A rule without an
   `x-majordomus` block is normative for whoever reads it and enforced by nobody, and the
-  listing says `not machine-enforced` rather than hiding it.
+  listing says `no validator; see the rule` rather than hiding it: the rule is normative for whoever reads it, and nothing checks it by machine.
 - `show <id>` prints one rule, front matter and body, with the repository-relative path it
   was read from as the first line. An id outside the effective set exits 12.
 - `vendor status` compares the vendored baseline with the package the running executable
@@ -1563,7 +1569,9 @@ p99, maximum, mean and standard deviation; nothing is averaged away.
 - Every run is written under `.ai/local/benchmarks/` (`runs/<run-id>.json`, `latest.json`,
   one line per run in `history.jsonl`) unless `--no-save`. That is local evidence: ignored
   by git, never a baseline.
-- `--write-baseline` writes the run as `.ai/repo/benchmarks/baseline.json`, schema
+- `--write-baseline` writes the run under `.ai/repo/benchmarks/rust/`, as
+  `baseline.<platform>.json` — one baseline per platform, since a duration compared
+  across machines compares the machines — with schema
   `majordomus/benchmark-baseline/v1`, and prints the old and new p50/p95/p99 per target. It
   refuses a dirty tree without `--force`, because a baseline records a commit.
 - `--check` compares the run with the baseline under `benchmark.regression`: for each target

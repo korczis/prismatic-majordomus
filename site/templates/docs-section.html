@@ -16,7 +16,7 @@
     {%- for path in section.subsections -%}
     {%- set sub = get_section(path=path) -%}
     <li><a href="{{ sub.permalink }}" class="block h-full rounded-base border border-brand-soft bg-brand-softer p-5 hover:bg-neutral-secondary-medium">
-      <span class="font-mono text-xs text-body-subtle">{{ sub.extra.source | default(value="") }}</span>
+      <span class="font-mono text-xs text-body">{{ sub.extra.source | default(value="") }}</span>
       <h2 class="mt-1 text-lg font-semibold tracking-tight text-heading">{{ sub.title }}</h2>
       <p class="mt-2 text-sm text-body">{{ sub.description }}</p></a></li>
     {%- endfor -%}

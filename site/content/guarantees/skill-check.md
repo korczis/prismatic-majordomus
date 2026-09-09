@@ -1,7 +1,7 @@
 +++
 title = "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed"
 description = "majordomus skills check, and doctor and watch through the doctrine majordomus.skill-integrity, examine every discovered skill: no front-matter key outside the schema, schema: skill/v1, an integer version of at least 1, a status from draft, active, deprecated, an id equal to the directory name, and non-empty # Purpose, # Procedure and # Output sections. Across the catalogue: no two skills claim one id, every related id names a skill, and every tracked example opens with a level-one heading. Every violation is a FAIL naming the file and every reason at once, and the command exits 10. The result ends with what was examined — skills, examples, references — and a repository with no skills gets a WARN, never an OK over nothing."
-weight = 138
+weight = 141
 [extra]
 claim_id = "skill-check"
 status = "guaranteed"

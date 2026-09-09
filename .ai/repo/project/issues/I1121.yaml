@@ -1,0 +1,32 @@
+id: I1121
+milestone: two-folder-integration
+title: Every surface shows the integration from the one model
+slug: integration-projected-everywhere
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Project the integration state — what is adopted, what is owned, what is generated, what would change — through the CLI, the API and its document, MCP, the Cockpit and the documentation, from the one model and with no parallel definition."
+why: "The question a person asks about an integration is what it did to my repository, and they will ask it wherever they happen to be. Answering it four ways is how the four answers begin to differ."
+current_state: "The capability registry already projects declared operations into every surface. The integration state is not among them."
+desired_state: "One declaration exposes the integration reads, and every surface derives from it as it does for everything else."
+scope:
+  - apps/majordomus-cli/src/capability/builtin
+non_scope:
+  - A mutating integration operation exposed to unauthenticated HTTP or to a browser
+  - A hand-edited API document, route table or documentation list
+depends_on:
+  - I1112
+acceptance_criteria:
+  - The integration reads are declared once and appear in the CLI, the API, the API document, MCP, the Cockpit and the generated reference with no second registration
+  - No mutating operation is exposed to an untrusted surface; adoption and removal stay with the trusted command line
+  - The Cockpit shows what is adopted, what is owned and what a reconciliation would change, from that declaration
+  - The published documentation derives its integration reference from the same model, with no retyped value
+validation:
+  - majordomus generate --check
+  - cargo test --workspace --all-features
+evidence_required:
+  - surfaces_derived
+  - no_mutation_untrusted
+risk: "Showing what a reconciliation would change means running the plan on a request. Its cost belongs to the budget, and a read that builds a plan has to say so."
+created_at: 2026-09-06
+updated_at: 2026-09-06

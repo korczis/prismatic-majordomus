@@ -1,7 +1,7 @@
 +++
 title = "A touched file outside the claimed scope is a failure, not a warning"
 description = "If a task's changes — uncommitted or committed since the task started — include a file outside the declared scope, check and finish fail on it by name. Files under .ai/ and the generated instruction files are always allowed, because the tool itself writes them."
-weight = 46
+weight = 48
 [extra]
 claim_id = "scope-enforcement"
 status = "guaranteed"

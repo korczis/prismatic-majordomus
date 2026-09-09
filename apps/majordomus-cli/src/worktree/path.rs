@@ -235,8 +235,8 @@ mod tests {
     #[test]
     fn the_container_is_the_sibling_whatever_the_parent() {
         assert_eq!(
-            container_root(Path::new("/srv/checkouts/prismatic-majordomus")).unwrap(),
-            PathBuf::from("/srv/checkouts/prismatic-majordomus-wt")
+            container_root(Path::new("/srv/dev/prismatic-majordomus")).unwrap(),
+            PathBuf::from("/srv/dev/prismatic-majordomus-wt")
         );
         assert_eq!(
             container_root(Path::new("/a/b/c/d")).unwrap(),

@@ -1,7 +1,7 @@
 +++
 title = "The web surface"
 description = "the web surface: every surface discovered from its producer rather than registered, the two reserved namespaces (`/docs` is documentation, `/swagger` is Swagger UI), what a surface declares, how to add one, how the documentation is built for its mount and served safely, and what is enforced where"
-weight = 33
+weight = 37
 [extra]
 source = "docs/WEB.md"
 +++
@@ -36,7 +36,7 @@ DERIVED PROJECTIONS         the HTTP router · the home page at / · /api/v1/web
 Every path below is the mount its surface declares. Nothing in this table is typed twice:
 `majordomus web list` prints it from the same resolution, and a mount that moves moves here.
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Path | Surface | What it is | Kind |
 |---|---|---|---|
@@ -196,7 +196,7 @@ and would make every clone report drift.
 
 ## What is enforced, and where
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | Invariant | Enforced by |
 |---|---|

@@ -1,6 +1,20 @@
 {
   "artifacts": [
     {
+      "document": "providers/bb",
+      "format": "markdown",
+      "path": ".bb/AGENTS.md",
+      "schema": null,
+      "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
+    },
+    {
+      "document": "deployment",
+      "format": "text",
+      "path": ".dockerignore",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
+    },
+    {
       "document": "providers/agents",
       "format": "markdown",
       "path": "AGENTS.md",
@@ -13,6 +27,13 @@
       "path": "CLAUDE.md",
       "schema": null,
       "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
+    },
+    {
+      "document": "deployment",
+      "format": "text",
+      "path": "deploy/Dockerfile",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "document": "install-guide",
@@ -71,6 +92,27 @@
       "source": "the canonical Majordomus capability registry"
     },
     {
+      "document": "changelog",
+      "format": "json",
+      "path": "docs/generated/changelog.json",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "document": "changelog",
+      "format": "markdown",
+      "path": "docs/generated/changelog.md",
+      "schema": null,
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "document": "changelog",
+      "format": "yaml",
+      "path": "docs/generated/changelog.yaml",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
       "document": "cli",
       "format": "json",
       "path": "docs/generated/cli.json",
@@ -127,6 +169,13 @@
       "source": "the `capabilities` module of the canonical Majordomus capability registry"
     },
     {
+      "document": "modules/commands",
+      "format": "markdown",
+      "path": "docs/generated/modules/commands.md",
+      "schema": null,
+      "source": "the `commands` module of the canonical Majordomus capability registry"
+    },
+    {
       "document": "modules/continuity",
       "format": "markdown",
       "path": "docs/generated/modules/continuity.md",
@@ -153,6 +202,13 @@
       "path": "docs/generated/modules/distribution.md",
       "schema": null,
       "source": "the `distribution` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/environment",
+      "format": "markdown",
+      "path": "docs/generated/modules/environment.md",
+      "schema": null,
+      "source": "the `environment` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/graph",
@@ -190,11 +246,39 @@
       "source": "the `perf` module of the canonical Majordomus capability registry"
     },
     {
+      "document": "modules/product",
+      "format": "markdown",
+      "path": "docs/generated/modules/product.md",
+      "schema": null,
+      "source": "the `product` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/quality",
+      "format": "markdown",
+      "path": "docs/generated/modules/quality.md",
+      "schema": null,
+      "source": "the `quality` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/release",
+      "format": "markdown",
+      "path": "docs/generated/modules/release.md",
+      "schema": null,
+      "source": "the `release` module of the canonical Majordomus capability registry"
+    },
+    {
       "document": "modules/repository",
       "format": "markdown",
       "path": "docs/generated/modules/repository.md",
       "schema": null,
       "source": "the `repository` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/trace",
+      "format": "markdown",
+      "path": "docs/generated/modules/trace.md",
+      "schema": null,
+      "source": "the `trace` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/web",
@@ -232,6 +316,27 @@
       "source": "the canonical Majordomus capability registry"
     },
     {
+      "document": "providers",
+      "format": "json",
+      "path": "docs/generated/providers.json",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    },
+    {
+      "document": "providers",
+      "format": "markdown",
+      "path": "docs/generated/providers.md",
+      "schema": null,
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    },
+    {
+      "document": "providers",
+      "format": "yaml",
+      "path": "docs/generated/providers.yaml",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    },
+    {
       "document": "registry",
       "format": "json",
       "path": "docs/generated/registry.json",
@@ -258,6 +363,13 @@
       "path": "docs/generated/web.yaml",
       "schema": "majordomus/web-topology/v1",
       "source": "the resolved web topology of this repository"
+    },
+    {
+      "document": "deployment",
+      "format": "text",
+      "path": "fly.toml",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "document": "allow/adr",
@@ -428,6 +540,13 @@
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
     },
     {
+      "document": "allow/workspace",
+      "format": "text",
+      "path": "share/allow/workspace.txt",
+      "schema": null,
+      "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
+    },
+    {
       "document": "schemas/majordomus.adr/v1",
       "format": "json",
       "path": "share/schemas/majordomus/adr/adr.v1.schema.json",
@@ -554,6 +673,20 @@
       "source": "share/distribution.yaml and the release records"
     },
     {
+      "document": "site-product-graph",
+      "format": "json",
+      "path": "site/data/registry/product-graph.json",
+      "schema": null,
+      "source": "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
+    },
+    {
+      "document": "site-product",
+      "format": "json",
+      "path": "site/data/registry/product.json",
+      "schema": "majordomus-site-product/v1",
+      "source": "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
+    },
+    {
       "document": "site-registry",
       "format": "json",
       "path": "site/data/registry/registry.json",
@@ -580,6 +713,20 @@
       "path": "site/static/install.sh",
       "schema": null,
       "source": "share/distribution.yaml and the release records"
+    },
+    {
+      "document": "release/latest",
+      "format": "json",
+      "path": "site/static/releases/latest.json",
+      "schema": null,
+      "source": "the latest stable release record"
+    },
+    {
+      "document": "release/v0.3.1",
+      "format": "json",
+      "path": "site/static/releases/v0.3.1.json",
+      "schema": null,
+      "source": "the release record v0.3.1"
     }
   ],
   "documents": [
@@ -753,6 +900,13 @@
     },
     {
       "formats": [
+        "text"
+      ],
+      "id": "allow/workspace",
+      "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
+    },
+    {
+      "formats": [
         "json",
         "markdown",
         "yaml"
@@ -784,9 +938,26 @@
         "markdown",
         "yaml"
       ],
+      "id": "changelog",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ],
       "id": "cli",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "deployment",
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "formats": [
@@ -842,6 +1013,13 @@
       "formats": [
         "markdown"
       ],
+      "id": "modules/commands",
+      "source": "the `commands` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
       "id": "modules/continuity",
       "source": "the `continuity` module of the canonical Majordomus capability registry"
     },
@@ -865,6 +1043,13 @@
       ],
       "id": "modules/distribution",
       "source": "the `distribution` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/environment",
+      "source": "the `environment` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -905,8 +1090,36 @@
       "formats": [
         "markdown"
       ],
+      "id": "modules/product",
+      "source": "the `product` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/quality",
+      "source": "the `quality` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/release",
+      "source": "the `release` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
       "id": "modules/repository",
       "source": "the `repository` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/trace",
+      "source": "the `trace` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -939,10 +1152,27 @@
     },
     {
       "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ],
+      "id": "providers",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    },
+    {
+      "formats": [
         "markdown"
       ],
       "id": "providers/agents",
       "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "providers/bb",
+      "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
     },
     {
       "formats": [
@@ -959,6 +1189,20 @@
       "id": "registry",
       "schema": "majordomus/capability-registry/v1",
       "source": "the canonical capability registry"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "release/latest",
+      "source": "the latest stable release record"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "release/v0.3.1",
+      "source": "the release record v0.3.1"
     },
     {
       "formats": [
@@ -1090,6 +1334,21 @@
       "formats": [
         "json"
       ],
+      "id": "site-product",
+      "schema": "majordomus-site-product/v1",
+      "source": "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "site-product-graph",
+      "source": "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
+    },
+    {
+      "formats": [
+        "json"
+      ],
       "id": "site-registry",
       "schema": "majordomus-site-registry/v2",
       "source": "the capability registry and the index of this repository's layer"
@@ -1120,7 +1379,7 @@
     }
   ],
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.2.0",
+  "generator": "majordomus-cli 0.4.0",
   "manifest_schema": "majordomus/generated-artifacts/v1",
   "schema": 1
 }

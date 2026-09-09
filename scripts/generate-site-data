@@ -18,13 +18,24 @@
 #
 #   scripts/generate-site-data            write site/data/generated/*.json
 #   scripts/generate-site-data --check    write to a temp dir and diff against the committed files
+#   scripts/generate-site-data --no-scenarios
+#                                         derive without executing the use-case scenarios
+#
+# --no-scenarios exists for the cases that test *derivation*: they mutate a canonical input
+# and prove the derived data followed it. Some of those mutations necessarily break the
+# behaviour the scenarios exercise — 12c removes a module's reference to a state file to
+# watch the graph edge disappear, and that same edit stops the command working — so running
+# the scenarios there reports a failure about the fixture rather than about derivation. The
+# data it writes carries no demonstrations and says so, and the published site never uses it:
+# the site build runs without the flag, and `--check` compares like with like.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Generation is transactional. Everything is written into a staging directory and only moved
 # into place once every step has succeeded, so a failure half way through (a claim without its
 # detail document, a renamed README heading) leaves the previous generated artifacts intact
 # rather than truncated. --check never publishes; it stages and diffs.
-CHECK=0; PUBLISH=1
+CHECK=0; PUBLISH=1; SCENARIOS=1
+case " $* " in *" --no-scenarios "*) SCENARIOS=0 ;; esac
 DEST_DATA="$ROOT/site/data/generated"
 [ "${1:-}" = --check ] && { CHECK=1; PUBLISH=0; }
 # --out writes the data somewhere else and publishes nothing: no content pages, no
@@ -61,8 +72,11 @@ docs/generated/openapi.json
 docs/generated/registry.json
 site/data/registry/why.json
 site/data/registry/why-graph.json
+site/data/registry/product.json
+site/data/registry/product-graph.json
 docs/generated/cli.json
 docs/generated/web.json
+docs/generated/changelog.json
 apps/majordomus-cli/README.md
 site/config.toml
 README.md
@@ -722,6 +736,21 @@ WHY_DATA="$ROOT/site/data/registry/why.json"
 [ "$(jq -r '.schema' "$WHY_DATA")" = "majordomus-site-why/v1" ] || { echo "generate-site-data: site/data/registry/why.json is not a majordomus-site-why/v1 dataset (regenerate: majordomus generate site)" >&2; exit 10; }
 [ "$(jq -r '.valid' "$WHY_DATA")" = "true" ] || { echo "generate-site-data: the Why catalogue does not validate; the site may not render it (reproduce: majordomus why validate)" >&2; exit 10; }
 [ "$(jq '.moments | length' "$WHY_DATA")" -ge 3 ] || { echo "generate-site-data: .ai/repo/why/moments/ produced almost no moments" >&2; exit 10; }
+# The product model, on the same contract: `majordomus generate site` writes
+# site/data/registry/product.json and product-graph.json from the features of the layer,
+# the capability registry, the command registry, the Why catalogue and the web topology
+# (ADR 22). This script reads them and renders them; it derives nothing about the product
+# itself, and it names no feature.
+PRODUCT_DATA="$ROOT/site/data/registry/product.json"
+[ "$(jq -r '.schema' "$PRODUCT_DATA")" = "majordomus-site-product/v1" ] || { echo "generate-site-data: site/data/registry/product.json is not a majordomus-site-product/v1 dataset (regenerate: majordomus generate site)" >&2; exit 10; }
+[ "$(jq -r '.valid' "$PRODUCT_DATA")" = "true" ] || { echo "generate-site-data: the product model does not validate; the site may not render it (reproduce: majordomus product validate)" >&2; exit 10; }
+[ "$(jq '[.features[] | select(.status != "draft")] | length' "$PRODUCT_DATA")" -ge 3 ] || { echo "generate-site-data: .ai/repo/features/ produced almost no features" >&2; exit 10; }
+[ "$(jq '[.features[] | select(.featured and .status != "draft")] | length' "$PRODUCT_DATA")" -ge 3 ] || { echo "generate-site-data: no feature declares itself featured; the homepage would have no chapters" >&2; exit 10; }
+# A public dataset that carried a feature's body, an absolute path or a key nobody allowed
+# would be a projection boundary that leaked; the executable copies field by field and its
+# test asserts it, and this refuses the artifact rather than publishing it.
+jq -e '[.features[] | has("body")] | any | not' "$PRODUCT_DATA" >/dev/null || { echo "generate-site-data: site/data/registry/product.json carries a feature body; the public projection is field-allow-listed and must not (apps/majordomus-cli/src/site.rs)" >&2; exit 10; }
+grep -qE '"(/Users|/home|/root|/tmp)/' "$PRODUCT_DATA" && { echo "generate-site-data: site/data/registry/product.json carries a machine path; nothing local may reach a published page" >&2; exit 10; }
 mj_phase_end "gen:why_catalogue" "$GEN_T0"
 # ---------------------------------------------------------------- sessions.json (the layer's own memory)
 GEN_T0="$(mj_phase_begin "gen:sessions.json")"
@@ -875,10 +904,31 @@ jq -R -n '
     | walk(if type == "object" and (keys | all(test("^[0-9]+$"))) and (keys | length) > 0 then to_entries | sort_by(.key | tonumber) | map(.value) else . end)' "$TAXf" > "$STAGE/taxonomy.json"
 # the scenarios, executed now, against this tree's own tool: what the pages show is what
 # the tool did, and --check proves it again; timings are dropped so the data is stable
+if [ "$SCENARIOS" = 0 ]; then
+  # no demonstrations, and the data says so rather than looking like a run in which every
+  # scenario happened to be absent
+  echo '{"results":[],"scenarios":"skipped"}' > "$STAGE/uc-run.json"; : > "$STAGE/uc-run.err"
+else
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase run --json > "$STAGE/uc-run.json" 2> "$STAGE/uc-run.err" || {
   echo "generate-site-data: a use-case scenario failed; the site does not show a demonstration that does not hold:" >&2
-  jq -r '.results[] | select(.result != "pass") | "  \(.use_case): \(.steps | map(select(.result != "pass")) | .[0].reason // .reason // "setup failed")"' "$STAGE/uc-run.json" 2>/dev/null >&2 || cat "$STAGE/uc-run.err" >&2
+  # Render the failures the run recorded; when that renders nothing — the run wrote no JSON,
+  # or wrote a shape this does not match — show what the tool actually said. `jq -r` over an
+  # empty or unmatched document exits 0 and prints nothing, so a `||` fallback never fired
+  # and the message was a header followed by silence: a finding with nothing to act on.
+  UC_FAILED="$(jq -r '.results[] | select(.result != "pass")
+        | . as $r | (($r.steps // []) | map(select(.result != "pass")) | (.[0].reason? // empty)) as $step
+        | "  \($r.use_case): \($step // $r.reason? // "setup failed")"' \
+        "$STAGE/uc-run.json" 2>/dev/null || true)"
+  if [ -z "$UC_FAILED" ]; then
+    echo "  the run recorded no failure it could name; what the tool reported:" >&2
+    sed 's/^/    /' "$STAGE/uc-run.err" >&2 2>/dev/null || true
+    [ -s "$STAGE/uc-run.json" ] || echo "    (usecase run wrote no JSON at all)" >&2
+  else
+    printf '%s\n' "$UC_FAILED" >&2
+  fi
+  echo "  reproduce: majordomus usecase run --json" >&2
   exit 10; }
+fi
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
 jq -n \
   --slurpfile ucs <(jq -s . "$STAGE/uc.jsonl") \
@@ -1056,8 +1106,12 @@ DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md
 # they have no page, and deciding a route by the presence of our own output makes the first
 # pass disagree with every later one — which is exactly what --check then reports as drift.
 GENERATED_DOCS="SITE_CLAIMS.md PLAN_STATUS.md PAGES_STATUS.md"
+# A function rather than a `case` inside the substitution below: bash 3.2 re-parses the body
+# of `$(...)` at run time and reads the `)` of a case pattern as the end of the substitution,
+# which is a syntax error on every macOS runner and on no Linux one.
+is_generated_doc() { case " $GENERATED_DOCS " in *" $1 "*) return 0 ;; esac; return 1; }
 DOC_ROUTES="$(printf '%s' "$DOCS" | jq -r '.[].path' | grep -E '^[A-Z_]+\.md$' | while read -r p; do
-  if [ ! -f "$ROOT/docs/$p" ]; then case " $GENERATED_DOCS " in *" $p "*) ;; *) continue ;; esac; fi
+  if [ ! -f "$ROOT/docs/$p" ] && ! is_generated_doc "$p"; then continue; fi
   n="${p%.md}"
   printf '%s\t/docs/%s/\n' "$p" "$(doc_slug "$n")"
 done | jq -Rn '[inputs | split("\t") | {key: .[0], value: .[1]}] | from_entries')"
@@ -1120,6 +1174,25 @@ source = "AGENTS.md"
 +++
 
 '; printf '{%% raw %%}\n'; sed '1{/^<!--/d;}' "$ROOT/AGENTS.md" | sed '1{/^# /d;}' | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"; printf '{%% endraw %%}\n'; } > "$CONTENT/contract.md"
+# ---------------------------------------------------------------- changelog.json (what shipped)
+# The changelog the Rust executable composes from the layer's release records, the decisions
+# dated inside each release's window and the conventional commits in its range, committed as
+# docs/generated/changelog.json and checked by `majordomus generate --check`. Zola cannot
+# load a file outside its own root, and everything under site/data/generated/ must carry
+# `schema: 1` for site-check, so the canonical document is projected into that shape here —
+# the same arrangement openapi.json has, and for the same two reasons. The presentation order
+# is not decided here: the document carries its own `groups`, each with its heading and rank,
+# so the page renders what the Markdown renders rather than an order of its own.
+CL="$ROOT/docs/generated/changelog.json"
+[ -f "$CL" ] || { echo "generate-site-data: docs/generated/changelog.json is missing (run: majordomus generate changelog)" >&2; exit 10; }
+jq -e '.schema == "majordomus/changelog/v1"' "$CL" >/dev/null 2>&1 \
+  || { echo "generate-site-data: docs/generated/changelog.json is not majordomus/changelog/v1" >&2; exit 10; }
+jq -S '{schema: 1, source_schema: .schema, source: "docs/generated/changelog.json",
+        current, sections, diagnostics}' "$CL" > "$OUT/changelog.json" \
+  || { echo "generate-site-data: projecting docs/generated/changelog.json failed" >&2; exit 13; }
+[ "$(jq '.sections | length' "$OUT/changelog.json")" -gt 0 ] \
+  || { echo "generate-site-data: the changelog has no section" >&2; exit 10; }
+
 # ---------------------------------------------------------------- openapi.json (the HTTP API, as data)
 # The OpenAPI document the Rust executable generates from its capability registry is committed
 # as docs/generated/openapi.json and checked by `majordomus generate --check`. The site does
@@ -1368,6 +1441,7 @@ mk_section() { # dir, title, description, section template, page template, weigh
 CONTENT_ROOT="$STAGE/content"
 rm -rf "$CONTENT_ROOT/profiles" "$CONTENT_ROOT/guarantees" "$CONTENT_ROOT/supervises" "$CONTENT_ROOT/commands" "$CONTENT_ROOT/doctrines" "$CONTENT_ROOT/use-cases" "$CONTENT_ROOT/applications" "$CONTENT_ROOT/plan" "$CONTENT_ROOT/skills"
 rm -rf "$CONTENT_ROOT/context" "$CONTENT_ROOT/sessions"
+rm -rf "$CONTENT_ROOT/features"
 mk_section profiles "Execution profiles" "Capability class, reasoning effort, output verbosity, presentation, context toggles and verification are independent fields. Rendered from the profile files a fresh install writes." profiles.html profile.html 30
 i=0; for slug in $(jq -r '.profiles[].slug' "$OUT/profiles.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nslug = %s\nsource = "share/skeleton/profiles/%s.yaml"\n+++\n' "$(jstr "$slug profile")" "$(jq -r --arg s "$slug" '.profiles[] | select(.slug==$s) | .description' "$OUT/profiles.json" | jline)" "$i" "$(jstr "$slug")" "$slug" > "$CONTENT_ROOT/profiles/$slug.md"; done
@@ -1462,6 +1536,22 @@ for tx in audiences areas; do
         | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
       printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/why/$tx/$id.md"; done
 done
+# The product's routes: the section, one page per feature, and the matrix. Nothing here
+# names a feature: adding .ai/repo/features/<id>.md and regenerating is what puts
+# /features/<id>/ on the site, in the homepage's chapters when it declares itself featured,
+# in the matrix, in the graph and in the search. The body is the feature's own file, read
+# from the `source` the dataset names; everything else on the page is derived (ADR 22).
+mk_section features "Features" "Every capability of the product as one object of the layer: what it is made of, the interfaces it is exposed through, the rules that hold it and the guarantees behind it. Each card is a file; every mark beside it is derived." features-section.html feature.html 4
+jq -r '.features[] | select(.status != "draft") | [.id, .title, .summary, .source, .status, (.weight|tostring)] | @tsv' "$PRODUCT_DATA" \
+  | while IFS="$MJ_TAB" read -r id title summary source status weight; do
+  { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nstatus = %s\nsource = %s\n+++\n{%% raw %%}\n' \
+      "$(jstr "$title")" "$(printf '%s' "$summary" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$status")" "$(jstr "$source")"
+    # the page template renders the title as the one h1, so the feature's own level-two
+    # sections keep their level and its prose never competes with the heading above it
+    mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
+    printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/features/$id.md"; done
+printf -- '+++\ntitle = "Every feature against every interface"\ndescription = "The matrix both ways: each feature against the command line, the HTTP API, MCP, the Cockpit and the documentation, and each capability module, public command and object kind against the features that name it. Every mark is derived; a gap is shown."\nweight = 1000\ntemplate = "features-matrix.html"\n[extra]\nsource = "majordomus product matrix"\n+++\n' > "$CONTENT_ROOT/features/matrix.md"
+
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
 i=0; for name in $(jq -r '.commands[].name' "$OUT/commands.json"); do i=$((i+1))
   printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nname = %s\nsource = "docs/CLI.md"\n+++\n' "$(jstr "majordomus $name")" "$(jq -r --arg n "$name" '.commands[] | select(.name==$n) | .summary' "$OUT/commands.json" | jline)" "$i" "$(jstr "$name")" > "$CONTENT_ROOT/commands/$name.md"; done
@@ -1742,6 +1832,34 @@ for d in $GENERATED_DOCS; do
   project_doc "$n" "$STAGE/$n.md"
 done
 mj_phase_end "gen:generated_docs_as_pages" "$GEN_T0"
+
+# ---------------------------------------------------------------- routes that moved
+# A route that changed address is declared once, in site/data/nav.toml, beside the routes
+# that did not: `[[redirects]] from = ... to = ...`. Each becomes a Zola alias on the page
+# it points at, so the old address answers with a redirect instead of a 404. Nothing here
+# names a route, and a redirect whose target this run did not generate is an error rather
+# than a link into nothing.
+: > "$STAGE/redirects.tsv"
+# the navigation is hand-written site data; a fixture repository that renders no navigation
+# has none, and then there is no route that moved either
+if [ -f "$ROOT/site/data/nav.toml" ]; then
+awk '
+  /^from *= *"/ { f = $0; sub(/^from *= *"/, "", f); sub(/".*$/, "", f); next }
+  /^to *= *"/   { t = $0; sub(/^to *= *"/, "", t);   sub(/".*$/, "", t);
+                  if (f != "") { print f "\t" t; f = "" } }
+' "$ROOT/site/data/nav.toml" | LC_ALL=C sort > "$STAGE/redirects.tsv"
+fi
+for to in $(cut -f2 "$STAGE/redirects.tsv" | LC_ALL=C sort -u); do
+  rel="${to#/}"; rel="${rel%/}"
+  target=""
+  for cand in "$STAGE/content/$rel/_index.md" "$STAGE/content/$rel.md"; do
+    [ -f "$cand" ] && { target="$cand"; break; }
+  done
+  [ -n "$target" ] || { echo "generate-site-data: site/data/nav.toml redirects to $to, which this run does not generate" >&2; exit 10; }
+  list="$(awk -F"$MJ_TAB" -v t="$to" '$2 == t { printf "%s\"%s\"", (n++ ? ", " : ""), $1 }' "$STAGE/redirects.tsv")"
+  awk -v a="aliases = [$list]" 'NR == 1 && $0 == "+++" { print; print a; next } { print }' "$target" > "$target.aliased"
+  mv "$target.aliased" "$target"
+done
 
 # ---------------------------------------------------------------- staged output complete
 GEN_T0="$(mj_phase_begin "gen:staged_output_complete")"

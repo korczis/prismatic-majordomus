@@ -23,6 +23,7 @@ pub fn run(args: DistributionArgs) -> Result<u8> {
     let mut out = stdout.lock();
     match args.command {
         None | Some(DistributionCommand::Show) => show(&app, args.format, &mut out),
+        Some(DistributionCommand::Status) => status(&app, args.format, &mut out),
         Some(DistributionCommand::Targets) => targets(&app, args.format, &mut out),
         Some(DistributionCommand::Validate) => validate(&app, args.format, &mut out),
         Some(DistributionCommand::Matrix) => {
@@ -71,6 +72,62 @@ fn call(app: &App, path: &[&str], input: Value) -> Result<Value> {
             ),
         })?;
     ctx.execute(id, input).map_err(map)
+}
+
+/// `majordomus distribution status`. Exits 10 when the published installation does not
+/// work, so that a script and a person get the same answer without reading prose.
+fn status(app: &App, format: OutputFormat, out: &mut Out<'_>) -> Result<u8> {
+    let v = call(app, &["distribution", "status"], json!({}))?;
+    let installable = v["installable"].as_bool().unwrap_or(false);
+    match format {
+        OutputFormat::Json => w(out, pretty(&v))?,
+        OutputFormat::Text => {
+            let s = |k: &str| v[k].as_str().unwrap_or("?").to_string();
+            for c in v["checks"].as_array().into_iter().flatten() {
+                let state = match c["state"].as_str().unwrap_or("") {
+                    "ok" => "OK  ",
+                    "failed" => "FAIL",
+                    _ => "?   ",
+                };
+                w(
+                    out,
+                    format!(
+                        "{state} {:<10} {}",
+                        c["id"].as_str().unwrap_or(""),
+                        c["observed"].as_str().unwrap_or("")
+                    ),
+                )?;
+            }
+            w(out, String::new())?;
+            w(out, format!("install      {}", s("install_command")))?;
+            w(
+                out,
+                format!(
+                    "stable       {}",
+                    v["stable_tag"].as_str().unwrap_or("none")
+                ),
+            )?;
+            w(
+                out,
+                format!("installable  {}", if installable { "yes" } else { "NO" }),
+            )?;
+            // A failure states its cause and the command that changes it, in that order,
+            // because an operator reading this is deciding what to do next.
+            if !installable {
+                for c in v["checks"].as_array().into_iter().flatten() {
+                    if c["state"].as_str() != Some("failed") {
+                        continue;
+                    }
+                    w(out, String::new())?;
+                    w(out, format!("CAUSE  {}", c["cause"].as_str().unwrap_or("")))?;
+                    if let Some(next) = c["next"].as_str() {
+                        w(out, format!("NEXT   {next}"))?;
+                    }
+                }
+            }
+        }
+    }
+    Ok(if installable { 0 } else { EXIT_INVALID })
 }
 
 fn show(app: &App, format: OutputFormat, out: &mut Out<'_>) -> Result<u8> {

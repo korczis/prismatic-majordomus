@@ -1,26 +1,26 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.2.0",
+  "generator": "majordomus-cli 0.4.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 38,
-      "covered": 38,
+      "required": 56,
+      "covered": 56,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "http",
-      "required": 38,
-      "covered": 38,
+      "required": 56,
+      "covered": 56,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "mcp",
-      "required": 36,
-      "covered": 36,
+      "required": 54,
+      "covered": 54,
       "missing": 0,
       "waived": 0
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 125,
-      "covered": 125,
+      "required": 179,
+      "covered": 179,
       "missing": 0,
       "waived": 0
     }
@@ -76,6 +76,57 @@
       "cases": [
         "all",
         "queries"
+      ]
+    },
+    {
+      "id": "capabilities.projections",
+      "module": "capabilities",
+      "kind": "query",
+      "cache": "process, 8 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "unmet"
+      ]
+    },
+    {
+      "id": "commands.get",
+      "module": "commands",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "worktree-status"
+      ]
+    },
+    {
+      "id": "commands.graph",
+      "module": "commands",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "commands.list",
+      "module": "commands",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "read-only",
+        "one-program"
       ]
     },
     {
@@ -190,6 +241,43 @@
       ]
     },
     {
+      "id": "distribution.status",
+      "module": "distribution",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "environment.explain",
+      "module": "environment",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "one-field"
+      ]
+    },
+    {
+      "id": "environment.status",
+      "module": "environment",
+      "kind": "query",
+      "cache": "process, 4 entries, 3s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "graph.get",
       "module": "graph",
       "kind": "query",
@@ -204,6 +292,7 @@
         "adrs",
         "use-cases",
         "why",
+        "product",
         "composed"
       ]
     },
@@ -343,6 +432,105 @@
       ]
     },
     {
+      "id": "product.feature",
+      "module": "product",
+      "kind": "query",
+      "cache": "process, 64 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-feature"
+      ]
+    },
+    {
+      "id": "product.features",
+      "module": "product",
+      "kind": "query",
+      "cache": "process, 32 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "featured",
+        "by-area"
+      ]
+    },
+    {
+      "id": "product.matrix",
+      "module": "product",
+      "kind": "query",
+      "cache": "process, 2 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "product.providers",
+      "module": "product",
+      "kind": "query",
+      "cache": "process, 2 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "product.validate",
+      "module": "product",
+      "kind": "query",
+      "cache": "process, 2 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "quality.report",
+      "module": "quality",
+      "kind": "query",
+      "cache": "process, 8 entries, 10s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "release.changelog",
+      "module": "release",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "one-version"
+      ]
+    },
+    {
+      "id": "release.version",
+      "module": "release",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "repository.info",
       "module": "repository",
       "kind": "query",
@@ -380,6 +568,43 @@
         "secret",
         "undeclared",
         "first-object"
+      ]
+    },
+    {
+      "id": "trace.commit",
+      "module": "trace",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "head"
+      ]
+    },
+    {
+      "id": "trace.issue",
+      "module": "trace",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-issue"
+      ]
+    },
+    {
+      "id": "trace.report",
+      "module": "trace",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "ten"
       ]
     },
     {

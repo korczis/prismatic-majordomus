@@ -1,0 +1,39 @@
+id: I1206
+milestone: web-sign-in
+title: What an anonymous reader may do is derived from the effect classification, not from a list
+slug: identity-exposure-policy
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Derive the exposure decision from the capability registry: a read-only capability stays open to an anonymous reader, anything that mutates requires an identified one, and the decision is stated once in policy over effect classes rather than per route. Project the decision into the OpenAPI security scheme, the Cockpit's disabled controls with their reason, and the generated documentation."
+why: "A route list is a second inventory of what this repository can do, and it is the inventory that will be out of date. The registry already knows what each capability is; the policy only has to say what each class of capability requires."
+current_state: "Every route is served to everyone; the fly-deployment milestone therefore forbids exposing any mutating operation to the browser."
+desired_state: "Adding a capability inherits its exposure from its effect class, and a capability that mutates cannot be reached anonymously without a policy change that is visible as one."
+scope:
+  - .ai/repo/policy.yaml
+  - apps/majordomus-cli/src/capability
+  - apps/majordomus-cli/src/http
+  - apps/majordomus-cli/src/cockpit
+  - docs
+  - apps/majordomus-cli/tests
+non_scope:
+  - A per-route authorisation table in any format
+  - Granting a signed-in reader anything the effect policy has not classified
+depends_on:
+  - I1205
+acceptance_criteria:
+  - The policy states the requirement per effect class, and no route names its own requirement
+  - A capability added with a mutating effect is refused to an anonymous caller with no edit to the HTTP layer, proved by a test capability
+  - The OpenAPI document carries the security scheme and marks the operations that require it, generated rather than written
+  - The Cockpit disables what the caller may not invoke and states the reason it is disabled
+validation:
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+  - bash test/run.sh
+evidence_required:
+  - policy_by_effect_class
+  - new_capability_inherits
+  - openapi_security_generated
+risk: "This issue depends on the effect classification being trustworthy. Where a capability's class is wrong, the fix is the classification, never an exception in the router."
+created_at: 2026-09-08
+updated_at: 2026-09-08

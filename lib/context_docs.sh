@@ -105,6 +105,34 @@ EOF
 mj_ctxd_scan() {
   local rel="$1" n="$2" f="$MJ_ROOT/$1" conv="$3" providers="$4" base dir depth st tmp
   base="${rel##*/}"
+  # Most files under the tree are not context documents, and reading each one cost four
+  # processes to establish that: a mktemp, the front-matter split, the flattener and the
+  # validator. The front matter is small and this shell can read it, so the question "could
+  # this file be a context document at all" is answered here, without a process, and only a
+  # file that could be goes on to the stages below.
+  #
+  # The test is the one the stages themselves apply: a file whose first line is not `---`
+  # has no front matter, and one whose front matter declares neither `kind: context` nor a
+  # `context/` schema is another kind. In both cases the stages return 2 without recording
+  # anything — unless the manifest names the file as a context document, which is the case
+  # that must still be reported, so those are never skipped.
+  case " $conv " in
+    *" $base "*) ;;
+    *)
+      local l lines=0 declares=0 opened=0
+      while IFS= read -r l || [ -n "$l" ]; do
+        lines=$((lines + 1))
+        if [ "$lines" = 1 ]; then
+          [ "$l" = "---" ] || break
+          opened=1; continue
+        fi
+        [ "$l" = "---" ] && break
+        case "$l" in kind:\ context|"kind: context "*|schema:\ context/*) declares=1; break ;; esac
+        [ "$lines" -gt 200 ] && break
+      done < "$f"
+      [ "$opened" = 1 ] && [ "$declares" = 1 ] || return 2
+      ;;
+  esac
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.ctxd.XXXXXX")"
   # stage 1: the front matter, or exit 2 (none) / 4 (never closes)
   awk 'NR == 1 && $0 != "---" { exit 2 }
@@ -126,7 +154,12 @@ mj_ctxd_scan() {
     return 2
   fi
   rm -f "$tmp.fm"
-  local kind schema; kind="$(mj_yget "$tmp" kind)"; schema="$(mj_yget "$tmp" schema)"
+  # two keys of a small flat file, read in this shell: an awk per key was two processes
+  # per document, and the scan visits every document of the layer
+  local kind="" schema="" line
+  while IFS= read -r line; do
+    case "$line" in kind=*) [ -n "$kind" ] || kind="${line#kind=}" ;; schema=*) [ -n "$schema" ] || schema="${line#schema=}" ;; esac
+  done < "$tmp"
   if [ "$kind" != context ] && [ "${schema%%/*}" != context ]; then
     rm -f "$tmp"
     case " $conv " in *" $base "*) mj_ctxd_problem invalid-front-matter "$rel" "front matter is not the context contract (kind '${kind:-absent}'), and the manifest names $base as a context document" "head -n 20 '$rel'"; return 1 ;; esac
@@ -136,7 +169,7 @@ mj_ctxd_scan() {
     rm -f "$tmp"; mj_ctxd_problem unsupported-schema "$rel" "schema '${schema:-absent}' is not $MJ_CTXD_SCHEMA (this executable reads $MJ_CTXD_SCHEMA)" "head -n 3 $rel"; return 1
   fi
   dir="${rel%/*}"; [ "$dir" = "$rel" ] && dir="."
-  depth="$(printf 'x%s\n' "${dir#"$(mj_ctxd_tree)"}" | awk -F/ '{ print NF - 1 }')"
+  local rest slashes; rest="x${dir#"$(mj_ctxd_tree)"}"; slashes="${rest//[!\/]/}"; depth="${#slashes}"
   local reason
   reason="$(awk -v n="$n" -v file="$rel" -v dir="$dir" -v depth="$depth" -v provs=" $providers " -v flat="$MJ_CTXD_FLAT" '
     function fail(m) { print m; exit 1 }

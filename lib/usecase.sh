@@ -377,6 +377,14 @@ mj_uc_cmd_validate() {
 # digits also spells a plausible number, and masking every one of them would hide counts as
 # well as commits.
 #
+# Two findings are decided by the clock rather than by the repository. `check` reports the
+# checkpoint as fresh or stale by the time elapsed since the task's last checkpoint against
+# the profile's interval, and `doctor` reports its own duration against a budget; both flip
+# between OK and WARN with the load of the machine that recorded them, and each flip made
+# `generate-site-data --check` call the catalogue stale for no change anyone made. Their
+# lines are replaced whole, status included, and an age in minutes, hours or days becomes
+# one token, since a scenario that ran slowly enough crosses from one unit into the next.
+#
 # The EPIPE diagnostic goes for the same reason. A reader that stops early closes the pipe
 # under the writer, and bash reports the failed write on stderr, which the recorder captures
 # along with everything else. Whether the race fires depends on the machine, so recording it
@@ -405,11 +413,12 @@ mj_uc_normalise() { # repo-path
     -e 's/^(> )?At [0-9a-f]{7}([,;. ]|$)/\1At <head>\2/g' \
     -e 's/^([a-z_-]+ +(cold|warm) +[a-z]+ +[0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+/\1  <ms>  <ms>  <ms>  <ms>/' \
     -e 's/^(INFO|WARN) +budget +([a-z]+) — .*$/·    budget      \2 — <timed against the policy budget>/' \
+    -e 's/^(OK|WARN|FAIL) +checkpoint +([^ ]+) — .*$/·    checkpoint  \2 — <timed against the checkpoint interval>/' \
     -e 's/(exit [0-9]+, )[0-9]+s$/\1<s>s/' \
     -e 's/[0-9]+ ms/<n> ms/g' \
     -e 's/[0-9]+ ms of/<n> ms of/g' \
-    -e 's/\([0-9]+m ago/(<n>m ago/g' \
-    -e 's/ [0-9]+m ago/ <n>m ago/g' \
+    -e 's/\([0-9]+[mhd] ago/(<age> ago/g' \
+    -e 's/ [0-9]+[mhd] ago/ <age> ago/g' \
     -e 's/(bash|git|jq|shellcheck) [0-9][0-9.]*/\1 <version>/g' \
     -e 's/^(owner +).*$/\1<owner>/' \
     -e 's/^( *owner=).*$/\1<owner>/' \
@@ -446,6 +455,14 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # the helpers the setup scripts use (pj_* for a plan model) come from the tool's test
   # library, which the distribution ships beside the fixtures
   local helpers="$fix/../../lib.sh"
+  # The tool under test is on PATH for the setup and every step, as an installed launcher
+  # would be. A provider hook the setup installs resolves the executable the way the
+  # provider would — the repository's own bin/, then PATH — and the scenario's repository has
+  # no bin/ of its own, so what it finds is whatever PATH holds. On a machine where
+  # `majordomus` is on PATH the recorded state is `verified`; on a runner where it is not,
+  # `wired`; and that difference reached the committed evidence, which is the one thing
+  # derivation may not do. The tool being exercised is the one the hook should find.
+  case ":$PATH:" in *":$MJ_BIN_DIR:"*) ;; *) PATH="$MJ_BIN_DIR:$PATH"; export PATH ;; esac
   ( cd "$W" && MJ="$MJ_BIN_DIR/majordomus" FIXTURE_SETUP="$fix/setup" ROOT="$MJ_ROOT" && export MJ FIXTURE_SETUP ROOT \
       && if [ -f "$helpers" ]; then # shellcheck disable=SC1090
         . "$helpers"; fi \

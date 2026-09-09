@@ -540,6 +540,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/features",
+      "kind": "artifact",
+      "label": "repo/features",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/sessions}",
       "kind": "artifact",
       "label": "repo/sessions}",
@@ -673,6 +683,16 @@
       "id": ".ai/repo/project/project.yaml",
       "kind": "artifact",
       "label": "repo/project/project.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "lib/rust_bin.sh",
+      "kind": "module",
+      "label": "rust_bin",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1469,6 +1489,11 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/deployments}",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
+      "target": ".ai/repo/features",
       "kind": "uses"
     },
     {

@@ -1,7 +1,7 @@
 +++
 title = "majordomus why validate"
 description = "Every finding over the catalogue; exit 10 when any is an error"
-weight = 30
+weight = 32
 [extra]
 route = "/docs/cli/why/validate/"
 command = "majordomus why validate"

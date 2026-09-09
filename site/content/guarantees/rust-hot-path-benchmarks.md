@@ -1,7 +1,7 @@
 +++
 title = "The paths of the Rust executable that scale with the repository carry criterion benchmarks that build on every push, and every executable capability declares its benchmark policy, required or waived for a typed reason"
 description = "The work that grows with the repository is measured, not assumed: the YAML subset and front matter parse of one object, one glob match, the index built from a filesystem walk, the registry composed over it, the OpenAPI document, one MCP resources/list and one capability call (benches/projections.rs); the router, the bridge and the shared server over a real socket (benches/shared.rs). Every benchmark is a criterion target declared in Cargo.toml without the default harness, and CI builds them on every push so a hot path cannot lose its measurement silently. Separately, every executable capability carries a benchmark policy: required with the cases its input type provides, or waived with a typed reason; a resource is waived as not_executable."
-weight = 116
+weight = 119
 [extra]
 claim_id = "rust-hot-path-benchmarks"
 status = "guaranteed"

@@ -65,14 +65,17 @@ trap 'rm -rf "$stage"' EXIT INT TERM HUP
 tree="$stage/$rootdir"
 
 mkdir -p "$tree/bin" "$tree/lib" "$tree/libexec" "$tree/share"
-cp "$ROOT/bin/majordomus" "$ROOT/bin/majordomus-mcp" "$tree/bin/"
+# majordomus-cli is the launcher the other two go through — `majordomus-mcp` execs it, and
+# it is what finds libexec/majordomus-cli in an installed tree — so the archive carries all
+# three or the installed MCP launcher execs a path that only exists in a checkout
+cp "$ROOT/bin/majordomus" "$ROOT/bin/majordomus-mcp" "$ROOT/bin/majordomus-cli" "$tree/bin/"
 cp "$ROOT"/lib/* "$tree/lib/"
 cp "$binary" "$tree/libexec/majordomus-cli"
 # the tool's data directory, whole: kinds, schemas, allow-lists, providers, skeleton,
 # the rule package, the cockpit assets and the distribution model itself
 cp -R "$ROOT/share/." "$tree/share/"
 cp "$ROOT/LICENSE" "$tree/LICENSE"
-chmod 0755 "$tree/bin/majordomus" "$tree/bin/majordomus-mcp" "$tree/libexec/majordomus-cli"
+chmod 0755 "$tree/bin/majordomus" "$tree/bin/majordomus-mcp" "$tree/bin/majordomus-cli" "$tree/libexec/majordomus-cli"
 find "$tree/lib" "$tree/share" -type f -exec chmod 0644 {} +
 find "$tree/share" -type d -exec chmod 0755 {} +
 chmod 0644 "$tree/LICENSE"
@@ -100,6 +103,44 @@ mkdir -p "$out"
 # writes the second copy as a hard link, which release-verify refuses by name, and bsdtar
 # writes it as a second regular entry, which it does not. Both are wrong; one of them is
 # also invisible on the machine most of this is written on.
-tar -czf "$out/$archive" -C "$stage" --no-recursion -T "$stage/.entries" 2>/dev/null \
-  || tar -czf "$out/$archive" -C "$stage" "$rootdir"
+#
+# There is deliberately no fallback. An earlier version ended this line with
+# `2>/dev/null || tar -czf "$out/$archive" -C "$stage" "$rootdir"`, and that is the whole
+# history of release v0.2.0: the first form was not yet passing --no-recursion, GNU tar
+# recursed over the list, wrote 931 duplicate members as hard links, release-verify refused
+# every one of them, fail-fast cancelled the other five targets, and nothing was ever
+# published. A fallback that silently produces a different archive than the one that was
+# asked for is not resilience; it is a way to ship the archive nobody verified. If tar
+# cannot pack the list it was given, the release stops here.
+tar -czf "$out/$archive" -C "$stage" --no-recursion -T "$stage/.entries" \
+  || die "tar could not pack the staged tree; there is no fallback, because a differently packed archive is not the one that was verified" 10
+
+# The structural contract of the archive, checked where it is written rather than only where
+# it is verified: one entry per path, and every entry a regular file or a directory. Both
+# hold by construction from the list above — which is exactly why a violation means the
+# packer misbehaved, and why finding out here costs a second instead of a release.
+listing="$stage/.listing"
+tar -tzvf "$out/$archive" > "$listing" || die "the archive just written does not read back" 10
+# `| head -n 3` is deliberately not used here, and this is the whole reason the check exists
+# rather than a style note. Under `set -o pipefail`, `head` closing the pipe after three
+# lines sends SIGPIPE to the writer, and the pipeline's status becomes 141 — which kills
+# this script before it can report anything or delete the archive. It only happens when the
+# writer produces more than a pipe buffer, which is to say only when the archive is *badly*
+# malformed: a handful of bad entries fits in the buffer and passes, 931 of them does not.
+# The guard failed in exactly the case it exists for, on Linux, while passing on macOS where
+# the same fault produces fewer lines. awk does the limiting in one process, with no pipe.
+irregular="$(awk '!/^[-d]/ { print; if (++n == 3) exit }' "$listing")"
+if [ -n "$irregular" ]; then
+  rm -f "$out/$archive"
+  printf '%s\n' "$irregular" | sed 's/^/  /' >&2
+  die "the archive carried an entry that is neither a regular file nor a directory (shown above)" 10
+fi
+packed="$(sed 's/^.*[0-9][0-9]:[0-9][0-9] //' "$listing" | sed 's:/$::')"
+duplicated="$(printf '%s\n' "$packed" | LC_ALL=C sort | uniq -d | awk 'NR <= 3')"
+if [ -n "$duplicated" ]; then
+  rm -f "$out/$archive"
+  printf '%s\n' "$duplicated" | sed 's/^/  /' >&2
+  die "the archive carried a path more than once (shown above); the packer recursed over its own list" 10
+fi
+
 printf '%s\n' "$out/$archive"

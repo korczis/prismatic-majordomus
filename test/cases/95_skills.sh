@@ -118,6 +118,20 @@ skill twin; sed -i.bak 's/^id: twin$/id: review/' .ai/repo/skills/twin/SKILL.md 
 expect_exit 10 "$MJ" skills check
 expect_grep "duplicate skill id 'review'"
 git rm -rqf .ai/repo/skills/twin >/dev/null
+# two skills that describe themselves the same way: a worker selects on the description, so
+# neither can be reached. Case, spacing and a trailing full stop are not a difference.
+skill sibling
+sed -i.bak 's/^description: .*$/description:   THE  REVIEW   PROCEDURE./' .ai/repo/skills/sibling/SKILL.md && rm -f .ai/repo/skills/sibling/SKILL.md.bak && git add .ai/repo/skills/sibling >/dev/null
+expect_exit 10 "$MJ" skills check
+expect_grep "description does not tell this skill apart from 'review'"
+expect_exit 10 "$MJ" doctor
+expect_grep 'sibling/SKILL\.md — description does not tell this skill apart'
+expect_exit 11 "$MJ" watch
+expect_grep '^DRIFT skill +\.ai/repo/skills/sibling/SKILL\.md'
+# a description that says something else is not a duplicate, however similar it looks
+sed -i.bak 's/^description: .*$/description: The review procedure, but for something else entirely./' .ai/repo/skills/sibling/SKILL.md && rm -f .ai/repo/skills/sibling/SKILL.md.bak && git add .ai/repo/skills/sibling >/dev/null
+expect_exit 0 "$MJ" skills check
+git rm -rqf .ai/repo/skills/sibling >/dev/null
 # an example under a directory with no skill, and one without a heading
 mkdir -p .ai/repo/skills/orphan/examples && printf 'no heading here\n' > .ai/repo/skills/orphan/examples/x.md && git add .ai/repo/skills/orphan >/dev/null
 expect_exit 10 "$MJ" skills check
@@ -216,7 +230,9 @@ expect_exit 0 "$F/scripts/generate-site-data"
 jq -e '.count == 1 and .skills[0].id == "review"' "$SJ" >/dev/null || { echo "    the removed skill is still in the catalogue"; exit 1; }
 [ ! -e "$F/site/content/skills/alpha.md" ] || { echo "    the removed skill still has a page"; exit 1; }
 if command -v zola >/dev/null; then
-  ( cd "$F/site" && zola build --force -o "$S/public" >/dev/null 2>&1 ) || { echo "    zola could not build the fixture site"; exit 1; }
+  # zola's own diagnosis, not a sentence that says only that it failed
+  ( cd "$F/site" && run_quiet "$S/zola.err" zola build --force -o "$S/public" >/dev/null ) \
+    || { echo "    zola could not build the fixture site"; exit 1; }
   [ -f "$S/public/skills/index.html" ] && [ -f "$S/public/skills/review/index.html" ] || { echo "    the built site lacks the skills index or the skill page"; exit 1; }
   [ ! -e "$S/public/skills/alpha" ] || { echo "    the built site still carries the removed skill"; exit 1; }
   grep -q 'majordomus://skill/review' "$S/public/skills/review/index.html" || { echo "    the skill page does not name its URI"; exit 1; }

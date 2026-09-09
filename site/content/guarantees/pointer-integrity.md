@@ -1,7 +1,7 @@
 +++
 title = "Every repository-relative reference in the always-loaded file is proven to resolve"
 description = "The always-loaded instruction file may point workers at other files (docs/DESIGN.md, .ai/repo/rules/README.md). doctor extracts every repository-relative Markdown link from it and checks the target exists. A worker following a broken pointer wastes a session on a file that is not there."
-weight = 37
+weight = 39
 [extra]
 claim_id = "pointer-integrity"
 status = "guaranteed"

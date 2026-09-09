@@ -25,6 +25,23 @@ const PAGES: &[&str] = &[
     "/cockpit/api",
     "/cockpit/search",
     "/cockpit/activity",
+    // The routes the dispatcher answers that this sweep did not name. `worktrees` is a
+    // whole page no test rendered; the rest are the branches a reader actually reaches —
+    // one entity in detail, and the filters and paging the listings offer. A page that
+    // renders only when a query string selects something is a page whose failure nobody
+    // sees, and each of these is one arm of the same match.
+    "/cockpit/worktrees",
+    "/cockpit/capabilities/repository.info",
+    "/cockpit/capabilities?module=repository",
+    "/cockpit/capabilities?kind=query",
+    "/cockpit/capabilities?source=builtin",
+    "/cockpit/capabilities?q=scope",
+    "/cockpit/capabilities?page=2",
+    "/cockpit/objects?kind=rule",
+    "/cockpit/objects?q=scope",
+    "/cockpit/objects?page=2",
+    "/cockpit/graphs/registry",
+    "/cockpit/search?q=scope",
 ];
 
 fn html(s: &Served, target: &str) -> (u16, String) {

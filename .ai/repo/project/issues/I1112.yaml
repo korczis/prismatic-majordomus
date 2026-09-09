@@ -1,0 +1,33 @@
+id: I1112
+milestone: two-folder-integration
+title: What touches the root is two small blocks, and they never change again
+slug: minimal-root-bridges
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Reduce every root-level integration to a small, stable, machine-owned bridge: a managed block in the agent document that points at the layer, and — when direnv is wanted — one line that sources the environment integration."
+why: "Root files are where an integration becomes visible and where it becomes a nuisance. A bridge that carries no logic never has to change, which means an upgrade touches nothing a person has to re-approve."
+current_state: "Root documents carry generated blocks whose content is regenerated as the layer changes, and provider bootstraps are written to the root."
+desired_state: "A bridge names where the truth lives and stops. Upgrading Majordomus does not rewrite it, because there is nothing version-dependent inside it."
+scope:
+  - AGENTS.md
+  - .envrc
+non_scope:
+  - Repository-domain logic in any root file
+  - A bridge whose content depends on the version of the tool that wrote it
+depends_on:
+  - I1109
+acceptance_criteria:
+  - Each bridge is bounded by markers, recorded in the ledger, and carries no logic — only a reference to where the canonical material lives
+  - Upgrading the tool leaves the bridges byte-identical, proved by reconciling with a newer version against an older adoption
+  - A bridge is created only when the surface genuinely requires a root file; where a tool can be configured programmatically, nothing is written
+  - The environment bridge is one stable line whose target lives under `.majordomus/`
+validation:
+  - majordomus init --dry-run
+  - bash test/run.sh
+evidence_required:
+  - bridges_minimal
+  - stable_across_versions
+risk: "Every provider that wants a root file argues that its file is special. The answer is the same one: the file is an adapter, and its content is derived."
+created_at: 2026-09-06
+updated_at: 2026-09-06

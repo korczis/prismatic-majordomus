@@ -1,0 +1,86 @@
+{
+  "schema": "majordomus/providers/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.4.0",
+  "scratch_roots": [
+    "$TMPDIR",
+    "/tmp",
+    "/private/tmp",
+    "/var/tmp",
+    "/var/folders",
+    "/private/var/folders"
+  ],
+  "count": 6,
+  "providers": [
+    {
+      "id": "agents",
+      "title": "Any tool that reads AGENTS.md",
+      "bootstraps": [
+        {
+          "target": "AGENTS.md",
+          "mode": "file",
+          "always_loaded": true
+        }
+      ],
+      "hooks": [],
+      "scratch_roots": []
+    },
+    {
+      "id": "bb",
+      "title": "bb",
+      "bootstraps": [
+        {
+          "target": ".bb/AGENTS.md",
+          "mode": "file",
+          "always_loaded": false
+        }
+      ],
+      "hooks": [],
+      "scratch_roots": [
+        "${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees"
+      ]
+    },
+    {
+      "id": "claude-code",
+      "title": "Claude Code",
+      "bootstraps": [
+        {
+          "target": "CLAUDE.md",
+          "mode": "file",
+          "always_loaded": false
+        }
+      ],
+      "client_config": ".mcp.json",
+      "hooks": [
+        "prompt-capture",
+        "session-lifecycle"
+      ],
+      "scratch_roots": [
+        "<primary>/.claude/worktrees"
+      ]
+    },
+    {
+      "id": "codex",
+      "title": "Codex",
+      "bootstraps": [],
+      "client_config": ".codex/config.toml",
+      "hooks": [],
+      "scratch_roots": []
+    },
+    {
+      "id": "gemini",
+      "title": "Gemini CLI",
+      "bootstraps": [],
+      "client_config": ".gemini/settings.json",
+      "hooks": [],
+      "scratch_roots": []
+    },
+    {
+      "id": "generic",
+      "title": "A worker with no convention of its own",
+      "bootstraps": [],
+      "hooks": [],
+      "scratch_roots": []
+    }
+  ]
+}

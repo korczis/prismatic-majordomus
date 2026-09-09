@@ -88,7 +88,7 @@ the protocol that says how the tree is read.
 
 Validation refuses a tree in any of these states, naming the documents:
 
-<div class="overflow-x-auto">
+<div class="overflow-x-auto" tabindex="0">
 
 | class | meaning |
 |---|---|

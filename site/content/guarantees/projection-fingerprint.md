@@ -1,7 +1,7 @@
 +++
 title = "Every generated instruction file carries its own stamp, and a hand edit is detected"
 description = "When update writes a projection it stamps it: the first line of a file-mode target, or the begin marker of a region-mode target, names the hash of the policy it was rendered from and the hash of the content the stamp covers. doctor and watch hash the content on disk and compare it with the stamp; a difference means somebody edited a generated file by hand, and it is reported by name. Nothing is recorded anywhere else, so a fresh clone is checked exactly as the checkout that generated the file was."
-weight = 24
+weight = 26
 [extra]
 claim_id = "projection-fingerprint"
 status = "guaranteed"

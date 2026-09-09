@@ -21,6 +21,17 @@ step() {
 }
 step "self-supervision: doctor and watch"
 git config core.hooksPath .githooks
+# The other half of this clone's wiring, and for the same reason the line above exists: both
+# are declared per clone rather than in a tracked file, so a fresh checkout — a runner's
+# included — has neither until something sets them. The merge driver never runs here (CI
+# merges nothing), but the policy declares it and doctor checks what the policy declares;
+# wiring it is how this checkout answers that check truthfully rather than by exemption.
+# The command is relative: git runs a merge driver from the top level of the working tree,
+# and .git/config is shared by every worktree of the clone, so an absolute root would name
+# whichever worktree ran this last and would outlive it. Setting it unconditionally is what
+# repairs such a stale declaration.
+git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
+git config merge.derived.driver "scripts/merge-derived %O %A %B %P"
 bin/majordomus doctor
 bin/majordomus watch
 # The scoped context documents: the tree validates, every projection matches its stamp, and
@@ -68,6 +79,13 @@ done
 # which no amount of regenerating could settle.
 step "nothing committed names a home directory"
 scripts/ci/no-machine-paths
+# Every repository path an authored document names must be there. The same reasoning as the
+# gate above, one step further from the deploy: a document that points at a file which has
+# moved costs a reader the time to look and teaches them a layout that is wrong, and nothing
+# else notices — the site builds, the schemas validate, the suite passes. `reference-check`
+# says what it checks and what it exempts.
+step "every reference resolves"
+scripts/ci/reference-check
 # The committed derived site data must match the canonical files it is generated from.
 step "derived site data in sync"
 scripts/generate-site-data --check

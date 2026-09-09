@@ -1,7 +1,7 @@
 +++
 title = "After startup, no MCP or HTTP request of the Rust executable scans the repository, builds the index or the registry, derives a schema or builds a projection, and perf.counters proves it"
 description = "Everything canonical is built once, when the process starts: the repository is discovered, the index built, the registry composed and validated, the MCP listings and the OpenAPI document prepared on first use and kept. A request looks things up and runs a handler. The process counts its own work and answers the counts over every transport as perf.counters; a test sends hundreds of requests and requires the startup counters unchanged, so a refactor that quietly rebuilds the registry per request fails before anyone measures latency."
-weight = 119
+weight = 122
 [extra]
 claim_id = "hot-path-no-rebuild"
 status = "guaranteed"

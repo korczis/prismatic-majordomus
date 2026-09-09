@@ -56,7 +56,7 @@ steps:
       exit: 0
       stdout_contains: ['doctor: 0 failure']
 then:
-  - 'the shared server the client autostart binds serves the Cockpit at /cockpit beside Swagger UI at /docs'
+  - 'the shared server the client autostart binds serves the Cockpit at /cockpit beside Swagger UI at /swagger'
   - 'every page is rendered from a capability, so a capability added to the registry has a page with no edit to the Cockpit'
   - 'the health page reports one check per dimension, each naming the engine that decided it and the command that reproduces it'
 ```

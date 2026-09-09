@@ -1187,6 +1187,76 @@ key, the value found and the correction.
 
 ---
 
+## `.ai/repo/workspaces/<id>.yaml`
+
+One external workspace this repository is authorised to read: a body of content held by
+another vendor — a ChatGPT Project, and later a Claude Project or its equivalent — over
+which the operator is already authenticated. A workspace is **not** a provider: a provider
+is a tool that works *in* this repository (ADR 0024, `share/providers.yaml`), and a
+workspace is the arrow pointing the other way. Both are named after the same vendors, which
+is why the distinction is written down rather than inferred. Contract:
+[`share/schemas/majordomus/workspace/workspace.v1.schema.json`](../share/schemas/majordomus/workspace/workspace.v1.schema.json)
+(`workspace/v1`); keys are closed by `share/allow/workspace.txt`, generated from it.
+
+```yaml
+schema: workspace/v1
+kind: workspace
+id: chatgpt-majordomus          # identity, [a-z][a-z0-9-]*; stable across a rename upstream
+title: ...                      # one line, for a listing
+description: ...                # one line: what it holds and why this repository reads it
+status: declared                # declared | active | retired
+
+vendor:
+  id: chatgpt                   # [a-z][a-z0-9-]*
+  name: ChatGPT
+  origins:                      # the only origins an adapter may observe; scheme and host
+    - https://chatgpt.com
+
+upstream:
+  id: g-p-...                   # the vendor's own identifier, carried opaquely
+  kind: project                 # the vendor's word for this shape of container
+  url: https://...              # where a person opens it; nothing resolves it
+
+authorisation:
+  asserted_by: ...              # who asserts it
+  asserted_at: 2026-09-09
+  statement: "..."              # what is authorised, in a sentence a person would defend
+  write: false                  # false until a separate decision says otherwise
+
+access:
+  browser_profile: default      # a label the operator's configuration resolves, outside
+                                # this repository — never a path, a variable or a secret
+  transports: [browser]         # official | browser | private_http, in preference order
+
+capabilities:                   # expectation, not permission
+  - workspace.read
+  - conversations.read
+  - messages.read
+  - instructions.read
+  - files.read
+```
+
+**The content is not here and never will be.** A workspace's conversations, messages and
+attachments are synced into `.ai/local/workspaces/<id>/`, which is this checkout's state
+and never a source (ADR 0005, ADR 0025). Nothing under it is indexed, generated from,
+published or carried by a branch. A piece of it becomes the repository's own statement only
+when a person promotes it into `.ai/repo/`, deliberately, one piece at a time.
+
+**No credential belongs here either.** `access.browser_profile` is constrained by the
+schema to `^[a-z][a-z0-9-]*$` so that a filesystem path, an environment variable or a token
+cannot be written where a label belongs; what the label resolves to lives outside the
+repository. `test/cases/93_workspace_kind.sh` reads every declaration and refuses one that
+carries a credential-shaped key or value.
+
+**The declaration bounds the adapter before anything is fetched.** `vendor.origins` is the
+scope of observation rather than a hint — traffic to anything not named there is never
+recorded, not filtered afterwards. `authorisation.statement` is a person's assertion in
+their own words and the adapter may not exceed it. `capabilities` is an expectation: one
+the vendor withdrew is a diagnostic, and an adapter that cannot provide one reports it
+unavailable rather than returning an empty success.
+
+---
+
 ## `.ai/repo/knowledge/sources.yaml`
 
 The repository's declared knowledge sources: which tracked files are knowledge, in which
@@ -1305,7 +1375,7 @@ layer; never a baseline.
 scenario does not accept. Percentiles are nearest-rank over the sorted samples. `clock`
 names the source of the milliseconds (`epochrealtime`, `perl` or `seconds`).
 
-## `.ai/repo/benchmarks/baseline.json` — the accepted baseline
+## `baseline.json` under `.ai/repo/benchmarks/` — the accepted baseline
 
 The same document with schema `majordomus/benchmark-baseline/v1`, written only by
 `majordomus bench --write-baseline` on a clean tree (or with `--force`), tracked and

@@ -1,7 +1,7 @@
 +++
 title = "Every directory of the layer carries a context document, the exemption is declared by the contract that governs the subtree, and a descendant may narrow that requirement but never weaken it"
 description = "A directory that says nothing about itself is not neutral. It contributes nothing to the"
-weight = 71
+weight = 73
 [extra]
 claim_id = "context-coverage"
 status = "guaranteed"

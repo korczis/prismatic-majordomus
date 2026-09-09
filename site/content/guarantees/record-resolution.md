@@ -1,7 +1,7 @@
 +++
 title = "The right prior record is resolved by worktree and branch, and an unrelated one is never offered"
 description = "handover --resolve, checkpoint --show and context all answer the same question: of the records on disk, which one is about the work happening here? The answer is deterministic, it is explained, and when there is no safe answer it says so instead of offering the nearest thing."
-weight = 62
+weight = 64
 [extra]
 claim_id = "record-resolution"
 status = "guaranteed"

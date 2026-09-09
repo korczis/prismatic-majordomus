@@ -155,7 +155,22 @@ fn sidebar(shell: &Shell<'_>) -> El {
         .attr("aria-label", "Cockpit sections");
     for section in shell.navigation.sections() {
         let mut list = el("ul").class("mj-nav-list");
+        // A grouped section shows its headings as the group changes. The items arrive in
+        // the canonical order, which puts a group's members together and the ungrouped
+        // ones last, so one pass is enough and nothing here decides the sequence.
+        let mut group: Option<&str> = None;
         for item in &section.items {
+            if item.group.as_deref() != group {
+                group = item.group.as_deref();
+                if let Some(heading) = group {
+                    list = list.child(
+                        el("li")
+                            .class("mj-nav-group")
+                            .attr("role", "presentation")
+                            .text(heading),
+                    );
+                }
+            }
             let current = item.area == shell.area && item.current;
             list = list.child(
                 el("li").child(
@@ -219,7 +234,7 @@ fn footer(shell: &Shell<'_>) -> El {
         .child(el("span").text("·"))
         .child(link("/openapi.json", "openapi.json"))
         .child(el("span").text("·"))
-        .child(link("/docs", "Swagger UI"))
+        .child(link(crate::http::swagger::SWAGGER_PATH, "Swagger UI"))
         .child(el("span").text("·"))
         .child(link("/cockpit/health", "health"))
 }
@@ -332,12 +347,17 @@ pub fn table(headers: &[&str], rows: Vec<El>) -> El {
     let head = headers.iter().fold(el("tr"), |r, h| {
         r.child(el("th").attr("scope", "col").text(*h))
     });
-    el("div").class("mj-table-wrap").child(
-        el("table")
-            .class("mj-table")
-            .child(el("thead").child(head))
-            .child(el("tbody").children(rows)),
-    )
+    // the wrapper scrolls, so it is in the tab order: a scrolling region only a pointer can
+    // reach is the accessibility defect the UI conformance check refuses (WCAG 2.1.1)
+    el("div")
+        .class("mj-table-wrap")
+        .attr("tabindex", "0")
+        .child(
+            el("table")
+                .class("mj-table")
+                .child(el("thead").child(head))
+                .child(el("tbody").children(rows)),
+        )
 }
 
 /// A row of cells.

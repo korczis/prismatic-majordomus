@@ -26,6 +26,17 @@ docs/SITE_CLAIMS.md                 merge=derived
 docs/generated/**                   merge=derived
 site/data/generated/**              merge=derived
 site/data/registry/**               merge=derived
+# The public release metadata: rendered from the record under .ai/repo/releases/ by
+# `majordomus generate`, one file per release plus the stable pointer. They arrived with the
+# first real release and had no rule until then, so every merge touching a release conflicted
+# on them — and the pointer changes on every release, which is exactly when several branches
+# are in flight. test/cases/57_derived_merge_driver.sh is what noticed.
+site/static/releases/**             merge=derived
+# Every page under site/content/docs/ is written by scripts/generate-site-data out of the
+# CLI tree, the capability registry and the documents: the front matter carries a `weight`
+# derived from presentation order, so any branch that adds a command renumbers pages it
+# never touched. Merging two renumberings is never the answer; deriving is.
+site/content/docs/**                merge=derived
 site/content/docs/pages-status.md   merge=derived
 site/content/docs/plan-status.md    merge=derived
 site/content/docs/site-claims.md    merge=derived
@@ -33,6 +44,14 @@ site/content/docs/site-claims.md    merge=derived
 # The site's registry projection: one page per capability and per module, all of them
 # rewritten whenever the registry moves.
 site/content/registry/**            merge=derived
+
+# The whole documentation tree the site serves: `scripts/generate-site-data` deletes and
+# rewrites site/content/docs on every run — the long-form pages are the canonical Markdown
+# under docs/ with a generated front matter, and the CLI reference is one page per command
+# whose `weight` is a function of where that command sits in the whole list. Adding a
+# command anywhere renumbers every page after it, so two branches that each add one
+# conflict on every page between them, over a number neither of them decides.
+site/content/docs/**                merge=derived
 
 # The schema, allow-list and section projections: `majordomus generate` writes all three out
 # of the kind and capability declarations, and they conflict for the same reason the rest of
@@ -47,8 +66,14 @@ share/sections/**                   merge=derived
 # so a merge of two branches leaves a stamp that describes neither.
 AGENTS.md                           merge=derived
 CLAUDE.md                           merge=derived
+.bb/AGENTS.md                       merge=derived
 
 # The installer and the document that describes it: both are written out of the release and
 # platform declarations, and both carry a fingerprint of the tree they were generated from.
 docs/INSTALL.md                     merge=derived
 site/static/install.sh              merge=derived
+
+# The release metadata the site publishes: `majordomus generate distribution` writes one
+# file per release plus latest.json out of the release declarations, so two branches that
+# cut or record a release conflict here on content neither of them decides.
+site/static/releases/**             merge=derived
