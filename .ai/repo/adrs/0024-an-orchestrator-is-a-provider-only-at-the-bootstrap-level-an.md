@@ -141,11 +141,17 @@ be a code change to a module that has nothing to do with it.
   Code runs under bb, not against `bb`. A reader of the archive sees the agent, not the
   orchestrator, which is the truth of who saw the prompt. Agents bb runs over ACP remain
   uncaptured, and `capture status` says `unsupported` for them as it does today.
-- One verification is still owed: a synthetic Claude Code run under an installed bb with
-  `capture status` and the session shim, to prove the SDK path fires the shims in this
-  repository as the documentation says it does. The other was done before the row was
-  accepted: a worktree created at bb's path is reported `ephemeral`, "created by bb", and
-  the guard refuses a commit from it with the remedy of continuing in the canonical
-  worktree.
+- Both verifications were done. A worktree created at bb's path is reported `ephemeral`,
+  "created by bb", and the guard refuses a commit from it with the remedy of continuing in
+  the canonical worktree. And on 2026-09-09 bb was started headless from a scratch data
+  directory over a clone of this branch, and one Claude Code thread was spawned in the
+  project checkout with a one-word prompt: the prompt was captured as `provider:
+  claude-code`, `event: UserPromptSubmit`, with bb's provider session id, branch and head;
+  the episode was opened by the SessionStart shim before the prompt; `bin/majordomus-mcp`
+  was started from `.mcp.json` and began building the executable; and `bb thread stop`
+  closed the episode with outcome `interrupted`, which is the truth of an agent stopped
+  from outside. Archiving the thread alone closed nothing: the agent process outlives the
+  thread until bb stops or releases it, so an operator who archives and walks away leaves
+  an open episode until then.
 - Nothing here is specific to bb. The next orchestrator is a row, a template and a
   declared root.
