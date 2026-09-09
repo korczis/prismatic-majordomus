@@ -32,6 +32,19 @@ the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profil
 `{{DEFAULT_PROFILE}}`. `AGENTS.md` carries the same bootstrap for every
 other worker, and a rule that exists in one of these files and not in `.ai/` is a bug.
 
+You are probably not alone. One shared server serves this repository, and every worker
+attached to it is visible to every other through `majordomus_peers`. Announce what you are
+doing and the paths you expect to touch, with `majordomus_announce`, before you start — and
+again whenever the connection is re-established, because an announcement belongs to a
+connection and a worker that reconnects keeps its work while losing its place on the board.
+Read the board before you open a mandate and before you fan work out: two workers built the
+same subsystem in one afternoon because neither looked first. A scope announced there is a
+claim, not a lock; the task's own scope and `check --overlap` are what refuse a commit.
+
+Push what you have, early. A branch whose commits reach no remote is invisible to every
+other worker, cannot be integrated by anyone but you, and is one disk away from being lost;
+`majordomus doctor` names those branches.
+
 Linked git worktrees of this repository live at `<repository>-wt/<branch>` — the primary
 checkout's sibling named with `-wt`, then the branch name with its hierarchy kept — derived
 from git and never chosen or registered; the primary checkout hosts the trunk. Before

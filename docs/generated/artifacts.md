@@ -96,8 +96,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
 | `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `bed894c9c26ecce4` |
-| `AGENTS.md` | `providers/agents` | markdown | 3807 | `07a824ca015cb1b5` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 3096 | `bee76a617c719f0b` |
+| `AGENTS.md` | `providers/agents` | markdown | 4752 | `7e0bfe1becf83c9f` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 4041 | `1390d2d297d3ebe5` |
 | `docs/INSTALL.md` | `install-guide` | markdown | 9530 | `bb1ff360c4eaf84b` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
@@ -181,7 +181,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 59514 | `b3fb7a9a6b79bc60` |
 | `site/data/registry/product.json` | `site-product` | json | 300523 | `b6c2042bc9536093` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1813522 | `67010929aac268e5` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1813522 | `f5331dea200e8105` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `fb5f4204da2c1cea` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `a655ee48696ea407` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |
