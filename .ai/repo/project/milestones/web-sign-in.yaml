@@ -1,0 +1,71 @@
+id: web-sign-in
+title: The deployed surfaces know who is asking, and the identity providers are data
+slug: web-sign-in
+order: 75
+priority: p1
+problem: "Everything this repository serves is served to whoever reaches the port. That was safe while the server bound loopback and the only reader was the person standing in front of the checkout, and it stops being safe the moment the deployment milestone puts a public HTTPS URL in front of the same router: the Cockpit, the API, the OpenAPI document and the MCP surface would all be readable by anyone who found the host, and no mutating capability could ever be exposed through the browser because there would be nobody to attribute the mutation to. The obvious repair is the wrong one twice over. Hand-written provider clients for Google and for Facebook would be two implementations of one flow, and a compiled-in list of which providers exist would put an identity decision in Rust source where every other decision of this repository is a declarative object under .ai/repo/. The provider set is expected to change — both of the first two may be struck and replaced once the audience is known — and a change of that kind must be an edit to one object, not a release of the executable."
+outcome: "One canonical identity-provider kind under .ai/repo/identity/providers/ describes each provider as data: its issuer, its endpoints or its discovery document, the scopes requested, the claim that carries a stable subject and the environment variable names its credentials arrive in. A single OpenID-Connect-shaped flow in the executable serves every provider in that directory; Google and Facebook are two objects, not two code paths. Sessions are cookie-borne, signed, short and revocable; identity is attached to a request once, in the router, and every surface — HTTP, Cockpit, OpenAPI, MCP — reads it from the same place. The capability registry's effect classification, not a per-route list, decides what an anonymous reader may do, and the OpenAPI document and the Cockpit both state that decision because both project it from the registry. Striking a provider is deleting one file and regenerating."
+current_state: "There is no authentication of any kind: no session, no cookie, no identity type, no login route, no credential handling and no notion of a caller anywhere in apps/majordomus-cli/src/http. The lease file records a URL and the server warns when it binds anything but loopback. The deployment milestone (fly-deployment) states as non-scope that mutating deployment operations must not be exposed to unauthenticated HTTP or to the browser, which is a constraint this milestone is what removes."
+desired_state: "A reader who opens the public URL is served the public read-only surfaces as they are today. A reader who signs in with any provider declared in .ai/repo/identity/providers/ gets a session, is named in the Cockpit, and may invoke the capabilities the effect policy allows a signed-in reader to invoke. Adding a third provider is one YAML file; removing the first two is deleting two files; neither is a code change, and the generated documentation, the Cockpit's sign-in offer and the OpenAPI security scheme all follow from the same objects."
+scope:
+  - .ai/repo/identity
+  - .ai/repo/adrs
+  - .ai/repo/rules/project
+  - .ai/repo/policy.yaml
+  - apps/majordomus-cli/src/identity
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/http
+  - apps/majordomus-cli/src/cockpit
+  - share/kinds.yaml
+  - share/allow
+  - share/schemas
+  - docs
+  - site
+  - test/cases
+  - .github/workflows
+
+non_scope:
+  - A user database, a profile store, or any record of a reader beyond the session needed to answer the next request
+  - Passwords, password reset, e-mail verification or any credential this repository would itself have to store
+  - A provider-specific code path, client library or SDK for Google, for Facebook or for any successor
+  - Authorisation roles, groups or an access-control language beyond what the capability registry's effect classification already decides
+  - Any credential, client secret or token committed to the repository, written into a generated artifact, rendered into the site or logged
+  - Exposing mutating capabilities to a signed-in reader before the effect classification says which ones are safe to expose at all
+  - Signing in to the local development server as a requirement; loopback stays open so the existing workflow is unchanged
+
+acceptance_criteria:
+  - Every fact about a provider — issuer, endpoints, scopes, subject claim, credential variable names, display name, ordering — lives in one object under .ai/repo/identity/providers/ and nowhere else
+  - Google and Facebook are each one such object, and the executable contains no identifier, endpoint or branch naming either of them
+  - Deleting a provider object removes the provider from the sign-in offer, from the generated documentation, from the OpenAPI security scheme and from the Cockpit, with no other edit
+  - The flow validates state and nonce, rejects a callback whose state it did not issue, pins the session to the issuer and subject, and refuses a provider whose credentials are absent rather than starting a flow that cannot complete
+  - The session cookie is signed, HttpOnly, SameSite-constrained, Secure when the surface is served over HTTPS, and expires; signing out revokes it server-side rather than only clearing it in the browser
+  - Identity is resolved once in the router and read by every surface from that one place; no surface parses the cookie a second time
+  - What an anonymous reader may do is derived from the capability registry's effect classification rather than from a list of routes
+  - No secret sentinel placed in the credential environment variables appears in any response, generated artifact, log line, cache, site output or OpenAPI example
+  - The documentation states how to add a provider and how to remove one, and both statements are executed by a test rather than only written
+
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - cargo test --workspace --all-features
+  - cargo clippy --workspace --all-targets --all-features -- -D warnings
+  - majordomus generate --check
+
+evidence_required:
+  - provider_objects_canonical
+  - provider_removal_proved
+  - flow_hardened
+  - session_hardened
+  - single_identity_resolution
+  - effect_derived_exposure
+  - no_secret_leakage
+  - documented_and_tested
+
+risks:
+  - "An OpenID Connect flow written twice — once for the provider that is standards-shaped and once for the one that is not — is the failure this milestone exists to prevent. Facebook's endpoints differ from Google's in their spelling, not in their shape; anything that genuinely cannot be expressed as data about one flow is a defect in the provider object's schema and is fixed there."
+  - "Credentials are the one part of this that cannot be data in the repository. The objects name the environment variables; the values arrive from the deployment's secret store and are never read into any structure that is serialised, cached or rendered."
+  - "Sign-in invites scope creep towards accounts, profiles and roles. The session exists to answer the next request and nothing more; anything beyond that belongs to a milestone that has a reason for it."
+  - "The provider set is expected to be struck. A design that makes Google and Facebook cheap to add but expensive to remove has failed even if it works."
+
+created_at: 2026-09-08
+updated_at: 2026-09-08

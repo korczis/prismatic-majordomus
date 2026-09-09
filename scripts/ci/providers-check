@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# providers-check — the gate of project.providers-are-data: what the tool knows about its
+# providers is declared once, projected everywhere, and never enumerated by hand.
+#
+# The declaration is share/providers.yaml; the set is the templates beside it; the
+# projection a person reads is docs/generated/providers.md, which `majordomus generate`
+# writes from the same value `product providers` answers. What this gate holds together:
+#
+#   1. every template has a declaration and every declaration a template — read from the
+#      generated document, which the executable wrote from both, so a fresh checkout
+#      without a toolchain can still ask
+#   2. every projected bootstrap the policy declares belongs to a provider that exists,
+#      and every provider that projects a bootstrap has it under `merge=derived`, so a
+#      merge never leaves a stamp that describes neither side
+#   3. no document enumerates providers by hand: a line naming three or more declared
+#      providers is a list the generated document already is, and the file that carries it
+#      must point at docs/generated/providers.md — the pattern project.no-counts-in-prose
+#      applies to numbers, applied to names. Records of a moment (ADRs, claims, the
+#      changelog) and generated files are exempt: they say what was true when written.
+#   4. the generated document is current, when the executable is at hand: `majordomus
+#      generate --check providers`; without it the derive-check gate of CI decides
+#
+#   scripts/ci/providers-check              report every finding, exit 10 on any
+#   MJ_ROOT=<dir> scripts/ci/providers-check
+#
+# Exit: 0 clean, 10 findings, 12 unusable.
+set -eu
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+findings=0
+ok()   { printf 'ok    %s\n' "$*"; }
+fail() { printf 'FAIL  %s\n' "$*"; findings=$((findings+1)); }
+
+DOC=docs/generated/providers.json
+[ -f "$DOC" ] || { echo "providers-check: $DOC is missing; run majordomus generate providers" >&2; exit 12; }
+command -v jq >/dev/null 2>&1 || { echo "providers-check: jq is required" >&2; exit 12; }
+jq -e '.schema == "majordomus/providers/v1"' "$DOC" >/dev/null 2>&1 \
+  || { echo "providers-check: $DOC is not a majordomus/providers/v1 document" >&2; exit 12; }
+
+# ------------------------------------------------------------ 1. declarations and templates
+ids="$(jq -r '.providers[].id' "$DOC")"
+for id in $ids; do
+  [ -f "share/providers/$id.tmpl" ] && ok "provider '$id' has a template" \
+    || fail "provider '$id' is in the declarations and share/providers/$id.tmpl does not exist"
+done
+for t in share/providers/*.tmpl; do
+  id="$(basename "$t" .tmpl)"
+  if printf '%s\n' "$ids" | grep -qx "$id"; then :
+  else fail "share/providers/$id.tmpl has no entry in share/providers.yaml (and no row in $DOC)"; fi
+done
+if [ -f share/providers.yaml ]; then
+  for id in $(awk '/^providers:/{p=1;next} p && /^  [a-z][a-z0-9-]*:/{sub(/:.*/,"");sub(/^  /,"");print}' share/providers.yaml); do
+    printf '%s\n' "$ids" | grep -qx "$id" || fail "share/providers.yaml declares '$id' and $DOC does not carry it; regenerate"
+  done
+fi
+
+# ------------------------------------------------------------ 2. bootstraps and the merge driver
+if [ -f .ai/repo/policy.yaml ]; then
+  targets="$(jq -r '.providers[].bootstraps[].target' "$DOC")"
+  for tgt in $targets; do
+    if grep -qE "^${tgt//./\\.}[[:space:]]+merge=derived" .gitattributes 2>/dev/null; then ok "$tgt is merge=derived"
+    else fail "$tgt is a projected bootstrap and .gitattributes does not mark it merge=derived"; fi
+  done
+  for prov in $(awk '/^projections:/{p=1;next} p && /^[^ ]/{p=0} p && /provider:/{print $NF}' .ai/repo/policy.yaml); do
+    printf '%s\n' "$ids" | grep -qx "$prov" && ok "the policy projects through a provider that exists: $prov" \
+      || fail ".ai/repo/policy.yaml projects through '$prov', which no template and no declaration names"
+  done
+fi
+
+# ------------------------------------------------------------ 3. no enumeration by hand
+# The names a line can name a provider by: the id, the title, and the title's leading word
+# when it is a proper name (Claude, Codex, Gemini), so that "Claude, Codex and Gemini" is
+# counted as three providers named. Words shorter than four letters and articles are not
+# names of anything.
+names="$(jq -r '.providers[] | .id, .title, (.title | split(" ") | .[0])' "$DOC" \
+  | awk 'length($0) >= 3 && $0 != "Any" && $0 != "A" && $0 != "bb" || $0 == "bb"' | sort -u)"
+# a line names a provider when one of its names appears as a word (bb is a word only in
+# lower case, as an id and a title, never inside another word)
+count_named() { # line -> number of distinct providers it names
+  local line="$1" n=0 id
+  for id in $ids; do
+    local hit=0 nm
+    while IFS= read -r nm; do
+      [ -n "$nm" ] || continue
+      if printf '%s\n' "$line" | grep -qwF -- "$nm"; then hit=1; break; fi
+    done <<EOF
+$(jq -r --arg id "$id" '.providers[] | select(.id == $id) | .id, .title, (.title | split(" ") | .[0])' "$DOC" | awk 'length($0) >= 3 && $0 != "Any"')
+EOF
+    n=$((n + hit))
+  done
+  printf '%s' "$n"
+}
+scan="$(git ls-files -- 'README.md' 'CONTRIBUTING.md' 'docs/*.md' 'docs/**/*.md' 'apps/majordomus-cli/README.md' \
+  '.ai/repo/features/*.md' '.ai/repo/use-cases/*.md' '.ai/repo/applications/*.md' '.ai/repo/why/**/*.md' \
+  '.ai/repo/rules/project/*.md' '.ai/repo/workflows/*.md' '.ai/repo/knowledge/**/*.md' 'share/skeleton/**/*.md' \
+  | grep -vE '^docs/(generated|claims)/|^docs/CLAIMS|CHANGELOG' || true)"
+enumerations=0
+for f in $scan; do
+  [ -f "$f" ] || continue
+  # cheap pre-filter: a line that mentions at least two of the names at all
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    n="$(count_named "$line")"
+    if [ "$n" -ge 3 ]; then
+      if grep -qF 'docs/generated/providers.md' "$f"; then
+        :   # the file points at the projection; the line is a reading aid beside it
+      else
+        fail "$f enumerates $n providers by hand and does not point at docs/generated/providers.md: ${line:0:110}"
+        enumerations=$((enumerations+1))
+      fi
+    fi
+  done < <(grep -nE "$(printf '%s\n' "$names" | paste -sd'|' -)" "$f" 2>/dev/null | sed 's/^[0-9]*://' || true)
+done
+[ "$enumerations" = 0 ] && ok "no document enumerates providers by hand without pointing at docs/generated/providers.md"
+
+# ------------------------------------------------------------ 4. the projection is current
+if [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ]; then
+  if "$MAJORDOMUS_BIN" generate --check providers >/dev/null 2>&1; then ok "docs/generated/providers.* are current (generate --check providers)"
+  else fail "docs/generated/providers.* are stale: run majordomus generate providers"; fi
+else
+  ok "no executable at hand; derive-check decides whether docs/generated/providers.* are current"
+fi
+
+if [ "$findings" -gt 0 ]; then
+  echo "providers-check: $findings finding(s); the rule is project.providers-are-data" >&2
+  exit 10
+fi
+echo "providers-check: one declaration, every projection current, no provider list written by hand"

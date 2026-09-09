@@ -42,6 +42,7 @@ use serde_json::Value;
 use crate::capability::{Capability, CapabilityKind, CapabilityRegistry, Provenance};
 use crate::index::Index;
 use crate::model::Object;
+use crate::web::Topology;
 
 /// One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`
 /// declares it to be; `route` is where the Cockpit shows the thing itself, when it shows
@@ -380,6 +381,7 @@ const DERIVATIONS: &[(&str, Derivation)] = &[
     ("adrs", adrs_graph),
     ("use-cases", use_cases_graph),
     ("why", why_graph),
+    ("product", product_graph),
     ("composed", composed_graph),
 ];
 
@@ -1613,6 +1615,157 @@ fn why_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
                 }
                 b.edge(&id, &target, edge);
             }
+        }
+    }
+    b.finish()
+}
+
+/// The product as a graph: every feature, the modules, commands and kinds it is made of,
+/// and the interfaces that follow — the command line, the HTTP API, MCP, the Cockpit and
+/// the documentation — each edge derived from what the feature names and what the registry
+/// projects. Read from the middle it answers what a module is for; read from the right it
+/// answers what an interface carries. Drawn on the homepage; nothing on that page is drawn
+/// by hand.
+fn product_graph(registry: &CapabilityRegistry, index: &Index) -> Graph {
+    let why = crate::why::Catalogue::build(index, registry);
+    let web = Topology::new(crate::web::discover::native(
+        crate::web::discover::Runtime::full(),
+    ));
+    let model = crate::product::ProductModel::build(index, registry, &why, &web);
+    let mut b = Builder::new(
+        "product",
+        "The product, composed",
+        "Every stable feature of the product, the capability modules, shell commands and object kinds it is made of, and the interfaces those project onto: the command line, the HTTP API, MCP, the Cockpit and the documentation. Every edge is derived from a feature's typed references and the registry's exposures; a feature that named something the repository does not have would fail validation rather than draw an edge to nothing.",
+        "the features of the layer, the capability registry and the command registry",
+    )
+    .node_kind("feature", "one product feature, as its file declares it")
+    .node_kind("module", "a capability module of the executable")
+    .node_kind("command", "a public command of the shell tool")
+    .node_kind("kind", "one kind of object of the layer")
+    .node_kind("surface", "an interface a feature is exposed through")
+    .edge_kind("made_of", "the feature is made of that module, command or kind")
+    .edge_kind("exposed_through", "the module, command or kind is reached through that interface")
+    .edge_kind("related_to", "the feature names that one as related");
+
+    for (id, title, route) in crate::product::SURFACES {
+        b.node(Node {
+            id: format!("surface:{id}"),
+            kind: "surface".into(),
+            label: (*title).to_string(),
+            summary: None,
+            route: Some((*route).to_string()),
+            source: None,
+            status: None,
+            external: false,
+            facts: BTreeMap::new(),
+        });
+    }
+    'outer: for r in model.public() {
+        let f = &r.feature;
+        let fid = format!("feature:{}", f.id);
+        if !b.node(Node {
+            id: fid.clone(),
+            kind: "feature".into(),
+            label: f.label().to_string(),
+            summary: Some(f.summary.clone()),
+            route: Some(f.route.clone()),
+            source: Some(f.source.clone()),
+            status: Some(if f.featured {
+                "featured".into()
+            } else {
+                f.status.clone()
+            }),
+            external: false,
+            facts: BTreeMap::new(),
+        }) {
+            break;
+        }
+        for m in &r.module_refs {
+            let id = format!("module:{}", m.id);
+            if !b.has(&id)
+                && !b.node(Node {
+                    id: id.clone(),
+                    kind: "module".into(),
+                    label: m.id.clone(),
+                    summary: Some(m.title.clone()),
+                    route: Some(format!(
+                        "/registry/modules/{}/",
+                        m.id.replace(['.', '_'], "-")
+                    )),
+                    source: Some(m.source_path.clone()),
+                    status: m.stability.clone(),
+                    external: false,
+                    facts: BTreeMap::new(),
+                })
+            {
+                break 'outer;
+            }
+            b.edge(&fid, &id, "made_of");
+            let caps = &m.capabilities;
+            if caps.iter().any(|c| c.cli.is_some()) {
+                b.edge(&id, "surface:cli", "exposed_through");
+            }
+            if caps.iter().any(|c| c.route.is_some()) {
+                b.edge(&id, "surface:api", "exposed_through");
+            }
+            if caps
+                .iter()
+                .any(|c| c.tool.is_some() || c.resource.is_some())
+            {
+                b.edge(&id, "surface:mcp", "exposed_through");
+            }
+            b.edge(&id, "surface:cockpit", "exposed_through");
+        }
+        for c in &r.command_refs {
+            let id = format!("command:{}", c.id);
+            if !b.has(&id)
+                && !b.node(Node {
+                    id: id.clone(),
+                    kind: "command".into(),
+                    label: format!("majordomus {}", c.id),
+                    summary: Some(c.summary.clone()),
+                    route: Some(format!("/commands/{}/", c.id)),
+                    source: Some("share/commands.yaml".into()),
+                    status: c.stage.clone(),
+                    external: false,
+                    facts: BTreeMap::new(),
+                })
+            {
+                break 'outer;
+            }
+            b.edge(&fid, &id, "made_of");
+            b.edge(&id, "surface:cli", "exposed_through");
+        }
+        for k in &r.kind_refs {
+            let id = format!("kind:{}", k.name);
+            if !b.has(&id)
+                && !b.node(Node {
+                    id: id.clone(),
+                    kind: "kind".into(),
+                    label: k.name.clone(),
+                    summary: Some(format!("{} object(s) of the layer", k.objects)),
+                    route: Some(format!(
+                        "/registry/modules/{}/",
+                        k.name.replace(['.', '_'], "-")
+                    )),
+                    source: Some("share/kinds.yaml".into()),
+                    status: None,
+                    external: false,
+                    facts: BTreeMap::new(),
+                })
+            {
+                break 'outer;
+            }
+            b.edge(&fid, &id, "made_of");
+            // every object of the layer is an MCP resource and has a Cockpit page
+            b.edge(&id, "surface:mcp", "exposed_through");
+            b.edge(&id, "surface:cockpit", "exposed_through");
+        }
+        if !r.doc_refs.is_empty() {
+            b.edge(&fid, "surface:docs", "exposed_through");
+        }
+        for rel in &f.related {
+            b.edge(&fid, &format!("feature:{rel}"), "related_to");
         }
     }
     b.finish()

@@ -260,7 +260,8 @@ written by hand.
 | HTTP routes | capabilities with an `http` exposure; `GET` binds every top-level input property as a query parameter coerced by its schema type, `POST` binds the JSON body (a command's binding); errors map to 400 `invalid_input`, 404 `not_found`, 422 `refused`, 500 `internal`, 405 for another method on a known path | the shared server `majordomus mcp` starts, and `majordomus serve` |
 | OpenAPI 3.1 | the same routes; `operationId` is the id; the tags are the modules with their descriptions; every example is one of the capability's benchmark cases, by name, evaluated against the repository's index; the responses are the statuses the router answers for the kind (422 for a command only) and `default` for what the transport adds; a query parameter is never nullable; `x-majordomus-id`, `-kind`, `-stability`, `-provenance`, `-benchmark`, `-cache`, `-mcp`, `-cli` carry the rest; `info`, licence, contact and `externalDocs` from `about.rs` and the crate manifest; schemas hoisted into sorted components; the OAS 3.1 base dialect | `GET /openapi.json`, `docs/generated/openapi.json`, and the site's `/docs/api/` and `/openapi.json` |
 | Swagger UI | a shell page that loads `/openapi.json`; it embeds no specification; its assets come from the pinned `swagger-ui-dist` on unpkg, the one part that is not offline | `GET /swagger` (`/docs` is the documentation) |
-| command line | `capabilities list` and `describe` dispatch through the registry's `cli` exposure; `schema` and `validate` are views of the registry, not capabilities | `majordomus capabilities …` |
+| command line | `capabilities list`, `describe` and `projections` dispatch through the registry's `cli` exposure; `schema` and `validate` are views of the registry, not capabilities | `majordomus capabilities …` |
+| projection closure | the registry's `cli` exposures against the clap declaration, both ways: every claim answered by a runnable command, and the commands no capability claims | `capabilities projections`: `majordomus_projections`, `GET /api/v1/capabilities/projections`; the `projection` line of `capabilities validate` |
 | reference | the index of modules and builtin capabilities, one page per executable module with every capability in full; declarative resources described by rule, listed live; the command line as clap declares it | `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md`, `docs/generated/cli.md`, `docs/generated/cli.{json,yaml}` (`majordomus/cli/v1`) |
 | benchmark targets | every required executable per exposed transport per case, plus the system targets; the coverage tallies | `majordomus bench`, `docs/generated/benchmarks.md` and `docs/generated/benchmarks.{json,yaml}` (`majordomus/benchmark-matrix/v1`) — one computation, three encodings |
 | registry manifest | the builtin registry as data: modules, descriptors with schemas and the file each was composed in, declarative kinds, system targets; the boundary the site generator reads for its routes | `docs/generated/registry.{json,yaml}` (`majordomus/capability-registry/v1`) |
@@ -279,6 +280,44 @@ transport's request half, with `Mcp-Session-Id` sessions) and exists on the shar
 only. One shared server serves a repository: the first `majordomus mcp` or `serve` binds
 it, every later `majordomus mcp` bridges its stdio to it, and the peers see each other
 through `peers.list`; the lifecycle is in [`MCP.md`](MCP.md).
+
+## The one projection that can drift
+
+Every projection in the table above is built by walking the registry. An MCP tool, an HTTP
+route, an OpenAPI operation, a benchmark target and a reference page cannot exist without a
+descriptor, and a descriptor cannot fail to produce one: there is nothing to compare,
+because there is only one declaration.
+
+The command line is different. It is declared a second time, in clap, in
+`apps/majordomus-cli/src/cli.rs`, because clap owns parsing, `--help`, defaults and value
+sets, and deriving that from the registry would mean reimplementing an argument parser to
+avoid writing a path twice. `CliExposure` is therefore not a projection — it is a *claim*
+about a declaration that lives somewhere else, and two declarations can disagree.
+
+They did. `repository.scope_classify` declared `cli: ["scope", "classify"]` so that the
+command module could find its id with `by_cli`. There is no such subcommand: `majordomus
+scope classify` parses `classify` as a path to judge and answers `out undeclared classify
+[absent]`. The claim was repeated by `capabilities describe`, by `docs/generated/cli.md` and
+by the site's registry dataset, and nothing noticed, because the only test of the CLI
+projection asked the registry whether it agreed with itself.
+
+`capability/closure.rs` compares the two declarations:
+
+- **a claim the command line does not answer** is a failure — `CLOSURE_CLI_ABSENT` for a
+  path clap does not have, `CLOSURE_CLI_NOT_RUNNABLE` for one that only groups other
+  commands. The finding names the capability, the claim, the file that declares it, the
+  file that declares the command line, and the command that shows it again.
+- **a runnable command no capability claims** is not a failure. `serve` and `mcp` start
+  processes, `generate` writes files, and the worktree verbs call a service directly; none
+  of them is a capability, and some never will be. The list is reported as the measure of
+  how much of the command line is still hand-written rather than derived.
+
+It is a pure function of the registry and the clap tree — no repository, no environment, no
+network — so it runs in a unit test, in `tests/projections.rs`, and as the `projection` line
+of `capabilities validate`, which CI runs through `scripts/rust-check --integration`.
+
+`majordomus capabilities projections` answers the same matrix over the command line, over
+HTTP and over MCP, with `--unmet` for the failures alone.
 
 ## Lifecycle and failure policy
 

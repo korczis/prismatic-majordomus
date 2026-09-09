@@ -1,8 +1,12 @@
-// The command palette. Every entry in it is something the registry, the graph derivations
-// or the index already holds: the capabilities from /api/v1/capabilities, the graphs from
-// /api/v1/graphs, the objects from /api/v1/objects, and the Cockpit's own areas read out
-// of the page's own navigation. Nothing is listed here by hand, so a capability, a kind or
-// a graph added to the backend is in the palette on the next load.
+// The command palette. Every entry in it is something the registry, the command graph, the
+// graph derivations or the index already holds: the capabilities from /api/v1/capabilities,
+// the commands from /api/v1/commands, the graphs from /api/v1/graphs, the objects from
+// /api/v1/objects, and the Cockpit's own areas read out of the page's own navigation.
+// Nothing is listed here by hand, so a capability, a command, a kind or a graph added to
+// the backend is in the palette on the next load.
+//
+// A command entry carries what a person needs in order to run it somewhere else — the
+// command line as it is typed — because the palette navigates and the terminal executes.
 //
 // Nothing is fetched until the palette is opened for the first time.
 
@@ -41,8 +45,9 @@ function install(list, field) {
     started = true;
     entries = pages.slice();
     render();
-    const [capabilities, graphs, objects] = await Promise.all([
+    const [capabilities, commands, graphs, objects] = await Promise.all([
       api('/api/v1/capabilities'),
+      api('/api/v1/commands'),
       api('/api/v1/graphs'),
       api('/api/v1/objects'),
     ]);
@@ -53,6 +58,16 @@ function install(list, field) {
           label: c.id,
           detail: c.title || '',
           href: '/cockpit/capabilities/' + encodeURIComponent(c.id),
+        });
+      }
+    }
+    if (commands.ok && commands.body && commands.body.commands) {
+      for (const c of commands.body.commands) {
+        entries.push({
+          kind: 'command',
+          label: c.invocation,
+          detail: c.summary || '',
+          href: '/cockpit/commands/' + encodeURIComponent(c.id),
         });
       }
     }

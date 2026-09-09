@@ -5,7 +5,7 @@ the gate says no.
 
 The rules are [`project.rust-public-api-quality`](../.ai/repo/rules/project/rust-public-api-quality.v1.md)
 and [`project.operation-transport-parity`](../.ai/repo/rules/project/operation-transport-parity.v1.md);
-the decision behind them is [ADR 0023](../.ai/repo/adrs/0023-the-crates-public-surface-is-measured-by-the-crate-and-absence.md).
+the decision behind them is [ADR 0028](../.ai/repo/adrs/0028-the-crates-public-surface-is-measured-by-the-crate-and-absence.md).
 This page is the working reference: the rules say why, this says how.
 
 ## The one command

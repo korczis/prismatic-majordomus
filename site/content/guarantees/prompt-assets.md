@@ -1,7 +1,7 @@
 +++
 title = "Every repository-local prompt asset renders, and an unknown token is a failure"
 description = "A repository can keep prompt assets under .ai/repo/prompts/, and the generated instructions point workers at them. An asset that no longer renders — an unknown token, broken front matter — is a broken reference, and is reported as a failure rather than discovered by the worker who tried to use it."
-weight = 34
+weight = 35
 [extra]
 claim_id = "prompt-assets"
 status = "guaranteed"

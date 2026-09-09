@@ -137,6 +137,7 @@ layout and names it.
   (Claude Code)  (Codex)       (Gemini, Cursor, local ...)
       |             |             |
       +-------------+-------------+
+        an orchestrator (bb) runs any of them; the agent stays the worker
                     |
                     v
           Verified, accepted outcomes
@@ -404,8 +405,8 @@ twice.
 
 Every generated file in the repository comes out of the same executable: `majordomus
 generate` writes `docs/generated/`, `share/allow/`, the provider bootstraps `AGENTS.md`
-and `CLAUDE.md` (from the policy and the templates), and the site's registry dataset
-`site/data/registry/registry.json`; `majordomus generate --check` says which of them is
+and `CLAUDE.md` (from the policy and the templates), and the site's registry and product
+datasets under `site/data/registry/`; `majordomus generate --check` says which of them is
 stale, and CI refuses a merge or a deploy from a stale one. The website's own generator
 consumes two of those files and nothing else of the crate, so `just derive` regenerates
 every derived file of the repository in dependency order and `just derive-check` names
@@ -416,6 +417,18 @@ and the graph is drawn in [`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGE
 the site's [Executable section](https://korczis.github.io/prismatic-majordomus/registry/) —
 the registry, every module and capability, the command line, the MCP surface, the HTTP API
 and the benchmarks — is rendered from that dataset and from nothing typed by hand.
+
+The website's front door is the same kind of projection. What the product does is stated
+once, as one file per feature under `.ai/repo/features/`, holding the references that name
+what the feature is made of and the editorial decisions nothing can infer; the interfaces
+it is exposed through, the counts behind it, the operational moments it answers and its
+route are derived from those references and refused as keys in the file. The homepage, the
+[feature pages](https://korczis.github.io/prismatic-majordomus/features/) and the
+[capability matrix](https://korczis.github.io/prismatic-majordomus/features/matrix/) name
+no feature, module, command, provider or count of their own, and a stale product dataset
+fails the build before it can be deployed. The contract is
+[`docs/PRODUCT.md`](docs/PRODUCT.md) and the decision is
+[ADR 23](.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md).
 
 ```bash
 just build                      # cargo build of apps/majordomus-cli (or: cargo build --manifest-path apps/majordomus-cli/Cargo.toml)
@@ -492,12 +505,15 @@ value came from: [`docs/WEB.md`](docs/WEB.md),
 [`.gemini/settings.json`](.gemini/settings.json) (Gemini CLI) and
 [`.codex/config.toml`](.codex/config.toml) (Codex) name [`bin/majordomus-mcp`](bin/majordomus-mcp),
 which builds the executable when it must and runs `majordomus mcp`. Open the repository in
-any of them and the server is there; open it in two and they share one.
+any of them and the server is there; open it in two and they share one. Which tools the
+distribution has an adapter for, what each reads and where each keeps its scratch
+checkouts is one generated table, [`docs/generated/providers.md`](docs/generated/providers.md),
+never a list written here.
 
 **Peers see each other.** Every attached client is a peer, named by what it said in
 `initialize`; `majordomus_peers` lists them and `majordomus_announce` tells the others what
-a client is working on and which paths it expects to touch, so Claude, Codex and Gemini in
-one checkout can avoid colliding, out of the box.
+a client is working on and which paths it expects to touch, so several clients in one
+checkout can avoid colliding, out of the box.
 
 **Every use case is executed, not described.** What a person does with the tool is one
 file under `.ai/repo/use-cases/`, naming the commands, rules and claims it relies on and

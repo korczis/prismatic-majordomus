@@ -34,6 +34,7 @@
 
 pub(crate) mod benchmark;
 pub mod builtin;
+pub(crate) mod closure;
 pub(crate) mod declarative;
 pub mod executor;
 pub mod handler;
@@ -43,6 +44,7 @@ pub mod registry;
 pub mod schema;
 
 pub use benchmark::{BenchmarkCases, CaseContext, CaseProvider, NamedCase};
+pub use closure::{Finding, Matrix as ProjectionMatrix, Projection, Row as ProjectionRow};
 pub use executor::CapabilityExecutor;
 pub use handler::{CapabilityError, Context, Executable, Handler};
 pub use model::{

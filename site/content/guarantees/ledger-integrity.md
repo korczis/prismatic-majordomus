@@ -1,7 +1,7 @@
 +++
 title = "Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record"
 description = ".ai/local/state/ledger.jsonl is append-only and is the only record of what happened that nothing else can reconstruct: which tasks were started, checkpointed, handed over and finished, and on what contract. A line that is not a well-formed event is reported by name and line number, by check, by doctor and by watch."
-weight = 30
+weight = 31
 [extra]
 claim_id = "ledger-integrity"
 status = "guaranteed"

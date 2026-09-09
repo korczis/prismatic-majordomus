@@ -1,7 +1,7 @@
 +++
 title = "Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits"
 description = "**Planned.** Optional, provider-specific hooks into a worker's runtime that clamp how many lines a single read may return, condense oversized tool output (head, diagnostic lines, tail, with a note that it was truncated), and cap how many sub-workers a session may spawn — with every limit derived from the task's profile rather than a global constant."
-weight = 89
+weight = 90
 [extra]
 claim_id = "runtime-adapters"
 status = "planned"

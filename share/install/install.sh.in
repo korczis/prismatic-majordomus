@@ -97,6 +97,7 @@ MJ_DRY_RUN=0
 MJ_INIT=0
 MJ_FORCE=0
 MJ_INSTALLED_ANYTHING=0
+MJ_HTTP_STATUS=''
 MJ_WANTED_VERSION="${MAJORDOMUS_VERSION:-}"
 MJ_INSTALL_DIR="${MAJORDOMUS_INSTALL_DIR:-$MJ_DEFAULT_INSTALL_DIR}"
 MJ_PREFIX="${MAJORDOMUS_PREFIX:-$MJ_DEFAULT_PREFIX}"
@@ -260,11 +261,13 @@ http_get() {
            "Check that the machine is online and that $MJ_RESOLVED_BASE is reachable."
     }
     debug "GET $url -> HTTP $code"
+    MJ_HTTP_STATUS=$code
     [ "$code" = 200 ] || return 1
     return 0
   fi
   if have wget; then
     if [ "$MJ_SECURE" = 1 ]; then set -- --https-only; else set --; fi
+    MJ_HTTP_STATUS=''
     wget -q "$@" --timeout=30 -O "$dest" "$url" && { debug "GET $url -> ok (wget)"; return 0; }
     return 1
   fi
@@ -338,14 +341,31 @@ resolve_release() {
   fi
   debug "release metadata: $MJ_METADATA_URL"
   if ! http_get "$MJ_METADATA_URL" "$MJ_TMP/release.json"; then
+    # A 404 is the project's own answer and means the release is not published. Any other
+    # status is the network or the host between here and it, and the two deserve different
+    # sentences: one is a fact about the project, the other is a fact about this connection.
+    # With wget, which reports no status, neither can be claimed and the older wording stands.
     if [ "$MJ_PINNED" = 1 ]; then
-      fail "no release metadata for ${MJ_WANTED_VERSION}" \
-           "$MJ_METADATA_URL could not be read." \
-           "Every published release is listed at $MJ_BASE_URL/docs/install/."
+      if [ "${MJ_HTTP_STATUS:-}" = 404 ]; then
+        fail "no release ${MJ_WANTED_VERSION} is published" \
+             "There is no release metadata at $MJ_METADATA_URL (HTTP 404)." \
+             "Every published release is listed at $MJ_BASE_URL/docs/install/."
+      fi
+      fail "the metadata for ${MJ_WANTED_VERSION} could not be retrieved" \
+           "$MJ_METADATA_URL answered${MJ_HTTP_STATUS:+ HTTP $MJ_HTTP_STATUS}, not the release metadata." \
+           "This is a failure to reach the release metadata, not a statement that the release" \
+           "does not exist. Try again, or check $MJ_BASE_URL/docs/install/."
     fi
-    fail "no stable release is published yet, or its metadata could not be read" \
-         "$MJ_METADATA_URL could not be read." \
-         "If this machine is online, the project may not have published a release yet."
+    if [ "${MJ_HTTP_STATUS:-}" = 404 ]; then
+      fail "no stable release is currently published" \
+           "The installer itself is available, but there is no stable release for it to install yet." \
+           "Release metadata: $MJ_METADATA_URL (HTTP 404)" \
+           "Published releases, when there are any: $MJ_BASE_URL/docs/install/"
+    fi
+    fail "the release metadata could not be retrieved" \
+         "$MJ_METADATA_URL answered${MJ_HTTP_STATUS:+ HTTP $MJ_HTTP_STATUS}, not the release metadata." \
+         "This says nothing about whether a release exists; it says this machine could not" \
+         "read the metadata that would name it."
   fi
   MJ_VERSION=$(metadata_field "$MJ_TMP/release.json" version)
   MJ_TAG=$(metadata_field "$MJ_TMP/release.json" tag)

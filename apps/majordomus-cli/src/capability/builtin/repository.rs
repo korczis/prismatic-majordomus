@@ -52,6 +52,17 @@ fn repository_info(ctx: &Context, _: Empty) -> Result<RepositoryReport, Capabili
     })
 }
 
+/// The capability `majordomus scope <PATHS>` answers with when it is given paths.
+///
+/// Named here, beside the declaration, because the command module must reach it by
+/// identity: it has no command line of its own to be found by.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::repository::SCOPE_CLASSIFY;
+/// assert_eq!(SCOPE_CLASSIFY, "repository.scope_classify");
+/// ```
+pub const SCOPE_CLASSIFY: &str = "repository.scope_classify";
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -103,10 +114,19 @@ pub fn module() -> ModuleDescriptor {
                 input: ClassifyInput,
                 output: Classification,
                 stability: Stability::BehaviorallyVerified,
+                // No CLI exposure: `majordomus scope <PATHS>` is one command that answers
+                // with this capability when it is given paths and with `repository.scope`
+                // when it is not, and clap has no `scope classify` subcommand for anybody
+                // to type. The path used to be declared here so that the command module
+                // could find the id with `by_cli`, which made a lookup key look like a
+                // public command line — `capabilities describe`, `docs/generated/cli.md`
+                // and the site's registry all repeated a command that does not exist. The
+                // command module names [`SCOPE_CLASSIFY`] instead, and this exposure says
+                // what is true: the capability is reached through the command above.
                 exposure: Exposure {
                     mcp: mcp("majordomus_scope_classify"),
                     http: get("/api/v1/scope/classify"),
-                    cli: Some(CliExposure { path: vec!["scope".into(), "classify".into()] }),
+                    cli: None,
                 },
                 tags: ["repository", "scope"],
                 handler: scope_classify,

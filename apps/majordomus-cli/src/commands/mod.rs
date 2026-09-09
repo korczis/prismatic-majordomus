@@ -31,9 +31,13 @@
 
 pub(crate) mod bench;
 pub(crate) mod capabilities;
+pub(crate) mod command_graph;
+pub(crate) mod completion;
 pub(crate) mod distribution;
+pub(crate) mod env;
 pub(crate) mod generate;
 pub(crate) mod mcp;
+pub(crate) mod product;
 pub(crate) mod quality;
 pub(crate) mod scope;
 pub(crate) mod serve;
@@ -56,7 +60,11 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Web(args) => web::run(args),
         Command::Why(args) => why::run(args),
         Command::Distribution(args) => distribution::run(args),
+        Command::Env(args) => env::run(args),
+        Command::Commands(args) => command_graph::run(args),
+        Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
+        Command::Product(args) => product::run(args),
         Command::Quality(args) => quality::run(args),
     }
 }

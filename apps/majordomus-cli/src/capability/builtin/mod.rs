@@ -32,15 +32,18 @@
 
 pub mod artifacts;
 pub(crate) mod capabilities;
+pub(crate) mod commands;
 pub mod continuity;
 pub(crate) mod deploy;
 pub(crate) mod directories;
 pub(crate) mod distribution;
+pub(crate) mod environment;
 pub(crate) mod graph;
 pub mod health;
 pub mod objects;
 pub(crate) mod peers;
 pub(crate) mod perf;
+pub(crate) mod product;
 pub mod quality;
 pub mod repository;
 mod scope;
@@ -69,9 +72,10 @@ pub use directories::{
 // the two never collide — in this module, and in the one schema component namespace the
 // OpenAPI document has.
 pub use distribution::{
-    BuildReport, DistributionReport, ReleaseArtifactInput, ReleaseArtifactView, ReleaseView,
-    ReleasesReport, TargetView,
+    BuildReport, CheckState, DistributionReport, InstallCheck, InstallabilityReport,
+    ReleaseArtifactInput, ReleaseArtifactView, ReleaseView, ReleasesReport, TargetView,
 };
+pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENVIRONMENT_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
@@ -84,6 +88,7 @@ pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
 pub(crate) mod why;
 
+pub use commands::{CommandGraphReport, CommandIndex, CommandSummary};
 pub use views::{Empty, ObjectSummary, ObjectView};
 pub use web::{SurfaceReport, SURFACES_URI};
 pub use worktree::{
@@ -97,6 +102,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         repository,
         objects,
         capabilities,
+        commands,
         graph,
         health,
         continuity,
@@ -105,11 +111,13 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         directories,
         artifacts,
+        environment,
         quality,
         distribution,
         why,
         web,
-        worktree
+        worktree,
+        product
     ]
 }
 

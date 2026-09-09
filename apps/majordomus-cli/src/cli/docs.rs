@@ -51,6 +51,13 @@ pub struct CommandDoc {
     /// parsed by this crate's own parser and run against the built executable by the
     /// example tests; nothing is shown that is not run.
     pub examples: Vec<ExampleView>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    /// The other names this command answers to, `["wt"]`, as clap declares them.
+    ///
+    /// An alias is declared once, on the command, and every projection that has a use for
+    /// one — the completion, the generated workflow bridge, the reference page — reads it
+    /// here rather than keeping a table of its own.
+    pub aliases: Vec<String>,
     /// The subcommands in declaration order.
     pub subcommands: Vec<CommandDoc>,
 }
@@ -250,6 +257,10 @@ fn walk(cmd: &clap::Command, mut path: Vec<String>) -> CommandDoc {
         long_about: cmd.get_long_about().map(|a| a.to_string()),
         args,
         examples,
+        aliases: cmd
+            .get_all_aliases()
+            .map(str::to_string)
+            .collect::<Vec<_>>(),
         subcommands,
     }
 }

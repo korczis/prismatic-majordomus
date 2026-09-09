@@ -178,6 +178,57 @@ fn capabilities_describe(
         .ok_or_else(|| CapabilityError::NotFound(format!("unknown capability: {}", input.id)))
 }
 
+// ---------------------------------------------------------------- capabilities.projections
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `capabilities.projections`: which rows, and whether only the unmet claims.
+pub struct ProjectionsInput {
+    /// Only capabilities composed in this module.
+    #[serde(default)]
+    pub module: Option<String>,
+    /// Only the capabilities whose declared exposures are not all answered by their
+    /// surface. Empty is the closure the rule asks for.
+    #[serde(default)]
+    pub unmet: bool,
+}
+
+impl BenchmarkCases for ProjectionsInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("all", ProjectionsInput::default()),
+            NamedCase::new(
+                "unmet",
+                ProjectionsInput {
+                    module: None,
+                    unmet: true,
+                },
+            ),
+        ]
+    }
+}
+
+fn capabilities_projections(
+    ctx: &Context,
+    input: ProjectionsInput,
+) -> Result<crate::capability::closure::Matrix, CapabilityError> {
+    // the clap tree is a pure function of the declaration compiled into this executable:
+    // no repository is read, and the walk is the same one `cli::validate` runs
+    let mut m = crate::capability::closure::matrix(&ctx.registry, &crate::cli::tree());
+    if let Some(module) = &input.module {
+        if !ctx.registry.modules().any(|k| k.id.as_str() == module) {
+            return Err(CapabilityError::InvalidInput(format!(
+                "no module named '{module}'"
+            )));
+        }
+        m.rows.retain(|r| &r.module == module);
+    }
+    if input.unmet {
+        m.rows.retain(|r| !r.closed);
+    }
+    Ok(m)
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -217,6 +268,22 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["introspection"],
                 handler: capabilities_describe,
             },
+            capability! {
+                id: "capabilities.projections",
+                title: "Where each capability is projected",
+                description: "A row per capability with the command line, HTTP route, MCP tool and MCP resource it reaches, whether every exposure it declares is answered by that surface, and the runnable commands no capability claims. Derived from the registry and the clap declaration; nothing is written down.",
+                input: ProjectionsInput,
+                output: crate::capability::closure::Matrix,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_projections"),
+                    http: get("/api/v1/capabilities/projections"),
+                    cli: Some(CliExposure { path: vec!["capabilities".into(), "projections".into()] }),
+                },
+                tags: ["introspection", "projections"],
+                cache: CachePolicy::Process { max_entries: 8, ttl_seconds: None },
+                handler: capabilities_projections,
+            },
         ],
     }
 }
@@ -245,6 +312,11 @@ mod tests {
                 "majordomus_capability",
                 "/api/v1/capability",
             ),
+            (
+                "capabilities.projections",
+                "majordomus_projections",
+                "/api/v1/capabilities/projections",
+            ),
         ];
         let ids: Vec<&str> = m
             .capabilities
@@ -269,5 +341,95 @@ mod tests {
                 "{id} lost or renamed its HTTP route"
             );
         }
+    }
+
+    /// The handler's two filters and its one refusal, over the registry this crate ships.
+    /// `Context::new` needs no repository: the filters read the registry and the clap tree,
+    /// and neither touches the index.
+    #[test]
+    fn projections_filters_by_module_and_refuses_a_module_that_does_not_exist() {
+        use crate::capability::{CapabilityRegistry, Context};
+        use crate::git::GitState;
+        use crate::index::{Index, RepositoryInfo, State};
+        use std::sync::Arc;
+
+        // an index with no objects: the filters read the registry and the clap tree, and
+        // neither of them touches the layer
+        let index = Index {
+            repository: RepositoryInfo {
+                root: "/tmp/projections".into(),
+                layer_schema: "ai-repository/v1".into(),
+                sections: Default::default(),
+                git: GitState::Unavailable {
+                    reason: "unit test".into(),
+                },
+                discovery: "filesystem".into(),
+                source_classes: vec![],
+                kind_sources: vec![],
+                scope_origin: crate::scope::Origin::Distribution,
+                scope_path: String::new(),
+            },
+            objects: vec![],
+            diagnostics: vec![],
+            state: State::Ok,
+            fingerprint: String::new(),
+            scoped: Default::default(),
+            distribution: None,
+            providers: Default::default(),
+        };
+        let registry = Arc::new(
+            CapabilityRegistry::builder()
+                .with_modules(super::super::modules())
+                .build()
+                .expect("the builtin registry builds"),
+        );
+        let ctx = Context::new(Arc::new(index), Arc::clone(&registry));
+
+        // every row, unfiltered
+        let all = capabilities_projections(&ctx, ProjectionsInput::default()).expect("all rows");
+        assert_eq!(all.rows.len(), registry.len());
+        assert!(
+            all.unbacked.iter().any(|c| c == "majordomus serve"),
+            "the process commands are the debt this reports"
+        );
+
+        // one module
+        let one = capabilities_projections(
+            &ctx,
+            ProjectionsInput {
+                module: Some("capabilities".into()),
+                unmet: false,
+            },
+        )
+        .expect("one module");
+        assert!(!one.rows.is_empty());
+        assert!(one.rows.iter().all(|r| r.module == "capabilities"));
+        assert!(one.rows.len() < all.rows.len());
+
+        // the closure this crate ships: nothing unmet
+        let unmet = capabilities_projections(
+            &ctx,
+            ProjectionsInput {
+                module: None,
+                unmet: true,
+            },
+        )
+        .expect("unmet");
+        assert!(unmet.rows.is_empty(), "the shipped declaration is closed");
+
+        // a module nobody composes is a refusal naming it, not an empty answer that reads
+        // as "this module has no capabilities"
+        let err = capabilities_projections(
+            &ctx,
+            ProjectionsInput {
+                module: Some("nonesuch".into()),
+                unmet: false,
+            },
+        )
+        .expect_err("an unknown module is refused");
+        assert!(
+            matches!(err, CapabilityError::InvalidInput(ref m) if m.contains("nonesuch")),
+            "{err:?}"
+        );
     }
 }

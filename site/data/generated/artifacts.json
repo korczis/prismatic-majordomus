@@ -1,6 +1,13 @@
 {
   "artifacts": [
     {
+      "document": "providers/bb",
+      "format": "markdown",
+      "path": ".bb/AGENTS.md",
+      "schema": null,
+      "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
+    },
+    {
       "document": "providers/agents",
       "format": "markdown",
       "path": "AGENTS.md",
@@ -113,6 +120,13 @@
       "source": "the `capabilities` module of the canonical Majordomus capability registry"
     },
     {
+      "document": "modules/commands",
+      "format": "markdown",
+      "path": "docs/generated/modules/commands.md",
+      "schema": null,
+      "source": "the `commands` module of the canonical Majordomus capability registry"
+    },
+    {
       "document": "modules/continuity",
       "format": "markdown",
       "path": "docs/generated/modules/continuity.md",
@@ -139,6 +153,13 @@
       "path": "docs/generated/modules/distribution.md",
       "schema": null,
       "source": "the `distribution` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/environment",
+      "format": "markdown",
+      "path": "docs/generated/modules/environment.md",
+      "schema": null,
+      "source": "the `environment` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/graph",
@@ -174,6 +195,13 @@
       "path": "docs/generated/modules/perf.md",
       "schema": null,
       "source": "the `perf` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/product",
+      "format": "markdown",
+      "path": "docs/generated/modules/product.md",
+      "schema": null,
+      "source": "the `product` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/quality",
@@ -223,6 +251,27 @@
       "path": "docs/generated/openapi.yaml",
       "schema": null,
       "source": "the canonical Majordomus capability registry"
+    },
+    {
+      "document": "providers",
+      "format": "json",
+      "path": "docs/generated/providers.json",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    },
+    {
+      "document": "providers",
+      "format": "markdown",
+      "path": "docs/generated/providers.md",
+      "schema": null,
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    },
+    {
+      "document": "providers",
+      "format": "yaml",
+      "path": "docs/generated/providers.yaml",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
     },
     {
       "document": "registry",
@@ -547,6 +596,20 @@
       "source": "share/distribution.yaml and the release records"
     },
     {
+      "document": "site-product-graph",
+      "format": "json",
+      "path": "site/data/registry/product-graph.json",
+      "schema": null,
+      "source": "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
+    },
+    {
+      "document": "site-product",
+      "format": "json",
+      "path": "site/data/registry/product.json",
+      "schema": "majordomus-site-product/v1",
+      "source": "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
+    },
+    {
       "document": "site-registry",
       "format": "json",
       "path": "site/data/registry/registry.json",
@@ -834,6 +897,13 @@
       "formats": [
         "markdown"
       ],
+      "id": "modules/commands",
+      "source": "the `commands` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
       "id": "modules/continuity",
       "source": "the `continuity` module of the canonical Majordomus capability registry"
     },
@@ -857,6 +927,13 @@
       ],
       "id": "modules/distribution",
       "source": "the `distribution` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/environment",
+      "source": "the `environment` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -892,6 +969,13 @@
       ],
       "id": "modules/perf",
       "source": "the `perf` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/product",
+      "source": "the `product` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -938,10 +1022,27 @@
     },
     {
       "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ],
+      "id": "providers",
+      "schema": "majordomus/providers/v1",
+      "source": "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy"
+    },
+    {
+      "formats": [
         "markdown"
       ],
       "id": "providers/agents",
       "source": "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "providers/bb",
+      "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
     },
     {
       "formats": [
@@ -1098,6 +1199,21 @@
       ],
       "id": "site-distribution",
       "source": "share/distribution.yaml and the release records"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "site-product",
+      "schema": "majordomus-site-product/v1",
+      "source": "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
+    },
+    {
+      "formats": [
+        "json"
+      ],
+      "id": "site-product-graph",
+      "source": "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
     },
     {
       "formats": [

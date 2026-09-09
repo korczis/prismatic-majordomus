@@ -158,6 +158,7 @@ impl Cockpit {
         match path {
             "" | PREFIX => pages::overview(&self.ctx),
             "/cockpit/capabilities" => pages::capabilities(&self.ctx, query),
+            "/cockpit/commands" => pages::commands(&self.ctx, query),
             "/cockpit/objects" => pages::objects(&self.ctx, query),
             "/cockpit/object" => match query.iter().find(|(k, _)| k == "uri") {
                 Some((_, uri)) => pages::object(&self.ctx, uri),
@@ -177,6 +178,8 @@ impl Cockpit {
             other => {
                 if let Some(id) = other.strip_prefix("/cockpit/capabilities/") {
                     pages::capability(&self.ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/commands/") {
+                    pages::command(&self.ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
                     pages::graph(&self.ctx, &percent_decode(id))
                 } else {

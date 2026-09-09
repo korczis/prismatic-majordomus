@@ -39,6 +39,7 @@ sections:
   adrs: repo/adrs
   project: repo/project
   why: repo/why
+  features: repo/features
   deployments: repo/deployments
 
 context:
@@ -124,6 +125,12 @@ sources:
     kind: area
     discovery: vcs
     pathspec: ':(glob).ai/repo/why/areas/*.md'
+    required: false
+
+  - id: feature
+    kind: feature
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/features/*.md'
     required: false
 
   - id: deployment
@@ -392,6 +399,41 @@ Because the fixture says so.
 Nothing the fixture does not say.
 ";
 
+/// The fixture's one product feature: it names the fixture's own rule, claim, document,
+/// area and audience, one module of the executable and one kind of the layer, so every
+/// reference resolves and every surface derives. Small on purpose.
+pub const FEATURE: &str = "---
+schema: feature/v1
+id: fixture-feature
+kind: feature
+title: The feature the fixture declares
+short_title: Fixture feature
+headline: 'A feature that exists so every projection has something to project.'
+summary: 'One feature, made of one module, one rule, one claim and one document.'
+status: stable
+weight: 10
+featured: true
+areas: [fixture-area]
+audiences: [fixture-team]
+modules: [repository]
+kinds: [rule]
+rules: [project.alpha]
+docs: [docs/CLI.md]
+claims: [policy-parse]
+cockpit: [overview]
+web: [swagger]
+tags: [fixture]
+---
+
+## What it does
+
+Because the fixture says so.
+
+## What it does not do
+
+Nothing the fixture does not say.
+";
+
 pub struct Fixture {
     dir: tempfile::TempDir,
 }
@@ -417,6 +459,11 @@ impl Fixture {
         f.write(".ai/repo/why/audiences/fixture-team.md", AUDIENCE);
         f.write(".ai/repo/why/areas/fixture-area.md", AREA);
         f.write(".ai/repo/why/moments/fixture-moment.md", MOMENT);
+        f.write(
+            ".ai/repo/features/README.md",
+            &context_doc("ai.repo.features", "Product features"),
+        );
+        f.write(".ai/repo/features/fixture-feature.md", FEATURE);
         f.write(".ai/repo/deployments/fixture-deployment.yaml", DEPLOYMENT);
         f.write(
             "docs/claims/policy-parse.md",

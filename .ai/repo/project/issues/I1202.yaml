@@ -1,0 +1,37 @@
+id: I1202
+milestone: web-sign-in
+title: One typed provider model reads the objects, and no code names a provider
+slug: identity-provider-model
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add apps/majordomus-cli/src/identity with the typed model of a provider object: discovery of every object under .ai/repo/identity/providers/, validation against the schema, resolution of the credential environment variables at use rather than at load, and a deterministic ordering of the sign-in offer. Expose the read as a capability so the provider list reaches the CLI, the API, OpenAPI, MCP and the Cockpit through the registry rather than through five readers."
+why: "The objects are only canonical if exactly one thing parses them. A second reader in the Cockpit or in the HTTP layer would be a second definition of what a provider is, and would drift the first time the schema gains a field."
+current_state: "I1201 has the objects; nothing reads them."
+desired_state: "identity::providers() returns the validated, ordered set; a provider whose credentials are absent is reported as unavailable with a reason rather than omitted silently; and grep for the strings google and facebook in apps/ returns nothing outside tests and fixtures."
+scope:
+  - apps/majordomus-cli/src/identity
+  - apps/majordomus-cli/src/capability/builtin
+  - apps/majordomus-cli/src/lib.rs
+  - apps/majordomus-cli/tests
+non_scope:
+  - The HTTP flow, which is I1203
+  - Reading a credential value into any type that is serialised, cached, logged or rendered
+depends_on:
+  - I1201
+acceptance_criteria:
+  - The provider set is discovered from the directory, validated, and ordered deterministically
+  - A provider with absent credentials is unavailable with a stated reason, and the reason reaches the surfaces
+  - No provider identifier appears in the executable's source outside test fixtures
+  - The read is declared once as a capability and appears in CLI, HTTP, OpenAPI, MCP and docs with no second registration
+validation:
+  - cargo test --workspace --all-features
+  - cargo clippy --workspace --all-targets --all-features -- -D warnings
+  - majordomus generate --check
+evidence_required:
+  - typed_model
+  - capability_projected
+  - no_provider_names_in_code
+risk: "Resolving credentials at load makes the model unusable in any context that serialises it. They are resolved at the moment of the flow and never held."
+created_at: 2026-09-08
+updated_at: 2026-09-08

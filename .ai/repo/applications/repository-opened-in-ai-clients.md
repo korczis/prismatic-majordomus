@@ -2,7 +2,7 @@
 id: repository-opened-in-ai-clients
 kind: application
 title: 'A repository opened in AI clients, not only by people'
-summary: 'Claude Code, Codex, Gemini CLI or another MCP client is a regular reader of the repository, and what it reads should be the layer, served, rather than files it happens to find.'
+summary: 'Any AI client the tool declares as a provider (docs/generated/providers.md), or any other MCP client, is a regular reader of the repository, and what it reads should be the layer, served, rather than files it happens to find.'
 weight: 5
 status: active
 fits_when:

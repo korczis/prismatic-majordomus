@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 35
+weight = 39
 [extra]
 source = "docs/MCP.md"
 +++
@@ -81,6 +81,16 @@ others attach:
 | Claude Code | [`.mcp.json`](../.mcp.json) | a stdio server, `bin/majordomus-mcp`; Claude Code asks once whether to trust a project server |
 | Gemini CLI | [`.gemini/settings.json`](../.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
 | Codex | [`.codex/config.toml`](../.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
+| bb | nothing of its own | an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with `settingSources: project`, which loads `.mcp.json`; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it `pending` at init and connected afterwards |
+
+</div>
+
+
+The rows are the providers whose declaration names a client configuration; the whole set,
+with what each reads and where it keeps its scratch checkouts, is
+[`docs/generated/providers.md`](generated/providers.md), generated from the same declaration.
+<div class="overflow-x-auto" tabindex="0">
+
 | anything speaking Streamable HTTP | the running server's `/mcp` | `initialize` answers with an `Mcp-Session-Id`; every later request carries it; `DELETE /mcp` ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |
 
 </div>

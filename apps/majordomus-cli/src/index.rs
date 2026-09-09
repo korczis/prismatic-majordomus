@@ -80,6 +80,12 @@ pub struct Index {
     /// kinds and the schemas, not discovered in the repository, so that an installed copy
     /// answers the same questions a checkout does.
     pub distribution: Option<crate::distribution::Model>,
+    /// The providers the tool distribution ships an adapter for: one per template under
+    /// `share/providers/`, joined with what `share/providers.yaml` declares about it. Read
+    /// from the tool's data directory beside the kinds and the schemas, like the
+    /// distribution model, so that the product model can say which providers exist without
+    /// a second discovery.
+    pub providers: crate::share::ProviderDeclarations,
 }
 
 impl Index {
@@ -181,6 +187,7 @@ impl Index {
             fingerprint,
             scoped: Scoped { scope, tally },
             distribution: None,
+            providers: Default::default(),
         })
     }
 

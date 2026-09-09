@@ -96,6 +96,12 @@ mkdir -p "$(dirname "$out")"
   printf 'commit: %s\n' "$commit"
   printf 'published_at: "%s"\n' "$published"
   [ -n "$notes" ] && printf 'notes_url: %s\n' "$notes"
+  # The set this release was published against, snapshotted rather than left to be
+  # recomputed later. A target added to the model afterwards is a promise about the next
+  # release; it cannot retroactively make this one incomplete, and this record is what says
+  # so. See Release::required_targets.
+  printf 'required_targets:\n'
+  for id in $targets; do printf '  - %s\n' "$id"; done
   printf 'artifacts:\n%s' "$body"
 } > "$out"
 

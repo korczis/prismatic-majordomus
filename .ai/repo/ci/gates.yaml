@@ -54,6 +54,11 @@ gates:
     runs: scripts/rust-check --integration
     summary: the executable built, the registry validated, every committed projection current, the benchmark coverage complete
 
+  - id: command-graph
+    job: rust
+    runs: scripts/ci/command-graph
+    summary: the command graph builds without an error, and no workflow file carries a hand-written bridge to either program
+
   - id: rust-check
     job: rust
     implies: [rust-integration, rust-quality]
@@ -80,8 +85,13 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench --profile ci --check --no-write
     summary: the benchmark check against the committed baseline of its platform (macOS, the one platform with a baseline under .ai/repo/benchmarks/rust/)
 
+  - id: projection-closure
+    job: rust
+    runs: scripts/ci/projection-check
+    summary: the command line, the one interface declared twice, agrees with the registry — no capability claims a command clap does not answer, and no new command is hand-written rather than derived
+
   - id: web-topology
-    job: structure
+    job: rust
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- web validate
     summary: the repository's web surfaces resolve into one topology with no collision, no nested claim and no directory outside the generated root
 
@@ -94,6 +104,11 @@ gates:
     job: structure
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
+
+  - id: providers-data
+    job: structure
+    runs: scripts/ci/providers-check
+    summary: every provider is declared once beside its template, every projected bootstrap is under the derived merge driver, the generated provider table is current, and no document lists providers by hand instead of pointing at it
 
   - id: cockpit-probe
     job: cockpit
@@ -138,19 +153,19 @@ gates:
 classes:
   # the pipeline itself: a change here can only be validated by running everything
   - id: ci
-    paths: [.github/workflows/**, .github/actions/**, scripts/ci/**, scripts/ci-plan, scripts/ci-baseline, .ai/repo/ci/**, test/run.sh, test/lib.sh, justfile]
+    paths: [.github/workflows/**, .github/actions/**, scripts/ci/**, scripts/ci-plan, scripts/ci-baseline, .ai/repo/ci/**, test/run.sh, test/lib.sh, justfile, .just/**]
     gates: full
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, rust-quality, rust-coverage, rust-bench, shell-suite, macos, cockpit-probe, worktree-topology]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
   - id: rust-generated
     paths: [docs/generated/**, site/data/registry/**, share/allow/**, AGENTS.md, CLAUDE.md]
-    gates: [rust-integration, shell-suite, site-build, site-probe]
+    gates: [rust-integration, shell-suite, site-build, site-probe, providers-data]
 
   # the Cockpit's own assets: its stylesheet source, its compiled stylesheet, its scripts.
   # Read from disk by the served executable, so the crate's suites see them; the compiled
@@ -166,23 +181,23 @@ classes:
   # the site generator
   - id: share
     paths: [share/**]
-    gates: [rust-check, rust-coverage, rust-bench, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit]
+    gates: [rust-check, rust-coverage, rust-bench, command-graph, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit, providers-data]
 
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, macos, worktree-topology, ui-audit]
+    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
   - id: layer
     paths: [.ai/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
     paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data]
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
