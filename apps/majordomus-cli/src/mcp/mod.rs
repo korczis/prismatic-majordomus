@@ -5,7 +5,7 @@
 //! about file descriptors; `surface` knows neither.
 
 pub mod bridge;
-pub mod protocol;
+pub(crate) mod protocol;
 pub mod stdio;
 pub mod surface;
 

@@ -1,7 +1,7 @@
 +++
 title = "Capabilities"
 description = "the Rust executable's capability model: one definition, and MCP, HTTP, OpenAPI, Swagger UI, the command line and the generated reference derived from it; what is canonical, how to extend it, how it fails"
-weight = 30
+weight = 31
 [extra]
 source = "docs/CAPABILITIES.md"
 +++
@@ -41,6 +41,14 @@ DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · the 
 
 A contributor adding one capability edits one `capability!` block (with its typed input
 and output and the input's benchmark cases) and runs `majordomus generate`. Nothing else.
+
+A contributor adding a **command** has one more thing to say, and only one: whether it is
+the projection of a capability (a `CliExposure` on that capability's declaration) or belongs
+to the command line alone, in which case `cli::LOCAL` in
+[`src/cli/local.rs`](../apps/majordomus-cli/src/cli/local.rs) carries the reason and
+`majordomus quality report` checks it. A command that says neither is a gate failure rather
+than an operation quietly missing from the API — the rule is
+`project.operation-transport-parity` and the working reference is [`QUALITY.md`](@/docs/quality.md).
 
 ## What is canonical, what is derived, what is not authoritative
 
@@ -291,6 +299,45 @@ transport's request half, with `Mcp-Session-Id` sessions) and exists on the shar
 only. One shared server serves a repository: the first `majordomus mcp` or `serve` binds
 it, every later `majordomus mcp` bridges its stdio to it, and the peers see each other
 through `peers.list`; the lifecycle is in [`MCP.md`](@/docs/mcp.md).
+
+## Order is a projection too
+
+A collection has one order, and every surface renders the sequence it was handed. The order
+is `apps/majordomus-cli/src/order.rs`: a total order over four parts, most significant
+first — the semantic **group** (none sorts last), an explicit **rank** for the collections
+whose domain declares one (`weight` on a moment, an audience, an area, a feature), the
+**label** compared naturally (digit runs by value, so `item-2` precedes `item-10`; ASCII
+case folded, so `Alpha` and `alpha` stay adjacent), and the canonical **identity**.
+
+The identity is what makes the order total rather than merely tidy. Two items with the same
+label must not exchange places because an unrelated item was added, because a different
+iterator was used, or because another machine enumerated differently.
+
+**To join it**, implement `order::Ordered` on the type — beside the type, not beside a
+renderer — and call `order::canonical()`. Nothing else is edited: every projection that
+shows the collection shows the new sequence.
+
+**To validate it**, run `scripts/ci/order-check`. Three of its checks are absolute — no
+case-folded comparator outside `order.rs`, no sort key that calls `render()`, no
+`.localeCompare(` under `scripts/`, `share/` or `site/` — and one is a ratchet over the debt
+that predates the rule, held as two counts in `.ai/repo/order-baseline.txt`: sort sites in
+the crate outside `order.rs`, and shell `sort` invocations not pinned with `LC_ALL=C`. Both
+may fall and may not rise; a commit that adopts the canonical order lowers the baseline with
+`scripts/ci/order-check --update`.
+
+**Grouping** is the order's first part, and it is derived too. A capability module's area is
+the areas of the features that name it in `modules:`, resolved by the catalogue's own
+`weight` — lowest first, ties by id. No module declares an area and no file lists the pairs;
+the Cockpit's sidebar asks the product model. Two features that name one module and share no
+area disagree about what it is for: the resolution stays deterministic and the disagreement
+is reported as `contested_area` by `majordomus product validate`, to be settled in the
+feature file rather than by a tiebreak. ADR 0026 records why the parent is derived rather
+than declared.
+
+**To diagnose an unexpected sequence**, read the key rather than the output. A collection
+ordered somewhere other than `order.rs` has an opinion of its own; a collection whose key
+ends before its identity has ties, and a tie is where an order looks like a race when there
+is none. The rule is `project.canonical-order`; ADR 0025 records the decision.
 
 ## The one projection that can drift
 

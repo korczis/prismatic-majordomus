@@ -20,9 +20,6 @@ use crate::{capability, module};
 
 use super::{get, mcp, Empty};
 
-/// The URI the model answers on, as a resource.
-pub const DISTRIBUTION_URI: &str = "majordomus://distribution";
-
 /// One target, as every projection shows it: what it is, what it is called in prose, and
 /// the artifact name the naming function derives for a tag yet to be chosen.
 #[derive(Debug, Clone, Serialize, JsonSchema)]

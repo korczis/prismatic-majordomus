@@ -23,9 +23,9 @@
 
 pub mod assets;
 pub mod html;
-pub mod nav;
-pub mod pages;
-pub mod view;
+pub(crate) mod nav;
+pub(crate) mod pages;
+pub(crate) mod view;
 
 use std::sync::Arc;
 
@@ -170,6 +170,7 @@ impl Cockpit {
             "/cockpit/worktrees" => pages::worktrees(&self.ctx),
             "/cockpit/directories" => pages::directories(&self.ctx, query),
             "/cockpit/health" => pages::health(&self.ctx),
+            "/cockpit/quality" => pages::quality(&self.ctx),
             "/cockpit/artifacts" => pages::artifacts(&self.ctx),
             "/cockpit/api" => pages::api(&self.ctx),
             "/cockpit/search" => pages::search(&self.ctx, query),
@@ -201,7 +202,7 @@ impl Cockpit {
 /// injection, which needs the escaping to have already failed and which cannot execute; the
 /// exposure `script-src 'unsafe-inline'` would carry is arbitrary code, and that stays shut.
 ///
-/// The digest is computed from [`view::THEME_BOOTSTRAP`] itself, so the policy cannot
+/// The digest is computed from `view::THEME_BOOTSTRAP` itself, so the policy cannot
 /// drift from the script it allows.
 ///
 /// ```

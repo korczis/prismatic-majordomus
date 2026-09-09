@@ -282,7 +282,7 @@ function whyDiagnosis() {
       const by = {};
       for (const id of this.matched) for (const v of (byId[id] || {})[field] || []) (by[v] = by[v] || []).push(id);
       return Object.entries(by).map(([id, why]) => ({ id, n: why.length, why }))
-        .sort((a, b) => b.n - a.n || a.id.localeCompare(b.id));
+        .sort((a, b) => b.n - a.n || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     },
     share() {
       const url = location.origin + location.pathname + '#diagnose?signals=' + this.picked.join(',');

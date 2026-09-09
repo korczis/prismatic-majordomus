@@ -566,21 +566,3 @@ pub fn copy_tree(from: &Path, to: &Path) -> Result<()> {
     }
     Ok(())
 }
-
-/// The copy-based move as one operation, for a caller that knows the rename cannot be used:
-/// copy, repair, verify with the whole-tree manifest, remove the original only when equal.
-pub fn migrate_by_copy(service: &WorktreeService, from: &Path, to: &Path) -> Result<Vec<String>> {
-    let primary = service.identity().primary_worktree().path.clone();
-    let before = fingerprint::capture(from, true)?;
-    copy_and_repair(&primary, from, to)?;
-    let after = fingerprint::capture(to, true)?;
-    let differences = fingerprint::differences(&before, &after);
-    if differences.is_empty() {
-        let mut identity = service.identity().clone();
-        identity.refresh()?;
-        if identity.record_at(&ResolvedPath::of(from)).is_none() {
-            std::fs::remove_dir_all(from).map_err(|e| WorktreeError::io(from, &e))?;
-        }
-    }
-    Ok(differences)
-}
