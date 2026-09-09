@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{CliExposure, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::release::{self, model::VersionReport, Changelog};
 use crate::{capability, module};
@@ -80,7 +80,15 @@ pub fn module() -> ModuleDescriptor {
                         resource: Some(McpResource { uri: CHANGELOG_URI.into(), name: "changelog".into() }),
                     }),
                     http: get("/api/v1/changelog"),
-                    cli: None,
+                    // The command line reaches this capability, and saying so is what lets
+                    // the command graph join the two: without it `commands explain` reports
+                    // that `release changelog` reaches no machine surface, while the
+                    // capability behind it is an MCP tool and an HTTP route. The path must
+                    // be a command the clap tree really has — a declaration naming one it
+                    // does not is the `scope classify` defect, and the graph refuses it.
+                    cli: Some(CliExposure {
+                        path: vec!["release".into(), "changelog".into()],
+                    }),
                 },
                 tags: ["release", "changelog"],
                 handler: changelog,
@@ -98,7 +106,9 @@ pub fn module() -> ModuleDescriptor {
                         resource: None,
                     }),
                     http: get("/api/v1/release/version"),
-                    cli: None,
+                    cli: Some(CliExposure {
+                        path: vec!["release".into(), "version".into()],
+                    }),
                 },
                 tags: ["release", "version"],
                 handler: version,
