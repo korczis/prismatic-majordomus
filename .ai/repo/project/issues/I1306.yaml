@@ -1,0 +1,37 @@
+id: I1306
+milestone: external-workspaces
+title: A sync resumes, repeats itself without harm, and says how fresh it is
+slug: incremental-sync
+priority: p1
+profile: deep-work
+parallel_safe: false
+objective: "Implement the sync: incremental from a durable checkpoint, idempotent on replay, bounded in what one run may fetch, and honest about how each change was acquired."
+why: "Polling is not a subscription. A run that cannot resume will either re-fetch a whole workspace every time or silently skip what it missed, and a store that changes when nothing upstream changed cannot be diffed by anyone."
+current_state: "Nothing exists."
+desired_state: "A run reads its checkpoint, fetches only what changed, writes records that are byte-identical when nothing changed, records the acquisition mode of every change, bounds itself by count and by wall clock, and leaves a checkpoint an interrupted run can resume from."
+scope:
+  - scripts/lib
+  - scripts
+  - test/cases
+non_scope:
+  - Any write to the vendor
+  - Watch semantics that call polling a subscription
+depends_on:
+  - I1303
+  - I1305
+acceptance_criteria:
+  - A second run over an unchanged workspace leaves the store byte-identical
+  - An interrupted run resumes from its checkpoint without re-fetching what it already had
+  - Every change records the acquisition mode that produced it, and a poll is never reported as a push
+  - A run is bounded by count and by wall clock and says what it did not reach
+  - Replaying a captured run over fixtures reproduces the same store
+validation:
+  - bash test/run.sh
+evidence_required:
+  - idempotent_replay
+  - resumable
+  - acquisition_honest
+  - bounded
+risk: "Bounds that are too tight make the first sync of a large workspace impossible to finish; bounds that are too loose make a broken adapter expensive. Both are tuned against a measured first run, not chosen in advance."
+created_at: 2026-09-09
+updated_at: 2026-09-09

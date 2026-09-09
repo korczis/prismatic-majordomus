@@ -1,0 +1,38 @@
+id: I1303
+milestone: external-workspaces
+title: The store is bounded, measured and invisible to every published projection
+slug: workspace-store
+priority: p0
+profile: deep-work
+parallel_safe: false
+objective: "Declare the layout of .ai/local/workspaces/, its checkpoint file, its retention cap in policy and the doctor stanza that measures it, and prove with a gate that nothing published ever reaches it."
+why: "mj_validate_retention is three hand-written stanzas over the ledger, handovers and checkpoints; a fourth store gets no cap and no doctor line unless one is written. An unbounded store nothing measures is the defect this repository keeps finding in itself. And the guarantee that .ai/local never reaches the site is enforced in the Rust index at three points but is, for scripts/generate-site-data, only the fact that its fixed input list does not mention it — closer to convention than to a guard."
+current_state: "No store, no cap, no stanza. .ai/local/ is git-ignored at .gitignore:55 and mj_validate_ai_layout fails the pre-commit hook if a file there is tracked."
+desired_state: "The store has a declared layout per workspace, a checkpoint with a schema, a retention cap read from policy.yaml, a doctor line that reports its size against that cap, and a gate that fails if any published projection reads a path under it."
+scope:
+  - .ai/repo/policy.yaml
+  - .ai/repo/ci/gates.yaml
+  - lib/doctor.sh
+  - scripts
+  - test/cases
+non_scope:
+  - Declaring the store as a knowledge-sources class; ADR 0025 rejected it and the reasons are recorded there
+  - Any adapter that writes into the store
+depends_on:
+  - I1302
+acceptance_criteria:
+  - The store layout and the checkpoint are described by a schema, not by a comment
+  - A retention cap is stated in policy.yaml and doctor reports the store against it, in the shape the three existing stanzas use
+  - A gate fails if the site build, the generated documentation or any published projection names a path under .ai/local/workspaces/
+  - A test case proves the gate fails when the boundary is crossed deliberately
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+evidence_required:
+  - layout_schema
+  - retention_capped
+  - boundary_gated
+  - gate_proven
+risk: "A cap chosen from taste rather than measurement will either never fire or fire on the first real sync. It has to be stated in terms of what the operator's own workspace actually holds."
+created_at: 2026-09-09
+updated_at: 2026-09-09
