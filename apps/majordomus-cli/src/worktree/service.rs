@@ -113,7 +113,8 @@ impl WorktreeService {
     /// The service over an identity already resolved.
     pub fn over(identity: RepositoryIdentity) -> Result<Self> {
         let primary = identity.primary_worktree().path.clone();
-        let scratch_roots = declared_scratch_roots(&primary);
+        let current = identity.current_worktree().path.clone();
+        let scratch_roots = declared_scratch_roots(&current, &primary);
         Self::over_with(identity, scratch_roots)
     }
 
@@ -1047,12 +1048,15 @@ fn is_in_place(w: &WorktreeState, trunk_source: TrunkSource) -> bool {
 
 /// The scratch roots the distribution declares, expanded against `primary`, in declaration
 /// order: the tool's own first, then each provider's. Located the way every command locates
-/// the share (`--share` excepted, which this path does not carry); a checkout with no share in
-/// reach declares none. The standard library's answer for the temporary directory is added
-/// when the declarations name `$TMPDIR` and the environment does not, so that what the tool
-/// itself creates under `std::env::temp_dir()` is recognised on every platform.
-pub fn declared_scratch_roots(primary: &Path) -> Vec<ScratchRoot> {
-    let Ok(share) = crate::share::Share::locate(None, primary) else {
+/// the share (`--share` excepted, which this path does not carry), from `current` — the
+/// checkout the command runs in, so that a repository supervising itself reads the
+/// declarations of the branch it is on rather than the primary checkout's; a checkout with
+/// no share in reach declares none. The standard library's answer for the temporary
+/// directory is added when the declarations name `$TMPDIR` and the environment does not, so
+/// that what the tool itself creates under `std::env::temp_dir()` is recognised on every
+/// platform.
+pub fn declared_scratch_roots(current: &Path, primary: &Path) -> Vec<ScratchRoot> {
+    let Ok(share) = crate::share::Share::locate(None, current) else {
         return Vec::new();
     };
     let Ok(decls) = share.providers() else {
