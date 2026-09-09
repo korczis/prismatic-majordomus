@@ -61,7 +61,10 @@ pub enum Target {
     OpenApi,
     /// `docs/generated/capabilities.md` (the index), `docs/generated/modules/<id>.md`,
     /// `docs/generated/cli.md` and `docs/generated/cli.{json,yaml}` (the command line as
-    /// clap declares it, with the examples declared beside it).
+    /// clap declares it, with the examples declared beside it), and
+    /// `docs/generated/providers.{md,json,yaml}`: every provider the distribution declares,
+    /// with what this repository does with it — the one table the documents point at
+    /// instead of enumerating providers by hand (ADR 0024).
     Docs,
     /// `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the
     /// coverage, from the projection.
@@ -76,10 +79,10 @@ pub enum Target {
     /// [`crate::proto::project`]).
     Documents,
     /// The provider bootstraps the policy's `projections[]` declare, rendered from the
-    /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]), and
-    /// `docs/generated/providers.{md,json,yaml}`: every provider the distribution declares,
-    /// with what this repository does with it — the one table the documents point at
-    /// instead of enumerating providers by hand.
+    /// provider templates: `AGENTS.md`, `CLAUDE.md`, ... (see [`crate::providers`]). The
+    /// provider *table* is a document of [`Target::Docs`]: a repository that projects no
+    /// bootstrap still has providers, and a fixture that checks its bootstraps alone is not
+    /// asked for a document it never wrote.
     Providers,
     /// `site/data/registry/registry.json`: the registry dataset GitHub Pages renders
     /// (see [`crate::site`]).
@@ -793,7 +796,7 @@ pub fn context_artifacts(
             .artifacts(version),
         );
     }
-    if targets.contains(&Target::Providers) {
+    if targets.contains(&Target::Docs) {
         let source = "the provider declarations the distribution ships (share/providers.yaml), the templates beside them, and this repository's policy";
         let value = providers_document(ctx)?;
         out.push(Artifact::markdown(

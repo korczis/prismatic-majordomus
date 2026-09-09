@@ -44,6 +44,8 @@ jobs:
       shell_suite: ${{ steps.plan.outputs.shell_suite }}
       rust_check: ${{ steps.plan.outputs.rust_check }}
       rust_integration: ${{ steps.plan.outputs.rust_integration }}
+      projection_closure: ${{ steps.plan.outputs.projection_closure }}
+      web_topology: ${{ steps.plan.outputs.web_topology }}
       rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
@@ -170,7 +172,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
