@@ -21,7 +21,9 @@ use serde_json::Value;
 use crate::model::Object;
 
 use super::commits;
-use super::model::{Artifact, Change, Changelog, Decision, ReleaseSection, CHANGELOG_SCHEMA};
+use super::model::{
+    Artifact, Change, ChangeGroup, Changelog, Decision, ReleaseSection, CHANGELOG_SCHEMA,
+};
 use super::version;
 
 /// The kind the layer gives a published release.
@@ -75,7 +77,7 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
             commit: None,
             unreleased: true,
             decisions: decisions_after(&decisions, newest.map(|r| r.date.as_str())),
-            changes: unreleased_changes,
+            groups: grouped(unreleased_changes),
             artifacts: Vec::new(),
         });
     }
@@ -102,7 +104,7 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
             commit: Some(r.commit.clone()),
             unreleased: false,
             decisions: decisions_between(&decisions, previous.map(|p| p.date.as_str()), &r.date),
-            changes,
+            groups: grouped(changes),
             artifacts: r.artifacts.clone(),
         });
     }
@@ -113,6 +115,25 @@ pub fn compose(root: &Path, objects: &[Object]) -> Changelog {
         sections,
         diagnostics,
     }
+}
+
+/// The changes of a section, grouped by kind and ordered by the rank each kind carries.
+///
+/// Done here rather than in each renderer: the Markdown, the site and any other reader get
+/// the same order because they are given it, not because they each reimplemented it.
+fn grouped(changes: Vec<Change>) -> Vec<ChangeGroup> {
+    let mut kinds: Vec<_> = changes.iter().map(|c| c.kind).collect();
+    kinds.sort_by_key(|k| k.rank());
+    kinds.dedup();
+    kinds
+        .into_iter()
+        .map(|kind| ChangeGroup {
+            kind,
+            heading: kind.heading().to_string(),
+            rank: kind.rank(),
+            changes: changes.iter().filter(|c| c.kind == kind).cloned().collect(),
+        })
+        .collect()
 }
 
 /// One release record, from its metadata.
@@ -192,7 +213,6 @@ fn decisions_of(objects: &[Object]) -> Vec<Decision> {
                     .and_then(|v| v.as_str())
                     .unwrap_or_default()
                     .to_string(),
-                route: format!("/decisions/{id}/"),
                 id,
             })
         })
@@ -275,16 +295,11 @@ pub fn render(changelog: &Changelog) -> String {
             out.push('\n');
         }
 
-        let mut kinds: Vec<_> = section.changes.iter().map(|c| c.kind).collect();
-        kinds.sort_by_key(|k| k.rank());
-        kinds.dedup();
-        for kind in kinds {
-            let entries: Vec<&Change> = section.changes.iter().filter(|c| c.kind == kind).collect();
-            if entries.is_empty() {
-                continue;
-            }
-            out.push_str(&format!("### {}\n\n", kind.heading()));
-            for c in entries {
+        // The groups the document carries, in the order it carries them: this renderer no
+        // longer decides the order, it reads it, which is what lets the site agree with it.
+        for group in &section.groups {
+            out.push_str(&format!("### {}\n\n", group.heading));
+            for c in &group.changes {
                 let scope = c
                     .scope
                     .as_ref()
@@ -333,7 +348,6 @@ mod tests {
             title: "t".into(),
             status: "accepted".into(),
             date: date.into(),
-            route: format!("/decisions/{id}/"),
         }
     }
 
@@ -385,7 +399,9 @@ mod tests {
                 commit: None,
                 unreleased: true,
                 decisions: vec![decision("adr-0027", "2026-09-09")],
-                changes: vec![
+                // Given in the order the commits arrived — a fix first — so that the
+                // grouping, not the input, is what decides the order the renderer shows.
+                groups: grouped(vec![
                     Change {
                         kind: ChangeKind::Fix,
                         scope: Some("ci".into()),
@@ -400,7 +416,7 @@ mod tests {
                         breaking: true,
                         commit: "bbb2222".into(),
                     },
-                ],
+                ]),
                 artifacts: Vec::new(),
             }],
             diagnostics: Vec::new(),

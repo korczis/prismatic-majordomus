@@ -69,6 +69,13 @@ and the site.
 
 # Verification
 
+`test/cases/99_canonical_order.sh` drives the gate against fixture trees rather than against
+this checkout — a case that asserted the repository's own counts would be a copy of the
+baseline — and writes each violation to see it refused: a folded comparator, a sort key that
+renders, a locale comparison, a count that rose, a count that fell, and a tree with no
+baseline at all. It also asserts that the word in prose is not the call in code, because the
+gate first failed on the documentation of this rule.
+
 `scripts/ci/order-check` on this tree. The order itself is proved where it is declared:
 `apps/majordomus-cli/src/order.rs` orders every one of the 5040 permutations of a seven-item
 fixture identically, and checks the comparator for antisymmetry and transitivity over every

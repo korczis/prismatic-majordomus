@@ -120,8 +120,6 @@ pub struct Decision {
     pub status: String,
     /// The date the record carries.
     pub date: String,
-    /// The page it is published at.
-    pub route: String,
 }
 
 /// One published artifact, from the release record's own evidence.
@@ -134,6 +132,25 @@ pub struct Artifact {
     pub name: String,
     /// Its SHA-256, as the record read it off the file.
     pub sha256: String,
+}
+
+/// The changes of one kind, with the heading and the rank that decide where they are shown.
+///
+/// The grouping is in the document rather than in each renderer. It was in the Markdown
+/// renderer alone, and the site — which cannot see a Rust function — grouped alphabetically
+/// instead, so the same changelog read in two orders depending on which surface showed it.
+/// A presentation order stated once and carried is the only kind that survives a projection.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "ReleaseChangeGroup")]
+pub struct ChangeGroup {
+    /// What the changes in it did.
+    pub kind: ChangeKind,
+    /// The heading it is shown under.
+    pub heading: String,
+    /// Where it sorts among the other groups; ascending.
+    pub rank: u8,
+    /// The changes, in the order the commits were read.
+    pub changes: Vec<Change>,
 }
 
 /// One version's worth of changelog.
@@ -155,8 +172,10 @@ pub struct ReleaseSection {
     pub unreleased: bool,
     /// The decisions dated inside this release's window.
     pub decisions: Vec<Decision>,
-    /// The changes, from the commits in this release's range.
-    pub changes: Vec<Change>,
+    /// The changes, from the commits in this release's range, grouped by what they did and
+    /// ordered by the rank each group carries. The flat list is the concatenation of the
+    /// groups' own; nothing holds it twice.
+    pub groups: Vec<ChangeGroup>,
     /// What was published, when this section is a release.
     pub artifacts: Vec<Artifact>,
 }

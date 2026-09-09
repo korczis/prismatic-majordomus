@@ -76,6 +76,7 @@ site/data/registry/product.json
 site/data/registry/product-graph.json
 docs/generated/cli.json
 docs/generated/web.json
+docs/generated/changelog.json
 apps/majordomus-cli/README.md
 site/config.toml
 README.md
@@ -1173,6 +1174,25 @@ source = "AGENTS.md"
 +++
 
 '; printf '{%% raw %%}\n'; sed '1{/^<!--/d;}' "$ROOT/AGENTS.md" | sed '1{/^# /d;}' | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"; printf '{%% endraw %%}\n'; } > "$CONTENT/contract.md"
+# ---------------------------------------------------------------- changelog.json (what shipped)
+# The changelog the Rust executable composes from the layer's release records, the decisions
+# dated inside each release's window and the conventional commits in its range, committed as
+# docs/generated/changelog.json and checked by `majordomus generate --check`. Zola cannot
+# load a file outside its own root, and everything under site/data/generated/ must carry
+# `schema: 1` for site-check, so the canonical document is projected into that shape here —
+# the same arrangement openapi.json has, and for the same two reasons. The presentation order
+# is not decided here: the document carries its own `groups`, each with its heading and rank,
+# so the page renders what the Markdown renders rather than an order of its own.
+CL="$ROOT/docs/generated/changelog.json"
+[ -f "$CL" ] || { echo "generate-site-data: docs/generated/changelog.json is missing (run: majordomus generate changelog)" >&2; exit 10; }
+jq -e '.schema == "majordomus/changelog/v1"' "$CL" >/dev/null 2>&1 \
+  || { echo "generate-site-data: docs/generated/changelog.json is not majordomus/changelog/v1" >&2; exit 10; }
+jq -S '{schema: 1, source_schema: .schema, source: "docs/generated/changelog.json",
+        current, sections, diagnostics}' "$CL" > "$OUT/changelog.json" \
+  || { echo "generate-site-data: projecting docs/generated/changelog.json failed" >&2; exit 13; }
+[ "$(jq '.sections | length' "$OUT/changelog.json")" -gt 0 ] \
+  || { echo "generate-site-data: the changelog has no section" >&2; exit 10; }
+
 # ---------------------------------------------------------------- openapi.json (the HTTP API, as data)
 # The OpenAPI document the Rust executable generates from its capability registry is committed
 # as docs/generated/openapi.json and checked by `majordomus generate --check`. The site does

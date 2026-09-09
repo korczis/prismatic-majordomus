@@ -1,22 +1,26 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.3.1 -->
+     Generator: majordomus-cli 0.4.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.3.1**
+Current version: **0.4.0**
 
 ## Unreleased
 
 ### Decisions
 
+- **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(proposed)_
 - **ADR-0026** A capability module's area is derived from the features that name it, not declared beside it _(accepted)_
 - **ADR-0025** Presentation order is one total order owned by the crate, not a decision each surface makes _(accepted)_
 - **ADR-0024** An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts _(accepted)_
 
 ### Added
 
+- **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
+- **release**: the changelog is a projection, and the version is derived from the commits (`82583eba1`)
+- **skills**: a description that does not tell two skills apart is a finding (`7af039a4a`)
 - **completion**: the shell integration installs itself, and takes itself out again (`2a7af4272`)
 - **commands**: a surface that withholds a command says why, including the last silent case (`26743dac5`)
 - **product**: a capability module's area is derived from the features that name it, and the sidebar groups by it (`1c36ca9a2`)
@@ -102,7 +106,11 @@ Current version: **0.3.1**
 
 ### Housekeeping
 
+- **derive**: the projections follow the two adopted sessions (`4066bdf4f`)
+- **sessions**: adopt the two episodes this checkout left unrecorded (`1015d8ff8`)
+- **derive**: the projections follow the merge with master (`ee9e79b3f`)
 - **derive**: the projections follow the five-PR integration, with adr-0028 renumbered (`60bc499e4`)
+- **derive**: the projections follow the skill description invariant (`6d19fc7ba`)
 - **derive**: the projections follow the merge with master (`d5d95779c`)
 - **derive**: the projections follow the merge of #114 (`867f3a9f8`)
 - **derive**: the projections follow the merge (`946bc36e0`)

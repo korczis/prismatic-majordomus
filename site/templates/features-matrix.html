@@ -11,7 +11,11 @@
 
 <p class="max-w-3xl text-body">Every mark is derived. A feature is on an interface because a capability module, a shell command or an object kind it names is projected there — a command-line path, an HTTP route, an MCP tool or resource, a Cockpit area, a document. No page and no file says so.</p>
 
-<div class="mt-8 min-w-0 overflow-x-auto rounded-base border border-default" tabindex="0">
+{#- `relative`: the cells carry .sr-only spans, which are absolutely positioned. Without a
+    positioned ancestor their containing block is the initial one, so each sits at its static
+    position inside the 36rem-wide table — past the viewport — and the document grows sideways
+    to reach a 1px box nobody can see. A scroll container contains what it positions. -#}
+<div class="relative mt-8 min-w-0 overflow-x-auto rounded-base border border-default" tabindex="0">
   <table class="w-full min-w-[36rem] border-collapse text-sm">
     <caption class="sr-only">Features against the interfaces they are exposed through</caption>
     <thead class="bg-neutral-primary-soft">
