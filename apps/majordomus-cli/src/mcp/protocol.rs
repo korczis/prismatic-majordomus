@@ -323,10 +323,37 @@ impl Server {
             ));
         }
         if let Some(peer) = self.surface.peer() {
+            let board = &self.surface.context().peers;
             text.push_str(&format!(
                 " You are peer {peer}; peers attached: {}. majordomus_peers lists them with what they announced; call majordomus_announce with your intent and the paths you expect to touch so that the other clients (Claude, Codex, Gemini, ...) can avoid colliding with you.",
-                self.surface.context().peers.summary()
+                board.summary()
             ));
+            // The nudge that matters is delivered here, on every initialize, which is also
+            // every reconnect. A session whose transport was re-established keeps its work
+            // and loses its place on the board, and nothing else in the protocol will ever
+            // mention it again: this repository spent three hours with a session invisible
+            // to eight others for exactly that reason. So the instructions say what is
+            // true of THIS caller rather than what is true in general.
+            let peers = board.list();
+            if !peers.iter().any(|p| Some(&p.id) == self.surface.peer() && p.announcement.is_some())
+            {
+                text.push_str(" You have not announced anything. If you have worked in this repository before in another session, the board does not know it: announce now, before you start, and again if this connection is ever re-established.");
+            }
+            let silent = peers
+                .iter()
+                .filter(|p| p.attached && p.announcement.is_none() && Some(&p.id) != self.surface.peer())
+                .count();
+            if silent > 0 {
+                text.push_str(&format!(
+                    " {silent} attached peer(s) have announced nothing, so the board understates who is here."
+                ));
+            }
+            let departed = peers.iter().filter(|p| !p.attached).count();
+            if departed > 0 {
+                text.push_str(&format!(
+                    " {departed} peer(s) on the board have gone but their announcements stand: what they claimed is still claimed until somebody says otherwise."
+                ));
+            }
         }
         text
     }
