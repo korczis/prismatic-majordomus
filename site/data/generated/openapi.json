@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 44,
-    "schemas": 200,
-    "tags": 16
+    "operations": 52,
+    "schemas": 218,
+    "tags": 17
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -3826,6 +3826,14 @@
         "peers.list",
         "peers.announce",
         "perf.counters",
+        "plan.model",
+        "plan.issues",
+        "plan.next",
+        "plan.record",
+        "plan.roadmap",
+        "plan.status",
+        "plan.validate",
+        "plan.waves",
         "product.feature",
         "product.features",
         "product.matrix",
@@ -7140,6 +7148,926 @@
       "used_by": [],
       "used_by_schemas": [
         "CounterSnapshot"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The whole derived plan: what every plan capability answers out of.",
+      "is_enum": false,
+      "name": "Plan",
+      "properties": [
+        {
+          "description": "The plan's header, with the active milestone derived.",
+          "name": "project",
+          "refs": [
+            "PlanProject"
+          ],
+          "required": true,
+          "type": "PlanProject"
+        },
+        {
+          "description": "The declared status vocabularies.",
+          "name": "statuses",
+          "refs": [
+            "PlanVocabulary"
+          ],
+          "required": true,
+          "type": "PlanVocabulary"
+        },
+        {
+          "description": "Every milestone, in id order.",
+          "name": "milestones",
+          "refs": [
+            "PlanMilestone"
+          ],
+          "required": true,
+          "type": "array of PlanMilestone"
+        },
+        {
+          "description": "Every issue, in id order.",
+          "name": "issues",
+          "refs": [
+            "PlanIssue"
+          ],
+          "required": true,
+          "type": "array of PlanIssue"
+        },
+        {
+          "description": "The execution waves, lowest first.",
+          "name": "waves",
+          "refs": [
+            "PlanWave"
+          ],
+          "required": true,
+          "type": "array of PlanWave"
+        },
+        {
+          "description": "The issue dependency graph, sorted.",
+          "name": "edges",
+          "refs": [
+            "PlanEdge"
+          ],
+          "required": true,
+          "type": "array of PlanEdge"
+        },
+        {
+          "description": "The milestone dependency graph, sorted.",
+          "name": "milestone_edges",
+          "refs": [
+            "PlanEdge"
+          ],
+          "required": true,
+          "type": "array of PlanEdge"
+        },
+        {
+          "description": "Every finding, in derivation order.",
+          "name": "findings",
+          "refs": [
+            "PlanFinding"
+          ],
+          "required": true,
+          "type": "array of PlanFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.model"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A milestone's issues counted: the two denominators, then one entry per declared status.",
+      "is_enum": false,
+      "name": "PlanCounts",
+      "properties": [
+        {
+          "description": "Every issue naming this milestone.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The denominator the milestone's own status derivation uses: total less cancelled, so\nno surface prints \"n of total\" for a milestone the engine calls DONE.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "One entry per declared issue status, keyed by the vocabulary.",
+          "name": "by_status",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint32)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanMilestone",
+        "PlanMilestoneProgress",
+        "PlanStatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One dependency edge, `from` before `to`.",
+      "is_enum": false,
+      "name": "PlanEdge",
+      "properties": [
+        {
+          "description": "The record that must be real first.",
+          "name": "from",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record that waits for it.",
+          "name": "to",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Plan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One validation finding, in the shape `project.finding-carries-reproduce` asks for.",
+      "is_enum": false,
+      "name": "PlanFinding",
+      "properties": [
+        {
+          "description": "`FAIL` or `WARN`. A failure means the model is invalid.",
+          "name": "level",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stable code a reader greps for (`unknown_dependency`, `scope_conflict`, …).",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record the finding is about, or `graph` when it is about the whole graph.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is wrong, in one line.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Plan",
+        "PlanValidation",
+        "PlanWaveReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One issue, as its record declares it and as the graph derives it.",
+      "is_enum": false,
+      "name": "PlanIssue",
+      "properties": [
+        {
+          "description": "The identity, which is also the file name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The milestone it belongs to.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The execution wave: one past the longest path to it through the dependency graph.",
+          "name": "wave",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "`p0` … `p3`.",
+          "name": "priority",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The execution profile the issue is worked under.",
+          "name": "profile",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it may run beside another issue of its wave.",
+          "name": "parallel_safe",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "One line naming the outcome.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The slug, when the record carries one.",
+          "name": "slug",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission.",
+          "name": "depends_on",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The dependencies that are not DONE, plus `milestone:<id>` when the milestone gate\nholds the whole outcome back.",
+          "name": "blocked_by",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The issues that depend on this one.",
+          "name": "dependents",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The paths it touches; two issues of one wave that share a path are serialised.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "One line: what the issue is for.",
+          "name": "objective",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Evidence entries attached.",
+          "name": "evidence_have",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Evidence tokens the record requires before it may be DONE.",
+          "name": "evidence_need",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "When execution began, when it did.",
+          "name": "started_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When implementation was declared complete.",
+          "name": "verified_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When completion was recorded.",
+          "name": "completed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Plan",
+        "PlanIssueList",
+        "PlanNextIssue",
+        "PlanRecord",
+        "PlanStatusReport",
+        "PlanWaveView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Issues matching a filter, with the vocabulary that names their statuses.",
+      "is_enum": false,
+      "name": "PlanIssueList",
+      "properties": [
+        {
+          "description": "The matching issues, in id order.",
+          "name": "issues",
+          "refs": [
+            "PlanIssue"
+          ],
+          "required": true,
+          "type": "array of PlanIssue"
+        },
+        {
+          "description": "How many matched.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The declared status vocabularies.",
+          "name": "statuses",
+          "refs": [
+            "PlanVocabulary"
+          ],
+          "required": true,
+          "type": "PlanVocabulary"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.issues"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One milestone, as its record declares it and as the two graphs derive it.",
+      "is_enum": false,
+      "name": "PlanMilestone",
+      "properties": [
+        {
+          "description": "The identity, which is also the file name; a stable slug, never a version.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The derived status.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Tie-break inside one rank; the roadmap is ordered by rank first.",
+          "name": "order",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "`p0` … `p3`.",
+          "name": "priority",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the outcome.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The slug, when the record carries one.",
+          "name": "slug",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The release the milestone belongs to, when it declares one.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its layer in the milestone graph: what orders the roadmap.",
+          "name": "rank",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The milestones it requires.",
+          "name": "depends_on",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Those of them that are not DONE. Non-empty means the gate holds every issue of this\nmilestone back, whatever the issue graph says.",
+          "name": "blocked_by",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The milestones that require it.",
+          "name": "dependents",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The claims of the repository this outcome makes true.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Its issues, counted by derived status.",
+          "name": "counts",
+          "refs": [
+            "PlanCounts"
+          ],
+          "required": true,
+          "type": "PlanCounts"
+        },
+        {
+          "description": "Its issues, in id order.",
+          "name": "issues",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "One line: what is true once the milestone is real.",
+          "name": "outcome",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Plan",
+        "PlanRecord",
+        "PlanRoadmap"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One milestone's progress, without its prose.",
+      "is_enum": false,
+      "name": "PlanMilestoneProgress",
+      "properties": [
+        {
+          "description": "The identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The derived status.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming the outcome.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its issues, counted by derived status.",
+          "name": "counts",
+          "refs": [
+            "PlanCounts"
+          ],
+          "required": true,
+          "type": "PlanCounts"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanStatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The one issue a worker should take now.",
+      "is_enum": false,
+      "name": "PlanNextIssue",
+      "properties": [
+        {
+          "description": "The issue, when the plan has one that is executable.",
+          "name": "issue",
+          "refs": [
+            "PlanIssue"
+          ],
+          "required": false,
+          "type": "PlanIssue | null"
+        },
+        {
+          "description": "The milestone the search started in.",
+          "name": "active_milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why there is none, when there is none: what to run to see what is in the way.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.next"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The plan's header: what this repository is, plus the one field nobody authors.",
+      "is_enum": false,
+      "name": "PlanProject",
+      "properties": [
+        {
+          "description": "The project's name, from `project.yaml`.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The repository it belongs to, `owner/name`.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch the plan is executed on.",
+          "name": "default_branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The milestone a worker is executing now: the lowest-ranked unblocked milestone that\nis ACTIVE, else the lowest-ranked unblocked one not finished. Derived on every read,\nstored nowhere, and never authored — the plan cannot nominate a milestone whose\nprerequisites are not real.",
+          "name": "active_milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Plan",
+        "PlanStatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One record of the plan, milestone or issue, with everything derived about it.",
+      "is_enum": false,
+      "name": "PlanRecord",
+      "properties": [],
+      "type": "object | object",
+      "used_by": [
+        "plan.record"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The milestones in derived order, with the one being executed and the one after it.",
+      "is_enum": false,
+      "name": "PlanRoadmap",
+      "properties": [
+        {
+          "description": "The milestones ordered by rank, then order, then id. The sequence is derived from\nthe milestone graph; no list of versions is maintained anywhere.",
+          "name": "milestones",
+          "refs": [
+            "PlanMilestone"
+          ],
+          "required": true,
+          "type": "array of PlanMilestone"
+        },
+        {
+          "description": "The first unfinished, unblocked milestone in that sequence.",
+          "name": "now",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The one after it, blocked or not.",
+          "name": "next",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.roadmap"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where the plan stands: every milestone's progress, the milestone being executed, and the\none issue to take next.",
+      "is_enum": false,
+      "name": "PlanStatusReport",
+      "properties": [
+        {
+          "description": "The plan's header, with the active milestone derived.",
+          "name": "project",
+          "refs": [
+            "PlanProject"
+          ],
+          "required": true,
+          "type": "PlanProject"
+        },
+        {
+          "description": "The declared status vocabularies.",
+          "name": "statuses",
+          "refs": [
+            "PlanVocabulary"
+          ],
+          "required": true,
+          "type": "PlanVocabulary"
+        },
+        {
+          "description": "Every milestone, in id order.",
+          "name": "milestones",
+          "refs": [
+            "PlanMilestoneProgress"
+          ],
+          "required": true,
+          "type": "array of PlanMilestoneProgress"
+        },
+        {
+          "description": "The next ready issue, when there is one.",
+          "name": "next_ready",
+          "refs": [
+            "PlanIssue"
+          ],
+          "required": false,
+          "type": "PlanIssue | null"
+        },
+        {
+          "description": "Every issue of the plan, counted by derived status.",
+          "name": "counts",
+          "refs": [
+            "PlanCounts"
+          ],
+          "required": true,
+          "type": "PlanCounts"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The model's own validation: what the graph refuses and what it merely warns about.",
+      "is_enum": false,
+      "name": "PlanValidation",
+      "properties": [
+        {
+          "description": "Whether the model is valid: no finding is a failure.",
+          "name": "valid",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many milestones the plan holds.",
+          "name": "milestones",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many issues.",
+          "name": "issues",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many findings are failures.",
+          "name": "failures",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are warnings.",
+          "name": "warnings",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every finding, in derivation order.",
+          "name": "findings",
+          "refs": [
+            "PlanFinding"
+          ],
+          "required": true,
+          "type": "array of PlanFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.validate"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The status vocabularies, so a reader never has to know which statuses exist.",
+      "is_enum": false,
+      "name": "PlanVocabulary",
+      "properties": [
+        {
+          "description": "The issue statuses, in derivation order.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The milestone statuses, in derivation order.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Plan",
+        "PlanIssueList",
+        "PlanStatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One execution wave: the issues the graph allows to run at the same time.",
+      "is_enum": false,
+      "name": "PlanWave",
+      "properties": [
+        {
+          "description": "The layer, from zero.",
+          "name": "wave",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The issues in it, in id order.",
+          "name": "issues",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Plan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The execution waves, with the overlaps that serialise issues the graph would let run\ntogether.",
+      "is_enum": false,
+      "name": "PlanWaveReport",
+      "properties": [
+        {
+          "description": "The waves, lowest first, with the issues of each.",
+          "name": "waves",
+          "refs": [
+            "PlanWaveView"
+          ],
+          "required": true,
+          "type": "array of PlanWaveView"
+        },
+        {
+          "description": "Scope overlaps between two issues of one wave. Two issues sharing a wave is a\nnecessary condition for running them at once, not a sufficient one: overlapping\nscope serialises them, and the overlap is reported here rather than left for two\nworkers to discover in a conflict.",
+          "name": "serialised_by_scope",
+          "refs": [
+            "PlanFinding"
+          ],
+          "required": true,
+          "type": "array of PlanFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "plan.waves"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One wave, with the issues in it.",
+      "is_enum": false,
+      "name": "PlanWaveView",
+      "properties": [
+        {
+          "description": "The layer, from zero.",
+          "name": "wave",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The issues in it, in id order.",
+          "name": "issues",
+          "refs": [
+            "PlanIssue"
+          ],
+          "required": true,
+          "type": "array of PlanIssue"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PlanWaveReport"
       ],
       "values": [],
       "variants": []
@@ -12498,6 +13426,519 @@
           "result_schema": "CounterSnapshot",
           "stability": "behaviorally_verified",
           "summary": "Performance counters"
+        }
+      ]
+    },
+    {
+      "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.",
+      "name": "plan",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan\"",
+          "description": "Every milestone and issue with its derived status, wave, rank, both directions of its graph and its counts; the execution waves; both dependency graphs as edges; every validation finding; and the plan's header with the active milestone derived. The one value every other capability of this module answers out of. Derived on every call: a transition writes a lifecycle marker into a record between two calls, and a plan answered from a snapshot would send two workers to one issue.",
+          "id": "plan.model",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "plan",
+            "uri": "majordomus://plan"
+          },
+          "mcp_tool": "majordomus_plan",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/plan",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The whole derived plan: the result.",
+              "schema": "Plan",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Plan",
+          "stability": "behaviorally_verified",
+          "summary": "The whole derived plan"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/issues?milestone=M000&status=READY\"",
+          "description": "One record per issue with its derived status, its wave, the dependencies it declares, the ones that are not DONE (plus `milestone:<id>` when the gate holds the whole outcome back), the issues that depend on it, the paths it touches and its evidence tally. Filtering by `status: READY` is the ready set and by `status: BLOCKED` the blocked set; nothing here is a separate derivation.",
+          "id": "plan.issues",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_issues",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only issues of this milestone. Default: every issue of the plan.",
+              "examples": [
+                {
+                  "case": "one-milestone",
+                  "value": "\"M000\""
+                }
+              ],
+              "name": "milestone",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only issues in this derived status — `READY` for the ready set, `BLOCKED` for the\nblocked set. The vocabulary travels with every answer, so a caller never has to know\nwhich statuses exist.",
+              "examples": [
+                {
+                  "case": "ready",
+                  "value": "\"READY\""
+                }
+              ],
+              "name": "status",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only issues in this execution wave.",
+              "examples": [],
+              "name": "wave",
+              "required": false,
+              "type": "integer (uint32)"
+            }
+          ],
+          "path": "/api/v1/plan/issues",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The issues, filtered by what the graph derived: the result.",
+              "schema": "PlanIssueList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanIssueList",
+          "stability": "behaviorally_verified",
+          "summary": "The issues, filtered by what the graph derived"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/next?milestone=M000\"",
+          "description": "The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.",
+          "id": "plan.next",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_next",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback.",
+              "examples": [
+                {
+                  "case": "one-milestone",
+                  "value": "\"M000\""
+                }
+              ],
+              "name": "milestone",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/plan/next",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The one issue to take now: the result.",
+              "schema": "PlanNextIssue",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanNextIssue",
+          "stability": "behaviorally_verified",
+          "summary": "The one issue to take now"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/record?id=I0001\"",
+          "description": "A milestone with its issues in full, or an issue with the issues it waits on in full. The record's own prose stays where it has always been — `majordomus://issue/<id>` returns the file — and this answers what the file cannot say about itself: what its status is, where it sits in the graph, and what is between it and being executable.",
+          "id": "plan.record",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_record",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The id of a milestone or an issue, as its file is named (`I0001`, `work-graph-github`).",
+              "examples": [
+                {
+                  "case": "issue",
+                  "value": "\"I0001\""
+                },
+                {
+                  "case": "milestone",
+                  "value": "\"M000\""
+                }
+              ],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/plan/record",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "One milestone or issue, with everything derived about it: the result.",
+              "schema": "PlanRecord",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanRecord",
+          "stability": "behaviorally_verified",
+          "summary": "One milestone or issue, with everything derived about it"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/roadmap\"",
+          "description": "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.",
+          "id": "plan.roadmap",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_roadmap",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/plan/roadmap",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The milestones in derived order: the result.",
+              "schema": "PlanRoadmap",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanRoadmap",
+          "stability": "behaviorally_verified",
+          "summary": "The milestones in derived order"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/status?milestone=M000\"",
+          "description": "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.",
+          "id": "plan.status",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_status",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback.",
+              "examples": [
+                {
+                  "case": "one-milestone",
+                  "value": "\"M000\""
+                }
+              ],
+              "name": "milestone",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/plan/status",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where the plan stands: the result.",
+              "schema": "PlanStatusReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanStatusReport",
+          "stability": "behaviorally_verified",
+          "summary": "Where the plan stands"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/validate\"",
+          "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
+          "id": "plan.validate",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_validate",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/plan/validate",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What the model refuses: the result.",
+              "schema": "PlanValidation",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanValidation",
+          "stability": "behaviorally_verified",
+          "summary": "What the model refuses"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/plan/waves?milestone=M000\"",
+          "description": "The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict.",
+          "id": "plan.waves",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_plan_waves",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback.",
+              "examples": [
+                {
+                  "case": "one-milestone",
+                  "value": "\"M000\""
+                }
+              ],
+              "name": "milestone",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/plan/waves",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::plan",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What may run at the same time: the result.",
+              "schema": "PlanWaveReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PlanWaveReport",
+          "stability": "behaviorally_verified",
+          "summary": "What may run at the same time"
         }
       ]
     },

@@ -24,6 +24,7 @@ acceptance_criteria:
   - The executable and the shell answer identically for every record in this repository, proved by a test that compares them
   - majordomus generate --check is clean after the declaration is added
   - The Cockpit shows the derived plan and its drift
+completion: "Three of the four acceptance criteria are met and the fourth is not. Met: the eight derivations are declared once in apps/majordomus-cli/src/capability/builtin/plan.rs and reach MCP as tools and a majordomus://plan resource, HTTP as eight routes and the OpenAPI document through the generator alone, with no transport registry, OpenAPI file or documentation table edited by hand; generate --check is in sync; and test/cases/99_plan_capabilities.sh runs both engines over every record of this repository and over a fixture carrying a cancellation, a milestone gate, a scope overlap, an unknown dependency and a cycle, comparing status, wave, both dependency lists, milestone counts, roadmap rank and order, the active milestone, the next ready issue, the waves and every finding, byte for byte. Not met: the Cockpit shows nothing of the derived plan. apps/majordomus-cli/src/cockpit/ was held by another session for the whole of this work and editing it would have collided with a landing in progress, so the page was left undone rather than written into a file somebody else was moving. What remains is a Cockpit page over plan.model and plan.validate; the capabilities it would read exist and are projected, so the remaining work is a view and not a derivation. The plan's command line is also unchanged: every capability here declares cli: None, because the command line is declared a second time in clap in cli.rs, that file was likewise held, and a CliExposure claiming a subcommand clap does not carry is a broken promise the closure check refuses. The shell tool keeps its own plan surface, which is what the equality test holds the executable to."
 validation:
   - cargo test --workspace --all-features
   - majordomus generate --check
@@ -33,4 +34,20 @@ evidence_required:
   - shell_and_executable_agree
 risk: "Two implementations of one derivation is the failure this repository exists to prevent; the equality test is the acceptance criterion, not a nicety."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-09-09T19:33:06Z
+started_at: 2026-09-09T19:32:48Z
+verified_at: 2026-09-09T19:33:03Z
+completed_at: 2026-09-09T19:33:06Z
+evidence:
+  - covers: derivations_projected
+    type: test
+    command: "env -u MAJORDOMUS_SHARE ./bin/majordomus-cli generate --check && bash test/run.sh 99_plan_capabilities"
+    result: "generate --check reports every projection in sync after the plan module was declared: the eight capabilities reach MCP as tools plus a majordomus://plan resource, HTTP as eight /api/v1/plan routes and the OpenAPI document, and docs/generated/modules/plan.md appeared, with no transport registry, OpenAPI file or documentation table edited by hand. The case asserts the same from outside: every plan capability carries an MCP tool and an HTTP path, plan.model carries the resource URI, and all eight routes are in docs/generated/openapi.json."
+    commit: 990bd0588a13f17a0dd0087080af3c422e3b1e37
+    recorded_at: 2026-09-09T19:32:51Z
+  - covers: shell_and_executable_agree
+    type: test
+    command: "env -u MAJORDOMUS_SHARE bash test/run.sh 99_plan_capabilities"
+    result: "ok, 1 passed. The case runs lib/project.awk and apps/majordomus-cli/src/plan.rs over every record of this repository (16 milestones, 192 issues) and over a fixture carrying a cancelled issue, a completion without its evidence, a milestone gate blocking the work underneath it, two issues of one wave sharing a path, an unknown dependency and a cycle. It compares, byte for byte: every issue's status, wave, milestone, priority, title, depends_on and blocked_by; every milestone's status, title and counts keyed by the declared vocabulary; the active milestone and the next ready issue; the roadmap's rank and order for every milestone; the whole wave layering; and every finding's level, code, subject and message in derivation order. It also proves no plan capability writes to the repository."
+    commit: 990bd0588a13f17a0dd0087080af3c422e3b1e37
+    recorded_at: 2026-09-09T19:33:02Z

@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.3.1
 coverage:
   - scope: direct
-    required: 44
-    covered: 44
+    required: 52
+    covered: 52
     missing: 0
     waived: 0
   - scope: http
-    required: 44
-    covered: 44
+    required: 52
+    covered: 52
     missing: 0
     waived: 0
   - scope: mcp
-    required: 42
-    covered: 42
+    required: 50
+    covered: 50
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 143
-    covered: 143
+    required: 167
+    covered: 167
     missing: 0
     waived: 0
 capabilities:
@@ -272,6 +272,84 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: plan.issues
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - ready
+      - one-milestone
+  - id: plan.model
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: plan.next
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole-plan
+      - one-milestone
+  - id: plan.record
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - issue
+      - milestone
+  - id: plan.roadmap
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: plan.status
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole-plan
+      - one-milestone
+  - id: plan.validate
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: plan.waves
+    module: plan
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole-plan
+      - one-milestone
   - id: product.feature
     module: product
     kind: query

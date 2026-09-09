@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 44 | 44 | 0 | 0 |
-| http | 44 | 44 | 0 | 0 |
-| mcp | 42 | 42 | 0 | 0 |
+| direct | 52 | 52 | 0 | 0 |
+| http | 52 | 52 | 0 | 0 |
+| mcp | 50 | 50 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 143 | 143 | 0 | 0 |
+| total | 167 | 167 | 0 | 0 |
 
 ## Capabilities
 
@@ -44,6 +44,14 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
+| `plan.issues` | plan | query | — | covered | covered | covered | `all`, `ready`, `one-milestone` |
+| `plan.model` | plan | query | — | covered | covered | covered | `default` |
+| `plan.next` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.record` | plan | query | — | covered | covered | covered | `issue`, `milestone` |
+| `plan.roadmap` | plan | query | — | covered | covered | covered | `default` |
+| `plan.status` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `plan.validate` | plan | query | — | covered | covered | covered | `default` |
+| `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
 | `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area` |
 | `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |

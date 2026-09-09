@@ -16,6 +16,7 @@ pub mod health;
 pub mod objects;
 pub mod peers;
 pub mod perf;
+pub mod plan;
 pub mod product;
 pub mod repository;
 mod scope;
@@ -54,6 +55,7 @@ pub use objects::{
     SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
 };
 pub use peers::{AnnounceInput, PeerList};
+pub use plan::{PlanIssueFilter, PlanMilestoneFilter, PlanRecordInput, PLAN_URI};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
 pub mod why;
@@ -79,6 +81,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         directories,
         artifacts,
+        plan,
         distribution,
         why,
         web,

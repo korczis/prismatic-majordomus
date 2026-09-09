@@ -6,26 +6,26 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "0896b1562fee246729814a1c54ef92223aa7245868059da6ecba0912e31070b8",
+    "fingerprint": "9a0c959bf06b75f13f29487b377483d0f73bd3aa1e006d3a97c61ab2b8daba62",
     "summary": {
-      "total": 1085,
-      "builtin": 44,
-      "declarative": 1041,
+      "total": 1094,
+      "builtin": 52,
+      "declarative": 1042,
       "by_kind": {
         "command": 1,
-        "query": 43,
-        "resource": 1041
+        "query": 51,
+        "resource": 1042
       },
       "by_stability": {
-        "behaviorally_verified": 44,
-        "implemented": 1041
+        "behaviorally_verified": 52,
+        "implemented": 1042
       },
-      "mcp_tools": 42,
-      "mcp_resources": 1057,
-      "http_routes": 44,
+      "mcp_tools": 50,
+      "mcp_resources": 1059,
+      "http_routes": 52,
       "cli_commands": 24,
-      "modules": 43,
-      "benchmark_required": 44,
+      "modules": 44,
+      "benchmark_required": 52,
       "benchmark_waived": 0,
       "cached": 21
     },
@@ -6533,6 +6533,2252 @@
           "policy": "disabled"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs"
+      },
+      {
+        "id": "plan.issues",
+        "module": "plan",
+        "kind": "query",
+        "title": "The issues, filtered by what the graph derived",
+        "description": "One record per issue with its derived status, its wave, the dependencies it declares, the ones that are not DONE (plus `milestone:<id>` when the gate holds the whole outcome back), the issues that depend on it, the paths it touches and its evidence tally. Filtering by `status: READY` is the ready set and by `status: BLOCKED` the blocked set; nothing here is a separate derivation.",
+        "input": {
+          "name": "PlanIssueFilter",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "milestone": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only issues of this milestone. Default: every issue of the plan."
+              },
+              "status": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Only issues in this derived status — `READY` for the ready set, `BLOCKED` for the\nblocked set. The vocabulary travels with every answer, so a caller never has to know\nwhich statuses exist."
+              },
+              "wave": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint32",
+                "minimum": 0,
+                "description": "Only issues in this execution wave."
+              }
+            },
+            "description": "Which issues to answer with.",
+            "title": "PlanIssueFilter"
+          }
+        },
+        "output": {
+          "name": "PlanIssueList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanIssue"
+                },
+                "description": "The matching issues, in id order."
+              },
+              "total": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many matched."
+              },
+              "statuses": {
+                "$ref": "#/$defs/PlanVocabulary",
+                "description": "The declared status vocabularies."
+              }
+            },
+            "required": [
+              "issues",
+              "total",
+              "statuses"
+            ],
+            "description": "Issues matching a filter, with the vocabulary that names their statuses.",
+            "title": "PlanIssueList",
+            "$defs": {
+              "PlanIssue": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "The milestone it belongs to."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies."
+                  },
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The execution wave: one past the longest path to it through the dependency graph."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The execution profile the issue is worked under."
+                  },
+                  "parallel_safe": {
+                    "type": "boolean",
+                    "description": "Whether it may run beside another issue of its wave."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The dependencies that are not DONE, plus `milestone:<id>` when the milestone gate\nholds the whole outcome back."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues that depend on this one."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches; two issues of one wave that share a path are serialised."
+                  },
+                  "objective": {
+                    "type": "string",
+                    "description": "One line: what the issue is for."
+                  },
+                  "evidence_have": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence entries attached."
+                  },
+                  "evidence_need": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence tokens the record requires before it may be DONE."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When execution began, when it did."
+                  },
+                  "verified_at": {
+                    "type": "string",
+                    "description": "When implementation was declared complete."
+                  },
+                  "completed_at": {
+                    "type": "string",
+                    "description": "When completion was recorded."
+                  }
+                },
+                "required": [
+                  "id",
+                  "milestone",
+                  "status",
+                  "wave",
+                  "priority",
+                  "profile",
+                  "parallel_safe",
+                  "title",
+                  "slug",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "scope",
+                  "objective",
+                  "evidence_have",
+                  "evidence_need",
+                  "started_at",
+                  "verified_at",
+                  "completed_at"
+                ],
+                "description": "One issue, as its record declares it and as the graph derives it."
+              },
+              "PlanVocabulary": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issue statuses, in derivation order."
+                  },
+                  "milestone": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestone statuses, in derivation order."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "milestone"
+                ],
+                "description": "The status vocabularies, so a reader never has to know which statuses exist."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_issues"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/issues"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "issues"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.model",
+        "module": "plan",
+        "kind": "query",
+        "title": "The whole derived plan",
+        "description": "Every milestone and issue with its derived status, wave, rank, both directions of its graph and its counts; the execution waves; both dependency graphs as edges; every validation finding; and the plan's header with the active milestone derived. The one value every other capability of this module answers out of. Derived on every call: a transition writes a lifecycle marker into a record between two calls, and a plan answered from a snapshot would send two workers to one issue.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "Plan",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "project": {
+                "$ref": "#/$defs/PlanProject",
+                "description": "The plan's header, with the active milestone derived."
+              },
+              "statuses": {
+                "$ref": "#/$defs/PlanVocabulary",
+                "description": "The declared status vocabularies."
+              },
+              "milestones": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanMilestone"
+                },
+                "description": "Every milestone, in id order."
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanIssue"
+                },
+                "description": "Every issue, in id order."
+              },
+              "waves": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanWave"
+                },
+                "description": "The execution waves, lowest first."
+              },
+              "edges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanEdge"
+                },
+                "description": "The issue dependency graph, sorted."
+              },
+              "milestone_edges": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanEdge"
+                },
+                "description": "The milestone dependency graph, sorted."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanFinding"
+                },
+                "description": "Every finding, in derivation order."
+              }
+            },
+            "required": [
+              "project",
+              "statuses",
+              "milestones",
+              "issues",
+              "waves",
+              "edges",
+              "milestone_edges",
+              "findings"
+            ],
+            "description": "The whole derived plan: what every plan capability answers out of.",
+            "title": "Plan",
+            "$defs": {
+              "PlanProject": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The project's name, from `project.yaml`."
+                  },
+                  "repository": {
+                    "type": "string",
+                    "description": "The repository it belongs to, `owner/name`."
+                  },
+                  "default_branch": {
+                    "type": "string",
+                    "description": "The branch the plan is executed on."
+                  },
+                  "active_milestone": {
+                    "type": "string",
+                    "description": "The milestone a worker is executing now: the lowest-ranked unblocked milestone that\nis ACTIVE, else the lowest-ranked unblocked one not finished. Derived on every read,\nstored nowhere, and never authored — the plan cannot nominate a milestone whose\nprerequisites are not real."
+                  }
+                },
+                "required": [
+                  "name",
+                  "repository",
+                  "default_branch",
+                  "active_milestone"
+                ],
+                "description": "The plan's header: what this repository is, plus the one field nobody authors."
+              },
+              "PlanVocabulary": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issue statuses, in derivation order."
+                  },
+                  "milestone": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestone statuses, in derivation order."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "milestone"
+                ],
+                "description": "The status vocabularies, so a reader never has to know which statuses exist."
+              },
+              "PlanMilestone": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name; a stable slug, never a version."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status."
+                  },
+                  "order": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Tie-break inside one rank; the roadmap is ordered by rank first."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "The release the milestone belongs to, when it declares one."
+                  },
+                  "rank": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its layer in the milestone graph: what orders the roadmap."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestones it requires."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Those of them that are not DONE. Non-empty means the gate holds every issue of this\nmilestone back, whatever the issue graph says."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestones that require it."
+                  },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The claims of the repository this outcome makes true."
+                  },
+                  "counts": {
+                    "$ref": "#/$defs/PlanCounts",
+                    "description": "Its issues, counted by derived status."
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Its issues, in id order."
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "description": "One line: what is true once the milestone is real."
+                  }
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "order",
+                  "priority",
+                  "title",
+                  "slug",
+                  "version",
+                  "rank",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "claims",
+                  "counts",
+                  "issues",
+                  "outcome"
+                ],
+                "description": "One milestone, as its record declares it and as the two graphs derive it."
+              },
+              "PlanCounts": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Every issue naming this milestone."
+                  },
+                  "required": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The denominator the milestone's own status derivation uses: total less cancelled, so\nno surface prints \"n of total\" for a milestone the engine calls DONE."
+                  },
+                  "by_status": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer",
+                      "format": "uint32",
+                      "minimum": 0
+                    },
+                    "description": "One entry per declared issue status, keyed by the vocabulary."
+                  }
+                },
+                "required": [
+                  "total",
+                  "required",
+                  "by_status"
+                ],
+                "description": "A milestone's issues counted: the two denominators, then one entry per declared status."
+              },
+              "PlanIssue": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "The milestone it belongs to."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies."
+                  },
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The execution wave: one past the longest path to it through the dependency graph."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The execution profile the issue is worked under."
+                  },
+                  "parallel_safe": {
+                    "type": "boolean",
+                    "description": "Whether it may run beside another issue of its wave."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The dependencies that are not DONE, plus `milestone:<id>` when the milestone gate\nholds the whole outcome back."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues that depend on this one."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches; two issues of one wave that share a path are serialised."
+                  },
+                  "objective": {
+                    "type": "string",
+                    "description": "One line: what the issue is for."
+                  },
+                  "evidence_have": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence entries attached."
+                  },
+                  "evidence_need": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence tokens the record requires before it may be DONE."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When execution began, when it did."
+                  },
+                  "verified_at": {
+                    "type": "string",
+                    "description": "When implementation was declared complete."
+                  },
+                  "completed_at": {
+                    "type": "string",
+                    "description": "When completion was recorded."
+                  }
+                },
+                "required": [
+                  "id",
+                  "milestone",
+                  "status",
+                  "wave",
+                  "priority",
+                  "profile",
+                  "parallel_safe",
+                  "title",
+                  "slug",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "scope",
+                  "objective",
+                  "evidence_have",
+                  "evidence_need",
+                  "started_at",
+                  "verified_at",
+                  "completed_at"
+                ],
+                "description": "One issue, as its record declares it and as the graph derives it."
+              },
+              "PlanWave": {
+                "type": "object",
+                "properties": {
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The layer, from zero."
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues in it, in id order."
+                  }
+                },
+                "required": [
+                  "wave",
+                  "issues"
+                ],
+                "description": "One execution wave: the issues the graph allows to run at the same time."
+              },
+              "PlanEdge": {
+                "type": "object",
+                "properties": {
+                  "from": {
+                    "type": "string",
+                    "description": "The record that must be real first."
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "The record that waits for it."
+                  }
+                },
+                "required": [
+                  "from",
+                  "to"
+                ],
+                "description": "One dependency edge, `from` before `to`."
+              },
+              "PlanFinding": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "description": "`FAIL` or `WARN`. A failure means the model is invalid."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The stable code a reader greps for (`unknown_dependency`, `scope_conflict`, …)."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The record the finding is about, or `graph` when it is about the whole graph."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one line."
+                  }
+                },
+                "required": [
+                  "level",
+                  "code",
+                  "subject",
+                  "message"
+                ],
+                "description": "One validation finding, in the shape `project.finding-carries-reproduce` asks for."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan",
+            "resource": {
+              "uri": "majordomus://plan",
+              "name": "plan"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "graph",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.next",
+        "module": "plan",
+        "kind": "query",
+        "title": "The one issue to take now",
+        "description": "The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.",
+        "input": {
+          "name": "PlanMilestoneFilter",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "milestone": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback."
+              }
+            },
+            "description": "Which part of the plan to answer about.",
+            "title": "PlanMilestoneFilter"
+          }
+        },
+        "output": {
+          "name": "PlanNextIssue",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "issue": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PlanIssue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The issue, when the plan has one that is executable."
+              },
+              "active_milestone": {
+                "type": "string",
+                "description": "The milestone the search started in."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why there is none, when there is none: what to run to see what is in the way."
+              }
+            },
+            "required": [
+              "active_milestone"
+            ],
+            "description": "The one issue a worker should take now.",
+            "title": "PlanNextIssue",
+            "$defs": {
+              "PlanIssue": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "The milestone it belongs to."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies."
+                  },
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The execution wave: one past the longest path to it through the dependency graph."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The execution profile the issue is worked under."
+                  },
+                  "parallel_safe": {
+                    "type": "boolean",
+                    "description": "Whether it may run beside another issue of its wave."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The dependencies that are not DONE, plus `milestone:<id>` when the milestone gate\nholds the whole outcome back."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues that depend on this one."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches; two issues of one wave that share a path are serialised."
+                  },
+                  "objective": {
+                    "type": "string",
+                    "description": "One line: what the issue is for."
+                  },
+                  "evidence_have": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence entries attached."
+                  },
+                  "evidence_need": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence tokens the record requires before it may be DONE."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When execution began, when it did."
+                  },
+                  "verified_at": {
+                    "type": "string",
+                    "description": "When implementation was declared complete."
+                  },
+                  "completed_at": {
+                    "type": "string",
+                    "description": "When completion was recorded."
+                  }
+                },
+                "required": [
+                  "id",
+                  "milestone",
+                  "status",
+                  "wave",
+                  "priority",
+                  "profile",
+                  "parallel_safe",
+                  "title",
+                  "slug",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "scope",
+                  "objective",
+                  "evidence_have",
+                  "evidence_need",
+                  "started_at",
+                  "verified_at",
+                  "completed_at"
+                ],
+                "description": "One issue, as its record declares it and as the graph derives it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_next"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/next"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "next"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.record",
+        "module": "plan",
+        "kind": "query",
+        "title": "One milestone or issue, with everything derived about it",
+        "description": "A milestone with its issues in full, or an issue with the issues it waits on in full. The record's own prose stays where it has always been — `majordomus://issue/<id>` returns the file — and this answers what the file cannot say about itself: what its status is, where it sits in the graph, and what is between it and being executable.",
+        "input": {
+          "name": "PlanRecordInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The id of a milestone or an issue, as its file is named (`I0001`, `work-graph-github`)."
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "description": "One record of the plan.",
+            "title": "PlanRecordInput"
+          }
+        },
+        "output": {
+          "name": "PlanRecord",
+          "schema": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "milestone": {
+                    "$ref": "#/$defs/PlanMilestone",
+                    "description": "The milestone, with its counts, its rank and both directions of its graph."
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/PlanIssue"
+                    },
+                    "description": "Its issues in full, in id order."
+                  }
+                },
+                "required": [
+                  "milestone",
+                  "issues"
+                ],
+                "description": "A milestone."
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "$ref": "#/$defs/PlanIssue",
+                    "description": "The issue, with its status, its wave and both directions of its graph."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/PlanIssue"
+                    },
+                    "description": "The issues it waits on, in full."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "depends_on"
+                ],
+                "description": "An issue."
+              }
+            ],
+            "description": "One record of the plan, milestone or issue, with everything derived about it.",
+            "title": "PlanRecord",
+            "$defs": {
+              "PlanMilestone": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name; a stable slug, never a version."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status."
+                  },
+                  "order": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Tie-break inside one rank; the roadmap is ordered by rank first."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "The release the milestone belongs to, when it declares one."
+                  },
+                  "rank": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its layer in the milestone graph: what orders the roadmap."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestones it requires."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Those of them that are not DONE. Non-empty means the gate holds every issue of this\nmilestone back, whatever the issue graph says."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestones that require it."
+                  },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The claims of the repository this outcome makes true."
+                  },
+                  "counts": {
+                    "$ref": "#/$defs/PlanCounts",
+                    "description": "Its issues, counted by derived status."
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Its issues, in id order."
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "description": "One line: what is true once the milestone is real."
+                  }
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "order",
+                  "priority",
+                  "title",
+                  "slug",
+                  "version",
+                  "rank",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "claims",
+                  "counts",
+                  "issues",
+                  "outcome"
+                ],
+                "description": "One milestone, as its record declares it and as the two graphs derive it."
+              },
+              "PlanCounts": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Every issue naming this milestone."
+                  },
+                  "required": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The denominator the milestone's own status derivation uses: total less cancelled, so\nno surface prints \"n of total\" for a milestone the engine calls DONE."
+                  },
+                  "by_status": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer",
+                      "format": "uint32",
+                      "minimum": 0
+                    },
+                    "description": "One entry per declared issue status, keyed by the vocabulary."
+                  }
+                },
+                "required": [
+                  "total",
+                  "required",
+                  "by_status"
+                ],
+                "description": "A milestone's issues counted: the two denominators, then one entry per declared status."
+              },
+              "PlanIssue": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "The milestone it belongs to."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies."
+                  },
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The execution wave: one past the longest path to it through the dependency graph."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The execution profile the issue is worked under."
+                  },
+                  "parallel_safe": {
+                    "type": "boolean",
+                    "description": "Whether it may run beside another issue of its wave."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The dependencies that are not DONE, plus `milestone:<id>` when the milestone gate\nholds the whole outcome back."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues that depend on this one."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches; two issues of one wave that share a path are serialised."
+                  },
+                  "objective": {
+                    "type": "string",
+                    "description": "One line: what the issue is for."
+                  },
+                  "evidence_have": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence entries attached."
+                  },
+                  "evidence_need": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence tokens the record requires before it may be DONE."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When execution began, when it did."
+                  },
+                  "verified_at": {
+                    "type": "string",
+                    "description": "When implementation was declared complete."
+                  },
+                  "completed_at": {
+                    "type": "string",
+                    "description": "When completion was recorded."
+                  }
+                },
+                "required": [
+                  "id",
+                  "milestone",
+                  "status",
+                  "wave",
+                  "priority",
+                  "profile",
+                  "parallel_safe",
+                  "title",
+                  "slug",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "scope",
+                  "objective",
+                  "evidence_have",
+                  "evidence_need",
+                  "started_at",
+                  "verified_at",
+                  "completed_at"
+                ],
+                "description": "One issue, as its record declares it and as the graph derives it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_record"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/record"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "issues",
+          "milestones"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.roadmap",
+        "module": "plan",
+        "kind": "query",
+        "title": "The milestones in derived order",
+        "description": "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "PlanRoadmap",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "milestones": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanMilestone"
+                },
+                "description": "The milestones ordered by rank, then order, then id. The sequence is derived from\nthe milestone graph; no list of versions is maintained anywhere."
+              },
+              "now": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The first unfinished, unblocked milestone in that sequence."
+              },
+              "next": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The one after it, blocked or not."
+              }
+            },
+            "required": [
+              "milestones"
+            ],
+            "description": "The milestones in derived order, with the one being executed and the one after it.",
+            "title": "PlanRoadmap",
+            "$defs": {
+              "PlanMilestone": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name; a stable slug, never a version."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status."
+                  },
+                  "order": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "Tie-break inside one rank; the roadmap is ordered by rank first."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "The release the milestone belongs to, when it declares one."
+                  },
+                  "rank": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its layer in the milestone graph: what orders the roadmap."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestones it requires."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Those of them that are not DONE. Non-empty means the gate holds every issue of this\nmilestone back, whatever the issue graph says."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestones that require it."
+                  },
+                  "claims": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The claims of the repository this outcome makes true."
+                  },
+                  "counts": {
+                    "$ref": "#/$defs/PlanCounts",
+                    "description": "Its issues, counted by derived status."
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Its issues, in id order."
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "description": "One line: what is true once the milestone is real."
+                  }
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "order",
+                  "priority",
+                  "title",
+                  "slug",
+                  "version",
+                  "rank",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "claims",
+                  "counts",
+                  "issues",
+                  "outcome"
+                ],
+                "description": "One milestone, as its record declares it and as the two graphs derive it."
+              },
+              "PlanCounts": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Every issue naming this milestone."
+                  },
+                  "required": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The denominator the milestone's own status derivation uses: total less cancelled, so\nno surface prints \"n of total\" for a milestone the engine calls DONE."
+                  },
+                  "by_status": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer",
+                      "format": "uint32",
+                      "minimum": 0
+                    },
+                    "description": "One entry per declared issue status, keyed by the vocabulary."
+                  }
+                },
+                "required": [
+                  "total",
+                  "required",
+                  "by_status"
+                ],
+                "description": "A milestone's issues counted: the two denominators, then one entry per declared status."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_roadmap"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/roadmap"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "roadmap"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.status",
+        "module": "plan",
+        "kind": "query",
+        "title": "Where the plan stands",
+        "description": "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.",
+        "input": {
+          "name": "PlanMilestoneFilter",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "milestone": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback."
+              }
+            },
+            "description": "Which part of the plan to answer about.",
+            "title": "PlanMilestoneFilter"
+          }
+        },
+        "output": {
+          "name": "PlanStatusReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "project": {
+                "$ref": "#/$defs/PlanProject",
+                "description": "The plan's header, with the active milestone derived."
+              },
+              "statuses": {
+                "$ref": "#/$defs/PlanVocabulary",
+                "description": "The declared status vocabularies."
+              },
+              "milestones": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanMilestoneProgress"
+                },
+                "description": "Every milestone, in id order."
+              },
+              "next_ready": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PlanIssue"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The next ready issue, when there is one."
+              },
+              "counts": {
+                "$ref": "#/$defs/PlanCounts",
+                "description": "Every issue of the plan, counted by derived status."
+              }
+            },
+            "required": [
+              "project",
+              "statuses",
+              "milestones",
+              "counts"
+            ],
+            "description": "Where the plan stands: every milestone's progress, the milestone being executed, and the\none issue to take next.",
+            "title": "PlanStatusReport",
+            "$defs": {
+              "PlanProject": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The project's name, from `project.yaml`."
+                  },
+                  "repository": {
+                    "type": "string",
+                    "description": "The repository it belongs to, `owner/name`."
+                  },
+                  "default_branch": {
+                    "type": "string",
+                    "description": "The branch the plan is executed on."
+                  },
+                  "active_milestone": {
+                    "type": "string",
+                    "description": "The milestone a worker is executing now: the lowest-ranked unblocked milestone that\nis ACTIVE, else the lowest-ranked unblocked one not finished. Derived on every read,\nstored nowhere, and never authored — the plan cannot nominate a milestone whose\nprerequisites are not real."
+                  }
+                },
+                "required": [
+                  "name",
+                  "repository",
+                  "default_branch",
+                  "active_milestone"
+                ],
+                "description": "The plan's header: what this repository is, plus the one field nobody authors."
+              },
+              "PlanVocabulary": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issue statuses, in derivation order."
+                  },
+                  "milestone": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The milestone statuses, in derivation order."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "milestone"
+                ],
+                "description": "The status vocabularies, so a reader never has to know which statuses exist."
+              },
+              "PlanMilestoneProgress": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "counts": {
+                    "$ref": "#/$defs/PlanCounts",
+                    "description": "Its issues, counted by derived status."
+                  }
+                },
+                "required": [
+                  "id",
+                  "status",
+                  "title",
+                  "counts"
+                ],
+                "description": "One milestone's progress, without its prose."
+              },
+              "PlanCounts": {
+                "type": "object",
+                "properties": {
+                  "total": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Every issue naming this milestone."
+                  },
+                  "required": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The denominator the milestone's own status derivation uses: total less cancelled, so\nno surface prints \"n of total\" for a milestone the engine calls DONE."
+                  },
+                  "by_status": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "integer",
+                      "format": "uint32",
+                      "minimum": 0
+                    },
+                    "description": "One entry per declared issue status, keyed by the vocabulary."
+                  }
+                },
+                "required": [
+                  "total",
+                  "required",
+                  "by_status"
+                ],
+                "description": "A milestone's issues counted: the two denominators, then one entry per declared status."
+              },
+              "PlanIssue": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "The milestone it belongs to."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies."
+                  },
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The execution wave: one past the longest path to it through the dependency graph."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The execution profile the issue is worked under."
+                  },
+                  "parallel_safe": {
+                    "type": "boolean",
+                    "description": "Whether it may run beside another issue of its wave."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The dependencies that are not DONE, plus `milestone:<id>` when the milestone gate\nholds the whole outcome back."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues that depend on this one."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches; two issues of one wave that share a path are serialised."
+                  },
+                  "objective": {
+                    "type": "string",
+                    "description": "One line: what the issue is for."
+                  },
+                  "evidence_have": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence entries attached."
+                  },
+                  "evidence_need": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence tokens the record requires before it may be DONE."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When execution began, when it did."
+                  },
+                  "verified_at": {
+                    "type": "string",
+                    "description": "When implementation was declared complete."
+                  },
+                  "completed_at": {
+                    "type": "string",
+                    "description": "When completion was recorded."
+                  }
+                },
+                "required": [
+                  "id",
+                  "milestone",
+                  "status",
+                  "wave",
+                  "priority",
+                  "profile",
+                  "parallel_safe",
+                  "title",
+                  "slug",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "scope",
+                  "objective",
+                  "evidence_have",
+                  "evidence_need",
+                  "started_at",
+                  "verified_at",
+                  "completed_at"
+                ],
+                "description": "One issue, as its record declares it and as the graph derives it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_status"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/status"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "status"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.validate",
+        "module": "plan",
+        "kind": "query",
+        "title": "What the model refuses",
+        "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "PlanValidation",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "valid": {
+                "type": "boolean",
+                "description": "Whether the model is valid: no finding is a failure."
+              },
+              "milestones": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many milestones the plan holds."
+              },
+              "issues": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many issues."
+              },
+              "failures": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many findings are failures."
+              },
+              "warnings": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many are warnings."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanFinding"
+                },
+                "description": "Every finding, in derivation order."
+              }
+            },
+            "required": [
+              "valid",
+              "milestones",
+              "issues",
+              "failures",
+              "warnings",
+              "findings"
+            ],
+            "description": "The model's own validation: what the graph refuses and what it merely warns about.",
+            "title": "PlanValidation",
+            "$defs": {
+              "PlanFinding": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "description": "`FAIL` or `WARN`. A failure means the model is invalid."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The stable code a reader greps for (`unknown_dependency`, `scope_conflict`, …)."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The record the finding is about, or `graph` when it is about the whole graph."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one line."
+                  }
+                },
+                "required": [
+                  "level",
+                  "code",
+                  "subject",
+                  "message"
+                ],
+                "description": "One validation finding, in the shape `project.finding-carries-reproduce` asks for."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_validate"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/validate"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "validation"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
+        "id": "plan.waves",
+        "module": "plan",
+        "kind": "query",
+        "title": "What may run at the same time",
+        "description": "The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict.",
+        "input": {
+          "name": "PlanMilestoneFilter",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "milestone": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Restrict the answer to one milestone. Default: the whole plan, and for `next` the\nactive milestone with the rest of the plan as the fallback."
+              }
+            },
+            "description": "Which part of the plan to answer about.",
+            "title": "PlanMilestoneFilter"
+          }
+        },
+        "output": {
+          "name": "PlanWaveReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "waves": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanWaveView"
+                },
+                "description": "The waves, lowest first, with the issues of each."
+              },
+              "serialised_by_scope": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PlanFinding"
+                },
+                "description": "Scope overlaps between two issues of one wave. Two issues sharing a wave is a\nnecessary condition for running them at once, not a sufficient one: overlapping\nscope serialises them, and the overlap is reported here rather than left for two\nworkers to discover in a conflict."
+              }
+            },
+            "required": [
+              "waves",
+              "serialised_by_scope"
+            ],
+            "description": "The execution waves, with the overlaps that serialise issues the graph would let run\ntogether.",
+            "title": "PlanWaveReport",
+            "$defs": {
+              "PlanWaveView": {
+                "type": "object",
+                "properties": {
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The layer, from zero."
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/PlanIssue"
+                    },
+                    "description": "The issues in it, in id order."
+                  }
+                },
+                "required": [
+                  "wave",
+                  "issues"
+                ],
+                "description": "One wave, with the issues in it."
+              },
+              "PlanIssue": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "The milestone it belongs to."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "The derived status. Never stored: an issue records what happened to it and the\nstatus follows from that and from the state of its dependencies."
+                  },
+                  "wave": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The execution wave: one past the longest path to it through the dependency graph."
+                  },
+                  "priority": {
+                    "type": "string",
+                    "description": "`p0` … `p3`."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The execution profile the issue is worked under."
+                  },
+                  "parallel_safe": {
+                    "type": "boolean",
+                    "description": "Whether it may run beside another issue of its wave."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line naming the outcome."
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "The slug, when the record carries one."
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every issue it declares a dependency on, as declared — including one that does not\nexist, which is a finding rather than a silent omission."
+                  },
+                  "blocked_by": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The dependencies that are not DONE, plus `milestone:<id>` when the milestone gate\nholds the whole outcome back."
+                  },
+                  "dependents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues that depend on this one."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches; two issues of one wave that share a path are serialised."
+                  },
+                  "objective": {
+                    "type": "string",
+                    "description": "One line: what the issue is for."
+                  },
+                  "evidence_have": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence entries attached."
+                  },
+                  "evidence_need": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Evidence tokens the record requires before it may be DONE."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When execution began, when it did."
+                  },
+                  "verified_at": {
+                    "type": "string",
+                    "description": "When implementation was declared complete."
+                  },
+                  "completed_at": {
+                    "type": "string",
+                    "description": "When completion was recorded."
+                  }
+                },
+                "required": [
+                  "id",
+                  "milestone",
+                  "status",
+                  "wave",
+                  "priority",
+                  "profile",
+                  "parallel_safe",
+                  "title",
+                  "slug",
+                  "depends_on",
+                  "blocked_by",
+                  "dependents",
+                  "scope",
+                  "objective",
+                  "evidence_have",
+                  "evidence_need",
+                  "started_at",
+                  "verified_at",
+                  "completed_at"
+                ],
+                "description": "One issue, as its record declares it and as the graph derives it."
+              },
+              "PlanFinding": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "description": "`FAIL` or `WARN`. A failure means the model is invalid."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The stable code a reader greps for (`unknown_dependency`, `scope_conflict`, …)."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The record the finding is about, or `graph` when it is about the whole graph."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one line."
+                  }
+                },
+                "required": [
+                  "level",
+                  "code",
+                  "subject",
+                  "message"
+                ],
+                "description": "One validation finding, in the shape `project.finding-carries-reproduce` asks for."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::plan"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_plan_waves"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/plan/waves"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "plan",
+          "project",
+          "graph",
+          "waves"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
       },
       {
         "id": "product.feature",
@@ -14634,6 +16880,25 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/perf.rs"
       },
       {
+        "id": "plan",
+        "title": "The plan and its derivations",
+        "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 8,
+        "capability_ids": [
+          "plan.issues",
+          "plan.model",
+          "plan.next",
+          "plan.record",
+          "plan.roadmap",
+          "plan.status",
+          "plan.validate",
+          "plan.waves"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/plan.rs"
+      },
+      {
         "id": "policy",
         "title": "policy",
         "description": "Declarative objects of kind 'policy' from the repository's AI layer.",
@@ -14740,7 +17005,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 114,
+        "capabilities": 115,
         "capability_ids": []
       },
       {
@@ -14798,7 +17063,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9a7d2c406cfd354cbcfed19d9f49896ed2c6deb899c39301ee940f9be310d6ae",
+    "fingerprint": "30aa830672cd36d988b59f5619c5ed7e88bfe0c41fb2b294f49ffa2c2b1ebf19",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14846,7 +17111,7 @@
       "session": 9,
       "skill": 3,
       "taxonomy": 10,
-      "test": 114,
+      "test": 115,
       "use-case": 40
     },
     "diagnostics": {},
@@ -17986,7 +20251,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 46876
+        "bytes": 46415
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -22151,7 +24416,7 @@
         "path": ".ai/repo/project/issues/I1306.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2423
+        "bytes": 6058
       },
       {
         "uri": "majordomus://issue/I1307",
@@ -25716,6 +27981,14 @@
         "bytes": 13341
       },
       {
+        "uri": "majordomus://test/test/cases/99_plan_capabilities.sh",
+        "kind": "test",
+        "identity": "test/cases/99_plan_capabilities.sh",
+        "path": "test/cases/99_plan_capabilities.sh",
+        "source_class": "case",
+        "bytes": 13518
+      },
+      {
         "uri": "majordomus://use-case/accept-or-refuse-finished-work",
         "kind": "use-case",
         "identity": "accept-or-refuse-finished-work",
@@ -26421,7 +28694,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 114
+      "objects": 115
     },
     {
       "name": "use-case",
@@ -36499,6 +38772,86 @@
         "output": "CounterSnapshot"
       },
       {
+        "name": "majordomus_plan_issues",
+        "id": "plan.issues",
+        "title": "The issues, filtered by what the graph derived",
+        "description": "One record per issue with its derived status, its wave, the dependencies it declares, the ones that are not DONE (plus `milestone:<id>` when the gate holds the whole outcome back), the issues that depend on it, the paths it touches and its evidence tally. Filtering by `status: READY` is the ready set and by `status: BLOCKED` the blocked set; nothing here is a separate derivation.",
+        "kind": "query",
+        "read_only": true,
+        "input": "PlanIssueFilter",
+        "output": "PlanIssueList"
+      },
+      {
+        "name": "majordomus_plan",
+        "id": "plan.model",
+        "title": "The whole derived plan",
+        "description": "Every milestone and issue with its derived status, wave, rank, both directions of its graph and its counts; the execution waves; both dependency graphs as edges; every validation finding; and the plan's header with the active milestone derived. The one value every other capability of this module answers out of. Derived on every call: a transition writes a lifecycle marker into a record between two calls, and a plan answered from a snapshot would send two workers to one issue.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "Plan"
+      },
+      {
+        "name": "majordomus_plan_next",
+        "id": "plan.next",
+        "title": "The one issue to take now",
+        "description": "The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.",
+        "kind": "query",
+        "read_only": true,
+        "input": "PlanMilestoneFilter",
+        "output": "PlanNextIssue"
+      },
+      {
+        "name": "majordomus_plan_record",
+        "id": "plan.record",
+        "title": "One milestone or issue, with everything derived about it",
+        "description": "A milestone with its issues in full, or an issue with the issues it waits on in full. The record's own prose stays where it has always been — `majordomus://issue/<id>` returns the file — and this answers what the file cannot say about itself: what its status is, where it sits in the graph, and what is between it and being executable.",
+        "kind": "query",
+        "read_only": true,
+        "input": "PlanRecordInput",
+        "output": "PlanRecord"
+      },
+      {
+        "name": "majordomus_plan_roadmap",
+        "id": "plan.roadmap",
+        "title": "The milestones in derived order",
+        "description": "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "PlanRoadmap"
+      },
+      {
+        "name": "majordomus_plan_status",
+        "id": "plan.status",
+        "title": "Where the plan stands",
+        "description": "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.",
+        "kind": "query",
+        "read_only": true,
+        "input": "PlanMilestoneFilter",
+        "output": "PlanStatusReport"
+      },
+      {
+        "name": "majordomus_plan_validate",
+        "id": "plan.validate",
+        "title": "What the model refuses",
+        "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "PlanValidation"
+      },
+      {
+        "name": "majordomus_plan_waves",
+        "id": "plan.waves",
+        "title": "What may run at the same time",
+        "description": "The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict.",
+        "kind": "query",
+        "read_only": true,
+        "input": "PlanMilestoneFilter",
+        "output": "PlanWaveReport"
+      },
+      {
         "name": "majordomus_feature",
         "id": "product.feature",
         "title": "One feature",
@@ -36733,6 +39086,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://plan",
+        "name": "plan",
+        "id": "plan.model",
+        "title": "The whole derived plan",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://product",
         "name": "product",
         "id": "product.features",
@@ -36955,6 +39315,54 @@
         "method": "GET",
         "path": "/api/v1/perf",
         "id": "perf.counters",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/issues",
+        "id": "plan.issues",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan",
+        "id": "plan.model",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/next",
+        "id": "plan.next",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/record",
+        "id": "plan.record",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/roadmap",
+        "id": "plan.roadmap",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/status",
+        "id": "plan.status",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/validate",
+        "id": "plan.validate",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/plan/waves",
+        "id": "plan.waves",
         "kind": "query"
       },
       {
@@ -38251,6 +40659,412 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/perf"
+      },
+      {
+        "key": "plan.issues|direct|all",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "all",
+        "cached": false
+      },
+      {
+        "key": "plan.issues|direct|ready",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "ready",
+        "cached": false
+      },
+      {
+        "key": "plan.issues|direct|one-milestone",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false
+      },
+      {
+        "key": "plan.issues|mcp|all",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "all",
+        "cached": false,
+        "tool": "majordomus_plan_issues"
+      },
+      {
+        "key": "plan.issues|mcp|ready",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "ready",
+        "cached": false,
+        "tool": "majordomus_plan_issues"
+      },
+      {
+        "key": "plan.issues|mcp|one-milestone",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false,
+        "tool": "majordomus_plan_issues"
+      },
+      {
+        "key": "plan.issues|http|all",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "all",
+        "cached": false,
+        "route": "GET /api/v1/plan/issues"
+      },
+      {
+        "key": "plan.issues|http|ready",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "ready",
+        "cached": false,
+        "route": "GET /api/v1/plan/issues"
+      },
+      {
+        "key": "plan.issues|http|one-milestone",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.issues",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false,
+        "route": "GET /api/v1/plan/issues"
+      },
+      {
+        "key": "plan.model|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.model",
+        "module": "plan",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "plan.model|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.model",
+        "module": "plan",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_plan"
+      },
+      {
+        "key": "plan.model|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.model",
+        "module": "plan",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/plan"
+      },
+      {
+        "key": "plan.next|direct|whole-plan",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.next",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false
+      },
+      {
+        "key": "plan.next|direct|one-milestone",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.next",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false
+      },
+      {
+        "key": "plan.next|mcp|whole-plan",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.next",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false,
+        "tool": "majordomus_plan_next"
+      },
+      {
+        "key": "plan.next|mcp|one-milestone",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.next",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false,
+        "tool": "majordomus_plan_next"
+      },
+      {
+        "key": "plan.next|http|whole-plan",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.next",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false,
+        "route": "GET /api/v1/plan/next"
+      },
+      {
+        "key": "plan.next|http|one-milestone",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.next",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false,
+        "route": "GET /api/v1/plan/next"
+      },
+      {
+        "key": "plan.record|direct|issue",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.record",
+        "module": "plan",
+        "case": "issue",
+        "cached": false
+      },
+      {
+        "key": "plan.record|direct|milestone",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.record",
+        "module": "plan",
+        "case": "milestone",
+        "cached": false
+      },
+      {
+        "key": "plan.record|mcp|issue",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.record",
+        "module": "plan",
+        "case": "issue",
+        "cached": false,
+        "tool": "majordomus_plan_record"
+      },
+      {
+        "key": "plan.record|mcp|milestone",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.record",
+        "module": "plan",
+        "case": "milestone",
+        "cached": false,
+        "tool": "majordomus_plan_record"
+      },
+      {
+        "key": "plan.record|http|issue",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.record",
+        "module": "plan",
+        "case": "issue",
+        "cached": false,
+        "route": "GET /api/v1/plan/record"
+      },
+      {
+        "key": "plan.record|http|milestone",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.record",
+        "module": "plan",
+        "case": "milestone",
+        "cached": false,
+        "route": "GET /api/v1/plan/record"
+      },
+      {
+        "key": "plan.roadmap|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.roadmap",
+        "module": "plan",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "plan.roadmap|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.roadmap",
+        "module": "plan",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_plan_roadmap"
+      },
+      {
+        "key": "plan.roadmap|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.roadmap",
+        "module": "plan",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/plan/roadmap"
+      },
+      {
+        "key": "plan.status|direct|whole-plan",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.status",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false
+      },
+      {
+        "key": "plan.status|direct|one-milestone",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.status",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false
+      },
+      {
+        "key": "plan.status|mcp|whole-plan",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.status",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false,
+        "tool": "majordomus_plan_status"
+      },
+      {
+        "key": "plan.status|mcp|one-milestone",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.status",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false,
+        "tool": "majordomus_plan_status"
+      },
+      {
+        "key": "plan.status|http|whole-plan",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.status",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false,
+        "route": "GET /api/v1/plan/status"
+      },
+      {
+        "key": "plan.status|http|one-milestone",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.status",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false,
+        "route": "GET /api/v1/plan/status"
+      },
+      {
+        "key": "plan.validate|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.validate",
+        "module": "plan",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "plan.validate|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.validate",
+        "module": "plan",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_plan_validate"
+      },
+      {
+        "key": "plan.validate|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.validate",
+        "module": "plan",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/plan/validate"
+      },
+      {
+        "key": "plan.waves|direct|whole-plan",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.waves",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false
+      },
+      {
+        "key": "plan.waves|direct|one-milestone",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "plan.waves",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false
+      },
+      {
+        "key": "plan.waves|mcp|whole-plan",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.waves",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false,
+        "tool": "majordomus_plan_waves"
+      },
+      {
+        "key": "plan.waves|mcp|one-milestone",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "plan.waves",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false,
+        "tool": "majordomus_plan_waves"
+      },
+      {
+        "key": "plan.waves|http|whole-plan",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.waves",
+        "module": "plan",
+        "case": "whole-plan",
+        "cached": false,
+        "route": "GET /api/v1/plan/waves"
+      },
+      {
+        "key": "plan.waves|http|one-milestone",
+        "kind": "capability",
+        "transport": "http",
+        "id": "plan.waves",
+        "module": "plan",
+        "case": "one-milestone",
+        "cached": false,
+        "route": "GET /api/v1/plan/waves"
       },
       {
         "key": "product.feature|direct|first-feature",
@@ -39671,6 +42485,174 @@
           "cases": 1
         },
         {
+          "subject": "plan.issues",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 3
+        },
+        {
+          "subject": "plan.issues",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 3
+        },
+        {
+          "subject": "plan.issues",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 3
+        },
+        {
+          "subject": "plan.model",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.model",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.model",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.next",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.next",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.next",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.record",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.record",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.record",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.roadmap",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.roadmap",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.roadmap",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.status",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.status",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.status",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.validate",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.validate",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.validate",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "plan.waves",
+          "module": "plan",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.waves",
+          "module": "plan",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "plan.waves",
+          "module": "plan",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "product.feature",
           "module": "product",
           "transport": "direct",
@@ -40163,20 +43145,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 44,
-          "covered": 44,
+          "required": 52,
+          "covered": 52,
           "missing": 0,
           "waived": 0
         },
         "http": {
-          "required": 44,
-          "covered": 44,
+          "required": 52,
+          "covered": 52,
           "missing": 0,
           "waived": 0
         },
         "mcp": {
-          "required": 42,
-          "covered": 42,
+          "required": 50,
+          "covered": 50,
           "missing": 0,
           "waived": 0
         },
@@ -40187,8 +43169,8 @@
           "waived": 0
         },
         "total": {
-          "required": 143,
-          "covered": 143,
+          "required": 167,
+          "covered": 167,
           "missing": 0,
           "waived": 0
         }
