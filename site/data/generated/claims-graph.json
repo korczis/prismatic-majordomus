@@ -804,7 +804,16 @@
       "status": "guaranteed",
       "route": "/guarantees/github-projection/",
       "external": false,
-      "note": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit."
+      "note": "The adapter lives in scripts/ because the tool itself makes no network call, which test/cases/08_no_forbidden_constructs.sh proves. The begin marker carries the hash of the record it was generated from, which is what separates a moved plan from a hand edit; a second marker carries the record's identity, so a title a person rewrites cannot orphan it. This claim is about what the adapter renders and refuses. Whether the remote has actually received it is a different question, and github-projection-gated is the claim that answers it."
+    },
+    {
+      "id": "claim:github-projection-gated",
+      "kind": "claim",
+      "label": "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing",
+      "status": "guaranteed",
+      "route": "/guarantees/github-projection-gated/",
+      "external": false,
+      "note": "The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise."
     },
     {
       "id": "claim:mcp-stdio-surface",
@@ -1733,6 +1742,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/ci/github-check",
+      "kind": "implementation",
+      "label": "scripts/ci/github-check",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/ci/install-check",
       "kind": "implementation",
       "label": "scripts/ci/install-check",
@@ -2524,6 +2540,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/96_worktree_topology.sh"
     },
     {
+      "id": "test:test/cases/97_github_gate.sh",
+      "kind": "test",
+      "label": "test/cases/97_github_gate.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_github_gate.sh"
+    },
+    {
       "id": "test:test/cases/97_install_gate.sh",
       "kind": "test",
       "label": "test/cases/97_install_gate.sh",
@@ -2997,6 +3020,11 @@
     },
     {
       "source": "claim:github-projection",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:github-projection-gated",
       "target": "source:docs/PLANNING.md",
       "kind": "specified_by"
     },
@@ -3686,6 +3714,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:github-projection-gated",
+      "target": "impl:scripts/ci/github-check",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mcp-stdio-surface",
       "target": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
       "kind": "implemented_by"
@@ -4368,6 +4401,11 @@
     {
       "source": "claim:github-projection",
       "target": "test:test/cases/45_github_projection.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:github-projection-gated",
+      "target": "test:test/cases/97_github_gate.sh",
       "kind": "proved_by"
     },
     {

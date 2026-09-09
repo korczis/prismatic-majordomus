@@ -29,4 +29,14 @@ evidence_required:
   - claims_cite_gates
 risk: "Low."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-09-09T17:50:40Z
+started_at: 2026-09-09T17:50:11Z
+verified_at: 2026-09-09T17:50:29Z
+completed_at: 2026-09-09T17:50:40Z
+evidence:
+  - covers: claims_cite_gates
+    type: ci
+    command: "scripts/ci/reference-check"
+    result: "the projection claim is split in two: github-projection covers what the adapter renders and refuses, github-projection-gated covers whether the remote still agrees and cites scripts/ci/github-check with test/cases/97_github_gate.sh; project.yaml, .ai/repo/project/README.md and docs/PLANNING.md now say that GitHub receives the projection only when somebody applies it, and name the gate that holds them together"
+    commit: 597ebe4e5fafab942cd2a962e9d80dcd41256c78
+    recorded_at: 2026-09-09T17:50:23Z

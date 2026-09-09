@@ -1,7 +1,7 @@
 +++
 title = "Which interfaces a feature is exposed through, what stands behind it and what it answers are derived from the registries that own those facts, never authored, and a source file that writes one down is refused by its schema"
 description = "A feature file holds two things: **references** naming what the feature is made of, and"
-weight = 156
+weight = 157
 [extra]
 claim_id = "product-surfaces-derived"
 status = "guaranteed"

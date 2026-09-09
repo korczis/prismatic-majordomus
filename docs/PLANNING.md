@@ -122,7 +122,7 @@ different opinions about what is ready:
 |---|---|
 | the command line | `majordomus plan` |
 | the Mermaid DAG | `majordomus plan graph` |
-| GitHub milestones and issues | `scripts/github-sync` |
+| GitHub milestones and issues | `scripts/github-sync`, proved current by `scripts/ci/github-check` |
 | the website's roadmap, milestone, issue and DAG pages | `scripts/generate-site-data` |
 | the documentation | this file explains the semantics; the figures are generated |
 
@@ -130,6 +130,33 @@ GitHub is a projection and a place to talk, never the source. A canonical change
 generated region of an issue body; a person editing that region is reported as drift and not
 overwritten; a person's comments and any text outside the region are never touched. Nothing
 is read back: closing an issue on GitHub does not complete it here.
+
+A record is found on GitHub by an identity it carries in its own body, written beside the
+hash as `<!-- majordomus:record I0001 -->`. A GitHub number is GitHub's to assign and a
+title is a person's to edit, so neither can be the key: matching on a title means a rename
+orphans the record and the next `--apply` creates a second one for work that already exists.
+
+Every finding about a body is one of six states, from two independent questions — has a
+person rewritten the region since it was posted, and has the canonical record moved since?
+
+| state | meaning | `--apply` |
+|---|---|---|
+| `insync` | intact and current | nothing |
+| `behind` | intact, the canonical record has moved | rewrites |
+| `edited` | a person rewrote the region | refuses without `--force` |
+| `conflict` | a person rewrote it and the record has moved | refuses without `--force` |
+| `adopt` | no identity marker; matched by title, this once | writes one |
+| `missing` | no counterpart on GitHub | creates |
+
+and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
+canonical id this repository does not have.
+
+Applying is a deliberate act; agreement is a gate. `scripts/ci/github-check` reads the
+remote on every change that can move either side, refuses the first six states outright,
+and ratchets `missing` and `adopt` against `.ai/repo/ci/github-drift-baseline.txt`, which
+may fall and may never rise. It exists because the detector was written, never called, and
+the projection decayed to a tenth of the model over five days with every build green
+(`project.github-projection-gated@1`).
 
 The network calls live in `scripts/github-sync`, outside the tool. `bin/`, `lib/`, `share/`
 and `test/` contain no network client, and `test/cases/08_no_forbidden_constructs.sh` proves
