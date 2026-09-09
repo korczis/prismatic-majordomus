@@ -13,6 +13,10 @@ sections:
         title: The design is one declaration and every surface is a projection of it
         status: accepted
         date: "2026-09-09"
+      - id: adr-0030
+        title: "A task owes obligations, and the evidence that discharges them goes stale"
+        status: proposed
+        date: "2026-09-09"
       - id: adr-0029
         title: "The changelog is a projection of what the repository already records, and the version has one writer rather than one source"
         status: proposed
@@ -39,6 +43,11 @@ sections:
             subject: "one declaration for the design, and every surface projects it"
             breaking: false
             commit: 2b3b9fffa
+          - kind: feat
+            scope: closure
+            subject: "a task owes obligations, and the evidence that discharges them goes stale"
+            breaking: false
+            commit: cf1ee94ca
           - kind: feat
             scope: ci
             subject: "a gate says the published site came from master, and is being served"
@@ -159,15 +168,55 @@ sections:
         rank: 1
         changes:
           - kind: fix
+            scope: release
+            subject: the module asserts the two projections it documents
+            breaking: false
+            commit: 98f6606ce
+          - kind: fix
+            scope: gates
+            subject: "a derivation refuses a degraded index, and one pass says everything a command still needs"
+            breaking: false
+            commit: f6b73b05a
+          - kind: fix
             scope: "design,adr"
             subject: "the three failures this session hit, each with the gate that would have caught it"
             breaking: false
             commit: 1cbb36869
           - kind: fix
+            scope: commands
+            subject: the module asserts the three projections it documents
+            breaking: false
+            commit: 5609ab148
+          - kind: fix
             scope: site
             subject: the changelog page reads the groups the document carries
             breaking: false
             commit: b551a3327
+          - kind: fix
+            scope: docs
+            subject: the semantics module documents a validation that is not an item
+            breaking: false
+            commit: ed649c769
+          - kind: fix
+            scope: share
+            subject: a MAJORDOMUS_SHARE naming another worktree of this repository is refused
+            breaking: false
+            commit: fc9864ebc
+          - kind: fix
+            scope: derive
+            subject: every stage names itself as it begins and reports what it cost
+            breaking: false
+            commit: 59aa3769c
+          - kind: fix
+            scope: ci
+            subject: ci-plan tells a bare path list which spelling it wanted
+            breaking: false
+            commit: 5bd2f77bc
+          - kind: fix
+            scope: cli
+            subject: an unknown command that the Rust executable provides says so and names the launcher
+            breaking: false
+            commit: 59f5c8b75
           - kind: fix
             scope: ui
             subject: "a scroll container is a containing block for what it positions, and the finding that says so names it"
@@ -459,6 +508,51 @@ sections:
         heading: Housekeeping
         rank: 7
         changes:
+          - kind: chore
+            scope: derive
+            subject: the projections follow the final master merge
+            breaking: false
+            commit: cdc859654
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 5e6d324c1
+          - kind: chore
+            scope: "adr,test"
+            subject: renumber to the identities the board actually left free
+            breaking: false
+            commit: 50f276bc3
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 21a1203cc
+          - kind: chore
+            scope: derive
+            subject: the projections follow the second master merge
+            breaking: false
+            commit: e94b760d1
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 5fe8f2ec8
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: b79363681
+          - kind: chore
+            scope: derive
+            subject: "the projections follow the master merge, with the ADR renumbered to 0030"
+            breaking: false
+            commit: f1c1b6556
+          - kind: chore
+            scope: derive
+            subject: the projections follow the entry-point fixes
+            breaking: false
+            commit: 691fab7db
           - kind: chore
             scope: derive
             subject: the projections follow the merge with master
