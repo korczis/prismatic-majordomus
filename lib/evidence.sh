@@ -59,15 +59,27 @@ mj_obligation_established_by() {
 # The hash the evidence is taken over: the tracked files the obligation's pathspecs select,
 # in git's order, through the one implementation in common.sh. An obligation with no inputs
 # hashes to the empty string and is judged by its commit alone.
+#
+# `set -f` in both subshells, and it is the whole correctness of this function. The specs
+# are word-split on purpose — `docs/** README.md .ai/repo/**/README.md` is three of them —
+# but unquoted word-splitting also globs, and a bash that expanded them before git saw them
+# was answering a different question: without `globstar` a `**` matches exactly one
+# directory level, and a bare `*` skips dotfiles. Measured on this tree,
+# `.ai/repo/**/README.md` selected 18 files where git selects 24, and the `implementation`
+# token's `*` selected 1919 where git selects 2485 — everything under .ai/ and .github/
+# outside the hash that exists to make its evidence go stale. That is this feature's own
+# failure mode occurring inside the feature: a change to a file the obligation names left
+# the evidence looking fresh. Disabling globbing hands git the literal `**` and `*`, which
+# it matches itself, correctly, at every depth.
 mj_obligation_inputs_hash() {
   local tok="$1" specs files
   specs="$(mj_obligation_inputs "$tok")"
   [ -n "$specs" ] || { printf ''; return 0; }
   # shellcheck disable=SC2086
-  files="$(cd "$MJ_ROOT" && git ls-files -- $specs 2>/dev/null)"
+  files="$(set -f; cd "$MJ_ROOT" && git ls-files -- $specs 2>/dev/null)"
   [ -n "$files" ] || { printf ''; return 0; }
   # shellcheck disable=SC2086
-  ( cd "$MJ_ROOT" && mj_inputs_hash $files )
+  ( set -f; cd "$MJ_ROOT" && mj_inputs_hash $files )
 }
 
 # ---------------------------------------------------------------- the task's obligations

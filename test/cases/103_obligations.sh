@@ -74,6 +74,25 @@ expect_grep 'OK   obligation  tests — discharged over inputs'
 expect_exit 0 "$MJ" doctrine show majordomus.obligation-closure
 expect_grep 'validator.*obligations'
 
+# ------------------------------------------------- the pathspecs reach every depth
+# `docs` is taken over `.ai/repo/**/README.md`, and the hash is only worth anything if that
+# selects every README at every depth. It did not: the specs were word-split unquoted, so
+# bash globbed them before git ever saw them, and without `globstar` a `**` matches exactly
+# one directory level. The nested READMEs were outside the hash, and a change to one of them
+# left the evidence looking fresh — this feature's own failure mode, inside the feature.
+# A nested README is what proves it, because a top-level one passes either way.
+owes docs
+nested="$(git ls-files -- '.ai/repo/**/README.md' | awk -F/ 'NF >= 5' | head -1)"
+[ -n "$nested" ] || { echo "    no README nested two levels under .ai/repo; the case cannot prove the depth"; exit 1; }
+expect_exit 0 "$MJ" evidence --covers docs --command 'scripts/ci/reference-check'
+expect_exit 0 "$MJ" check
+expect_grep 'OK   obligation  docs — discharged over inputs'
+echo 'a line the obligation is supposed to notice' >> "$nested"
+git add -A >/dev/null && git commit -qm nested
+expect_exit 10 "$MJ" finish --outcome completed --note "done"
+expect_grep 'docs — the evidence was taken over inputs .* it no longer describes what it proved'
+
+
 # ================================================================ the outer obligations
 # Six tokens name a fact outside the working tree. Five of them are facts something already
 # holds — git, and the publication probe `scripts/pages verify` — and the point of the rest

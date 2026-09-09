@@ -19,6 +19,7 @@ Current version: **0.4.0**
 
 ### Added
 
+- **obligations**: the outer obligations are established from git and the published site, not typed into a ledger by the worker who owes them (`f2000a52c`)
 - **closure**: a task owes obligations, and the evidence that discharges them goes stale (`cf1ee94ca`)
 - **ci**: a gate says the published site came from master, and is being served (`fbc1da919`)
 - **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
