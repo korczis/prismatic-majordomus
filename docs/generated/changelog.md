@@ -44,7 +44,11 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **release**: the module asserts the two projections it documents (`98f6606ce`)
+- **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
+- **commands**: the module asserts the three projections it documents (`5609ab148`)
 - **site**: the changelog page reads the groups the document carries (`b551a3327`)
+- **docs**: the semantics module documents a validation that is not an item (`ed649c769`)
 - **ui**: a scroll container is a containing block for what it positions, and the finding that says so names it (`2d328460b`)
 - **ci**: a job that hangs fails instead of holding a runner for a shift (`1ea8da126`)
 - **completion**: TAB in this repository asks a program that can answer it (`ff2d64e57`)
