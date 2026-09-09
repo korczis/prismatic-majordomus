@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "6d500cea3ad2bfabfa8e8fec4af8313291f469e1a2b8ef9d2479c1fda322203a",
+    "fingerprint": "e43217caf08fa3c0498dcf4f201dad1af014417a51fa62025f31ea023d6f4f2a",
     "summary": {
-      "total": 1113,
+      "total": 1115,
       "builtin": 52,
-      "declarative": 1061,
+      "declarative": 1063,
       "by_kind": {
         "command": 1,
         "query": 51,
-        "resource": 1061
+        "resource": 1063
       },
       "by_stability": {
         "behaviorally_verified": 47,
-        "implemented": 1066
+        "implemented": 1068
       },
       "mcp_tools": 50,
-      "mcp_resources": 1081,
+      "mcp_resources": 1083,
       "http_routes": 52,
       "cli_commands": 25,
       "modules": 47,
@@ -18697,7 +18697,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 100,
+        "capabilities": 101,
         "capability_ids": []
       },
       {
@@ -18737,7 +18737,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 120,
+        "capabilities": 121,
         "capability_ids": []
       },
       {
@@ -18795,7 +18795,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e245da48e4a0f22922bba326fbb0694c6e3f14c0c8726f4fab1be366b2eff21e",
+    "fingerprint": "ee0c1ad4cab4a7b8d8cc15ac95c52b91e87dbacb6c26002435bb81bbc8cee4ec",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -18838,12 +18838,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 100,
+      "rule": 101,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 120,
+      "test": 121,
       "use-case": 41
     },
     "diagnostics": {},
@@ -21814,7 +21814,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 2446
+        "bytes": 4271
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -23877,7 +23877,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 4873
+        "bytes": 7251
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-cli",
@@ -23957,7 +23957,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 51687
+        "bytes": 54338
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -28093,6 +28093,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.diagnostics-decide-the-exit@1",
+        "kind": "rule",
+        "identity": "project.diagnostics-decide-the-exit@1",
+        "title": "A return code is not the diagnostic channel",
+        "description": "A command that emits an error diagnostic does not exit zero; every derivation and every check runs so that an error in the layer stops it.",
+        "path": ".ai/repo/rules/project/a-return-code-is-not-the-diagnostic-channel.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2545,
+        "tags": [
+          "gates",
+          "diagnostics"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.distribution-canonical@1",
         "kind": "rule",
         "identity": "project.distribution-canonical@1",
@@ -29116,6 +29131,14 @@
         "bytes": 18953
       },
       {
+        "uri": "majordomus://test/test/cases/104_strict_derivation.sh",
+        "kind": "test",
+        "identity": "test/cases/104_strict_derivation.sh",
+        "path": "test/cases/104_strict_derivation.sh",
+        "source_class": "case",
+        "bytes": 4466
+      },
+      {
         "uri": "majordomus://test/test/cases/10_site_data.sh",
         "kind": "test",
         "identity": "test/cases/10_site_data.sh",
@@ -29177,7 +29200,7 @@
         "identity": "test/cases/15_command_surface.sh",
         "path": "test/cases/15_command_surface.sh",
         "source_class": "case",
-        "bytes": 3185
+        "bytes": 4833
       },
       {
         "uri": "majordomus://test/test/cases/16_profiles.sh",
@@ -29577,7 +29600,7 @@
         "identity": "test/cases/65_tool_root_independence.sh",
         "path": "test/cases/65_tool_root_independence.sh",
         "source_class": "case",
-        "bytes": 3457
+        "bytes": 4380
       },
       {
         "uri": "majordomus://test/test/cases/66_migrate_legacy.sh",
@@ -29849,7 +29872,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 15636
+        "bytes": 16160
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -30617,7 +30640,7 @@
         "id",
         "version"
       ],
-      "objects": 100
+      "objects": 101
     },
     {
       "name": "scope",
@@ -30672,7 +30695,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 120
+      "objects": 121
     },
     {
       "name": "use-case",
