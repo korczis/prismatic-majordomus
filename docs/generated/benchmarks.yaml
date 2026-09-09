@@ -6,30 +6,30 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.4.0
 coverage:
   - scope: direct
-    required: 54
-    covered: 54
+    required: 65
+    covered: 62
     missing: 0
-    waived: 0
+    waived: 3
   - scope: http
-    required: 54
-    covered: 54
+    required: 65
+    covered: 62
     missing: 0
-    waived: 0
+    waived: 3
   - scope: mcp
-    required: 52
-    covered: 52
+    required: 63
+    covered: 60
     missing: 0
-    waived: 0
+    waived: 3
   - scope: system
     required: 13
     covered: 13
     missing: 0
     waived: 0
   - scope: total
-    required: 173
-    covered: 173
+    required: 206
+    covered: 197
     missing: 0
-    waived: 0
+    waived: 9
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -211,6 +211,66 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: executions.cancel
+    module: executions
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: executions.demonstrate
+    module: executions
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - immediate
+  - id: executions.events
+    module: executions
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: executions.get
+    module: executions
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: executions.list
+    module: executions
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - recent
+  - id: executions.protocol
+    module: executions
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: executions.start
+    module: executions
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - demonstrate
   - id: graph.get
     module: graph
     kind: query
@@ -293,6 +353,15 @@ capabilities:
     cases:
       - common-word
       - no-hit
+  - id: objects.verify
+    module: objects
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - bounded
   - id: obligations.closure
     module: obligations
     kind: query
@@ -444,6 +513,34 @@ capabilities:
       - secret
       - undeclared
       - first-object
+  - id: trace.commit
+    module: trace
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - head
+  - id: trace.issue
+    module: trace
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-issue
+  - id: trace.report
+    module: trace
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - ten
   - id: web.surfaces
     module: web
     kind: query

@@ -324,6 +324,125 @@
       "tool": "majordomus_environment"
     },
     {
+      "api_anchor": "/docs/api/#op-executions-cancel",
+      "claims": [],
+      "cli": "majordomus executions cancel",
+      "id": "executions.cancel",
+      "kind": "command",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": null,
+      "route": "/registry/capabilities/executions-cancel/",
+      "slug": "executions-cancel",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "Ask an execution to stop",
+      "tool": "majordomus_execution_cancel"
+    },
+    {
+      "api_anchor": "/docs/api/#op-executions-demonstrate",
+      "claims": [],
+      "cli": null,
+      "id": "executions.demonstrate",
+      "kind": "query",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": null,
+      "route": "/registry/capabilities/executions-demonstrate/",
+      "slug": "executions-demonstrate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "Demonstrate an execution",
+      "tool": "majordomus_demonstrate_execution"
+    },
+    {
+      "api_anchor": "/docs/api/#op-executions-events",
+      "claims": [],
+      "cli": "majordomus executions events",
+      "id": "executions.events",
+      "kind": "query",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": null,
+      "route": "/registry/capabilities/executions-events/",
+      "slug": "executions-events",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "An execution's event history",
+      "tool": "majordomus_execution_events"
+    },
+    {
+      "api_anchor": "/docs/api/#op-executions-get",
+      "claims": [],
+      "cli": "majordomus executions show",
+      "id": "executions.get",
+      "kind": "query",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": null,
+      "route": "/registry/capabilities/executions-get/",
+      "slug": "executions-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "One execution",
+      "tool": "majordomus_execution"
+    },
+    {
+      "api_anchor": "/docs/api/#op-executions-list",
+      "claims": [],
+      "cli": "majordomus executions list",
+      "id": "executions.list",
+      "kind": "query",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": "majordomus://executions",
+      "route": "/registry/capabilities/executions-list/",
+      "slug": "executions-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "List executions",
+      "tool": "majordomus_executions"
+    },
+    {
+      "api_anchor": "/docs/api/#op-executions-protocol",
+      "claims": [],
+      "cli": "majordomus executions protocol",
+      "id": "executions.protocol",
+      "kind": "query",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": "majordomus://executions/protocol",
+      "route": "/registry/capabilities/executions-protocol/",
+      "slug": "executions-protocol",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "The live channel's contract",
+      "tool": "majordomus_execution_protocol"
+    },
+    {
+      "api_anchor": "/docs/api/#op-executions-start",
+      "claims": [],
+      "cli": "majordomus run",
+      "id": "executions.start",
+      "kind": "command",
+      "module": "executions",
+      "module_route": "/registry/modules/executions/",
+      "resource": null,
+      "route": "/registry/capabilities/executions-start/",
+      "slug": "executions-start",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "tests": [],
+      "title": "Start a capability as an execution",
+      "tool": "majordomus_execution_start"
+    },
+    {
       "api_anchor": "/docs/api/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -488,6 +607,33 @@
       ],
       "title": "Search objects",
       "tool": "majordomus_search"
+    },
+    {
+      "api_anchor": "/docs/api/#op-objects-verify",
+      "claims": [
+        {
+          "id": "mcp-uri-resolution",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+          "route": "/guarantees/mcp-uri-resolution/",
+          "status": "guaranteed",
+          "test": "test/cases/72_rust_mcp.sh"
+        }
+      ],
+      "cli": null,
+      "id": "objects.verify",
+      "kind": "query",
+      "module": "objects",
+      "module_route": "/registry/modules/objects/",
+      "resource": null,
+      "route": "/registry/capabilities/objects-verify/",
+      "slug": "objects-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
+      "tests": [
+        "test/cases/72_rust_mcp.sh"
+      ],
+      "title": "Verify the index against the working tree",
+      "tool": "majordomus_verify_objects"
     },
     {
       "api_anchor": "/docs/api/#op-obligations-closure",
@@ -760,6 +906,57 @@
       "tests": [],
       "title": "Judge a path against the scope",
       "tool": "majordomus_scope_classify"
+    },
+    {
+      "api_anchor": "/docs/api/#op-trace-commit",
+      "claims": [],
+      "cli": null,
+      "id": "trace.commit",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": null,
+      "route": "/registry/capabilities/trace-commit/",
+      "slug": "trace-commit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "What contract this commit served",
+      "tool": "majordomus_trace_commit"
+    },
+    {
+      "api_anchor": "/docs/api/#op-trace-issue",
+      "claims": [],
+      "cli": null,
+      "id": "trace.issue",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": null,
+      "route": "/registry/capabilities/trace-issue/",
+      "slug": "trace-issue",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "What realised this issue",
+      "tool": "majordomus_trace_issue"
+    },
+    {
+      "api_anchor": "/docs/api/#op-trace-report",
+      "claims": [],
+      "cli": null,
+      "id": "trace.report",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": "majordomus://traceability",
+      "route": "/registry/capabilities/trace-report/",
+      "slug": "trace-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "The whole work graph above the branch",
+      "tool": "majordomus_traceability"
     },
     {
       "api_anchor": "/docs/api/#op-web-surfaces",
@@ -1200,9 +1397,9 @@
     ]
   },
   "counts": {
-    "capabilities": 54,
+    "capabilities": 65,
     "claims": 35,
-    "modules": 21
+    "modules": 23
   },
   "generator": "majordomus-cli 0.4.0",
   "modules": [
@@ -1392,6 +1589,52 @@
     {
       "capabilities": [
         {
+          "id": "executions.cancel",
+          "route": "/registry/capabilities/executions-cancel/",
+          "slug": "executions-cancel"
+        },
+        {
+          "id": "executions.demonstrate",
+          "route": "/registry/capabilities/executions-demonstrate/",
+          "slug": "executions-demonstrate"
+        },
+        {
+          "id": "executions.events",
+          "route": "/registry/capabilities/executions-events/",
+          "slug": "executions-events"
+        },
+        {
+          "id": "executions.get",
+          "route": "/registry/capabilities/executions-get/",
+          "slug": "executions-get"
+        },
+        {
+          "id": "executions.list",
+          "route": "/registry/capabilities/executions-list/",
+          "slug": "executions-list"
+        },
+        {
+          "id": "executions.protocol",
+          "route": "/registry/capabilities/executions-protocol/",
+          "slug": "executions-protocol"
+        },
+        {
+          "id": "executions.start",
+          "route": "/registry/capabilities/executions-start/",
+          "slug": "executions-start"
+        }
+      ],
+      "claims": [],
+      "id": "executions",
+      "route": "/registry/modules/executions/",
+      "slug": "executions",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "title": "Executions"
+    },
+    {
+      "capabilities": [
+        {
           "id": "graph.get",
           "route": "/registry/capabilities/graph-get/",
           "slug": "graph-get"
@@ -1452,6 +1695,11 @@
           "id": "objects.search",
           "route": "/registry/capabilities/objects-search/",
           "slug": "objects-search"
+        },
+        {
+          "id": "objects.verify",
+          "route": "/registry/capabilities/objects-verify/",
+          "slug": "objects-verify"
         }
       ],
       "claims": [
@@ -1626,6 +1874,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "trace.commit",
+          "route": "/registry/capabilities/trace-commit/",
+          "slug": "trace-commit"
+        },
+        {
+          "id": "trace.issue",
+          "route": "/registry/capabilities/trace-issue/",
+          "slug": "trace-issue"
+        },
+        {
+          "id": "trace.report",
+          "route": "/registry/capabilities/trace-report/",
+          "slug": "trace-report"
+        }
+      ],
+      "claims": [],
+      "id": "trace",
+      "route": "/registry/modules/trace/",
+      "slug": "trace",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "title": "Traceability"
     },
     {
       "capabilities": [

@@ -8,6 +8,13 @@
       "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
     },
     {
+      "document": "deployment",
+      "format": "text",
+      "path": ".dockerignore",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
+    },
+    {
       "document": "providers/agents",
       "format": "markdown",
       "path": "AGENTS.md",
@@ -20,6 +27,13 @@
       "path": "CLAUDE.md",
       "schema": null,
       "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
+    },
+    {
+      "document": "deployment",
+      "format": "text",
+      "path": "deploy/Dockerfile",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "document": "install-guide",
@@ -183,6 +197,13 @@
       "source": "the `environment` module of the canonical Majordomus capability registry"
     },
     {
+      "document": "modules/executions",
+      "format": "markdown",
+      "path": "docs/generated/modules/executions.md",
+      "schema": null,
+      "source": "the `executions` module of the canonical Majordomus capability registry"
+    },
+    {
       "document": "modules/graph",
       "format": "markdown",
       "path": "docs/generated/modules/graph.md",
@@ -251,6 +272,13 @@
       "path": "docs/generated/modules/repository.md",
       "schema": null,
       "source": "the `repository` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/trace",
+      "format": "markdown",
+      "path": "docs/generated/modules/trace.md",
+      "schema": null,
+      "source": "the `trace` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/web",
@@ -335,6 +363,13 @@
       "path": "docs/generated/web.yaml",
       "schema": "majordomus/web-topology/v1",
       "source": "the resolved web topology of this repository"
+    },
+    {
+      "document": "deployment",
+      "format": "text",
+      "path": "fly.toml",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "document": "allow/adr",
@@ -503,6 +538,13 @@
       "path": "share/allow/use-case.txt",
       "schema": null,
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    },
+    {
+      "document": "allow/workspace",
+      "format": "text",
+      "path": "share/allow/workspace.txt",
+      "schema": null,
+      "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
     },
     {
       "document": "schemas/majordomus.adr/v1",
@@ -858,6 +900,13 @@
     },
     {
       "formats": [
+        "text"
+      ],
+      "id": "allow/workspace",
+      "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
+    },
+    {
+      "formats": [
         "json",
         "markdown",
         "yaml"
@@ -902,6 +951,13 @@
       "id": "cli",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "deployment",
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "formats": [
@@ -984,6 +1040,13 @@
       "formats": [
         "markdown"
       ],
+      "id": "modules/executions",
+      "source": "the `executions` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
       "id": "modules/graph",
       "source": "the `graph` module of the canonical Majordomus capability registry"
     },
@@ -1049,6 +1112,13 @@
       ],
       "id": "modules/repository",
       "source": "the `repository` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/trace",
+      "source": "the `trace` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [

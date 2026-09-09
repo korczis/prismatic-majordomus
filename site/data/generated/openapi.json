@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 54,
-    "schemas": 266,
-    "tags": 21
+    "operations": 65,
+    "schemas": 307,
+    "tags": 23
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -45,24 +45,46 @@
   },
   "infrastructure": [
     {
+      "availability": "served-only",
+      "id": "home",
       "path": "/",
-      "what": "The index: name, version, repository root, and where the document, the reference, the capabilities, the peers and MCP are."
+      "what": "This process, and everything it serves"
     },
     {
+      "availability": "served-only",
+      "id": "api",
+      "path": "/api/v1",
+      "what": "The capability registry over HTTP"
+    },
+    {
+      "availability": "both",
+      "id": "openapi",
       "path": "/openapi.json",
-      "what": "This document, rendered from the registry at every request; what Swagger UI loads."
+      "what": "The OpenAPI document of the capability registry"
     },
     {
+      "availability": "served-only",
+      "id": "swagger",
       "path": "/swagger",
-      "what": ""
+      "what": "Swagger UI over the OpenAPI document"
     },
     {
+      "availability": "served-only",
+      "id": "mcp",
       "path": "/mcp",
-      "what": "MCP over HTTP (Streamable HTTP) for a second client; the shared server only."
+      "what": "MCP over HTTP for attached clients"
     },
     {
+      "availability": "served-only",
+      "id": "events",
+      "path": "/events",
+      "what": "The live channel: what this process's executions are doing"
+    },
+    {
+      "availability": "served-only",
+      "id": "cockpit",
       "path": "/cockpit",
-      "what": ""
+      "what": "The registry, rendered for a person"
     }
   ],
   "openapi": "3.1.0",
@@ -140,6 +162,66 @@
       "variants": []
     },
     {
+      "description": "Who asked, and which peer they are when this process knows.",
+      "is_enum": false,
+      "name": "Actor",
+      "properties": [
+        {
+          "description": "Where the request came from.",
+          "name": "kind",
+          "refs": [
+            "ActorKind"
+          ],
+          "required": true,
+          "type": "ActorKind"
+        },
+        {
+          "description": "The peer id, for a call that arrived through an MCP session.",
+          "name": "peer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI.",
+      "is_enum": true,
+      "name": "ActorKind",
+      "properties": [],
+      "type": "\"http\" | \"mcp\" | \"cli\" | \"internal\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Actor"
+      ],
+      "values": [
+        {
+          "description": "An HTTP client, which includes the Cockpit.",
+          "value": "http"
+        },
+        {
+          "description": "An MCP client attached to this process.",
+          "value": "mcp"
+        },
+        {
+          "description": "The command line of this process.",
+          "value": "cli"
+        },
+        {
+          "description": "This executable's own tests and benchmarks.",
+          "value": "internal"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One architecture decision the feature names.",
       "is_enum": false,
       "name": "AdrRef",
@@ -210,6 +292,86 @@
       "variants": []
     },
     {
+      "description": "What `announce` answers: the peer as recorded, and who else is on that ground.",
+      "is_enum": false,
+      "name": "Announced",
+      "properties": [
+        {
+          "description": "`p1`, `p2`, ...",
+          "name": "id",
+          "refs": [
+            "PeerId"
+          ],
+          "required": true,
+          "type": "PeerId"
+        },
+        {
+          "description": "The client behind it.",
+          "name": "client",
+          "refs": [
+            "ClientInfo"
+          ],
+          "required": true,
+          "type": "ClientInfo"
+        },
+        {
+          "description": "How it is attached.",
+          "name": "transport",
+          "refs": [
+            "Transport"
+          ],
+          "required": true,
+          "type": "Transport"
+        },
+        {
+          "description": "When it attached, RFC 3339, UTC.",
+          "name": "connected_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds since its last message.",
+          "name": "last_seen_seconds_ago",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Its announcement, when it made one.",
+          "name": "announcement",
+          "refs": [
+            "Announcement"
+          ],
+          "required": false,
+          "type": "Announcement | null"
+        },
+        {
+          "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case.",
+          "name": "overlaps",
+          "refs": [
+            "Overlap"
+          ],
+          "required": false,
+          "type": "array of Overlap"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "peers.announce"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What a peer said it is working on.",
       "is_enum": false,
       "name": "Announcement",
@@ -239,6 +401,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "Announced",
         "Peer"
       ],
       "values": [],
@@ -746,6 +909,32 @@
       "variants": []
     },
     {
+      "description": "What is known about the contract one commit served.",
+      "is_enum": true,
+      "name": "Attribution",
+      "properties": [],
+      "type": "\"attributed\" | \"unattributed\" | \"ambiguous\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitAttribution"
+      ],
+      "values": [
+        {
+          "description": "Exactly one issue's branches contain it.",
+          "value": "attributed"
+        },
+        {
+          "description": "No branch naming an issue contains it.",
+          "value": "unattributed"
+        },
+        {
+          "description": "Branches naming more than one issue contain it.",
+          "value": "ambiguous"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Every audience.",
       "is_enum": false,
       "name": "AudienceList",
@@ -1011,6 +1200,73 @@
       "variants": []
     },
     {
+      "description": "One branch that names an issue, with the commits it holds.",
+      "is_enum": false,
+      "name": "BranchTrace",
+      "properties": [
+        {
+          "description": "The ref, short: `feature/I1305-traceability`, or `origin/feature/I1305-traceability`\nwhen only the remote still has it.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the ref is a remote-tracking one and no local branch of the same name\nstands for it.",
+          "name": "remote",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The commit the ref points at.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it stands to the trunk.",
+          "name": "integration",
+          "refs": [
+            "Integration"
+          ],
+          "required": true,
+          "type": "Integration"
+        },
+        {
+          "description": "The merge commit that brought it into the trunk, when one did.",
+          "name": "merge_commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why the commit list is what it is, when it is worth a sentence.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commits this branch holds and the trunk did not, newest first, merges excluded.",
+          "name": "commits",
+          "refs": [
+            "CommitRef"
+          ],
+          "required": true,
+          "type": "array of CommitRef"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssueTrace"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The measured figures this deployment is held to. Each is written by the run that\nmeasured it; an absent one has not been measured yet and is not a licence.",
       "is_enum": false,
       "name": "Budgets",
@@ -1241,6 +1497,64 @@
       ]
     },
     {
+      "description": "The input of `executions.cancel`.",
+      "is_enum": false,
+      "name": "CancelInput",
+      "properties": [
+        {
+          "description": "The execution's id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.cancel"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `executions.cancel`.",
+      "is_enum": false,
+      "name": "CancelReport",
+      "properties": [
+        {
+          "description": "What asking achieved: `requested`, `already_requested` or `already_finished`.",
+          "name": "outcome",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the capability declares that it looks at its cancellation flag. When it\ndoes not, the request is recorded and the execution runs to completion.",
+          "name": "cancellable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The execution as it stands after the request.",
+          "name": "execution",
+          "refs": [
+            "ExecutionView"
+          ],
+          "required": true,
+          "type": "ExecutionView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.cancel"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A JSON Schema with, when the type has one, a stable component name (the type's title).",
       "is_enum": false,
       "name": "CanonicalSchema",
@@ -1401,6 +1715,15 @@
           ],
           "required": true,
           "type": "CachePolicy"
+        },
+        {
+          "description": "What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself.",
+          "name": "execution",
+          "refs": [
+            "ExecutionPolicy"
+          ],
+          "required": true,
+          "type": "ExecutionPolicy"
         }
       ],
       "type": "object",
@@ -1457,7 +1780,7 @@
       "variants": []
     },
     {
-      "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.",
+      "description": "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`].",
       "is_enum": true,
       "name": "CapabilityKind",
       "properties": [],
@@ -2119,6 +2442,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "Announced",
         "Peer"
       ],
       "values": [],
@@ -3459,6 +3783,147 @@
       ]
     },
     {
+      "description": "One commit and the contract it served, or the fact that none can be found.",
+      "is_enum": false,
+      "name": "CommitAttribution",
+      "properties": [
+        {
+          "description": "The commit.",
+          "name": "commit",
+          "refs": [
+            "CommitRef"
+          ],
+          "required": true,
+          "type": "CommitRef"
+        },
+        {
+          "description": "What is known.",
+          "name": "attribution",
+          "refs": [
+            "Attribution"
+          ],
+          "required": true,
+          "type": "Attribution"
+        },
+        {
+          "description": "The issue, when exactly one claims it.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestone that issue belongs to, filled by the caller that has the index.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every issue whose branches contain it: one when attributed, none when unattributed,\nmore than one when ambiguous.",
+          "name": "issues",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The branches that contain it, by the names their refs carry.",
+          "name": "branches",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Why the verdict is what it is, in one line a person can act on.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "trace.commit"
+      ],
+      "used_by_schemas": [
+        "TraceReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One commit, exactly as git names it. Nothing here is stored anywhere: the whole record\nis re-read from the object database on every call.",
+      "is_enum": false,
+      "name": "CommitRef",
+      "properties": [
+        {
+          "description": "The full object name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The abbreviated object name, as this repository abbreviates it.",
+          "name": "short",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The author, as the commit records them.",
+          "name": "author",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The author date, ISO 8601 as the commit records it.",
+          "name": "date",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The subject line.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BranchTrace",
+        "CommitAttribution"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How closely a file could be compared with what the index holds.\n\nA file that is one object is compared byte for byte, because the index kept its whole\ncontent. A collection file holds one object per member, and what the index kept for each\nis that member as JSON rather than the file's text — so the strongest thing that can be\nsaid without re-parsing it is whether its size is what it was. The report says which\ncomparison was made rather than implying the stronger one.",
+      "is_enum": true,
+      "name": "Comparison",
+      "properties": [],
+      "type": "\"content\" | \"size\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftedObject"
+      ],
+      "values": [
+        {
+          "description": "Byte for byte against the content the index holds.",
+          "value": "content"
+        },
+        {
+          "description": "By size against the size the index recorded.",
+          "value": "size"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "When the edge considers a machine loaded, in requests.",
       "is_enum": false,
       "name": "Concurrency",
@@ -3990,6 +4455,41 @@
       "used_by_schemas": [
         "ScopeReport"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `executions.demonstrate`.",
+      "is_enum": false,
+      "name": "DemonstrateReport",
+      "properties": [
+        {
+          "description": "How many steps ran.",
+          "name": "steps",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "How long it took, in milliseconds.",
+          "name": "elapsed_ms",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether anything was watching: false when it was called directly rather than as an\nexecution, which is the difference this capability exists to show.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.demonstrate"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -4953,6 +5453,66 @@
       "variants": []
     },
     {
+      "description": "One file of the layer that is no longer what the index read.",
+      "is_enum": false,
+      "name": "DriftedObject",
+      "properties": [
+        {
+          "description": "Its repository-relative path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it stands.",
+          "name": "standing",
+          "refs": [
+            "ObjectStanding"
+          ],
+          "required": true,
+          "type": "ObjectStanding"
+        },
+        {
+          "description": "How it was compared.",
+          "name": "comparison",
+          "refs": [
+            "Comparison"
+          ],
+          "required": true,
+          "type": "Comparison"
+        },
+        {
+          "description": "How many objects of the index came from it.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "One of the URIs it holds, so a reader can see what is affected.",
+          "name": "example_uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is wrong, for a person.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VerifyReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One directed edge. Both ends are node ids of the same graph; a derivation that cannot\nresolve an end adds an external node rather than a dangling edge.",
       "is_enum": false,
       "name": "Edge",
@@ -5119,12 +5679,20 @@
         "distribution.status",
         "environment.status",
         "environment.explain",
+        "executions.list",
+        "executions.cancel",
+        "executions.demonstrate",
+        "executions.events",
+        "executions.get",
+        "executions.protocol",
+        "executions.start",
         "graph.get",
         "graph.list",
         "health.report",
         "health.live",
         "objects.get",
         "objects.list",
+        "objects.verify",
         "obligations.vocabulary",
         "obligations.closure",
         "peers.list",
@@ -5142,6 +5710,9 @@
         "repository.scope",
         "repository.scope_classify",
         "objects.search",
+        "trace.report",
+        "trace.commit",
+        "trace.issue",
         "web.surfaces",
         "why.list",
         "why.areas",
@@ -5183,6 +5754,66 @@
       "used_by_schemas": [
         "ErrorBody"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `executions.events`: one page of an execution's retained history.",
+      "is_enum": false,
+      "name": "EventHistory",
+      "properties": [
+        {
+          "description": "The execution the events belong to.",
+          "name": "execution_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the execution stands now, so a client needs one request rather than two.",
+          "name": "state",
+          "refs": [
+            "ExecutionState"
+          ],
+          "required": true,
+          "type": "ExecutionState"
+        },
+        {
+          "description": "The events, oldest first.",
+          "name": "events",
+          "refs": [
+            "ExecutionEvent"
+          ],
+          "required": true,
+          "type": "array of ExecutionEvent"
+        },
+        {
+          "description": "The sequence of the last event here: the cursor for the next page, and the one to\nopen the live channel with.",
+          "name": "last_sequence",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether more events follow this page right now.",
+          "name": "more",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether events before this page had already been dropped by the store's bound.",
+          "name": "truncated",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.events"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -5308,6 +5939,826 @@
       "used_by": [],
       "used_by_schemas": [
         "MomentDetail"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether two executions of one capability may overlap.",
+      "is_enum": true,
+      "name": "ExecutionConcurrency",
+      "properties": [],
+      "type": "\"unrestricted\" | \"serial\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionPolicy"
+      ],
+      "values": [
+        {
+          "description": "Any number at once. Every read is one of these: the index and the registry are\nimmutable for the life of the process, so concurrent readers cannot interfere.",
+          "value": "unrestricted"
+        },
+        {
+          "description": "One at a time. A second execution of the same capability waits for the first, which\nis what a capability that changes anything — this process's own memory included —\nneeds in order to be reasoned about at all.",
+          "value": "serial"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A structured finding an execution reported on its way, distinct from its outcome.",
+      "is_enum": false,
+      "name": "ExecutionDiagnostic",
+      "properties": [
+        {
+          "description": "How bad.",
+          "name": "severity",
+          "refs": [
+            "Severity"
+          ],
+          "required": true,
+          "type": "Severity"
+        },
+        {
+          "description": "A stable machine-readable code.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line, for a person.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The rest, when there is more.",
+          "name": "detail",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What to do about it, when there is something.",
+          "name": "suggestion",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionEvent",
+        "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written.",
+      "is_enum": true,
+      "name": "ExecutionEffect",
+      "properties": [],
+      "type": "\"read\" | \"process_state\" | \"repository_mutation\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionPolicy"
+      ],
+      "values": [
+        {
+          "description": "Nothing changes. Every query and every resource of this executable.",
+          "value": "read"
+        },
+        {
+          "description": "This process's own memory changes, and nothing outside it.",
+          "value": "process_state"
+        },
+        {
+          "description": "The repository changes.\n\nNothing classifies to this, and the doctrine of this tool is why: no capability of\nany kind writes to the repository. It is on the model so that the day one does, it\nsays so here — where a projection already reads it and a client already asks before\nrunning it — rather than in whichever page happens to render its button.",
+          "value": "repository_mutation"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Why an execution ended badly, in the repository's diagnostic vocabulary rather than in\nRust's: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution's correlation id; the panic itself is\non the process's own error stream, where the operator running the server can read it.",
+      "is_enum": false,
+      "name": "ExecutionError",
+      "properties": [
+        {
+          "description": "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What went wrong, for a person.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to do about it, when there is something.",
+          "name": "suggestion",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The execution this failure belongs to, so a log line and a UI agree.",
+          "name": "correlation_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionEvent",
+        "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world.",
+      "is_enum": false,
+      "name": "ExecutionEvent",
+      "properties": [
+        {
+          "description": "The protocol version, [`PROTOCOL_VERSION`].",
+          "name": "schema_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identity of this event: the execution's id and the sequence, so a client that\ndeduplicates needs no composite key of its own.",
+          "name": "event_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The execution it is about.",
+          "name": "execution_id",
+          "refs": [
+            "ExecutionId"
+          ],
+          "required": true,
+          "type": "ExecutionId"
+        },
+        {
+          "description": "Its position in that execution's stream, from 1, without gaps.",
+          "name": "sequence",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "When the event was produced, RFC 3339 in UTC.",
+          "name": "timestamp",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "one of 12 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "EventHistory"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The execution was accepted and exists. Carries what it will run and with what,\nredacted, so a client that joins at the first event needs nothing else to render a\nheading.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.created\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "It is waiting for a worker.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.queued\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A worker picked it up and is about to enter the handler.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.started\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "How far along it is.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.progress\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [
+                "ProgressView"
+              ],
+              "required": true,
+              "type": "ProgressView"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A named phase was entered.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.step.started\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A named phase finished.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.step.completed\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A line of output.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.log\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [
+                "LogStream"
+              ],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A structured finding, distinct from the outcome.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.diagnostic\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [
+                "ExecutionDiagnostic"
+              ],
+              "required": true,
+              "type": "ExecutionDiagnostic"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Cancellation was asked for; the handler has not stopped yet.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.cancelling\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "It stopped because it was asked to.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.cancelled\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "It finished, and the handler returned an output.\n\nThe output is on this event and not on one of its own, because a client must never\nbe able to read \"succeeded\" and find no result: the state and the value it produced\nare one fact and travel together.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.completed\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "It finished, and it did not.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.failed\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [
+                "ExecutionError"
+              ],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.",
+      "is_enum": false,
+      "name": "ExecutionId",
+      "properties": [],
+      "type": "string",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionEvent",
+        "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where to read more about one execution, in this server's own terms.\n\nEvery value is derived from the registry's declared routes and from the live channel's\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve.",
+      "is_enum": false,
+      "name": "ExecutionLinks",
+      "properties": [
+        {
+          "description": "The snapshot: `GET /api/v1/executions/get?id=…`.",
+          "name": "self",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The retained history: `GET /api/v1/executions/events?id=…`.",
+          "name": "events",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where to ask it to stop: `POST /api/v1/executions/cancel`.",
+          "name": "cancel",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The live channel, from the beginning: `GET /events?execution=…`.",
+          "name": "websocket",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The page a person opens.",
+          "name": "cockpit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `executions.list`.",
+      "is_enum": false,
+      "name": "ExecutionList",
+      "properties": [
+        {
+          "description": "How many are answered here.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many this process remembers in total, before the filter.",
+          "name": "remembered",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are not finished.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are waiting for a worker.",
+          "name": "queued",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many live channels are following them.",
+          "name": "live_channels",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The executions, newest first.",
+          "name": "executions",
+          "refs": [
+            "ExecutionView"
+          ],
+          "required": true,
+          "type": "array of ExecutionView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What running a capability as an execution means: what it changes, whether asking it to\nstop achieves anything, and whether two of them may overlap.\n\nThe effect and the concurrency are classified from the kind by\n[`ExecutionPolicy::classify`], for the same reason [`Availability`] is: the facts are\nalready on the declaration, and asking each `capability!` block to restate them would be\none more thing that can disagree with itself.\n\nCancellability is the one thing the kind cannot decide, because it is a fact about the\nhandler: whether it looks at its cancellation flag and stops. A handler that does says\nso with [`crate::capability::Executable::cancellable`], and a client is then told\nwhether a Cancel button will achieve anything instead of being given one that lies.",
+      "is_enum": false,
+      "name": "ExecutionPolicy",
+      "properties": [
+        {
+          "description": "What it changes.",
+          "name": "effect",
+          "refs": [
+            "ExecutionEffect"
+          ],
+          "required": true,
+          "type": "ExecutionEffect"
+        },
+        {
+          "description": "Whether asking it to stop does anything. A task looks at its cancellation flag; a\nquery and a command do not, and a client is told so rather than being given a\nbutton that lies.",
+          "name": "cancellable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether two of them may overlap.",
+          "name": "concurrency",
+          "refs": [
+            "ExecutionConcurrency"
+          ],
+          "required": true,
+          "type": "ExecutionConcurrency"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Capability"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.",
+      "is_enum": true,
+      "name": "ExecutionState",
+      "properties": [],
+      "type": "\"queued\" | \"running\" | \"cancelling\" | \"succeeded\" | \"failed\" | \"cancelled\"",
+      "used_by": [
+        "executions.list"
+      ],
+      "used_by_schemas": [
+        "EventHistory",
+        "ExecutionView"
+      ],
+      "values": [
+        {
+          "description": "Accepted, and no worker has picked it up.",
+          "value": "queued"
+        },
+        {
+          "description": "The handler is running.",
+          "value": "running"
+        },
+        {
+          "description": "Cancellation was asked for and the handler has not stopped yet.",
+          "value": "cancelling"
+        },
+        {
+          "description": "The handler returned an output.",
+          "value": "succeeded"
+        },
+        {
+          "description": "The handler returned an error, or the worker could not run it.",
+          "value": "failed"
+        },
+        {
+          "description": "It stopped because it was asked to.",
+          "value": "cancelled"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One execution with the links to everything else about it.",
+      "is_enum": false,
+      "name": "ExecutionView",
+      "properties": [
+        {
+          "description": "The identity.",
+          "name": "id",
+          "refs": [
+            "ExecutionId"
+          ],
+          "required": true,
+          "type": "ExecutionId"
+        },
+        {
+          "description": "The capability that ran, by its canonical id.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "That capability's title, so a list needs no second lookup.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is.",
+          "name": "state",
+          "refs": [
+            "ExecutionState"
+          ],
+          "required": true,
+          "type": "ExecutionState"
+        },
+        {
+          "description": "When it was accepted, RFC 3339 in UTC.",
+          "name": "created_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the handler was entered.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it reached a final state.",
+          "name": "finished_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How long it ran, in milliseconds, once it has finished.",
+          "name": "duration_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The input it was given, with every value the input schema marks sensitive replaced.",
+          "name": "input",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "What the handler returned, for a succeeded execution and never before.",
+          "name": "output",
+          "refs": [],
+          "required": false,
+          "type": "any"
+        },
+        {
+          "description": "Why it failed, for a failed execution and never before.",
+          "name": "error",
+          "refs": [
+            "ExecutionError"
+          ],
+          "required": false,
+          "type": "ExecutionError | null"
+        },
+        {
+          "description": "The last progress the handler reported.",
+          "name": "progress",
+          "refs": [
+            "ProgressView"
+          ],
+          "required": false,
+          "type": "ProgressView | null"
+        },
+        {
+          "description": "The steps it entered, in order.",
+          "name": "steps",
+          "refs": [
+            "StepView"
+          ],
+          "required": false,
+          "type": "array of StepView"
+        },
+        {
+          "description": "The findings it reported.",
+          "name": "diagnostics",
+          "refs": [
+            "ExecutionDiagnostic"
+          ],
+          "required": false,
+          "type": "array of ExecutionDiagnostic"
+        },
+        {
+          "description": "The sequence number of the last event: the cursor a client subscribes from.",
+          "name": "last_sequence",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "How many events it has produced, including the ones no longer retained.",
+          "name": "event_count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether the retained event history has lost its oldest entries to the bound.",
+          "name": "events_truncated",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether asking to cancel this execution will do anything: the capability's policy.",
+          "name": "cancellable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Who asked for it.",
+          "name": "actor",
+          "refs": [
+            "Actor"
+          ],
+          "required": true,
+          "type": "Actor"
+        },
+        {
+          "description": "Which repository it ran against.",
+          "name": "repository",
+          "refs": [
+            "RepositoryRef"
+          ],
+          "required": true,
+          "type": "RepositoryRef"
+        },
+        {
+          "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects.",
+          "name": "correlation_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where to read more.",
+          "name": "links",
+          "refs": [
+            "ExecutionLinks"
+          ],
+          "required": true,
+          "type": "ExecutionLinks"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.get",
+        "executions.start"
+      ],
+      "used_by_schemas": [
+        "CancelReport",
+        "ExecutionList"
       ],
       "values": [],
       "variants": []
@@ -6883,6 +8334,36 @@
       "variants": []
     },
     {
+      "description": "How a branch stands to the trunk, which is what decides which commits are its own.",
+      "is_enum": true,
+      "name": "Integration",
+      "properties": [],
+      "type": "\"open\" | \"merged\" | \"absorbed\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BranchTrace"
+      ],
+      "values": [
+        {
+          "description": "Not reachable from the trunk: its commits are the ones the trunk does not have.",
+          "value": "open"
+        },
+        {
+          "description": "Reachable from the trunk through a merge commit, which the trace names: its commits\nare the ones that merge brought in.",
+          "value": "merged"
+        },
+        {
+          "description": "Reachable from the trunk with no merge commit of its own — fast-forwarded, or\nrebased onto it. Its commits cannot be told from the trunk's and none are claimed.",
+          "value": "absorbed"
+        },
+        {
+          "description": "The trunk is unknown, so there is nothing to measure the branch against.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Which interface a process listens on.",
       "is_enum": true,
       "name": "Interface",
@@ -6902,6 +8383,73 @@
           "value": "all"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Everything git knows about one issue's realisation.",
+      "is_enum": false,
+      "name": "IssueTrace",
+      "properties": [
+        {
+          "description": "The issue id, as the project model spells it.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the project model declares this id. False is not an error and not an\nempty answer: it says the id was looked for and the model does not have it, which a\ncaller must be able to tell apart from \"declared, and nothing has realised it yet\".\nA repository with no project model at all answers `false` for every id rather than\nrefusing, because the branches naming an id are still derivable there.",
+          "name": "declared",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The milestone the canonical issue record names. Git does not hold this edge and\nnothing here derives it: the caller with the index fills it in, and it is `null` in\na repository whose issue record does not name one.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The trunk every branch was measured against.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branches that name it, local first.",
+          "name": "branches",
+          "refs": [
+            "BranchTrace"
+          ],
+          "required": true,
+          "type": "array of BranchTrace"
+        },
+        {
+          "description": "How many distinct commits the branches hold between them.",
+          "name": "commits",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "True when every branch's commits could be derived. False when at least one reached\nthe trunk without a merge commit, so part of the work is not distinguishable.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "trace.issue"
+      ],
+      "used_by_schemas": [
+        "TraceReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -7043,6 +8591,55 @@
       "variants": []
     },
     {
+      "description": "What this process's execution store keeps.",
+      "is_enum": false,
+      "name": "LimitsView",
+      "properties": [
+        {
+          "description": "How many executions are remembered.",
+          "name": "max_executions",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many events are retained per execution.",
+          "name": "max_events",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The longest a single log line may be.",
+          "name": "max_log_chars",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many executions run at once.",
+          "name": "max_running",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How far a live channel may fall behind before it is told to resynchronise.",
+          "name": "max_subscriber_queue",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProtocolReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The address the process listens on.",
       "is_enum": false,
       "name": "Listen",
@@ -7100,6 +8697,32 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which stream a log line came from.",
+      "is_enum": true,
+      "name": "LogStream",
+      "properties": [],
+      "type": "\"stdout\" | \"stderr\" | \"handler\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionEvent"
+      ],
+      "values": [
+        {
+          "description": "The standard output of a child process the handler ran.",
+          "value": "stdout"
+        },
+        {
+          "description": "Its standard error.",
+          "value": "stderr"
+        },
+        {
+          "description": "The handler itself, saying something it wants a reader to see.",
+          "value": "handler"
+        }
+      ],
       "variants": []
     },
     {
@@ -8277,6 +9900,36 @@
       "variants": []
     },
     {
+      "description": "How one file stands against what the index read from it.",
+      "is_enum": true,
+      "name": "ObjectStanding",
+      "properties": [],
+      "type": "\"current\" | \"changed\" | \"missing\" | \"unreadable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DriftedObject"
+      ],
+      "values": [
+        {
+          "description": "It is what the index read.",
+          "value": "current"
+        },
+        {
+          "description": "It is there and it has changed since the index was built.",
+          "value": "changed"
+        },
+        {
+          "description": "The file the index read is no longer there.",
+          "value": "missing"
+        },
+        {
+          "description": "It is there and could not be read.",
+          "value": "unreadable"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One object, summarised for a listing.",
       "is_enum": false,
       "name": "ObjectSummary",
@@ -8963,6 +10616,116 @@
       "variants": []
     },
     {
+      "description": "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch.",
+      "is_enum": false,
+      "name": "Overlap",
+      "properties": [
+        {
+          "description": "The other peer.",
+          "name": "peer",
+          "refs": [
+            "PeerId"
+          ],
+          "required": true,
+          "type": "PeerId"
+        },
+        {
+          "description": "Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What it said it was doing.",
+          "name": "intent",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The claims that meet: one line per pair, `yours` and `theirs`.",
+          "name": "paths",
+          "refs": [
+            "OverlapPath"
+          ],
+          "required": true,
+          "type": "array of OverlapPath"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Announced",
+        "PeerList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One pair of claims that contain one another.",
+      "is_enum": false,
+      "name": "OverlapPath",
+      "properties": [
+        {
+          "description": "The path the announcing peer claimed.",
+          "name": "yours",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The path the other peer claimed.",
+          "name": "theirs",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Overlap"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One query parameter of the live channel.",
+      "is_enum": false,
+      "name": "ParameterView",
+      "properties": [
+        {
+          "description": "Its name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it does.",
+          "name": "description",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it must be given.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProtocolReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One peer as the board lists it.",
       "is_enum": false,
       "name": "Peer",
@@ -9009,6 +10772,13 @@
           "type": "integer (uint64)"
         },
         {
+          "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.",
+          "name": "attached",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
           "description": "Its announcement, when it made one.",
           "name": "announcement",
           "refs": [
@@ -9019,9 +10789,7 @@
         }
       ],
       "type": "object",
-      "used_by": [
-        "peers.announce"
-      ],
+      "used_by": [],
       "used_by_schemas": [
         "PeerList"
       ],
@@ -9036,6 +10804,8 @@
       "type": "string",
       "used_by": [],
       "used_by_schemas": [
+        "Announced",
+        "Overlap",
         "Peer",
         "PeerList"
       ],
@@ -9064,13 +10834,22 @@
           "type": "PeerId | null"
         },
         {
-          "description": "The peers, in attachment order; `p1` started the server.",
+          "description": "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`.",
           "name": "peers",
           "refs": [
             "Peer"
           ],
           "required": true,
           "type": "array of Peer"
+        },
+        {
+          "description": "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work.",
+          "name": "overlaps",
+          "refs": [
+            "Overlap"
+          ],
+          "required": false,
+          "type": "array of Overlap"
         }
       ],
       "type": "object",
@@ -9436,6 +11215,42 @@
       "variants": []
     },
     {
+      "description": "How far along an execution is.",
+      "is_enum": false,
+      "name": "ProgressView",
+      "properties": [
+        {
+          "description": "Units done.",
+          "name": "current",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Units in total, when the handler knows how many.",
+          "name": "total",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "What is being done, for a reader.",
+          "name": "message",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionEvent",
+        "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the project is, from the crate manifest and the prose written once in\n[`crate::about`]. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers.",
       "is_enum": false,
       "name": "ProjectIdentity",
@@ -9533,6 +11348,101 @@
           "value": "unknown"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `executions.protocol`: the live channel's whole contract, derived from\nthe types that implement it.",
+      "is_enum": false,
+      "name": "ProtocolReport",
+      "properties": [
+        {
+          "description": "The version of the event protocol this server speaks.",
+          "name": "protocol_version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the live channel is: a path on this same server, not a second daemon.",
+          "name": "websocket",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How the subscription is expressed, and what a reconnect sends.",
+          "name": "subscription",
+          "refs": [
+            "ParameterView"
+          ],
+          "required": true,
+          "type": "array of ParameterView"
+        },
+        {
+          "description": "How many seconds of quiet before the server pings.",
+          "name": "heartbeat_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "How many live channels this process serves at once.",
+          "name": "max_connections",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many retained events a scoped connection replays before going live.",
+          "name": "max_replay",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The event types a client may receive, from the one enum that defines them.",
+          "name": "event_types",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The stream's own control messages.",
+          "name": "stream_types",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The JSON Schema of an event, derived from the Rust type.",
+          "name": "event_schema",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "The JSON Schema of a control message, derived from the Rust type.",
+          "name": "stream_schema",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "What the store keeps, so a client knows what it may ask for.",
+          "name": "limits",
+          "refs": [
+            "LimitsView"
+          ],
+          "required": true,
+          "type": "LimitsView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.protocol"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -11105,6 +13015,41 @@
       "variants": []
     },
     {
+      "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them.",
+      "is_enum": false,
+      "name": "RepositoryRef",
+      "properties": [
+        {
+          "description": "The repository's name: the last component of its root.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stable identity two processes over one checkout both compute.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch checked out, when git can say.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The repository, its layer, its git state, and the state of this process's index.",
       "is_enum": false,
       "name": "RepositoryReport",
@@ -12129,6 +14074,7 @@
       "used_by": [],
       "used_by_schemas": [
         "Diagnostic",
+        "ExecutionDiagnostic",
         "Finding",
         "ProductFinding",
         "TopologyDiagnostic"
@@ -12252,6 +14198,34 @@
       "variants": []
     },
     {
+      "description": "The input of `executions.start`: which capability to run, and with what.",
+      "is_enum": false,
+      "name": "StartInput",
+      "properties": [
+        {
+          "description": "The canonical id of the capability to run (`health.report`, `objects.verify`).",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its input, as its own input schema describes it; an empty object when it takes none.",
+          "name": "input",
+          "refs": [],
+          "required": false,
+          "type": "any"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.start"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether every discovered file became an object.",
       "is_enum": true,
       "name": "State",
@@ -12372,6 +14346,90 @@
           "value": "failed"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Where a step of an execution stands.",
+      "is_enum": true,
+      "name": "StepState",
+      "properties": [],
+      "type": "\"running\" | \"completed\" | \"failed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "StepView"
+      ],
+      "values": [
+        {
+          "description": "Entered and not finished.",
+          "value": "running"
+        },
+        {
+          "description": "Finished, and what it was asked to do happened.",
+          "value": "completed"
+        },
+        {
+          "description": "Finished, and it did not.",
+          "value": "failed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One named phase of an execution, as the handler reported it.",
+      "is_enum": false,
+      "name": "StepView",
+      "properties": [
+        {
+          "description": "A stable name, unique within the execution.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line for a reader.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "state",
+          "refs": [
+            "StepState"
+          ],
+          "required": true,
+          "type": "StepState"
+        },
+        {
+          "description": "When it was entered, RFC 3339 in UTC.",
+          "name": "started_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it finished, when it has.",
+          "name": "finished_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What it said when it finished, when it said anything.",
+          "name": "detail",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutionView"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -13419,6 +15477,131 @@
       "variants": []
     },
     {
+      "description": "The whole traceability answer: every issue git can say something about, and every commit\nof a stretch of the trunk with the contract it served or the fact that it has none.",
+      "is_enum": false,
+      "name": "TraceReport",
+      "properties": [
+        {
+          "description": "The trunk every branch and commit was measured against.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many trunk commits were attributed.",
+          "name": "examined",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The issues that at least one branch names, in id order.",
+          "name": "issues",
+          "refs": [
+            "IssueTrace"
+          ],
+          "required": true,
+          "type": "array of IssueTrace"
+        },
+        {
+          "description": "The issue ids the project model declares that no ref names. Not a fault: an issue\nnobody has started has no branch yet.",
+          "name": "without_branch",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The examined trunk commits, newest first.",
+          "name": "commits",
+          "refs": [
+            "CommitAttribution"
+          ],
+          "required": true,
+          "type": "array of CommitAttribution"
+        },
+        {
+          "description": "The counts, so a caller need not add them up.",
+          "name": "tallies",
+          "refs": [
+            "TraceTallies"
+          ],
+          "required": true,
+          "type": "TraceTallies"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "trace.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The counts of one report.",
+      "is_enum": false,
+      "name": "TraceTallies",
+      "properties": [
+        {
+          "description": "Issue ids the project model declares.",
+          "name": "issues_declared",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, the ones at least one ref names.",
+          "name": "issues_with_branch",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Branches naming an issue.",
+          "name": "branches",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct commits those branches claim.",
+          "name": "branch_commits",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Examined trunk commits with exactly one issue.",
+          "name": "attributed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Examined trunk commits no branch naming an issue contains.",
+          "name": "unattributed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Examined trunk commits more than one issue claims.",
+          "name": "ambiguous",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TraceReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How a peer reached the server.",
       "is_enum": true,
       "name": "Transport",
@@ -13426,6 +15609,7 @@
       "type": "\"stdio\" | \"http\"",
       "used_by": [],
       "used_by_schemas": [
+        "Announced",
         "Peer"
       ],
       "values": [
@@ -13713,6 +15897,78 @@
       "variants": []
     },
     {
+      "description": "The answer of `objects.verify`.",
+      "is_enum": false,
+      "name": "VerifyReport",
+      "properties": [
+        {
+          "description": "How many files were read.",
+          "name": "files",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many of them are what the index read.",
+          "name": "current",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are not, of any kind of not.",
+          "name": "drifted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many objects of the index those files carry.",
+          "name": "objects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many were compared byte for byte rather than by size.",
+          "name": "compared_by_content",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The index fingerprint this process is serving.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the index is still a true picture of the working tree, as far as this\ncomparison can tell.",
+          "name": "index_is_current",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The files that are not, with what is wrong with each.",
+          "name": "findings",
+          "refs": [
+            "DriftedObject"
+          ],
+          "required": true,
+          "type": "array of DriftedObject"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "objects.verify"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One finding: what, where, why, and what to do.",
       "is_enum": false,
       "name": "Violation",
@@ -13916,7 +16172,7 @@
       "is_enum": true,
       "name": "WaiverReason",
       "properties": [],
-      "type": "\"not_executable\" | \"destructive\" | \"external_dependency\"",
+      "type": "\"not_executable\" | \"destructive\" | \"external_dependency\" | \"transient_state\"",
       "used_by": [],
       "used_by_schemas": [
         "BenchmarkPolicy"
@@ -13933,6 +16189,10 @@
         {
           "description": "The capability talks to something the benchmark host cannot provide.",
           "value": "external_dependency"
+        },
+        {
+          "description": "The capability starts, or answers about, work that exists only while it is running.\nA benchmark host cannot stage an execution to read, and running the operation in a\nloop would measure the work rather than the operation.",
+          "value": "transient_state"
         }
       ],
       "variants": []
@@ -15658,6 +17918,486 @@
       ]
     },
     {
+      "description": "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.",
+      "name": "executions",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "executions list",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions?limit=50\"",
+          "description": "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question.",
+          "id": "executions.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "executions",
+            "uri": "majordomus://executions"
+          },
+          "mcp_tool": "majordomus_executions",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only executions in this state.",
+              "examples": [],
+              "name": "state",
+              "required": false,
+              "type": "ExecutionState | null"
+            },
+            {
+              "description": "Only executions of this capability.",
+              "examples": [],
+              "name": "capability",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "How many, newest first; the default and the bound are both `200`.",
+              "examples": [
+                {
+                  "case": "recent",
+                  "value": "50"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint)"
+            }
+          ],
+          "path": "/api/v1/executions",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "List executions: the result.",
+              "schema": "ExecutionList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ExecutionList",
+          "stability": "behaviorally_verified",
+          "summary": "List executions"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [],
+          "body_schema": "CancelInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "executions cancel",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/cancel\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Set the execution's cancellation flag and say so on its stream. Cancellation is cooperative: a task looks at its flag and stops, and a capability whose policy says it is not cancellable runs to completion — which the answer says rather than pretending otherwise.",
+          "id": "executions.cancel",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_execution_cancel",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/executions/cancel",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Ask an execution to stop: the result.",
+              "schema": "CancelReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CancelReport",
+          "stability": "behaviorally_verified",
+          "summary": "Ask an execution to stop"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions/demonstrate?steps=1&delay_ms=0\"",
+          "description": "Walk a given number of steps, reporting each one, logging a line and advancing progress, then finish — or fail at a step you name. It exists so that an operator, a probe and an end-to-end test can prove the whole path works without waiting for real work: it reads nothing, writes nothing, and its only effect is the events it produces. It looks at its cancellation flag between steps and while it waits, so cancelling it stops it.",
+          "id": "executions.demonstrate",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_demonstrate_execution",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "How many steps to walk through.",
+              "examples": [
+                {
+                  "case": "immediate",
+                  "value": "1"
+                }
+              ],
+              "name": "steps",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "How long each step takes, in milliseconds. Bounded at ten seconds a step, so this\ncannot be used to hold a worker.",
+              "examples": [
+                {
+                  "case": "immediate",
+                  "value": "0"
+                }
+              ],
+              "name": "delay_ms",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "Fail on this step instead of completing, to show what a failure looks like.",
+              "examples": [],
+              "name": "fail_at",
+              "required": false,
+              "type": "integer (uint64)"
+            }
+          ],
+          "path": "/api/v1/executions/demonstrate",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Demonstrate an execution: the result.",
+              "schema": "DemonstrateReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DemonstrateReport",
+          "stability": "behaviorally_verified",
+          "summary": "Demonstrate an execution"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "executions events",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions/events\"",
+          "description": "The retained events of one execution, oldest first, after a sequence number. This is what a browser reads after a reload and what a client reads after a reconnect: the page carries the cursor to open the live channel with, so nothing is missed between the history and the stream.",
+          "id": "executions.events",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_execution_events",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The execution's id.",
+              "examples": [],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Only events after this sequence number: the cursor a reconnecting client holds.",
+              "examples": [],
+              "name": "after",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "How many, oldest first; the default and the bound are both `500`.",
+              "examples": [],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint)"
+            }
+          ],
+          "path": "/api/v1/executions/events",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "An execution's event history: the result.",
+              "schema": "EventHistory",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EventHistory",
+          "stability": "behaviorally_verified",
+          "summary": "An execution's event history"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "executions show",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions/get\"",
+          "description": "The whole of what is known about one execution: its state, its input as it was stored, its steps, its progress, its diagnostics, and its output or its error. Taken under one lock, so a snapshot that says it succeeded carries what it produced.",
+          "id": "executions.get",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_execution",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The execution's id.",
+              "examples": [],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/executions/get",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "One execution: the result.",
+              "schema": "ExecutionView",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ExecutionView",
+          "stability": "behaviorally_verified",
+          "summary": "One execution"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "executions protocol",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions/protocol\"",
+          "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
+          "id": "executions.protocol",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "execution-protocol",
+            "uri": "majordomus://executions/protocol"
+          },
+          "mcp_tool": "majordomus_execution_protocol",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/executions/protocol",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The live channel's contract: the result.",
+              "schema": "ProtocolReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ProtocolReport",
+          "stability": "behaviorally_verified",
+          "summary": "The live channel's contract"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "demonstrate",
+              "json": "{\"capability\":\"executions.demonstrate\",\"input\":{\"steps\":1,\"delay_ms\":0}}"
+            }
+          ],
+          "body_schema": "StartInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "run",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/start\" -H \"content-type: application/json\" -d '{\"capability\":\"executions.demonstrate\",\"input\":{\"steps\":1,\"delay_ms\":0}}'",
+          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything.",
+          "id": "executions.start",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_execution_start",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/executions/start",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::executions",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Start a capability as an execution: the result.",
+              "schema": "ExecutionView",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ExecutionView",
+          "stability": "behaviorally_verified",
+          "summary": "Start a capability as an execution"
+        }
+      ]
+    },
+    {
       "description": "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape.",
       "name": "graph",
       "operations": [
@@ -16126,6 +18866,78 @@
           "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/objects/verify?limit=25\"",
+          "description": "Read every file the layer was built from and compare it with what this process is serving. The index is built once at start-up and kept, which is what makes every other request cost nothing and what makes a file edited afterwards be served as it was; this is how a running server says whether that has happened, without being restarted to find out. A file that is one object is compared byte for byte; a collection file, whose objects the index keeps as members rather than as text, is compared by size, and every finding says which comparison was made. It reads every file of the layer, so it reports its progress file by file and stops when it is asked to.",
+          "id": "objects.verify",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_verify_objects",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only objects of this kind.",
+              "examples": [],
+              "name": "kind",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "How many objects to read at most; every one of them when absent.",
+              "examples": [
+                {
+                  "case": "bounded",
+                  "value": "25"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint)"
+            }
+          ],
+          "path": "/api/v1/objects/verify",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::objects",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Verify the index against the working tree: the result.",
+              "schema": "VerifyReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "VerifyReport",
+          "stability": "behaviorally_verified",
+          "summary": "Verify the index against the working tree"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
           "cache": "process",
           "cache_detail": "max_entries=64",
           "cli": "",
@@ -16412,7 +19224,7 @@
           "responses": [
             {
               "description": "Announce what this peer is working on: the result.",
-              "schema": "Peer",
+              "schema": "Announced",
               "status": "200"
             },
             {
@@ -16441,7 +19253,7 @@
               "status": "default"
             }
           ],
-          "result_schema": "Peer",
+          "result_schema": "Announced",
           "stability": "behaviorally_verified",
           "summary": "Announce what this peer is working on"
         }
@@ -17273,6 +20085,210 @@
           "result_schema": "Classification",
           "stability": "behaviorally_verified",
           "summary": "Judge a path against the scope"
+        }
+      ]
+    },
+    {
+      "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name.",
+      "name": "trace",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/trace?limit=10\"",
+          "description": "Every issue at least one branch names with its branches and commits, every declared issue no branch names, and the newest stretch of the trunk with each commit attributed to the issue whose branches hold it or reported as unattributed. The tallies count both sides, so the proportion of the trunk that no execution contract accounts for is a number rather than an impression. Read from git on every call: the history changes outside this process.",
+          "id": "trace.report",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "traceability",
+            "uri": "majordomus://traceability"
+          },
+          "mcp_tool": "majordomus_traceability",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "How many trunk commits to attribute, newest first. Default: 50. Anything above 2000\nis read as 2000 — a traceability report is a reading, not a history export.",
+              "examples": [
+                {
+                  "case": "ten",
+                  "value": "10"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint)"
+            }
+          ],
+          "path": "/api/v1/trace",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::trace",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The whole work graph above the branch: the result.",
+              "schema": "TraceReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "TraceReport",
+          "stability": "behaviorally_verified",
+          "summary": "The whole work graph above the branch"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/trace/commit?commit=HEAD\"",
+          "description": "One commit with the issue and milestone it served, or the fact that none can be found. Attributed when exactly one issue's branches hold it, ambiguous when branches naming two issues do, and unattributed when no branch naming an issue holds it at all — which is either work committed without an execution contract or a branch deleted after its merge, and the answer says so rather than guessing between them.",
+          "id": "trace.commit",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_trace_commit",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Anything git resolves to a commit: a full or abbreviated object name, a ref, `HEAD`,\n`master~3`.",
+              "examples": [
+                {
+                  "case": "head",
+                  "value": "\"HEAD\""
+                }
+              ],
+              "name": "commit",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/trace/commit",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::trace",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What contract this commit served: the result.",
+              "schema": "CommitAttribution",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CommitAttribution",
+          "stability": "behaviorally_verified",
+          "summary": "What contract this commit served"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/trace/issue?issue=I0001\"",
+          "description": "One issue with the branches that name it — local, and remote-tracking where only the remote still has the branch — and, for each, the commits it holds that the trunk did not: measured against the trunk while the branch is open, and against the first parent of the merge commit that brought it in once it is merged. A branch that reached the trunk without a merge commit of its own says so and claims nothing, because its commits cannot be told from the trunk's. The milestone comes from the canonical issue record, which is the one edge here that git does not hold, and `declared` says whether the project model has this id at all — a repository with no plan still gets the branches, and a typo still cannot read as work nobody did.",
+          "id": "trace.issue",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_trace_issue",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The issue id, as the project model spells it (`I1305`). An id the model does not\ndeclare is answered with `declared: false` rather than refused, and rather than\nanswered with a bare empty trace: a typo that read as \"nothing realised this issue\"\nis the one answer this capability must never give.",
+              "examples": [
+                {
+                  "case": "first-issue",
+                  "value": "\"I0001\""
+                }
+              ],
+              "name": "issue",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/trace/issue",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::trace",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What realised this issue: the result.",
+              "schema": "IssueTrace",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IssueTrace",
+          "stability": "behaviorally_verified",
+          "summary": "What realised this issue"
         }
       ]
     },
