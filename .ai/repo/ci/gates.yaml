@@ -65,6 +65,11 @@ gates:
     runs: scripts/rust-check --ci
     summary: fmt, clippy with warnings denied, the suites and doc examples, rustdoc, the benchmarks building, the registry checks, the benchmark runner through every transport
 
+  - id: command-furnished
+    job: structure
+    runs: scripts/ci/command-furnished
+    summary: every public command carries its reference section, its fixture, its demo and its behavioural and negative cases, reported in one pass rather than one refusal per derivation
+
   - id: rust-command
     job: structure
     runs: scripts/ci/rust-command-check --strict

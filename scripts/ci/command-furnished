@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# command-furnished — everything a public command must carry, reported in one pass.
+#
+# Adding one public command cost six full derivations on 2026-09-09, because each refusal
+# named exactly one missing piece and each derivation takes about ten minutes: a CLI section,
+# then a fixture, then a demo, then a claim page, then a use case, then a scenario whose
+# asserted exit code was wrong. Every refusal was correct and every one of them was knowable
+# in the same second as the others.
+#
+# This says all of it at once, in under a second, from the same declarations the site
+# generator reads. It adds no requirement of its own: if the site build stops requiring
+# something, delete it here too, and the case that covers this will notice.
+#
+#   scripts/ci/command-furnished            every public command
+#   scripts/ci/command-furnished <id>...    only these
+#   scripts/ci/command-furnished --root DIR  examine that tree instead of this one, so the
+#                                            case that covers this never edits the checkout
+#
+# exit 0 when every command examined is furnished, 10 when one is not, 2 on usage.
+set -eu
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+MJ_VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")"
+MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
+export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# shellcheck source=../../lib/common.sh
+. "$ROOT/lib/common.sh"
+
+case "${1:-}" in -h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;; esac
+# --root lets the behavioural case build a tree with a bare command in it and examine that,
+# rather than editing share/commands.yaml in a checkout eight sessions are working in
+if [ "${1:-}" = --root ]; then
+  [ $# -ge 2 ] || { echo "command-furnished: --root needs a directory" >&2; exit 2; }
+  ROOT="$(cd "$2" && pwd)"; shift 2
+fi
+
+CF="$(mktemp "${TMPDIR:-/tmp}/mj.cf.XXXXXX")"; trap 'rm -f "$CF"' EXIT
+mj_yaml_flatten "$ROOT/share/commands.yaml" > "$CF"
+
+want="$*"
+rc=0; n=0; missing=0
+
+# one row per (command, requirement) that is absent — the whole list, never the first one
+report() { printf 'MISSING %-14s %s\n' "$1" "$2"; missing=$((missing + 1)); rc=10; }
+
+i=0
+while id="$(mj_yget "$CF" "commands.$i.id")"; [ -n "$id" ]; do
+  vis="$(mj_yget "$CF" "commands.$i.visibility")"
+  i=$((i + 1))
+  [ "$vis" = public ] || continue
+  [ -z "$want" ] || case " $want " in *" $id "*) ;; *) continue ;; esac
+  n=$((n + 1))
+
+  # the reference a person reads
+  awk -v h="## \`majordomus $id" 'index($0,h)==1{f=1;found=1;next} f&&/^## /{exit} f' \
+    "$ROOT/docs/CLI.md" | grep -q . \
+    || report "$id" "no section in docs/CLI.md (add: ## \`majordomus $id\`)"
+
+  # the demonstration the site runs
+  [ -f "$ROOT/test/fixtures/commands/$id.json" ] \
+    || report "$id" "no fixture at test/fixtures/commands/$id.json"
+  d="$(mj_yget "$CF" "commands.$((i-1)).demo")"
+  { [ -n "$d" ] && [ "$d" != none ]; } \
+    || report "$id" "declares no demo: in share/commands.yaml"
+
+  # the behavioural case, and a negative one: the site refuses a command that only ever passes
+  grep -rlq "^# majordomus-covers:.*\b$id\b" "$ROOT"/test/cases/*.sh 2>/dev/null \
+    || report "$id" "no test/cases/*.sh declares '# majordomus-covers: $id'"
+  grep -rlq "^# majordomus-negative:.*\b$id\b" "$ROOT"/test/cases/*.sh 2>/dev/null \
+    || report "$id" "no test/cases/*.sh declares '# majordomus-negative: $id'"
+done
+
+# a claim a rule names must have its detail page; the same one-pass principle
+if [ -z "$want" ] && [ -f "$ROOT/docs/CLAIMS.yaml" ]; then
+  CL="$(mktemp "${TMPDIR:-/tmp}/mj.cl.XXXXXX")"; mj_yaml_flatten "$ROOT/docs/CLAIMS.yaml" > "$CL"
+  # from the claims list only: the file also carries a statuses list whose entries have ids
+  for cid in $(sed -n 's/^claims\.[0-9]*\.id=//p' "$CL"); do
+    [ -f "$ROOT/docs/claims/$cid.md" ] || report "$cid" "claim has no docs/claims/$cid.md"
+  done
+  rm -f "$CL"
+fi
+
+if [ "$rc" = 0 ]; then
+  printf 'command-furnished: %s public command(s), each with its reference, fixture, demo and cases\n' "$n"
+else
+  printf 'command-furnished: %s requirement(s) unmet across %s public command(s); every one is listed above\n' \
+    "$missing" "$n" >&2
+fi
+exit "$rc"
