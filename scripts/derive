@@ -24,11 +24,15 @@
 #
 #   MAJORDOMUS_BIN            the Rust executable to use instead of building one
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
+#   CARGO_TARGET_DIR          where cargo builds, when worktrees share one build directory
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 PROFILE="${MAJORDOMUS_BUILD_PROFILE:-debug}"
 export MAJORDOMUS_SHARE="${MAJORDOMUS_SHARE:-$ROOT/share}"
+# for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
 
 # Progress, on stderr. Stage B writes the whole site data set and runs the use-case scenarios;
 # it says nothing at all while it does, and minutes of silence read as a hang — a session has
@@ -51,7 +55,10 @@ else
   step "building the Rust executable ($PROFILE)"
   release=(); [ "$PROFILE" = release ] && release=(--release)
   RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}"
-  RB="$CRATE/target/$PROFILE/majordomus"
+  # ask cargo where it put the result rather than compose it: a run that then spends ten
+  # minutes can afford the 80ms, and the composed path is what exits 127 under a shared
+  # CARGO_TARGET_DIR — the executable is in the shared directory, not under the worktree
+  RB="$(mj_cargo_target_dir "$CRATE" ask-cargo)/$PROFILE/majordomus"
   step_done
 fi
 step "stage A: majordomus generate (code-only projections)"

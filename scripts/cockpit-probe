@@ -29,6 +29,9 @@
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
+# for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
 MODE=full
 case "${1:-}" in
   --quick) MODE=quick ;;
@@ -59,11 +62,12 @@ if [ -z "$BASE" ] && [ -f "$LEASE" ]; then
   fi
 fi
 if [ -z "$BASE" ]; then
-  BIN="${MAJORDOMUS_BIN:-$CRATE/target/debug/majordomus}"
+  TARGET_DIR="$(mj_cargo_target_dir "$CRATE" ask-cargo)"
+  BIN="${MAJORDOMUS_BIN:-$TARGET_DIR/debug/majordomus}"
   if [ ! -x "$BIN" ]; then
     command -v cargo >/dev/null || { echo "cockpit-probe: no executable at $BIN and no cargo to build one" >&2; exit 12; }
     RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" || exit 12
-    BIN="$CRATE/target/debug/majordomus"
+    BIN="$TARGET_DIR/debug/majordomus"
   fi
   LOG="$(mktemp "${TMPDIR:-/tmp}/mj-cockpit-probe.XXXXXX")"
   # a server of our own on its own port: the repository's shared server may be running an

@@ -18,6 +18,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
+# for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
 
 die() { printf 'release-record: %s\n' "$*" >&2; exit "${2:-12}"; }
 
@@ -47,7 +50,7 @@ esac
 [ -n "$published" ] || published="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 [ -n "$out" ] || out="$ROOT/.ai/repo/releases/$tag.yaml"
 
-mj="${MAJORDOMUS_DIST_BIN:-$CRATE/target/debug/majordomus}"
+mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
 [ -x "$mj" ] || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
 
 digest() {
