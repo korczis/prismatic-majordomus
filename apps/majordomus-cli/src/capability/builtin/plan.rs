@@ -1,0 +1,692 @@
+//! The `plan` module: the milestone and issue model's *derivations*, projected.
+//!
+//! The records themselves have always been served — `majordomus://issue/I0001` returns the
+//! file through `objects.get` — and that is the least interesting half of the model. What
+//! makes it worth having is everything nobody authored: which issues are READY, which are
+//! BLOCKED and on what, the topological waves the graph allows to run at once, the roadmap
+//! order the milestone graph implies, the milestone a worker is on and the one issue to
+//! take next. Until this module those lived only in `lib/plan.sh`, so an agent asking the
+//! shared MCP server what to work on could be handed 184 documents and no answer.
+//!
+//! Every capability here reads [`crate::plan::Plan`], built on the call out of records the
+//! index already holds. Nothing is cached: the plan changes under the process — a
+//! transition writes a lifecycle marker into a record between two calls — and a `next`
+//! that answered from a snapshot would send two workers to one issue.
+//!
+//! Writing is deliberately absent. `plan start`, `plan verify`, `plan evidence` and
+//! `plan done` each write one lifecycle marker into a record, and a capability of this
+//! registry never writes to the repository; that is the registry's contract and what the
+//! shared MCP server rests on. They stay command-line operations of the shell tool.
+
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
+use crate::capability::handler::{CapabilityError, Context};
+use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
+use crate::capability::module::ModuleDescriptor;
+use crate::plan::{PlanCounts, PlanFinding, PlanIssue, PlanMilestone, Plan, PlanProject, PlanVocabulary, PlanWave};
+use crate::{capability, module};
+
+use super::{get, mcp, Empty};
+
+/// The URI under which the whole derived plan is read as an MCP resource.
+pub const PLAN_URI: &str = "majordomus://plan";
+
+// ---------------------------------------------------------------- the plan, from a context
+
+/// The derived plan of the repository this process serves. Built on the call: the plan
+/// changes under the process.
+///
+/// A repository with no `.ai/repo/project/` answers with an empty plan rather than a
+/// refusal. The shell tool exits 12 there because it is telling a person where the model
+/// would live; a projection is answering what this repository holds, and "no milestones and
+/// no issues" is that answer. Only a named record that does not exist is a `not found`.
+fn plan_of(ctx: &Context) -> Result<Plan, CapabilityError> {
+    Ok(Plan::build(&ctx.index))
+}
+
+// ---------------------------------------------------------------- inputs
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which issues to answer with.
+pub struct PlanIssueFilter {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Only issues of this milestone. Default: every issue of the plan.
+    pub milestone: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Only issues in this derived status — `READY` for the ready set, `BLOCKED` for the
+    /// blocked set. The vocabulary travels with every answer, so a caller never has to know
+    /// which statuses exist.
+    pub status: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Only issues in this execution wave.
+    pub wave: Option<u32>,
+}
+
+impl BenchmarkCases for PlanIssueFilter {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let milestone = Plan::build(ctx.index)
+            .milestones
+            .first()
+            .map(|m| m.id.clone());
+        vec![
+            NamedCase::new("all", PlanIssueFilter::default()),
+            NamedCase::new(
+                "ready",
+                PlanIssueFilter {
+                    status: Some("READY".into()),
+                    ..PlanIssueFilter::default()
+                },
+            ),
+            NamedCase::new(
+                "one-milestone",
+                PlanIssueFilter {
+                    milestone,
+                    ..PlanIssueFilter::default()
+                },
+            ),
+        ]
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// Which part of the plan to answer about.
+pub struct PlanMilestoneFilter {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Restrict the answer to one milestone. Default: the whole plan, and for `next` the
+    /// active milestone with the rest of the plan as the fallback.
+    pub milestone: Option<String>,
+}
+
+impl BenchmarkCases for PlanMilestoneFilter {
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let milestone = Plan::build(ctx.index)
+            .milestones
+            .first()
+            .map(|m| m.id.clone());
+        vec![
+            NamedCase::new("whole-plan", PlanMilestoneFilter::default()),
+            NamedCase::new("one-milestone", PlanMilestoneFilter { milestone }),
+        ]
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// One record of the plan.
+pub struct PlanRecordInput {
+    /// The id of a milestone or an issue, as its file is named (`I0001`, `work-graph-github`).
+    pub id: String,
+}
+
+impl BenchmarkCases for PlanRecordInput {
+    /// A repository with no plan still has to be timed on this capability — the coverage
+    /// gate counts targets, not repositories — so the cases fall back to an id that names
+    /// nothing. The refusal is the operation being measured there, and it is the one a
+    /// caller asking for a record that does not exist gets.
+    fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        let plan = Plan::build(ctx.index);
+        vec![
+            NamedCase::new(
+                "issue",
+                PlanRecordInput {
+                    id: plan
+                        .issues
+                        .first()
+                        .map_or_else(|| "I0001".to_string(), |i| i.id.clone()),
+                },
+            ),
+            NamedCase::new(
+                "milestone",
+                PlanRecordInput {
+                    id: plan
+                        .milestones
+                        .first()
+                        .map_or_else(|| "M000".to_string(), |m| m.id.clone()),
+                },
+            ),
+        ]
+    }
+}
+
+// ---------------------------------------------------------------- outputs
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// Issues matching a filter, with the vocabulary that names their statuses.
+pub struct PlanIssueList {
+    /// The matching issues, in id order.
+    pub issues: Vec<PlanIssue>,
+    /// How many matched.
+    pub total: usize,
+    /// The declared status vocabularies.
+    pub statuses: PlanVocabulary,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// One milestone's progress, without its prose.
+pub struct PlanMilestoneProgress {
+    /// The identity.
+    pub id: String,
+    /// The derived status.
+    pub status: String,
+    /// One line naming the outcome.
+    pub title: String,
+    /// Its issues, counted by derived status.
+    pub counts: PlanCounts,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// Where the plan stands: every milestone's progress, the milestone being executed, and the
+/// one issue to take next.
+pub struct PlanStatusReport {
+    /// The plan's header, with the active milestone derived.
+    pub project: PlanProject,
+    /// The declared status vocabularies.
+    pub statuses: PlanVocabulary,
+    /// Every milestone, in id order.
+    pub milestones: Vec<PlanMilestoneProgress>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The next ready issue, when there is one.
+    pub next_ready: Option<PlanIssue>,
+    /// Every issue of the plan, counted by derived status.
+    pub counts: PlanCounts,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// The execution waves, with the overlaps that serialise issues the graph would let run
+/// together.
+pub struct PlanWaveReport {
+    /// The waves, lowest first, with the issues of each.
+    pub waves: Vec<PlanWaveView>,
+    /// Scope overlaps between two issues of one wave. Two issues sharing a wave is a
+    /// necessary condition for running them at once, not a sufficient one: overlapping
+    /// scope serialises them, and the overlap is reported here rather than left for two
+    /// workers to discover in a conflict.
+    pub serialised_by_scope: Vec<PlanFinding>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// One wave, with the issues in it.
+pub struct PlanWaveView {
+    /// The layer, from zero.
+    pub wave: u32,
+    /// The issues in it, in id order.
+    pub issues: Vec<PlanIssue>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// The one issue a worker should take now.
+pub struct PlanNextIssue {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The issue, when the plan has one that is executable.
+    pub issue: Option<PlanIssue>,
+    /// The milestone the search started in.
+    pub active_milestone: String,
+    /// Why there is none, when there is none: what to run to see what is in the way.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// The milestones in derived order, with the one being executed and the one after it.
+pub struct PlanRoadmap {
+    /// The milestones ordered by rank, then order, then id. The sequence is derived from
+    /// the milestone graph; no list of versions is maintained anywhere.
+    pub milestones: Vec<PlanMilestone>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The first unfinished, unblocked milestone in that sequence.
+    pub now: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The one after it, blocked or not.
+    pub next: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// The model's own validation: what the graph refuses and what it merely warns about.
+pub struct PlanValidation {
+    /// Whether the model is valid: no finding is a failure.
+    pub valid: bool,
+    /// How many milestones the plan holds.
+    pub milestones: usize,
+    /// How many issues.
+    pub issues: usize,
+    /// How many findings are failures.
+    pub failures: usize,
+    /// How many are warnings.
+    pub warnings: usize,
+    /// Every finding, in derivation order.
+    pub findings: Vec<PlanFinding>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+/// One record of the plan, milestone or issue, with everything derived about it.
+#[serde(untagged)]
+pub enum PlanRecord {
+    /// A milestone.
+    PlanMilestone {
+        /// The milestone, with its counts, its rank and both directions of its graph.
+        milestone: Box<PlanMilestone>,
+        /// Its issues in full, in id order.
+        issues: Vec<PlanIssue>,
+    },
+    /// An issue.
+    PlanIssue {
+        /// The issue, with its status, its wave and both directions of its graph.
+        issue: Box<PlanIssue>,
+        /// The issues it waits on, in full.
+        depends_on: Vec<PlanIssue>,
+    },
+}
+
+// ---------------------------------------------------------------- handlers
+
+fn plan_model(ctx: &Context, _: Empty) -> Result<Plan, CapabilityError> {
+    plan_of(ctx)
+}
+
+fn plan_status(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanStatusReport, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    let only = input.milestone.as_deref();
+    if let Some(m) = only {
+        if plan.milestone(m).is_none() {
+            return Err(CapabilityError::NotFound(format!("no milestone '{m}'")));
+        }
+    }
+    let mut counts = PlanCounts {
+        total: 0,
+        required: 0,
+        by_status: plan
+            .statuses
+            .issue
+            .iter()
+            .map(|s| (s.clone(), 0))
+            .collect(),
+    };
+    for i in &plan.issues {
+        if only.is_some_and(|m| i.milestone != m) {
+            continue;
+        }
+        counts.total += 1;
+        *counts.by_status.entry(i.status.clone()).or_insert(0) += 1;
+    }
+    counts.required = counts.total - counts.by_status.get("CANCELLED").copied().unwrap_or(0);
+    Ok(PlanStatusReport {
+        milestones: plan
+            .milestones
+            .iter()
+            .filter(|m| only.is_none_or(|only| m.id == only))
+            .map(|m| PlanMilestoneProgress {
+                id: m.id.clone(),
+                status: m.status.clone(),
+                title: m.title.clone(),
+                counts: m.counts.clone(),
+            })
+            .collect(),
+        next_ready: plan.next_ready(only).cloned(),
+        project: plan.project.clone(),
+        statuses: plan.statuses.clone(),
+        counts,
+    })
+}
+
+fn plan_issues(ctx: &Context, input: PlanIssueFilter) -> Result<PlanIssueList, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    if let Some(s) = input.status.as_deref() {
+        if !plan.statuses.issue.iter().any(|v| v == s) {
+            return Err(CapabilityError::InvalidInput(format!(
+                "'{s}' is not an issue status; the vocabulary is {}",
+                plan.statuses.issue.join(", ")
+            )));
+        }
+    }
+    let issues: Vec<PlanIssue> = plan
+        .issues
+        .iter()
+        .filter(|i| input.milestone.as_deref().is_none_or(|m| i.milestone == m))
+        .filter(|i| input.status.as_deref().is_none_or(|s| i.status == s))
+        .filter(|i| input.wave.is_none_or(|w| i.wave == w))
+        .cloned()
+        .collect();
+    Ok(PlanIssueList {
+        total: issues.len(),
+        issues,
+        statuses: plan.statuses,
+    })
+}
+
+fn plan_waves(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanWaveReport, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    let only = input.milestone.as_deref();
+    let view = |w: &PlanWave| PlanWaveView {
+        wave: w.wave,
+        issues: plan
+            .issues
+            .iter()
+            .filter(|i| w.issues.contains(&i.id))
+            .filter(|i| only.is_none_or(|m| i.milestone == m))
+            .cloned()
+            .collect(),
+    };
+    Ok(PlanWaveReport {
+        waves: plan
+            .waves
+            .iter()
+            .map(view)
+            .filter(|w| !w.issues.is_empty())
+            .collect(),
+        serialised_by_scope: plan
+            .findings
+            .iter()
+            .filter(|f| f.code == "scope_conflict")
+            .cloned()
+            .collect(),
+    })
+}
+
+fn plan_next(ctx: &Context, input: PlanMilestoneFilter) -> Result<PlanNextIssue, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    let issue = plan.next_ready(input.milestone.as_deref()).cloned();
+    Ok(PlanNextIssue {
+        reason: issue.is_none().then(|| {
+            "no issue is READY; every one of them waits on a dependency or on its milestone's gate"
+                .to_string()
+        }),
+        active_milestone: input
+            .milestone
+            .unwrap_or_else(|| plan.project.active_milestone.clone()),
+        issue,
+    })
+}
+
+fn plan_roadmap(ctx: &Context, _: Empty) -> Result<PlanRoadmap, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    let ordered: Vec<PlanMilestone> = plan.roadmap().into_iter().cloned().collect();
+    let mut open = ordered
+        .iter()
+        .filter(|m| !matches!(m.status.as_str(), "DONE" | "CANCELLED" | "SUPERSEDED"));
+    let now = open
+        .next()
+        .filter(|m| m.blocked_by.is_empty())
+        .map(|m| m.id.clone());
+    let next = if now.is_some() {
+        open.next().map(|m| m.id.clone())
+    } else {
+        // The first open milestone is itself blocked: it is not "now", it is "next".
+        ordered
+            .iter()
+            .find(|m| !matches!(m.status.as_str(), "DONE" | "CANCELLED" | "SUPERSEDED"))
+            .map(|m| m.id.clone())
+    };
+    Ok(PlanRoadmap {
+        milestones: ordered,
+        now,
+        next,
+    })
+}
+
+fn plan_validate(ctx: &Context, _: Empty) -> Result<PlanValidation, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    Ok(PlanValidation {
+        valid: plan.failures() == 0,
+        milestones: plan.milestones.len(),
+        issues: plan.issues.len(),
+        failures: plan.failures(),
+        warnings: plan.warnings(),
+        findings: plan.findings,
+    })
+}
+
+fn plan_record(ctx: &Context, input: PlanRecordInput) -> Result<PlanRecord, CapabilityError> {
+    let plan = plan_of(ctx)?;
+    if let Some(m) = plan.milestone(&input.id) {
+        let issues = plan
+            .issues
+            .iter()
+            .filter(|i| i.milestone == m.id)
+            .cloned()
+            .collect();
+        return Ok(PlanRecord::PlanMilestone {
+            milestone: Box::new(m.clone()),
+            issues,
+        });
+    }
+    if let Some(i) = plan.issue(&input.id) {
+        let depends_on = i
+            .depends_on
+            .iter()
+            .filter_map(|d| plan.issue(d))
+            .cloned()
+            .collect();
+        return Ok(PlanRecord::PlanIssue {
+            issue: Box::new(i.clone()),
+            depends_on,
+        });
+    }
+    Err(CapabilityError::NotFound(format!(
+        "no milestone or issue '{}'",
+        input.id
+    )))
+}
+
+// ---------------------------------------------------------------- the module
+
+/// The `plan` module: the derivations of the milestone and issue model, projected once.
+pub fn module() -> ModuleDescriptor {
+    module! {
+        id: "plan",
+        title: "The plan and its derivations",
+        description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.",
+        stability: Stability::BehaviorallyVerified,
+        capabilities: [
+            capability! {
+                id: "plan.model",
+                title: "The whole derived plan",
+                description: "Every milestone and issue with its derived status, wave, rank, both directions of its graph and its counts; the execution waves; both dependency graphs as edges; every validation finding; and the plan's header with the active milestone derived. The one value every other capability of this module answers out of. Derived on every call: a transition writes a lifecycle marker into a record between two calls, and a plan answered from a snapshot would send two workers to one issue.",
+                input: Empty,
+                output: Plan,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_plan".into()),
+                        resource: Some(McpResource { uri: PLAN_URI.into(), name: "plan".into() }),
+                    }),
+                    http: get("/api/v1/plan"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "graph", "introspection"],
+                cache: CachePolicy::Disabled,
+                handler: plan_model,
+            },
+            capability! {
+                id: "plan.status",
+                title: "Where the plan stands",
+                description: "Every milestone with its derived status and its issues counted by status, the milestone a worker is executing now, the next ready issue in full, and the plan's own totals. The counts are keyed by the declared vocabulary, which travels with the answer, so a status added to the engine appears here without anything being edited.",
+                input: PlanMilestoneFilter,
+                output: PlanStatusReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_status"),
+                    http: get("/api/v1/plan/status"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "status"],
+                cache: CachePolicy::Disabled,
+                handler: plan_status,
+            },
+            capability! {
+                id: "plan.issues",
+                title: "The issues, filtered by what the graph derived",
+                description: "One record per issue with its derived status, its wave, the dependencies it declares, the ones that are not DONE (plus `milestone:<id>` when the gate holds the whole outcome back), the issues that depend on it, the paths it touches and its evidence tally. Filtering by `status: READY` is the ready set and by `status: BLOCKED` the blocked set; nothing here is a separate derivation.",
+                input: PlanIssueFilter,
+                output: PlanIssueList,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_issues"),
+                    http: get("/api/v1/plan/issues"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "issues"],
+                cache: CachePolicy::Disabled,
+                handler: plan_issues,
+            },
+            capability! {
+                id: "plan.waves",
+                title: "What may run at the same time",
+                description: "The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict.",
+                input: PlanMilestoneFilter,
+                output: PlanWaveReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_waves"),
+                    http: get("/api/v1/plan/waves"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "graph", "waves"],
+                cache: CachePolicy::Disabled,
+                handler: plan_waves,
+            },
+            capability! {
+                id: "plan.next",
+                title: "The one issue to take now",
+                description: "The lowest-wave READY issue of the active milestone, highest priority first, then id. The active milestone can have nothing ready while another one does — one waiting on its own acceptance evidence, for instance — so the search widens to the whole plan rather than answering `none` and sending a worker away from work that is genuinely executable. This is what an agent asks before it starts.",
+                input: PlanMilestoneFilter,
+                output: PlanNextIssue,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_next"),
+                    http: get("/api/v1/plan/next"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "next"],
+                cache: CachePolicy::Disabled,
+                handler: plan_next,
+            },
+            capability! {
+                id: "plan.roadmap",
+                title: "The milestones in derived order",
+                description: "The milestone graph laid out by rank, with `order` breaking ties inside a rank only, and the first unblocked unfinished milestone as `now` and the one after it as `next`. Nothing in the sequence is authored: a milestone whose prerequisites are not real cannot be nominated, which is what makes `each step is gated by the previous one being real` an invariant rather than a sentence.",
+                input: Empty,
+                output: PlanRoadmap,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_roadmap"),
+                    http: get("/api/v1/plan/roadmap"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "roadmap"],
+                cache: CachePolicy::Disabled,
+                handler: plan_roadmap,
+            },
+            capability! {
+                id: "plan.validate",
+                title: "What the model refuses",
+                description: "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
+                input: Empty,
+                output: PlanValidation,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_validate"),
+                    http: get("/api/v1/plan/validate"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "validation"],
+                cache: CachePolicy::Disabled,
+                handler: plan_validate,
+            },
+            capability! {
+                id: "plan.record",
+                title: "One milestone or issue, with everything derived about it",
+                description: "A milestone with its issues in full, or an issue with the issues it waits on in full. The record's own prose stays where it has always been — `majordomus://issue/<id>` returns the file — and this answers what the file cannot say about itself: what its status is, where it sits in the graph, and what is between it and being executable.",
+                input: PlanRecordInput,
+                output: PlanRecord,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_plan_record"),
+                    http: get("/api/v1/plan/record"),
+                    cli: None,
+                },
+                tags: ["plan", "project", "issues", "milestones"],
+                cache: CachePolicy::Disabled,
+                handler: plan_record,
+            },
+        ],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The declaration is the only place these names exist; every projection derives from
+    /// it. This is the assertion a refactor that dropped an exposure would fail.
+    #[test]
+    fn the_declaration_yields_the_projections_it_claims() {
+        let m = module();
+        assert_eq!(m.id.as_str(), "plan");
+        let expected: &[(&str, &str, &str)] = &[
+            ("plan.model", "majordomus_plan", "/api/v1/plan"),
+            ("plan.status", "majordomus_plan_status", "/api/v1/plan/status"),
+            ("plan.issues", "majordomus_plan_issues", "/api/v1/plan/issues"),
+            ("plan.waves", "majordomus_plan_waves", "/api/v1/plan/waves"),
+            ("plan.next", "majordomus_plan_next", "/api/v1/plan/next"),
+            (
+                "plan.roadmap",
+                "majordomus_plan_roadmap",
+                "/api/v1/plan/roadmap",
+            ),
+            (
+                "plan.validate",
+                "majordomus_plan_validate",
+                "/api/v1/plan/validate",
+            ),
+            ("plan.record", "majordomus_plan_record", "/api/v1/plan/record"),
+        ];
+        let ids: Vec<&str> = m
+            .capabilities
+            .iter()
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        let want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        assert_eq!(ids, want);
+        for (executable, (id, tool, path)) in m.capabilities.iter().zip(expected) {
+            let exposure = &executable.capability.exposure;
+            assert_eq!(
+                exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+                Some(*tool),
+                "{id} lost or renamed its MCP tool"
+            );
+            assert_eq!(
+                exposure.http.as_ref().map(|h| h.path.as_str()),
+                Some(*path),
+                "{id} lost or renamed its HTTP route"
+            );
+            assert!(
+                !executable.capability.cache.is_enabled(),
+                "{id} must not cache: a transition changes the plan between two calls"
+            );
+        }
+        let resource = m.capabilities[0]
+            .capability
+            .exposure
+            .mcp
+            .as_ref()
+            .and_then(|m| m.resource.as_ref());
+        assert_eq!(resource.map(|r| r.uri.as_str()), Some(PLAN_URI));
+    }
+
+    /// Every capability of the module is read-only: the registry's contract, and the reason
+    /// the four transitions live on the command line.
+    #[test]
+    fn every_capability_is_a_query() {
+        for e in module().capabilities {
+            assert!(
+                e.capability.kind.is_read_only(),
+                "{} writes",
+                e.capability.id
+            );
+        }
+    }
+}

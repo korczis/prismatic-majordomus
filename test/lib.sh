@@ -107,6 +107,13 @@ reset_policy() {
 # ---------------------------------------------------------------- project model fixtures
 # A canonical project model small enough to reason about, built in the disposable repository
 # the case runs in. Cases append extra fields to the files these produce.
+#
+# `validation: - "true"` is quoted on purpose. Unquoted it is a YAML boolean, which the
+# flattener renders as the same text the shell engine sees but which
+# `share/schemas/majordomus.issue/v1` refuses as "not of type string" — so the Rust
+# executable dropped every fixture record and the two engines could not be compared on one.
+# The quotes cost the shell nothing and make the fixture valid under the repository's own
+# schema, which is what a fixture ought to be.
 pj_init() {
   mkdir -p .ai/repo/project/milestones .ai/repo/project/issues
   cat > .ai/repo/project/project.yaml <<'Y'
@@ -129,7 +136,7 @@ outcome: "The outcome once it is solved."
 acceptance_criteria:
   - The outcome is reached
 validation:
-  - true
+  - "true"
 evidence_required:
   - proof
 Y
@@ -150,7 +157,7 @@ scope:
 acceptance_criteria:
   - The work is done
 validation:
-  - true
+  - "true"
 evidence_required:
   - proof
 Y
