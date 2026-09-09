@@ -479,7 +479,7 @@ capability of the one registry, through the one executor, and what a client may 
 whether to ask before running it, whether a Cancel button will do anything — is read from
 that capability's own descriptor
 ([`docs/EXECUTIONS.md`](docs/EXECUTIONS.md),
-[ADR 22](.ai/repo/adrs/0031-an-execution-is-a-watched-capability-call-not-a-second-registry.md)).
+[ADR 22](.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md)).
 
 **One server per repository.** The first `majordomus mcp` binds the loopback HTTP
 projection beside its stdio session and logs the URL and every surface it serves (the home

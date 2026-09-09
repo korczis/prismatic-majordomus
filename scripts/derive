@@ -55,6 +55,9 @@ else
   step_done
 fi
 step "stage A: majordomus generate (code-only projections)"
+# --strict: an error diagnostic must not pass for success. A duplicate identity excludes
+# every claimant and the index goes on without them, so without this a derivation writes
+# projections from a tree that has silently lost documents, and says nothing.
 "$RB" generate --repo "$ROOT" --strict >/dev/null
 step_done
 step "stage B: scripts/generate-site-data (site data, content, derived documents)"

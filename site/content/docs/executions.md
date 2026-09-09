@@ -13,7 +13,7 @@ capability as work that can be watched: the model, the lifecycle, the typed even
 the live channel, what each interface offers, and what it deliberately does not do.
 Behaviour as implemented and tested; where this document and the executable disagree, the
 document is wrong and changes in the same commit. The decision is
-[ADR 22](../.ai/repo/adrs/0031-an-execution-is-a-watched-capability-call-not-a-second-registry.md);
+[ADR 22](../.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md);
 the rules are [`project.execution-events-are-typed`](../.ai/repo/rules/project/execution-events-are-typed.v1.md)
 and [`project.executions-carry-no-secret`](../.ai/repo/rules/project/executions-carry-no-secret.v1.md);
 the registry it runs on is [`CAPABILITIES.md`](@/docs/capabilities.md).

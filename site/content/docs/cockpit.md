@@ -343,7 +343,7 @@ what would change the trade — "when something genuinely long-running arrives, 
 will be worth its own decision, and the typed event envelope belongs in that decision rather
 than ahead of it".
 
-That arrived, and that is [ADR 22](../.ai/repo/adrs/0031-an-execution-is-a-watched-capability-call-not-a-second-registry.md):
+That arrived, and that is [ADR 22](../.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md):
 a capability that reads every file of the layer takes long enough to watch rather than wait
 for, so an **execution** has an identity, typed events and a live channel at `GET /events`
 ([`EXECUTIONS.md`](@/docs/executions.md)). What did *not* change is the trade the paragraph

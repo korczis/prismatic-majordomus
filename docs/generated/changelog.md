@@ -11,7 +11,9 @@ Current version: **0.4.0**
 
 ### Decisions
 
-- **ADR-0030** An external workspace is not a provider: the term, the dependency posture, and where synced content lives _(proposed)_
+- **ADR-0032** An external workspace is not a provider: the term, the dependency posture, and where synced content lives _(proposed)_
+- **ADR-0031** The design is one declaration and every surface is a projection of it _(accepted)_
+- **ADR-0030** A task owes obligations, and the evidence that discharges them goes stale _(proposed)_
 - **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(proposed)_
 - **ADR-0026** A capability module's area is derived from the features that name it, not declared beside it _(accepted)_
 - **ADR-0025** Presentation order is one total order owned by the crate, not a decision each surface makes _(accepted)_
@@ -21,6 +23,7 @@ Current version: **0.4.0**
 
 - **peers**: a session is told it has not announced, and doctor names the work that exists on one disk (`1487d729e`)
 - **peers**: an announcement outlives the connection that made it, and a claim is answered rather than merely recorded (`6aeec67b1`)
+- **ci**: a gate says the published site came from master, and is being served (`fbc1da919`)
 - **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
 - **release**: the changelog is a projection, and the version is derived from the commits (`82583eba1`)
 - **ci**: the GitHub projection has a gate, so it cannot rot green again (`597ebe4e5`)
@@ -52,6 +55,10 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **release**: the module asserts the two projections it documents (`98f6606ce`)
+- **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
+- **commands**: the module asserts the three projections it documents (`5609ab148`)
+- **site**: the changelog page reads the groups the document carries (`b551a3327`)
 - **docs**: the semantics module documents a validation that is not an item (`ed649c769`)
 - **share**: a MAJORDOMUS_SHARE naming another worktree of this repository is refused (`fc9864ebc`)
 - **derive**: every stage names itself as it begins and reports what it cost (`59aa3769c`)
@@ -98,6 +105,8 @@ Current version: **0.4.0**
 - **test**: the duplicate plan test and the unformatted tests a merge left behind (`de52b8497`)
 - **cli**: the crate passes fmt, rustdoc and its test build again (`a10f0af08`)
 - **environment**: describe the services master serves, from its route constants (`b405705ba`)
+- **tests**: master's own two failures, and the size cliff behind one of them (`6815b9bf5`)
+- **why**: the acceptance case asserts the schema identity the tool prints (`5314bd6c8`)
 
 ### Performance
 
@@ -137,6 +146,9 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the second master merge (`e94b760d1`)
+- **derive**: the projections follow the master merge (`5fe8f2ec8`)
+- **derive**: the projections follow the master merge (`b79363681`)
 - **derive**: the projections follow the entry-point fixes (`691fab7db`)
 - **derive**: the projections follow the merge with master (`44468dbc1`)
 - **order**: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are (`c72d294cc`)
@@ -190,7 +202,7 @@ Current version: **0.4.0**
 
 ### Decisions
 
-- **ADR-0031** An execution is a watched capability call, not a second registry _(accepted)_
+- **ADR-0033** An execution is a watched capability call, not a second registry _(accepted)_
 - **ADR-0028** The crate's public surface is measured by the crate, and absence from the API is a decision _(accepted)_
 - **ADR-0027** A command is declared once and every surface is a projection of the command graph _(proposed)_
 - **ADR-0023** Product features are objects of the layer, and the landing page is a projection of them _(accepted)_

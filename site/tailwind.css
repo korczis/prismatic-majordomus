@@ -2,10 +2,20 @@
    Directives follow the Flowbite quickstart (flowbite.com/docs/getting-started/quickstart/)
    and dark-mode guide (flowbite.com/docs/customize/dark-mode/). No custom CSS lives here:
    everything on the site is a Tailwind utility, a Flowbite class or a Flowbite Typography
-   class. The theme names Inter first; it is not loaded, so the stack falls to system-ui,
-   which is deliberate: no remote font, no blocking asset. */
+   class. Flowbite's theme names Inter first and this site never loaded it, so the stack
+   always fell to system-ui; share/design/theme.css names that stack outright, which makes
+   the deliberate part deliberate — no remote font, no blocking asset — and makes it the
+   same stack the Cockpit and the executable's own pages resolve, from one declaration. */
 @import "tailwindcss";
 @import "flowbite/src/themes/default";
+/* after Flowbite's theme, because it overrides it: the repository's design tokens, generated
+   from share/design/tokens.yaml by scripts/design-tokens. Never edited here. */
+@import "../share/design/theme.css";
+/* the semantic surface and the graph tokens, the same block the Cockpit imports. The site
+   styles itself with Flowbite utilities and needs few of these directly; what it does need
+   is for its graph and diagram views to read them from the page instead of falling through
+   to a colour table of their own, which is what they did while nothing declared them. */
+@import "../share/design/surface.css";
 @plugin "flowbite/plugin";
 @plugin "flowbite-typography";
 @source "../node_modules/flowbite";

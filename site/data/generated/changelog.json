@@ -8,9 +8,21 @@
       "decisions": [
         {
           "date": "2026-09-09",
-          "id": "adr-0030",
+          "id": "adr-0032",
           "status": "proposed",
           "title": "An external workspace is not a provider: the term, the dependency posture, and where synced content lives"
+        },
+        {
+          "date": "2026-09-09",
+          "id": "adr-0031",
+          "status": "accepted",
+          "title": "The design is one declaration and every surface is a projection of it"
+        },
+        {
+          "date": "2026-09-09",
+          "id": "adr-0030",
+          "status": "proposed",
+          "title": "A task owes obligations, and the evidence that discharges them goes stale"
         },
         {
           "date": "2026-09-09",
@@ -53,6 +65,13 @@
               "kind": "feat",
               "scope": "peers",
               "subject": "an announcement outlives the connection that made it, and a claim is answered rather than merely recorded"
+            },
+            {
+              "breaking": false,
+              "commit": "fbc1da919",
+              "kind": "feat",
+              "scope": "ci",
+              "subject": "a gate says the published site came from master, and is being served"
             },
             {
               "breaking": false,
@@ -257,6 +276,34 @@
         },
         {
           "changes": [
+            {
+              "breaking": false,
+              "commit": "98f6606ce",
+              "kind": "fix",
+              "scope": "release",
+              "subject": "the module asserts the two projections it documents"
+            },
+            {
+              "breaking": false,
+              "commit": "f6b73b05a",
+              "kind": "fix",
+              "scope": "gates",
+              "subject": "a derivation refuses a degraded index, and one pass says everything a command still needs"
+            },
+            {
+              "breaking": false,
+              "commit": "5609ab148",
+              "kind": "fix",
+              "scope": "commands",
+              "subject": "the module asserts the three projections it documents"
+            },
+            {
+              "breaking": false,
+              "commit": "b551a3327",
+              "kind": "fix",
+              "scope": "site",
+              "subject": "the changelog page reads the groups the document carries"
+            },
             {
               "breaking": false,
               "commit": "ed649c769",
@@ -578,6 +625,20 @@
               "kind": "fix",
               "scope": "environment",
               "subject": "describe the services master serves, from its route constants"
+            },
+            {
+              "breaking": false,
+              "commit": "6815b9bf5",
+              "kind": "fix",
+              "scope": "tests",
+              "subject": "master's own two failures, and the size cliff behind one of them"
+            },
+            {
+              "breaking": false,
+              "commit": "5314bd6c8",
+              "kind": "fix",
+              "scope": "why",
+              "subject": "the acceptance case asserts the schema identity the tool prints"
             }
           ],
           "heading": "Fixed",
@@ -795,6 +856,27 @@
         },
         {
           "changes": [
+            {
+              "breaking": false,
+              "commit": "e94b760d1",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the second master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "5fe8f2ec8",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "b79363681",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
             {
               "breaking": false,
               "commit": "691fab7db",
@@ -1156,7 +1238,7 @@
       "decisions": [
         {
           "date": "2026-09-08",
-          "id": "adr-0031",
+          "id": "adr-0033",
           "status": "accepted",
           "title": "An execution is a watched capability call, not a second registry"
         },

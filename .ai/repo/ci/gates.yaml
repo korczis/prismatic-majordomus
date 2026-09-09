@@ -105,6 +105,14 @@ gates:
     runs: scripts/cockpit-assets --check
     summary: the committed Cockpit stylesheet matches the source it is compiled from
 
+  # Needs no browser, no built site and no node: it reads one YAML file, regenerates three
+  # stylesheets from it and greps the tree. Cheap enough to run beside the structure checks
+  # rather than behind the site build, which is where a gate stops being run.
+  - id: design
+    job: structure
+    runs: scripts/ci/design-check
+    summary: the three generated stylesheets match share/design/tokens.yaml, and no file that puts a colour on a screen names one outside it
+
   - id: worktree-topology
     job: structure
     runs: scripts/ci/worktree-check
@@ -209,7 +217,14 @@ classes:
   # union of every matching class, so both apply.
   - id: cockpit
     paths: [share/cockpit/**, scripts/cockpit-assets, scripts/cockpit-probe, scripts/lib/cockpit-probe.mjs]
-    gates: [cockpit-assets, cockpit-probe, rust-check, site-build, order-check]
+    gates: [cockpit-assets, cockpit-probe, rust-check, site-build, order-check, design]
+
+  # the design tokens and their projections. The canonical file reaches every surface, so a
+  # change here is selected by the site, the Cockpit and the crate at once; the class exists
+  # so that the gate also runs when only the generator or the gate itself is edited.
+  - id: design
+    paths: [share/design/**, scripts/design-tokens, scripts/ci/design-check, apps/majordomus-cli/src/web/tokens.css]
+    gates: [design, cockpit-assets, rust-check, site-build, site-probe, ui-audit]
 
   # the distribution: the skeleton, the schemas, the kinds, the command and event registries;
   # read by both implementations at run time, embedded in the crate at build, and inputs of
@@ -237,7 +252,7 @@ gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, ma
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
     paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and

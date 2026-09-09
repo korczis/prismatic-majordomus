@@ -1083,11 +1083,38 @@
         "majordomus.verify-outcomes@1"
       ],
       "source": "share/standard/majordomus/rules/verification-integrity.v1.md"
+    },
+    {
+      "id": "majordomus.obligation-closure",
+      "slug": "obligation-closure",
+      "title": "Obligation closure",
+      "class": "blocking",
+      "principle": "",
+      "statement": "A task owes what its `requires` declares; each obligation is discharged by a recorded piece of evidence naming the command that produced it, and evidence taken over inputs that have since changed, or at a commit the branch has since left, no longer discharges anything.",
+      "summary": "A task that declares obligations reaches the outcome completed only when each one has evidence, and that evidence still describes the tree or the commit it was taken over.",
+      "validator": "obligations",
+      "validator_function": "mj_validate_obligations",
+      "defined_in": "lib/evidence.sh",
+      "category": "obligation",
+      "enforced_by": [
+        "check",
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "obligations_met",
+      "claims": [
+        "obligation-closure"
+      ],
+      "test": "test/cases/103_obligations.sh",
+      "depends_on": [
+        "majordomus.verification-integrity@1"
+      ],
+      "source": "share/standard/majordomus/rules/obligation-closure.v1.md"
     }
   ],
   "counts": {
-    "declared": 39,
-    "blocking": 35,
+    "declared": 40,
+    "blocking": 36,
     "advisory": 4
   },
   "index": {
@@ -1129,6 +1156,7 @@
     "majordomus.state-consistency": 35,
     "majordomus.task-continuity": 36,
     "majordomus.use-case-coverage": 37,
-    "majordomus.verification-integrity": 38
+    "majordomus.verification-integrity": 38,
+    "majordomus.obligation-closure": 39
   }
 }
