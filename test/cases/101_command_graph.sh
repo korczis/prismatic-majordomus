@@ -111,8 +111,23 @@ grep -q 'bin/majordomus-cli' "$PROBE/.just/probe.just" || { echo "    the probe 
 : > "$PROBE/justfile"
 cp "$ROOT/bin/majordomus-cli" "$PROBE/bin/" 2>/dev/null || true
 ( cd "$PROBE" && ./scripts/ci/command-graph >"$T/gate.out" 2>&1; echo $? > "$T/gate.code" ) || true
-grep -q 'whose body calls the program directly' "$T/gate.out" || {
+grep -q 'whose body is one call to the program' "$T/gate.out" || {
   echo "    the gate did not reject a hand-written bridge:"; cat "$T/gate.out"; exit 1; }
+
+# ...and does not reject a composition. A recipe that runs two commands in an order is not
+# a spelling of either: no node of the graph projects to it, so the bridge cannot write it
+# and forbidding it would forbid composition. The distinction the gate makes is structural
+# — how many program calls the body holds — rather than a list of blessed recipe names,
+# which is the catalogue this whole gate exists to remove. Asserted with a second probe so
+# that a gate which regressed to matching any call fails here.
+printf '%s\n' '# Two commands, in an order, as one gate.' \
+  "[group('probe')]" 'probe-check:' '    @bin/majordomus-cli distribution validate' \
+  '    @bin/majordomus-cli generate distribution --check' \
+  > "$PROBE/.just/probe.just"
+( cd "$PROBE" && ./scripts/ci/command-graph >"$T/gate2.out" 2>&1 ) || true
+if grep -q 'probe-check' "$T/gate2.out"; then
+  echo "    the gate rejected a composition of two commands:"; cat "$T/gate2.out"; exit 1
+fi
 
 # --- adding a command reaches every projection without editing one
 #

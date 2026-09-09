@@ -92,6 +92,25 @@ pub fn variables(environment: &RepositoryEnvironment, share: Option<&str>) -> Ve
             purpose: "the kinds and schemas the executable reads at run time",
         });
     }
+    // The completion adapter's default binary is `majordomus`, and in this repository that
+    // name on the path is the *shell tool*, which has no `completion query`. Left unset,
+    // every TAB in the checkout that ships the completion would silently answer nothing and
+    // fall back to file completion — the one failure mode a completion must not have,
+    // because it looks exactly like "there is nothing to complete".
+    //
+    // The value is this process's own executable, not the `bin/majordomus-cli` launcher.
+    // The launcher builds the crate when its output is missing or stale, which is right for
+    // a person running a command and catastrophic for a keypress: TAB would block on a
+    // compiler. Whatever is answering this call has already been resolved and is already
+    // built, so naming it is both the fastest answer and the honest one.
+    if let Ok(exe) = std::env::current_exe() {
+        out.push(Variable {
+            name: crate::command_graph::shell::BIN_ENV,
+            value: exe.to_string_lossy().into_owned(),
+            purpose: "the executable the shell completion asks for candidates; never builds",
+        });
+    }
+
     // Only while a server is actually holding the lease: a variable naming an address
     // nothing answers at is worse than no variable, because a script will use it.
     if let Some(url) = environment

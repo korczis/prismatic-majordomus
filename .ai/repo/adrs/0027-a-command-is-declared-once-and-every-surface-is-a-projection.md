@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0025
+id: adr-0027
 kind: adr
 title: A command is declared once and every surface is a projection of the command graph
 status: proposed
@@ -17,7 +17,7 @@ provenance:
     - test:test/cases/101_command_graph.sh
 ---
 
-# 25. A command is declared once and every surface is a projection of the command graph
+# 27. A command is declared once and every surface is a projection of the command graph
 
 ## Context
 
