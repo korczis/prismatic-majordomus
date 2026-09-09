@@ -247,8 +247,14 @@ others attach:</p>
 <tr><td>Claude Code</td><td><a href="../.mcp.json"><code>.mcp.json</code></a></td><td>a stdio server, <code>bin/majordomus-mcp</code>; Claude Code asks once whether to trust a project server</td></tr>
 <tr><td>Gemini CLI</td><td><a href="../.gemini/settings.json"><code>.gemini/settings.json</code></a></td><td>the same launcher under <code>mcpServers.majordomus</code></td></tr>
 <tr><td>Codex</td><td><a href="../.codex/config.toml"><code>.codex/config.toml</code></a></td><td><code>[mcp_servers.majordomus]</code>, loaded when the project is trusted</td></tr>
-<tr><td>anything speaking Streamable HTTP</td><td>the running server's <code>/mcp</code></td><td><code>initialize</code> answers with an <code>Mcp-Session-Id</code>; every later request carries it; <code>DELETE /mcp</code> ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes</td></tr>
+<tr><td>bb</td><td>nothing of its own</td><td>an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with <code>settingSources: project</code>, which loads <code>.mcp.json</code>; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it <code>pending</code> at init and connected afterwards</td></tr>
 </tbody></table>
+</div>
+<p>The rows are the providers whose declaration names a client configuration; the whole set,
+with what each reads and where it keeps its scratch checkouts, is
+<a href="https://korczis.github.io/prismatic-majordomus/docs/mcp/generated/providers.md"><code>docs/generated/providers.md</code></a>, generated from the same declaration.</p>
+<div class="overflow-x-auto" tabindex="0">
+<p>| anything speaking Streamable HTTP | the running server's <code>/mcp</code> | <code>initialize</code> answers with an <code>Mcp-Session-Id</code>; every later request carries it; <code>DELETE /mcp</code> ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |</p>
 </div>
 <p><code>bin/majordomus-mcp</code> builds the executable when it is missing or older than its sources
 (<code>MAJORDOMUS_BUILD_PROFILE=release</code> for a release build; <code>MAJORDOMUS_BIN</code> names an
@@ -434,7 +440,7 @@ under <code>mcp-</code>, <code>hot-path-no-rebuild</code> and <code>benchmark-co
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/41c3a5a947216342cdede7a85e8abf1fd72eed4a" class="font-mono underline">41c3a5a</a> · inputs <span class="font-mono">a80755d07a68</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4b655ece9b244755a3dfc89e8dec8b3aa20d5a74" class="font-mono underline">4b655ec</a> · inputs <span class="font-mono">e00d4f53d224</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

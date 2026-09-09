@@ -215,9 +215,18 @@ every run writes its own summary.</p>
 <span class="giallo-l"></span>
 <span class="giallo-l"><span>pages.yml ──► one job: build ──► check ──► push gh-pages ──► measure publication</span></span></code></pre>
 <p><code>plan</code> reads the model and decides. <code>structure</code> runs the cheap, deterministic gates every
-plan has (<code>scripts/ci/shell-lint</code>, <code>scripts/ci/core-check</code>). The other jobs run when the
-plan selected a gate they carry, in parallel, each through the script a person runs. <code>ci</code>
-always runs and turns the plan and the jobs' results into one verdict.</p>
+plan has (<code>scripts/ci/shell-lint</code>, <code>scripts/ci/core-check</code>) and the structural gates the
+change needs. The other jobs run when the plan selected a gate they carry, in parallel, each
+through the script a person runs. <code>ci</code> always runs and turns the plan and the jobs' results
+into one verdict.</p>
+<p>A job does not list its gates. <code>scripts/ci/run-plan --plan plan.json --job &lt;job&gt;</code> reads the plan and runs every
+gate the model assigns to that job, in the model's order, skipping the ones the plan did not
+select; a job that runs one gate in a step of its own — the rust job's <code>rust-check</code>, which
+needs a mode and an artifact argument — says so beside that step with <code>--skip</code>. The
+alternative was tried and failed silently: four gates the model assigned to <code>structure</code> were
+reported as "run" in every plan summary and executed by nothing, because the job's steps
+were written by hand. A gate declared in <code>.ai/repo/ci/gates.yaml</code> now runs or is named as
+skipped, and nothing in between.</p>
 <p>Two workflows, and the split between them is what each decides. <code>.github/workflows/validate.yml</code>
 decides whether a change may merge. <code>.github/workflows/pages.yml</code> decides what the public site
 shows: it triggers directly on a master push whose paths can change the site and publishes as
@@ -259,8 +268,11 @@ that gate, is needed by <code>ci</code>, and <code>ci</code> always runs.</p>
 <h2 id="the-gates"><a class="zola-anchor" href="#the-gates" aria-label="Anchor link for: the-gates">The gates</a></h2>
 <p>The list, with the command each one runs, is the model: <code>scripts/ci-plan --full x --format text</code> prints it, and <code>.ai/repo/ci/gates.yaml</code> explains each. The commands are the ones a
 person runs:</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/shell-lint</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> syntax and shellcheck over the tool, the scripts, the cases</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/run-plan</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-job</span><span class="z-l-8 z-d-8"> structure</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-plan</span><span class="z-l-8 z-d-8"> plan.json</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> one job&#39;s gates of a written plan, as CI runs them</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/shell-lint</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> syntax and shellcheck over the tool, the scripts, the cases</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/core-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> doctor, watch, context, continuity, plan validate, github-sync, references, site data</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/providers-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> one provider declaration, every projection current, no provider list by hand</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/worktree-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> one constant, the guard wired, every document naming the same container</span></span>
 <span class="giallo-l"><span>MJ_TEST_JOBS</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">4</span><span class="z-l-1 z-d-3"> bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-10 z-l-i z-d-4 z-d-i">        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the behavioural suite, four cases at a time</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-ci</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> every Rust gate but coverage, plus the benchmark check</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-integration</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the executable built and the registry checks only</span></span>
@@ -390,7 +402,7 @@ fixtures.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/41c3a5a947216342cdede7a85e8abf1fd72eed4a" class="font-mono underline">41c3a5a</a> · inputs <span class="font-mono">a80755d07a68</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4b655ece9b244755a3dfc89e8dec8b3aa20d5a74" class="font-mono underline">4b655ec</a> · inputs <span class="font-mono">e00d4f53d224</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

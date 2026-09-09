@@ -274,7 +274,7 @@ contract the shared MCP server rests on, and the Cockpit names the exact command
 <tr><td><code>canonical</code></td><td>a linked worktree at exactly its branch's path</td></tr>
 <tr><td><code>misplaced</code></td><td>a linked worktree somewhere else; migration brings it home</td></tr>
 <tr><td><code>detached</code></td><td>no branch, so no canonical path; never moved</td></tr>
-<tr><td><code>ephemeral</code></td><td>a session's scratch checkout, under the temporary directory or <code>&lt;primary&gt;/.claude/worktrees/</code>; reported, refused for commits, moved only on request</td></tr>
+<tr><td><code>ephemeral</code></td><td>a session's scratch checkout, under a declared scratch root — the temporary directory, <code>&lt;primary&gt;/.claude/worktrees/</code> for Claude Code, bb's thread directory under its data directory — as <code>share/providers.yaml</code> declares them; reported, refused for commits, moved only on request</td></tr>
 <tr><td><code>missing</code></td><td>a registration whose directory is gone; <code>repair</code> drops it</td></tr>
 </tbody></table>
 </div>
@@ -301,6 +301,15 @@ contract the shared MCP server rests on, and the Cockpit names the exact command
 </div>
 <p>The topology is <em>valid</em> when no error-level diagnostic stands. Detached and ephemeral
 worktrees do not make it invalid; the guard still refuses a commit from an ephemeral one.</p>
+<p>Which directories make a checkout ephemeral is data, not a list in the executable:
+<code>share/providers.yaml</code> declares the tool's own scratch roots (the temporary directory) and
+each provider's — <code>&lt;primary&gt;/.claude/worktrees</code> for Claude Code, and for bb, an
+orchestrator that keeps a worktree per thread, <code>${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees</code>.
+A root is expanded against the primary checkout and the environment; a root the primary
+checkout itself lives under is skipped, so a test fixture in the temporary directory has
+ordinary siblings. The diagnostic names the provider whose root it matched. Somebody
+else's checkout is never migrated unasked and never cleaned up by the tool: the remedy the
+guard offers is to continue in the canonical worktree (ADR 0024).</p>
 <h2 id="commands"><a class="zola-anchor" href="#commands" aria-label="Anchor link for: commands">Commands</a></h2>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> where am I, and is that where I belong (exit 10 if not)</span></span>
 <span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> worktree</span><span class="z-l-8 z-d-8"> create</span><span class="z-l-8 z-d-8"> feature/improve-cli</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> start: the path is derived, never given</span></span>
@@ -479,7 +488,7 @@ topology changes outside the process.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/41c3a5a947216342cdede7a85e8abf1fd72eed4a" class="font-mono underline">41c3a5a</a> · inputs <span class="font-mono">a80755d07a68</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4b655ece9b244755a3dfc89e8dec8b3aa20d5a74" class="font-mono underline">4b655ec</a> · inputs <span class="font-mono">e00d4f53d224</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
