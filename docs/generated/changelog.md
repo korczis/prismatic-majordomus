@@ -11,7 +11,7 @@ Current version: **0.4.0**
 
 ### Decisions
 
-- **ADR-0030** The design is one declaration and every surface is a projection of it _(accepted)_
+- **ADR-0031** The design is one declaration and every surface is a projection of it _(accepted)_
 - **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(proposed)_
 - **ADR-0026** A capability module's area is derived from the features that name it, not declared beside it _(accepted)_
 - **ADR-0025** Presentation order is one total order owned by the crate, not a decision each surface makes _(accepted)_
@@ -46,6 +46,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **design,adr**: the three failures this session hit, each with the gate that would have caught it (`1cbb36869`)
 - **site**: the changelog page reads the groups the document carries (`b551a3327`)
 - **ui**: a scroll container is a containing block for what it positions, and the finding that says so names it (`2d328460b`)
 - **ci**: a job that hangs fails instead of holding a runner for a shift (`1ea8da126`)

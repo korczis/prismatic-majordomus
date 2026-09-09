@@ -275,7 +275,6 @@ git add -A >/dev/null; git commit -qm "before the branch" >/dev/null 2>&1 || tru
 # a number used on another branch and not present here at all
 git checkout -q -b other-branch
 "$MJ" adr propose "Decided on a branch" >/dev/null
-branch_adr="$(ls .ai/repo/adrs/ | grep -c '' )"
 git add -A >/dev/null && git commit -qm "a decision on a branch" >/dev/null
 high="$(ls .ai/repo/adrs/[0-9][0-9][0-9][0-9]-*.md | sed 's|.*/||; s|-.*||' | sort -n | tail -1)"
 git checkout -q -

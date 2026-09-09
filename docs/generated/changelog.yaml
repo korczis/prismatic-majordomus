@@ -9,7 +9,7 @@ sections:
   - version: unreleased
     unreleased: true
     decisions:
-      - id: adr-0030
+      - id: adr-0031
         title: The design is one declaration and every surface is a projection of it
         status: accepted
         date: "2026-09-09"
@@ -158,6 +158,11 @@ sections:
         heading: Fixed
         rank: 1
         changes:
+          - kind: fix
+            scope: "design,adr"
+            subject: "the three failures this session hit, each with the gate that would have caught it"
+            breaking: false
+            commit: 1cbb36869
           - kind: fix
             scope: site
             subject: the changelog page reads the groups the document carries

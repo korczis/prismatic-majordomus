@@ -84,7 +84,7 @@ accent should be blue is intent; a person states it, in the one file that holds 
 
 # Verification
 
-`test/cases/104_design_tokens.sh` proves it by mutation: a hand-edited projection is
+`test/cases/107_design_tokens.sh` proves it by mutation: a hand-edited projection is
 refused; a value changed canonically reaches every projection; an alias pointing at
 nothing is refused; a stylesheet with a literal fails and the same stylesheet naming a
 token passes; `color-mix()` over tokens passes and a literal inside one does not; a read of a token
@@ -92,5 +92,5 @@ nothing declares fails and the same read passes once it is declared; and neither
 `href="#features"` nor `Merge pull request #117` is mistaken for a colour, because a gate
 that cries wolf is a gate somebody turns off. Two of its assertions are regressions for real bugs in the generator —
 a quote stripper that broke a font stack, and a comment stripper that ate `#fff` — both of
-which produced CSS that failed in silence. ADR 0030 records the decision and what it left
+which produced CSS that failed in silence. ADR 0031 records the decision and what it left
 undone.

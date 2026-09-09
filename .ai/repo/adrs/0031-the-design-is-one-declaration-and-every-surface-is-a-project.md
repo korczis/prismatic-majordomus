@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0030
+id: adr-0031
 kind: adr
 title: The design is one declaration and every surface is a projection of it
 status: accepted
@@ -16,12 +16,12 @@ related:
   - file:scripts/ci/design-check
   - file:apps/majordomus-cli/src/web/html.rs
   - file:apps/majordomus-cli/src/http/swagger.rs
-  - test:test/cases/104_design_tokens.sh
+  - test:test/cases/107_design_tokens.sh
 provenance:
   origin: authored
 ---
 
-# 30. The design is one declaration and every surface is a projection of it
+# 31. The design is one declaration and every surface is a projection of it
 
 ## Context
 
@@ -103,7 +103,7 @@ The generator validates what it emits before writing it. This is not defensive
 programming; it is a bug this generator had. An unbalanced quote produced
 `--font-sans: ...Emoji;` — a declaration the CSS parser drops in silence, so the build
 succeeded, the drift check passed, every gate stayed green, and one surface lost its type
-stack. `test/cases/104_design_tokens.sh` holds that mutation and the other one, where a
+stack. `test/cases/107_design_tokens.sh` holds that mutation and the other one, where a
 comment stripper ate `#fff` and wrote a custom property with no value at all.
 
 The gate asks a third question the first version did not: is every `--mj-` token a surface
