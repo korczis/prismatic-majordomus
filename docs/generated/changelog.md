@@ -43,6 +43,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **ui**: a scroll container is a containing block for what it positions, and the finding that says so names it (`2d328460b`)
 - **ci**: a job that hangs fails instead of holding a runner for a shift (`1ea8da126`)
 - **completion**: TAB in this repository asks a program that can answer it (`ff2d64e57`)
 - **order**: the collections that disagreed with each other, and a rule that keeps them from disagreeing again (`28304f300`)
@@ -78,6 +79,8 @@ Current version: **0.4.0**
 - **test**: two site checks that no longer describe what the build produces (`5e04284fc`)
 - **cli**: the crate passes fmt, rustdoc and its test build again (`a10f0af08`)
 - **environment**: describe the services master serves, from its route constants (`b405705ba`)
+- **tests**: master's own two failures, and the size cliff behind one of them (`6815b9bf5`)
+- **why**: the acceptance case asserts the schema identity the tool prints (`5314bd6c8`)
 
 ### Performance
 
@@ -97,6 +100,7 @@ Current version: **0.4.0**
 
 ### Tests
 
+- **order**: the gate is driven against fixture trees, and driving it found five more unpinned sorts (`f6af28819`)
 - **gate**: case 56's first export is a repository too, so CI asks the same gate as a laptop (`8b6b9a982`)
 - **distribution**: the installability report, over states this repository is not in (`b1be17353`)
 - **gate**: the registry half needs a repository, not just a tree (`b7f88c73e`)
@@ -106,6 +110,8 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the merge with master (`44468dbc1`)
+- **order**: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are (`c72d294cc`)
 - **derive**: the projections follow the two adopted sessions (`4066bdf4f`)
 - **sessions**: adopt the two episodes this checkout left unrecorded (`1015d8ff8`)
 - **derive**: the projections follow the merge with master (`ee9e79b3f`)

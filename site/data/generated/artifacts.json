@@ -78,6 +78,27 @@
       "source": "the canonical Majordomus capability registry"
     },
     {
+      "document": "changelog",
+      "format": "json",
+      "path": "docs/generated/changelog.json",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "document": "changelog",
+      "format": "markdown",
+      "path": "docs/generated/changelog.md",
+      "schema": null,
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "document": "changelog",
+      "format": "yaml",
+      "path": "docs/generated/changelog.yaml",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
       "document": "cli",
       "format": "json",
       "path": "docs/generated/cli.json",
@@ -209,6 +230,13 @@
       "path": "docs/generated/modules/quality.md",
       "schema": null,
       "source": "the `quality` module of the canonical Majordomus capability registry"
+    },
+    {
+      "document": "modules/release",
+      "format": "markdown",
+      "path": "docs/generated/modules/release.md",
+      "schema": null,
+      "source": "the `release` module of the canonical Majordomus capability registry"
     },
     {
       "document": "modules/repository",
@@ -854,6 +882,16 @@
         "markdown",
         "yaml"
       ],
+      "id": "changelog",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ],
       "id": "cli",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it"
@@ -983,6 +1021,13 @@
       ],
       "id": "modules/quality",
       "source": "the `quality` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/release",
+      "source": "the `release` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -1249,7 +1294,7 @@
     }
   ],
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.3.1",
+  "generator": "majordomus-cli 0.4.0",
   "manifest_schema": "majordomus/generated-artifacts/v1",
   "schema": 1
 }

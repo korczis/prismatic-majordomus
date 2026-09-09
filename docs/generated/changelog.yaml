@@ -145,6 +145,11 @@ sections:
         rank: 1
         changes:
           - kind: fix
+            scope: ui
+            subject: "a scroll container is a containing block for what it positions, and the finding that says so names it"
+            breaking: false
+            commit: 2d328460b
+          - kind: fix
             scope: ci
             subject: a job that hangs fails instead of holding a runner for a shift
             breaking: false
@@ -319,6 +324,16 @@ sections:
             subject: "describe the services master serves, from its route constants"
             breaking: false
             commit: b405705ba
+          - kind: fix
+            scope: tests
+            subject: "master's own two failures, and the size cliff behind one of them"
+            breaking: false
+            commit: 6815b9bf5
+          - kind: fix
+            scope: why
+            subject: the acceptance case asserts the schema identity the tool prints
+            breaking: false
+            commit: 5314bd6c8
       - kind: perf
         heading: Performance
         rank: 2
@@ -382,6 +397,11 @@ sections:
         rank: 5
         changes:
           - kind: test
+            scope: order
+            subject: "the gate is driven against fixture trees, and driving it found five more unpinned sorts"
+            breaking: false
+            commit: f6af28819
+          - kind: test
             scope: gate
             subject: "case 56's first export is a repository too, so CI asks the same gate as a laptop"
             breaking: false
@@ -415,6 +435,16 @@ sections:
         heading: Housekeeping
         rank: 7
         changes:
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: 44468dbc1
+          - kind: chore
+            scope: order
+            subject: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are
+            breaking: false
+            commit: c72d294cc
           - kind: chore
             scope: derive
             subject: the projections follow the two adopted sessions

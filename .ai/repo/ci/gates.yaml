@@ -145,6 +145,17 @@ gates:
   # release proves the same thing in its own smoke phase, at the moment of publication;
   # this is what notices afterwards, when a release was never retried or a deployment
   # regressed and every tree-level gate stayed green.
+  # The other gate that measures the published site rather than this tree, and the one that
+  # was missing: is what GitHub Pages serves a projection of master at all? On 2026-09-09 the
+  # public site served a commit from an unmerged branch for about half an hour and every
+  # tree-level gate stayed green throughout, because the tree was fine — what was wrong was
+  # which tree had been published. A person noticed by eye. No class selects it, for the same
+  # reason installer-live has none: no change to a tree can make it true or false.
+  - id: pages-live
+    job: install
+    runs: scripts/ci/pages-check
+    summary: the site GitHub Pages serves was built from a commit on master, and the live site is serving what gh-pages published
+
   - id: installer-live
     job: install
     runs: scripts/ci/install-check --wait 300

@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# pages-check — what GitHub Pages is serving came from master, and is actually serving it.
+#
+# The one thing no gate asked. Every other gate measures a tree: the projections are current,
+# the graph is coherent, the command line matches the registry. None of them can be false
+# because of a deployment, and none of them notices when the published site stops being a
+# projection of the default branch.
+#
+# Two failures this exists for, both of which happened:
+#
+#   1. An UNMERGED REF WAS PUBLISHED. On 2026-09-09 the public site served a commit from
+#      feature/external-workspaces for about half an hour — `scripts/site-deploy --any-ref`
+#      pointed at production. Every tree-level gate was green throughout, because the tree
+#      was fine; what was wrong was which tree had been published. A person noticed by eye.
+#
+#   2. PAGES NEVER REBUILT. A push made with GITHUB_TOKEN starts no workflow, so a gh-pages
+#      commit can land with the Pages build never running. gh-pages then says one commit and
+#      the live site serves an older one, and nothing says so.
+#
+# So: the branch says which commit it was built from, and this asserts that commit is on
+# master; then it asks the live site what it is serving and asserts the two agree.
+#
+#   scripts/ci/pages-check                 both checks; needs network for the second
+#   scripts/ci/pages-check --offline       the ancestry check alone, from the local clone
+#   scripts/ci/pages-check --url URL       ask a different origin (a preview, a fork)
+#
+# Exit: 0 ok · 2 usage · 10 the published site is not a projection of master · 12 something
+# needed could not be read (no gh-pages, no network when one was required).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$ROOT"
+
+OFFLINE=0
+URL=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --offline) OFFLINE=1; shift ;;
+    --url) URL="${2:?--url needs a value}"; shift 2 ;;
+    -h|--help) sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "pages-check: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+REMOTE="${PAGES_CHECK_REMOTE:-origin}"
+BRANCH="${PAGES_CHECK_BRANCH:-gh-pages}"
+TRUNK="${PAGES_CHECK_TRUNK:-master}"
+
+say()  { printf '%s\n' "$*"; }
+ok()   { printf 'ok    %s\n' "$*"; }
+bad()  { printf 'FAIL  %s\n' "$*"; fail=1; }
+fail=0
+
+# ---------------------------------------------------------------- 1. what was published
+git fetch -q "$REMOTE" "$BRANCH" "$TRUNK" 2>/dev/null || true
+if ! git rev-parse --verify -q "$REMOTE/$BRANCH" >/dev/null; then
+  say "pages-check: $REMOTE/$BRANCH does not exist; nothing has been published"
+  exit 12
+fi
+
+subject="$(git log -1 --format=%s "$REMOTE/$BRANCH")"
+# The deploy commit names its source: `deploy: site from <sha> (registry <hash>), N routes`.
+# scripts/site-deploy writes it, and this is the only reader; a deploy that stopped saying
+# where it came from is itself the failure, so an unreadable subject is not tolerated.
+source_sha="$(printf '%s' "$subject" | sed -n 's/^deploy: site from \([0-9a-f][0-9a-f]*\).*/\1/p')"
+if [ -z "$source_sha" ]; then
+  say "pages-check: the head of $BRANCH does not name the commit it was built from:"
+  say "             $subject"
+  say "             scripts/site-deploy writes that subject; a deploy that does not is unauditable"
+  exit 12
+fi
+
+if ! git cat-file -e "$source_sha^{commit}" 2>/dev/null; then
+  bad "the published commit $source_sha is not in this clone; fetch, or it was never pushed"
+elif git merge-base --is-ancestor "$source_sha" "$REMOTE/$TRUNK" 2>/dev/null; then
+  behind="$(git rev-list --count "$source_sha..$REMOTE/$TRUNK")"
+  ok "the published commit $source_sha is on $TRUNK ($behind commit(s) behind its head)"
+else
+  bad "the published commit $source_sha is NOT on $TRUNK — an unmerged ref is being served"
+  say "      $subject"
+  say "      whoever deployed it used --any-ref against production; redeploy from $TRUNK"
+fi
+
+# ---------------------------------------------------------------- 2. what is being served
+if [ "$OFFLINE" = 1 ]; then
+  ok "the live site was not asked (--offline)"
+else
+  if [ -z "$URL" ]; then
+    # The site's own base, from the configuration that generated it — never a literal here,
+    # because a URL written in a gate is a second declaration of where the site lives.
+    URL="$(sed -n 's/^ *base_url *= *"\(.*\)"/\1/p' site/config.toml | head -1)"
+  fi
+  if [ -z "$URL" ]; then
+    say "pages-check: site/config.toml declares no base_url, so there is no site to ask"
+    exit 12
+  fi
+  body="$(curl -fsSL --max-time 30 "$URL" 2>/dev/null || true)"
+  if [ -z "$body" ]; then
+    bad "the live site at $URL did not answer; it is published but not reachable"
+  else
+    # The footer names the commit the site was generated from; site/templates/partials/footer.html
+    # renders it as a link into the repository.
+    live_sha="$(printf '%s' "$body" | sed -n 's|.*/commit/\([0-9a-f]\{7,40\}\).*|\1|p' | head -1)"
+    if [ -z "$live_sha" ]; then
+      bad "the live site names no commit in its footer; it cannot be matched to a tree"
+    elif [ "${live_sha#"$source_sha"}" != "$live_sha" ] || [ "${source_sha#"$live_sha"}" != "$source_sha" ]; then
+      ok "the live site is serving $source_sha, which is what $BRANCH published"
+    else
+      bad "the live site serves ${live_sha:0:12} but $BRANCH published ${source_sha:0:12}"
+      say "      Pages did not rebuild. A push made with GITHUB_TOKEN starts no workflow;"
+      say "      re-run the pages workflow, or push the branch with a token that does."
+    fi
+  fi
+fi
+
+[ "$fail" = 0 ] || exit 10
+say "pages-check: the published site is a projection of $TRUNK, and is being served"

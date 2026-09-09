@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-registry/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.3.1",
+  "generator": "majordomus-cli 0.4.0",
   "modules": [
     {
       "id": "artifacts",
@@ -122,6 +122,14 @@
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 1
+    },
+    {
+      "id": "release",
+      "title": "Release",
+      "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become.",
+      "stability": "implemented",
+      "source": "builtin",
+      "capabilities": 2
     },
     {
       "id": "repository",
@@ -12144,6 +12152,519 @@
         "ttl_seconds": 10
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
+    },
+    {
+      "id": "release.changelog",
+      "module": "release",
+      "kind": "query",
+      "title": "The changelog",
+      "description": "Every release the layer records, newest first, with the work that has not been released leading. A section's decisions are the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty.",
+      "input": {
+        "name": "ReleaseChangelogInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "version": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "One version, or `unreleased`; every section when absent."
+            }
+          },
+          "description": "Which part of the changelog to answer with.",
+          "title": "ReleaseChangelogInput"
+        }
+      },
+      "output": {
+        "name": "ReleaseChangelog",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "type": "string",
+              "description": "The schema this document satisfies."
+            },
+            "current": {
+              "type": "string",
+              "description": "The version the tree currently declares."
+            },
+            "sections": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ReleaseSection"
+              },
+              "description": "Newest first, the unreleased section leading when there is one."
+            },
+            "diagnostics": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "What could not be read, said rather than hidden: a repository with no git history,\na release record that names no commit, a tag that is not in this clone."
+            }
+          },
+          "required": [
+            "schema",
+            "current",
+            "sections",
+            "diagnostics"
+          ],
+          "description": "The whole changelog.",
+          "title": "ReleaseChangelog",
+          "$defs": {
+            "ReleaseSection": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "string",
+                  "description": "The version, or `unreleased`."
+                },
+                "tag": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The tag, when one was published."
+                },
+                "date": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "When it was published, from the record."
+                },
+                "commit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit it was published from."
+                },
+                "unreleased": {
+                  "type": "boolean",
+                  "description": "Whether this section is the work that has not been released."
+                },
+                "decisions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReleaseDecision"
+                  },
+                  "description": "The decisions dated inside this release's window."
+                },
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReleaseChangeGroup"
+                  },
+                  "description": "The changes, from the commits in this release's range, grouped by what they did and\nordered by the rank each group carries. The flat list is the concatenation of the\ngroups' own; nothing holds it twice."
+                },
+                "artifacts": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReleaseChangelogArtifact"
+                  },
+                  "description": "What was published, when this section is a release."
+                }
+              },
+              "required": [
+                "version",
+                "unreleased",
+                "decisions",
+                "groups",
+                "artifacts"
+              ],
+              "description": "One version's worth of changelog."
+            },
+            "ReleaseDecision": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "`adr-0027`."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The decision, in its own words."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "`proposed`, `accepted`, `superseded`."
+                },
+                "date": {
+                  "type": "string",
+                  "description": "The date the record carries."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "status",
+                "date"
+              ],
+              "description": "One decision, as the layer's own ADR object states it."
+            },
+            "ReleaseChangeGroup": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "$ref": "#/$defs/ReleaseChangeKind",
+                  "description": "What the changes in it did."
+                },
+                "heading": {
+                  "type": "string",
+                  "description": "The heading it is shown under."
+                },
+                "rank": {
+                  "type": "integer",
+                  "format": "uint8",
+                  "minimum": 0,
+                  "maximum": 255,
+                  "description": "Where it sorts among the other groups; ascending."
+                },
+                "changes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReleaseChange"
+                  },
+                  "description": "The changes, in the order the commits were read."
+                }
+              },
+              "required": [
+                "kind",
+                "heading",
+                "rank",
+                "changes"
+              ],
+              "description": "The changes of one kind, with the heading and the rank that decide where they are shown.\n\nThe grouping is in the document rather than in each renderer. It was in the Markdown\nrenderer alone, and the site — which cannot see a Rust function — grouped alphabetically\ninstead, so the same changelog read in two orders depending on which surface showed it.\nA presentation order stated once and carried is the only kind that survives a projection."
+            },
+            "ReleaseChangeKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "feat",
+                  "description": "A capability a person did not have before."
+                },
+                {
+                  "type": "string",
+                  "const": "fix",
+                  "description": "Behaviour that was wrong and is not any more."
+                },
+                {
+                  "type": "string",
+                  "const": "perf",
+                  "description": "Performance, with the behaviour unchanged."
+                },
+                {
+                  "type": "string",
+                  "const": "refactor",
+                  "description": "Structure, with the behaviour unchanged."
+                },
+                {
+                  "type": "string",
+                  "const": "docs",
+                  "description": "Documentation."
+                },
+                {
+                  "type": "string",
+                  "const": "test",
+                  "description": "Tests."
+                },
+                {
+                  "type": "string",
+                  "const": "chore",
+                  "description": "The build, the pipeline, the tooling."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "Continuous integration."
+                },
+                {
+                  "type": "string",
+                  "const": "other",
+                  "description": "A commit whose subject does not parse as a conventional commit."
+                }
+              ],
+              "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+            },
+            "ReleaseChange": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "$ref": "#/$defs/ReleaseChangeKind",
+                  "description": "What it did."
+                },
+                "scope": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The area it did it in, when the subject named one: `commands`, `ci`, `site`."
+                },
+                "subject": {
+                  "type": "string",
+                  "description": "The subject, without the type and scope that prefixed it."
+                },
+                "breaking": {
+                  "type": "boolean",
+                  "description": "Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The abbreviated commit."
+                }
+              },
+              "required": [
+                "kind",
+                "subject",
+                "breaking",
+                "commit"
+              ],
+              "description": "One change, from one commit."
+            },
+            "ReleaseChangelogArtifact": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "description": "The platform triple the record names."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The file name."
+                },
+                "sha256": {
+                  "type": "string",
+                  "description": "Its SHA-256, as the record read it off the file."
+                }
+              },
+              "required": [
+                "target",
+                "name",
+                "sha256"
+              ],
+              "description": "One published artifact, from the release record's own evidence."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::release"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_changelog",
+          "resource": {
+            "uri": "majordomus://changelog",
+            "name": "changelog"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/changelog"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "implemented",
+      "tags": [
+        "release",
+        "changelog"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
+    },
+    {
+      "id": "release.version",
+      "module": "release",
+      "kind": "query",
+      "title": "The version, and the one the commits imply",
+      "description": "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ReleaseVersionReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "declared": {
+              "type": "string",
+              "description": "The version the crate manifest declares — the authority."
+            },
+            "tool": {
+              "type": "string",
+              "description": "The version `bin/majordomus` prints."
+            },
+            "agree": {
+              "type": "boolean",
+              "description": "Whether the two agree. `scripts/release-version --check` is the gate; this is the\nsame question asked by the executable, so every surface can show the answer."
+            },
+            "last_release": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The last release the layer records."
+            },
+            "bump": {
+              "type": "string",
+              "description": "What the commits since it imply: `major`, `minor`, `patch`, or `none`."
+            },
+            "next": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The version that bump would produce."
+            },
+            "changes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ReleaseChange"
+              },
+              "description": "How many commits since the last release, and of what kind — the evidence for the\nbump, so that a surprising answer can be checked rather than believed."
+            }
+          },
+          "required": [
+            "declared",
+            "tool",
+            "agree",
+            "bump",
+            "changes"
+          ],
+          "description": "What the version is, and what the commits since the last release imply it should become.",
+          "title": "ReleaseVersionReport",
+          "$defs": {
+            "ReleaseChange": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "$ref": "#/$defs/ReleaseChangeKind",
+                  "description": "What it did."
+                },
+                "scope": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The area it did it in, when the subject named one: `commands`, `ci`, `site`."
+                },
+                "subject": {
+                  "type": "string",
+                  "description": "The subject, without the type and scope that prefixed it."
+                },
+                "breaking": {
+                  "type": "boolean",
+                  "description": "Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer."
+                },
+                "commit": {
+                  "type": "string",
+                  "description": "The abbreviated commit."
+                }
+              },
+              "required": [
+                "kind",
+                "subject",
+                "breaking",
+                "commit"
+              ],
+              "description": "One change, from one commit."
+            },
+            "ReleaseChangeKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "feat",
+                  "description": "A capability a person did not have before."
+                },
+                {
+                  "type": "string",
+                  "const": "fix",
+                  "description": "Behaviour that was wrong and is not any more."
+                },
+                {
+                  "type": "string",
+                  "const": "perf",
+                  "description": "Performance, with the behaviour unchanged."
+                },
+                {
+                  "type": "string",
+                  "const": "refactor",
+                  "description": "Structure, with the behaviour unchanged."
+                },
+                {
+                  "type": "string",
+                  "const": "docs",
+                  "description": "Documentation."
+                },
+                {
+                  "type": "string",
+                  "const": "test",
+                  "description": "Tests."
+                },
+                {
+                  "type": "string",
+                  "const": "chore",
+                  "description": "The build, the pipeline, the tooling."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "Continuous integration."
+                },
+                {
+                  "type": "string",
+                  "const": "other",
+                  "description": "A commit whose subject does not parse as a conventional commit."
+                }
+              ],
+              "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::release"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_release_version"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/release/version"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "implemented",
+      "tags": [
+        "release",
+        "version"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs"
     },
     {
       "id": "repository.info",
