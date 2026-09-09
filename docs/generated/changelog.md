@@ -21,6 +21,8 @@ Current version: **0.4.0**
 
 ### Added
 
+- **rules**: an empty result and a failed command must not look alike (`824223cb5`)
+- **ci**: three failures of one session, turned into checks (`1e96e91b7`)
 - **context**: the board reaches the worker who never asked for it (`8ad5bb6a7`)
 - **peers**: a session is told it has not announced, and doctor names the work that exists on one disk (`1487d729e`)
 - **design**: one declaration for the design, and every surface projects it (`2b3b9fffa`)
@@ -156,12 +158,20 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`08348b0c1`)
+- **derive**: the projections follow the master merge (`c4b6d0715`)
 - **derive**: the projections follow master once more (`f36420c30`)
+- **derive**: the projections follow the master merge (`8c53e2b11`)
+- **derive**: the projections follow the master merge (`a4f9780b0`)
+- **derive**: the projections follow the master merge (`16cc159c7`)
 - **derive**: the projections follow eight branches and current master (`98f3dfbda`)
 - **derive**: the projections follow six branches folded together (`e15b311e7`)
 - **derive**: the projections follow the master merge (`c114a92f3`)
 - **derive**: the projections follow the master merge (`341451cb7`)
+- **derive**: the projections follow the master merge (`91b4e8be6`)
+- **derive**: the projections follow the master merge (`3a2aeab52`)
 - **derive**: the projections follow the merge (`f2b018f26`)
+- **derive**: the projections follow the two merges, and the baseline records lib/doctor.sh (`501ea2d41`)
 - **derive**: the projections follow the merge of origin/master (`11fc8bf2b`)
 - **derive**: the projections follow the master merge, and the baseline records three scripts that arrived with it (`8ddb6496d`)
 - **derive**: the projections follow the final master merge (`cdc859654`)
