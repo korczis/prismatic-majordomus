@@ -44,6 +44,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **tooling**: two failures of this session become refusals with tests (`b90e0dd47`)
 - **release**: the module asserts the two projections it documents (`98f6606ce`)
 - **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
 - **commands**: the module asserts the three projections it documents (`5609ab148`)
@@ -117,6 +118,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the second master merge (`e94b760d1`)
 - **derive**: the projections follow the master merge (`5fe8f2ec8`)
 - **derive**: the projections follow the master merge (`b79363681`)
 - **derive**: the projections follow the merge with master (`44468dbc1`)
