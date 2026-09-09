@@ -15,6 +15,7 @@ scope:
 non_scope:
   - Any adapter or transport implementation
   - Any vendor-specific field; ChatGPT's own shape is I1307
+  - Placing the schema file under share/schemas/ before something reads it. The schema-integrity doctrine refuses a schema that nothing applies, and nothing reads a workspace record until the syncer (I1306) or the reader capability (I1308) exists, so the file lands in the same change as its first reader rather than ahead of it.
 depends_on:
   - I1301
 acceptance_criteria:

@@ -36,4 +36,33 @@ evidence_required:
   - object_indexed
 risk: "A schema written for ChatGPT becomes a ChatGPT file with a generic name. It has to state only what a second vendor would plausibly restate, and push everything else into a named vendor block."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-09-09T18:26:36Z
+started_at: 2026-09-09T18:25:15Z
+verified_at: 2026-09-09T18:26:21Z
+completed_at: 2026-09-09T18:26:36Z
+evidence:
+  - covers: kind_registered
+    type: test
+    command: "grep -A8 '^  workspace:' share/kinds.yaml"
+    result: "the workspace kind is declared with schema majordomus.workspace/v1 and identity [id]"
+    commit: 3d9c929a5b962817b0383c4bf2f991e1725932da
+    recorded_at: 2026-09-09T18:25:41Z
+  - covers: keys_closed
+    type: build
+    command: "majordomus generate"
+    result: "share/allow/workspace.txt generated from the schema; 23 key patterns, additionalProperties false"
+    commit: 3d9c929a5b962817b0383c4bf2f991e1725932da
+    recorded_at: 2026-09-09T18:25:49Z
+  - covers: directory_contract
+    type: artifact
+    command: "cat .ai/repo/workspaces/README.md"
+    result: "context/v1 document, tracks the schema and share/kinds.yaml, states what is authoritative and what is never here"
+    artifact: ".ai/repo/workspaces/README.md"
+    commit: 3d9c929a5b962817b0383c4bf2f991e1725932da
+    recorded_at: 2026-09-09T18:25:55Z
+  - covers: object_indexed
+    type: test
+    command: "bash test/run.sh 93_workspace_kind"
+    result: "1 passed; majordomus://workspace/chatgpt-majordomus is indexed and served on the deployed /registry/ page with no Rust written for it"
+    commit: 3d9c929a5b962817b0383c4bf2f991e1725932da
+    recorded_at: 2026-09-09T18:26:04Z
