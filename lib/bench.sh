@@ -111,7 +111,7 @@ mj_bench_once() { # dir
 # nearest-rank percentiles over the sample lines on stdin, one line of tab-separated
 # fields: count min p50 p90 p95 p99 max mean stddev. One implementation, tested by the case.
 mj_bench_stats() {
-  sort -n | awk '
+  LC_ALL=C sort -n | awk '
     { v[++n] = $1 + 0; s += v[n]; ss += v[n] * v[n] }
     function pct(p,   r) { r = int((p * n + 99) / 100); if (r < 1) r = 1; if (r > n) r = n; return v[r] }
     END {

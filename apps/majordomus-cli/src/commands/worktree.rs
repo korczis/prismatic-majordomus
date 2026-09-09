@@ -12,7 +12,6 @@
 //! form and the JSON form are two renderings of one typed answer.
 
 use std::io::Write;
-use std::path::PathBuf;
 
 use serde::Serialize;
 use serde_json::Value;
@@ -860,9 +859,4 @@ fn remove(
         }
     }
     Ok(0)
-}
-
-/// The path of a worktree, for callers outside this module that only have a selector.
-pub fn path_of(svc: &WorktreeService, selector: &str) -> Result<PathBuf> {
-    Ok(svc.resolve(selector).map_err(refuse)?.path)
 }

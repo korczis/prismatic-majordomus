@@ -3,8 +3,8 @@ id: majordomus.skill-integrity
 version: 1
 kind: rule
 title: Skill integrity
-description: Every skill the repository declares parses against the skill contract, names the directory it lives in, carries its sections, and every skill or example it refers to exists.
-statement: A skill is canonical data under the skills section; it is valid against the skill schema, its id is its directory, its body carries the sections a reader relies on, and every reference it makes resolves.
+description: Every skill the repository declares parses against the skill contract, names the directory it lives in, carries its sections, describes itself in terms no other skill uses, and every skill or example it refers to exists.
+statement: A skill is canonical data under the skills section; it is valid against the skill schema, its id is its directory, its body carries the sections a reader relies on, its description tells it apart from every other skill, and every reference it makes resolves.
 status: active
 class: blocking
 depends_on: [majordomus.minimum-sufficient-context@1]
@@ -25,7 +25,7 @@ A skill is loaded only when a task is about what it covers, so a broken one is n
 
 # Required behaviour
 
-Every file the source class `skill` discovers has front matter that satisfies `share/schemas/majordomus/skill/skill.v1.schema.json` (no unknown key, `schema: skill/v1`, an integer `version`, a `status` from the closed set), an `id` equal to its directory name, and a body with non-empty `# Purpose`, `# Procedure` and `# Output` sections. No two skills claim one id. Every `related` id names a skill in the catalogue, and every tracked example under a skill's `examples/` opens with a level-one heading.
+Every file the source class `skill` discovers has front matter that satisfies `share/schemas/majordomus/skill/skill.v1.schema.json` (no unknown key, `schema: skill/v1`, an integer `version`, a `status` from the closed set), an `id` equal to its directory name, and a body with non-empty `# Purpose`, `# Procedure` and `# Output` sections. No two skills claim one id, and no two describe themselves the same way: a skill is chosen by what its description says it covers, so two skills that say the same thing cannot both be chosen and the one a worker wanted is unreachable. Descriptions are compared folded to lower case with runs of whitespace collapsed and trailing sentence punctuation dropped, so the difference has to be in what a description says rather than in how it is typed. Every `related` id names a skill in the catalogue, and every tracked example under a skill's `examples/` opens with a level-one heading.
 
 # Failure behaviour
 

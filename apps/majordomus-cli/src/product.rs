@@ -344,6 +344,14 @@ pub struct SurfaceRef {
     pub category: String,
 }
 
+// `weight` is the ranking a feature declares; the canonical order takes it as the rank and
+// ends on the identity, so two features of equal weight keep one order everywhere.
+impl crate::order::Ordered for Feature {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id).ranked(i64::from(self.weight))
+    }
+}
+
 /// One operational moment the feature answers: derived from the moments that name any of
 /// the feature's commands, capabilities, claims or rules.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -530,6 +538,63 @@ pub struct ProductModel {
     modules: Vec<ProductCoverage>,
     commands: Vec<ProductCoverage>,
     kinds: Vec<ProductCoverage>,
+    module_areas: BTreeMap<String, String>,
+}
+
+/// What claims a module: the features that name it, each with the areas it serves.
+type Claims = BTreeMap<String, Vec<(String, Vec<String>)>>;
+
+/// Resolve one area per module, and name the modules whose claimants disagree.
+///
+/// The rule is the catalogue's own ranking: among the areas the claiming features serve,
+/// the one with the lowest `weight`, ties broken by id. The areas are already ordered by
+/// what the operator cares about most, and a second ranking invented here would be a second
+/// opinion about a question the layer has already answered.
+///
+/// Two features that name one module and share no area disagree about what the module is
+/// for. The resolution stays deterministic and the disagreement is still returned, so that
+/// it is settled in the feature files where the semantics live rather than by a tiebreak in
+/// this function.
+fn resolve_module_areas(
+    claims: &Claims,
+    weight: &BTreeMap<&str, u32>,
+) -> (BTreeMap<String, String>, Vec<(String, String)>) {
+    let mut areas: BTreeMap<String, String> = BTreeMap::new();
+    let mut contested: Vec<(String, String)> = Vec::new();
+
+    for (module, claimants) in claims {
+        // A set, not a sort and a dedup: unique and ordered is what a BTreeSet is, and the
+        // canonical-order gate is right to ask why a comparator appeared here.
+        let union: std::collections::BTreeSet<&str> = claimants
+            .iter()
+            .flat_map(|(_, areas)| areas.iter().map(String::as_str))
+            .collect();
+
+        let disjoint = claimants.len() > 1
+            && claimants.iter().any(|(_, a)| {
+                claimants
+                    .iter()
+                    .any(|(_, b)| !a.iter().any(|x| b.contains(x)))
+            });
+        if disjoint {
+            let who: Vec<String> = claimants
+                .iter()
+                .map(|(id, a)| format!("{id} ({})", a.join(", ")))
+                .collect();
+            contested.push((module.clone(), who.join(" / ")));
+        }
+
+        if let Some(best) = union.iter().min_by(|a, b| {
+            weight
+                .get(*a)
+                .unwrap_or(&u32::MAX)
+                .cmp(weight.get(*b).unwrap_or(&u32::MAX))
+                .then_with(|| a.cmp(b))
+        }) {
+            areas.insert(module.clone(), (*best).to_string());
+        }
+    }
+    (areas, contested)
 }
 
 /// Levenshtein distance, for the nearest-candidate hint on an unresolved reference.
@@ -699,7 +764,7 @@ impl ProductModel {
                 features.push(f);
             }
         }
-        features.sort_by(|a, b| a.weight.cmp(&b.weight).then(a.id.cmp(&b.id)));
+        crate::order::canonical(&mut features);
 
         m.adopt_diagnostics(index);
         let lookups = Lookups::new(index);
@@ -749,6 +814,12 @@ impl ProductModel {
             }
         }
         m.coverage(registry, &lookups);
+        let area_weights: BTreeMap<&str, u32> = why
+            .areas()
+            .iter()
+            .map(|a| (a.id.as_str(), a.weight))
+            .collect();
+        m.derive_module_areas(&area_weights);
         m.findings.sort_by(|a, b| {
             b.severity
                 .cmp(&a.severity)
@@ -758,6 +829,54 @@ impl ProductModel {
         });
         m.fingerprint = m.compute_fingerprint();
         m
+    }
+
+    /// The area each capability module serves, derived rather than declared.
+    ///
+    /// A module has no area of its own and is given none: the features that name it in
+    /// `modules:` already say which areas they serve, so the module's area is theirs,
+    /// resolved by [`resolve_module_areas`]. A feature that declares no area claims
+    /// nothing; a module no feature claims is shown under no heading and ordered last.
+    fn derive_module_areas(&mut self, weight: &BTreeMap<&str, u32>) {
+        let mut claims: Claims = BTreeMap::new();
+        for r in &self.features {
+            if r.feature.areas.is_empty() {
+                continue;
+            }
+            for module in &r.feature.modules {
+                claims
+                    .entry(module.clone())
+                    .or_default()
+                    .push((r.feature.id.clone(), r.feature.areas.clone()));
+            }
+        }
+        let (areas, contested) = resolve_module_areas(&claims, weight);
+        self.module_areas = areas;
+        for (module, who) in contested {
+            self.findings.push(ProductFinding {
+                severity: Severity::Warning,
+                code: "contested_area".into(),
+                path: ".ai/repo/features".into(),
+                id: Some(module.clone()),
+                field: Some("areas".into()),
+                message: format!(
+                    "the module '{module}' is claimed by features that share no area: {who}; \
+                     the lowest-weight area wins until a feature file settles it"
+                ),
+                did_you_mean: None,
+            });
+        }
+    }
+
+    /// The area a capability module serves, or `None` for a module no feature with an area
+    /// names.
+    ///
+    /// Derived when the model is built, from the features that name the module, resolved by
+    /// the areas' own weight; the Cockpit's sidebar groups by it. The derivation is private
+    /// and this text does not link to it: rustdoc refuses a public link to a private item,
+    /// and the public fact is the answer rather than the route to it.
+    pub fn module_area(&self, module: &str) -> Option<&str> {
+        self.module_areas.get(module).map(String::as_str)
     }
 
     /// Every diagnostic the index raised about a file of the features section: an object the
@@ -1506,6 +1625,131 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Areas as weights: the ranking the resolution reads, and the whole of what it reads.
+    /// The catalogue's own numbers, five of the nine.
+    fn areas() -> BTreeMap<&'static str, u32> {
+        [
+            ("context", 10),
+            ("coordination", 20),
+            ("governance", 30),
+            ("verification", 60),
+            ("documentation", 90),
+        ]
+        .into_iter()
+        .collect()
+    }
+
+    /// One module's claimants in a fixture: the feature's id and the areas it serves.
+    type Claimant<'a> = (&'a str, &'a [&'a str]);
+
+    /// Claims as the model builds them: module -> the features that name it, with the areas
+    /// each of those features serves.
+    fn claims(of: &[(&str, &[Claimant<'_>])]) -> Claims {
+        of.iter()
+            .map(|(module, claimants)| {
+                (
+                    (*module).to_string(),
+                    claimants
+                        .iter()
+                        .map(|(feature, areas)| {
+                            (
+                                (*feature).to_string(),
+                                areas.iter().map(|a| (*a).to_string()).collect(),
+                            )
+                        })
+                        .collect(),
+                )
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_modules_area_is_the_lowest_weight_area_of_the_features_that_name_it() {
+        let (areas_by_module, contested) = resolve_module_areas(
+            &claims(&[
+                (
+                    "continuity",
+                    &[("continuity", &["context", "coordination"])],
+                ),
+                (
+                    "distribution",
+                    &[("install", &["verification", "documentation"])],
+                ),
+            ]),
+            &areas(),
+        );
+        assert_eq!(
+            areas_by_module.get("continuity").map(String::as_str),
+            Some("context")
+        );
+        assert_eq!(
+            areas_by_module.get("distribution").map(String::as_str),
+            Some("verification")
+        );
+        assert_eq!(areas_by_module.get("nothing-names-me"), None);
+        assert!(
+            contested.is_empty(),
+            "one claimant per module is not a disagreement"
+        );
+    }
+
+    #[test]
+    fn a_module_two_features_place_differently_is_reported_and_still_resolved() {
+        let (areas_by_module, contested) = resolve_module_areas(
+            &claims(&[(
+                "health",
+                &[
+                    ("cockpit", &["documentation"]),
+                    ("doctrine", &["governance", "verification"]),
+                ],
+            )]),
+            &areas(),
+        );
+        // Deterministic despite the disagreement: the catalogue's own ranking decides.
+        assert_eq!(
+            areas_by_module.get("health").map(String::as_str),
+            Some("governance")
+        );
+        assert_eq!(contested.len(), 1, "the disagreement is reported once");
+        assert_eq!(contested[0].0, "health");
+        assert!(contested[0].1.contains("cockpit"));
+        assert!(contested[0].1.contains("doctrine"));
+    }
+
+    #[test]
+    fn features_that_overlap_in_one_area_are_not_a_disagreement() {
+        let (areas_by_module, contested) = resolve_module_areas(
+            &claims(&[(
+                "worktree",
+                &[
+                    ("coordination", &["coordination"]),
+                    ("worktrees", &["coordination", "context"]),
+                ],
+            )]),
+            &areas(),
+        );
+        assert_eq!(
+            areas_by_module.get("worktree").map(String::as_str),
+            Some("context")
+        );
+        assert!(
+            contested.is_empty(),
+            "a shared area is agreement, whatever else each feature also serves"
+        );
+    }
+
+    #[test]
+    fn an_area_the_catalogue_does_not_rank_loses_to_one_it_does() {
+        let (areas_by_module, _) = resolve_module_areas(
+            &claims(&[("m", &[("f", &["not-an-area", "documentation"])])]),
+            &areas(),
+        );
+        assert_eq!(
+            areas_by_module.get("m").map(String::as_str),
+            Some("documentation")
+        );
+    }
 
     #[test]
     fn the_surface_vocabulary_is_closed_and_read_back_in_order() {

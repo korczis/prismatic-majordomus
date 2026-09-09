@@ -1,6 +1,40 @@
 //! The domain model: what an object is, where it came from, and what was wrong with what
-//! could not become one. Nothing here knows about files being read or protocols being
-//! spoken; those layers produce and consume these types.
+//! could not become one.
+//!
+//! Nothing here knows about files being read or protocols being spoken. Discovery produces
+//! these types, the index holds them, and every projection consumes them — which is what
+//! lets the same [`Object`] be an MCP resource, an HTTP response, a row of the generated
+//! reference and a page of the site without any of those knowing how it was read.
+//!
+//! # Diagnostics are not errors
+//!
+//! A malformed file inside the layer is a [`Diagnostic`], never an [`crate::Error`]. The
+//! distinction is load-bearing: an error stops the process, and one bad file must not.
+//! [`Severity::Error`] excludes that file from the index and puts the index into the
+//! degraded state, so the repository still answers and says what it could not read;
+//! `Warning` and `Info` do neither. Every diagnostic carries a stable code, so a gate can
+//! act on one without matching prose.
+//!
+//! ```
+//! use majordomus_cli::{Diagnostic, Severity};
+//! use majordomus_cli::model::uri_for;
+//!
+//! // what could not be read, said in a way something can act on
+//! let bad = Diagnostic::error(
+//!     "front_matter",
+//!     Some(".ai/repo/rules/project/broken.v1.md".into()),
+//!     "front matter opened on line 1 and never closed",
+//! );
+//! assert_eq!(bad.severity, Severity::Error);
+//! assert_eq!(bad.code, "front_matter");
+//!
+//! // and a warning leaves the file in the index
+//! assert_eq!(Diagnostic::warning("tags", None, "no tags").severity, Severity::Warning);
+//!
+//! // an object is addressed the same way wherever it is read
+//! assert_eq!(uri_for("rule", "project.scope-is-declared@1"),
+//!            "majordomus://rule/project.scope-is-declared@1");
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

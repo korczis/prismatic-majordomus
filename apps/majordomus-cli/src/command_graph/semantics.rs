@@ -14,7 +14,7 @@
 //!   non-interactive; [`Semantics::DEFAULT`] says so, and a command that is nothing more
 //!   than that appears nowhere below. Only a command that *departs* from the default is
 //!   named — which is exactly the information nothing else holds.
-//! - **Completeness is enforced in both directions.** [`validate`] fails when an entry
+//! - **Completeness is enforced in both directions.** `validate` fails when an entry
 //!   names a command that does not exist (a rename that left this file behind) and when a
 //!   command's effect could not be decided. The table cannot silently go stale, which is
 //!   the property that distinguishes a declaration from a mirror.
@@ -100,6 +100,15 @@ pub const SEMANTICS: &[Semantics] = &[
         effect: Effect::LocalMutation,
         interactivity: Interactivity::NonInteractive,
         requires: &[],
+    },
+    // Raising the version writes two tracked files, which is a repository mutation and is
+    // why no capability declares it: the policy keeps repository mutations off every machine
+    // surface, so the bump is a command a person runs and nothing reachable over MCP or HTTP.
+    Semantics {
+        path: &["release", "bump"],
+        effect: Effect::RepositoryMutation,
+        interactivity: Interactivity::NonInteractive,
+        requires: &[Requirement::Repository],
     },
     // Packaging writes into the build directory.
     Semantics {

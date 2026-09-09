@@ -4,18 +4,42 @@
 //!
 //! Two sources feed the registry: typed executable capabilities written in Rust
 //! ([`builtin`]) and declarative objects the repository's layer declares
-//! ([`declarative`]). Both normalise into the same [`Capability`] descriptor; a consumer
+//! (`declarative`). Both normalise into the same [`Capability`] descriptor; a consumer
 //! cannot tell, and need not care, which source an entry came from except through its
 //! provenance.
+//!
+//! ```
+//! use majordomus_cli::capability::{builtin, CapabilityRegistry, HttpMethod};
+//!
+//! // the application composed from its modules, validated on the way in
+//! let registry = CapabilityRegistry::builder()
+//!     .with_modules(builtin::modules())
+//!     .build()
+//!     .expect("the composed application is valid");
+//!
+//! // one descriptor, and every projection is a way of asking for it
+//! let by_id = registry.get("repository.info").expect("a canonical id");
+//! let by_route = registry
+//!     .by_http(HttpMethod::Get, "/api/v1/repository")
+//!     .expect("the route it declares");
+//! let by_tool = registry
+//!     .by_mcp_tool("majordomus_repository")
+//!     .expect("the MCP tool it declares");
+//! assert_eq!(by_id.id, by_route.id);
+//! assert_eq!(by_id.id, by_tool.id);
+//!
+//! // and nothing was told about it: the exposures are on the descriptor itself
+//! assert_eq!(by_id.exposure.http.as_ref().unwrap().path, "/api/v1/repository");
+//! ```
 
-pub mod benchmark;
+pub(crate) mod benchmark;
 pub mod builtin;
 pub mod closure;
-pub mod declarative;
+pub(crate) mod declarative;
 pub mod executor;
 pub mod handler;
 pub mod model;
-pub mod module;
+pub(crate) mod module;
 pub mod registry;
 pub mod schema;
 

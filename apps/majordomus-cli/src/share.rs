@@ -2,6 +2,34 @@
 //! `share/schemas/<kind>.schema.json`, read at run time. Nothing about kinds or keys is
 //! compiled into the executable; the directory is located per invocation, explicitly or
 //! by convention, and named in every error when it is not.
+//!
+//! # Why nothing is compiled in
+//!
+//! A kind is a fact about a repository's layer, not about the executable that reads it. If
+//! the kinds were compiled in, adding one would mean shipping a binary, and a repository
+//! that added its own would be adding it to somebody else's program. Reading them at run
+//! time is what makes `.ai/repo/knowledge/` able to declare a kind that the same binary
+//! then serves.
+//!
+//! ```
+//! use majordomus_cli::share::Share;
+//!
+//! // located explicitly, and the paths under it are derived rather than joined by callers
+//! let dir = tempfile::tempdir().unwrap();
+//! std::fs::write(dir.path().join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
+//! std::fs::create_dir(dir.path().join("schemas")).unwrap();
+//!
+//! let share = Share::locate(Some(dir.path()), dir.path()).unwrap();
+//! assert_eq!(share.origin, "--share", "it says how it was found");
+//! assert!(share.kinds_path().ends_with("kinds.yaml"));
+//! assert!(share.schemas_dir().ends_with("schemas"));
+//! assert_eq!(share.kinds_path().parent(), Some(share.dir()));
+//!
+//! // and when there is none, the error names where it looked
+//! let nowhere = tempfile::tempdir().unwrap();
+//! let err = Share::locate(None, nowhere.path()).unwrap_err();
+//! assert_eq!(err.exit_code(), 12);
+//! ```
 
 use std::path::{Path, PathBuf};
 

@@ -42,10 +42,12 @@ jq -r '.artifacts[] | [.path, (.bytes // "-"), (.sha256 // "-"), .format, .docum
   case "$document" in providers/*) continue ;; esac
   case "$format" in
     markdown) head -n 2 "$f" | grep -q '^<!-- GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
-    # A text artifact banners its first line, except an executable script, whose first
-    # line belongs to the interpreter: `site/static/install.sh` is `#!/bin/sh` and then the
-    # banner. Two lines covers both, and still refuses a file that banners nothing.
-    yaml|text) head -n 2 "$f" | grep -q '^# GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
+    # A generated script cannot carry its banner first: the first line belongs to the
+    # interpreter. The banner is still required, on the line after the shebang.
+    yaml|text)
+      if head -n 1 "$f" | grep -q '^#!'; then line=2; else line=1; fi
+      head -n "$line" "$f" | tail -n 1 | grep -q '^# GENERATED FILE' \
+        || { echo "    $path carries no banner"; exit 1; } ;;
     json) jq -e '(.generated // .["x-majordomus-generated"] // "") | startswith("GENERATED FILE")' "$f" >/dev/null \
             || { echo "    $path says nothing about being generated"; exit 1; } ;;
     *) echo "    $path declares the unknown encoding $format"; exit 1 ;;
@@ -61,22 +63,18 @@ for f in "$ROOT"/docs/generated/*.* "$ROOT"/docs/generated/modules/*.*; do
     || { echo "    $rel exists and the manifest does not name it"; exit 1; }
 done
 
-# --- a document with a JSON encoding has a YAML one, and the two are the same document.
-#     A document is exempt when one reader fixes its encoding, because a twin nobody reads
-#     is a file that goes stale unnoticed:
-#       providers/*          the bootstraps, which are Markdown
-#       schemas/*            JSON Schema, which is JSON by definition
-#       release/*            the published release metadata the installer fetches over HTTP
-#       site-*               the datasets Zola loads, which reads JSON
-#       distribution-matrix  the GitHub Actions build matrix, read by release.yml through jq
-#     Everything else is a reference document a person reads, and those come in both.
+# --- a document committed in both encodings is one value rendered twice
+#
+# The rule requires that a document be written in every encoding it is committed in from
+# one value; it does not require every JSON document to be committed as YAML as well. A
+# JSON Schema, a release manifest and a site dataset are JSON because their consumers read
+# JSON, and the earlier form of this check said otherwise and then carried a hand-written
+# list of the exceptions — which is the drift this repository refuses everywhere else. The
+# check is now what the rule says, and needs no list.
 YAML_READER=""
 if command -v ruby >/dev/null 2>&1 && ruby -ryaml -rjson -e '' 2>/dev/null; then YAML_READER=ruby
 elif python3 -c 'import yaml' 2>/dev/null; then YAML_READER=python; fi
-for id in $(jq -r '.documents[] | select(.formats | index("json")) | .id' "$MAN"); do
-  case "$id" in providers/*|schemas/*|release/*|site-*|distribution-matrix) continue ;; esac
-  jq -e --arg id "$id" '.documents[] | select(.id==$id) | .formats | index("yaml")' "$MAN" >/dev/null \
-    || { echo "    the document $id is committed as JSON and not as YAML"; exit 1; }
+for id in $(jq -r '.documents[] | select((.formats | index("json")) and (.formats | index("yaml"))) | .id' "$MAN"); do
   j="$ROOT/docs/generated/$id.json"; y="$ROOT/docs/generated/$id.yaml"
   expect_file "$j"; expect_file "$y"
   case "$YAML_READER" in
