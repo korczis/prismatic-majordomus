@@ -37,6 +37,8 @@ tags:
     description: "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own."
   - name: environment
     description: "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
+  - name: executions
+    description: "Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it."
   - name: graph
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
   - name: health
@@ -1301,6 +1303,494 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_environment_explain
+  "/api/v1/executions":
+    get:
+      operationId: executions.list
+      summary: List executions
+      description: "Every execution this process remembers, newest first, narrowed by state or by capability. The counts beside them — remembered, active, queued, live channels — are what a control plane shows without asking a second question."
+      tags:
+        - executions
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/ExecutionState"
+              - type: "null"
+          description: Only executions in this state.
+        - name: capability
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Only executions of this capability.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many, newest first; the default and the bound are both `200`."
+          examples:
+            recent:
+              value: 50
+      responses:
+        "200":
+          description: "List executions: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ExecutionList"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.list
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_executions
+        resource:
+          uri: majordomus://executions
+          name: executions
+      x-majordomus-cli: executions list
+  "/api/v1/executions/cancel":
+    post:
+      operationId: executions.cancel
+      summary: Ask an execution to stop
+      description: "Set the execution's cancellation flag and say so on its stream. Cancellation is cooperative: a task looks at its flag and stops, and a capability whose policy says it is not cancellable runs to completion — which the answer says rather than pretending otherwise."
+      tags:
+        - executions
+      requestBody:
+        required: true
+        description: "The input of `executions.cancel`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/CancelInput"
+      responses:
+        "200":
+          description: "Ask an execution to stop: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CancelReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.cancel
+      x-majordomus-kind: command
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: waived
+        reason: transient_state
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_execution_cancel
+      x-majordomus-cli: executions cancel
+  "/api/v1/executions/demonstrate":
+    get:
+      operationId: executions.demonstrate
+      summary: Demonstrate an execution
+      description: "Walk a given number of steps, reporting each one, logging a line and advancing progress, then finish — or fail at a step you name. It exists so that an operator, a probe and an end-to-end test can prove the whole path works without waiting for real work: it reads nothing, writes nothing, and its only effect is the events it produces. It looks at its cancellation flag between steps and while it waits, so cancelling it stops it."
+      tags:
+        - executions
+      parameters:
+        - name: steps
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+            default: 3
+          description: How many steps to walk through.
+          examples:
+            immediate:
+              value: 1
+        - name: delay_ms
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+            default: 0
+          description: "How long each step takes, in milliseconds. Bounded at ten seconds a step, so this\ncannot be used to hold a worker."
+          examples:
+            immediate:
+              value: 0
+        - name: fail_at
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "Fail on this step instead of completing, to show what a failure looks like."
+      responses:
+        "200":
+          description: "Demonstrate an execution: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DemonstrateReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.demonstrate
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_demonstrate_execution
+  "/api/v1/executions/events":
+    get:
+      operationId: executions.events
+      summary: "An execution's event history"
+      description: "The retained events of one execution, oldest first, after a sequence number. This is what a browser reads after a reload and what a client reads after a reconnect: the page carries the cursor to open the live channel with, so nothing is missed between the history and the stream."
+      tags:
+        - executions
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The execution's id."
+        - name: after
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "Only events after this sequence number: the cursor a reconnecting client holds."
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many, oldest first; the default and the bound are both `500`."
+      responses:
+        "200":
+          description: "An execution's event history: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/EventHistory"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.events
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: waived
+        reason: transient_state
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_execution_events
+      x-majordomus-cli: executions events
+  "/api/v1/executions/get":
+    get:
+      operationId: executions.get
+      summary: One execution
+      description: "The whole of what is known about one execution: its state, its input as it was stored, its steps, its progress, its diagnostics, and its output or its error. Taken under one lock, so a snapshot that says it succeeded carries what it produced."
+      tags:
+        - executions
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The execution's id."
+      responses:
+        "200":
+          description: "One execution: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ExecutionView"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.get
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: waived
+        reason: transient_state
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_execution
+      x-majordomus-cli: executions show
+  "/api/v1/executions/protocol":
+    get:
+      operationId: executions.protocol
+      summary: "The live channel's contract"
+      description: "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives."
+      tags:
+        - executions
+      parameters: []
+      responses:
+        "200":
+          description: "The live channel's contract: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ProtocolReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.protocol
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_execution_protocol
+        resource:
+          uri: majordomus://executions/protocol
+          name: execution-protocol
+      x-majordomus-cli: executions protocol
+  "/api/v1/executions/start":
+    post:
+      operationId: executions.start
+      summary: Start a capability as an execution
+      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything."
+      tags:
+        - executions
+      requestBody:
+        required: true
+        description: "The input of `executions.start`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/StartInput"
+            examples:
+              demonstrate:
+                value:
+                  capability: executions.demonstrate
+                  input:
+                    steps: 1
+                    delay_ms: 0
+      responses:
+        "200":
+          description: "Start a capability as an execution: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ExecutionView"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: executions.start
+      x-majordomus-kind: command
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::executions
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_execution_start
+      x-majordomus-cli: run
   "/api/v1/graph":
     get:
       operationId: graph.get
@@ -1663,6 +2153,74 @@ paths:
         policy: disabled
       x-majordomus-mcp:
         tool: majordomus_list
+  "/api/v1/objects/verify":
+    get:
+      operationId: objects.verify
+      summary: Verify the index against the working tree
+      description: "Read every file the layer was built from and compare it with what this process is serving. The index is built once at start-up and kept, which is what makes every other request cost nothing and what makes a file edited afterwards be served as it was; this is how a running server says whether that has happened, without being restarted to find out. A file that is one object is compared byte for byte; a collection file, whose objects the index keeps as members rather than as text, is compared by size, and every finding says which comparison was made. It reads every file of the layer, so it reports its progress file by file and stops when it is asked to."
+      tags:
+        - objects
+      parameters:
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Only objects of this kind.
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+          description: How many objects to read at most; every one of them when absent.
+          examples:
+            bounded:
+              value: 25
+      responses:
+        "200":
+          description: "Verify the index against the working tree: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/VerifyReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: objects.verify
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::objects
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_verify_objects
   "/api/v1/peers":
     get:
       operationId: peers.list
@@ -3534,6 +4092,35 @@ components:
         - profile
         - outcome
       description: "The active task of this checkout, when there is one."
+    Actor:
+      type: object
+      properties:
+        kind:
+          "$ref": "#/components/schemas/ActorKind"
+          description: Where the request came from.
+        peer:
+          type:
+            - string
+            - "null"
+          description: "The peer id, for a call that arrived through an MCP session."
+      required:
+        - kind
+      description: "Who asked, and which peer they are when this process knows."
+    ActorKind:
+      oneOf:
+        - type: string
+          const: http
+          description: "An HTTP client, which includes the Cockpit."
+        - type: string
+          const: mcp
+          description: An MCP client attached to this process.
+        - type: string
+          const: cli
+          description: The command line of this process.
+        - type: string
+          const: internal
+          description: "This executable's own tests and benchmarks."
+      description: "Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI."
     AdrRef:
       type: object
       properties:
@@ -4248,6 +4835,33 @@ components:
             - max_entries
           description: "Results are kept in this process's memory, bounded, for equal inputs."
       description: "Whether, and how, the executor keeps results of this capability. Cache lives in the\nexecutor and nowhere else, so MCP, HTTP and the command line share one; the key is the\ncanonical id, the normalised input and the registry fingerprint, so a changed\nrepository never answers from an old entry."
+    CancelInput:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          description: "The execution's id."
+      required:
+        - id
+      description: "The input of `executions.cancel`."
+    CancelReport:
+      type: object
+      properties:
+        outcome:
+          type: string
+          description: "What asking achieved: `requested`, `already_requested` or `already_finished`."
+        cancellable:
+          type: boolean
+          description: "Whether the capability declares that it looks at its cancellation flag. When it\ndoes not, the request is recorded and the execution runs to completion."
+        execution:
+          "$ref": "#/components/schemas/ExecutionView"
+          description: The execution as it stands after the request.
+      required:
+        - outcome
+        - cancellable
+        - execution
+      description: "The answer of `executions.cancel`."
     CanonicalSchema:
       type: object
       properties:
@@ -4311,6 +4925,9 @@ components:
         cache:
           "$ref": "#/components/schemas/CachePolicy"
           description: Whether the executor keeps its results.
+        execution:
+          "$ref": "#/components/schemas/ExecutionPolicy"
+          description: "What running it as an execution means: classified from the kind, so that a client\nreads a fact rather than deciding for itself."
       required:
         - id
         - module
@@ -4326,6 +4943,7 @@ components:
         - stability
         - benchmark
         - cache
+        - execution
       description: The canonical descriptor. Everything a projection may say about a capability is here.
     CapabilityAvailability:
       oneOf:
@@ -4356,7 +4974,7 @@ components:
         - type: string
           const: resource
           description: "Declarative content the repository holds: read as it is, never executed."
-      description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository."
+      description: "What a capability is. Three kinds exist because three semantics exist: something that\nis executed and changes nothing, something that is executed and changes this process's\nown memory, and something that is read. Nothing of any kind writes to the repository.\n\nHow *long* a call takes is not a kind. A read that walks every file of the layer is\nstill a read, and the thing that makes it worth watching — that it reports as it goes\nand stops when it is asked to — is one property of its handler, declared with\n[`crate::capability::Executable::cancellable`] and carried on [`ExecutionPolicy`]."
     CapabilityList:
       type: object
       properties:
@@ -5420,6 +6038,15 @@ components:
         - date
         - subject
       description: "One commit, exactly as git names it. Nothing here is stored anywhere: the whole record\nis re-read from the object database on every call."
+    Comparison:
+      oneOf:
+        - type: string
+          const: content
+          description: Byte for byte against the content the index holds.
+        - type: string
+          const: size
+          description: By size against the size the index recorded.
+      description: "How closely a file could be compared with what the index holds.\n\nA file that is one object is compared byte for byte, because the index kept its whole\ncontent. A collection file holds one object per member, and what the index kept for each\nis that member as JSON rather than the file's text — so the strongest thing that can be\nsaid without re-parsing it is whether its size is what it was. The report says which\ncomparison was made rather than implying the stronger one."
     Concurrency:
       type: object
       additionalProperties: false
@@ -5752,6 +6379,27 @@ components:
         - in
         - out
       description: "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema."
+    DemonstrateReport:
+      type: object
+      properties:
+        steps:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: How many steps ran.
+        elapsed_ms:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "How long it took, in milliseconds."
+        observed:
+          type: boolean
+          description: "Whether anything was watching: false when it was called directly rather than as an\nexecution, which is the difference this capability exists to show."
+      required:
+        - steps
+        - elapsed_ms
+        - observed
+      description: "The answer of `executions.demonstrate`."
     DeploymentCheck:
       type: object
       properties:
@@ -6313,6 +6961,37 @@ components:
         - source
         - formats
       description: "One document, and the encodings it is committed in."
+    DriftedObject:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Its repository-relative path.
+        standing:
+          "$ref": "#/components/schemas/ObjectStanding"
+          description: How it stands.
+        comparison:
+          "$ref": "#/components/schemas/Comparison"
+          description: How it was compared.
+        objects:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many objects of the index came from it.
+        example_uri:
+          type: string
+          description: "One of the URIs it holds, so a reader can see what is affected."
+        detail:
+          type: string
+          description: "What is wrong, for a person."
+      required:
+        - path
+        - standing
+        - comparison
+        - objects
+        - example_uri
+        - detail
+      description: One file of the layer that is no longer what the index read.
     Edge:
       type: object
       properties:
@@ -6403,6 +7082,39 @@ components:
         - code
         - message
       description: "What went wrong, as the HTTP projection names it."
+    EventHistory:
+      type: object
+      properties:
+        execution_id:
+          type: string
+          description: The execution the events belong to.
+        state:
+          "$ref": "#/components/schemas/ExecutionState"
+          description: "Where the execution stands now, so a client needs one request rather than two."
+        events:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionEvent"
+          description: "The events, oldest first."
+        last_sequence:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The sequence of the last event here: the cursor for the next page, and the one to\nopen the live channel with."
+        more:
+          type: boolean
+          description: Whether more events follow this page right now.
+        truncated:
+          type: boolean
+          description: "Whether events before this page had already been dropped by the store's bound."
+      required:
+        - execution_id
+        - state
+        - events
+        - last_sequence
+        - more
+        - truncated
+      description: "The answer of `executions.events`: one page of an execution's retained history."
     Example:
       type: object
       properties:
@@ -6428,6 +7140,513 @@ components:
         - before
         - after
       description: "One concrete situation, in one audience, with what happens today and what happens\ninstead."
+    ExecutionConcurrency:
+      oneOf:
+        - type: string
+          const: unrestricted
+          description: "Any number at once. Every read is one of these: the index and the registry are\nimmutable for the life of the process, so concurrent readers cannot interfere."
+        - type: string
+          const: serial
+          description: "One at a time. A second execution of the same capability waits for the first, which\nis what a capability that changes anything — this process's own memory included —\nneeds in order to be reasoned about at all."
+      description: Whether two executions of one capability may overlap.
+    ExecutionDiagnostic:
+      type: object
+      properties:
+        severity:
+          "$ref": "#/components/schemas/Severity"
+          description: How bad.
+        code:
+          type: string
+          description: A stable machine-readable code.
+        summary:
+          type: string
+          description: "One line, for a person."
+        detail:
+          type:
+            - string
+            - "null"
+          description: "The rest, when there is more."
+        suggestion:
+          type:
+            - string
+            - "null"
+          description: "What to do about it, when there is something."
+      required:
+        - severity
+        - code
+        - summary
+      description: "A structured finding an execution reported on its way, distinct from its outcome."
+    ExecutionEffect:
+      oneOf:
+        - type: string
+          const: read
+          description: Nothing changes. Every query and every resource of this executable.
+        - type: string
+          const: process_state
+          description: "This process's own memory changes, and nothing outside it."
+        - type: string
+          const: repository_mutation
+          description: "The repository changes.\n\nNothing classifies to this, and the doctrine of this tool is why: no capability of\nany kind writes to the repository. It is on the model so that the day one does, it\nsays so here — where a projection already reads it and a client already asks before\nrunning it — rather than in whichever page happens to render its button."
+      description: "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
+    ExecutionError:
+      type: object
+      properties:
+        code:
+          type: string
+          description: "`invalid_input`, `not_found`, `refused`, `internal`, `cancelled`, `unavailable`."
+        message:
+          type: string
+          description: "What went wrong, for a person."
+        suggestion:
+          type:
+            - string
+            - "null"
+          description: "What to do about it, when there is something."
+        correlation_id:
+          type: string
+          description: "The execution this failure belongs to, so a log line and a UI agree."
+      required:
+        - code
+        - message
+        - correlation_id
+      description: "Why an execution ended badly, in the repository's diagnostic vocabulary rather than in\nRust's: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution's correlation id; the panic itself is\non the process's own error stream, where the operator running the server can read it."
+    ExecutionEvent:
+      type: object
+      properties:
+        schema_version:
+          type: string
+          description: "The protocol version, [`PROTOCOL_VERSION`]."
+        event_id:
+          type: string
+          description: "The identity of this event: the execution's id and the sequence, so a client that\ndeduplicates needs no composite key of its own."
+        execution_id:
+          "$ref": "#/components/schemas/ExecutionId"
+          description: The execution it is about.
+        sequence:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "Its position in that execution's stream, from 1, without gaps."
+        timestamp:
+          type: string
+          description: "When the event was produced, RFC 3339 in UTC."
+      required:
+        - schema_version
+        - event_id
+        - execution_id
+        - sequence
+        - timestamp
+      oneOf:
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.created
+            data:
+              type: object
+              properties:
+                capability:
+                  description: "The capability's canonical id."
+                  type: string
+                title:
+                  description: Its title.
+                  type: string
+                input:
+                  description: "The input, with sensitive values already replaced."
+              required:
+                - capability
+                - title
+                - input
+          required:
+            - type
+            - data
+          description: "The execution was accepted and exists. Carries what it will run and with what,\nredacted, so a client that joins at the first event needs nothing else to render a\nheading."
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.queued
+            data:
+              type: object
+              properties:
+                ahead:
+                  description: How many executions are ahead of it.
+                  type: integer
+                  format: uint
+                  minimum: 0
+              required:
+                - ahead
+          required:
+            - type
+            - data
+          description: It is waiting for a worker.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.started
+          required:
+            - type
+          description: A worker picked it up and is about to enter the handler.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.progress
+            data:
+              "$ref": "#/components/schemas/ProgressView"
+          required:
+            - type
+            - data
+          description: How far along it is.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.step.started
+            data:
+              type: object
+              properties:
+                name:
+                  description: "The step's stable name."
+                  type: string
+                title:
+                  description: One line for a reader.
+                  type: string
+              required:
+                - name
+                - title
+          required:
+            - type
+            - data
+          description: A named phase was entered.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.step.completed
+            data:
+              type: object
+              properties:
+                name:
+                  description: "The step's stable name."
+                  type: string
+                ok:
+                  description: Whether what it was asked to do happened.
+                  type: boolean
+                detail:
+                  description: "What it said, when it said anything."
+                  type:
+                    - string
+                    - "null"
+              required:
+                - name
+                - ok
+          required:
+            - type
+            - data
+          description: A named phase finished.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.log
+            data:
+              type: object
+              properties:
+                stream:
+                  description: Which stream it came from.
+                  "$ref": "#/components/schemas/LogStream"
+                message:
+                  description: "The text, with control characters and terminal escapes already removed."
+                  type: string
+              required:
+                - stream
+                - message
+          required:
+            - type
+            - data
+          description: A line of output.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.diagnostic
+            data:
+              "$ref": "#/components/schemas/ExecutionDiagnostic"
+          required:
+            - type
+            - data
+          description: "A structured finding, distinct from the outcome."
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.cancelling
+            data:
+              type: object
+              properties:
+                by:
+                  description: "Who asked, in one word."
+                  type: string
+              required:
+                - by
+          required:
+            - type
+            - data
+          description: Cancellation was asked for; the handler has not stopped yet.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.cancelled
+          required:
+            - type
+          description: It stopped because it was asked to.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.completed
+            data:
+              type: object
+              properties:
+                output:
+                  description: What the handler returned.
+              required:
+                - output
+          required:
+            - type
+            - data
+          description: "It finished, and the handler returned an output.\n\nThe output is on this event and not on one of its own, because a client must never\nbe able to read \"succeeded\" and find no result: the state and the value it produced\nare one fact and travel together."
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.failed
+            data:
+              type: object
+              properties:
+                error:
+                  description: Why.
+                  "$ref": "#/components/schemas/ExecutionError"
+              required:
+                - error
+          required:
+            - type
+            - data
+          description: "It finished, and it did not."
+      description: "One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world."
+    ExecutionId:
+      type: string
+      description: "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
+    ExecutionLinks:
+      type: object
+      properties:
+        self:
+          type: string
+          description: "The snapshot: `GET /api/v1/executions/get?id=…`."
+        events:
+          type: string
+          description: "The retained history: `GET /api/v1/executions/events?id=…`."
+        cancel:
+          type: string
+          description: "Where to ask it to stop: `POST /api/v1/executions/cancel`."
+        websocket:
+          type: string
+          description: "The live channel, from the beginning: `GET /events?execution=…`."
+        cockpit:
+          type: string
+          description: The page a person opens.
+      required:
+        - self
+        - events
+        - cancel
+        - websocket
+        - cockpit
+      description: "Where to read more about one execution, in this server's own terms.\n\nEvery value is derived from the registry's declared routes and from the live channel's\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve."
+    ExecutionList:
+      type: object
+      properties:
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many are answered here.
+        remembered:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many this process remembers in total, before the filter."
+        active:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many are not finished.
+        queued:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many are waiting for a worker.
+        live_channels:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many live channels are following them.
+        executions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionView"
+          description: "The executions, newest first."
+      required:
+        - count
+        - remembered
+        - active
+        - queued
+        - live_channels
+        - executions
+      description: "The answer of `executions.list`."
+    ExecutionPolicy:
+      type: object
+      properties:
+        effect:
+          "$ref": "#/components/schemas/ExecutionEffect"
+          description: What it changes.
+        cancellable:
+          type: boolean
+          description: "Whether asking it to stop does anything. A task looks at its cancellation flag; a\nquery and a command do not, and a client is told so rather than being given a\nbutton that lies."
+        concurrency:
+          "$ref": "#/components/schemas/ExecutionConcurrency"
+          description: Whether two of them may overlap.
+      required:
+        - effect
+        - cancellable
+        - concurrency
+      description: "What running a capability as an execution means: what it changes, whether asking it to\nstop achieves anything, and whether two of them may overlap.\n\nThe effect and the concurrency are classified from the kind by\n[`ExecutionPolicy::classify`], for the same reason [`Availability`] is: the facts are\nalready on the declaration, and asking each `capability!` block to restate them would be\none more thing that can disagree with itself.\n\nCancellability is the one thing the kind cannot decide, because it is a fact about the\nhandler: whether it looks at its cancellation flag and stops. A handler that does says\nso with [`crate::capability::Executable::cancellable`], and a client is then told\nwhether a Cancel button will achieve anything instead of being given one that lies."
+    ExecutionState:
+      oneOf:
+        - type: string
+          const: queued
+          description: "Accepted, and no worker has picked it up."
+        - type: string
+          const: running
+          description: The handler is running.
+        - type: string
+          const: cancelling
+          description: Cancellation was asked for and the handler has not stopped yet.
+        - type: string
+          const: succeeded
+          description: The handler returned an output.
+        - type: string
+          const: failed
+          description: "The handler returned an error, or the worker could not run it."
+        - type: string
+          const: cancelled
+          description: It stopped because it was asked to.
+      description: "Where an execution is in its life.\n\nThe transitions are the whole contract, and [`ExecutionState::may_move_to`] is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+    ExecutionView:
+      type: object
+      properties:
+        id:
+          "$ref": "#/components/schemas/ExecutionId"
+          description: The identity.
+        capability:
+          type: string
+          description: "The capability that ran, by its canonical id."
+        title:
+          type: string
+          description: "That capability's title, so a list needs no second lookup."
+        state:
+          "$ref": "#/components/schemas/ExecutionState"
+          description: Where it is.
+        created_at:
+          type: string
+          description: "When it was accepted, RFC 3339 in UTC."
+        started_at:
+          type:
+            - string
+            - "null"
+          description: When the handler was entered.
+        finished_at:
+          type:
+            - string
+            - "null"
+          description: When it reached a final state.
+        duration_ms:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long it ran, in milliseconds, once it has finished."
+        input:
+          description: "The input it was given, with every value the input schema marks sensitive replaced."
+        output:
+          description: "What the handler returned, for a succeeded execution and never before."
+        error:
+          anyOf:
+            - "$ref": "#/components/schemas/ExecutionError"
+            - type: "null"
+          description: "Why it failed, for a failed execution and never before."
+        progress:
+          anyOf:
+            - "$ref": "#/components/schemas/ProgressView"
+            - type: "null"
+          description: The last progress the handler reported.
+        steps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/StepView"
+          description: "The steps it entered, in order."
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionDiagnostic"
+          description: The findings it reported.
+        last_sequence:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The sequence number of the last event: the cursor a client subscribes from."
+        event_count:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "How many events it has produced, including the ones no longer retained."
+        events_truncated:
+          type: boolean
+          description: Whether the retained event history has lost its oldest entries to the bound.
+        cancellable:
+          type: boolean
+          description: "Whether asking to cancel this execution will do anything: the capability's policy."
+        actor:
+          "$ref": "#/components/schemas/Actor"
+          description: Who asked for it.
+        repository:
+          "$ref": "#/components/schemas/RepositoryRef"
+          description: Which repository it ran against.
+        correlation_id:
+          type: string
+          description: "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+        links:
+          "$ref": "#/components/schemas/ExecutionLinks"
+          description: Where to read more.
+      required:
+        - id
+        - capability
+        - title
+        - state
+        - created_at
+        - input
+        - last_sequence
+        - event_count
+        - events_truncated
+        - cancellable
+        - actor
+        - repository
+        - correlation_id
+        - links
+      description: One execution with the links to everything else about it.
     Exemption:
       type: object
       properties:
@@ -7494,6 +8713,41 @@ components:
           const: musl
           description: "musl: Alpine, and any statically linked artifact."
       description: The C library a Linux artifact is linked against.
+    LimitsView:
+      type: object
+      properties:
+        max_executions:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many executions are remembered.
+        max_events:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many events are retained per execution.
+        max_log_chars:
+          type: integer
+          format: uint
+          minimum: 0
+          description: The longest a single log line may be.
+        max_running:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many executions run at once.
+        max_subscriber_queue:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How far a live channel may fall behind before it is told to resynchronise.
+      required:
+        - max_executions
+        - max_events
+        - max_log_chars
+        - max_running
+        - max_subscriber_queue
+      description: "What this process's execution store keeps."
     Listen:
       type: object
       additionalProperties: false
@@ -7521,6 +8775,18 @@ components:
         - alive
         - version
       description: "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for."
+    LogStream:
+      oneOf:
+        - type: string
+          const: stdout
+          description: The standard output of a child process the handler ran.
+        - type: string
+          const: stderr
+          description: Its standard error.
+        - type: string
+          const: handler
+          description: "The handler itself, saying something it wants a reader to see."
+      description: Which stream a log line came from.
     Machines:
       type: object
       additionalProperties: false
@@ -8216,6 +9482,21 @@ components:
         - source_class
         - bytes
       description: "Where an object came from. Every field is computed from the repository, never authored."
+    ObjectStanding:
+      oneOf:
+        - type: string
+          const: current
+          description: It is what the index read.
+        - type: string
+          const: changed
+          description: It is there and it has changed since the index was built.
+        - type: string
+          const: missing
+          description: The file the index read is no longer there.
+        - type: string
+          const: unreadable
+          description: It is there and could not be read.
+      description: How one file stands against what the index read from it.
     ObjectSummary:
       type: object
       properties:
@@ -8519,6 +9800,23 @@ components:
         - yours
         - theirs
       description: One pair of claims that contain one another.
+    ParameterView:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Its name.
+        description:
+          type: string
+          description: What it does.
+        required:
+          type: boolean
+          description: Whether it must be given.
+      required:
+        - name
+        - description
+        - required
+      description: One query parameter of the live channel.
     Peer:
       type: object
       properties:
@@ -8800,6 +10098,29 @@ components:
         - counts
         - findings
       description: "What the model's own validation found."
+    ProgressView:
+      type: object
+      properties:
+        current:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Units done.
+        total:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Units in total, when the handler knows how many."
+        message:
+          type:
+            - string
+            - "null"
+          description: "What is being done, for a reader."
+      required:
+        - current
+      description: How far along an execution is.
     ProjectIdentity:
       type: object
       properties:
@@ -8852,6 +10173,65 @@ components:
           const: unknown
           description: "It could not be rendered, so nothing can be said."
       description: Where one provider projection stands against its policy.
+    ProtocolReport:
+      type: object
+      properties:
+        protocol_version:
+          type: string
+          description: The version of the event protocol this server speaks.
+        websocket:
+          type: string
+          description: "Where the live channel is: a path on this same server, not a second daemon."
+        subscription:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ParameterView"
+          description: "How the subscription is expressed, and what a reconnect sends."
+        heartbeat_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: How many seconds of quiet before the server pings.
+        max_connections:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many live channels this process serves at once.
+        max_replay:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many retained events a scoped connection replays before going live.
+        event_types:
+          type: array
+          items:
+            type: string
+          description: "The event types a client may receive, from the one enum that defines them."
+        stream_types:
+          type: array
+          items:
+            type: string
+          description: "The stream's own control messages."
+        event_schema:
+          description: "The JSON Schema of an event, derived from the Rust type."
+        stream_schema:
+          description: "The JSON Schema of a control message, derived from the Rust type."
+        limits:
+          "$ref": "#/components/schemas/LimitsView"
+          description: "What the store keeps, so a client knows what it may ask for."
+      required:
+        - protocol_version
+        - websocket
+        - subscription
+        - heartbeat_seconds
+        - max_connections
+        - max_replay
+        - event_types
+        - stream_types
+        - event_schema
+        - stream_schema
+        - limits
+      description: "The answer of `executions.protocol`: the live channel's whole contract, derived from\nthe types that implement it."
     Provenance:
       oneOf:
         - type: object
@@ -9709,6 +11089,24 @@ components:
         - scope_origin
         - scope_path
       description: What the index knows about the repository it was built from.
+    RepositoryRef:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The repository's name: the last component of its root."
+        id:
+          type: string
+          description: The stable identity two processes over one checkout both compute.
+        branch:
+          type:
+            - string
+            - "null"
+          description: "The branch checked out, when git can say."
+      required:
+        - name
+        - id
+      description: "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
     RepositoryReport:
       type: object
       properties:
@@ -10352,6 +11750,19 @@ components:
           const: missing
           description: A registration whose directory is gone. Repair drops it.
       description: Where a work tree stands against the topology.
+    StartInput:
+      type: object
+      additionalProperties: false
+      properties:
+        capability:
+          type: string
+          description: "The canonical id of the capability to run (`health.report`, `objects.verify`)."
+        input:
+          description: "Its input, as its own input schema describes it; an empty object when it takes none."
+          default: null
+      required:
+        - capability
+      description: "The input of `executions.start`: which capability to run, and with what."
     State:
       oneOf:
         - type: string
@@ -10411,6 +11822,49 @@ components:
           const: failed
           description: "Attempted and not completed, or completed and not verified; the message says which."
       description: What became of a step.
+    StepState:
+      oneOf:
+        - type: string
+          const: running
+          description: Entered and not finished.
+        - type: string
+          const: completed
+          description: "Finished, and what it was asked to do happened."
+        - type: string
+          const: failed
+          description: "Finished, and it did not."
+      description: Where a step of an execution stands.
+    StepView:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "A stable name, unique within the execution."
+        title:
+          type: string
+          description: One line for a reader.
+        state:
+          "$ref": "#/components/schemas/StepState"
+          description: Where it stands.
+        started_at:
+          type: string
+          description: "When it was entered, RFC 3339 in UTC."
+        finished_at:
+          type:
+            - string
+            - "null"
+          description: "When it finished, when it has."
+        detail:
+          type:
+            - string
+            - "null"
+          description: "What it said when it finished, when it said anything."
+      required:
+        - name
+        - title
+        - state
+        - started_at
+      description: "One named phase of an execution, as the handler reported it."
     Summary:
       type: object
       properties:
@@ -11256,6 +12710,55 @@ components:
           const: out
           description: Never read; the reason says why.
       description: In or out.
+    VerifyReport:
+      type: object
+      properties:
+        files:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many files were read.
+        current:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many of them are what the index read.
+        drifted:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many are not, of any kind of not."
+        objects:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many objects of the index those files carry.
+        compared_by_content:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many were compared byte for byte rather than by size.
+        fingerprint:
+          type: string
+          description: The index fingerprint this process is serving.
+        index_is_current:
+          type: boolean
+          description: "Whether the index is still a true picture of the working tree, as far as this\ncomparison can tell."
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DriftedObject"
+          description: "The files that are not, with what is wrong with each."
+      required:
+        - files
+        - current
+        - drifted
+        - objects
+        - compared_by_content
+        - fingerprint
+        - index_is_current
+        - findings
+      description: "The answer of `objects.verify`."
     Violation:
       type: object
       properties:
@@ -11359,6 +12862,9 @@ components:
         - type: string
           const: external_dependency
           description: The capability talks to something the benchmark host cannot provide.
+        - type: string
+          const: transient_state
+          description: "The capability starts, or answers about, work that exists only while it is running.\nA benchmark host cannot stage an execution to read, and running the operation in a\nloop would measure the work rather than the operation."
       description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
     WorkflowCatalogue:
       type: object
@@ -11622,6 +13128,10 @@ x-majordomus:
     - id: mcp
       path: /mcp
       what: MCP over HTTP for attached clients
+      availability: served-only
+    - id: events
+      path: /events
+      what: "The live channel: what this process's executions are doing"
       availability: served-only
     - id: cockpit
       path: /cockpit

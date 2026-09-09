@@ -24,6 +24,7 @@ documentation arrived the name meant two things; the rule
 | swagger | `/swagger` |
 | openapi | `/openapi.json` |
 | capabilities | `/api/v1/` |
+| events | `/events` |
 
 ## Surfaces
 
@@ -32,6 +33,7 @@ documentation arrived the name meant two things; the rule
 | The capability registry over HTTP | `/api/v1` | native-route | api | public | served-only | `capability registry` |
 | The registry, rendered for a person | `/cockpit` | native-route | interface | public | served-only | `cockpit` |
 | The documentation, as this process serves it | `/docs` | static-directory | documentation | public | served-only | `scripts/site-build --serve` |
+| The live channel: what this process's executions are doing | `/events` | native-route | protocol | internal | served-only | `http::events` |
 | MCP over HTTP for attached clients | `/mcp` | native-route | protocol | internal | served-only | `mcp endpoint` |
 | The OpenAPI document of the capability registry | `/openapi.json` | native-route | api | public | both | `capability registry` |
 | Swagger UI over the OpenAPI document | `/swagger` | native-route | documentation | public | served-only | `http::swagger` |

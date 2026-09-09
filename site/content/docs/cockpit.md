@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit"
 description = "the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline"
-weight = 36
+weight = 37
 [extra]
 source = "docs/COCKPIT.md"
 +++
@@ -55,6 +55,8 @@ pages still render, say so, and remain fully usable.
 | `/cockpit` | repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `repository.info`, `health.report` |
 | `/cockpit/capabilities` | every capability, filtered by module, kind, source or text | the registry |
 | `/cockpit/capabilities/<id>` | one descriptor in full: schemas, projections, cache and benchmark policy, provenance, examples, and a form that runs it | the descriptor and its `BenchmarkCases` |
+| `/cockpit/executions` | what this process has run and is running, with the counts beside it; follows the live channel and updates itself | `executions.list` |
+| `/cockpit/executions/<id>` | one execution: its state, steps, progress, diagnostics, live output, output or error, and the input as it was stored; a stable URL a reload restores from | `executions.get`, `executions.events` |
 | `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
 | `/cockpit/object?uri=` | one object: front matter, provenance, content as it is | `objects.get` |
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
@@ -334,15 +336,21 @@ the navigation being the registry's rather than a list.
 Four things a control plane is expected to have, left out on purpose. Each is a decision
 rather than a gap, and each names what would have to change first.
 
-**No live transport — no WebSocket, no SSE.** The activity page polls `/api/v1/perf` while
-it is on screen and stops when it is not. A stream would be a fourth capability kind beside
-query, command and resource: the registry has no way to declare one, the executor has no way
-to run one, the benchmark projection has no way to time one, and `capabilities validate` has
-no way to refuse a malformed one. Adding a noun to the core to make a counter update without
-a poll is the trade this repository's `optional-complexity` rule exists to refuse. When
-something genuinely long-running arrives — a capability that takes minutes and reports
-progress — the stream kind will be worth its own decision, and the typed event envelope
-belongs in that decision rather than ahead of it.
+**No streaming for its own sake.** This section used to say there was no live transport at
+all, and gave the reason: a stream to make a counter update without a poll is a noun added
+to the core for a convenience, which `optional-complexity` exists to refuse. It also said
+what would change the trade — "when something genuinely long-running arrives, the stream
+will be worth its own decision, and the typed event envelope belongs in that decision rather
+than ahead of it".
+
+That arrived, and that is [ADR 22](../.ai/repo/adrs/0031-an-execution-is-a-watched-capability-call-not-a-second-registry.md):
+a capability that reads every file of the layer takes long enough to watch rather than wait
+for, so an **execution** has an identity, typed events and a live channel at `GET /events`
+([`EXECUTIONS.md`](@/docs/executions.md)). What did *not* change is the trade the paragraph
+protected. The activity page still polls, because counters are a convenience; no capability
+became a stream, because the fourth kind was drafted and dropped; and the live channel
+carries execution events and nothing else. A page that wants a number to tick has the same
+answer it had before.
 
 **No rule-precedence resolution.** "What instructions apply at this path?" is a question the
 Cockpit is the right place to answer and the wrong place to *decide*. The shell tool owns
@@ -358,9 +366,11 @@ decides whether what this process *serves* is sound. Different subjects with dif
 engines, and the Rust server dispatches no shell, so there is no third thing that runs both.
 A reader who wants both runs both; each names the other's territory.
 
-**No write path.** Every capability the Cockpit can reach is a query, or the one command
-that changes this process's own memory. Nothing in it writes to the repository, and a
-capability that did would need its own decision (ADR 12 says so explicitly).
+**No write path.** Every capability the Cockpit can reach is a query, or a command that
+changes this process's own memory — starting an execution and cancelling one are two of
+those. Nothing in it writes to the repository, and a capability that did would need its own
+decision (ADR 12 says so explicitly) and would say so in its own execution policy, which is
+what the confirmation on the Run button reads.
 
 ## In a browser
 

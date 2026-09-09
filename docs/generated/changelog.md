@@ -179,6 +179,7 @@ Current version: **0.4.0**
 
 ### Other
 
+- Merge feature/github-work-graph into int/everything, with I1305 restored to its own milestone (`d52f43334`)
 - **feature/graph-model**: uncommitted work found in the worktree at the topology migration, committed as it was (`034f334bf`)
 - **feature/deployment-core**: uncommitted work found in the worktree at the topology migration, committed as it was (`6579f1978`)
 
@@ -187,6 +188,7 @@ Current version: **0.4.0**
 
 ### Decisions
 
+- **ADR-0031** An execution is a watched capability call, not a second registry _(accepted)_
 - **ADR-0028** The crate's public surface is measured by the crate, and absence from the API is a decision _(accepted)_
 - **ADR-0027** A command is declared once and every surface is a projection of the command graph _(proposed)_
 - **ADR-0023** Product features are objects of the layer, and the landing page is a projection of them _(accepted)_

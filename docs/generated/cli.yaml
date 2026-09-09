@@ -9298,3 +9298,676 @@ cli:
               setup: []
               expectation: "exits 0; prints one JSON document carrying /measured, /passes, /report/schema"
           subcommands: []
+    - path:
+        - majordomus
+        - run
+      route: /docs/cli/run/
+      executable: true
+      usage: "majordomus run [OPTIONS] <CAPABILITY>"
+      about: "Run a capability as an execution and follow it: its steps, its progress and its output as they happen"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: capability
+          positional: true
+          help: "The capability to run, by its canonical id (`health.report`, `objects.verify`)"
+          value_name: CAPABILITY
+          takes_value: true
+          required: true
+          global: false
+          possible_values: []
+          defaults: []
+        - name: input
+          long: input
+          positional: false
+          help: "Its input, as one JSON object; the capability's input schema is what validates it"
+          value_name: JSON
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
+        - name: follow
+          long: follow
+          positional: false
+          help: Print the events as they arrive on stderr; on by default when stderr is a terminal
+          value_name: FOLLOW
+          takes_value: false
+          required: false
+          global: false
+          possible_values: []
+          defaults:
+            - "false"
+        - name: quiet
+          long: quiet
+          positional: false
+          help: Print nothing but the final output
+          value_name: QUIET
+          takes_value: false
+          required: false
+          global: false
+          possible_values: []
+          defaults:
+            - "false"
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: false
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: run-demonstrate
+          title: Watch an execution happen
+          description: "`run` starts a capability as an execution and follows it to its end: every step, every line it logs and every advance of its progress, as the handler reports them. `executions.demonstrate` exists to make that visible without waiting for real work — it reads nothing and writes nothing, and its only effect is the events it produces. The same execution, started from the Cockpit, streams the same events to a browser."
+          argv:
+            - run
+            - executions.demonstrate
+            - "--input"
+            - "{\"steps\":2,\"delay_ms\":0}"
+            - "--format"
+            - json
+          command: "majordomus run executions.demonstrate --input '{\"steps\":2,\"delay_ms\":0}' --format json"
+          setup: []
+          expectation: "exits 0; prints one JSON document carrying /state, /id, /output/steps, /steps/0/name"
+      subcommands: []
+    - path:
+        - majordomus
+        - executions
+      route: /docs/cli/executions/
+      executable: true
+      usage: "majordomus executions [OPTIONS] [COMMAND]"
+      about: "The executions of the server serving this repository: what has run, what is running, and what each one said"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples:
+        - id: executions-default-list
+          title: What has run
+          description: "`executions` with nothing after it lists what the server serving this repository has run, newest first. In a checkout where no server is running it says so rather than pretending: an execution lives in the process that accepted it."
+          argv:
+            - executions
+          command: majordomus executions
+          setup: []
+          expectation: exits 0; prints execution
+      subcommands:
+        - path:
+            - majordomus
+            - executions
+            - list
+          route: /docs/cli/executions/list/
+          executable: true
+          usage: "majordomus executions list [OPTIONS]"
+          about: "Every execution the server remembers, newest first"
+          args:
+            - name: state
+              long: state
+              positional: false
+              help: "Only executions in this state (queued, running, cancelling, succeeded, failed, cancelled)"
+              value_name: STATE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: capability
+              long: capability
+              positional: false
+              help: Only executions of this capability
+              value_name: CAPABILITY
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: executions-list-json
+              title: "Every execution, as one document"
+              description: "The same answer `GET /api/v1/executions`, the MCP tool `majordomus_executions` and the Cockpit's Executions page render, with the counts beside it: how many are remembered, how many are active, how many are waiting for a worker and how many live channels are following them."
+              argv:
+                - executions
+                - list
+                - "--format"
+                - json
+              command: majordomus executions list --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /count, /active, /queued, /live_channels"
+          subcommands: []
+        - path:
+            - majordomus
+            - executions
+            - show
+          route: /docs/cli/executions/show/
+          executable: true
+          usage: "majordomus executions show [OPTIONS] <ID>"
+          about: "One execution in full: its state, its steps, its diagnostics and what it produced"
+          args:
+            - name: id
+              positional: true
+              help: "The execution's id"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: executions-show-absent
+              title: An execution that is not there
+              description: "An execution lives in the process that accepted it and is remembered in bounded numbers, so asking for one nothing ran says so and exits with the missing-artifact code rather than inventing an empty answer. Against a running server, the same command prints that execution's state, its steps and what it produced."
+              argv:
+                - executions
+                - show
+                - x-20260101T120000Z-4c3b2a19
+              command: majordomus executions show x-20260101T120000Z-4c3b2a19
+              setup: []
+              expectation: exits 12
+          subcommands: []
+        - path:
+            - majordomus
+            - executions
+            - events
+          route: /docs/cli/executions/events/
+          executable: true
+          usage: "majordomus executions events [OPTIONS] <ID>"
+          about: "One execution's retained events, oldest first"
+          args:
+            - name: id
+              positional: true
+              help: "The execution's id"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: after
+              long: after
+              positional: false
+              help: Only events after this sequence number
+              value_name: AFTER
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: executions-events-absent
+              title: The events of an execution that is not there
+              description: "The retained events of one execution, oldest first, after a sequence number — what a reconnecting client reads before it opens the live channel. For an execution nothing ran, the same refusal as `show`."
+              argv:
+                - executions
+                - events
+                - x-20260101T120000Z-4c3b2a19
+              command: majordomus executions events x-20260101T120000Z-4c3b2a19
+              setup: []
+              expectation: exits 12
+          subcommands: []
+        - path:
+            - majordomus
+            - executions
+            - cancel
+          route: /docs/cli/executions/cancel/
+          executable: true
+          usage: "majordomus executions cancel [OPTIONS] <ID>"
+          about: Ask an execution to stop
+          args:
+            - name: id
+              positional: true
+              help: "The execution's id"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: executions-cancel-absent
+              title: Asking an execution that is not there to stop
+              description: "Cancellation is cooperative: the flag is set and a task stops when it next looks at it. There is nothing to set for an execution nothing ran, and the command says so rather than reporting a success it did not have."
+              argv:
+                - executions
+                - cancel
+                - x-20260101T120000Z-4c3b2a19
+              command: majordomus executions cancel x-20260101T120000Z-4c3b2a19
+              setup: []
+              expectation: exits 12
+          subcommands: []
+        - path:
+            - majordomus
+            - executions
+            - protocol
+          route: /docs/cli/executions/protocol/
+          executable: true
+          usage: "majordomus executions protocol [OPTIONS]"
+          about: "The live channel's contract: where it is, what it writes, and the schema of each message"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: executions-protocol
+              title: "The live channel's contract, from the types that implement it"
+              description: "Where the WebSocket is, how a subscription and a reconnect are expressed, every message type, and the JSON Schema of each — derived from the Rust types, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket, which is why this is a capability and not a paragraph."
+              argv:
+                - executions
+                - protocol
+                - "--format"
+                - json
+              command: majordomus executions protocol --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /protocol_version, /websocket, /event_types/0, /stream_types/0, /limits/max_events"
+          subcommands: []

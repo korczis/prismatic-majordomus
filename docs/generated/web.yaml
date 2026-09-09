@@ -11,6 +11,7 @@ reserved:
   swagger: /swagger
   openapi: /openapi.json
   capabilities: /api/v1/
+  events: /events
 surfaces:
   - id: api
     title: The capability registry over HTTP
@@ -56,6 +57,17 @@ surfaces:
         path: site/config.toml
       mount:
         source: default
+  - id: events
+    title: "The live channel: what this process's executions are doing"
+    category: protocol
+    visibility: internal
+    kind: native-route
+    mount: /events
+    producer: http::events
+    availability: served-only
+    provenance:
+      mount:
+        source: registry
   - id: mcp
     title: MCP over HTTP for attached clients
     category: protocol

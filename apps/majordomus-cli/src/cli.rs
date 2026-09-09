@@ -62,6 +62,10 @@ pub enum Command {
     Release(ReleaseArgs),
     /// What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
     Quality(QualityArgs),
+    /// Run a capability as an execution and follow it: its steps, its progress and its output as they happen
+    Run(RunArgs),
+    /// The executions of the server serving this repository: what has run, what is running, and what each one said
+    Executions(ExecutionsArgs),
 }
 
 #[derive(Debug, Args)]
@@ -262,6 +266,94 @@ pub struct QualityReportArgs {
     /// Record today's findings as the accepted baseline, so the debt can shrink and cannot grow
     #[arg(long)]
     pub write_baseline: bool,
+}
+
+
+#[derive(Debug, Args)]
+/// `majordomus run`. One capability, run as an execution in this process, followed to its
+/// end.
+///
+/// It runs here rather than on the shared server because following it is the point: the
+/// steps and the progress are printed as the handler reports them, over a subscription to
+/// this process's own store rather than by asking anything repeatedly. The capability, the
+/// executor and the events are the same ones a browser sees; only the audience differs.
+pub struct RunArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    /// The capability to run, by its canonical id (`health.report`, `objects.verify`)
+    pub capability: String,
+
+    /// Its input, as one JSON object; the capability's input schema is what validates it
+    #[arg(long, value_name = "JSON")]
+    pub input: Option<String>,
+
+    /// Print the events as they arrive on stderr; on by default when stderr is a terminal
+    #[arg(long)]
+    pub follow: bool,
+
+    /// Print nothing but the final output
+    #[arg(long)]
+    pub quiet: bool,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus executions`. What the server serving this repository has run.
+///
+/// An execution lives in the process that accepted it, so these read the shared server
+/// this repository's lease names, and fall back to this process — which, in a one-shot
+/// command, has run nothing — when no server answers.
+pub struct ExecutionsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `list`, `show`, `events`, `cancel` or `protocol`; none lists.
+    pub command: Option<ExecutionsCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus executions`.
+pub enum ExecutionsCommand {
+    /// Every execution the server remembers, newest first
+    List {
+        /// Only executions in this state (queued, running, cancelling, succeeded, failed, cancelled)
+        #[arg(long)]
+        state: Option<String>,
+        /// Only executions of this capability
+        #[arg(long)]
+        capability: Option<String>,
+    },
+    /// One execution in full: its state, its steps, its diagnostics and what it produced
+    Show {
+        /// The execution's id
+        id: String,
+    },
+    /// One execution's retained events, oldest first
+    Events {
+        /// The execution's id
+        id: String,
+        /// Only events after this sequence number
+        #[arg(long)]
+        after: Option<u64>,
+    },
+    /// Ask an execution to stop
+    Cancel {
+        /// The execution's id
+        id: String,
+    },
+    /// The live channel's contract: where it is, what it writes, and the schema of each message
+    Protocol,
 }
 
 #[derive(Debug, Args)]
@@ -1425,6 +1517,83 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["env", "explain", "project.version"],
             setup: &[],
             expect: Expect::StdoutContains(&["project.version", "source", "resolver"]),
+        }],
+    },
+    CommandExamples {
+        command: "run",
+        examples: &[ExampleDoc {
+            id: "run-demonstrate",
+            title: "Watch an execution happen",
+            description: "`run` starts a capability as an execution and follows it to its end: every step, every line it logs and every advance of its progress, as the handler reports them. `executions.demonstrate` exists to make that visible without waiting for real work — it reads nothing and writes nothing, and its only effect is the events it produces. The same execution, started from the Cockpit, streams the same events to a browser.",
+            argv: &["run", "executions.demonstrate", "--input", "{\"steps\":2,\"delay_ms\":0}", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/state", "/id", "/output/steps", "/steps/0/name"]),
+        }],
+    },
+    CommandExamples {
+        command: "executions",
+        examples: &[ExampleDoc {
+            id: "executions-default-list",
+            title: "What has run",
+            description: "`executions` with nothing after it lists what the server serving this repository has run, newest first. In a checkout where no server is running it says so rather than pretending: an execution lives in the process that accepted it.",
+            argv: &["executions"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["execution"]),
+        }],
+    },
+    CommandExamples {
+        command: "executions list",
+        examples: &[ExampleDoc {
+            id: "executions-list-json",
+            title: "Every execution, as one document",
+            description: "The same answer `GET /api/v1/executions`, the MCP tool `majordomus_executions` and the Cockpit's Executions page render, with the counts beside it: how many are remembered, how many are active, how many are waiting for a worker and how many live channels are following them.",
+            argv: &["executions", "list", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/count", "/active", "/queued", "/live_channels"]),
+        }],
+    },
+    CommandExamples {
+        command: "executions show",
+        examples: &[ExampleDoc {
+            id: "executions-show-absent",
+            title: "An execution that is not there",
+            description: "An execution lives in the process that accepted it and is remembered in bounded numbers, so asking for one nothing ran says so and exits with the missing-artifact code rather than inventing an empty answer. Against a running server, the same command prints that execution's state, its steps and what it produced.",
+            argv: &["executions", "show", "x-20260101T120000Z-4c3b2a19"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "executions events",
+        examples: &[ExampleDoc {
+            id: "executions-events-absent",
+            title: "The events of an execution that is not there",
+            description: "The retained events of one execution, oldest first, after a sequence number — what a reconnecting client reads before it opens the live channel. For an execution nothing ran, the same refusal as `show`.",
+            argv: &["executions", "events", "x-20260101T120000Z-4c3b2a19"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "executions cancel",
+        examples: &[ExampleDoc {
+            id: "executions-cancel-absent",
+            title: "Asking an execution that is not there to stop",
+            description: "Cancellation is cooperative: the flag is set and a task stops when it next looks at it. There is nothing to set for an execution nothing ran, and the command says so rather than reporting a success it did not have.",
+            argv: &["executions", "cancel", "x-20260101T120000Z-4c3b2a19"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "executions protocol",
+        examples: &[ExampleDoc {
+            id: "executions-protocol",
+            title: "The live channel's contract, from the types that implement it",
+            description: "Where the WebSocket is, how a subscription and a reconnect are expressed, every message type, and the JSON Schema of each — derived from the Rust types, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket, which is why this is a capability and not a paragraph.",
+            argv: &["executions", "protocol", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/protocol_version", "/websocket", "/event_types/0", "/stream_types/0", "/limits/max_events"]),
         }],
     },
     CommandExamples {

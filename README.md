@@ -468,6 +468,19 @@ navigation entry, its search entry and its benchmark target with no edit to the 
 ([`docs/COCKPIT.md`](docs/COCKPIT.md),
 [ADR 12](.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md)).
 
+**Work you can watch.** A capability that reads every file of the layer takes longer than a
+request should be held open for, so it can be run as an *execution*: it gets an id, a
+lifecycle and a stream of typed events, and a browser, an agent or a terminal follows it
+while it happens. `majordomus run objects.verify` prints each step as the handler reports
+it; the Cockpit's Executions page shows the same run live over a WebSocket at `/events` and
+restores it from the server on a reload; `executions.*` answer the same facts over HTTP and
+MCP. There is no action registry and no second implementation: an execution runs a
+capability of the one registry, through the one executor, and what a client may offer —
+whether to ask before running it, whether a Cancel button will do anything — is read from
+that capability's own descriptor
+([`docs/EXECUTIONS.md`](docs/EXECUTIONS.md),
+[ADR 22](.ai/repo/adrs/0031-an-execution-is-a-watched-capability-call-not-a-second-registry.md)).
+
 **One server per repository.** The first `majordomus mcp` binds the loopback HTTP
 projection beside its stdio session and logs the URL and every surface it serves (the home
 page at `/`, the documentation at `/docs/`, the Cockpit at `/cockpit`, Swagger UI at

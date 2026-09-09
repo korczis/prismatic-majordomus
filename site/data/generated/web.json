@@ -7,7 +7,8 @@
     "documentation": "/docs",
     "swagger": "/swagger",
     "openapi": "/openapi.json",
-    "capabilities": "/api/v1/"
+    "capabilities": "/api/v1/",
+    "events": "/events"
   },
   "surfaces": [
     {
@@ -69,6 +70,23 @@
         },
         "mount": {
           "source": "default"
+        }
+      }
+    },
+    {
+      "id": "events",
+      "title": "The live channel: what this process's executions are doing",
+      "mount": "/events",
+      "category": "protocol",
+      "visibility": "internal",
+      "kind": "native-route",
+      "producer": "http::events",
+      "availability": "served-only",
+      "artifact": null,
+      "feature": null,
+      "provenance": {
+        "mount": {
+          "source": "registry"
         }
       }
     },
@@ -173,9 +191,9 @@
     "protocol"
   ],
   "counts": {
-    "surfaces": 8,
+    "surfaces": 9,
     "public": 7,
-    "served": 7,
+    "served": 8,
     "published": 2
   }
 }

@@ -129,8 +129,8 @@ impl Target {
         Target::Web,
         Target::Changelog,
         Target::Distribution,
-        Target::Manifest,
         Target::Deployment,
+        Target::Manifest,
     ];
 
     /// Every target but the manifest, in generation order: the artifacts the manifest

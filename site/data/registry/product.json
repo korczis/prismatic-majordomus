@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.4.0"
   },
-  "fingerprint": "1c6b12d057bba8eaf920724fac964cd752ca0b2901d084da96d3f6cb3e34e325",
+  "fingerprint": "9e04180effee8eec566c8a9f99d82f9ac88a60f1f6d31a0edfbc66633b264405",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 21,
+    "modules": 22,
     "modules_covered": 16,
     "commands": 27,
     "commands_covered": 27,
@@ -710,6 +710,14 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_search",
               "route": "GET /api/v1/search"
+            },
+            {
+              "id": "objects.verify",
+              "title": "Verify the index against the working tree",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_verify_objects",
+              "route": "GET /api/v1/objects/verify"
             }
           ]
         },
@@ -1108,10 +1116,10 @@
         "declare-once"
       ],
       "counts": {
-        "capabilities": 7,
-        "mcp_tools": 7,
+        "capabilities": 8,
+        "mcp_tools": 8,
         "mcp_resources": 3,
-        "http_routes": 7,
+        "http_routes": 8,
         "cli_paths": 1,
         "commands": 0,
         "objects": 0,
@@ -2431,7 +2439,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 30
+          "objects": 31
         },
         {
           "name": "knowledge",
@@ -2439,7 +2447,7 @@
         },
         {
           "name": "document",
-          "objects": 207
+          "objects": 208
         }
       ],
       "rule_refs": [
@@ -2688,11 +2696,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 239,
+        "mcp_resources": 241,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 238,
+        "objects": 240,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2857,7 +2865,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 100
+          "objects": 102
         }
       ],
       "rule_refs": [
@@ -3178,11 +3186,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 101,
+        "mcp_resources": 103,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 100,
+        "objects": 102,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -7385,6 +7393,11 @@
         "features": []
       },
       {
+        "id": "executions",
+        "title": "Executions",
+        "features": []
+      },
+      {
         "id": "graph",
         "title": "Graphs",
         "features": [
@@ -7685,7 +7698,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (30)",
+        "title": "adr (31)",
         "features": [
           "knowledge"
         ]
@@ -7807,7 +7820,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (100)",
+        "title": "rule (102)",
         "features": [
           "doctrine"
         ]
@@ -8579,19 +8592,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1138,
-    "builtin": 55,
-    "declarative": 1083,
-    "modules": 21,
-    "mcp_tools": 53,
-    "mcp_resources": 1104,
-    "http_routes": 55,
-    "cli_commands": 81,
+    "capabilities": 1151,
+    "builtin": 63,
+    "declarative": 1088,
+    "modules": 22,
+    "mcp_tools": 61,
+    "mcp_resources": 1111,
+    "http_routes": 63,
+    "cli_commands": 88,
     "shell_commands": 27,
     "kinds": 28,
-    "objects": 1083,
+    "objects": 1088,
     "by_kind": {
-      "adr": 30,
+      "adr": 31,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8600,7 +8613,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 207,
+      "document": 208,
       "feature": 20,
       "implementation": 44,
       "issue": 202,
@@ -8611,18 +8624,18 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 100,
+      "rule": 102,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 123,
+      "test": 124,
       "use-case": 40,
       "workspace": 1
     },
     "providers": 6,
     "features": 19,
-    "web_surfaces": 8
+    "web_surfaces": 9
   },
   "valid": true
 }

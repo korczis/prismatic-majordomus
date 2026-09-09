@@ -17,9 +17,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
 | `environment` | Repository environment | behaviorally_verified | 2 | [`modules/environment.md`](modules/environment.md) |
+| `executions` | Executions | behaviorally_verified | 7 | [`modules/executions.md`](modules/executions.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
-| `objects` | Objects | behaviorally_verified | 3 | [`modules/objects.md`](modules/objects.md) |
+| `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
 | `product` | Product | behaviorally_verified | 5 | [`modules/product.md`](modules/product.md) |
@@ -54,6 +55,13 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `distribution.status` | `distribution` | query | behaviorally_verified | `majordomus_install_status` | — | `GET /api/v1/distribution/status` | `majordomus distribution status` | — | required |
 | `environment.explain` | `environment` | query | behaviorally_verified | `majordomus_environment_explain` | — | `GET /api/v1/environment/explain` | — | — | required |
 | `environment.status` | `environment` | query | behaviorally_verified | `majordomus_environment` | `majordomus://environment` | `GET /api/v1/environment` | — | process, 4 entries, 3s | required |
+| `executions.cancel` | `executions` | command | behaviorally_verified | `majordomus_execution_cancel` | — | `POST /api/v1/executions/cancel` | `majordomus executions cancel` | — | waived (transient_state) |
+| `executions.demonstrate` | `executions` | query | behaviorally_verified | `majordomus_demonstrate_execution` | — | `GET /api/v1/executions/demonstrate` | — | — | required |
+| `executions.events` | `executions` | query | behaviorally_verified | `majordomus_execution_events` | — | `GET /api/v1/executions/events` | `majordomus executions events` | — | waived (transient_state) |
+| `executions.get` | `executions` | query | behaviorally_verified | `majordomus_execution` | — | `GET /api/v1/executions/get` | `majordomus executions show` | — | waived (transient_state) |
+| `executions.list` | `executions` | query | behaviorally_verified | `majordomus_executions` | `majordomus://executions` | `GET /api/v1/executions` | `majordomus executions list` | — | required |
+| `executions.protocol` | `executions` | query | behaviorally_verified | `majordomus_execution_protocol` | `majordomus://executions/protocol` | `GET /api/v1/executions/protocol` | `majordomus executions protocol` | — | required |
+| `executions.start` | `executions` | command | behaviorally_verified | `majordomus_execution_start` | — | `POST /api/v1/executions/start` | `majordomus run` | — | required |
 | `graph.get` | `graph` | query | behaviorally_verified | `majordomus_graph` | — | `GET /api/v1/graph` | — | process, 16 entries | required |
 | `graph.list` | `graph` | query | behaviorally_verified | `majordomus_graphs` | `majordomus://graphs` | `GET /api/v1/graphs` | — | — | required |
 | `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |
@@ -62,6 +70,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `objects.get` | `objects` | query | behaviorally_verified | `majordomus_get` | — | `GET /api/v1/object` | — | — | required |
 | `objects.list` | `objects` | query | behaviorally_verified | `majordomus_list` | — | `GET /api/v1/objects` | — | — | required |
 | `objects.search` | `objects` | query | behaviorally_verified | `majordomus_search` | — | `GET /api/v1/search` | — | process, 64 entries | required |
+| `objects.verify` | `objects` | query | behaviorally_verified | `majordomus_verify_objects` | — | `GET /api/v1/objects/verify` | — | — | required |
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
 | `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |
@@ -97,4 +106,4 @@ Every object of the repository's AI layer is a capability of kind `resource` wit
 
 ## Infrastructure routes
 
-The HTTP projection's own routes, not capabilities: `/`, `/api/v1`, `/openapi.json`, `/swagger`, `/mcp`, `/cockpit`. `/swagger` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/docs/` is this repository's own documentation, and `/mcp` is MCP over HTTP on the shared server.
+The HTTP projection's own routes, not capabilities: `/`, `/api/v1`, `/openapi.json`, `/swagger`, `/mcp`, `/events`, `/cockpit`. `/swagger` is a Swagger UI shell that loads `/openapi.json`; it embeds no specification. `/docs/` is this repository's own documentation, and `/mcp` is MCP over HTTP on the shared server.

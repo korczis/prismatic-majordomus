@@ -38,6 +38,7 @@ pub(crate) mod deploy;
 pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
+pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
 pub mod objects;
@@ -78,11 +79,16 @@ pub use distribution::{
     ReleaseArtifactInput, ReleaseArtifactView, ReleaseView, ReleasesReport, TargetView,
 };
 pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENVIRONMENT_URI};
+pub use executions::{
+    CancelReport, EventHistory, ExecutionLinks, ExecutionList, ExecutionView, ProtocolReport,
+    EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
+};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
-    resolve, AnswerView, GetInput, ListInput, ObjectList, Resolved, ResourceView, SearchHit,
-    SearchInput, SearchResult, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
+    resolve, AnswerView, Comparison, DriftedObject, GetInput, ListInput, ObjectList,
+    ObjectStanding, Resolved, ResourceView, SearchHit, SearchInput, SearchResult, VerifyInput,
+    VerifyReport, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
 };
 pub use peers::{AnnounceInput, PeerList};
 pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
@@ -111,6 +117,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         health,
         continuity,
         deploy,
+        executions,
         peers,
         perf,
         directories,

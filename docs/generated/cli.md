@@ -100,13 +100,20 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in both places at once, to the bump the commits imply or to one you name |
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
+| [`majordomus run`](#majordomus-run) | `/docs/cli/run/` | Run a capability as an execution and follow it: its steps, its progress and its output as they happen |
+| [`majordomus executions`](#majordomus-executions) | `/docs/cli/executions/` | The executions of the server serving this repository: what has run, what is running, and what each one said |
+| [`majordomus executions list`](#majordomus-executions-list) | `/docs/cli/executions/list/` | Every execution the server remembers, newest first |
+| [`majordomus executions show`](#majordomus-executions-show) | `/docs/cli/executions/show/` | One execution in full: its state, its steps, its diagnostics and what it produced |
+| [`majordomus executions events`](#majordomus-executions-events) | `/docs/cli/executions/events/` | One execution's retained events, oldest first |
+| [`majordomus executions cancel`](#majordomus-executions-cancel) | `/docs/cli/executions/cancel/` | Ask an execution to stop |
+| [`majordomus executions protocol`](#majordomus-executions-protocol) | `/docs/cli/executions/protocol/` | The live channel's contract: where it is, what it writes, and the schema of each message |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions).
 
 ```text
 majordomus <COMMAND>
@@ -2715,4 +2722,205 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /measured, /passes, /report/schema.
+
+<a id="majordomus-run"></a>
+## `majordomus run`
+
+Run a capability as an execution and follow it: its steps, its progress and its output as they happen
+
+```text
+majordomus run [OPTIONS] <CAPABILITY>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `<CAPABILITY>` | `<CAPABILITY>` | required | The capability to run, by its canonical id (`health.report`, `objects.verify`) |
+| `--input` | `<JSON>` | — | Its input, as one JSON object; the capability's input schema is what validates it |
+| `--follow` | flag | — | Print the events as they arrive on stderr; on by default when stderr is a terminal |
+| `--quiet` | flag | — | Print nothing but the final output |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Watch an execution happen** — `run` starts a capability as an execution and follows it to its end: every step, every line it logs and every advance of its progress, as the handler reports them. `executions.demonstrate` exists to make that visible without waiting for real work — it reads nothing and writes nothing, and its only effect is the events it produces. The same execution, started from the Cockpit, streams the same events to a browser.
+
+  ```console
+  $ majordomus run executions.demonstrate --input '{"steps":2,"delay_ms":0}' --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /state, /id, /output/steps, /steps/0/name.
+
+<a id="majordomus-executions"></a>
+## `majordomus executions`
+
+The executions of the server serving this repository: what has run, what is running, and what each one said
+
+Subcommands: [`majordomus executions list`](#majordomus-executions-list), [`majordomus executions show`](#majordomus-executions-show), [`majordomus executions events`](#majordomus-executions-events), [`majordomus executions cancel`](#majordomus-executions-cancel), [`majordomus executions protocol`](#majordomus-executions-protocol).
+
+```text
+majordomus executions [OPTIONS] [COMMAND]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What has run** — `executions` with nothing after it lists what the server serving this repository has run, newest first. In a checkout where no server is running it says so rather than pretending: an execution lives in the process that accepted it.
+
+  ```console
+  $ majordomus executions
+  ```
+
+  Verified: exits 0; prints execution.
+
+<a id="majordomus-executions-list"></a>
+## `majordomus executions list`
+
+Every execution the server remembers, newest first
+
+```text
+majordomus executions list [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--state` | `<STATE>` | — | Only executions in this state (queued, running, cancelling, succeeded, failed, cancelled) |
+| `--capability` | `<CAPABILITY>` | — | Only executions of this capability |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every execution, as one document** — The same answer `GET /api/v1/executions`, the MCP tool `majordomus_executions` and the Cockpit's Executions page render, with the counts beside it: how many are remembered, how many are active, how many are waiting for a worker and how many live channels are following them.
+
+  ```console
+  $ majordomus executions list --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /count, /active, /queued, /live_channels.
+
+<a id="majordomus-executions-show"></a>
+## `majordomus executions show`
+
+One execution in full: its state, its steps, its diagnostics and what it produced
+
+```text
+majordomus executions show [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The execution's id |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **An execution that is not there** — An execution lives in the process that accepted it and is remembered in bounded numbers, so asking for one nothing ran says so and exits with the missing-artifact code rather than inventing an empty answer. Against a running server, the same command prints that execution's state, its steps and what it produced.
+
+  ```console
+  $ majordomus executions show x-20260101T120000Z-4c3b2a19
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-executions-events"></a>
+## `majordomus executions events`
+
+One execution's retained events, oldest first
+
+```text
+majordomus executions events [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The execution's id |
+| `--after` | `<AFTER>` | — | Only events after this sequence number |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The events of an execution that is not there** — The retained events of one execution, oldest first, after a sequence number — what a reconnecting client reads before it opens the live channel. For an execution nothing ran, the same refusal as `show`.
+
+  ```console
+  $ majordomus executions events x-20260101T120000Z-4c3b2a19
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-executions-cancel"></a>
+## `majordomus executions cancel`
+
+Ask an execution to stop
+
+```text
+majordomus executions cancel [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The execution's id |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Asking an execution that is not there to stop** — Cancellation is cooperative: the flag is set and a task stops when it next looks at it. There is nothing to set for an execution nothing ran, and the command says so rather than reporting a success it did not have.
+
+  ```console
+  $ majordomus executions cancel x-20260101T120000Z-4c3b2a19
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-executions-protocol"></a>
+## `majordomus executions protocol`
+
+The live channel's contract: where it is, what it writes, and the schema of each message
+
+```text
+majordomus executions protocol [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The live channel's contract, from the types that implement it** — Where the WebSocket is, how a subscription and a reconnect are expressed, every message type, and the JSON Schema of each — derived from the Rust types, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket, which is why this is a capability and not a paragraph.
+
+  ```console
+  $ majordomus executions protocol --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /protocol_version, /websocket, /event_types/0, /stream_types/0, /limits/max_events.
 
