@@ -691,7 +691,11 @@ for route in $served; do
   if grep -rhoE 'href="[^"]*"' $pages | grep -qE "href=\"($PREFIX)?$route(/[^\"]*)?\"" ; then
     bad surface "a published page links $route, which only a running server answers"; surfbad=1
   fi
-  grep -qF "<code class=\"font-mono text-heading\">$route</code>" "$PUB/docs/api/index.html" || { bad surface "$route is not named on /docs/api/"; surfbad=1; }
+  # the class list is presentation and changes with it — a long path gained `break-all` so it
+  # wraps at 320px. What this asserts is that the route is NAMED in a code element, not what
+  # that element is styled with, so it matches the attribute rather than one spelling of it.
+  grep -qE "<code class=\"[^\"]*font-mono text-heading\">$route</code>" "$PUB/docs/api/index.html" \
+    || { bad surface "$route is not named on /docs/api/"; surfbad=1; }
 done
 grep -qF 'while a server runs' "$PUB/docs/api/index.html" || { bad surface "/docs/api/ does not say which routes need a server"; surfbad=1; }
 [ "$surfbad" = 0 ] && ok surface "every served-only route is named on /docs/api/ and linked from nowhere: $(printf '%s ' $served)"
