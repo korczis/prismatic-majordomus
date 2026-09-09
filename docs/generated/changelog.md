@@ -11,7 +11,7 @@ Current version: **0.4.0**
 
 ### Decisions
 
-- **ADR-0030** A task owes obligations, and the evidence that discharges them goes stale _(proposed)_
+- **ADR-0031** The design is one declaration and every surface is a projection of it _(accepted)_
 - **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(proposed)_
 - **ADR-0026** A capability module's area is derived from the features that name it, not declared beside it _(accepted)_
 - **ADR-0025** Presentation order is one total order owned by the crate, not a decision each surface makes _(accepted)_
@@ -19,7 +19,7 @@ Current version: **0.4.0**
 
 ### Added
 
-- **closure**: a task owes obligations, and the evidence that discharges them goes stale (`cf1ee94ca`)
+- **design**: one declaration for the design, and every surface projects it (`2b3b9fffa`)
 - **ci**: a gate says the published site came from master, and is being served (`fbc1da919`)
 - **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
 - **release**: the changelog is a projection, and the version is derived from the commits (`82583eba1`)
@@ -46,15 +46,8 @@ Current version: **0.4.0**
 
 ### Fixed
 
-- **release**: the module asserts the two projections it documents (`98f6606ce`)
-- **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
-- **commands**: the module asserts the three projections it documents (`5609ab148`)
+- **design,adr**: the three failures this session hit, each with the gate that would have caught it (`1cbb36869`)
 - **site**: the changelog page reads the groups the document carries (`b551a3327`)
-- **docs**: the semantics module documents a validation that is not an item (`ed649c769`)
-- **share**: a MAJORDOMUS_SHARE naming another worktree of this repository is refused (`fc9864ebc`)
-- **derive**: every stage names itself as it begins and reports what it cost (`59aa3769c`)
-- **ci**: ci-plan tells a bare path list which spelling it wanted (`5bd2f77bc`)
-- **cli**: an unknown command that the Rust executable provides says so and names the launcher (`59f5c8b75`)
 - **ui**: a scroll container is a containing block for what it positions, and the finding that says so names it (`2d328460b`)
 - **ci**: a job that hangs fails instead of holding a runner for a shift (`1ea8da126`)
 - **completion**: TAB in this repository asks a program that can answer it (`ff2d64e57`)
@@ -122,13 +115,6 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
-- **derive**: the projections follow the master merge (`5e6d324c1`)
-- **derive**: the projections follow the master merge (`21a1203cc`)
-- **derive**: the projections follow the second master merge (`e94b760d1`)
-- **derive**: the projections follow the master merge (`5fe8f2ec8`)
-- **derive**: the projections follow the master merge (`b79363681`)
-- **derive**: the projections follow the master merge, with the ADR renumbered to 0030 (`f1c1b6556`)
-- **derive**: the projections follow the entry-point fixes (`691fab7db`)
 - **derive**: the projections follow the merge with master (`44468dbc1`)
 - **order**: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are (`c72d294cc`)
 - **derive**: the projections follow the two adopted sessions (`4066bdf4f`)

@@ -22,6 +22,14 @@
 
 @import "tailwindcss" source(none);
 @import "flowbite/src/themes/default";
+/* after Flowbite's theme, because it overrides it: the same generated token block the
+   site imports, so the two Tailwind builds cannot resolve a different type or a different
+   accent. Generated from share/design/tokens.yaml by scripts/design-tokens. */
+@import "../../design/theme.css";
+/* the semantic surface, the same values under the selector this stylesheet is written
+   against, with the `--mj-*` names declared as aliases of the canonical ones. Generated
+   from share/design/tokens.yaml by scripts/design-tokens. */
+@import "../../design/surface.css";
 @plugin "flowbite/plugin";
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -31,43 +39,14 @@
    a function of this file and the pinned versions alone, and never of what happens to be
    in the tree — which is what lets `scripts/cockpit-assets --check` be exact. */
 
-@theme {
-  /* Type: one system stack, one monospace stack. Nothing is fetched. */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
-    monospace;
-
-  /* The one accent. Everything else is neutral, because a control plane that colours
-     everything says nothing with colour. */
-  --color-accent-50: oklch(0.97 0.02 250);
-  --color-accent-200: oklch(0.87 0.07 250);
-  --color-accent-500: oklch(0.62 0.16 250);
-  --color-accent-600: oklch(0.55 0.16 250);
-  --color-accent-900: oklch(0.32 0.10 250);
-}
 
 @layer base {
   :root {
     /* The topbar's height: the sidebar and a listing's sticky header both sit under it,
-       and one value keeps them from disagreeing. */
+       and one value keeps them from disagreeing. It is a layout value and it stays here;
+       every colour this file used to declare is now share/design/surface.css, imported
+       above, because the Cockpit's palette was one of four and is now one of one. */
     --mj-topbar-h: 2.75rem;
-    --mj-bg: var(--color-white);
-    --mj-bg-raised: var(--color-white);
-    --mj-bg-sunken: var(--color-gray-50);
-    --mj-border: var(--color-gray-200);
-    --mj-text: var(--color-gray-900);
-    --mj-text-muted: var(--color-gray-500);
-    color-scheme: light;
-  }
-  :where(.dark) {
-    --mj-bg: oklch(0.19 0.005 250);
-    --mj-bg-raised: oklch(0.23 0.006 250);
-    --mj-bg-sunken: oklch(0.16 0.005 250);
-    --mj-border: oklch(0.32 0.008 250);
-    --mj-text: oklch(0.94 0.004 250);
-    --mj-text-muted: oklch(0.68 0.008 250);
-    color-scheme: dark;
   }
 
   html {
