@@ -1,0 +1,114 @@
+# The design tokens of every surface this repository renders, declared once.
+#
+# Four surfaces put HTML in front of a person — the published site, the Cockpit, the
+# generated reports and the Swagger UI shell — and before this file each carried a palette
+# and a type stack of its own. They were not four designs anybody chose; they were one
+# design decided four times, by four authors, in four syntaxes, and they had already
+# drifted: the site named a font it never loaded, the Cockpit declared an accent ramp
+# nothing else knew about, a report page hard-coded seven hexadecimal literals, and the
+# API viewer inherited whatever a third party shipped that week.
+#
+# So the tokens are data, and every stylesheet is a projection of them:
+#
+#   share/design/tokens.yaml              <- this file, the only place a value is chosen
+#     -> share/design/theme.css           the Tailwind `@theme`, imported by the site's
+#                                         entry point and by the Cockpit's
+#     -> apps/majordomus-cli/src/web/tokens.css
+#                                         plain custom properties, compiled into the
+#                                         executable for the pages it renders itself,
+#                                         which have no Tailwind and fetch no asset
+#
+# `scripts/design-tokens` writes both; `scripts/design-tokens --check` proves the committed
+# projections match this file, and the `design` gate runs it. Changing a value here and
+# regenerating changes every surface at once, which is the only way four surfaces stay one
+# design. The rule is `project.design-tokens-declared-once`; ADR 0029 records the decision.
+#
+# The values are Tailwind v4's own palette, quoted exactly, because the site is built on
+# Flowbite's default theme over that palette and the point of this file is to bring the
+# other three surfaces to where the site already was — not to restyle the site. A comment
+# names the scale entry every colour came from, so a reader can check it against
+# node_modules/tailwindcss/theme.css rather than trust the number.
+schema: 1
+
+# Type. One system stack and one monospace stack; nothing is fetched over the network at
+# any width, on any surface. Flowbite's default theme names Inter first and the site never
+# loaded it, so the site has always rendered in this stack — naming it is what makes that
+# true on purpose rather than by accident. The emoji families are the tail of Flowbite's
+# own stack, kept: they are what a platform without automatic emoji fallback reaches for,
+# and dropping them while claiming the change is invisible would not have been true.
+font:
+  sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"
+  mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace
+
+# The one accent. Everything else is neutral, because a control plane that colours
+# everything says nothing with colour. Hue 250 is the blue the Cockpit already used and
+# the family Flowbite's brand tokens sit in.
+accent:
+  50: oklch(0.97 0.02 250)
+  200: oklch(0.87 0.07 250)
+  500: oklch(0.62 0.16 250)
+  600: oklch(0.55 0.16 250)
+  900: oklch(0.32 0.10 250)
+
+# The semantic surface. Three of the four surfaces need these and none of them can reach a
+# Tailwind utility for them: the Cockpit sets them on :root and switches them with the `dark`
+# class, and the pages the executable renders have no Tailwind at all. Before this file each
+# had its own set — the Cockpit's dark was hue 250 at its own lightnesses, a report's was
+# seven hexadecimal literals — which is how one design became three.
+#
+# Light is Tailwind's gray, which is what the site's own theme already resolves to. Dark is
+# the Cockpit's, kept: it was chosen for a dense control plane read for hours, and it is the
+# better of the two sets. A report page inherits it rather than the other way round.
+#
+#   bg      the page
+#   raised  a card or a panel that sits on the page
+#   sunken  a header cell, a well, a table stripe
+#   line    every border and rule
+#   fg      body text
+#   muted   secondary text
+#   ok/warn/bad  the only three colours that carry meaning rather than decoration
+surface-light:
+  bg: "#fff"                          # white
+  raised: "#fff"                      # white
+  sunken: oklch(98.5% 0.002 247.839)  # gray-50
+  line: oklch(92.8% 0.006 264.531)    # gray-200
+  fg: oklch(21% 0.034 264.665)        # gray-900
+  muted: oklch(55.1% 0.027 264.364)   # gray-500
+  ok: oklch(50.8% 0.118 165.612)      # emerald-700
+  warn: oklch(55.5% 0.163 48.998)     # amber-700
+  bad: oklch(51.4% 0.222 16.935)      # rose-700
+
+surface-dark:
+  bg: oklch(0.19 0.005 250)
+  raised: oklch(0.23 0.006 250)
+  sunken: oklch(0.16 0.005 250)
+  line: oklch(0.32 0.008 250)
+  fg: oklch(0.94 0.004 250)
+  muted: oklch(0.68 0.008 250)
+  ok: oklch(76.5% 0.177 163.223)      # emerald-400
+  warn: oklch(82.8% 0.189 84.429)     # amber-400
+  bad: oklch(71.2% 0.194 13.428)      # rose-400
+
+# The Cockpit's own names for the same values. Its stylesheet is 800 lines written against
+# `--mj-*` and renaming them would be churn with no reader; declaring them once as aliases
+# of the canonical properties costs nothing and cannot drift, because an alias has no value
+# of its own to drift from. A name here is a synonym, never a second decision.
+# The graph and diagram views read these names from the page at run time. They were read
+# before this file existed too — and every one of them resolved to nothing, because no
+# stylesheet ever declared them, so every drawing fell through to a literal in JavaScript
+# while its comment said the palette came from the page. Declaring them is what makes that
+# comment true. An `accent-N` target is a step of the accent ramp above.
+alias:
+  --mj-graph-text: fg
+  --mj-graph-muted: muted
+  --mj-graph-line: line
+  --mj-graph-surface: raised
+  --mj-graph-accent: accent-600
+  --mj-graph-warn: warn
+  --mj-graph-good: ok
+  --mj-bg: bg
+  --mj-bg-raised: raised
+  --mj-bg-sunken: sunken
+  --mj-border: line
+  --mj-text: fg
+  --mj-text-muted: muted

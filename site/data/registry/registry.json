@@ -6,22 +6,22 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "d2c2530b46ccbafa8944bf6c48d3d0c10e1f15b958219114a572c32bb96e0be4",
+    "fingerprint": "13fcb953957d9a10d15eab37837e56353afd5c10e30362e1ce386ce44e93162c",
     "summary": {
-      "total": 1089,
+      "total": 1092,
       "builtin": 49,
-      "declarative": 1040,
+      "declarative": 1043,
       "by_kind": {
         "command": 1,
         "query": 48,
-        "resource": 1040
+        "resource": 1043
       },
       "by_stability": {
         "behaviorally_verified": 46,
-        "implemented": 1043
+        "implemented": 1046
       },
       "mcp_tools": 47,
-      "mcp_resources": 1057,
+      "mcp_resources": 1060,
       "http_routes": 49,
       "cli_commands": 24,
       "modules": 45,
@@ -17311,7 +17311,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": []
       },
       {
@@ -17674,7 +17674,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 95,
+        "capabilities": 96,
         "capability_ids": []
       },
       {
@@ -17714,7 +17714,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 116,
+        "capabilities": 117,
         "capability_ids": []
       },
       {
@@ -17772,7 +17772,7 @@
     ]
   },
   "index": {
-    "fingerprint": "eea054c5d16cb0ca74ba02869f4576859859d282eec8a13c4d5c761438fb056f",
+    "fingerprint": "628147a3b9cfe9ab15371a2db0f8b57ce92d5eb5c7f2bfa0addae7a9156638ba",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -17795,7 +17795,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 25,
+      "adr": 26,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -17815,12 +17815,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 95,
+      "rule": 96,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 116,
+      "test": 117,
       "use-case": 40
     },
     "diagnostics": {},
@@ -18219,6 +18219,23 @@
           "commands",
           "projections",
           "completion"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0029",
+        "kind": "adr",
+        "identity": "adr-0029",
+        "title": "The design is one declaration and every surface is a projection of it",
+        "description": "The design is one declaration and every surface is a projection of it",
+        "path": ".ai/repo/adrs/0029-the-design-is-one-declaration-and-every-surface-is-a-project.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6909,
+        "tags": [
+          "design",
+          "ui",
+          "projections",
+          "derived"
         ]
       },
       {
@@ -20957,7 +20974,7 @@
         "title": "GitHub Pages performance status",
         "path": "docs/PAGES_STATUS.md",
         "source_class": "document",
-        "bytes": 2401
+        "bytes": 2518
       },
       {
         "uri": "majordomus://document/docs/PERFORMANCE.md",
@@ -26897,6 +26914,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.design-tokens-declared-once@1",
+        "kind": "rule",
+        "identity": "project.design-tokens-declared-once@1",
+        "title": "A design value is chosen once and every stylesheet is a projection of it",
+        "description": "Type, palette and accent are declared in one canonical file and generated into the Tailwind theme both builds import, the surface block the Cockpit is written against, and the custom properties compiled into the executable; a file that puts a colour on a screen may name a token and may not invent one.",
+        "path": ".ai/repo/rules/project/design-tokens-declared-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5373,
+        "tags": [
+          "design",
+          "ui",
+          "derived",
+          "projections"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.distribution-canonical@1",
         "kind": "rule",
         "identity": "project.distribution-canonical@1",
@@ -27850,6 +27884,14 @@
         "path": "test/cases/102_completion_shell.sh",
         "source_class": "case",
         "bytes": 4953
+      },
+      {
+        "uri": "majordomus://test/test/cases/104_design_tokens.sh",
+        "kind": "test",
+        "identity": "test/cases/104_design_tokens.sh",
+        "path": "test/cases/104_design_tokens.sh",
+        "source_class": "case",
+        "bytes": 6873
       },
       {
         "uri": "majordomus://test/test/cases/10_site_data.sh",
@@ -29126,7 +29168,7 @@
       "identity": [
         "id"
       ],
-      "objects": 25
+      "objects": 26
     },
     {
       "name": "application",
@@ -29326,7 +29368,7 @@
         "id",
         "version"
       ],
-      "objects": 95
+      "objects": 96
     },
     {
       "name": "scope",
@@ -29381,7 +29423,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 116
+      "objects": 117
     },
     {
       "name": "use-case",
