@@ -155,7 +155,22 @@ fn sidebar(shell: &Shell<'_>) -> El {
         .attr("aria-label", "Cockpit sections");
     for section in shell.navigation.sections() {
         let mut list = el("ul").class("mj-nav-list");
+        // A grouped section shows its headings as the group changes. The items arrive in
+        // the canonical order, which puts a group's members together and the ungrouped
+        // ones last, so one pass is enough and nothing here decides the sequence.
+        let mut group: Option<&str> = None;
         for item in &section.items {
+            if item.group.as_deref() != group {
+                group = item.group.as_deref();
+                if let Some(heading) = group {
+                    list = list.child(
+                        el("li")
+                            .class("mj-nav-group")
+                            .attr("role", "presentation")
+                            .text(heading),
+                    );
+                }
+            }
             let current = item.area == shell.area && item.current;
             list = list.child(
                 el("li").child(

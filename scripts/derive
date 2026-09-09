@@ -38,9 +38,12 @@ else
 fi
 step() { printf '==> derive: %s\n' "$*"; }
 step "stage A: majordomus generate (code-only projections)"
-"$RB" generate --repo "$ROOT" >/dev/null
+# --strict: an error diagnostic must not pass for success. A duplicate identity excludes
+# every claimant and the index goes on without them, so without this a derivation writes
+# projections from a tree that has silently lost documents, and says nothing.
+"$RB" generate --repo "$ROOT" --strict >/dev/null
 step "stage B: scripts/generate-site-data (site data, content, derived documents)"
 "$ROOT/scripts/generate-site-data"
 step "stage C: majordomus generate (the site dataset and the benchmark matrix over the index)"
-"$RB" generate --repo "$ROOT" >/dev/null
+"$RB" generate --repo "$ROOT" --strict >/dev/null
 step "done; scripts/derive-check proves it"

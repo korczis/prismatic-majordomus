@@ -481,8 +481,9 @@ fn layer_line(environment: &RepositoryEnvironment, g: &Glyphs, budget: usize) ->
     }
     let mut kinds = environment.layer.kinds.clone();
     // Largest first: what a repository is mostly made of is what a person wants to see
-    // when the line has to be cut. Ties by name, so the order is total and stable.
-    kinds.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.kind.cmp(&b.kind)));
+    // when the line has to be cut. The rank is the negated count, so the canonical order —
+    // which ranks ascending and ends on an identity — reads the same way here as everywhere.
+    crate::order::canonical(&mut kinds);
     let mut line = String::new();
     for kind in &kinds {
         let part = format!("{} {}", sanitise(&kind.kind), kind.count);

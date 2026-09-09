@@ -72,7 +72,7 @@ mj_derive_changed() {
     mj_git diff --name-only "$base..HEAD" 2>/dev/null >> "$tmp"
   fi
   mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //' >> "$tmp"
-  sort -u "$tmp" | sed '/^$/d'
+  LC_ALL=C sort -u "$tmp" | sed '/^$/d'
   rm -f "$tmp"
   return 0
 }

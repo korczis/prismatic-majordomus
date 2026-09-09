@@ -12,7 +12,7 @@ use crate::cli::{
     CompletionArgs, CompletionCommand, CompletionInitArgs, CompletionInstallArgs,
     CompletionQueryArgs, CompletionShell, CompletionSurface, OutputFormat,
 };
-use crate::command_graph::complete::{self, NoValues, Request, ValueResolver};
+use crate::command_graph::complete::{self, Request, ValueResolver};
 use crate::command_graph::{load, shell, Surface, ValueSource};
 use crate::error::{Error, Result};
 
@@ -347,11 +347,6 @@ fn walk(base: &std::path::Path, dir: &std::path::Path, out: &mut Vec<String>) {
             out.push(name.to_string_lossy().replace('\\', "/"));
         }
     }
-}
-
-/// A resolver that answers nothing, for a caller that wants only the declaration's values.
-pub fn no_values() -> NoValues {
-    NoValues
 }
 
 #[cfg(test)]

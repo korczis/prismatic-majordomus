@@ -76,6 +76,7 @@ site/data/registry/product.json
 site/data/registry/product-graph.json
 docs/generated/cli.json
 docs/generated/web.json
+docs/generated/changelog.json
 apps/majordomus-cli/README.md
 site/config.toml
 README.md
@@ -910,15 +911,22 @@ if [ "$SCENARIOS" = 0 ]; then
 else
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase run --json > "$STAGE/uc-run.json" 2> "$STAGE/uc-run.err" || {
   echo "generate-site-data: a use-case scenario failed; the site does not show a demonstration that does not hold:" >&2
-  # `jq` exits 0 over a document with no failing result — and over `{}` — so its own status
-  # says nothing about whether anything was printed. A run that died before writing valid
-  # JSON leaves an empty file, and reporting that as an empty list is how this failure
-  # reached CI with nothing after the colon. Decide on the output, not on the exit status.
-  detail="$(jq -r '.results[]? | select(.result != "pass") | "  \(.use_case): \(.steps | map(select(.result != "pass")) | .[0].reason // .reason // "setup failed")"' "$STAGE/uc-run.json" 2>/dev/null || true)"
-  if [ -n "$detail" ]; then printf '%s\n' "$detail" >&2; else
-    echo "  the run wrote no usable result; its stderr follows" >&2
-    sed 's/^/  /' "$STAGE/uc-run.err" >&2 || true
+  # Render the failures the run recorded; when that renders nothing — the run wrote no JSON,
+  # or wrote a shape this does not match — show what the tool actually said. `jq -r` over an
+  # empty or unmatched document exits 0 and prints nothing, so a `||` fallback never fired
+  # and the message was a header followed by silence: a finding with nothing to act on.
+  UC_FAILED="$(jq -r '.results[] | select(.result != "pass")
+        | . as $r | (($r.steps // []) | map(select(.result != "pass")) | (.[0].reason? // empty)) as $step
+        | "  \($r.use_case): \($step // $r.reason? // "setup failed")"' \
+        "$STAGE/uc-run.json" 2>/dev/null || true)"
+  if [ -z "$UC_FAILED" ]; then
+    echo "  the run recorded no failure it could name; what the tool reported:" >&2
+    sed 's/^/    /' "$STAGE/uc-run.err" >&2 2>/dev/null || true
+    [ -s "$STAGE/uc-run.json" ] || echo "    (usecase run wrote no JSON at all)" >&2
+  else
+    printf '%s\n' "$UC_FAILED" >&2
   fi
+  echo "  reproduce: majordomus usecase run --json" >&2
   exit 10; }
 fi
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
@@ -1166,6 +1174,25 @@ source = "AGENTS.md"
 +++
 
 '; printf '{%% raw %%}\n'; sed '1{/^<!--/d;}' "$ROOT/AGENTS.md" | sed '1{/^# /d;}' | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk"; printf '{%% endraw %%}\n'; } > "$CONTENT/contract.md"
+# ---------------------------------------------------------------- changelog.json (what shipped)
+# The changelog the Rust executable composes from the layer's release records, the decisions
+# dated inside each release's window and the conventional commits in its range, committed as
+# docs/generated/changelog.json and checked by `majordomus generate --check`. Zola cannot
+# load a file outside its own root, and everything under site/data/generated/ must carry
+# `schema: 1` for site-check, so the canonical document is projected into that shape here —
+# the same arrangement openapi.json has, and for the same two reasons. The presentation order
+# is not decided here: the document carries its own `groups`, each with its heading and rank,
+# so the page renders what the Markdown renders rather than an order of its own.
+CL="$ROOT/docs/generated/changelog.json"
+[ -f "$CL" ] || { echo "generate-site-data: docs/generated/changelog.json is missing (run: majordomus generate changelog)" >&2; exit 10; }
+jq -e '.schema == "majordomus/changelog/v1"' "$CL" >/dev/null 2>&1 \
+  || { echo "generate-site-data: docs/generated/changelog.json is not majordomus/changelog/v1" >&2; exit 10; }
+jq -S '{schema: 1, source_schema: .schema, source: "docs/generated/changelog.json",
+        current, sections, diagnostics}' "$CL" > "$OUT/changelog.json" \
+  || { echo "generate-site-data: projecting docs/generated/changelog.json failed" >&2; exit 13; }
+[ "$(jq '.sections | length' "$OUT/changelog.json")" -gt 0 ] \
+  || { echo "generate-site-data: the changelog has no section" >&2; exit 10; }
+
 # ---------------------------------------------------------------- openapi.json (the HTTP API, as data)
 # The OpenAPI document the Rust executable generates from its capability registry is committed
 # as docs/generated/openapi.json and checked by `majordomus generate --check`. The site does

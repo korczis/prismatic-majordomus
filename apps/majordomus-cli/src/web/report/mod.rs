@@ -12,7 +12,7 @@
 //! opened from disk. That is the whole of the "static-safe URL" problem, solved once by not
 //! creating it.
 
-pub mod benchmarks;
+pub(crate) mod benchmarks;
 /// The page style every generated surface uses. It lives beside the model now that the
 /// home page renders through it too; this re-export keeps the reports' own path to it.
 pub use super::html;

@@ -1,6 +1,57 @@
-//! The canonical schema of an input or an output: one JSON Schema (draft 2020-12, as
-//! schemars emits it) derived from the Rust type, carried as data. MCP and OpenAPI take
-//! their schemas from here and nowhere else.
+//! One schema per type, and every projection reads it.
+//!
+//! A [`CanonicalSchema`] is a JSON Schema (draft 2020-12, as schemars emits it) derived
+//! from the Rust type that the handler actually deserialises and serialises. That is the
+//! whole architectural point: MCP's `inputSchema`, the OpenAPI operation's parameters and
+//! its `components/schemas` entry, and the Cockpit runner's form are four *renderings* of
+//! this value, produced by [`CanonicalSchema::for_mcp`] and
+//! [`CanonicalSchema::for_openapi`]. None of them describes a payload of its own, so none
+//! of them can describe it differently from the code that reads it.
+//!
+//! # The two dialects
+//!
+//! MCP takes the schema inline. OpenAPI wants named components and `$ref`s, so
+//! [`CanonicalSchema::for_openapi`] hoists the type into a `components` map under the
+//! name schemars gave it and answers with the reference — which is why the component
+//! namespace is flat and why two types with one title are a build-time conflict rather
+//! than a document that silently describes one of them twice.
+//!
+//! # Query strings
+//!
+//! An HTTP `GET` binds each top-level property from the query string, where everything is
+//! a string. [`coerce`] is the one place that turns `"12"` into a number and `"true"` into
+//! a boolean, guided by the property's own schema, so a route cannot invent a coercion the
+//! schema does not describe.
+//!
+//! ```
+//! use majordomus_cli::capability::CanonicalSchema;
+//! use schemars::JsonSchema;
+//!
+//! /// A search over the index.
+//! #[derive(JsonSchema)]
+//! struct SearchInput {
+//!     /// What to look for.
+//!     query: String,
+//!     /// How many hits at most.
+//!     limit: u32,
+//! }
+//!
+//! let schema = CanonicalSchema::of::<SearchInput>();
+//! assert_eq!(schema.name.as_deref(), Some("SearchInput"));
+//!
+//! // the properties every projection binds, derived once
+//! let (properties, required) = schema.properties();
+//! let names: Vec<&str> = properties.iter().map(|(n, _)| n.as_str()).collect();
+//! assert!(names.contains(&"query") && names.contains(&"limit"));
+//! assert!(required.contains(&"query".to_string()));
+//!
+//! // MCP takes it inline; OpenAPI takes a reference and the component beside it
+//! assert!(schema.for_mcp()["properties"]["query"].is_object());
+//! let mut components = std::collections::BTreeMap::new();
+//! let reference = schema.openapi_ref(&mut components).unwrap();
+//! assert_eq!(reference["$ref"], "#/components/schemas/SearchInput");
+//! assert!(components.contains_key("SearchInput"));
+//! ```
 
 use std::collections::BTreeMap;
 

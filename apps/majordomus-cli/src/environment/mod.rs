@@ -278,6 +278,15 @@ pub struct KindCount {
     pub count: usize,
 }
 
+// The kinds line ranks by count, largest first, and the workflow list reads by name. Both
+// end on an identity, so neither depends on the order its source produced.
+impl crate::order::Ordered for KindCount {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        // Negated: the canonical rank ascends, and this line wants the largest first.
+        crate::order::OrderKey::plain(&self.kind, &self.kind).ranked(-(self.count as i64))
+    }
+}
+
 /// The workflows a person can run here, as the workflow runner itself describes them.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct WorkflowCatalogue {
@@ -329,6 +338,14 @@ pub struct WorkflowDescriptor {
     pub dependencies: Vec<String>,
     /// Whether it asks before it runs (`[confirm]`).
     pub confirm: bool,
+}
+
+// By the name a person types. The namespace is part of the identity rather than a group:
+// `just build` and `just site::build` are two recipes, and the list is read as one.
+impl crate::order::Ordered for WorkflowDescriptor {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.name, self.namespace.as_deref().unwrap_or(&self.name))
+    }
 }
 
 /// One parameter of a workflow.
