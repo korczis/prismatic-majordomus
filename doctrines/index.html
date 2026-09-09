@@ -182,8 +182,8 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
   <dl class="grid max-w-3xl grid-cols-1 gap-4 border-b border-default pb-8 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">39</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">35</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">40</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">36</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">advisory</dt><dd class="mt-1 text-2xl font-semibold text-heading">4</dd></div>
   </dl>
   <p class="mt-4 max-w-3xl text-sm text-body">Counted from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/share/standard/majordomus/" class="text-fg-brand underline">the rule package</a> when this page was built. Every doctrine below resolves to a validator function, a command that dispatches it, a test, and a CI job — or the build fails and this page is not published.</p><div class="mt-8" x-data="{ q: '', cls: 'all' }">
@@ -471,6 +471,13 @@
           <p class="text-sm leading-relaxed text-body">Completion requires a verification command that actually ran and exited 0; its exit code and duration are recorded.</p>
           <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_verification</span>
         </a>
+      </li><li x-show="(cls === 'all' || cls === 'blocking') && ('majordomus.obligation-closure obligation closure obligations check finish'.includes(q.toLowerCase()))">
+        <a href="https://korczis.github.io/prismatic-majordomus/doctrines/obligation-closure/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <div class="mb-2 flex items-start justify-between gap-2"><span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span><span class="font-mono text-xs text-body-subtle">check · finish</span></div>
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Obligation closure</h2>
+          <p class="text-sm leading-relaxed text-body">A task that declares obligations reaches the outcome completed only when each one has evidence, and that evidence still describes the tree or the commit it was taken over.</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_obligations</span>
+        </a>
       </li></ul>
   </div>
 
@@ -495,7 +502,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8ff06314e2ccd4fcdaee2dcac8f74d24a877f28e" class="font-mono underline">8ff0631</a> · inputs <span class="font-mono">a7da5dcdc1a8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5be30578b9f86c6898cfe412972f4c854e022add" class="font-mono underline">5be3057</a> · inputs <span class="font-mono">1d1844eed349</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

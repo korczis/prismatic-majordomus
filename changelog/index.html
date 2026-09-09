@@ -209,14 +209,22 @@
   <section class="mt-12 border-t border-default pt-8">
     <h2 id="unreleased" class="scroll-mt-24 break-words text-2xl font-bold tracking-tight text-heading">Unreleased</h2>
     <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-body-subtle">
-      <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">unreleased</span><span>120 change(s)</span>
-      <span>4 decision(s)</span>
+      <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">unreleased</span><span>128 change(s)</span>
+      <span>5 decision(s)</span>
       <span>0 artifact(s)</span>
     </div>
     <p class="mt-3 max-w-3xl text-sm text-body">Work committed since the last release. It has no tag and no date because nothing has been published from it yet.</p>
     <h3 class="mt-8 text-lg font-semibold tracking-tight text-heading">Decisions</h3>
     <p class="mt-1 max-w-3xl text-sm text-body-subtle">The architecture decisions the layer dates inside this version's window, each with the route the document records for it.</p>
     <ul class="mt-4 space-y-3" role="list">
+      <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-sm font-medium text-heading">adr-0030</span>
+          <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">proposed</span>
+          <span class="font-mono text-xs text-body-subtle">2026-09-09</span>
+        </div>
+        <p class="mt-2 break-words text-sm leading-relaxed text-body">A task owes obligations, and the evidence that discharges them goes stale</p>
+      </li>
       <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span class="font-mono text-sm font-medium text-heading">adr-0029</span>
@@ -256,9 +264,15 @@
       <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
         <span class="font-medium">Added</span>
         <span class="ml-2 font-mono text-xs text-body-subtle">feat</span>
-        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">23</span>
+        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">24</span>
       </summary>
       <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">closure</span>
+            <span class="min-w-0 break-words text-body">a task owes obligations, and the evidence that discharges them goes stale</span>
+            <code class="break-all font-mono text-xs text-body-subtle">cf1ee94ca</code>
+          </div>
+        </li>
         <li class="border-b border-default py-2 last:border-0">
           <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ci</span>
             <span class="min-w-0 break-words text-body">a gate says the published site came from master, and is being served</span>
@@ -403,13 +417,19 @@
       <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
         <span class="font-medium">Fixed</span>
         <span class="ml-2 font-mono text-xs text-body-subtle">fix</span>
-        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">45</span>
+        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">47</span>
       </summary>
       <ul class="border-t border-default px-4 py-3 text-sm" role="list">
         <li class="border-b border-default py-2 last:border-0">
           <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">release</span>
             <span class="min-w-0 break-words text-body">the module asserts the two projections it documents</span>
             <code class="break-all font-mono text-xs text-body-subtle">98f6606ce</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">gates</span>
+            <span class="min-w-0 break-words text-body">a derivation refuses a degraded index, and one pass says everything a command still needs</span>
+            <code class="break-all font-mono text-xs text-body-subtle">f6b73b05a</code>
           </div>
         </li>
         <li class="border-b border-default py-2 last:border-0">
@@ -428,6 +448,12 @@
           <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">docs</span>
             <span class="min-w-0 break-words text-body">the semantics module documents a validation that is not an item</span>
             <code class="break-all font-mono text-xs text-body-subtle">ed649c769</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">share</span>
+            <span class="min-w-0 break-words text-body">a MAJORDOMUS_SHARE naming another worktree of this repository is refused</span>
+            <code class="break-all font-mono text-xs text-body-subtle">fc9864ebc</code>
           </div>
         </li>
         <li class="border-b border-default py-2 last:border-0">
@@ -811,13 +837,43 @@
       <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
         <span class="font-medium">Housekeeping</span>
         <span class="ml-2 font-mono text-xs text-body-subtle">chore</span>
-        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">35</span>
+        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">40</span>
       </summary>
       <ul class="border-t border-default px-4 py-3 text-sm" role="list">
         <li class="border-b border-default py-2 last:border-0">
           <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
             <span class="min-w-0 break-words text-body">the projections follow the master merge</span>
+            <code class="break-all font-mono text-xs text-body-subtle">5e6d324c1</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+            <span class="min-w-0 break-words text-body">the projections follow the master merge</span>
             <code class="break-all font-mono text-xs text-body-subtle">21a1203cc</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+            <span class="min-w-0 break-words text-body">the projections follow the second master merge</span>
+            <code class="break-all font-mono text-xs text-body-subtle">e94b760d1</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+            <span class="min-w-0 break-words text-body">the projections follow the master merge</span>
+            <code class="break-all font-mono text-xs text-body-subtle">5fe8f2ec8</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+            <span class="min-w-0 break-words text-body">the projections follow the master merge</span>
+            <code class="break-all font-mono text-xs text-body-subtle">b79363681</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+            <span class="min-w-0 break-words text-body">the projections follow the master merge, with the ADR renumbered to 0030</span>
+            <code class="break-all font-mono text-xs text-body-subtle">f1c1b6556</code>
           </div>
         </li>
         <li class="border-b border-default py-2 last:border-0">
@@ -5627,7 +5683,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8ff06314e2ccd4fcdaee2dcac8f74d24a877f28e" class="font-mono underline">8ff0631</a> · inputs <span class="font-mono">a7da5dcdc1a8</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5be30578b9f86c6898cfe412972f4c854e022add" class="font-mono underline">5be3057</a> · inputs <span class="font-mono">1d1844eed349</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
