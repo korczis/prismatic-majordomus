@@ -6,25 +6,25 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "a14251ce6b53dc07907afcfdf15183ce054d454eef807fb8c83c1e918eae644a",
+    "fingerprint": "60d7b62208ffb976846f4ecb04aab13cebcc6f53731913d2774ec9e8645d044e",
     "summary": {
-      "total": 1084,
+      "total": 1086,
       "builtin": 44,
-      "declarative": 1040,
+      "declarative": 1042,
       "by_kind": {
         "command": 1,
         "query": 43,
-        "resource": 1040
+        "resource": 1042
       },
       "by_stability": {
         "behaviorally_verified": 44,
-        "implemented": 1040
+        "implemented": 1042
       },
       "mcp_tools": 42,
-      "mcp_resources": 1056,
+      "mcp_resources": 1058,
       "http_routes": 44,
       "cli_commands": 24,
-      "modules": 43,
+      "modules": 44,
       "benchmark_required": 44,
       "benchmark_waived": 0,
       "cached": 21
@@ -14438,7 +14438,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 26,
+        "capabilities": 27,
         "capability_ids": []
       },
       {
@@ -14781,6 +14781,14 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
       },
       {
+        "id": "workspace",
+        "title": "workspace",
+        "description": "Declarative objects of kind 'workspace' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
         "id": "worktree",
         "title": "Worktree topology",
         "description": "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.",
@@ -14798,7 +14806,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7d14aeb4ec1979eb0e67b949446b12947ba049bff8eba8271d0013c10663efa0",
+    "fingerprint": "dabaad5e92b08faf148249a55faf4eacc3e50b332b731596627a1e1e7b1daf00",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14827,7 +14835,7 @@
       "audience": 8,
       "claim": 145,
       "command": 28,
-      "context": 26,
+      "context": 27,
       "deployment": 1,
       "distribution-model": 1,
       "document": 202,
@@ -14847,7 +14855,8 @@
       "skill": 3,
       "taxonomy": 10,
       "test": 113,
-      "use-case": 40
+      "use-case": 40,
+      "workspace": 1
     },
     "diagnostics": {},
     "objects": [
@@ -17563,6 +17572,16 @@
         "section": "workflows",
         "source_class": "context",
         "bytes": 943
+      },
+      {
+        "uri": "majordomus://context/ai.repo.workspaces",
+        "kind": "context",
+        "identity": "ai.repo.workspaces",
+        "title": "External workspaces",
+        "description": "One declaration per external workspace this repository is authorised to read; the content it names is this checkout's state and is never here.",
+        "path": ".ai/repo/workspaces/README.md",
+        "source_class": "context",
+        "bytes": 3244
       },
       {
         "uri": "majordomus://deployment/majordomus",
@@ -26147,6 +26166,16 @@
         "section": "use-cases",
         "source_class": "use_case",
         "bytes": 3430
+      },
+      {
+        "uri": "majordomus://workspace/chatgpt-majordomus",
+        "kind": "workspace",
+        "identity": "chatgpt-majordomus",
+        "title": "The Majordomus project in ChatGPT",
+        "description": "The operator's own ChatGPT Project holding design conversation about this repository, read so that what was decided there can be cited, carried and promoted here.",
+        "path": ".ai/repo/workspaces/chatgpt-majordomus.yaml",
+        "source_class": "workspace",
+        "bytes": 1467
       }
     ]
   },
@@ -26219,7 +26248,7 @@
       "identity": [
         "id"
       ],
-      "objects": 26
+      "objects": 27
     },
     {
       "name": "deployment",
@@ -26425,6 +26454,16 @@
         "id"
       ],
       "objects": 40
+    },
+    {
+      "name": "workspace",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "majordomus.workspace/v1",
+      "identity": [
+        "id"
+      ],
+      "objects": 1
     }
   ],
   "projections": [
