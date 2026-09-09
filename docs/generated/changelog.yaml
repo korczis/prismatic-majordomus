@@ -43,6 +43,16 @@ sections:
         rank: 0
         changes:
           - kind: feat
+            scope: rules
+            subject: an empty result and a failed command must not look alike
+            breaking: false
+            commit: 824223cb5
+          - kind: feat
+            scope: ci
+            subject: "three failures of one session, turned into checks"
+            breaking: false
+            commit: 1e96e91b7
+          - kind: feat
             scope: peers
             subject: "a session is told it has not announced, and doctor names the work that exists on one disk"
             breaking: false
@@ -211,6 +221,11 @@ sections:
         heading: Fixed
         rank: 1
         changes:
+          - kind: fix
+            scope: ci
+            subject: "the gate model parses again, and the gate a merge dropped is declared again"
+            breaking: false
+            commit: d7f492294
           - kind: fix
             scope: site-check
             subject: a route is named on the API page whatever it is styled with
@@ -636,6 +651,16 @@ sections:
         heading: Housekeeping
         rank: 7
         changes:
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: a4f9780b0
+          - kind: chore
+            scope: derive
+            subject: the projections follow the master merge
+            breaking: false
+            commit: 3a2aeab52
           - kind: chore
             scope: derive
             subject: the projections follow the merge
