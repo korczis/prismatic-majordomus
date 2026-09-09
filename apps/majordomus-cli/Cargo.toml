@@ -1,6 +1,6 @@
 [package]
 name = "majordomus-cli"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 rust-version = "1.85"
 description = "Majordomus control-plane CLI: a data-driven stdio MCP server over the repository's .ai/ layer"
@@ -41,6 +41,11 @@ sha2 = "0.10"
 # libc: the lease file is removed inside the SIGTERM/SIGINT/SIGHUP handler (unlink, then
 # the default disposition), so a killed server leaves no stale lease. Nothing else.
 libc = "0.2"
+# syn + proc-macro2: the quality subsystem reads this crate's own source as a syntax tree.
+# Rust is not line-oriented text and a grep cannot tell a `pub` item in a private module
+# from one the crate exports; `span-locations` is what lets a finding name a line.
+syn = { version = "2", default-features = false, features = ["full", "parsing", "clone-impls", "printing", "proc-macro"] }
+proc-macro2 = { version = "1", features = ["span-locations"] }
 
 [dev-dependencies]
 tempfile = "3"

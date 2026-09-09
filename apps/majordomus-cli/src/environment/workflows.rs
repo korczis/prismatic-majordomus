@@ -91,7 +91,7 @@ pub fn resolve(root: &Path) -> WorkflowCatalogue {
 pub fn workflows_of(document: &Value) -> Vec<WorkflowDescriptor> {
     let mut out = Vec::new();
     collect(document, None, &mut out);
-    out.sort_by(|a, b| a.name.cmp(&b.name));
+    crate::order::canonical(&mut out);
     out
 }
 

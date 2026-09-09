@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.3.1 -->
+     Generator: majordomus-cli 0.4.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -23,6 +23,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
 | `product` | Product | behaviorally_verified | 5 | [`modules/product.md`](modules/product.md) |
+| `quality` | Public API quality | behaviorally_verified | 1 | [`modules/quality.md`](modules/quality.md) |
+| `release` | Release | implemented | 2 | [`modules/release.md`](modules/release.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `web` | Web surfaces | behaviorally_verified | 1 | [`modules/web.md`](modules/web.md) |
 | `why` | Why | behaviorally_verified | 6 | [`modules/why.md`](modules/why.md) |
@@ -38,7 +40,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `capabilities.projections` | `capabilities` | query | behaviorally_verified | `majordomus_projections` | — | `GET /api/v1/capabilities/projections` | `majordomus capabilities projections` | process, 8 entries | required |
 | `commands.get` | `commands` | query | implemented | `majordomus_command` | — | `GET /api/v1/command` | — | — | required |
 | `commands.graph` | `commands` | query | implemented | `majordomus_command_graph` | — | `GET /api/v1/commands/graph` | — | — | required |
-| `commands.list` | `commands` | query | implemented | `majordomus_commands` | — | `GET /api/v1/commands` | — | — | required |
+| `commands.list` | `commands` | query | implemented | `majordomus_commands` | `majordomus://commands` | `GET /api/v1/commands` | — | — | required |
 | `continuity.state` | `continuity` | query | behaviorally_verified | `majordomus_continuity` | `majordomus://continuity` | `GET /api/v1/continuity` | — | process, 2 entries, 2s | required |
 | `deploy.check` | `deploy` | query | behaviorally_verified | `majordomus_deploy_check` | — | `GET /api/v1/deployments/check` | — | process, 2 entries, 5s | required |
 | `deploy.get` | `deploy` | query | behaviorally_verified | `majordomus_deployment` | — | `GET /api/v1/deployment` | — | — | required |
@@ -67,6 +69,9 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `product.matrix` | `product` | query | behaviorally_verified | `majordomus_product_matrix` | `majordomus://product/matrix` | `GET /api/v1/product/matrix` | `majordomus product matrix` | process, 2 entries | required |
 | `product.providers` | `product` | query | behaviorally_verified | `majordomus_providers` | `majordomus://product/providers` | `GET /api/v1/product/providers` | `majordomus product providers` | process, 2 entries | required |
 | `product.validate` | `product` | query | behaviorally_verified | `majordomus_product_validate` | — | `GET /api/v1/product/validate` | `majordomus product validate` | process, 2 entries | required |
+| `quality.report` | `quality` | query | behaviorally_verified | `majordomus_quality` | `majordomus://quality` | `GET /api/v1/quality` | `majordomus quality report` | process, 8 entries, 10s | required |
+| `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
+| `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | — | required |
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | — | required |
 | `repository.scope` | `repository` | query | behaviorally_verified | `majordomus_scope` | `majordomus://scope` | `GET /api/v1/scope` | `majordomus scope` | — | required |
 | `repository.scope_classify` | `repository` | query | behaviorally_verified | `majordomus_scope_classify` | — | `GET /api/v1/scope/classify` | — | — | required |

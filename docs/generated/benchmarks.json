@@ -1,26 +1,26 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.3.1",
+  "generator": "majordomus-cli 0.4.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 49,
-      "covered": 49,
+      "required": 52,
+      "covered": 52,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "http",
-      "required": 49,
-      "covered": 49,
+      "required": 52,
+      "covered": 52,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "mcp",
-      "required": 47,
-      "covered": 47,
+      "required": 50,
+      "covered": 50,
       "missing": 0,
       "waived": 0
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 158,
-      "covered": 158,
+      "required": 167,
+      "covered": 167,
       "missing": 0,
       "waived": 0
     }
@@ -474,6 +474,43 @@
       "module": "product",
       "kind": "query",
       "cache": "process, 2 entries",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "quality.report",
+      "module": "quality",
+      "kind": "query",
+      "cache": "process, 8 entries, 10s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "release.changelog",
+      "module": "release",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "one-version"
+      ]
+    },
+    {
+      "id": "release.version",
+      "module": "release",
+      "kind": "query",
+      "cache": "—",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
