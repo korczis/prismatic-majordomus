@@ -239,7 +239,7 @@ Layered, and honest about what each layer can do:
 | the command line | `worktree create` is the way a branch's worktree comes into being; a path is never an argument |
 | the git hook | `.githooks/pre-commit` asks `majordomus worktree guard`; a feature branch is committed only from its canonical worktree, the primary checkout only on the trunk |
 | the wiring check | the policy's `enforcement` list declares the guard, so `majordomus doctor` proves the hook asks it |
-| the repository entry | `.envrc` prints `worktree status` on entry, without building anything |
+| the repository entry | `.envrc` renders the repository environment on entry through `bin/majordomus-env`, which never builds ([`ENVIRONMENT.md`](ENVIRONMENT.md)); the worktree standing in that banner is a target |
 | the surfaces | the topology is on the command line, MCP, HTTP, the Swagger UI and the Cockpit, so a wrong one is visible everywhere |
 | the tests | the crate's suite proves the derivation, the safety and the migration against real git; the shell case proves the wiring |
 | the CI gate | `scripts/ci/worktree-check` holds the constant, the hook, the policy, the documents and the case together |
@@ -318,7 +318,7 @@ topology changes outside the process.
 | the capabilities | `apps/majordomus-cli/src/capability/builtin/worktree.rs` |
 | the command line | `apps/majordomus-cli/src/commands/worktree.rs`, declared in `src/cli.rs` |
 | the Cockpit page | `/cockpit/worktrees`, `apps/majordomus-cli/src/cockpit/pages.rs` |
-| the launcher the hook and `.envrc` use | `bin/majordomus-cli` |
+| the launcher the hook uses | `bin/majordomus-cli`; `.envrc` goes through `bin/majordomus-env`, the launcher that never builds, and both find the executable through `lib/rust_bin.sh` |
 | the hook | `.githooks/pre-commit`; the entry in `.ai/repo/policy.yaml` `enforcement` |
 | the gate | `scripts/ci/worktree-check`, gate `worktree-topology` in `.ai/repo/ci/gates.yaml` |
 | the tests | `apps/majordomus-cli/tests/worktree.rs`, `test/cases/96_worktree_topology.sh` |

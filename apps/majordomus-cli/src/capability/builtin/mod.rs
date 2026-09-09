@@ -7,10 +7,12 @@
 
 pub mod artifacts;
 pub mod capabilities;
+pub mod commands;
 pub mod continuity;
 pub mod deploy;
 pub mod directories;
 pub mod distribution;
+pub mod environment;
 pub mod graph;
 pub mod health;
 pub mod objects;
@@ -47,6 +49,7 @@ pub use distribution::{
     BuildReport, CheckState, DistributionReport, InstallCheck, InstallabilityReport,
     ReleaseArtifactInput, ReleaseArtifactView, ReleaseView, ReleasesReport, TargetView,
 };
+pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENVIRONMENT_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
@@ -58,6 +61,7 @@ pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
 pub mod why;
 
+pub use commands::{CommandGraphReport, CommandIndex, CommandSummary};
 pub use views::{Empty, ObjectSummary, ObjectView};
 pub use web::{SurfaceReport, SURFACES_URI};
 pub use worktree::{
@@ -71,6 +75,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         repository,
         objects,
         capabilities,
+        commands,
         graph,
         health,
         continuity,
@@ -79,6 +84,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         perf,
         directories,
         artifacts,
+        environment,
         distribution,
         why,
         web,

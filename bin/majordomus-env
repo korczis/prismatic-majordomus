@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# majordomus-env — the adapter `.envrc` calls. It finds the Rust executable and hands it
+# the arguments it was given; it never builds, never reaches the network, and knows
+# nothing about the repository beyond where it is.
+#
+# The reason it exists rather than `.envrc` calling the executable directly: a checkout
+# does not have the executable until somebody builds it, and entering a repository must
+# not fail, hang, or start a two-minute compile because of that. So a missing executable
+# is one line on stderr naming what to run, and exit 0.
+#
+#   MAJORDOMUS_BIN            use this executable
+#   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
+#   MAJORDOMUS_BANNER         auto (default), full, compact or off
+#
+# Exit codes are the executable's, except that a missing executable is 0: this runs on
+# every `cd`, and a non-zero exit there makes direnv report the whole environment failed.
+set -eu
+
+here="$(unset CDPATH; cd -- "$(dirname -- "$0")" && pwd)"
+root="$(unset CDPATH; cd -- "$here/.." && pwd)"
+
+# shellcheck source=../lib/rust_bin.sh
+. "$root/lib/rust_bin.sh"
+
+bin="$(mj_rust_bin "$root")"
+share="$(mj_rust_share "$root")"
+if [ -n "$share" ]; then
+  export MAJORDOMUS_SHARE="$share"
+fi
+
+if [ ! -x "$bin" ]; then
+  # One line, on stderr, naming a recipe this repository really has. Nothing is built
+  # here: a shell prompt is not the place to start a compiler. Plain text, because the
+  # one thing that must never happen on a `cd` is an escape sequence somebody's terminal
+  # does not understand.
+  printf 'majordomus: the executable is not built; run `just build`\n' >&2
+  exit 0
+fi
+
+# The log is off unless somebody asked for it: entering a directory must not print
+# diagnostics, and `MAJORDOMUS_LOG=debug` still turns them on for whoever is debugging.
+export MAJORDOMUS_LOG="${MAJORDOMUS_LOG:-error}"
+
+exec "$bin" env "$@"
