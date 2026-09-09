@@ -150,6 +150,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`3a2aeab52`)
 - **derive**: the projections follow the final master merge (`cdc859654`)
 - **derive**: the projections follow the master merge (`5e6d324c1`)
 - **adr,test**: renumber to the identities the board actually left free (`50f276bc3`)

@@ -36,6 +36,13 @@ the base, not only the branches active right now. Announce afterwards, once the 
 clear or once a collision has been read and understood — `majordomus_announce` says who is
 working now, `collision-check` says what was already built.
 
+The check reads *committed* refs, local and remote. Work that is staged or uncommitted is
+invisible to it, and so is an identifier a session is about to allocate but has not pushed —
+two sessions renumbering an ADR into each other in the same minute is exactly what a branch
+scan cannot see. So the two halves are not interchangeable: `scripts/collision-check` answers
+what has been pushed, `majordomus_announce` answers what is being written right now, and the
+intent announced should name the identifiers being allocated as well as the paths.
+
 # Failure behaviour
 
 `scripts/collision-check` exits 11 when a path is already claimed, naming the claiming

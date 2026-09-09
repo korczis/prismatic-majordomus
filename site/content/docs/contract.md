@@ -52,7 +52,10 @@ Before implementing something new — a module, a command group, a document kind
 generated artifact — run `scripts/collision-check --new <paths>` to see which other
 branches already carry those paths, not only who the peer board says is working now: a
 branch pushed before this session started carries no announcement and no less of a claim.
-Announce with `majordomus_announce` once the paths are clear. The rule is
+Announce with `majordomus_announce` once the paths are clear, and announce the
+identifier you are about to allocate — an ADR number, a case number, an issue id —
+not only the paths: a branch scan sees what was pushed, and the board is the only
+thing that sees a number two sessions are taking in the same minute. The rule is
 `project.work-is-claimed-before-it-is-built`.
 
 Linked git worktrees of this repository live at `<repository>-wt/<branch>` — the primary
