@@ -13,6 +13,11 @@
 # What the line adds is the hash of the inputs the evidence was taken over, which is what
 # lets a later reader say the evidence no longer describes this tree — stale rather than
 # merely old. The vocabulary for that judgement is mj_git_label's, not a new one.
+#
+# A recorded line is not the first thing asked, though. Where the fact is one the tool can
+# hold — the tree is clean, the remote has the commit, the trunk reaches it, the published
+# site serves it — it is established live and the ledger is not consulted at all; see
+# "establishing the fact" below for why that direction, and what stays on the recorded path.
 
 MJ_OBL_FLAT=""
 mj_obligations_load() {
@@ -44,6 +49,12 @@ mj_obligation_inputs() {
   sed -n "s/^obligations\.$i\.inputs\.[0-9]*=//p" "$MJ_OBL_FLAT"
 }
 mj_obligation_remote() { [ "$(mj_obligation_field "$1" remote)" = "true" ]; }
+# what settles this obligation without asking a worker, or `none`
+mj_obligation_established_by() {
+  local by; by="$(mj_obligation_field "$1" established_by)" || by=""
+  [ -n "$by" ] || by=none
+  printf '%s' "$by"
+}
 
 # The hash the evidence is taken over: the tracked files the obligation's pathspecs select,
 # in git's order, through the one implementation in common.sh. An obligation with no inputs
@@ -142,6 +153,14 @@ mj_evidence() {
   else
     printf 'evidence: %s recorded for %s%s\n' "$covers" "$task" \
       "$([ -n "$ih" ] && printf ' (inputs %s)' "$(printf '%s' "$ih" | cut -c1-12)")"
+    # Recording a token the tool establishes is allowed and mostly without effect, and
+    # saying so is kinder than refusing it: this line is exactly what a checkout that
+    # *cannot* establish the fact — no remote configured, no route to the published site —
+    # falls back to, so the option has to stay. What it must not do is let a worker walk
+    # away believing they have discharged something.
+    [ "$(mj_obligation_established_by "$covers")" = none ] || printf \
+      '          note: %s is established from %s where it can be, and this record is read only where it cannot\n' \
+      "$covers" "$(mj_obligation_established_by "$covers")"
   fi
 }
 
@@ -159,8 +178,169 @@ usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | -
   --artifact  a reference the evidence points at, such as a published URL
   --result    what it said, when a command's output is the point
 
+  Some obligations are not recorded at all. A token whose established_by in
+  share/obligations.yaml is not \`none\` — commit, push, target, pages — is settled live at
+  HEAD by check and finish, and a record of it is read only in a checkout that cannot settle
+  it, such as one with no remote configured or no route to the published site.
+
   exit 0 recorded, 2 on usage, 11 when no task is active or the task did not promise it
 USAGE
+}
+
+# ---------------------------------------------------------------- establishing the fact
+# Six of the eleven tokens name a fact that lives outside the working tree, and most of
+# those are facts a machine already holds. Git knows whether the task's changes are still
+# in the tree or in the history, whether a remote-tracking ref reaches the head, and
+# whether the trunk does. `scripts/pages verify` knows whether the published site serves
+# this commit — it has known since it was written, and until now nothing but the Pages
+# workflow had ever asked it. Asking a worker to type any of that into a ledger is asking
+# them to transcribe an answer the tool can read.
+#
+# So a token whose `established_by` names something is settled here, live, and no recorded
+# evidence is consulted for it. Establishment beats recording in both directions: it
+# discharges without a ledger line, and it refuses one that says otherwise, because a
+# hand-recorded `commit` against a dirty tree is not evidence of anything.
+#
+# Live rather than recorded, deliberately, and the argument runs both ways.
+#
+# For recording: a ledger line says when the fact was true, which is what an auditor reading
+# the history a month later wants, and it keeps one mechanism instead of two.
+#
+# For live, which is what this does: the whole of this file exists because a record outlives
+# the thing it described, and the cure it applies everywhere else is recomputation, never a
+# timestamp — `mj_obligation_inputs_hash` recomputes, the site's `source_hash` recomputes.
+# A git fact recomputes in milliseconds and is always a statement about now. Recording it
+# would manufacture exactly the staleness this file was written to remove, and then need
+# the staleness machinery to take it away again — a round trip whose only product is a
+# window during which the record and the repository disagree. The ledger already holds what
+# a worker *did*: every start, checkpoint, evidence and finish is in it. It is not where the
+# tool writes down what it can look up. And a hand-recorded remote fact is exactly the thing
+# a worker can be wrong about in the direction that flatters them.
+#
+# The staleness discipline is kept rather than dropped. A fact established here is taken at
+# HEAD by construction, which is `mj_git_label`'s `exact`, and `exact` is the word the
+# finding says. The other three labels keep their meaning on the fallback path below, which
+# is what an obligation nothing here can settle still runs through. No fifth vocabulary.
+#
+# Each of these prints "<message><TAB><reproduce>" and exits 0 established, 1 refuted,
+# 2 undecidable — nothing here could settle it, so the recorded evidence is consulted as it
+# was before.
+mj_obl_say() { printf '%s\t%s\n' "$1" "$2"; }
+
+# The task's changes are in the history rather than in the tree. What counts as the task's
+# changes is the task's own scope: a worker cannot be held to a session record a hook wrote
+# under .ai/, and a task whose scope *is* .ai/ must be held to exactly that. A task that
+# declared no scope falls back to everything outside the layer's own directory, which is
+# what `mj_validate_scope` already excludes for the same reason.
+mj_obl_est_commit() {
+  local head base dirty f s inside out="" n=0 first=""
+  head="$(mj_git_head)"
+  [ "$head" = NONE ] && { mj_obl_say "the checkout has no commit at all; nothing of this task is in any history" "git log -1"; return 1; }
+  dirty="$(mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //')"
+  local scope_list; scope_list="$(mj_ylist "$MJ_CUR_FLAT" scope 2>/dev/null || true)"
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    if [ -n "$scope_list" ]; then
+      inside=0
+      for s in $scope_list; do mj_path_contains "$s" "$f" && { inside=1; break; }; done
+      [ "$inside" = 1 ] || continue
+    else
+      mj_is_ai_path "$f" && continue
+    fi
+    n=$((n + 1)); [ -n "$first" ] || first="$f"
+  done <<EOF
+$dirty
+EOF
+  if [ "$n" -gt 0 ]; then
+    out="$n file(s) the task touched are still in the working tree, not in the branch's history (${first}"
+    [ "$n" -gt 1 ] && out="$out and $((n - 1)) more"
+    mj_obl_say "$out)" "git status --porcelain"
+    return 1
+  fi
+  base="$(mj_cur head)"
+  if [ -n "$base" ] && [ "$base" != NONE ] && [ "$base" = "$head" ]; then
+    mj_obl_say "the tree is clean and no commit was made since the task started (${head:0:12}); there is nothing of this task in the history to be committed" "git log --oneline $base..HEAD"
+    return 1
+  fi
+  mj_obl_say "exact: the tree is clean and ${head:0:12} carries the task's changes" "git status --porcelain"
+  return 0
+}
+
+# The remote-tracking refs are read as they stand. Nothing here fetches: a validator that
+# went to the network on every `check` would make a diagnostic depend on connectivity, and
+# a fetch is a write to the object store. The reading is safe in the direction that matters
+# — a tracking ref cannot contain a commit the remote never received, so a stale ref can
+# only say "not yet" when the answer is "yes", never the reverse.
+mj_obl_est_push() {
+  local head up ref
+  head="$(mj_git_head)"
+  [ "$head" = NONE ] && { mj_obl_say "the checkout has no commit" "git log -1"; return 2; }
+  [ -n "$(mj_git remote 2>/dev/null)" ] || { mj_obl_say "the checkout has no remote, so a push cannot be established here" "git remote -v"; return 2; }
+  up="$(mj_git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+  if [ -n "$up" ] && mj_git merge-base --is-ancestor "$head" "refs/remotes/$up" 2>/dev/null; then
+    mj_obl_say "exact: $up contains ${head:0:12}" "git rev-parse $up"
+    return 0
+  fi
+  ref="$(mj_git for-each-ref --contains "$head" --format='%(refname:short)' refs/remotes 2>/dev/null | head -1)"
+  if [ -n "$ref" ]; then
+    mj_obl_say "exact: $ref contains ${head:0:12}${up:+, though the branch tracks $up}" "git branch -r --contains $head"
+    return 0
+  fi
+  mj_obl_say "no remote-tracking ref reaches ${head:0:12}${up:+ (the branch tracks $up)}; the commit has not reached the remote" "git push"
+  return 1
+}
+
+# The trunk reaches the commit. The default branch is git's own record of it —
+# refs/remotes/<remote>/HEAD, written by clone and by `git remote set-head` — and not a
+# name written down anywhere here: a repository whose trunk is `main` must not need this
+# file edited.
+mj_obl_est_target() {
+  local head remote def
+  head="$(mj_git_head)"
+  [ "$head" = NONE ] && { mj_obl_say "the checkout has no commit" "git log -1"; return 2; }
+  remote="$(mj_git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+  remote="${remote%%/*}"
+  [ -n "$remote" ] || remote="$(mj_git remote 2>/dev/null | head -1)"
+  [ -n "$remote" ] || { mj_obl_say "the checkout has no remote, so integration cannot be established here" "git remote -v"; return 2; }
+  def="$(mj_git symbolic-ref --short "refs/remotes/$remote/HEAD" 2>/dev/null || true)"
+  [ -n "$def" ] || { mj_obl_say "the checkout records no default branch for '$remote', so integration cannot be established here" "git remote set-head $remote -a"; return 2; }
+  if mj_git merge-base --is-ancestor "$head" "refs/remotes/$def" 2>/dev/null; then
+    mj_obl_say "exact: $def reaches ${head:0:12}" "git merge-base --is-ancestor HEAD $def"
+    return 0
+  fi
+  mj_obl_say "$def does not reach ${head:0:12}; the work is not on the trunk" "git log --oneline $def..HEAD"
+  return 1
+}
+
+# Publication, asked of the published site. `scripts/pages verify` is the probe and there is
+# no second one here: it already polls the identity document the site serves until `.commit`
+# equals a given commit, and writing another would be a second answer to one question.
+# `--timeout 0` is what turns its poll into the single probe a validator can afford — the
+# loop reads the site before it looks at the clock — and its exit codes carry the three
+# outcomes this needs: 0 serves it, 10 serves something else, 12 could not be reached.
+mj_obl_est_pages() {
+  local head out rc=0
+  head="$(mj_git_head)"
+  [ "$head" = NONE ] && { mj_obl_say "the checkout has no commit" "git log -1"; return 2; }
+  [ -x "$MJ_ROOT/scripts/pages" ] || { mj_obl_say "this repository has no scripts/pages, so publication cannot be established here" "ls scripts/pages"; return 2; }
+  out="$(cd "$MJ_ROOT" && ./scripts/pages verify --commit "$head" --timeout 0 --quiet 2>&1)" || rc=$?
+  case "$rc" in
+    0)  mj_obl_say "exact: the published site serves ${head:0:12}" "scripts/pages verify --commit HEAD" ; return 0 ;;
+    10) mj_obl_say "$(printf '%s' "$out" | sed -n 's/^pages verify: //p' | tail -1)" "scripts/pages verify --commit HEAD" ; return 1 ;;
+    *)  mj_obl_say "the published site could not be reached (scripts/pages verify exited $rc), so publication cannot be established here" "scripts/pages verify --commit HEAD" ; return 2 ;;
+  esac
+}
+
+# The dispatcher. The vocabulary declares *that* a token can be established and by what;
+# which function does it is this one line, keyed by the token's own id, so a token declared
+# establishable with nothing to establish it is a reported defect rather than a silent pass.
+mj_obligation_establish() {
+  local tok="$1" by fn
+  by="$(mj_obligation_established_by "$tok")"
+  [ "$by" != none ] || { mj_obl_say "$(mj_obligation_field "$tok" unestablished)" ""; return 2; }
+  fn="mj_obl_est_$tok"
+  mj_is_function "$fn" || { mj_obl_say "share/obligations.yaml says '$by' establishes '$tok', and no $fn exists to do it" "grep -rn $fn lib/"; return 2; }
+  "$fn"
 }
 
 # ---------------------------------------------------------------- doctrine validator
@@ -175,7 +355,7 @@ mj_obl_verdict() {
 }
 
 mj_validate_obligations() {
-  local toks tok ev head_rec ih_rec ih_now label rel
+  local toks tok ev head_rec ih_rec ih_now label rel est est_rc emsg erep by
   mj_load_current || { mj_doctrine_skip obligation "-" "no active task; nothing owes anything"; return 0; }
   toks="$(mj_task_requires)"
   if [ -z "$toks" ]; then
@@ -194,8 +374,22 @@ mj_validate_obligations() {
       mj_obl_verdict "$rel" "the task requires '$tok', which share/obligations.yaml does not declare" "majordomus evidence --help"
       continue
     fi
+    # First, the fact itself, where the tool can hold it. A token the vocabulary says is
+    # established here never reaches the ledger: it is discharged by being true and refused
+    # by being false, and a recorded line claiming otherwise does not survive either way.
+    by="$(mj_obligation_established_by "$tok")"
+    est=""; est_rc=0
+    est="$(mj_obligation_establish "$tok")" || est_rc=$?
+    emsg="${est%%"$MJ_TAB"*}"; erep="${est#*"$MJ_TAB"}"; [ "$erep" = "$est" ] && erep=""
+    case "$est_rc" in
+      0) mj_doctrine_ok obligation "$tok" "$emsg"; continue ;;
+      1) mj_obl_verdict "$tok" "$emsg" "$erep"; continue ;;
+    esac
+    # Undecidable here, so the recorded evidence is what there is. A token that was meant to
+    # be established says why it could not be, because "no evidence was recorded" and "the
+    # site was unreachable from this laptop" are different problems with different fixes.
     if ! ev="$(mj_obligation_evidence "$(mj_cur id)" "$tok")"; then
-      mj_obl_verdict "$tok" "owed, and no evidence was recorded" \
+      mj_obl_verdict "$tok" "owed, and no evidence was recorded$([ "$by" != none ] && [ -n "$emsg" ] && printf ' (%s)' "$emsg")" \
         "majordomus evidence --covers $tok --command '$(mj_obligation_field "$tok" discharged_by)'"
       continue
     fi

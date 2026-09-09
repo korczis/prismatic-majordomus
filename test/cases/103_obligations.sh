@@ -13,14 +13,17 @@ S="$(mktemp -d "${TMPDIR:-/tmp}/mj103.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 mkdir -p lib && echo a > lib/a && git add -A >/dev/null && git commit -qm base
 
 # the task record carries `requires` beside `scope`; start writes the scope, and the
-# obligations are added the way a caller would add them
+# obligations are added the way a caller would add them. Called again it replaces the list
+# rather than adding a second one, so the second half of this case can hand the same task a
+# different set of things to owe without restarting it.
 owes() {
   python3 - "$@" <<'PY'
-import io, sys
+import io, re, sys
 p = '.ai/local/state/current.yaml'
 s = io.open(p, encoding='utf-8').read()
+s = re.sub(r'(?m)^requires:\n(?:  - .*\n)*', '', s)
 block = 'requires:\n' + ''.join('  - %s\n' % t for t in sys.argv[1:])
-s = s.replace('outcome:', block + 'outcome:')
+s = s.replace('outcome:', block + 'outcome:', 1)
 io.open(p, 'w', encoding='utf-8').write(s)
 PY
 }
@@ -70,3 +73,136 @@ expect_grep 'OK   obligation  tests — discharged over inputs'
 # ---------------------------------------------------------------- the vocabulary is data
 expect_exit 0 "$MJ" doctrine show majordomus.obligation-closure
 expect_grep 'validator.*obligations'
+
+# ================================================================ the outer obligations
+# Six tokens name a fact outside the working tree. Five of them are facts something already
+# holds — git, and the publication probe `scripts/pages verify` — and the point of the rest
+# of this case is that the tool establishes those itself: it discharges them without a
+# ledger line, and it refuses a ledger line that says otherwise. The vocabulary of staleness
+# stays the four values `mj_git_label` already uses; nothing here invents a fifth.
+
+# the data and the code that establishes it are paired in both directions, which is the
+# failure this section would otherwise hide: a token declared establishable with nothing to
+# establish it passes silently, and one declared unestablishable with no reason is a gap
+# nobody wrote down
+python3 - "$ROOT" <<'PY'
+import io, re, sys
+root = sys.argv[1]
+voc = io.open(root + '/share/obligations.yaml', encoding='utf-8').read()
+lib = io.open(root + '/lib/evidence.sh', encoding='utf-8').read()
+bad = []
+for block in re.split(r'(?m)^  - id: ', voc)[1:]:
+    tok = block.split('\n', 1)[0].strip()
+    by = re.search(r'(?m)^    established_by: (.*)$', block)
+    if not by:
+        bad.append('%s declares no established_by' % tok); continue
+    if by.group(1).strip() == 'none':
+        if not re.search(r'(?m)^    unestablished: \S', block):
+            bad.append('%s is established by nothing and says no reason why' % tok)
+    elif ('mj_obl_est_%s()' % tok) not in lib:
+        bad.append('%s says %r establishes it and no mj_obl_est_%s exists' % (tok, by.group(1), tok))
+if bad:
+    print('    ' + '\n    '.join(bad)); sys.exit(1)
+PY
+
+owes commit push target pages
+# the pages section puts a probe shim under scripts/, which the scope validator would
+# otherwise report as work outside the claimed scope — a true finding about a different rule
+python3 - <<'PY'
+import io, re
+p = '.ai/local/state/current.yaml'
+s = io.open(p, encoding='utf-8').read()
+io.open(p, 'w', encoding='utf-8').write(re.sub(r'(?m)^scope:\n(?:  - .*\n)*', 'scope:\n  - lib\n  - scripts\n', s, count=1))
+PY
+
+# ---------------------------------------------------------------- commit
+# work in the tree is not work in the history, and git is asked rather than the worker
+echo 'outer' >> lib/a
+expect_exit 10 "$MJ" finish --outcome completed --note "done"
+expect_grep 'FAIL obligation +commit — 1 file\(s\) the task touched are still in the working tree'
+git add -A >/dev/null && git commit -qm outer
+expect_exit 0 "$MJ" check
+expect_grep 'OK   obligation  commit — exact: the tree is clean'
+
+# ---------------------------------------------------------------- push, with no remote
+# Nothing here can settle it, so the recorded line is consulted exactly as it always was,
+# and judged against the commit it was taken at.
+expect_grep 'push — owed, and no evidence was recorded \(the checkout has no remote'
+expect_exit 0 "$MJ" evidence --covers push --command 'git push'
+expect_exit 0 "$MJ" check
+expect_grep 'OK   obligation  push — discharged at this commit'
+
+# ---------------------------------------------------------------- push, with a remote
+# The same recorded line, now against a checkout where the question can be answered: the
+# answer wins. This is the whole point — a worker cannot hand-record a fact git holds.
+git init -q --bare "$S/remote.git"
+git remote add origin "$S/remote.git"
+expect_exit 0 "$MJ" check
+expect_grep 'push — no remote-tracking ref reaches'
+B="$(git branch --show-current)"
+git push -q -u origin "$B"
+git remote set-head origin "$B" >/dev/null
+expect_exit 0 "$MJ" check
+expect_grep "OK   obligation  push — exact: origin/$B contains"
+expect_grep "OK   obligation  target — exact: origin/$B reaches"
+
+# ---------------------------------------------------------------- one commit further on
+# Pushed and integrated are statements about a commit, not about a branch. A commit made
+# after the push is neither, and both tokens say so in their own words.
+echo 'further' >> lib/a && git add -A >/dev/null && git commit -qm further
+expect_exit 10 "$MJ" finish --outcome completed --note "done"
+expect_grep 'push — no remote-tracking ref reaches'
+expect_grep "target — origin/$B does not reach"
+git push -q origin "$B"
+expect_exit 0 "$MJ" check
+expect_grep "OK   obligation  target — exact: origin/$B reaches"
+
+# ---------------------------------------------------------------- pages
+# The probe is `scripts/pages verify`, which has answered this question since it was
+# written and had one caller — the Pages workflow. The sandbox reaches the real script and
+# substitutes only the URL, so what runs here is the shipped probe against a real server.
+mkdir -p "$S/public" scripts
+if start_http "$S/public"; then
+  printf '#!/bin/sh\nexec "%s/scripts/pages" "$@" --url "%s"\n' "$ROOT" "$HTTP_BASE" > scripts/pages
+  chmod +x scripts/pages
+  printf '{"commit":"%s"}\n' "$(git rev-parse HEAD)" > "$S/public/build.json"
+  expect_exit 0 "$MJ" check
+  expect_grep 'OK   obligation  pages — exact: the published site serves'
+
+  # the site serves an older commit: unpublished, and said in those words
+  printf '{"commit":"deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"}\n' > "$S/public/build.json"
+  expect_exit 10 "$MJ" finish --outcome completed --note "done"
+  expect_grep 'pages — after 0 s .* still serves deadbeef'
+
+  # and a hand-recorded line does not rescue what the probe refutes
+  expect_exit 0 "$MJ" evidence --covers pages --command 'scripts/pages verify'
+  expect_exit 0 "$MJ" check
+  expect_grep 'pages — after 0 s .* still serves deadbeef'
+
+  # unreachable is not the same fact as unpublished. The probe exits 12 rather than 10,
+  # nothing is established, and the recorded line stands — a laptop with no network must
+  # not be able to fail a task it cannot measure.
+  stop_http
+  expect_exit 0 env MJ_PAGES_PROBE_SECONDS=2 "$MJ" check
+  expect_grep 'OK   obligation  pages — discharged at this commit'
+  rm -f scripts/pages
+else
+  echo "    (no python3 or node: the pages probe was not exercised)"
+fi
+
+# ---------------------------------------------------------------- deploy and verify
+# Left to a person on purpose, and the vocabulary says why rather than leaving a reader to
+# infer it. A deployment is a fact about a machine this repository never contacts.
+owes deploy verify
+expect_exit 10 "$MJ" finish --outcome completed --note "done"
+expect_grep 'FAIL obligation +deploy — owed, and no evidence was recorded'
+expect_no_grep 'deploy — .*could not be established'
+expect_exit 0 "$MJ" evidence --covers deploy --type manual --command 'majordomus deployment'
+expect_exit 0 "$MJ" evidence --covers verify --type manual --artifact 'https://example.invalid/ready'
+expect_exit 0 "$MJ" check
+expect_grep 'OK   obligation  deploy — discharged at this commit'
+expect_grep 'OK   obligation  verify — discharged at this commit'
+# and the hand-held record still goes stale the moment the branch moves past it
+echo 'after' >> lib/a && git add -A >/dev/null && git commit -qm after
+expect_exit 10 "$MJ" finish --outcome completed --note "done"
+expect_grep 'deploy — the evidence names .*, and the branch has moved since'
