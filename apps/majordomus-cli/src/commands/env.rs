@@ -31,7 +31,7 @@ use crate::environment::render::{banner, BannerMode, Presentation};
 use crate::environment::shell::{export, Dialect};
 use crate::environment::{
     cache::Cache, resolve, EnvironmentQuery, Inputs, ProjectionState, RepositoryEnvironment,
-    Resolution, ServiceAvailability, TierState, ToolchainAvailability, VcsState,
+    ServiceAvailability, TierState, ToolchainAvailability, VcsState,
 };
 use crate::error::{Error, Result};
 use crate::repository::Repository;
@@ -416,17 +416,18 @@ fn export_command(
     Ok(0)
 }
 
-/// The resolution each subcommand uses, so the documentation and the tests can assert it
-/// rather than describe it.
+/// The resolution each subcommand uses.
 ///
-/// ```
-/// use majordomus_cli::commands::env::resolution_of;
-/// use majordomus_cli::environment::Resolution;
-/// assert_eq!(resolution_of("status"), Some(Resolution::Full));
-/// assert_eq!(resolution_of("banner"), Some(Resolution::Fast));
-/// assert_eq!(resolution_of("export"), Some(Resolution::Fast));
-/// assert_eq!(resolution_of("nonsense"), None);
-/// ```
+/// Test-only, and honestly so: the dispatch above does not consult this — each of the four
+/// commands calls `resolve_full` or `resolve_fast` directly — so this restates that decision
+/// rather than making it. It earns its place by being the thing the test names, which is how
+/// the rule the module is built around ("only the two a person waits on may build the index")
+/// is written down somewhere a change has to walk past. It was a doc example until the
+/// crate's public surface narrowed and an example outside the crate could no longer name it.
+#[cfg(test)]
+use crate::environment::Resolution;
+
+#[cfg(test)]
 pub fn resolution_of(subcommand: &str) -> Option<Resolution> {
     match subcommand {
         "status" | "explain" => Some(Resolution::Full),

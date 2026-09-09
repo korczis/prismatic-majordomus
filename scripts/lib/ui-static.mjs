@@ -90,7 +90,118 @@ export function tags(text) {
       attributes: match[2],
       whole: match[0],
       line: text.slice(0, match.index).split('\n').length,
+      index: match.index,
+      end: match.index + match[0].length,
     });
+  }
+  return out;
+}
+
+
+/** Elements that never contain anything, so a nesting walk must not wait for their close. */
+const VOID = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+  'link', 'meta', 'param', 'source', 'track', 'wbr',
+]);
+
+/**
+ * The class tokens of an opening tag that apply unconditionally.
+ *
+ * A Tailwind variant is a condition — `focus:absolute` positions the element while it has
+ * focus, `sm:absolute` above a breakpoint, `[&_pre]:absolute` its descendants. None of them
+ * describes the element's resting state, and a check that read them would fail the skip
+ * link every page carries.
+ *
+ * ```
+ * plainClasses('class="sr-only focus:not-sr-only focus:absolute"')   // ['sr-only']
+ * ```
+ */
+export function plainClasses(attributes) {
+  const match = /\bclass\s*=\s*("([^"]*)"|'([^']*)')/.exec(attributes);
+  const value = match ? (match[2] ?? match[3] ?? '') : '';
+  return value.split(/\s+/).filter((token) => token && !token.includes(':'));
+}
+
+/** Does this tag take itself out of flow, so that a containing block decides where it sits? */
+const outOfFlow = (attributes) =>
+  plainClasses(attributes).some((c) => c === 'sr-only' || c === 'absolute' || c === 'fixed')
+  || /position\s*:\s*(absolute|fixed)/.test(attributes);
+
+/** Is this tag a containing block for the absolutely positioned elements inside it? */
+const containingBlock = (attributes) =>
+  plainClasses(attributes).some((c) => c === 'relative' || c === 'absolute' || c === 'fixed' || c === 'sticky')
+  || /position\s*:\s*(relative|absolute|fixed|sticky)/.test(attributes);
+
+/**
+ * Where one opening tag's element ends: the offsets of the text it contains.
+ *
+ * Not a parser and not trying to be. It counts one tag name in and out, which is the only
+ * nesting this check has to get right. An unclosed tag yields the rest of the file, which is
+ * the safe direction — the check then looks at more markup, not less.
+ */
+function bounds(text, tag) {
+  if (VOID.has(tag.name) || /\/>\s*$/.test(tag.whole)) return { start: tag.end, end: tag.end };
+  const open = new RegExp(`<${tag.name}(?=[\\s/>])`, 'gi');
+  const close = new RegExp(`</${tag.name}\\s*>`, 'gi');
+  let depth = 1, at = tag.end;
+  while (at < text.length) {
+    open.lastIndex = at; close.lastIndex = at;
+    const o = open.exec(text), c = close.exec(text);
+    if (!c) break;
+    if (o && o.index < c.index) { depth += 1; at = o.index + 1; continue; }
+    depth -= 1;
+    if (depth === 0) return { start: tag.end, end: c.index };
+    at = c.index + 1;
+  }
+  return { start: tag.end, end: text.length };
+}
+
+/**
+ * Out-of-flow descendants of a scrolling box that no containing block inside it holds.
+ *
+ * An absolutely positioned element is placed against its nearest positioned ancestor, and
+ * against the initial containing block when it has none. Put one inside a horizontally
+ * scrolling box that is not itself positioned, and it leaves: its static position is inside
+ * the scrolled content — past the viewport, on a narrow screen — but it is laid out against
+ * the page, so the page grows sideways to reach it. A `<span class="sr-only">` in a wide
+ * table's cell scrolls the whole document to reveal a one-pixel box nobody can see, and the
+ * overflow it causes names no visible element, which is how it survives a review.
+ *
+ * The remedy is one class: a scroll container is a containing block for what it positions.
+ *
+ * A subtree under a containing block of its own is skipped rather than searched: whatever it
+ * positions, it positions inside itself, and inside is where the scroller wants it.
+ *
+ * ```
+ * escapes('<div class="overflow-x-auto"><span class="sr-only">x</span></div>').length   // 1
+ * escapes('<div class="relative overflow-x-auto"><span class="sr-only">x</span></div>') // []
+ * ```
+ */
+export function escapes(text) {
+  const out = [];
+  for (const box of tags(text)) {
+    if (!scrolls(box.attributes)) continue;
+    if (containingBlock(box.attributes)) continue;
+    const { start, end } = bounds(text, box);
+    const region = text.slice(start, end);
+    let skipTo = 0;
+    for (const tag of tags(region)) {
+      if (tag.index < skipTo) continue;
+      // Out of flow first: `absolute` makes an element a containing block for what is inside
+      // it and a fugitive from what is outside it, and it is the second that this is about.
+      if (!outOfFlow(tag.attributes)) {
+        if (containingBlock(tag.attributes)) skipTo = bounds(region, tag).end;
+        continue;
+      }
+      out.push({
+        line: text.slice(0, start + tag.index).split('\n').length,
+        rule: 'ui.positioned-escapes-scroller',
+        detail: `<${tag.name}> is positioned out of flow inside a scrolling <${box.name}> that is not a containing block`,
+        remedy: 'add `relative` to the scrolling box, so what it positions stays inside it',
+        excerpt: tag.whole.replace(/\s+/g, ' ').slice(0, 120),
+      });
+      break;
+    }
   }
   return out;
 }
@@ -145,6 +256,7 @@ export function scan(text, { scrollingTagNames = [] } = {}) {
       severity: 'warning',
     });
   }
+  offences.push(...escapes(text));
   return offences;
 }
 

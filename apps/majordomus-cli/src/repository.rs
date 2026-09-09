@@ -4,6 +4,35 @@
 //! `.git` is not a marker: an arbitrary git repository is not a Majordomus repository. A
 //! `.majordomus/` directory is not a marker either; it is an optional installation of the
 //! tool, or the pre-`.ai` layout, which is refused by name.
+//!
+//! # Why the marker is the manifest
+//!
+//! Every other candidate marker is ambiguous. `.git` says a directory is version
+//! controlled, which almost every directory a person runs this in will be; a `.ai`
+//! directory alone says nothing about whether it is *this* layer. The manifest declares its
+//! own schema, so discovery either finds a layer this executable can read or it says which
+//! schema it found and which it reads — never a half-open repository.
+//!
+//! # Errors
+//!
+//! [`crate::Error::RepositoryNotFound`] when no ancestor carries the manifest, naming where
+//! the search began; [`crate::Error::LegacyLayout`] when it finds the pre-`.ai` layout,
+//! naming the migration; and the manifest's own parse and schema errors, each naming the
+//! file. None of them is a diagnostic: without a manifest nothing can be discovered at all.
+//!
+//! ```
+//! use majordomus_cli::Repository;
+//!
+//! // a directory that is not a repository is an error that says where it looked
+//! let empty = tempfile::tempdir().unwrap();
+//! let err = Repository::discover(empty.path()).unwrap_err();
+//! assert!(matches!(err, majordomus_cli::Error::RepositoryNotFound { .. }));
+//! assert_eq!(err.exit_code(), 12, "the code for something that is not there");
+//!
+//! // and a git repository is not one either: the marker is the manifest and nothing else
+//! std::fs::create_dir(empty.path().join(".git")).unwrap();
+//! assert!(Repository::discover(empty.path()).is_err());
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

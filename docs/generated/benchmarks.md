@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.3.1 -->
+     Generator: majordomus-cli 0.4.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 49 | 49 | 0 | 0 |
-| http | 49 | 49 | 0 | 0 |
-| mcp | 47 | 47 | 0 | 0 |
+| direct | 52 | 52 | 0 | 0 |
+| http | 52 | 52 | 0 | 0 |
+| mcp | 50 | 50 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 158 | 158 | 0 | 0 |
+| total | 167 | 167 | 0 | 0 |
 
 ## Capabilities
 
@@ -54,6 +54,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
+| `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
+| `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
+| `release.version` | release | query | — | covered | covered | covered | `default` |
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
