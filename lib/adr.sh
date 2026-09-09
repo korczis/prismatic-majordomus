@@ -250,7 +250,7 @@ mj_adr_catalogue() {
     printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
       "$f" "${id:--}" "${st:--}" "${date:--}" "${title:--}" "${sb:--}" "${sup:--}" "${reasons:--}" >> "$tmp"
   done < <(mj_adr_files)
-  sort -t"$MJ_TAB" -k2,2 "$tmp" > "$out"
+  LC_ALL=C sort -t"$MJ_TAB" -k2,2 "$tmp" > "$out"
   rm -f "$tmp"
   return 0
 }

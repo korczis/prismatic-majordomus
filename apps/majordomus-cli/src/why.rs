@@ -222,6 +222,28 @@ pub struct Area {
     pub body: String,
 }
 
+// The three catalogues are ordered the same way, once. `weight` is the ranking each record
+// declares; the canonical order takes it as the rank and ends on the identity, so two
+// records that declare the same weight cannot swap places between runs or between machines.
+
+impl crate::order::Ordered for Moment {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id).ranked(i64::from(self.weight))
+    }
+}
+
+impl crate::order::Ordered for Audience {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id).ranked(i64::from(self.weight))
+    }
+}
+
+impl crate::order::Ordered for Area {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id).ranked(i64::from(self.weight))
+    }
+}
+
 // ---------------------------------------------------------------- findings
 
 // How much a finding matters is the layer's own [`Severity`]: `error` is a broken
@@ -370,12 +392,11 @@ impl Catalogue {
             }
         }
 
-        c.moments
-            .sort_by(|a, b| a.weight.cmp(&b.weight).then(a.id.cmp(&b.id)));
-        c.audiences
-            .sort_by(|a, b| a.weight.cmp(&b.weight).then(a.id.cmp(&b.id)));
-        c.areas
-            .sort_by(|a, b| a.weight.cmp(&b.weight).then(a.id.cmp(&b.id)));
+        // Weight is the catalogue's own ranking; the canonical order takes it as the rank
+        // and breaks its ties by identity, the way every other collection is ordered.
+        crate::order::canonical(&mut c.moments);
+        crate::order::canonical(&mut c.audiences);
+        crate::order::canonical(&mut c.areas);
 
         c.adopt_diagnostics(index);
         c.index_moments();

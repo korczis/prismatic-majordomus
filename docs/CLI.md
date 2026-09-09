@@ -826,8 +826,11 @@ majordomus skills check [--json]       validate every skill and every reference 
 - `check` validates every skill against the allow-list generated from the schema (no
   unknown key), `schema: skill/v1`, an integer `version`, a `status` from the closed
   set, an `id` equal to the directory name, non-empty `# Purpose`, `# Procedure` and
-  `# Output` sections; refuses two skills claiming one id, a `related` id that names no
-  skill, and an example without a level-one heading. Every finding names the file and
+  `# Output` sections; refuses two skills claiming one id, two skills whose descriptions
+  do not tell them apart, a `related` id that names no skill, and an example without a
+  level-one heading. Descriptions are compared folded to lower case, with runs of
+  whitespace collapsed and trailing sentence punctuation dropped, so the difference has
+  to be in what a description says rather than in how it is typed. Every finding names the file and
   every reason. It ends with the counts of what it examined — skills, examples,
   references — and exits `10` on any failure. A repository with no skills is a `WARN`,
   never a pass over nothing. An absent allow-list (`share/allow/skill.txt`, a distribution
