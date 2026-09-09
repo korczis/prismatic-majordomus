@@ -29,18 +29,38 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 PROFILE="${MAJORDOMUS_BUILD_PROFILE:-debug}"
 export MAJORDOMUS_SHARE="${MAJORDOMUS_SHARE:-$ROOT/share}"
+
+# Progress, on stderr. Stage B writes the whole site data set and runs the use-case scenarios;
+# it says nothing at all while it does, and minutes of silence read as a hang — a session has
+# already killed a healthy run for it. So each stage names itself as it begins and reports
+# what it cost as it ends, which is also what tells the next person which stage is the slow
+# one. stderr, because stdout belongs to whatever a caller redirects.
+#
+# Whole seconds from `date +%s`, the clock scripts/pages times its own steps with. The phase
+# timers in lib/common.sh (mj_phase_begin) are a different instrument and not this one: they
+# print nothing as a phase begins and report only at exit, under MJ_TIMING. That is what a
+# profiler owes; it cannot break a silence while the silence is happening.
+now() { date +%s; }
+RUN_T0="$(now)"; STAGE_T0=0; STAGE=""
+step()     { STAGE="$1"; STAGE_T0="$(now)"; printf '==> derive: %s ...\n' "$1" >&2; }
+step_done() { printf '==> derive: %s: %ss\n' "$STAGE" "$(( $(now) - STAGE_T0 ))" >&2; }
+
 if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
 else
   # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
+  step "building the Rust executable ($PROFILE)"
   release=(); [ "$PROFILE" = release ] && release=(--release)
   RUSTFLAGS='' cargo build --quiet --manifest-path "$CRATE/Cargo.toml" "${release[@]}"
   RB="$CRATE/target/$PROFILE/majordomus"
+  step_done
 fi
-step() { printf '==> derive: %s\n' "$*"; }
 step "stage A: majordomus generate (code-only projections)"
 "$RB" generate --repo "$ROOT" >/dev/null
+step_done
 step "stage B: scripts/generate-site-data (site data, content, derived documents)"
 "$ROOT/scripts/generate-site-data"
+step_done
 step "stage C: majordomus generate (the site dataset and the benchmark matrix over the index)"
 "$RB" generate --repo "$ROOT" >/dev/null
-step "done; scripts/derive-check proves it"
+step_done
+printf '==> derive: done in %ss; scripts/derive-check proves it\n' "$(( $(now) - RUN_T0 ))" >&2
