@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# github-check — the gate of the GitHub projection: does the remote still agree with the
+# canonical model, and has anything drifted that was not already drifted?
+#
+# The adapter has been able to answer this since it was written. `scripts/github-sync
+# --check` exits 11 on drift. Nothing ever called it: core-check runs --plan and --render,
+# which prove the adapter can produce a projection, not that the projection is current. So
+# the projection decayed from complete to a tenth of the model without one red build, and
+# every document that claimed GitHub issues are generated from the canonical model stayed
+# green while it stopped being true.
+#
+# Two tolerances, not one. The states that mean somebody's work is at stake or that new
+# drift has appeared are refused outright, from the first run:
+#
+#   behind     a canonical record moved and nobody projected it
+#   edited     a person rewrote a generated region
+#   conflict   a person rewrote it and the record moved since
+#   unmanaged  a remote issue claims a canonical id this repository does not have
+#   state      the remote's open/closed disagrees with the derived status
+#   milestone  the remote's milestone assignment disagrees
+#
+# The states that are the known backlog of a projection that stopped being applied are
+# ratcheted against a baseline, so the gate lands green today and refuses any increase:
+#
+#   missing    a canonical record with no counterpart on GitHub
+#   adopt      a counterpart carrying no identity marker
+#
+# The baseline shrinks to zero when the backfill runs; it may never grow. Writing it is a
+# deliberate act with a reason, exactly as scripts/ci/projection-check treats its own.
+#
+#   scripts/ci/github-check                  report and exit 10 on any refused finding
+#   MJ_ROOT=<dir> MJ_GH_BASELINE=<file>      measure another tree against another baseline
+#   scripts/ci/github-check --write-baseline record today's backlog as the ceiling
+#
+# Exit: 0 clean, 10 findings, 12 the gate cannot run (no gh, no token, no model).
+set -eu
+# The gate is part of the tool; the model is the tree under test. They are not always the
+# same tree — the case that proves this gate can fail drives it over a fixture repository —
+# so the adapter is located from this script and the model from MJ_ROOT.
+SELF="$(cd "$(dirname "$0")" && pwd)"
+SYNC="$SELF/../github-sync"
+ROOT="${MJ_ROOT:-$(cd "$SELF/../.." && pwd)}"
+cd "$ROOT"
+BASELINE="${MJ_GH_BASELINE:-.ai/repo/ci/github-drift-baseline.txt}"
+WRITE=0
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) WRITE=1; shift ;;
+  *) echo "github-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+
+# A gate that cannot reach the remote must say so. Passing quietly is the failure this
+# gate exists to remove, and it would remove it by reintroducing it. A fixture remote
+# (MJ_GH_FIXTURE_*) is a remote the adapter can read without gh, which is how the gate's
+# own behaviour is proved offline.
+if [ -z "${MJ_GH_FIXTURE_ISSUES:-}${MJ_GH_FIXTURE_MILESTONES:-}" ]; then
+  command -v gh >/dev/null 2>&1 || { echo "github-check: gh is not installed; this gate reads the remote" >&2; exit 12; }
+  gh auth status >/dev/null 2>&1 || {
+    echo "github-check: gh is not authenticated. In CI, set GH_TOKEN (the workflow token needs issues:read)." >&2
+    exit 12
+  }
+fi
+
+out="$(mktemp "${TMPDIR:-/tmp}/mj.ghc.XXXXXX")"
+trap 'rm -f "$out"' EXIT
+set +e
+"$SYNC" --check > "$out" 2>&1
+rc=$?
+set -e
+[ "$rc" = 11 ] || [ "$rc" = 0 ] || { echo "github-check: the adapter could not read the remote (exit $rc)" >&2; sed -n '$p' "$out" >&2; exit 12; }
+
+count_of() { grep -cE "^DRIFT  $1 " "$out" || true; }
+REFUSED="behind edited conflict unmanaged state milestone closed"
+RATCHET="missing adopt"
+
+if [ "$WRITE" = 1 ]; then
+  {
+    echo "# The backlog of a projection that stopped being applied, as a ceiling."
+    echo "#"
+    echo "# Written by scripts/ci/github-check --write-baseline; never by hand. These two"
+    echo "# states are the records the projection has not reached yet, and the number may"
+    echo "# only fall. Every other state is refused outright and has no line here."
+    for s in $RATCHET; do printf '%s %s\n' "$s" "$(count_of "$s")"; done
+  } > "$BASELINE"
+  echo "github-check: baseline written to $BASELINE"
+  cat "$BASELINE"
+  exit 0
+fi
+
+[ -f "$BASELINE" ] || { echo "github-check: no baseline at $BASELINE; write one with --write-baseline" >&2; exit 12; }
+
+findings=0
+fail() { printf 'FAIL github-check  %s\n' "$*"; findings=$((findings + 1)); }
+ok()   { printf 'OK   github-check  %s\n' "$*"; }
+
+for s in $REFUSED; do
+  n="$(count_of "$s")"
+  if [ "$n" -gt 0 ]; then
+    fail "$n record(s) $s — the projection is behind the canonical model or a person's text is at stake (run: scripts/github-sync --check)"
+    grep -E "^DRIFT  $s " "$out" | sed 's/^/     /' | head -10
+  else
+    ok "no record is $s"
+  fi
+done
+
+for s in $RATCHET; do
+  n="$(count_of "$s")"
+  b="$(awk -v s="$s" '$1==s { print $2; exit }' "$BASELINE")"
+  [ -n "$b" ] || b=0
+  if [ "$n" -gt "$b" ]; then
+    fail "$n record(s) $s, over the baseline of $b — a record was added to the model and never projected (run: scripts/github-sync --apply, then scripts/ci/github-check --write-baseline)"
+  elif [ "$n" -lt "$b" ]; then
+    ok "$n record(s) $s, under the baseline of $b — lower it with --write-baseline"
+  else
+    ok "$n record(s) $s, at the baseline"
+  fi
+done
+
+printf '\ngithub-check: %s finding(s)\n' "$findings"
+[ "$findings" = 0 ] || exit 10
+exit 0

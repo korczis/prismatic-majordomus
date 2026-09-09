@@ -1497,12 +1497,7 @@ fn metadata_strings(metadata: &Value, key: &str) -> Vec<String> {
 }
 
 fn kind_word(kind: CapabilityKind) -> String {
-    match kind {
-        CapabilityKind::Query => "query",
-        CapabilityKind::Command => "command",
-        CapabilityKind::Resource => "resource",
-    }
-    .into()
+    kind.as_str().into()
 }
 
 fn enum_word<T: Serialize>(v: &T) -> String {

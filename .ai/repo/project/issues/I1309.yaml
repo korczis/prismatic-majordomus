@@ -1,0 +1,41 @@
+id: I1309
+milestone: external-workspaces
+title: The boundaries this milestone asserts are gates, not sentences
+slug: workspace-gates
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Add the gates that make ADR 0025 enforceable: the dependency boundary of majordomus-cli, the credential leak check over the store and the fixtures, the retention cap, and the publication boundary."
+why: "This repository's own doctrine is that a rule enforced by nobody is normative for whoever reads it and nothing else. Three of the four boundaries here are exactly the kind that hold until the first hurried afternoon."
+current_state: "No gate covers any of them. The only adjacent precedent is scripts/site-check, which greps rendered output for secret-shaped strings and fails the site gate."
+desired_state: "Four gates in .ai/repo/ci/gates.yaml, each a script, each selected by the paths it protects, each with a test case that proves it fails when the boundary is crossed."
+scope:
+  - .ai/repo/ci/gates.yaml
+  - .ai/repo/rules/project
+  - scripts/ci
+  - test/cases
+  - docs/CLAIMS.yaml
+non_scope:
+  - Adding a new CI job; these gates belong to jobs that already exist
+depends_on:
+  - I1303
+  - I1308
+acceptance_criteria:
+  - A gate fails if majordomus-cli's runtime dependency list changes, naming what was added
+  - A gate greps the store, the fixtures, the logs and the snapshots for credential-shaped values and fails on a hit
+  - A gate fails if the store exceeds its declared retention cap
+  - A gate fails if any published projection names a path under .ai/local/workspaces/
+  - Each gate has a test case that proves it red before it proves it green, and each rule carries the x-majordomus block that makes it enforced rather than stated
+validation:
+  - bash test/run.sh
+  - scripts/ci-plan --full
+  - bin/majordomus doctrine
+evidence_required:
+  - dependency_gated
+  - leak_gated
+  - retention_gated
+  - publication_gated
+  - each_gate_proven_red
+risk: "A leak grep tuned to today's token shapes finds today's tokens. It is a floor, and the record says so rather than implying the boundary is proven."
+created_at: 2026-09-09
+updated_at: 2026-09-09

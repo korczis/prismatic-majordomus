@@ -320,7 +320,38 @@ mj_report_environment() {
   mj_has jq && env="$env, jq $(jq --version 2>/dev/null | sed 's/jq-//')" || env="$env, jq absent"
   mj_has shellcheck && env="$env, shellcheck present"
   mj_info env "-" "$env"
+  mj_report_clone
   return 0
+}
+
+# Two facts about this clone that no gate over a tree can see, because they are not in the
+# tree. Both were learned the hard way in one afternoon of eight sessions sharing a
+# repository, and both cost more than any defect in the code did.
+mj_report_clone() {
+  git -C "$MJ_ROOT" rev-parse --git-dir >/dev/null 2>&1 || return 0
+
+  # The derived merge driver is NOT checked here: `wiring/derived-merge-driver` already
+  # decides it, and a second check of one fact is the defect this repository spends its
+  # time removing. It was written here first and removed on reading doctor's own output.
+  #
+  # Work that exists on one disk. A branch whose commits reach no remote is not backed up,
+  # is invisible to every other session, and cannot be folded by whoever is integrating —
+  # fifteen commits over sixty-eight files sat in exactly that state for three days.
+  local unpushed="" b n
+  while read -r b; do
+    [ -n "$b" ] || continue
+    n="$(git -C "$MJ_ROOT" rev-list --count "$b" --not --remotes 2>/dev/null || echo 0)"
+    [ "$n" -gt 0 ] 2>/dev/null && unpushed="$unpushed $b($n)"
+  done <<EOF
+$(git -C "$MJ_ROOT" for-each-ref --format='%(refname:short)' refs/heads 2>/dev/null)
+EOF
+  if [ -n "$unpushed" ]; then
+    mj_warn clone "unpushed" \
+      "commits on no remote:${unpushed} — work on one disk is invisible to every other session and cannot be integrated" \
+      "git push -u origin <branch>"
+  else
+    mj_ok clone "unpushed" "every local commit is on a remote"
+  fi
 }
 
 # a hook file plus every file in its <hook>.d/ dispatch directory, in dispatch order

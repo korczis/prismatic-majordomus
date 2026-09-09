@@ -55,13 +55,12 @@ def url_encode: @uri;
     generated_by: ($x.generator // ""),
     binding: ($x.binding // ""),
     errors: ($x.errors // []),
+    # The projection's own routes, as the document resolved them from the surfaces that
+    # declare them: the path, what it is in its producer's words, and whether a
+    # publication can carry it. Describing them again here is how `/cockpit` came out
+    # with an empty description while the Cockpit had one of its own.
     infrastructure: [ ($x.infrastructure // [])[]
-      | { path: .,
-          what: (if . == "/" then "The index: name, version, repository root, and where the document, the reference, the capabilities, the peers and MCP are."
-                 elif . == "/openapi.json" then "This document, rendered from the registry at every request; what Swagger UI loads."
-                 elif . == "/docs" then "Swagger UI over /openapi.json, served by the running server; the page embeds no specification of its own."
-                 elif . == "/mcp" then "MCP over HTTP (Streamable HTTP) for a second client; the shared server only."
-                 else "" end) } ],
+      | { id: .id, path: .path, what: .what, availability: .availability } ],
     tags: [ ($doc.tags // [])[] | . as $t
       | { name: $t.name, description: ($t.description // ""),
           operations: [ $doc.paths | to_entries[] | .key as $path | .value | to_entries[]

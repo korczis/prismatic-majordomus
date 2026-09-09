@@ -13,8 +13,8 @@ use crate::index::Index;
 use super::benchmark::CaseProvider;
 use super::handler::{CapabilityError, Context, Executable, Handler};
 use super::model::{
-    Availability, BenchmarkPolicy, Capability, CapabilityId, CapabilityKind, HttpMethod,
-    McpResource, ModuleId, Provenance, Stability, Visibility, WaiverReason,
+    Availability, BenchmarkPolicy, Capability, CapabilityId, CapabilityKind, ExecutionPolicy,
+    HttpMethod, McpResource, ModuleId, Provenance, Stability, Visibility, WaiverReason,
 };
 use super::module::ModuleDescriptor;
 
@@ -456,6 +456,22 @@ impl Builder {
                 });
                 continue;
             }
+            // classification is the registry's, not the declaration's, for the same reason
+            // availability and visibility are: a descriptor arriving from outside this
+            // crate with a policy of its own would be a claim a projection then reads as a
+            // fact
+            let policy = ExecutionPolicy::classify(c.kind);
+            if c.execution != policy && c.execution != policy.stoppable() {
+                errors.push(RegistryError::Shape {
+                    id: id.clone(),
+                    provenance: prov.clone(),
+                    reason: format!(
+                        "declares the execution policy {:?}; its kind makes it {policy:?}, and the only thing a declaration may add is cancellation (`.cancellable()`). The effect and the concurrency follow the kind",
+                        c.execution
+                    ),
+                });
+                continue;
+            }
             match (c.kind, entry.handler.is_some()) {
                 (CapabilityKind::Query, false) => {
                     errors.push(RegistryError::Shape {
@@ -610,6 +626,7 @@ impl Builder {
                 });
             }
             if c.kind == CapabilityKind::Command {
+                let word = c.kind.as_str();
                 if c.exposure
                     .mcp
                     .as_ref()
@@ -618,8 +635,9 @@ impl Builder {
                     errors.push(RegistryError::Shape {
                         id: id.clone(),
                         provenance: prov.clone(),
-                        reason: "a command is called, not read: it has no MCP resource exposure"
-                            .into(),
+                        reason: format!(
+                            "a {word} is called, not read: it has no MCP resource exposure"
+                        ),
                     });
                 }
                 if let Some(http) = &c.exposure.http {
@@ -629,7 +647,7 @@ impl Builder {
                             provenance: prov.clone(),
                             projection: "HTTP".into(),
                             reason: format!(
-                                "a command changes state and is bound to POST, not {}",
+                                "a {word} changes state and is bound to POST, not {}",
                                 http.method.as_str()
                             ),
                         });

@@ -184,17 +184,34 @@ fn handshake_discovery_and_a_real_round_trip() {
         .expect("objects.list is announced as a tool");
     assert!(list_tool["inputSchema"]["properties"]["kind"].is_object());
     assert!(list_tool["outputSchema"]["properties"]["objects"].is_object());
-    // every query is announced read-only; the one command (a peer announcing itself,
-    // this process's memory only) is announced as what it is
+    // the hint follows the kind, and the kind is read from the registry rather than from a
+    // list of tool names here: a capability that becomes a command is caught by this
+    let kinds: std::collections::BTreeMap<String, bool> =
+        majordomus_cli::capability::builtin::all()
+            .into_iter()
+            .map(|e| {
+                (
+                    e.capability.id.to_string(),
+                    e.capability.kind.is_read_only(),
+                )
+            })
+            .collect();
     for t in r[&5]["result"]["tools"].as_array().unwrap() {
-        let expected = t["name"] != "majordomus_announce";
+        let id = t["_meta"]["majordomus"]["id"].as_str().expect("the id");
+        let expected = *kinds
+            .get(id)
+            .unwrap_or_else(|| panic!("{id} is announced and is not a builtin"));
         assert_eq!(
             t["annotations"]["readOnlyHint"], expected,
-            "readOnlyHint of {}",
+            "readOnlyHint of {} ({id})",
             t["name"]
         );
         assert_eq!(t["annotations"]["destructiveHint"], false);
     }
+    assert!(
+        kinds.values().any(|read_only| !read_only),
+        "the fixture has at least one command, or this assertion proves nothing"
+    );
 
     let get = &r[&6]["result"];
     assert_eq!(get["isError"], false);
