@@ -22,7 +22,9 @@ Current version: **0.4.0**
 - **peers**: an announcement outlives the connection that made it, and a claim is answered rather than merely recorded (`6aeec67b1`)
 - **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
 - **release**: the changelog is a projection, and the version is derived from the commits (`82583eba1`)
+- **ci**: the GitHub projection has a gate, so it cannot rot green again (`597ebe4e5`)
 - **skills**: a description that does not tell two skills apart is a finding (`7af039a4a`)
+- **plan**: the projection to GitHub becomes a gated, identified, traversable milestone (`209a82c30`)
 - **completion**: the shell integration installs itself, and takes itself out again (`2a7af4272`)
 - **workspace**: a workspace is a kind, and only its content is local (`f9bbc636a`)
 - **commands**: a surface that withholds a command says why, including the last silent case (`26743dac5`)
@@ -52,6 +54,8 @@ Current version: **0.4.0**
 - **derive**: every stage names itself as it begins and reports what it cost (`59aa3769c`)
 - **ci**: ci-plan tells a bare path list which spelling it wanted (`5bd2f77bc`)
 - **cli**: an unknown command that the Rust executable provides says so and names the launcher (`59f5c8b75`)
+- **github-sync**: the protection against overwriting a person's edit was blind when the plan had moved (`21f7ad848`)
+- **github-sync**: a projected record carries its own identity, so a rename cannot orphan it (`3db47f7d6`)
 - **ui**: a scroll container is a containing block for what it positions, and the finding that says so names it (`2d328460b`)
 - **ci**: a job that hangs fails instead of holding a runner for a shift (`1ea8da126`)
 - **completion**: TAB in this repository asks a program that can answer it (`ff2d64e57`)
@@ -96,6 +100,7 @@ Current version: **0.4.0**
 ### Documentation
 
 - **plan**: I1301 is done, and I1302 may not land its schema alone (`012fed644`)
+- **plan**: the projection claim splits in two, and only one of the halves was ever true (`990bd0588`)
 - **plan**: the external-workspaces milestone and its ten issues (`54c5f45ee`)
 - **adr**: the audit withdraws two thirds of ADR 0025 (`7f75414bf`)
 - **adr**: an external workspace is not a provider (`a845624ad`)
