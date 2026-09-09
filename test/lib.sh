@@ -75,7 +75,13 @@ rust_bin() {
   log="$(mktemp "${TMPDIR:-/tmp}/mj-rust-bin.XXXXXX")"
   RUSTFLAGS='' cargo build -q --manifest-path "$manifest" 2>"$log" || { cat "$log" >&2; rm -f "$log"; echo "    cargo build failed" >&2; return 1; }
   rm -f "$log"
-  printf '%s' "$ROOT/apps/majordomus-cli/target/debug/majordomus"
+  # Where cargo put it, not where it would have without CARGO_TARGET_DIR — which is how
+  # several worktrees of this repository share one build directory, and composing the path
+  # under the crate then names a file that was never written. The variable is read rather
+  # than `cargo metadata` asked (lib/rust_bin.sh's mj_cargo_target_dir will ask, for callers
+  # that want a .cargo/config.toml honoured too): this runs once per case, and a suite of
+  # forty Rust cases should not spend forty processes learning that a variable is unset.
+  printf '%s' "${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
 }
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
