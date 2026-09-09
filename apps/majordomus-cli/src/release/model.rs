@@ -91,6 +91,26 @@ impl ChangeKind {
     }
 }
 
+/// A record of the layer that a commit names in its own text.
+///
+/// Inferred, never declared beside the commit: an issue id or a milestone id appearing in a
+/// subject or a body is a reference, and the layer already holds the object it refers to. A
+/// reference to something the layer does not have is not carried — a link to a record that
+/// does not exist is worse than no link, because the reader cannot tell until they follow it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "ReleaseReference")]
+pub struct Reference {
+    /// `issue` or `milestone`.
+    pub kind: String,
+    /// `I1305`, `M000`.
+    pub id: String,
+    /// What it is, from the record itself.
+    pub title: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Where it is published on this site, when it has a page.
+    pub route: Option<String>,
+}
+
 /// One change, from one commit.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseChange")]
@@ -106,6 +126,14 @@ pub struct Change {
     pub breaking: bool,
     /// The abbreviated commit.
     pub commit: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Where that commit can be read, when the repository's own URL is known. Derived from
+    /// `about::REPOSITORY`, never written beside each entry.
+    pub url: Option<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// The records of the layer this commit names — issues, milestones — resolved against
+    /// what the layer actually holds.
+    pub references: Vec<Reference>,
 }
 
 /// One decision, as the layer's own ADR object states it.
@@ -120,6 +148,10 @@ pub struct Decision {
     pub status: String,
     /// The date the record carries.
     pub date: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Where the decision itself can be read: the file in the repository. The site has no
+    /// per-ADR page, so this is the honest destination rather than an invented route.
+    pub url: Option<String>,
 }
 
 /// One published artifact, from the release record's own evidence.
@@ -170,6 +202,15 @@ pub struct ReleaseSection {
     pub commit: Option<String>,
     /// Whether this section is the work that has not been released.
     pub unreleased: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The release notes the record names — the published release itself.
+    pub notes_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Every commit between the previous release and this one, as the forge renders it.
+    pub compare_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The tree at this release.
+    pub tree_url: Option<String>,
     /// The decisions dated inside this release's window.
     pub decisions: Vec<Decision>,
     /// The changes, from the commits in this release's range, grouped by what they did and

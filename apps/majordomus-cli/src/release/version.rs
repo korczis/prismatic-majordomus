@@ -242,8 +242,8 @@ pub fn report(root: &Path, objects: &[Object]) -> VersionReport {
         .max_by(|a, b| a.0.cmp(&b.0));
 
     let changes = match &last {
-        Some((_, _, commit)) => super::commits::in_range(root, &format!("{commit}..HEAD")),
-        None => super::commits::in_range(root, "HEAD"),
+        Some((_, _, commit)) => super::commits::in_range(root, &format!("{commit}..HEAD"), objects),
+        None => super::commits::in_range(root, "HEAD", objects),
     };
     let bump = bump_of(&changes);
     let next = Version::parse(&declared).map(|v| v.raised(bump).to_string());
@@ -270,6 +270,8 @@ mod tests {
             subject: "x".into(),
             breaking,
             commit: "abc1234".into(),
+            url: None,
+            references: Vec::new(),
         }
     }
 
