@@ -295,6 +295,18 @@ board, each pair once. It is still not enforcement — the shell tool's <code>st
 <code>check --overlap</code> do that, per worktree, and they are what refuses a commit — but a
 collision is now known at the moment it is created rather than discovered afterwards in
 the history of a branch.</p>
+<p><strong>The board reaches a worker that never asks for it.</strong> Reading it was voluntary, and
+voluntary co-operation failed: a session announced, its transport was re-established under a
+new peer id, and it was invisible to eight others for three hours; two sessions built the
+same subsystem because neither looked first. So <code>majordomus context</code> — the command the
+bootstrap tells every worker to run before working — carries a <code>PEERS</code> section between <code>GIT</code>
+and <code>TASK</code>: who else is attached, what each of them claims, and specifically which of those
+claims meets the current task's scope. It reads the lease of the shared server (which is
+repository-scoped, so a linked worktree finds it through <code>--git-common-dir</code> in the primary
+checkout) and asks <code>GET /api/v1/peers</code>. The hint is never load-bearing: no lease, no <code>jq</code> or
+<code>curl</code>, a server that does not answer within two seconds, or a board holding nobody leaves
+<code>context</code> exactly as it was, because a repository with one worker in it must not grow a
+section about being alone. <code>test/cases/106_context_peers.sh</code> holds all of it.</p>
 <p><strong>An announcement outlives the connection that made it.</strong> A session that reconnects used
 to lose everything it had said, silently, to itself and to everyone else; the board now
 keeps a departed peer's announcement and lists it with <code>attached: false</code>, so what a
@@ -456,7 +468,7 @@ under <code>mcp-</code>, <code>hot-path-no-rebuild</code> and <code>benchmark-co
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/10d45ffec57336ca739c680b625f8421035b6712" class="font-mono underline">10d45ff</a> · inputs <span class="font-mono">c577ae7eb0fe</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6afaa7330bc2ef34de2b7dcc8445992969541a85" class="font-mono underline">6afaa73</a> · inputs <span class="font-mono">54f560afe5a9</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

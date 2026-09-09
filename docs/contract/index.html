@@ -228,6 +228,17 @@ semantic definition across projections is a design defect (<code>docs/CAPABILITI
 <p>A capability you add or change has use cases: run <code>majordomus usecase impact</code> and the
 scenarios it names, and close a coverage gap (<code>majordomus usecase coverage</code>) with a use
 case that executes (<code>.ai/repo/workflows/use-cases.md</code>); <code>finish</code> refuses a required gap.</p>
+<p>You are probably not alone. One shared server serves this repository, and every worker
+attached to it is visible to every other through <code>majordomus_peers</code>. Announce what you are
+doing and the paths you expect to touch, with <code>majordomus_announce</code>, before you start — and
+again whenever the connection is re-established, because an announcement belongs to a
+connection and a worker that reconnects keeps its work while losing its place on the board.
+Read the board before you open a mandate and before you fan work out: two workers built the
+same subsystem in one afternoon because neither looked first. A scope announced there is a
+claim, not a lock; the task's own scope and <code>check --overlap</code> are what refuse a commit.</p>
+<p>Push what you have, early. A branch whose commits reach no remote is invisible to every
+other worker, cannot be integrated by anyone but you, and is one disk away from being lost;
+<code>majordomus doctor</code> names those branches.</p>
 <p>Before implementing something new — a module, a command group, a document kind, a
 generated artifact — run <code>scripts/collision-check --new &lt;paths&gt;</code> to see which other
 branches already carry those paths, not only who the peer board says is working now: a
@@ -267,7 +278,7 @@ rule that exists here and nowhere else is a bug.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/10d45ffec57336ca739c680b625f8421035b6712" class="font-mono underline">10d45ff</a> · inputs <span class="font-mono">c577ae7eb0fe</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6afaa7330bc2ef34de2b7dcc8445992969541a85" class="font-mono underline">6afaa73</a> · inputs <span class="font-mono">54f560afe5a9</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
