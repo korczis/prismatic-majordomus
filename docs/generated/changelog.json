@@ -9,6 +9,12 @@
       "unreleased": true,
       "decisions": [
         {
+          "id": "adr-0030",
+          "title": "A task owes obligations, and the evidence that discharges them goes stale",
+          "status": "proposed",
+          "date": "2026-09-09"
+        },
+        {
           "id": "adr-0029",
           "title": "The changelog is a projection of what the repository already records, and the version has one writer rather than one source",
           "status": "proposed",
@@ -39,6 +45,20 @@
           "heading": "Added",
           "rank": 0,
           "changes": [
+            {
+              "kind": "feat",
+              "scope": "closure",
+              "subject": "a task owes obligations, and the evidence that discharges them goes stale",
+              "breaking": false,
+              "commit": "cf1ee94ca"
+            },
+            {
+              "kind": "feat",
+              "scope": "ci",
+              "subject": "a gate says the published site came from master, and is being served",
+              "breaking": false,
+              "commit": "fbc1da919"
+            },
             {
               "kind": "feat",
               "scope": "release",
@@ -200,6 +220,13 @@
           "heading": "Fixed",
           "rank": 1,
           "changes": [
+            {
+              "kind": "fix",
+              "scope": "site",
+              "subject": "the changelog page reads the groups the document carries",
+              "breaking": false,
+              "commit": "b551a3327"
+            },
             {
               "kind": "fix",
               "scope": "ui",

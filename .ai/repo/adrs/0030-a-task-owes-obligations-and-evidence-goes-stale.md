@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0028
+id: adr-0030
 kind: adr
 title: A task owes obligations, and the evidence that discharges them goes stale
 status: proposed
@@ -18,7 +18,7 @@ provenance:
     - file:scripts/generate-site-data
 ---
 
-# 28. A task owes obligations, and the evidence that discharges them goes stale
+# 30. A task owes obligations, and the evidence that discharges them goes stale
 
 ## Context
 
