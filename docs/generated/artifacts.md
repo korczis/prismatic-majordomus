@@ -111,9 +111,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/benchmarks.md` | `benchmarks` | markdown | 8850 | `8a1cd4ba41de58fd` |
 | `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 13338 | `5a202b0e9ae92c56` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 15043 | `5fe5a0614a15f8e3` |
-| `docs/generated/changelog.json` | `changelog` | json | 210175 | `446519b608f171af` |
-| `docs/generated/changelog.md` | `changelog` | markdown | 75693 | `a3abdafef7c8eff0` |
-| `docs/generated/changelog.yaml` | `changelog` | yaml | 159863 | `c2659eb382f6d5cb` |
+| `docs/generated/changelog.json` | `changelog` | json | 220103 | `63f8053efe40615e` |
+| `docs/generated/changelog.md` | `changelog` | markdown | 79347 | `b1c2bb8452a4bf0c` |
+| `docs/generated/changelog.yaml` | `changelog` | yaml | 167442 | `8a793e173a435419` |
 | `docs/generated/cli.json` | `cli` | json | 466696 | `59ed1dd5a9e27a43` |
 | `docs/generated/cli.md` | `cli` | markdown | 195690 | `8724d3d376d13aff` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 362976 | `3df848616bbeced3` |
@@ -193,7 +193,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 60224 | `912530cebb3c790e` |
 | `site/data/registry/product.json` | `site-product` | json | 302949 | `8e7a7d10be7350e1` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2050181 | `6c66a37dad7e6279` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2050181 | `97485507ac7e0d29` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `58f7d0d6945968ba` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `626b03ff72b5b235` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |
