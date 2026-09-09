@@ -58,6 +58,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **ci**: the gate model parses again, and the gate a merge dropped is declared again (`d7f492294`)
 - **site-check**: a route is named on the API page whatever it is styled with (`9fcd06f8f`)
 - **runtime**: a stale runtime says so, on the lease and on the way in (`53b21b4bb`)
 - **tooling**: two failures of this session become refusals with tests (`b90e0dd47`)
@@ -155,6 +156,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow eight branches and current master (`98f3dfbda`)
 - **derive**: the projections follow six branches folded together (`e15b311e7`)
 - **derive**: the projections follow the master merge (`c114a92f3`)
 - **derive**: the projections follow the master merge (`341451cb7`)
