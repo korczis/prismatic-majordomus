@@ -57,6 +57,8 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **site-check**: a route is named on the API page whatever it is styled with (`9fcd06f8f`)
+- **runtime**: a stale runtime says so, on the lease and on the way in (`53b21b4bb`)
 - **tooling**: two failures of this session become refusals with tests (`b90e0dd47`)
 - **release**: the module asserts the two projections it documents (`98f6606ce`)
 - **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
@@ -151,6 +153,8 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`91b4e8be6`)
+- **derive**: the projections follow the merge (`f2b018f26`)
 - **derive**: the projections follow the two merges, and the baseline records lib/doctor.sh (`501ea2d41`)
 - **derive**: the projections follow the master merge, and the baseline records three scripts that arrived with it (`8ddb6496d`)
 - **derive**: the projections follow the final master merge (`cdc859654`)
