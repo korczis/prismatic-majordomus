@@ -228,6 +228,15 @@ semantic definition across projections is a design defect (<code>docs/CAPABILITI
 <p>A capability you add or change has use cases: run <code>majordomus usecase impact</code> and the
 scenarios it names, and close a coverage gap (<code>majordomus usecase coverage</code>) with a use
 case that executes (<code>.ai/repo/workflows/use-cases.md</code>); <code>finish</code> refuses a required gap.</p>
+<p>Before implementing something new — a module, a command group, a document kind, a
+generated artifact — run <code>scripts/collision-check --new &lt;paths&gt;</code> to see which other
+branches already carry those paths, not only who the peer board says is working now: a
+branch pushed before this session started carries no announcement and no less of a claim.
+Announce with <code>majordomus_announce</code> once the paths are clear, and announce the
+identifier you are about to allocate — an ADR number, a case number, an issue id —
+not only the paths: a branch scan sees what was pushed, and the board is the only
+thing that sees a number two sessions are taking in the same minute. The rule is
+<code>project.work-is-claimed-before-it-is-built</code>.</p>
 <p>Linked git worktrees of this repository live at <code>&lt;repository&gt;-wt/&lt;branch&gt;</code> — the primary
 checkout's sibling named with <code>-wt</code>, then the branch name with its hierarchy kept — derived
 from git and never chosen or registered; the primary checkout hosts the trunk. Before
@@ -258,7 +267,7 @@ rule that exists here and nowhere else is a bug.</p>
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c45621e4100e55e6863084cd9ef72aad5205cdfb" class="font-mono underline">c45621e</a> · inputs <span class="font-mono">a3b1674b0215</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/faed20ba300c646fe6f7f75e21ff1d6193b0e0fb" class="font-mono underline">faed20b</a> · inputs <span class="font-mono">0e5a8517175d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

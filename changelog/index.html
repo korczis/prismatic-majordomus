@@ -209,7 +209,7 @@
   <section class="mt-12 border-t border-default pt-8">
     <h2 id="unreleased" class="scroll-mt-24 break-words text-2xl font-bold tracking-tight text-heading">Unreleased</h2>
     <div class="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-xs text-body-subtle">
-      <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">unreleased</span><span>168 change(s)</span>
+      <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">unreleased</span><span>173 change(s)</span>
       <span>7 decision(s)</span>
       <span>0 artifact(s)</span>
     </div>
@@ -280,9 +280,21 @@
       <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
         <span class="font-medium">Added</span>
         <span class="ml-2 font-mono text-xs text-body-subtle">feat</span>
-        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">33</span>
+        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">35</span>
       </summary>
       <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">rules</span>
+            <span class="min-w-0 break-words text-body">an empty result and a failed command must not look alike</span>
+            <code class="break-all font-mono text-xs text-body-subtle">824223cb5</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ci</span>
+            <span class="min-w-0 break-words text-body">three failures of one session, turned into checks</span>
+            <code class="break-all font-mono text-xs text-body-subtle">1e96e91b7</code>
+          </div>
+        </li>
         <li class="border-b border-default py-2 last:border-0">
           <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">peers</span>
             <span class="min-w-0 break-words text-body">a session is told it has not announced, and doctor names the work that exists on one disk</span>
@@ -487,9 +499,15 @@
       <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
         <span class="font-medium">Fixed</span>
         <span class="ml-2 font-mono text-xs text-body-subtle">fix</span>
-        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">55</span>
+        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">56</span>
       </summary>
       <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">ci</span>
+            <span class="min-w-0 break-words text-body">the gate model parses again, and the gate a merge dropped is declared again</span>
+            <code class="break-all font-mono text-xs text-body-subtle">d7f492294</code>
+          </div>
+        </li>
         <li class="border-b border-default py-2 last:border-0">
           <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">site-check</span>
             <span class="min-w-0 break-words text-body">a route is named on the API page whatever it is styled with</span>
@@ -1015,9 +1033,21 @@
       <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
         <span class="font-medium">Housekeeping</span>
         <span class="ml-2 font-mono text-xs text-body-subtle">chore</span>
-        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">50</span>
+        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">52</span>
       </summary>
       <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+            <span class="min-w-0 break-words text-body">the projections follow the master merge</span>
+            <code class="break-all font-mono text-xs text-body-subtle">a4f9780b0</code>
+          </div>
+        </li>
+        <li class="border-b border-default py-2 last:border-0">
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
+            <span class="min-w-0 break-words text-body">the projections follow the master merge</span>
+            <code class="break-all font-mono text-xs text-body-subtle">3a2aeab52</code>
+          </div>
+        </li>
         <li class="border-b border-default py-2 last:border-0">
           <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1"><span class="font-mono text-xs font-medium text-fg-brand">derive</span>
             <span class="min-w-0 break-words text-body">the projections follow the merge</span>
@@ -5956,7 +5986,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c45621e4100e55e6863084cd9ef72aad5205cdfb" class="font-mono underline">c45621e</a> · inputs <span class="font-mono">a3b1674b0215</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/faed20ba300c646fe6f7f75e21ff1d6193b0e0fb" class="font-mono underline">faed20b</a> · inputs <span class="font-mono">0e5a8517175d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
