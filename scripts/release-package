@@ -17,6 +17,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
+# for mj_cargo_target_dir: cargo does not necessarily build into "$CRATE/target"
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
 
 die() { printf 'release-package: %s\n' "$*" >&2; exit "${2:-12}"; }
 
@@ -40,7 +43,7 @@ done
 case "$tag" in v[0-9]*) ;; *) die "--tag must be v followed by a version, not '$tag'" 2 ;; esac
 
 # The names come from the model. `distribution artifact` is the one place they are derived.
-mj="${MAJORDOMUS_DIST_BIN:-$CRATE/target/debug/majordomus}"
+mj="${MAJORDOMUS_DIST_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/debug/majordomus}"
 if [ ! -x "$mj" ]; then
   command -v cargo >/dev/null 2>&1 || die "the distribution model needs the executable; build it or set MAJORDOMUS_DIST_BIN"
   RUSTFLAGS='' cargo build --quiet --locked --manifest-path "$CRATE/Cargo.toml" 1>&2
@@ -52,7 +55,7 @@ rootdir="$(printf '%s\n' "$names" | sed -n '2p')"
 [ -n "$archive" ] && [ -n "$rootdir" ] || die "the model answered no artifact name for '$target'" 10
 
 # The executable for the target.
-binary="${MAJORDOMUS_BIN:-$CRATE/target/$target/release/majordomus}"
+binary="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$CRATE" ask-cargo)/$target/release/majordomus}"
 if [ "$build" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
   command -v cargo >/dev/null 2>&1 || die "cargo is needed to build $target (or pass --no-build / MAJORDOMUS_BIN)"
   printf 'release-package: building %s (release)\n' "$target" >&2
