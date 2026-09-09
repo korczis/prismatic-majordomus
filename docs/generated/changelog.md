@@ -22,6 +22,8 @@ Current version: **0.4.0**
 ### Added
 
 - **peers**: a session is told it has not announced, and doctor names the work that exists on one disk (`1487d729e`)
+- **design**: one declaration for the design, and every surface projects it (`2b3b9fffa`)
+- **closure**: a task owes obligations, and the evidence that discharges them goes stale (`cf1ee94ca`)
 - **peers**: an announcement outlives the connection that made it, and a claim is answered rather than merely recorded (`6aeec67b1`)
 - **ci**: a gate says the published site came from master, and is being served (`fbc1da919`)
 - **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
@@ -57,6 +59,7 @@ Current version: **0.4.0**
 
 - **release**: the module asserts the two projections it documents (`98f6606ce`)
 - **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
+- **design,adr**: the three failures this session hit, each with the gate that would have caught it (`1cbb36869`)
 - **commands**: the module asserts the three projections it documents (`5609ab148`)
 - **site**: the changelog page reads the groups the document carries (`b551a3327`)
 - **docs**: the semantics module documents a validation that is not an item (`ed649c769`)
@@ -146,9 +149,14 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the final master merge (`cdc859654`)
+- **derive**: the projections follow the master merge (`5e6d324c1`)
+- **adr,test**: renumber to the identities the board actually left free (`50f276bc3`)
+- **derive**: the projections follow the master merge (`21a1203cc`)
 - **derive**: the projections follow the second master merge (`e94b760d1`)
 - **derive**: the projections follow the master merge (`5fe8f2ec8`)
 - **derive**: the projections follow the master merge (`b79363681`)
+- **derive**: the projections follow the master merge, with the ADR renumbered to 0030 (`f1c1b6556`)
 - **derive**: the projections follow the entry-point fixes (`691fab7db`)
 - **derive**: the projections follow the merge with master (`44468dbc1`)
 - **order**: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are (`c72d294cc`)
