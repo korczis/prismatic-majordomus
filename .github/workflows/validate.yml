@@ -48,6 +48,7 @@ jobs:
       web_topology: ${{ steps.plan.outputs.web_topology }}
       rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
+      command_graph: ${{ steps.plan.outputs.command_graph }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
@@ -172,7 +173,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -181,6 +182,7 @@ jobs:
         with:
           components: rustfmt, clippy
       - name: rust-check
+        if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
         env:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
@@ -188,15 +190,16 @@ jobs:
         with:
           name: ci-plan
       # The other gates the model assigns to this job — the ones that need the executable
-      # the step above built: projection-closure, web-topology. rust-check and
-      # rust-integration are the step above, with the mode and the artifact argument the
-      # model's line does not carry, so they are the only two skipped here.
+      # the step above built: projection-closure, web-topology, command-graph. rust-check
+      # and rust-integration are the step above, with the mode and the artifact argument
+      # the model's line does not carry, so they are the only two skipped here.
       - name: the rust gates of the plan
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         run: |
           echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
+      - if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: majordomus-cli-${{ steps.target.outputs.triple }}
           path: dist

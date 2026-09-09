@@ -47,6 +47,12 @@ pub enum Command {
     Why(WhyArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
+    /// What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
+    Env(EnvArgs),
+    /// Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it
+    Commands(CommandsArgs),
+    /// Completion for any surface, answered from the command graph: the candidates a shell asks for, and the one-time integration that asks
+    Completion(CompletionArgs),
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
@@ -109,6 +115,59 @@ pub enum ProductCommand {
     Providers,
     /// Every finding over the model; exit 10 when any is an error
     Validate,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus env`.
+pub struct EnvArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to do with the snapshot; none prints it.
+    pub command: Option<EnvCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus env`.
+pub enum EnvCommand {
+    /// The whole snapshot, resolved in full: what the layer holds is counted, and the cache the banner reads is written
+    Status,
+    /// Render the snapshot for a terminal. Goes to standard error, never standard output, because direnv reads standard output as the environment it is setting
+    Banner {
+        /// How much to show: `auto`, `full`, `compact` or `off`. Without it, MAJORDOMUS_BANNER decides, and without that, `auto` — which is silent when nothing is watching, shows the whole box when the repository has something new to say, and the two-line form when it does not
+        #[arg(long, value_name = "MODE")]
+        mode: Option<String>,
+        /// Draw as if the terminal were this wide, whatever it is
+        #[arg(long, value_name = "COLUMNS")]
+        width: Option<usize>,
+    },
+    /// The variable assignments a shell in this repository benefits from, for `eval`. Assignments only: no command, no side effect
+    Export {
+        /// The shell to write for: `direnv`, `bash`, `zsh`, `sh`, `ksh` or `fish`
+        #[arg(long = "shell", value_name = "SHELL", default_value = "direnv")]
+        shell: String,
+        /// Also draw the banner, to standard error, from the same snapshot. What an adapter asks for: one process on the path a shell takes on every entry, rather than two that each pay for a `git status`
+        #[arg(long)]
+        banner: bool,
+        /// With --banner, how much to show; MAJORDOMUS_BANNER decides without it
+        #[arg(long, value_name = "MODE", requires = "banner")]
+        mode: Option<String>,
+        /// Also refresh the workflow bridge under .ai/local/cache/ when a declaration behind it has changed. A few `stat` calls when nothing has; never a build, never a network call
+        #[arg(long)]
+        bridge: bool,
+    },
+    /// Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted
+    Explain {
+        /// One field in dotted form (`vcs.branch`, `layer.objects`), or a prefix; every field when absent
+        #[arg(value_name = "FIELD")]
+        field: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -794,6 +853,171 @@ pub struct GenerateArgs {
     pub out: Option<PathBuf>,
 }
 
+#[derive(Debug, Args)]
+/// `majordomus commands`.
+pub struct CommandsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to ask of the graph; none lists it.
+    pub command: Option<CommandsCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// What `majordomus commands` can be asked.
+pub enum CommandsCommand {
+    /// Every command, one line each: what it is, what running it changes, and where it is projected
+    List(CommandsListArgs),
+    /// One command in full: its arguments, its effect, what it needs, and every surface that carries it
+    Show(CommandsShowArgs),
+    /// Why one command appears where it does: the declaration it came from, the policy that placed it, and the reason for every surface that withholds it
+    Explain(CommandsShowArgs),
+    /// The whole graph as one document, with its fingerprint and every diagnostic
+    Graph(CommandsGraphArgs),
+    /// Materialise the workflow bridge from the graph, and refresh the cache the completion reads; writes nothing when the graph has not changed
+    Bridge(CommandsBridgeArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus commands list`.
+pub struct CommandsListArgs {
+    /// Only the commands of this program
+    #[arg(long, value_enum)]
+    pub origin: Option<CommandOrigin>,
+
+    /// Only the commands whose effect is at most this
+    #[arg(long, value_enum)]
+    pub effect: Option<CommandEffect>,
+
+    /// Only the commands matching this text, in their invocation, summary, tags or identity
+    #[arg(long, value_name = "TEXT")]
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus commands show` and `explain`.
+pub struct CommandsShowArgs {
+    /// The command's identity, `executable.worktree.status`
+    pub id: String,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus commands graph`.
+pub struct CommandsGraphArgs {
+    /// Exit 10 when the graph carries an error
+    #[arg(long)]
+    pub check: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus commands bridge`.
+pub struct CommandsBridgeArgs {
+    /// Exit 10 when the materialised bridge is not the one this graph projects; write nothing
+    #[arg(long)]
+    pub check: bool,
+}
+
+/// Which program a command belongs to, as a filter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum CommandOrigin {
+    /// This executable
+    Executable,
+    /// The shell tool, bin/majordomus
+    Tool,
+    /// A workflow the repository declares
+    Workflow,
+}
+
+/// What running a command changes, as a filter.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum CommandEffect {
+    /// Reads and answers
+    ReadOnly,
+    /// Writes only what no commit carries
+    LocalMutation,
+    /// Writes tracked files
+    RepositoryMutation,
+    /// Reaches the network with an effect
+    NetworkMutation,
+    /// Removes something
+    Destructive,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus completion`.
+pub struct CompletionArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// What to do; none prints the integration for the current shell.
+    pub command: Option<CompletionCommand>,
+}
+
+#[derive(Debug, Subcommand)]
+/// What `majordomus completion` can be asked.
+pub enum CompletionCommand {
+    /// The candidates for one command line, from the command graph. What a shell adapter calls on every TAB
+    Query(CompletionQueryArgs),
+    /// The shell integration to load once, which carries no command of its own and asks this executable for every candidate
+    Init(CompletionInitArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus completion query`.
+pub struct CompletionQueryArgs {
+    /// Which surface the words are spelled for
+    #[arg(long, value_enum, default_value_t = CompletionSurface::Cli)]
+    pub surface: CompletionSurface,
+
+    /// The index of the word the cursor is in; the default is a new word after the last
+    #[arg(long, value_name = "N")]
+    pub cursor: Option<usize>,
+
+    /// Output shape
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    pub format: OutputFormat,
+
+    /// The words of the command line, the program's own name first
+    #[arg(trailing_var_arg = true, value_name = "WORD")]
+    pub words: Vec<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus completion init`.
+pub struct CompletionInitArgs {
+    /// Which shell to print the integration for
+    #[arg(long, value_enum, default_value_t = CompletionShell::Zsh)]
+    pub shell: CompletionShell,
+}
+
+/// The surface a completion request is spelled for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum CompletionSurface {
+    /// The command line of either program
+    Cli,
+    /// The workflow runner
+    Workflow,
+}
+
+/// A shell the integration is printed for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum CompletionShell {
+    /// zsh
+    Zsh,
+    /// bash
+    Bash,
+    /// fish
+    Fish,
+}
+
 // ------------------------------------------------------------------ the command line as data
 //
 // clap is the one declaration of the command line: every command, argument, default and
@@ -804,7 +1028,7 @@ pub struct GenerateArgs {
 // the routes under /docs/cli/. `cli::validate` is the contract that keeps the two halves
 // complete, and the example tests execute exactly the argv shown below.
 
-mod docs;
+pub mod docs;
 mod validate;
 
 pub use docs::tree;
@@ -972,6 +1196,61 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["product", "validate"],
             setup: &[],
             expect: Expect::StdoutContains(&["feature(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "env",
+        examples: &[ExampleDoc {
+            id: "env-status",
+            title: "What this checkout is",
+            description: "`env` with nothing after it resolves the whole snapshot: the project and its version, the repository and its layer, version control, the toolchains the repository declares, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services. This is the resolution that counts the layer, so it builds the index and writes the cache the banner reads.",
+            argv: &["env"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["project", "repository", "resolution"]),
+        }],
+    },
+    CommandExamples {
+        command: "env status",
+        examples: &[ExampleDoc {
+            id: "env-status-json",
+            title: "The snapshot as one document",
+            description: "The same value the HTTP route `/api/v1/environment` and the MCP resource `majordomus://environment` answer with, and the value the banner renders. Every field carries where it came from under `provenance`, and a value nothing could resolve is absent rather than zero.",
+            argv: &["env", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/project/version", "/repository/name", "/provenance"]),
+        }],
+    },
+    CommandExamples {
+        command: "env banner",
+        examples: &[ExampleDoc {
+            id: "env-banner-compact",
+            title: "The two-line form, at a width you choose",
+            description: "What `direnv` renders on entering the repository. It resolves fast — it never builds the index — and it writes to standard error, because direnv reads the standard output of a `.envrc` as the environment it is applying. `--width` renders as if the terminal were that wide, which is what makes the layout testable.",
+            argv: &["env", "banner", "--mode", "compact", "--width", "80"],
+            setup: &[],
+            expect: Expect::Success,
+        }],
+    },
+    CommandExamples {
+        command: "env export",
+        examples: &[ExampleDoc {
+            id: "env-export-direnv",
+            title: "The assignments a shell in this repository wants",
+            description: "Assignments and nothing else, safe to `eval`: no command runs, no file is touched, and every value is quoted so that a repository path holding a quote or a `$(...)` cannot become shell code. This is the whole of what `.envrc` needs from Majordomus.",
+            argv: &["env", "export", "--shell", "direnv"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["export MAJORDOMUS_ROOT="]),
+        }],
+    },
+    CommandExamples {
+        command: "env explain",
+        examples: &[ExampleDoc {
+            id: "env-explain-field",
+            title: "Where one value came from",
+            description: "An inferred system without provenance is magic. Every field of the snapshot can name the file, command or compile-time constant that decided it, the resolver that read it, and whether it was read now, taken from the cache, or not resolved at all.",
+            argv: &["env", "explain", "project.version"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["project.version", "source", "resolver"]),
         }],
     },
     CommandExamples {
@@ -1701,5 +1980,104 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::Json(&["/0/verdict", "/0/rule"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "commands",
+        examples: &[ExampleDoc {
+            id: "commands-list",
+            title: "Every command this repository offers",
+            description: "The command graph, composed from the three declarations that already exist: the clap tree of this executable, the shipped command registry of the shell tool, and the recipes the workflow runner describes. One line per command, with the program that runs it and what running it changes.",
+            argv: &["commands"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["commands", "executable", "read-only"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands list",
+        examples: &[ExampleDoc {
+            id: "commands-list-filtered",
+            title: "Only what reads",
+            description: "The filters are the graph's own vocabulary rather than a search over text: `--effect read-only` is every command that changes nothing anywhere, which is the same predicate the exposure policy uses to decide what a machine surface may call.",
+            argv: &["commands", "list", "--effect", "read-only"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["read-only"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands show",
+        examples: &[ExampleDoc {
+            id: "commands-show",
+            title: "One command, and every surface that carries it",
+            description: "The arguments with the source of each one's values, the effect, and the projections: the command line, the workflow recipe, the MCP tool, the HTTP route, the Cockpit and the page. A surface that withholds it says why.",
+            argv: &["commands", "show", "executable.worktree.status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["executable.worktree.status", "projections"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands explain",
+        examples: &[ExampleDoc {
+            id: "commands-explain",
+            title: "Why a command appears where it does",
+            description: "The same command with its provenance: the file that declares it, the reader that found it, the capability behind it when there is one, what it requires, and the file the exposure policy lives in. Nothing about a command's placement is a mystery a grep has to solve.",
+            argv: &["commands", "explain", "executable.serve"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["declared in", "policy"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands graph",
+        examples: &[ExampleDoc {
+            id: "commands-graph-json",
+            title: "The whole graph as one document",
+            description: "Deterministic and fingerprinted: two builds over one tree produce the same bytes, which is what lets the workflow bridge, the completion index and the Cockpit all key on the fingerprint instead of regenerating.",
+            argv: &["commands", "graph", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/fingerprint", "/commands"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands bridge",
+        examples: &[ExampleDoc {
+            id: "commands-bridge",
+            title: "The workflow runner's recipes, derived",
+            description: "Every command of both programs, written as a recipe that runs the canonical program with the caller's own arguments. It goes under .ai/local/cache/, which no commit carries, and it is rewritten only when the graph's fingerprint changes.",
+            argv: &["commands", "bridge"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["bridge", "recipe"]),
+        }],
+    },
+    CommandExamples {
+        command: "completion",
+        examples: &[ExampleDoc {
+            id: "completion-default",
+            title: "The integration a person installs once",
+            description: "With no subcommand, the shell integration for zsh. It contains no command, no flag and no identifier: every candidate comes from a query against the command graph of the repository the shell is in, so one integration serves every checkout and never goes stale.",
+            argv: &["completion"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["completion query", "compdef"]),
+        }],
+    },
+    CommandExamples {
+        command: "completion init",
+        examples: &[ExampleDoc {
+            id: "completion-init-bash",
+            title: "The same, for bash",
+            description: "A different shell's protocol, the same question. Both adapters read the words being completed, find the cursor, ask this executable and print what comes back.",
+            argv: &["completion", "init", "--shell", "bash"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["completion query", "complete -F"]),
+        }],
+    },
+    CommandExamples {
+        command: "completion query",
+        examples: &[ExampleDoc {
+            id: "completion-query",
+            title: "What a shell asks on every TAB",
+            description: "The words of the command line and the position of the cursor; back come the candidates with their descriptions. The same call answers the workflow runner's completion with `--surface workflow`, resolving the recipe name to the command it bridges and then completing that command's own arguments.",
+            argv: &["completion", "query", "--surface", "cli", "--", "majordomus", "work"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["worktree"]),
+        }],
     },
 ];

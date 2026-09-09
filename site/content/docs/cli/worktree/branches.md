@@ -1,7 +1,7 @@
 +++
 title = "majordomus worktree branches"
 description = "Every local branch, one per line, for a shell completion that wants the live set"
-weight = 59
+weight = 73
 [extra]
 route = "/docs/cli/worktree/branches/"
 command = "majordomus worktree branches"

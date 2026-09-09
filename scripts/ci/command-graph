@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+# The command-graph gate: the graph is coherent, and no surface keeps a command catalogue
+# of its own.
+#
+# Two questions, both of which fail loudly rather than quietly:
+#
+#   1. Does the graph build without an error? A duplicate identity, a recipe name two
+#      commands would take, a capability that claims a command line the executable does not
+#      declare, an annotation that names a command that no longer exists, a compatibility
+#      alias pointing at nothing, or a secret argument something would enumerate.
+#   2. Does any workflow file still carry a recipe whose whole body is a call to one of the
+#      two programs? That is a hand-written bridge, and a hand-written bridge is a second
+#      copy of a command's name and description that nothing keeps in step with the first.
+#
+# Exit 0 clean, 10 with every finding named.
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$root"
+
+fail=0
+say() { printf '%s\n' "$*"; }
+
+# ---------------------------------------------------------------- 1. the graph is coherent
+if ! out="$(MAJORDOMUS_NO_BUILD="${MAJORDOMUS_NO_BUILD:-0}" bin/majordomus-cli commands graph --check 2>&1)"; then
+  status=$?
+  say "$out"
+  if [ "$status" = 10 ]; then
+    say "command-graph: the graph carries an error; every finding is named above"
+  else
+    say "command-graph: the graph could not be built (exit $status)"
+  fi
+  fail=1
+else
+  say "$out" | sed -n '1,6p'
+fi
+
+# ---------------------------------------------------------------- 2. no hand-written bridge
+#
+# A recipe whose body is *one* call to one of the two launchers, or to the built executable,
+# is a bridge somebody wrote by hand: it spells a command's name and repeats its description,
+# and the generated bridge already carries both from the declaration itself. That is what
+# this refuses.
+#
+# A recipe that calls a program more than once is a different animal. `distribution-check`
+# runs `distribution validate` and then `generate distribution --check`: two commands, in an
+# order, as one gate. No single command in the graph projects to it, so the bridge cannot
+# write it and forbidding it would be forbidding composition itself. The distinction is
+# structural — how many program calls the body makes — rather than a list of blessed recipe
+# names, because a list of names is the same manually maintained catalogue this whole gate
+# exists to prevent.
+#
+# One recipe is still named: `bridge` is a single call, and it is the one that *writes* the
+# bridge, so it cannot come from it.
+#
+# Building the crate is not a call to the program: `cargo build --manifest-path
+# apps/majordomus-cli/Cargo.toml` names the crate, not the executable.
+allowed='^(bridge)$'
+while IFS= read -r file; do
+  recipe=""
+  calls=0
+  first_line=""
+  # Close the recipe that just ended: report it when its whole body was one program call.
+  close() {
+    [ -n "$recipe" ] || return 0
+    [ "$calls" = 1 ] || return 0
+    if printf '%s' "$recipe" | grep -Eq "$allowed"; then return 0; fi
+    say "command-graph: $file declares \`$recipe\`, whose body is one call to the program"
+    say "               a recipe that only spells a command is the generated bridge's work;"
+    say "               remove it and let \`majordomus commands bridge\` write it"
+    say "               ($first_line)"
+    fail=1
+  }
+  while IFS= read -r line; do
+    case "$line" in
+      \#*) continue ;;
+      [a-zA-Z_]*:*) close; recipe="${line%%[ :]*}"; calls=0; first_line="" ;;
+      *bin/majordomus*|*"{{rust_bin}}"*|*"{{shell_bin}}"*|*target/debug/majordomus\ *|*target/release/majordomus\ *)
+        [ -n "$recipe" ] || continue
+        calls=$((calls + 1))
+        [ -n "$first_line" ] || first_line="$(printf '%s' "$line" | sed 's/^[[:space:]]*//')"
+        ;;
+    esac
+  done < "$file"
+  close
+done < <(ls justfile .just/*.just 2>/dev/null)
+
+[ "$fail" = 0 ] || exit 10
+say "command-graph: coherent, and no surface keeps a command catalogue of its own"

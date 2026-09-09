@@ -9,6 +9,12 @@
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
+# A recipe's arguments reach its body as "$@" rather than as text spliced into it. Every
+# generated bridge recipe forwards "$@", so a path with a space, a quoted string, a leading
+# dash and a `$(...)` all arrive as the one argument they were typed as. Interpolating
+# {{args}} would splice them, and no amount of escaping in a generator makes that safe.
+set positional-arguments
+
 root      := justfile_directory()
 crate     := root / "apps/majordomus-cli"
 manifest  := crate / "Cargo.toml"
@@ -23,358 +29,29 @@ export MAJORDOMUS_SHARE := root / "share"
 default:
     @just --list --unsorted
 
-# ---------------------------------------------------------------- build
+# The recipes themselves live in .just/, one file per bounded context. `import` splices
+# them into this one namespace, so every recipe keeps the name it always had: `just test`
+# is `just test` whichever file it is written in. The order of the imports is the order
+# `just --list` and `just --groups` report the groups in, and therefore the order the
+# environment snapshot offers a newcomer their first commands in.
+import '.just/test.just'
+import '.just/build.just'
+import '.just/serve.just'
+import '.just/ci.just'
+import '.just/site.just'
 
-# Build the Rust executable (debug; MAJORDOMUS_BUILD_PROFILE=release for a release build).
+# Every command of both programs, as a recipe, derived from the command graph: the whole of
+# `majordomus <command>` and `bin/majordomus <command>`, with the descriptions their own
+# declarations carry and the older recipe names kept as aliases. Nothing about a command is
+# written here or in .just/ — `majordomus commands bridge` writes this file from the graph,
+# entering the repository refreshes it when the graph has changed, and it is not tracked
+# because it is a pure function of the tree it sits in.
+#
+# The import is optional so that a fresh clone, which has none, still has a justfile: `just
+# bridge` writes it, and direnv does the same on the way in.
+import? '.ai/local/cache/command-graph/bridge.just'
+
+# Derive the workflow bridge from the command graph — the one recipe the bridge cannot write, because it is what writes the bridge.
 [group('build')]
-build:
-    RUSTFLAGS='' cargo build --locked --manifest-path "{{manifest}}" {{ if profile == "release" { "--release" } else { "" } }}
-
-# Build the release executable.
-[group('build')]
-build-release:
-    RUSTFLAGS='' cargo build --locked --release --manifest-path "{{manifest}}"
-
-# Remove the Rust build output.
-[group('build')]
-[confirm("Remove apps/majordomus-cli/target? [y/N]")]
-clean:
-    cargo clean --manifest-path "{{manifest}}"
-
-# ---------------------------------------------------------------- serve (Rust executable)
-
-# MCP on stdio for the client that spawned it, joining or starting the repository's one shared server (its home page at / lists every surface). Extra arguments pass through.
-[group('serve')]
-mcp *args: build
-    "{{rust_bin}}" mcp {{args}}
-
-# The shared server alone, on 127.0.0.1:8741 by default: the home page /, the documentation /docs/, the Cockpit /cockpit, Swagger UI /swagger, /openapi.json, MCP over HTTP /mcp. Exits 0 if one already runs.
-[group('serve')]
-serve *args: build
-    "{{rust_bin}}" serve {{args}}
-
-# What `mcp` would serve, and every diagnostic; exit 10 when the layer is degraded.
-[group('serve')]
-inspect *args: build
-    "{{rust_bin}}" mcp --inspect {{args}}
-
-# Where the repository's shared server is, if one runs (from the lease under .ai/local/).
-[group('serve')]
-mcp-status:
-    @f=".ai/local/state/mcp/server.json"; if [ -f "$f" ]; then cat "$f"; echo; else echo "no shared server lease at $f"; fi
-
-# Open Swagger UI of the running shared server in the browser (macOS `open`, else xdg-open).
-[group('serve')]
-swagger-ui:
-    @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
-    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/swagger"; (command -v open >/dev/null && open "$url/swagger") || xdg-open "$url/swagger"
-
-# Open the running shared server's home page — every surface it serves, derived from the topology.
-[group('serve')]
-home:
-    @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
-    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/"; (command -v open >/dev/null && open "$url/") || xdg-open "$url/"
-
-# Open the Cockpit of the running shared server in the browser (macOS `open`, else xdg-open).
-[group('serve')]
-cockpit:
-    @f=".ai/local/state/mcp/server.json"; [ -f "$f" ] || { echo "no shared server is running (just serve, or start an MCP client)"; exit 1; }; \
-    url="$(sed -n 's/.*"url":"\([^"]*\)".*/\1/p' "$f")"; echo "$url/cockpit"; (command -v open >/dev/null && open "$url/cockpit") || xdg-open "$url/cockpit"
-
-# Build the Cockpit's static assets: compile share/cockpit/cockpit.css, vendor the pinned libraries (needs npm ci).
-[group('serve')]
-cockpit-assets:
-    scripts/cockpit-assets
-
-# The committed Cockpit stylesheet matches its source; exit 10 when it is stale.
-[group('serve')]
-cockpit-assets-check:
-    scripts/cockpit-assets --check
-
-# Every Cockpit route the server serves, answered; then the pages and the interactions in a real browser.
-[group('serve')]
-cockpit-probe *args:
-    scripts/cockpit-probe {{args}}
-
-# ---------------------------------------------------------------- registry (Rust executable)
-
-# Every capability with its projections (Rust registry). Extra arguments pass through (--kind, --exposure, --format).
-[group('registry')]
-capabilities *args: build
-    "{{rust_bin}}" capabilities list {{args}}
-
-# One capability by id: schemas, provenance, every projection.
-[group('registry')]
-describe id *args: build
-    "{{rust_bin}}" capabilities describe "{{id}}" {{args}}
-
-# The registry's invariants and every projection; exit 10 with every violation named.
-[group('registry')]
-validate: build
-    "{{rust_bin}}" capabilities validate
-
-# Regenerate every projection: docs/generated/, share/allow/, AGENTS.md/CLAUDE.md/... from the policy, site/data/registry/ from the registry.
-[group('registry')]
-generate: build
-    "{{rust_bin}}" generate
-
-# Exit 10 naming every stale generated projection; writes nothing.
-[group('registry')]
-generate-check: build
-    "{{rust_bin}}" generate --check
-
-# ---------------------------------------------------------------- distribution (Rust executable)
-
-# How this project is packaged, published and installed: the install command, the prefix, every declared target.
-[group('distribution')]
-distribution *args: build
-    "{{rust_bin}}" distribution show {{args}}
-
-# Whether the advertised one-line installation works right now; exit 10 naming the missing link and the command that changes it. Local and offline.
-[group('distribution')]
-distribution-status *args: build
-    "{{rust_bin}}" distribution status {{args}}
-
-# Everything about the distribution that can be checked without a network: the model, every release record, and the projections generated from them. Exit 10 on the first violation.
-[group('distribution')]
-distribution-check: build
-    "{{rust_bin}}" distribution validate
-    "{{rust_bin}}" generate distribution --check
-
-# ---------------------------------------------------------------- benchmarks (Rust executable)
-
-# Time every externally callable operation (each capability directly, over MCP and over HTTP, and the transports' own operations). `just bench-run objects.search --transport mcp --profile full` narrows it.
-[group('bench')]
-bench-run *args: build
-    "{{rust_bin}}" bench {{args}}
-
-# Benchmark coverage: covered / required, the denominator generated from the registry; exit 10 when anything is missing or waived.
-[group('bench')]
-bench-coverage *args: build
-    "{{rust_bin}}" bench coverage --check {{args}}
-
-# Compare a run with this platform's accepted baseline under .ai/repo/benchmarks/rust/ (policy.yaml); exit 10 on a regression.
-[group('bench')]
-bench-check *args: build
-    "{{rust_bin}}" bench --profile ci --check --no-write {{args}}
-
-# Record this platform's baseline from a full run (a reviewable, tracked file); refuses a dirty tree.
-[group('bench')]
-bench-baseline *args: build
-    "{{rust_bin}}" bench baseline update {{args}}
-
-# ---------------------------------------------------------------- use cases (shell tool)
-
-# Every use case: id, category, status, whether it has a scenario, the commands it runs.
-[group('use-cases')]
-usecase-list *args:
-    bin/majordomus usecase list {{args}}
-
-# Execute every scenario against the real tool in disposable repositories; evidence under .ai/local/evidence/use-cases/.
-[group('use-cases')]
-usecase-run *args:
-    bin/majordomus usecase run {{args}}
-
-# Every public command, guaranteed claim and MCP tool against the use cases that name and run it; exit 10 on a required gap.
-[group('use-cases')]
-usecase-coverage *args:
-    bin/majordomus usecase coverage --check {{args}}
-
-# What a change reaches: the commands, rules, use cases, scenarios and cases, from the files changed since the upstream.
-[group('use-cases')]
-usecase-impact *args:
-    bin/majordomus usecase impact {{args}}
-
-# ---------------------------------------------------------------- lifecycle (shell tool)
-
-# What the next worker needs to know now, within budget.
-[group('lifecycle')]
-context *args:
-    "{{shell_bin}}" context {{args}}
-
-# Is Majordomus itself healthy and wired here?
-[group('lifecycle')]
-doctor *args:
-    "{{shell_bin}}" doctor {{args}}
-
-# What has drifted: state, policy, projections, retention.
-[group('lifecycle')]
-watch *args:
-    "{{shell_bin}}" watch {{args}}
-
-# Is the current task consistent with policy, scope and state?
-[group('lifecycle')]
-check *args:
-    "{{shell_bin}}" check {{args}}
-
-# Regenerate AGENTS.md, CLAUDE.md and the other projections from the policy.
-[group('lifecycle')]
-update *args:
-    "{{shell_bin}}" update {{args}}
-
-# The repository's skills: list, show <id>, or check every one against its contract.
-[group('lifecycle')]
-skills *args:
-    "{{shell_bin}}" skills {{args}}
-
-# ---------------------------------------------------------------- test
-
-# Every gate: the shell suite, the Rust gate, the site data check.
-[group('test')]
-test: test-shell rust-check derive-check
-
-# The behavioural suite of the shell tool and the cross-checks of the Rust executable (test/cases/*.sh), MJ_TEST_JOBS cases at a time (default 4 here; `MJ_TEST_JOBS=1 just test-shell` streams serially). `just test-shell 72_rust_mcp` runs one.
-[group('test')]
-test-shell *only:
-    MJ_TEST_JOBS="${MJ_TEST_JOBS:-4}" bash test/run.sh {{only}}
-
-# The Rust crate's own suites: unit, integration, doctests.
-[group('test')]
-test-rust *args:
-    RUSTFLAGS='' cargo test --manifest-path "{{manifest}}" --no-fail-fast {{args}}
-
-# Every Rust gate CI runs, in CI's order: fmt, clippy -D warnings, tests, rustdoc, benches compile, validate, generate --check, coverage threshold.
-[group('test')]
-rust-check:
-    scripts/rust-check
-
-# Line coverage of the Rust crate, against the threshold in scripts/rust-coverage-threshold.
-[group('test')]
-coverage:
-    cd "{{crate}}" && RUSTFLAGS='' cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat "{{root}}/scripts/rust-coverage-threshold")"
-
-# The criterion microbenchmarks (benches/projections.rs, benches/shared.rs, benches/scaling.rs). `just bench scaling` runs one; `just bench-run` is the end-to-end measurement.
-[group('test')]
-bench *name:
-    RUSTFLAGS='' cargo bench --manifest-path "{{manifest}}" {{ if name == "" { "" } else { "--bench " + name } }}
-
-# bash -n and shellcheck over the shell tool, the scripts and every case (scripts/ci/shell-lint, the same gate CI runs).
-[group('test')]
-lint-shell:
-    scripts/ci/shell-lint
-
-# ---------------------------------------------------------------- ci (docs/CI.md)
-
-# What CI would run for this working tree against master, from .ai/repo/ci/gates.yaml; extra arguments pass to scripts/ci-plan (--full, --base, --head, --files).
-[group('ci')]
-ci-plan *args:
-    scripts/ci-plan --format text {{args}}
-
-# The install command this project advertises, fetched and run from the published site: does a stranger who copies the line off the front page get a working tool right now? Pass --base URL to ask the same of a local fixture (docs/DISTRIBUTION.md).
-[group('ci')]
-install-check *args:
-    scripts/ci/install-check {{args}}
-
-# The gates every plan runs: shell syntax and shellcheck, then doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection and the derived site data.
-[group('ci')]
-ci-structure:
-    scripts/ci/shell-lint
-    scripts/ci/core-check
-
-# The gates the plan selects for this working tree, with the commands CI runs, in the plan's order.
-[group('ci')]
-ci-fast *args:
-    scripts/ci/run-plan {{args}}
-
-# Every gate, as a push to master runs them (the macOS gate only on macOS).
-[group('ci')]
-ci-full:
-    scripts/ci/run-plan --full "just ci-full"
-
-# What GitHub observed of recent runs, recorded into .ai/repo/ci/baseline.json (needs gh); `just ci-baseline --table` renders it.
-[group('ci')]
-ci-baseline *args:
-    scripts/ci-baseline {{args}}
-
-# ---------------------------------------------------------------- site and derived files
-
-# Regenerate site/data/generated and the derived docs from README, docs/, the policy skeleton and CLAIMS.yaml.
-[group('site')]
-site-data:
-    scripts/generate-site-data
-
-# Exit 10 when the derived site data is stale.
-[group('site')]
-site-data-check:
-    scripts/generate-site-data --check
-
-# Deploy the site by hand: gate, build, check, push gh-pages (see .ai/repo/skills/deploy-site/SKILL.md). `just site-deploy --dry-run` shows what it would push.
-[group('site')]
-site-deploy *args:
-    scripts/site-deploy {{args}}
-
-# Build the website (zola).
-[group('site')]
-site-build:
-    scripts/site-build
-
-# Build the same documentation source for the running executable: mounted at /docs, written
-# into target/web/docs with the surface.json that makes it discoverable. One source, one
-# generator, two base URLs; `just serve` then answers /docs/ from it.
-[group('site')]
-site-docs:
-    scripts/site-build --serve
-
-# The static checks over the built site (scripts/site-check).
-[group('site')]
-site-check:
-    scripts/site-check
-
-# Every route at three widths in a real browser, SITE_PROBE_JOBS routes at a time (default 4 here); `just site-probe --quick` samples one route per template.
-[group('site')]
-site-probe *args:
-    SITE_PROBE_JOBS="${SITE_PROBE_JOBS:-4}" scripts/site-probe {{args}}
-
-# Serve the website locally in watch mode.
-[group('site')]
-site-serve:
-    scripts/site-serve
-
-# The publication fast path, exactly as .github/workflows/pages.yml runs it: prove the committed derived data current by its input hash, render it, check the output. `just pages build`, `pages check`, `pages paths`, `pages budget`, `pages current`, `pages verify`.
-[group('site')]
-pages *args:
-    scripts/pages {{args}}
-
-# The controlled publication path, measured N times; `just pages-benchmark -n 10 --write-baseline` records this platform's baseline under .ai/repo/benchmarks/pages/.
-[group('site')]
-pages-benchmark *args:
-    scripts/pages benchmark {{args}}
-
-# Every committed derived artifact, regenerated in dependency order (scripts/derive: generate, site data, generate again over the index the site data changed).
-[group('site')]
-derive:
-    scripts/derive
-
-# Exit 10 naming every stale derived artifact — the registry's projections and the site's data — and write nothing (scripts/derive-check).
-[group('site')]
-derive-check:
-    scripts/derive-check
-
-# Declare the `derived` merge driver this clone needs, so .gitattributes resolves the derived artifacts on merge instead of conflicting on their fingerprints (scripts/merge-derived).
-[group('site')]
-derive-merge-driver:
-    git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
-    git config merge.derived.driver "{{root}}/scripts/merge-derived %O %A %B %P"
-    @echo "merge.derived wired; .gitattributes now resolves the derived artifacts on merge"
-
-# ---------------------------------------------------------------- worktree (Rust executable)
-
-# Where this checkout stands in the branch-to-worktree topology (<repo>-wt/<branch>): `just wt`, `just wt list`, `just wt create feature/x`, `just wt migrate --plan`. Every argument passes through to `majordomus worktree`.
-[group('worktree')]
-wt *args: build
-    "{{rust_bin}}" worktree {{args}}
-
-# Start work on a branch: its canonical worktree, created if absent; prints the path to cd into.
-[group('worktree')]
-wt-create branch *args: build
-    "{{rust_bin}}" worktree ensure "{{branch}}" {{args}}
-
-# Bring every misplaced worktree to its canonical path, dirty state included, fingerprint-verified; `just wt-migrate --plan` shows the moves and changes nothing.
-[group('worktree')]
-wt-migrate *args: build
-    "{{rust_bin}}" worktree migrate {{args}}
-
-# Every diagnostic of the topology with its code and remedy; exit 10 when an error stands.
-[group('worktree')]
-wt-doctor *args: build
-    "{{rust_bin}}" worktree doctor {{args}}
+bridge *args:
+    @bin/majordomus-cli commands bridge "$@"

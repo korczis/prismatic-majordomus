@@ -1,7 +1,7 @@
 +++
 title = "distribution.releases"
 description = "Every release this repository recorded, newest first, and the one an unpinned installation resolves to: the highest version among the stable, unwithdrawn records. The pointer is derived here and never authored anywhere."
-weight = 13
+weight = 16
 slug = "distribution-releases"
 [extra]
 id = "distribution.releases"
