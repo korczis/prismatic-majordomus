@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "19dacc473e5e56ad890b22d3138318a9b9f13a775c79e3475021dce3d53bb69d",
+    "fingerprint": "426354d2c809df425f17f9a2af16a82a59badf0f0d7c96b296255aaf3c3ee750",
     "summary": {
-      "total": 1168,
+      "total": 1171,
       "builtin": 63,
-      "declarative": 1105,
+      "declarative": 1108,
       "by_kind": {
         "command": 3,
         "query": 60,
-        "resource": 1105
+        "resource": 1108
       },
       "by_stability": {
         "behaviorally_verified": 58,
-        "implemented": 1110
+        "implemented": 1113
       },
       "mcp_tools": 61,
-      "mcp_resources": 1128,
+      "mcp_resources": 1131,
       "http_routes": 63,
       "cli_commands": 31,
       "modules": 50,
@@ -23428,7 +23428,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 105,
+        "capabilities": 108,
         "capability_ids": []
       },
       {
@@ -23548,7 +23548,7 @@
     ]
   },
   "index": {
-    "fingerprint": "bac60e659af09c356b97f7f623b923335ee58cf340f36dd9778811225e599fa7",
+    "fingerprint": "55c27d2f35ff2b35e45dfe1f508aeade4af2eee5995c2c496d54e9d9b27a263b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -23591,7 +23591,7 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 105,
+      "rule": 108,
       "scope": 1,
       "session": 11,
       "skill": 3,
@@ -26658,7 +26658,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 4752
+        "bytes": 5475
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -26667,7 +26667,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 4041
+        "bytes": 4764
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -33173,6 +33173,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "rule",
+        "identity": "project.destructive-sweeps-fail-closed@1",
+        "title": "A sweep that deletes fails closed on what it could not read",
+        "description": "Any script that selects paths for deletion by a measured predicate — age, size, staleness — treats a predicate input it could not read as false, never as an extreme value; it names what it is about to delete and the measurement behind the verdict before deleting, and it reports how many candidates it skipped for want of a readable input.",
+        "path": ".ai/repo/rules/project/destructive-sweeps-fail-closed.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3552,
+        "tags": [
+          "safety",
+          "tooling"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "kind": "rule",
         "identity": "project.diagnostics-decide-the-exit@1",
@@ -33201,6 +33216,22 @@
           "distribution",
           "release",
           "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "rule",
+        "identity": "project.empty-is-not-failure@1",
+        "title": "An empty result and a failed command must not look alike",
+        "description": "A command that could not answer is reported as a command that could not answer, never as a command that answered nothing; a caller that cannot tell the two apart acts on a confident wrong answer.",
+        "path": ".ai/repo/rules/project/empty-is-not-failure.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3781,
+        "tags": [
+          "evidence",
+          "shell",
+          "diagnostics"
         ]
       },
       {
@@ -33829,6 +33860,21 @@
           "catalogue",
           "projections",
           "documentation"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "rule",
+        "identity": "project.work-is-claimed-before-it-is-built@1",
+        "title": "What already claims a path is checked before that path is built",
+        "description": "Before implementing something that creates a new module, command group, document kind or generated artifact, a worker asks what already claims those paths across every local and remote branch (scripts/collision-check --new <paths>), not only who the peer board says is working now, and announces its own intent afterwards.",
+        "path": ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3689,
+        "tags": [
+          "coordination",
+          "process"
         ]
       },
       {
@@ -35860,7 +35906,7 @@
         "id",
         "version"
       ],
-      "objects": 105
+      "objects": 108
     },
     {
       "name": "scope",

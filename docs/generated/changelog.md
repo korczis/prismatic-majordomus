@@ -156,6 +156,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow master once more (`f36420c30`)
 - **derive**: the projections follow eight branches and current master (`98f3dfbda`)
 - **derive**: the projections follow six branches folded together (`e15b311e7`)
 - **derive**: the projections follow the master merge (`c114a92f3`)
