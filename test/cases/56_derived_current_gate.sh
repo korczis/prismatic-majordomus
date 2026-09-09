@@ -17,6 +17,14 @@ W="$T/tree"
 mkdir -p "$W"
 (cd "$ROOT" && git archive HEAD) | (cd "$W" && tar xf -) || {
   echo "    could not export HEAD"; exit 1; }
+# The export is a repository, not just a tree, for the same reason the second half's is
+# below: the gate asks both halves, and the registry half discovers its index with
+# `git ls-files`. A tree with no `.git` of its own resolves to the runner's fixture repository
+# around it, indexes nothing, and reads every artifact as stale. Locally that half is skipped
+# for want of an executable and the case passes; in CI, where MAJORDOMUS_BIN is set, it ran
+# and failed on a tree that is current.
+(cd "$W" && git init -q . && git config user.email t@example.com && git config user.name t \
+  && git add -A && git commit -qm export) || { echo "    could not make the export a repository"; exit 1; }
 
 out="$(cd "$W" && scripts/pages current 2>&1)" || {
   echo "    the committed tree is not current; run scripts/derive and commit the result"

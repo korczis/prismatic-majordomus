@@ -28,8 +28,9 @@ The first `majordomus mcp` in a repository binds one shared server on the loopba
 interface and logs every surface it serves: the home page, this documentation, the Cockpit,
 the Swagger UI, the OpenAPI document, the capability routes and MCP over HTTP. Every later
 client attaches to it instead of starting another, and the server ends when its last client
-leaves. The client configurations for Claude Code, Codex and Gemini CLI at the repository
-root name one launcher, so opening the repository in any of them is enough.
+leaves. The client configurations at the repository root — one per provider that reads
+one, as `docs/generated/providers.md` lists them — name one launcher, so opening the
+repository in any of them is enough.
 
 What the server answers is the registry: a tool, a resource, a route or a command exists
 because a declaration exists, and the same declaration is what the reference and the

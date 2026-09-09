@@ -19,7 +19,7 @@ CRATE="$ROOT/apps/majordomus-cli"
 RC="$ROOT/scripts/rust-check"
 TH="$ROOT/scripts/rust-coverage-threshold"
 WF="$ROOT/.github/workflows/validate.yml"
-JF="$ROOT/justfile"
+JF="$(just_declaration)"   # the root file plus the modules it imports
 RULE="$ROOT/.ai/repo/rules/project/rust-cli-evidence.v1.md"
 CLAIMS="$ROOT/docs/CLAIMS.yaml"
 

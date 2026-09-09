@@ -3,7 +3,10 @@
 
 pub mod bench;
 pub mod capabilities;
+pub mod command_graph;
+pub mod completion;
 pub mod distribution;
+pub mod env;
 pub mod generate;
 pub mod mcp;
 pub mod product;
@@ -28,6 +31,9 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Web(args) => web::run(args),
         Command::Why(args) => why::run(args),
         Command::Distribution(args) => distribution::run(args),
+        Command::Env(args) => env::run(args),
+        Command::Commands(args) => command_graph::run(args),
+        Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
         Command::Product(args) => product::run(args),
     }

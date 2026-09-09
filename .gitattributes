@@ -32,6 +32,11 @@ site/data/registry/**               merge=derived
 # on them — and the pointer changes on every release, which is exactly when several branches
 # are in flight. test/cases/57_derived_merge_driver.sh is what noticed.
 site/static/releases/**             merge=derived
+# Every page under site/content/docs/ is written by scripts/generate-site-data out of the
+# CLI tree, the capability registry and the documents: the front matter carries a `weight`
+# derived from presentation order, so any branch that adds a command renumbers pages it
+# never touched. Merging two renumberings is never the answer; deriving is.
+site/content/docs/**                merge=derived
 site/content/docs/pages-status.md   merge=derived
 site/content/docs/plan-status.md    merge=derived
 site/content/docs/site-claims.md    merge=derived
@@ -53,6 +58,7 @@ share/sections/**                   merge=derived
 # so a merge of two branches leaves a stamp that describes neither.
 AGENTS.md                           merge=derived
 CLAUDE.md                           merge=derived
+.bb/AGENTS.md                       merge=derived
 
 # The installer and the document that describes it: both are written out of the release and
 # platform declarations, and both carry a fingerprint of the tree they were generated from.

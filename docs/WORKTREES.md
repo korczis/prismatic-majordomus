@@ -103,7 +103,7 @@ Every registered worktree has one standing:
 | `canonical` | a linked worktree at exactly its branch's path |
 | `misplaced` | a linked worktree somewhere else; migration brings it home |
 | `detached` | no branch, so no canonical path; never moved |
-| `ephemeral` | a session's scratch checkout, under the temporary directory or `<primary>/.claude/worktrees/`; reported, refused for commits, moved only on request |
+| `ephemeral` | a session's scratch checkout, under a declared scratch root — the temporary directory, `<primary>/.claude/worktrees/` for Claude Code, bb's thread directory under its data directory — as `share/providers.yaml` declares them; reported, refused for commits, moved only on request |
 | `missing` | a registration whose directory is gone; `repair` drops it |
 
 and every condition has a stable code, the same on every surface, each with a remedy:
@@ -129,6 +129,16 @@ and every condition has a stable code, the same on every surface, each with a re
 
 The topology is *valid* when no error-level diagnostic stands. Detached and ephemeral
 worktrees do not make it invalid; the guard still refuses a commit from an ephemeral one.
+
+Which directories make a checkout ephemeral is data, not a list in the executable:
+`share/providers.yaml` declares the tool's own scratch roots (the temporary directory) and
+each provider's — `<primary>/.claude/worktrees` for Claude Code, and for bb, an
+orchestrator that keeps a worktree per thread, `${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees`.
+A root is expanded against the primary checkout and the environment; a root the primary
+checkout itself lives under is skipped, so a test fixture in the temporary directory has
+ordinary siblings. The diagnostic names the provider whose root it matched. Somebody
+else's checkout is never migrated unasked and never cleaned up by the tool: the remedy the
+guard offers is to continue in the canonical worktree (ADR 0024).
 
 ## Commands
 
@@ -229,7 +239,7 @@ Layered, and honest about what each layer can do:
 | the command line | `worktree create` is the way a branch's worktree comes into being; a path is never an argument |
 | the git hook | `.githooks/pre-commit` asks `majordomus worktree guard`; a feature branch is committed only from its canonical worktree, the primary checkout only on the trunk |
 | the wiring check | the policy's `enforcement` list declares the guard, so `majordomus doctor` proves the hook asks it |
-| the repository entry | `.envrc` prints `worktree status` on entry, without building anything |
+| the repository entry | `.envrc` renders the repository environment on entry through `bin/majordomus-env`, which never builds ([`ENVIRONMENT.md`](ENVIRONMENT.md)); the worktree standing in that banner is a target |
 | the surfaces | the topology is on the command line, MCP, HTTP, the Swagger UI and the Cockpit, so a wrong one is visible everywhere |
 | the tests | the crate's suite proves the derivation, the safety and the migration against real git; the shell case proves the wiring |
 | the CI gate | `scripts/ci/worktree-check` holds the constant, the hook, the policy, the documents and the case together |
@@ -308,7 +318,7 @@ topology changes outside the process.
 | the capabilities | `apps/majordomus-cli/src/capability/builtin/worktree.rs` |
 | the command line | `apps/majordomus-cli/src/commands/worktree.rs`, declared in `src/cli.rs` |
 | the Cockpit page | `/cockpit/worktrees`, `apps/majordomus-cli/src/cockpit/pages.rs` |
-| the launcher the hook and `.envrc` use | `bin/majordomus-cli` |
+| the launcher the hook uses | `bin/majordomus-cli`; `.envrc` goes through `bin/majordomus-env`, the launcher that never builds, and both find the executable through `lib/rust_bin.sh` |
 | the hook | `.githooks/pre-commit`; the entry in `.ai/repo/policy.yaml` `enforcement` |
 | the gate | `scripts/ci/worktree-check`, gate `worktree-topology` in `.ai/repo/ci/gates.yaml` |
 | the tests | `apps/majordomus-cli/tests/worktree.rs`, `test/cases/96_worktree_topology.sh` |

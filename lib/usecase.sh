@@ -455,6 +455,14 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # the helpers the setup scripts use (pj_* for a plan model) come from the tool's test
   # library, which the distribution ships beside the fixtures
   local helpers="$fix/../../lib.sh"
+  # The tool under test is on PATH for the setup and every step, as an installed launcher
+  # would be. A provider hook the setup installs resolves the executable the way the
+  # provider would — the repository's own bin/, then PATH — and the scenario's repository has
+  # no bin/ of its own, so what it finds is whatever PATH holds. On a machine where
+  # `majordomus` is on PATH the recorded state is `verified`; on a runner where it is not,
+  # `wired`; and that difference reached the committed evidence, which is the one thing
+  # derivation may not do. The tool being exercised is the one the hook should find.
+  case ":$PATH:" in *":$MJ_BIN_DIR:"*) ;; *) PATH="$MJ_BIN_DIR:$PATH"; export PATH ;; esac
   ( cd "$W" && MJ="$MJ_BIN_DIR/majordomus" FIXTURE_SETUP="$fix/setup" ROOT="$MJ_ROOT" && export MJ FIXTURE_SETUP ROOT \
       && if [ -f "$helpers" ]; then # shellcheck disable=SC1090
         . "$helpers"; fi \

@@ -26,9 +26,19 @@ pages.yml ──► one job: build ──► check ──► push gh-pages ─�
 ```
 
 `plan` reads the model and decides. `structure` runs the cheap, deterministic gates every
-plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`). The other jobs run when the
-plan selected a gate they carry, in parallel, each through the script a person runs. `ci`
-always runs and turns the plan and the jobs' results into one verdict.
+plan has (`scripts/ci/shell-lint`, `scripts/ci/core-check`) and the structural gates the
+change needs. The other jobs run when the plan selected a gate they carry, in parallel, each
+through the script a person runs. `ci` always runs and turns the plan and the jobs' results
+into one verdict.
+
+A job does not list its gates. `scripts/ci/run-plan --plan plan.json --job <job>` reads the plan and runs every
+gate the model assigns to that job, in the model's order, skipping the ones the plan did not
+select; a job that runs one gate in a step of its own — the rust job's `rust-check`, which
+needs a mode and an artifact argument — says so beside that step with `--skip`. The
+alternative was tried and failed silently: four gates the model assigned to `structure` were
+reported as "run" in every plan summary and executed by nothing, because the job's steps
+were written by hand. A gate declared in `.ai/repo/ci/gates.yaml` now runs or is named as
+skipped, and nothing in between.
 
 Two workflows, and the split between them is what each decides. `.github/workflows/validate.yml`
 decides whether a change may merge. `.github/workflows/pages.yml` decides what the public site
@@ -83,8 +93,11 @@ text` prints it, and `.ai/repo/ci/gates.yaml` explains each. The commands are th
 person runs:
 
 ```bash
+scripts/ci/run-plan --job structure --plan plan.json   # one job's gates of a written plan, as CI runs them
 scripts/ci/shell-lint                  # syntax and shellcheck over the tool, the scripts, the cases
 scripts/ci/core-check                  # doctor, watch, context, continuity, plan validate, github-sync, references, site data
+scripts/ci/providers-check             # one provider declaration, every projection current, no provider list by hand
+scripts/ci/worktree-check              # one constant, the guard wired, every document naming the same container
 MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
 scripts/rust-check --ci                # every Rust gate but coverage, plus the benchmark check
 scripts/rust-check --integration       # the executable built and the registry checks only
