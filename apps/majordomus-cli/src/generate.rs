@@ -867,7 +867,12 @@ pub fn providers_markdown(value: &Value) -> String {
     s.push_str("Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).\n\n");
     s.push_str("| provider | title | bootstraps | client configuration | hooks | scratch roots |\n|---|---|---|---|---|---|\n");
     for p in value["providers"].as_array().into_iter().flatten() {
-        let str_of = |k: &str| p.get(k).and_then(Value::as_str).unwrap_or_default().to_string();
+        let str_of = |k: &str| {
+            p.get(k)
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string()
+        };
         s.push_str(&format!(
             "| `{}` | {} | {} | {} | {} | {} |\n",
             str_of("id"),
