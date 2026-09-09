@@ -35,9 +35,10 @@ expect_grep 'I0002 +open +READY'
 # --- the body is the same rendering the CLI prints, inside a generated region
 expect_exit 0 "$SYNC" --render I0002
 expect_grep '^<!-- majordomus:begin [0-9a-f]+ -->$'
+expect_grep '^<!-- majordomus:record I0002 -->$'
 expect_grep '^<!-- majordomus:end -->$'
 expect_grep '^# I0002 — Issue I0002$'
-"$SYNC" --render I0002 | sed '1d;$d' > /tmp/rendered.$$
+"$SYNC" --render I0002 | sed '1d;$d' | grep -v '^<!-- majordomus:record ' > /tmp/rendered.$$
 "$MJ" plan body I0002 > /tmp/cli.$$
 diff -q /tmp/rendered.$$ /tmp/cli.$$ >/dev/null \
   || { echo "    the projection body and 'plan body' are two different renderings"; diff /tmp/rendered.$$ /tmp/cli.$$ | head; exit 1; }
@@ -69,6 +70,40 @@ expect_exit 2 "$SYNC" --nonsense
 expect_grep 'unknown option'
 expect_exit 12 "$SYNC" --render I9999
 expect_grep "no record 'I9999'"
+
+
+# --- identity is what the record carries, not what its title says
+#     A GitHub number is GitHub's to assign and a title is a person's to rewrite. Matching
+#     on a title is how an adapter loses a renamed issue and then creates a second one for
+#     the same canonical record, which is the one mistake a projection may not make.
+FX_I=/tmp/fx_issues.$$; FX_M=/tmp/fx_ms.$$
+b64() { base64 | tr -d '\n'; }
+managed_body() { printf '<!-- majordomus:begin %s -->\n<!-- majordomus:record %s -->\nstale\n<!-- majordomus:end -->' "$1" "$2"; }
+printf '1\tM000 — Milestone M000\topen\n' > "$FX_M"
+
+# the remote holds I0002 under a title nobody would match, but it carries its identity
+printf '7\tRenamed by a person entirely\topen\t%s\tM000 — Milestone M000\tI0002\n' \
+  "$(managed_body deadbeefdeadbeef I0002 | b64)" > "$FX_I"
+MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" expect_exit 11 "$SYNC" --check
+expect_grep 'DRIFT +body +issue I0002 \(#7\)'
+expect_no_grep 'DRIFT +missing +issue I0002'
+
+# an issue projected before the marker existed is adopted by its title, once, and said so
+printf '8\tI0002 — Issue I0002\topen\t%s\tM000 — Milestone M000\t\n' \
+  "$(printf '<!-- majordomus:begin deadbeefdeadbeef -->\nstale\n<!-- majordomus:end -->' | b64)" > "$FX_I"
+MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" expect_exit 11 "$SYNC" --check
+expect_grep 'DRIFT +adopt +issue I0002 \(#8\)'
+
+# a title that merely looks canonical never captures a record that carries its own identity
+printf '9\tI0002 — Issue I0002\topen\t%s\tM000 — Milestone M000\tI0100\n' \
+  "$(managed_body deadbeefdeadbeef I0100 | b64)" > "$FX_I"
+MJ_GH_FIXTURE_ISSUES="$FX_I" MJ_GH_FIXTURE_MILESTONES="$FX_M" expect_exit 11 "$SYNC" --check
+expect_grep 'DRIFT +missing +issue I0002 is not on GitHub'
+
+# a fixture is a remote to read, never one to write
+MJ_GH_FIXTURE_ISSUES="$FX_I" expect_exit 15 "$SYNC" --apply
+expect_grep 'refuses a fixture remote'
+rm -f "$FX_I" "$FX_M"
 
 # --- nothing the adapter does writes to the canonical model
 before="$(find .ai/repo/project -type f -exec shasum -a 256 {} \; | sort)"

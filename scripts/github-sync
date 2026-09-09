@@ -24,6 +24,17 @@
 # what separates "the plan moved" from "a person edited the generated text": if the remote
 # hash matches the canonical hash and the region text still differs, a human changed it, and
 # --apply refuses to overwrite that without --force.
+#
+# Identity. A record is found on GitHub by the identity it carries in its own body, written
+# beside the hash as <!-- majordomus:record I0001 -->. A GitHub number is GitHub's to assign
+# and a title is a person's to edit, so neither can be the key: matching on a title means a
+# rename orphans the record and the next --apply creates a second one. An issue projected
+# before the marker existed is matched by its title once, reported as an adoption, and given
+# a marker by --apply.
+#
+#   MJ_GH_FIXTURE_ISSUES=<tsv> MJ_GH_FIXTURE_MILESTONES=<tsv> scripts/github-sync --check
+#     read the remote from files instead of the network, so reconciliation is provable
+#     offline. --apply refuses a fixture.
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -43,7 +54,7 @@ while [ $# -gt 0 ]; do
     --render) [ $# -ge 2 ] || { echo "github-sync: --render needs an id" >&2; exit 2; }; MODE=render; RENDER="$2"; shift 2 ;;
     --milestone) [ $# -ge 2 ] || { echo "github-sync: --milestone needs an id" >&2; exit 2; }; ONLY="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
-    -h|--help) sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,37p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "github-sync: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -62,10 +73,18 @@ render_body() {
   if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
   sha="$(mj_sha256 "$tmp" | cut -c1-16)"
   printf -- '<!-- majordomus:begin %s -->\n' "$sha"
+  printf -- '%s\n' "$(record_marker "$id")"
   cat "$tmp"
   printf -- '<!-- majordomus:end -->\n'
   rm -f "$tmp"
 }
+
+# The identity of a projected record, carried by the record itself. A GitHub number is
+# GitHub's to assign and a title is a person's to edit; neither can be the key. The marker
+# is written inside the generated region, so a splice rewrites it and nothing can leave it
+# behind pointing at the wrong record. It is what lets a person rename an issue on GitHub
+# without the adapter losing it — or, worse, creating a second one.
+record_marker() { printf -- '<!-- majordomus:record %s -->' "$1"; }
 canonical_hash() {
   local id="$1" tmp sha
   tmp="$(mktemp "${TMPDIR:-/tmp}/mj.gh.XXXXXX")"
@@ -116,8 +135,20 @@ if [ "$MODE" = plan ]; then
 fi
 
 # ---------------------------------------------------------------- live surface
-command -v gh >/dev/null 2>&1 || { echo "github-sync: gh is required for --$MODE" >&2; exit 12; }
-gh auth status >/dev/null 2>&1 || { echo "github-sync: gh is not authenticated; --$MODE needs it" >&2; exit 12; }
+# The remote can be a fixture. Reconciliation is the half of this adapter with logic worth
+# testing — which record is which, what state a finding is in, what applying would change —
+# and none of that should need a network or a token to prove. MJ_GH_FIXTURE_ISSUES and
+# MJ_GH_FIXTURE_MILESTONES name files in the same tab-separated shape the live read
+# produces. A fixture is a remote to observe, never one to mutate: --apply refuses it.
+FIXTURE=0
+if [ -n "${MJ_GH_FIXTURE_ISSUES:-}" ] || [ -n "${MJ_GH_FIXTURE_MILESTONES:-}" ]; then
+  FIXTURE=1
+  [ "$MODE" = apply ] && { echo "github-sync: --apply refuses a fixture remote; unset MJ_GH_FIXTURE_*" >&2; exit 15; }
+fi
+if [ "$FIXTURE" = 0 ]; then
+  command -v gh >/dev/null 2>&1 || { echo "github-sync: gh is required for --$MODE" >&2; exit 12; }
+  gh auth status >/dev/null 2>&1 || { echo "github-sync: gh is not authenticated; --$MODE needs it" >&2; exit 12; }
+fi
 
 DRIFT=0
 note() { printf '%-6s %-7s %s\n' "$1" "$2" "$3"; [ "$1" = DRIFT ] && DRIFT=$((DRIFT + 1)); return 0; }
@@ -125,17 +156,38 @@ note() { printf '%-6s %-7s %s\n' "$1" "$2" "$3"; [ "$1" = DRIFT ] && DRIFT=$((DR
 REMOTE_MS="$(mktemp "${TMPDIR:-/tmp}/mj.ms.XXXXXX")"
 REMOTE_IS="$(mktemp "${TMPDIR:-/tmp}/mj.is.XXXXXX")"
 trap 'rm -f "$REMOTE_MS" "$REMOTE_IS"; mj_cleanup' EXIT
-gh api --paginate "repos/$REPO/milestones?state=all" \
-  --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
-gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
-  --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64), (.milestone.title // "")] | @tsv' \
-  > "$REMOTE_IS" 2>/dev/null || true
+if [ "$FIXTURE" = 1 ]; then
+  [ -n "${MJ_GH_FIXTURE_MILESTONES:-}" ] && cat "$MJ_GH_FIXTURE_MILESTONES" > "$REMOTE_MS"
+  [ -n "${MJ_GH_FIXTURE_ISSUES:-}" ] && cat "$MJ_GH_FIXTURE_ISSUES" > "$REMOTE_IS"
+  true
+else
+  gh api --paginate "repos/$REPO/milestones?state=all" \
+    --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
+  gh api --paginate "repos/$REPO/issues?state=all&per_page=100" \
+    --jq '.[] | select(has("pull_request")|not) | [(.number|tostring), .title, .state, (.body // "" | @base64), (.milestone.title // ""), ((.body // "") | [scan("majordomus:record ([A-Za-z0-9_.-]+)")] | if length > 0 then .[0][0] else "" end)] | @tsv' \
+    > "$REMOTE_IS" 2>/dev/null || true
+fi
 
+# One resolution for every question about a remote issue. A record is found by the identity
+# it carries in its own body; a record that carries none is found once by its title prefix,
+# which is how the issues projected before the marker existed are adopted rather than
+# duplicated. A record that carries an identity is never matched by title, so renaming it on
+# GitHub moves nothing, and a title a person rewrote cannot capture another record's slot.
+remote_issue_line() {
+  awk -F'\t' -v id="$1" -v p="$1 — " '
+    $6 == id            { print; found = 1; exit }
+    $6 == "" && index($2,p)==1 && !legacy { legacy = $0 }
+    END { if (!found && legacy != "") print legacy }' "$REMOTE_IS"
+}
+# True when the record was matched by its title because it carries no identity marker: the
+# state that --apply resolves by writing one, and that --check reports so it is not mistaken
+# for a projection that is current.
+remote_issue_is_legacy() { [ -n "$(remote_issue_line "$1")" ] && [ -z "$(remote_issue_line "$1" | cut -f6)" ]; }
 remote_milestone_number() { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_MS"; }
-remote_issue_number()     { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $1; exit }' "$REMOTE_IS"; }
-remote_issue_state()      { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $3; exit }' "$REMOTE_IS"; }
-remote_issue_body()       { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $4; exit }' "$REMOTE_IS" | base64 --decode 2>/dev/null || true; }
-remote_issue_milestone()  { awk -F'\t' -v p="$1 — " 'index($2,p)==1 { print $5; exit }' "$REMOTE_IS"; }
+remote_issue_number()     { remote_issue_line "$1" | cut -f1; }
+remote_issue_state()      { remote_issue_line "$1" | cut -f3; }
+remote_issue_body()       { remote_issue_line "$1" | cut -f4 | base64 --decode 2>/dev/null || true; }
+remote_issue_milestone()  { remote_issue_line "$1" | cut -f5; }
 
 # region hash recorded in a remote body, empty when the body carries no generated region
 remote_region_hash() { printf '%s\n' "$1" | sed -n 's/^<!-- majordomus:begin \([0-9a-f]*\) -->$/\1/p' | head -1; }
@@ -150,17 +202,12 @@ region_edited() {
   [ "$rh" = "$cur" ] || return 1
   tmp_r="$(mktemp "${TMPDIR:-/tmp}/mj.rr.XXXXXX")"; tmp_c="$(mktemp "${TMPDIR:-/tmp}/mj.rc.XXXXXX")"
   printf '%s\n' "$body" > "$tmp_r"
-  mj_region_extract "$tmp_r" > "$tmp_c" 2>/dev/null || { rm -f "$tmp_r" "$tmp_c"; return 1; }
+  mj_region_extract "$tmp_r" 2>/dev/null | grep -v '^<!-- majordomus:record ' > "$tmp_c" \
+    || { rm -f "$tmp_r" "$tmp_c"; return 1; }
   local h; h="$(mj_sha256 "$tmp_c" | cut -c1-16)"
   rm -f "$tmp_r" "$tmp_c"
   # the region content hashes differently from the body the recorded hash was taken over
-  [ "$h" != "$(canonical_region_hash "$id")" ]
-}
-canonical_region_hash() {
-  local id="$1" tmp h
-  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.cr.XXXXXX")"
-  if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$tmp"; else mj_plan_body_issue "$id" > "$tmp"; fi
-  h="$(mj_sha256 "$tmp" | cut -c1-16)"; rm -f "$tmp"; printf '%s' "$h"
+  [ "$h" != "$(canonical_hash "$id")" ]
 }
 
 # ---------------------------------------------------------------- labels
@@ -211,7 +258,7 @@ done
 
 # A milestone created a moment ago is not in the listing this run started with, and an issue
 # cannot be assigned to a milestone the adapter does not know the title of. Re-read.
-if [ "$MODE" = apply ]; then
+if [ "$MODE" = apply ] && [ "$FIXTURE" = 0 ]; then
   gh api --paginate "repos/$REPO/milestones?state=all" \
     --jq '.[] | [(.number|tostring), .title, .state] | @tsv' > "$REMOTE_MS" 2>/dev/null || true
 fi
@@ -227,27 +274,34 @@ for id in $(selected_issues); do
     if [ "$MODE" = apply ]; then
       tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"; printf '%s\n' "$body" > "$tmp"
       if [ -n "$(remote_milestone_number "$ms")" ]; then
-        gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
-          --label "$(labels_of "$id")" --milestone "$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")" >/dev/null
+        url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
+          --label "$(labels_of "$id")" --milestone "$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")")"
       else
-        gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
-          --label "$(labels_of "$id")" >/dev/null
+        url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
+          --label "$(labels_of "$id")")"
         note DRIFT milestone "issue $id has no GitHub milestone; $ms does not exist there"
       fi
       rm -f "$tmp"
+      # The number comes from the creation itself. Searching for the title back would put
+      # identity in text a person may rewrite, which is the defect this issue removes.
+      num="${url##*/}"
+      case "$num" in ''|*[!0-9]*) note DRIFT created "issue $id was created but GitHub returned no number in '$url'"; num="" ;; esac
       # a created issue starts open; canonical status decides whether it stays that way
-      if [ "$want_state" = closed ]; then
-        num="$(gh issue list --repo "$REPO" --state all --limit 200 --search "$id in:title" --json number,title \
-          --jq "map(select(.title | startswith(\"$id — \"))) | .[0].number" 2>/dev/null || true)"
-        [ -n "$num" ] && [ "$num" != null ] && gh issue close "$num" --repo "$REPO" >/dev/null 2>&1
+      if [ "$want_state" = closed ] && [ -n "$num" ]; then
+        gh issue close "$num" --repo "$REPO" >/dev/null 2>&1 || true
       fi
-      note OK created "issue $id"
+      note OK created "issue $id${num:+ (#$num)}"
     fi
     continue
   fi
   remote="$(remote_issue_body "$id")"
   have_state="$(remote_issue_state "$id")"
   edited=0
+  legacy=0
+  if remote_issue_is_legacy "$id"; then
+    legacy=1
+    note DRIFT adopt "issue $id (#$num) carries no identity marker; matched by title, and --apply writes one"
+  fi
   if region_edited "$id" "$remote"; then
     note DRIFT edited "issue $id (#$num) has a hand-edited generated region; not overwriting"
     [ "$FORCE" = 1 ] || continue
@@ -256,6 +310,7 @@ for id in $(selected_issues); do
     edited=1
   fi
   changed=$edited
+  [ "$legacy" = 1 ] && changed=1
   want_ms="$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")"
   if [ -n "$want_ms" ] && [ "$(remote_issue_milestone "$id")" != "$want_ms" ]; then
     note DRIFT milestone "issue $id (#$num) is not on GitHub milestone $ms"
@@ -270,7 +325,8 @@ for id in $(selected_issues); do
     tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"
     hostf="$(mktemp "${TMPDIR:-/tmp}/mj.host.XXXXXX")"; printf '%s\n' "$remote" > "$hostf"
     bodyf="$(mktemp "${TMPDIR:-/tmp}/mj.reg.XXXXXX")"
-    if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" > "$bodyf"; else mj_plan_body_issue "$id" > "$bodyf"; fi
+    record_marker "$id" > "$bodyf"
+    if mj_pj_is_milestone "$id"; then mj_plan_body_milestone "$id" >> "$bodyf"; else mj_plan_body_issue "$id" >> "$bodyf"; fi
     mj_region_splice "$hostf" "$bodyf" "$(canonical_hash "$id")" > "$tmp"
     gh issue edit "$num" --repo "$REPO" --body-file "$tmp" >/dev/null
     [ "$want_state" = closed ] && gh issue close "$num" --repo "$REPO" >/dev/null 2>&1 || true
@@ -282,8 +338,11 @@ for id in $(selected_issues); do
 done
 
 # ---------------------------------------------------------------- extra managed issues
-awk -F'\t' '{ print $1 "\t" $2 }' "$REMOTE_IS" | while IFS="$(printf '\t')" read -r n t; do
-  cid="$(printf '%s' "$t" | sed -n 's/^\([MI][0-9][0-9]*\) — .*/\1/p')"
+awk -F'\t' '{ print $1 "\t" ($6 != "" ? $6 : $2) }' "$REMOTE_IS" | while IFS="$(printf '\t')" read -r n t; do
+  case "$t" in
+    *' — '*) cid="$(printf '%s' "$t" | sed -n 's/^\([MI][0-9][0-9]*\) — .*/\1/p')" ;;
+    *)       cid="$t" ;;
+  esac
   [ -n "$cid" ] || continue
   [ -f "$(mj_pj_flat "$cid")" ] || printf '%-6s %-7s %s\n' DRIFT extra "issue #$n claims to be $cid, which is not in the canonical model"
 done

@@ -6,7 +6,7 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "9c67e16c45e0ac746a3dfba28b6f02672e1a30b5abdc7ec8559b10c7c3e48f4c",
+    "fingerprint": "5971e240266848c9f88adc33b31474483a00694990af609b88448aa825244ecf",
     "summary": {
       "total": 1081,
       "builtin": 44,
@@ -14798,7 +14798,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2d2315c1023f009202c60e72c9fc81cf293a49a5e6e1d6b9344345044e8df553",
+    "fingerprint": "df40e325e5a1c605f8270fa267c6c60f1877db184b3d58bd9c95aa1227543097",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -17976,7 +17976,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 47027
+        "bytes": 46966
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -22072,12 +22072,12 @@
         "uri": "majordomus://issue/I1301",
         "kind": "issue",
         "identity": "I1301",
-        "title": "The remote read is paginated to exhaustion and the identity of a record is data, not a parsed title",
-        "description": "Replace the two mechanisms that make the projection unsafe to run at the size the model has already reached: a remote lookup that matches an `I0001 — ` prefix in a GitHub title, and a remote read capped at 200 items on an endpoint that returns issues and pull requests together.",
+        "title": "The identity of a projected record is what the record carries, not what its title says",
+        "description": "Make the adapter find a remote record by an identity the record itself carries, so that a person may rename an issue on GitHub without the projection losing it or creating a second one, and make reconciliation provable without a network.",
         "path": ".ai/repo/project/issues/I1301.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3085
+        "bytes": 3952
       },
       {
         "uri": "majordomus://issue/I1302",
@@ -22341,11 +22341,11 @@
         "kind": "milestone",
         "identity": "work-graph-github",
         "title": "The projection to GitHub is gated, identified and traversable, and a merged pull request leads back to the outcome it served",
-        "description": "The projection cannot rot silently: a gate runs the drift check on every change that can move the model or the adapter, and drift is a CI failure with the record named. Identity is data rather than a parsed title, so renaming a GitHub title moves nothing and creates no duplicate, and the remote read is paginated to completion rather than to a page. The reconciliation vocabulary distinguishes the states it currently conflates, so `missing` no longer stands for both a record never created and a record a person deleted, and a remote edit is reported as a remote edit. Above the projection, a pull request names the issue it realises and the edge is derived from git and GitHub rather than remembered, so a merged commit leads back to the acceptance criteria it satisfied and an outcome leads forward to the evidence that it holds. The derivations the shell already computes — ready, blocked, waves, next, status — are readable through the same capability surface as every other thing this repository knows, rather than only from a terminal.",
+        "description": "The projection cannot rot silently: a gate runs the drift check on every change that can move the model or the adapter, and drift is a CI failure with the record named. Identity travels with the record rather than being parsed out of its title, so renaming a GitHub title moves nothing and creates no duplicate, and the remote can be a fixture, so which record is which is provable with no network. The reconciliation vocabulary distinguishes the states it currently conflates, so `missing` no longer stands for both a record never created and a record a person deleted, and a remote edit is reported as a remote edit. Above the projection, a pull request names the issue it realises and the edge is derived from git and GitHub rather than remembered, so a merged commit leads back to the acceptance criteria it satisfied and an outcome leads forward to the evidence that it holds. The derivations the shell already computes — ready, blocked, waves, next, status — are readable through the same capability surface as every other thing this repository knows, rather than only from a terminal.",
         "path": ".ai/repo/project/milestones/work-graph-github.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 5820
+        "bytes": 5886
       },
       {
         "uri": "majordomus://moment/abandoned-worktree",
@@ -25149,7 +25149,7 @@
         "identity": "test/cases/45_github_projection.sh",
         "path": "test/cases/45_github_projection.sh",
         "source_class": "case",
-        "bytes": 3782
+        "bytes": 5852
       },
       {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
