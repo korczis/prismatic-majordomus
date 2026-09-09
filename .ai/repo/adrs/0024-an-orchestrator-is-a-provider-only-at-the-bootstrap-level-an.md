@@ -50,8 +50,11 @@ them and neither could be read off a page:
   `.claude/settings.json` "run automatically in the SDK with no extra configuration" when
   `settingSources` includes `project`, which bb sets. Prompt capture and the episode boundary
   for Claude Code under bb are therefore the same shims, fired by the same events, as under
-  the CLI. Whether `.mcp.json` is read the same way is not in the SDK's table of what
-  `settingSources` loads and remains to be proved by a synthetic run.
+  the CLI. The SDK's MCP guide says the same of `.mcp.json`: "picked up when the `project`
+  setting source is enabled", so the shared server's client configuration reaches a Claude
+  Code thread under bb too, with one difference worth knowing — a server loaded from a
+  settings file is given two seconds before the first turn, so `bin/majordomus-mcp` building
+  the executable on a cold checkout shows `pending` at init and connects afterwards.
 - The worktree topology refuses the orchestrator's checkouts. bb places a managed worktree at
   `~/.bb/plugins/environment-git-worktree/host-data/worktrees/<thread-id>/<repo>` on a fresh
   branch. A worktree created there on 2026-09-09 was reported `misplaced` with
@@ -138,10 +141,11 @@ be a code change to a module that has nothing to do with it.
   Code runs under bb, not against `bb`. A reader of the archive sees the agent, not the
   orchestrator, which is the truth of who saw the prompt. Agents bb runs over ACP remain
   uncaptured, and `capture status` says `unsupported` for them as it does today.
-- Two verifications are owed before the row is accepted, and both are one command each: a
-  synthetic Claude Code run under bb with `capture status` and the session shim, to prove
-  the SDK path fires the shims in this repository and to settle `.mcp.json`; and a commit
-  attempt from a bb worktree after the declaration lands, to prove the guard names the
-  right remedy.
+- One verification is still owed: a synthetic Claude Code run under an installed bb with
+  `capture status` and the session shim, to prove the SDK path fires the shims in this
+  repository as the documentation says it does. The other was done before the row was
+  accepted: a worktree created at bb's path is reported `ephemeral`, "created by bb", and
+  the guard refuses a commit from it with the remedy of continuing in the canonical
+  worktree.
 - Nothing here is specific to bb. The next orchestrator is a row, a template and a
   declared root.
