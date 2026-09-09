@@ -31,6 +31,11 @@ sections:
         rank: 0
         changes:
           - kind: feat
+            scope: ci
+            subject: "a gate says the published site came from master, and is being served"
+            breaking: false
+            commit: fbc1da919
+          - kind: feat
             scope: release
             subject: "the version rises to 0.4.0, and the projection gains its page, gate and record"
             breaking: false
@@ -144,6 +149,21 @@ sections:
         heading: Fixed
         rank: 1
         changes:
+          - kind: fix
+            scope: commands
+            subject: the module asserts the three projections it documents
+            breaking: false
+            commit: 5609ab148
+          - kind: fix
+            scope: site
+            subject: the changelog page reads the groups the document carries
+            breaking: false
+            commit: b551a3327
+          - kind: fix
+            scope: docs
+            subject: the semantics module documents a validation that is not an item
+            breaking: false
+            commit: ed649c769
           - kind: fix
             scope: ui
             subject: "a scroll container is a containing block for what it positions, and the finding that says so names it"
