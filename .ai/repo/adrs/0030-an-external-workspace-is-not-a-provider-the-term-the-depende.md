@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0025
+id: adr-0030
 kind: adr
 title: An external workspace is not a provider: the term, the dependency posture, and where synced content lives
 status: proposed

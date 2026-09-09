@@ -109,6 +109,9 @@ pub enum Target {
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
     /// that a manifest naming half the artifacts cannot exist.
     Manifest,
+    /// The provider artifacts of every deployment object: `deploy/Dockerfile`,
+    /// `.dockerignore` and `fly.toml` (see [`crate::deploy::render`]).
+    Deployment,
 }
 
 impl Target {
@@ -127,6 +130,7 @@ impl Target {
         Target::Changelog,
         Target::Distribution,
         Target::Manifest,
+        Target::Deployment,
     ];
 
     /// Every target but the manifest, in generation order: the artifacts the manifest
@@ -158,6 +162,7 @@ impl Target {
             Target::Changelog => "changelog",
             Target::Distribution => "distribution",
             Target::Manifest => "manifest",
+            Target::Deployment => "deployment",
         }
     }
 }
@@ -547,6 +552,7 @@ pub fn artifacts(
             | Target::Web
             | Target::Changelog
             | Target::Distribution
+            | Target::Deployment
             | Target::Manifest => {}
         }
     }
@@ -679,6 +685,24 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     }
     if targets.contains(&Target::Distribution) {
         out.extend(distribution_artifacts(app)?);
+    }
+    if targets.contains(&Target::Deployment) {
+        for object in app
+            .context
+            .index
+            .objects
+            .iter()
+            .filter(|o| o.kind == crate::deploy::KIND)
+        {
+            let deployment = crate::deploy::Deployment::parse(object)
+                .map_err(|refusal| Error::InvalidDeployment {
+                    reason: refusal.to_string(),
+                })?;
+            out.extend(crate::deploy::render::artifacts(
+                &deployment,
+                &object.provenance.path,
+            ));
+        }
     }
     Ok(out)
 }

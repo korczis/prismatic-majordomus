@@ -489,6 +489,31 @@
       ]
     },
     {
+      "id": "ai.repo.workspaces",
+      "path": ".ai/repo/workspaces/README.md",
+      "dir": ".ai/repo/workspaces",
+      "depth": 2,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "External workspaces",
+      "description": "One declaration per external workspace this repository is authorised to read; the content it names is this checkout's state and is never here.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "share/schemas/majordomus/workspace/workspace.v1.schema.json",
+        "share/kinds.yaml"
+      ]
+    },
+    {
       "id": "ai.repo.benchmarks.pages",
       "path": ".ai/repo/benchmarks/pages/README.md",
       "dir": ".ai/repo/benchmarks/pages",
@@ -804,7 +829,7 @@
       "depth": 3,
       "name": "pages",
       "contract": {
-        "index": 21,
+        "index": 22,
         "id": "ai.repo.benchmarks.pages",
         "path": ".ai/repo/benchmarks/pages/README.md",
         "dir": ".ai/repo/benchmarks/pages",
@@ -839,7 +864,7 @@
       "depth": 3,
       "name": "rust",
       "contract": {
-        "index": 22,
+        "index": 23,
         "id": "ai.repo.benchmarks.rust",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "dir": ".ai/repo/benchmarks/rust",
@@ -1023,7 +1048,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 23,
+        "index": 24,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -1129,7 +1154,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 24,
+        "index": 25,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1164,7 +1189,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 25,
+        "index": 26,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1342,7 +1367,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 26,
+        "index": 27,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -1615,11 +1640,47 @@
         "paths": [],
         "sha256": "b565315eb51039456fd46d9ec37cfc8f267042cfe6ef88cb4aa944e2e5bb835f"
       }
+    },
+    {
+      "dir": ".ai/repo/workspaces",
+      "document": "ai.repo.workspaces",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 2,
+      "name": "workspaces",
+      "contract": {
+        "index": 21,
+        "id": "ai.repo.workspaces",
+        "path": ".ai/repo/workspaces/README.md",
+        "dir": ".ai/repo/workspaces",
+        "depth": 2,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "External workspaces",
+        "description": "One declaration per external workspace this repository is authorised to read; the content it names is this checkout's state and is never here.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "share/schemas/majordomus/workspace/workspace.v1.schema.json",
+          "share/kinds.yaml"
+        ],
+        "paths": [],
+        "sha256": "d9912abe2fca620ff09bc10657fd5557dbbeefab2ae6cff6f5064bed3fadd152"
+      }
     }
   ],
   "counts": {
-    "directories": 34,
-    "documented": 26,
+    "directories": 35,
+    "documented": 27,
     "exempt": 8
   }
 }

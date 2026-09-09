@@ -9,6 +9,10 @@ sections:
   - version: unreleased
     unreleased: true
     decisions:
+      - id: adr-0030
+        title: "An external workspace is not a provider: the term, the dependency posture, and where synced content lives"
+        status: proposed
+        date: "2026-09-09"
       - id: adr-0029
         title: "The changelog is a projection of what the repository already records, and the version has one writer rather than one source"
         status: proposed
@@ -50,6 +54,11 @@ sections:
             subject: "the shell integration installs itself, and takes itself out again"
             breaking: false
             commit: 2a7af4272
+          - kind: feat
+            scope: workspace
+            subject: "a workspace is a kind, and only its content is local"
+            breaking: false
+            commit: f9bbc636a
           - kind: feat
             scope: commands
             subject: "a surface that withholds a command says why, including the last silent case"
@@ -140,10 +149,45 @@ sections:
             subject: one typed snapshot of what a checkout is
             breaking: false
             commit: aa64215da
+          - kind: feat
+            scope: generate
+            subject: "the composed graph is an artifact of the one plan, with a schema and nothing private"
+            breaking: false
+            commit: 674b89907
       - kind: fix
         heading: Fixed
         rank: 1
         changes:
+          - kind: fix
+            scope: docs
+            subject: the semantics module documents a validation that is not an item
+            breaking: false
+            commit: ed649c769
+          - kind: fix
+            scope: share
+            subject: a MAJORDOMUS_SHARE naming another worktree of this repository is refused
+            breaking: false
+            commit: fc9864ebc
+          - kind: fix
+            scope: derive
+            subject: every stage names itself as it begins and reports what it cost
+            breaking: false
+            commit: 59aa3769c
+          - kind: fix
+            scope: ci
+            subject: ci-plan tells a bare path list which spelling it wanted
+            breaking: false
+            commit: 5bd2f77bc
+          - kind: fix
+            scope: cli
+            subject: an unknown command that the Rust executable provides says so and names the launcher
+            breaking: false
+            commit: 59f5c8b75
+          - kind: fix
+            scope: ui
+            subject: "a scroll container is a containing block for what it positions, and the finding that says so names it"
+            breaking: false
+            commit: 2d328460b
           - kind: fix
             scope: ci
             subject: a job that hangs fails instead of holding a runner for a shift
@@ -333,6 +377,26 @@ sections:
         rank: 4
         changes:
           - kind: docs
+            scope: plan
+            subject: "I1301 is done, and I1302 may not land its schema alone"
+            breaking: false
+            commit: 012fed644
+          - kind: docs
+            scope: plan
+            subject: the external-workspaces milestone and its ten issues
+            breaking: false
+            commit: 54c5f45ee
+          - kind: docs
+            scope: adr
+            subject: the audit withdraws two thirds of ADR 0025
+            breaking: false
+            commit: 7f75414bf
+          - kind: docs
+            scope: adr
+            subject: an external workspace is not a provider
+            breaking: false
+            commit: a845624ad
+          - kind: docs
             scope: adr
             subject: "the synthetic run under bb was done, and it says what archiving a thread does not"
             breaking: false
@@ -382,6 +446,16 @@ sections:
         rank: 5
         changes:
           - kind: test
+            scope: workspace
+            subject: the declaration is proved to carry no credential
+            breaking: false
+            commit: 3d9c929a5
+          - kind: test
+            scope: order
+            subject: "the gate is driven against fixture trees, and driving it found five more unpinned sorts"
+            breaking: false
+            commit: f6af28819
+          - kind: test
             scope: gate
             subject: "case 56's first export is a repository too, so CI asks the same gate as a laptop"
             breaking: false
@@ -417,6 +491,21 @@ sections:
         changes:
           - kind: chore
             scope: derive
+            subject: the projections follow the entry-point fixes
+            breaking: false
+            commit: 691fab7db
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: 44468dbc1
+          - kind: chore
+            scope: order
+            subject: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are
+            breaking: false
+            commit: c72d294cc
+          - kind: chore
+            scope: derive
             subject: the projections follow the two adopted sessions
             breaking: false
             commit: 4066bdf4f
@@ -445,6 +534,11 @@ sections:
             subject: the projections follow the merge with master
             breaking: false
             commit: d5d95779c
+          - kind: chore
+            scope: derive
+            subject: the projections follow ADR 0025
+            breaking: false
+            commit: a3a267e8e
           - kind: chore
             scope: derive
             subject: "the projections follow the merge of #114"
@@ -570,6 +664,35 @@ sections:
             subject: the projections follow the merge
             breaking: false
             commit: c85c2cb0b
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: 8bafa2854
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: e25278a71
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge with master
+            breaking: false
+            commit: 2365af0cf
+          - kind: chore
+            scope: plan
+            subject: "I1005 done, with the evidence the contract asked for"
+            breaking: false
+            commit: 27662495a
+      - kind: other
+        heading: Other
+        rank: 8
+        changes:
+          - kind: other
+            scope: feature/graph-model
+            subject: "uncommitted work found in the worktree at the topology migration, committed as it was"
+            breaking: false
+            commit: 034f334bf
     artifacts: []
   - version: "0.3.1"
     tag: v0.3.1

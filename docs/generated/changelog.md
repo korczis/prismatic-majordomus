@@ -11,6 +11,7 @@ Current version: **0.4.0**
 
 ### Decisions
 
+- **ADR-0030** An external workspace is not a provider: the term, the dependency posture, and where synced content lives _(proposed)_
 - **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(proposed)_
 - **ADR-0026** A capability module's area is derived from the features that name it, not declared beside it _(accepted)_
 - **ADR-0025** Presentation order is one total order owned by the crate, not a decision each surface makes _(accepted)_
@@ -22,6 +23,7 @@ Current version: **0.4.0**
 - **release**: the changelog is a projection, and the version is derived from the commits (`82583eba1`)
 - **skills**: a description that does not tell two skills apart is a finding (`7af039a4a`)
 - **completion**: the shell integration installs itself, and takes itself out again (`2a7af4272`)
+- **workspace**: a workspace is a kind, and only its content is local (`f9bbc636a`)
 - **commands**: a surface that withholds a command says why, including the last silent case (`26743dac5`)
 - **product**: a capability module's area is derived from the features that name it, and the sidebar groups by it (`1c36ca9a2`)
 - **order**: one canonical presentation order, total and natural, owned by the crate (`d7df74e93`)
@@ -40,9 +42,16 @@ Current version: **0.4.0**
 - **env**: a direnv adapter that carries no repository logic, and a modular justfile (`d648e974c`)
 - **cli**: majordomus env, and the split between what may build the index (`c6bbce3a2`)
 - **env**: one typed snapshot of what a checkout is (`aa64215da`)
+- **generate**: the composed graph is an artifact of the one plan, with a schema and nothing private (`674b89907`)
 
 ### Fixed
 
+- **docs**: the semantics module documents a validation that is not an item (`ed649c769`)
+- **share**: a MAJORDOMUS_SHARE naming another worktree of this repository is refused (`fc9864ebc`)
+- **derive**: every stage names itself as it begins and reports what it cost (`59aa3769c`)
+- **ci**: ci-plan tells a bare path list which spelling it wanted (`5bd2f77bc`)
+- **cli**: an unknown command that the Rust executable provides says so and names the launcher (`59f5c8b75`)
+- **ui**: a scroll container is a containing block for what it positions, and the finding that says so names it (`2d328460b`)
 - **ci**: a job that hangs fails instead of holding a runner for a shift (`1ea8da126`)
 - **completion**: TAB in this repository asks a program that can answer it (`ff2d64e57`)
 - **order**: the collections that disagreed with each other, and a rule that keeps them from disagreeing again (`28304f300`)
@@ -85,6 +94,10 @@ Current version: **0.4.0**
 
 ### Documentation
 
+- **plan**: I1301 is done, and I1302 may not land its schema alone (`012fed644`)
+- **plan**: the external-workspaces milestone and its ten issues (`54c5f45ee`)
+- **adr**: the audit withdraws two thirds of ADR 0025 (`7f75414bf`)
+- **adr**: an external workspace is not a provider (`a845624ad`)
 - **adr**: the synthetic run under bb was done, and it says what archiving a thread does not (`cc6540f2e`)
 - **adr**: .mcp.json reaches Claude Code under bb, and the projection baseline takes the parent command the unwired gate let in (`929c29f8e`)
 - **adr**: an orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts (`7da5ad9b2`)
@@ -97,6 +110,8 @@ Current version: **0.4.0**
 
 ### Tests
 
+- **workspace**: the declaration is proved to carry no credential (`3d9c929a5`)
+- **order**: the gate is driven against fixture trees, and driving it found five more unpinned sorts (`f6af28819`)
 - **gate**: case 56's first export is a repository too, so CI asks the same gate as a laptop (`8b6b9a982`)
 - **distribution**: the installability report, over states this repository is not in (`b1be17353`)
 - **gate**: the registry half needs a repository, not just a tree (`b7f88c73e`)
@@ -106,12 +121,16 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the entry-point fixes (`691fab7db`)
+- **derive**: the projections follow the merge with master (`44468dbc1`)
+- **order**: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are (`c72d294cc`)
 - **derive**: the projections follow the two adopted sessions (`4066bdf4f`)
 - **sessions**: adopt the two episodes this checkout left unrecorded (`1015d8ff8`)
 - **derive**: the projections follow the merge with master (`ee9e79b3f`)
 - **derive**: the projections follow the five-PR integration, with adr-0028 renumbered (`60bc499e4`)
 - **derive**: the projections follow the skill description invariant (`6d19fc7ba`)
 - **derive**: the projections follow the merge with master (`d5d95779c`)
+- **derive**: the projections follow ADR 0025 (`a3a267e8e`)
 - **derive**: the projections follow the merge of #114 (`867f3a9f8`)
 - **derive**: the projections follow the merge (`946bc36e0`)
 - **derive**: the projections follow the merge (`09d410b5a`)
@@ -137,6 +156,14 @@ Current version: **0.4.0**
 - **derive**: the projections follow the two check corrections (`6cda9bcc2`)
 - **derive**: the use-case evidence re-recorded at normal speed (`3c5705d1e`)
 - **derive**: the projections follow the merge (`c85c2cb0b`)
+- **derive**: the projections follow the merge with master (`8bafa2854`)
+- **derive**: the projections follow the merge with master (`e25278a71`)
+- **derive**: the projections follow the merge with master (`2365af0cf`)
+- **plan**: I1005 done, with the evidence the contract asked for (`27662495a`)
+
+### Other
+
+- **feature/graph-model**: uncommitted work found in the worktree at the topology migration, committed as it was (`034f334bf`)
 
 
 ## v0.3.1 — 2026-09-08

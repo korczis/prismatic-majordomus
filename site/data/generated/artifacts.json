@@ -8,6 +8,13 @@
       "source": "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
     },
     {
+      "document": "deployment",
+      "format": "text",
+      "path": ".dockerignore",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
+    },
+    {
       "document": "providers/agents",
       "format": "markdown",
       "path": "AGENTS.md",
@@ -20,6 +27,13 @@
       "path": "CLAUDE.md",
       "schema": null,
       "source": "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
+    },
+    {
+      "document": "deployment",
+      "format": "text",
+      "path": "deploy/Dockerfile",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "document": "install-guide",
@@ -76,6 +90,27 @@
       "path": "docs/generated/capabilities.md",
       "schema": null,
       "source": "the canonical Majordomus capability registry"
+    },
+    {
+      "document": "changelog",
+      "format": "json",
+      "path": "docs/generated/changelog.json",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "document": "changelog",
+      "format": "markdown",
+      "path": "docs/generated/changelog.md",
+      "schema": null,
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "document": "changelog",
+      "format": "yaml",
+      "path": "docs/generated/changelog.yaml",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
     },
     {
       "document": "cli",
@@ -211,6 +246,13 @@
       "source": "the `quality` module of the canonical Majordomus capability registry"
     },
     {
+      "document": "modules/release",
+      "format": "markdown",
+      "path": "docs/generated/modules/release.md",
+      "schema": null,
+      "source": "the `release` module of the canonical Majordomus capability registry"
+    },
+    {
       "document": "modules/repository",
       "format": "markdown",
       "path": "docs/generated/modules/repository.md",
@@ -300,6 +342,13 @@
       "path": "docs/generated/web.yaml",
       "schema": "majordomus/web-topology/v1",
       "source": "the resolved web topology of this repository"
+    },
+    {
+      "document": "deployment",
+      "format": "text",
+      "path": "fly.toml",
+      "schema": null,
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "document": "allow/adr",
@@ -468,6 +517,13 @@
       "path": "share/allow/use-case.txt",
       "schema": null,
       "source": "the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`"
+    },
+    {
+      "document": "allow/workspace",
+      "format": "text",
+      "path": "share/allow/workspace.txt",
+      "schema": null,
+      "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
     },
     {
       "document": "schemas/majordomus.adr/v1",
@@ -823,6 +879,13 @@
     },
     {
       "formats": [
+        "text"
+      ],
+      "id": "allow/workspace",
+      "source": "the JSON Schema `majordomus.workspace/v1` of the kind it validates"
+    },
+    {
+      "formats": [
         "json",
         "markdown",
         "yaml"
@@ -854,9 +917,26 @@
         "markdown",
         "yaml"
       ],
+      "id": "changelog",
+      "schema": "majordomus/changelog/v1",
+      "source": "the layer's release records, the decisions dated in each release's window, and the commits in its range"
+    },
+    {
+      "formats": [
+        "json",
+        "markdown",
+        "yaml"
+      ],
       "id": "cli",
       "schema": "majordomus/cli/v1",
       "source": "the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it"
+    },
+    {
+      "formats": [
+        "text"
+      ],
+      "id": "deployment",
+      "source": ".ai/repo/deployments/majordomus.yaml"
     },
     {
       "formats": [
@@ -983,6 +1063,13 @@
       ],
       "id": "modules/quality",
       "source": "the `quality` module of the canonical Majordomus capability registry"
+    },
+    {
+      "formats": [
+        "markdown"
+      ],
+      "id": "modules/release",
+      "source": "the `release` module of the canonical Majordomus capability registry"
     },
     {
       "formats": [
@@ -1249,7 +1336,7 @@
     }
   ],
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the generation plan itself, over every other target; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.3.1",
+  "generator": "majordomus-cli 0.4.0",
   "manifest_schema": "majordomus/generated-artifacts/v1",
   "schema": 1
 }

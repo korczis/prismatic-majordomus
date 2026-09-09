@@ -643,6 +643,40 @@
       "tool": "majordomus_quality"
     },
     {
+      "api_anchor": "/docs/api/#op-release-changelog",
+      "claims": [],
+      "cli": null,
+      "id": "release.changelog",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": "majordomus://changelog",
+      "route": "/registry/capabilities/release-changelog/",
+      "slug": "release-changelog",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "The changelog",
+      "tool": "majordomus_changelog"
+    },
+    {
+      "api_anchor": "/docs/api/#op-release-version",
+      "claims": [],
+      "cli": null,
+      "id": "release.version",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-version/",
+      "slug": "release-version",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "The version, and the one the commits imply",
+      "tool": "majordomus_release_version"
+    },
+    {
       "api_anchor": "/docs/api/#op-repository-info",
       "claims": [],
       "cli": null,
@@ -1132,11 +1166,11 @@
     ]
   },
   "counts": {
-    "capabilities": 50,
+    "capabilities": 52,
     "claims": 35,
-    "modules": 19
+    "modules": 20
   },
-  "generator": "majordomus-cli 0.3.1",
+  "generator": "majordomus-cli 0.4.0",
   "modules": [
     {
       "capabilities": [
@@ -1490,6 +1524,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/quality.rs",
       "title": "Public API quality"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "release.changelog",
+          "route": "/registry/capabilities/release-changelog/",
+          "slug": "release-changelog"
+        },
+        {
+          "id": "release.version",
+          "route": "/registry/capabilities/release-version/",
+          "slug": "release-version"
+        }
+      ],
+      "claims": [],
+      "id": "release",
+      "route": "/registry/modules/release/",
+      "slug": "release",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "title": "Release"
     },
     {
       "capabilities": [
