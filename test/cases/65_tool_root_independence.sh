@@ -46,6 +46,20 @@ grep -q '^started t-' "$elsewhere/path.out" || { echo "    start through PATH di
 expect_exit 0 "$MJ" check
 rm -rf "$elsewhere"
 
+# --- MAJORDOMUS_SHARE naming another worktree of this repository is refused, not obeyed.
+# A worktree inherits the variable from the shell that entered its sibling; the tool then
+# runs this checkout's code against that sibling's schemas, allow-lists and skeleton, and
+# reports the difference between the two distributions as drift in the repository. What the
+# variable is for — a distribution installed outside every working tree — still works.
+cp -R "$DIST/share" "$T/share"
+sibling="$(mktemp -d "${TMPDIR:-/tmp}/mj-sibling.XXXXXX")"; rm -rf "$sibling"
+git worktree add -q "$sibling" -b sibling
+expect_exit 15 env MAJORDOMUS_SHARE="$T/share" "$MJ" --repo "$sibling" check
+expect_grep 'another worktree of this repository'
+expect_exit 12 env MAJORDOMUS_SHARE="$DIST/share" "$MJ" --repo "$sibling" check
+expect_grep 'no active task'
+git worktree remove --force "$sibling"; git branch -qD sibling; rm -rf "$T/share"
+
 # --- and the distribution is byte for byte what it was
 after="$(cd "$DIST" && find . -type f | LC_ALL=C sort | xargs shasum -a 256 | shasum -a 256)"
 [ "$before" = "$after" ] || { echo "    the distribution was written to; it must be usable read-only"; exit 1; }
