@@ -96,17 +96,34 @@ what it announced, before its first tool call.
 
 | tool | capability | arguments | answers |
 |---|---|---|---|
-| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, and each peer's announcement |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record with its announcement |
+| `majordomus_peers` | `peers.list` | none | every peer, the caller's own id, each peer's announcement, and every pair of claims that meet |
+| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
 
 An announcement is one line of intent and the repository-relative paths the peer expects
-to touch. It is informational: other clients read it to avoid a collision; nothing here
-enforces it (the shell tool's `start --scope` and `check` do that, per worktree). The
-board lives in the server's memory and is gone with the process; `peers.announce` is the
-one capability of kind `command`, because it changes that memory, and it is announced to
-MCP clients as not read-only. Over plain HTTP there is no caller, so `POST
-/api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without a
-`caller`.
+to touch. The board lives in the server's memory and is gone with the process;
+`peers.announce` is the one capability of kind `command`, because it changes that memory,
+and it is announced to MCP clients as not read-only. Over plain HTTP there is no caller,
+so `POST /api/v1/peers/announce` is refused (422) and `GET /api/v1/peers` answers without
+a `caller`.
+
+**A claim is answered, not merely recorded.** `peers.announce` compares the scope it is
+given against every other announcement and returns the peers whose claims meet it, with
+the pairs of paths that meet: two claims meet when they are equal or one is inside the
+other (`apps` contains `apps/majordomus-cli`; `app` does not, because a claim is a path
+and not a prefix of a string). `peers.list` reports the same collisions across the whole
+board, each pair once. It is still not enforcement — the shell tool's `start --scope` and
+`check --overlap` do that, per worktree, and they are what refuses a commit — but a
+collision is now known at the moment it is created rather than discovered afterwards in
+the history of a branch.
+
+**An announcement outlives the connection that made it.** A session that reconnects used
+to lose everything it had said, silently, to itself and to everyone else; the board now
+keeps a departed peer's announcement and lists it with `attached: false`, so what a
+session said it was working on survives a dropped socket. A peer that never announced
+leaves nothing behind, the newest 32 departed peers are kept so that a server which ran
+all day is not a museum, and an attached peer is never evicted to make room for one that
+left. `peers.list`'s `count` is the peers actually attached; the `peers` array is longer
+when the board is holding what somebody said before they went.
 
 ## What decides what is served
 

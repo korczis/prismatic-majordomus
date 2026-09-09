@@ -51,8 +51,13 @@ fn the_peer_board_identifies_touches_announces_and_summarises() {
         .announce(&b, "writing docs", vec!["docs".into()])
         .unwrap();
     assert_eq!(
-        announced.announcement.as_ref().unwrap().intent,
+        announced.peer.announcement.as_ref().unwrap().intent,
         "writing docs"
+    );
+    assert!(
+        announced.overlaps.is_empty(),
+        "nobody else claimed docs: {:?}",
+        announced.overlaps
     );
     let summary = board.summary();
     assert!(summary.contains("p1 unit (Stdio)"), "{summary}");

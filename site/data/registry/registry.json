@@ -6,22 +6,22 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "56db77475971b1f5b5a1cf79e1ac7ad26e827c1de40181a6ef4af2e47579d4ac",
+    "fingerprint": "25336fc85d788011ad2579017c227d3e5936e92db21698b1cf2189163b537361",
     "summary": {
-      "total": 1091,
+      "total": 1093,
       "builtin": 49,
-      "declarative": 1042,
+      "declarative": 1044,
       "by_kind": {
         "command": 1,
         "query": 48,
-        "resource": 1042
+        "resource": 1044
       },
       "by_stability": {
         "behaviorally_verified": 46,
-        "implemented": 1045
+        "implemented": 1047
       },
       "mcp_tools": 47,
-      "mcp_resources": 1059,
+      "mcp_resources": 1061,
       "http_routes": 49,
       "cli_commands": 24,
       "modules": 45,
@@ -8955,7 +8955,7 @@
           }
         },
         "output": {
-          "name": "Peer",
+          "name": "Announced",
           "schema": {
             "type": "object",
             "properties": {
@@ -8981,6 +8981,10 @@
                 "minimum": 0,
                 "description": "Seconds since its last message."
               },
+              "attached": {
+                "type": "boolean",
+                "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
+              },
               "announcement": {
                 "anyOf": [
                   {
@@ -8991,6 +8995,13 @@
                   }
                 ],
                 "description": "Its announcement, when it made one."
+              },
+              "overlaps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Overlap"
+                },
+                "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case."
               }
             },
             "required": [
@@ -8998,10 +9009,11 @@
               "client",
               "transport",
               "connected_at",
-              "last_seen_seconds_ago"
+              "last_seen_seconds_ago",
+              "attached"
             ],
-            "description": "One peer as the board lists it.",
-            "title": "Peer",
+            "description": "What `announce` answers: the peer as recorded, and who else is on that ground.",
+            "title": "Announced",
             "$defs": {
               "PeerId": {
                 "type": "string",
@@ -9072,6 +9084,55 @@
                   "at"
                 ],
                 "description": "What a peer said it is working on."
+              },
+              "Overlap": {
+                "type": "object",
+                "properties": {
+                  "peer": {
+                    "$ref": "#/$defs/PeerId",
+                    "description": "The other peer."
+                  },
+                  "attached": {
+                    "type": "boolean",
+                    "description": "Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is."
+                  },
+                  "intent": {
+                    "type": "string",
+                    "description": "What it said it was doing."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/OverlapPath"
+                    },
+                    "description": "The claims that meet: one line per pair, `yours` and `theirs`."
+                  }
+                },
+                "required": [
+                  "peer",
+                  "attached",
+                  "intent",
+                  "paths"
+                ],
+                "description": "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch."
+              },
+              "OverlapPath": {
+                "type": "object",
+                "properties": {
+                  "yours": {
+                    "type": "string",
+                    "description": "The path the announcing peer claimed."
+                  },
+                  "theirs": {
+                    "type": "string",
+                    "description": "The path the other peer claimed."
+                  }
+                },
+                "required": [
+                  "yours",
+                  "theirs"
+                ],
+                "description": "One pair of claims that contain one another."
               }
             }
           }
@@ -9146,7 +9207,14 @@
                 "items": {
                   "$ref": "#/$defs/Peer"
                 },
-                "description": "The peers, in attachment order; `p1` started the server."
+                "description": "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`."
+              },
+              "overlaps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Overlap"
+                },
+                "description": "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work."
               }
             },
             "required": [
@@ -9185,6 +9253,10 @@
                     "minimum": 0,
                     "description": "Seconds since its last message."
                   },
+                  "attached": {
+                    "type": "boolean",
+                    "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
+                  },
                   "announcement": {
                     "anyOf": [
                       {
@@ -9202,7 +9274,8 @@
                   "client",
                   "transport",
                   "connected_at",
-                  "last_seen_seconds_ago"
+                  "last_seen_seconds_ago",
+                  "attached"
                 ],
                 "description": "One peer as the board lists it."
               },
@@ -9271,6 +9344,55 @@
                   "at"
                 ],
                 "description": "What a peer said it is working on."
+              },
+              "Overlap": {
+                "type": "object",
+                "properties": {
+                  "peer": {
+                    "$ref": "#/$defs/PeerId",
+                    "description": "The other peer."
+                  },
+                  "attached": {
+                    "type": "boolean",
+                    "description": "Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is."
+                  },
+                  "intent": {
+                    "type": "string",
+                    "description": "What it said it was doing."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/OverlapPath"
+                    },
+                    "description": "The claims that meet: one line per pair, `yours` and `theirs`."
+                  }
+                },
+                "required": [
+                  "peer",
+                  "attached",
+                  "intent",
+                  "paths"
+                ],
+                "description": "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch."
+              },
+              "OverlapPath": {
+                "type": "object",
+                "properties": {
+                  "yours": {
+                    "type": "string",
+                    "description": "The path the announcing peer claimed."
+                  },
+                  "theirs": {
+                    "type": "string",
+                    "description": "The path the other peer claimed."
+                  }
+                },
+                "required": [
+                  "yours",
+                  "theirs"
+                ],
+                "description": "One pair of claims that contain one another."
               }
             }
           }
@@ -17690,7 +17812,7 @@
         "title": "session",
         "description": "Declarative objects of kind 'session' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 9,
+        "capabilities": 11,
         "capability_ids": []
       },
       {
@@ -17772,7 +17894,7 @@
     ]
   },
   "index": {
-    "fingerprint": "412e99d2c94b1e70ab2cfe4421e9df9879e9c2f3ee412246d774d56019b222c2",
+    "fingerprint": "8f480e15e158fdcaed54ce805c9dbaf6851edf49eca38f009694d097030a8316",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -17817,7 +17939,7 @@
       "release-record": 1,
       "rule": 96,
       "scope": 1,
-      "session": 9,
+      "session": 11,
       "skill": 3,
       "taxonomy": 10,
       "test": 117,
@@ -20982,7 +21104,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 20871
+        "bytes": 22182
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -27617,6 +27739,28 @@
         "bytes": 1117
       },
       {
+        "uri": "majordomus://session/s-20260908003954-b327",
+        "kind": "session",
+        "identity": "s-20260908003954-b327",
+        "title": "Session s-20260908003954-b327 on master",
+        "description": "Session s-20260908003954-b327 on master",
+        "path": ".ai/repo/sessions/20260908T193329Z--s-20260908003954-b327--master--ebec65f--19701e4316a32b7b.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 2302
+      },
+      {
+        "uri": "majordomus://session/s-20260908193341-cdf1",
+        "kind": "session",
+        "identity": "s-20260908193341-cdf1",
+        "title": "Session s-20260908193341-cdf1 on master",
+        "description": "Session s-20260908193341-cdf1 on master",
+        "path": ".ai/repo/sessions/20260909T150832Z--s-20260908193341-cdf1--master--867f3a9--38e50db8741a3b60.md",
+        "section": "sessions",
+        "source_class": "session",
+        "bytes": 1002
+      },
+      {
         "uri": "majordomus://skill/deploy-site",
         "kind": "skill",
         "identity": "deploy-site",
@@ -28574,7 +28718,7 @@
         "identity": "test/cases/90_mcp_shared_server.sh",
         "path": "test/cases/90_mcp_shared_server.sh",
         "source_class": "case",
-        "bytes": 10127
+        "bytes": 10713
       },
       {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -29381,7 +29525,7 @@
       "identity": [
         "session_id"
       ],
-      "objects": 9
+      "objects": 11
     },
     {
       "name": "session-context",
@@ -41508,7 +41652,7 @@
         "kind": "command",
         "read_only": false,
         "input": "AnnounceInput",
-        "output": "Peer"
+        "output": "Announced"
       },
       {
         "name": "majordomus_peers",
