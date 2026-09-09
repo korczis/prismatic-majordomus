@@ -6,16 +6,49 @@
 # suites under macOS; on another platform it is reported as not runnable here, never as a
 # pass.
 #
-#   scripts/ci/run-plan [--full] [ci-plan options...]
+# CI runs the same dispatcher, one job at a time, over the plan the plan job wrote: a
+# workflow job does not list its gates, because a job that did was a second declaration of
+# the model and the two disagreed — four gates the model assigned to the structure job were
+# reported as "run" in every summary and executed by nothing. A job that runs one gate in a
+# step of its own, with an argument the model's line does not carry (the rust job's
+# rust-check, with its mode and artifact), names it with --skip beside that step.
+#
+#   scripts/ci/run-plan [--full] [ci-plan options...]        compute the plan here, run it
+#   scripts/ci/run-plan --plan plan.json --job <job> [--skip id,id]
+#                                                            one job's gates of a written plan
+#
+#   MJ_CI_TIMINGS=FILE   append "<job or plan><TAB><gate id><TAB>seconds" per gate
 set -u
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT" || exit 2
-plan="$(mktemp "${TMPDIR:-/tmp}/mj-run-plan.XXXXXX")"; trap 'rm -f "$plan"' EXIT
-scripts/ci-plan "$@" > "$plan" || exit $?
+given=""; job=""; skip=""; rest=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --plan) given="$2"; shift 2 ;;
+    --job) job="$2"; shift 2 ;;
+    --skip) skip=",$2,"; shift 2 ;;
+    *) rest+=("$1"); shift ;;
+  esac
+done
+if [ -n "$given" ]; then
+  [ -f "$given" ] || { echo "run-plan: $given is missing; the plan job writes it (scripts/ci-plan)" >&2; exit 12; }
+  plan="$given"
+else
+  plan="$(mktemp "${TMPDIR:-/tmp}/mj-run-plan.XXXXXX")"; trap 'rm -f "$plan"' EXIT
+  scripts/ci-plan ${rest[@]+"${rest[@]}"} > "$plan" || exit $?
+fi
+if [ -n "$job" ]; then
+  gates="$(jq -r --arg j "$job" '.gates[] | select(.job == $j and .selected) | .id' "$plan")"
+  jq -e --arg j "$job" 'any(.gates[]; .job == $j)' "$plan" >/dev/null \
+    || { echo "run-plan: the model assigns no gate to the job '$job'" >&2; exit 12; }
+else
+  gates="$(jq -r '.selected[]' "$plan")"
+fi
 printf 'run-plan: %s — %s\n' "$(jq -r .mode "$plan")" "$(jq -r .reason "$plan")"
 failed=""; ran=0; t_all="$(date +%s)"
-for g in $(jq -r '.selected[]' "$plan"); do
+for g in $gates; do
   cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
+  case "$skip" in *",$g,"*) printf '\n==> %s: run by the job in a step of its own\n' "$g"; continue ;; esac
   if [ "$g" = macos ] && [ "$(uname -s)" != Darwin ]; then
     printf '\n==> %s: not runnable here (macOS only); CI runs it on macos-latest\n' "$g"; continue
   fi
@@ -23,6 +56,7 @@ for g in $(jq -r '.selected[]' "$plan"); do
   t0="$(date +%s)"
   if bash -c "$cmd"; then printf '==> %s: ok (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"
   else printf '==> %s: FAILED (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; failed="$failed $g"; fi
+  [ -n "${MJ_CI_TIMINGS:-}" ] && printf '%s\t%s\t%s\n' "${job:-plan}" "$g" "$(( $(date +%s) - t0 ))" >> "$MJ_CI_TIMINGS"
   ran=$((ran+1))
 done
 printf '\nrun-plan: %s gate(s) ran in %ss' "$ran" "$(( $(date +%s) - t_all ))"

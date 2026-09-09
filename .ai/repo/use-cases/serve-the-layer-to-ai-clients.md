@@ -2,7 +2,7 @@
 id: serve-the-layer-to-ai-clients
 kind: use-case
 title: "Serve the repository's AI layer to every AI client through one shared server"
-summary: 'Open the repository in Claude Code, Codex or Gemini CLI and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other.'
+summary: 'Open the repository in any client the tool declares a provider for (docs/generated/providers.md) and have each of them read the same rules, prompts and knowledge over MCP from one process, seeing each other.'
 category: mcp
 status: active
 target: guaranteed

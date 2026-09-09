@@ -73,6 +73,15 @@ claims:
     responsibility: projection
     note: The line is run as it is written, pipe included, on Linux and macOS, into a home directory of the run's own. It proves the metadata resolves, the tool reports the version that was resolved, the MCP launcher runs with no toolchain, and a repository can be initialised. A release proves the same thing once at publication; this keeps proving it afterwards.
 
+  - id: release-archive-shape
+    claim: A release archive carries every path once and carries nothing but files and directories
+    source: docs/DISTRIBUTION.md
+    implementation: scripts/release-package
+    test: test/cases/87b_release_archive_shape.sh
+    status: guaranteed
+    responsibility: projection
+    note: The packer reads back what it wrote and deletes an archive carrying a repeated path or an entry that is not a file or a directory; the verifier checks the same two properties again on the runner that built it. There is no fallback packer, because an archive packed another way is not the one that was verified.
+
   - id: policy-parse
     claim: The canonical policy is parsed and rejected if it contains an unknown key
     source: docs/SCHEMAS.md

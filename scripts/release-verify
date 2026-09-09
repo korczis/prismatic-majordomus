@@ -17,7 +17,26 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CRATE="$ROOT/apps/majordomus-cli"
 
-fail() { printf 'release-verify: FAIL %s\n' "$*" >&2; bad=$((bad + 1)); }
+# Every failure is counted; the first few of each kind are printed and the rest are
+# summarised. A malformed archive fails once per entry, and an archive has thousands of
+# them: the run that lost release v0.2.0 printed 931 lines that said one thing, and the one
+# sentence a reader needed was above all of them, off the top of the log. A diagnostic
+# nobody scrolls to is a diagnostic nobody has.
+FAIL_SHOWN_PER_KIND=5
+fail() {
+  bad=$((bad + 1))
+  # the kind is the sentence without its subject: "entry is not a file or a directory: X"
+  # and the same for Y are one kind, so the second thousand of them add nothing
+  kind="${1%%:*}"
+  eval "seen=\${FAIL_SEEN_$(printf '%s' "$kind" | tr -c 'A-Za-z0-9' '_'):-0}"
+  seen=$((seen + 1))
+  eval "FAIL_SEEN_$(printf '%s' "$kind" | tr -c 'A-Za-z0-9' '_')=$seen"
+  if [ "$seen" -le "$FAIL_SHOWN_PER_KIND" ]; then
+    printf 'release-verify: FAIL %s\n' "$*" >&2
+  elif [ "$seen" = "$((FAIL_SHOWN_PER_KIND + 1))" ]; then
+    printf 'release-verify: FAIL ... and more of "%s"; the count is in the summary below\n' "$kind" >&2
+  fi
+}
 die() { printf 'release-verify: %s\n' "$*" >&2; exit "${2:-12}"; }
 ok() { printf 'release-verify: OK   %s\n' "$*"; }
 
@@ -81,13 +100,17 @@ done < "$listing"
 # One entry per path. A packer that lists a directory and its contents to a tar that also
 # recurses writes everything twice; where that lands as a hard link the check above catches
 # it, and where it lands as a second regular entry nothing did until here.
-dupes="$(LC_ALL=C sort "$names" | uniq -d | head -n 5)"
+# awk rather than `head -n 5`: under pipefail, head closing the pipe early makes the whole
+# pipeline exit 141 once the writer outstrips a pipe buffer, which is precisely the badly
+# malformed archive this line is here to describe. awk reads its input to the end.
+dupes="$(LC_ALL=C sort "$names" | uniq -d | awk 'NR <= 5')"
 if [ -n "$dupes" ]; then
   fail "the archive carries a path more than once: $(printf '%s' "$dupes" | tr '\n' ' ')"
 else
   ok "one entry per path ($entries)"
 fi
-ok "$entries entries, all under $expected_root/"
+# only a claim if it is one: entries that failed the checks above are not "all under" anything
+[ "$bad" = 0 ] && ok "$entries entries, all under $expected_root/"
 
 for required in \
   "$expected_root/bin/majordomus" \
@@ -100,9 +123,9 @@ for required in \
   "$expected_root/LICENSE" \
   "$expected_root/RELEASE.json"
 do
-  grep -q " $required\$" "$listing" || fail "the archive holds no $required"
+  grep -q " $required\$" "$listing" || { fail "the archive holds no $required"; missing=1; }
 done
-ok "every required member is present"
+[ "${missing:-0}" = 0 ] && ok "every required member is present"
 
 for executable in "$expected_root/bin/majordomus" "$expected_root/bin/majordomus-mcp" "$expected_root/bin/majordomus-cli" "$expected_root/libexec/majordomus-cli"; do
   mode="$(grep " $executable\$" "$listing" | sed -n '1s/^\(.\{10\}\).*/\1/p')"

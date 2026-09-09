@@ -1,7 +1,7 @@
 +++
 title = "Canonical ownership and derivation"
 description = "canonical ownership: what may be written down twice, what must be derived, and which entities still have no owner"
-weight = 27
+weight = 29
 [extra]
 source = "docs/DYNAMICITY.md"
 +++
@@ -86,7 +86,11 @@ file in `docs/` appears in no row.
 | Claim | `docs/CLAIMS.yaml` | registry walk | guarantees pages, `docs/SITE_CLAIMS.md` |
 | Responsibility | `docs/RESPONSIBILITIES.yaml` | registry walk | site, doctrine registry |
 | Document | `docs/*.md` + the index tables | directory glob, index enforced | site routes |
-| Command | `share/commands.yaml` | validated against the dispatch table | docs, pages, demos, coverage |
+| Command (shell tool) | `share/commands.yaml` | validated against the dispatch table | docs, pages, demos, coverage, the command graph |
+| Command (executable) | the clap declaration, `apps/majordomus-cli/src/cli.rs` | tree walk | `--help`, `docs/generated/cli.*`, `/docs/cli/**`, the command graph |
+| Workflow | the `justfile` and `.just/*.just` | `just --dump --dump-format json` | the environment snapshot, the banner, the command graph |
+| Command semantics (effect, interactivity, requirements, value sources, compatibility aliases) | `command_graph/semantics.rs`, beside the declaration | completeness enforced against the clap tree in both directions | the graph, and every projection of it |
+| Where a command is exposed | `command_graph/policy.rs` | derived from the effect and the interactivity | the workflow bridge, the completion, MCP, HTTP, the Cockpit, the reference |
 | Event type | `share/events.yaml` | registry walk | ledger validation, `history`, `docs/SCHEMAS.md` |
 | Projection | `.ai/repo/policy.yaml` `projections[]` | policy walk | `update`, `doctor`, `watch` |
 | Context provider | *target:* one table in `lib/context.sh` | registry walk | assembly, budget dropping, JSON |
@@ -264,7 +268,15 @@ Short by design. If a list below grows, the architecture has regressed.
   `docs/README.md`. The route, the page and the index entry follow.
 - **A profile** — add `.ai/repo/profiles/<name>.yaml`. It is discovered by glob and
   validated by `doctor`.
+- **A command** — declare it where the program that implements it declares its commands: a
+  clap arm and its example for the executable, an entry in `share/commands.yaml` and a
+  dispatch arm for the shell tool, a recipe for a workflow. Annotate it in
+  `command_graph/semantics.rs` only if it is not read-only and non-interactive. The workflow
+  bridge, the shell completion of both surfaces, the machine surfaces the policy admits, the
+  Cockpit and the reference follow. `docs/COMMANDS.md` is the whole of it.
 
-Adding a command, an event type, a provider or a projection is not yet this short. Those
-are the ledger's priority 1 and 2 rows.
+Adding an event type, a provider or a projection is not yet this short. Those are the
+ledger's remaining priority 1 and 2 rows. Adding a *command* became this short when the
+command graph replaced the per-surface lists: see `docs/COMMANDS.md` and the rule
+`project.commands-are-projections`.
 {% endraw %}

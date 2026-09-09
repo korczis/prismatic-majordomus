@@ -361,7 +361,7 @@ fn providers_text(v: &Value) -> String {
         .unwrap_or(8)
         .max(8);
     let mut out = vec![format!(
-        "{:<width$}  {:<36}  BOOTSTRAPS  CLIENT CONFIG  HOOKS",
+        "{:<width$}  {:<36}  BOOTSTRAPS  CLIENT CONFIG  HOOKS  SCRATCH ROOTS",
         "PROVIDER",
         "TITLE",
         width = width
@@ -373,8 +373,24 @@ fn providers_text(v: &Value) -> String {
             .flatten()
             .map(|b| s(b, "target"))
             .collect();
+        let hooks = {
+            let h = arr(p, "hooks");
+            if h.is_empty() {
+                "-".to_string()
+            } else {
+                h.join(",")
+            }
+        };
+        let roots = {
+            let r = arr(p, "scratch_roots");
+            if r.is_empty() {
+                "-".to_string()
+            } else {
+                r.join(",")
+            }
+        };
         out.push(format!(
-            "{:<width$}  {:<36}  {:<10}  {:<13}  {}",
+            "{:<width$}  {:<36}  {:<10}  {:<13}  {:<5}  {}",
             s(p, "id"),
             s(p, "title"),
             if boots.is_empty() {
@@ -383,14 +399,8 @@ fn providers_text(v: &Value) -> String {
                 boots.join(",")
             },
             p["client_config"].as_str().unwrap_or("-"),
-            {
-                let h = arr(p, "hooks");
-                if h.is_empty() {
-                    "-".to_string()
-                } else {
-                    h.join(",")
-                }
-            },
+            hooks,
+            roots,
             width = width
         ));
     }

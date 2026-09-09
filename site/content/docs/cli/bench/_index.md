@@ -4,7 +4,7 @@ description = "Time every externally callable operation (each capability directl
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 10
+weight = 11
 [extra]
 route = "/docs/cli/bench/"
 command = "majordomus bench"

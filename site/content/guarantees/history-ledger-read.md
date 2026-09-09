@@ -1,7 +1,7 @@
 +++
 title = "The ledger is readable back as operational history, filtered by task, event and time"
 description = "Majordomus has always appended events to state/ledger.jsonl. majordomus history is the command that reads them back: what happened, when, for which task, at which commit, what verification ran, and what outcome was accepted."
-weight = 64
+weight = 65
 [extra]
 claim_id = "history-ledger-read"
 status = "guaranteed"

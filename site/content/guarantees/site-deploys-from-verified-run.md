@@ -1,7 +1,7 @@
 +++
 title = "Publication is gated on everything that can make the published site wrong and waits for nothing else; the checks that decide whether a change may merge run beside it on the same commit, not in front of it"
 description = "A push to master that can change the site starts one job, and that job publishes as soon as the bytes are proved: the committed derived data is current for the tree, the site builds from it, and every static check over the output passes. It does not wait for the behavioural suite, the crate's gates, coverage, the macOS suite, the benchmark check or the browser probe. Those run on the same commit, in parallel, in the validation workflow, and they gate merging through the ci status — they guard the repository, not the published bytes. Nothing that can make the published bytes wrong was moved off the publication path; what was removed from it is what could only ever have delayed it. A newer push supersedes an older deployment: an older run is cancelled rather than finished, because the site is a projection of the newest commit and the branch push is last-writer-wins. Publication is measured from outside rather than assumed from a green job: the site serves the commit it was built from, and the workflow waits for the public URL to name this one."
-weight = 128
+weight = 129
 [extra]
 claim_id = "site-deploys-from-verified-run"
 status = "guaranteed"

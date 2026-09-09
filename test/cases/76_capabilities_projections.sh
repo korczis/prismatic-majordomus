@@ -60,6 +60,29 @@ expect_grep 'openapi.json \(differs\)'
 # and the shell tool's own allow-lists are derived from the schemas this tree ships
 expect_exit 0 "$RB" generate allow --check
 
+# --- the command line, the one projection that is declared twice, agrees with the registry
+# Every other interface is built by walking the registry and cannot carry an entry it does
+# not have. clap owns the command line, so `CliExposure` is a claim about a declaration that
+# lives elsewhere; these two assertions are the comparison.
+expect_exit 0 "$RB" capabilities validate
+expect_grep '^OK   projection '
+"$RB" capabilities projections --format json 2>/dev/null > "$S/proj.json"
+jq -e '[.rows[] | select(.closed == false)] | length == 0' "$S/proj.json" >/dev/null \
+  || { echo "    a capability claims a command line the clap declaration does not answer"; jq '[.rows[]|select(.closed==false)]' "$S/proj.json"; exit 1; }
+# Every row that reports a command line is a command the built executable actually runs.
+# Read into a file first: a `while read` on the right of a pipe runs in a subshell, and an
+# exit there would leave the case passing.
+jq -r '.rows[] | select(.cli != null) | .cli | sub("^majordomus "; "")' "$S/proj.json" > "$S/clis.txt"
+[ -s "$S/clis.txt" ] || { echo "    no capability reports a command line"; exit 1; }
+while read -r words; do
+  [ -n "$words" ] || continue
+  # shellcheck disable=SC2086
+  "$RB" $words --help >/dev/null 2>&1 \
+    || { echo "    'majordomus $words' is reported as a command line and does not run"; exit 1; }
+done < "$S/clis.txt"
+jq -e '(.rows | length) > 0 and (.unbacked | type) == "array"' "$S/proj.json" >/dev/null \
+  || { echo "    the projection matrix is not shaped as declared"; exit 1; }
+
 # --- data only: a declarative object of a known kind, and a kind the repository defines with its schema
 cat > .ai/repo/rules/project/example.v1.md <<'R'
 ---

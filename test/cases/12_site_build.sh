@@ -51,9 +51,10 @@ expect_grep 'id="second-level-heading"' "$P/render-test/index.html"
 expect_grep 'overflow-x-auto' "$P/render-test/index.html"
 expect_grep 'role="note"' "$P/render-test/index.html"
 expect_grep 'footnote' "$P/render-test/index.html"
-# the opening tag, not the whole of it: the build's conformance pass adds tabindex="0" to
-# every scrolling element, so a fenced mermaid block renders as <pre class="mermaid" ...>
-expect_grep '<pre class="mermaid"' "$P/render-test/index.html"
+# The class, not the whole tag: the build's conformance pass puts every scrolling element
+# in the tab order, so this `pre` carries a `tabindex` the diagram does not choose. The
+# bracket keeps it from matching a class that merely starts with the word.
+expect_grep '<pre class="mermaid"[ >]' "$P/render-test/index.html"
 # navigation: five groups, dropdown menus present with Flowbite hooks; render-test is noindex
 # a dropdown per navigation group that has items; the count comes from the data, not from
 # a number written here, so adding a group to site/data/nav.toml does not break this case
@@ -70,9 +71,12 @@ expect_grep 'href="[^"]*/features/"' "$P/index.html"
 [ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
 # The recognition grid is the moments that declare themselves featured, counted from the
 # catalogue the executable derives. It used to be counted from site/content-src/why/*.md,
-# which stopped existing when a moment became an object of the layer: the glob then matched
-# nothing, the count was one, and a bare comparison under `set -e` failed with no message.
+# which stopped existing when a moment became an object of the layer (ADR 0018): the glob
+# then matched nothing, the count was one, and a bare comparison under `set -e` failed with
+# no message. The count must also be non-zero, or the comparison passes by both sides being
+# empty — a check that cannot fail is worse than the one it replaced.
 n_why="$(jq '[.moments[] | select(.status == "stable" and .featured)] | length' "$ROOT/site/data/registry/why.json")"
+[ "$n_why" -gt 0 ] || { echo "    the catalogue features no stable moment; the homepage would link none"; exit 1; }
 n_linked="$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')"
 [ "$n_linked" = "$n_why" ] || { echo "    the homepage links $n_linked why moment(s); $n_why declare themselves featured"; exit 1; }
 # the doctrine section is the dataset's own rule list: every rule it names has its page

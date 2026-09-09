@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.3.1
 coverage:
   - scope: direct
-    required: 42
-    covered: 42
+    required: 49
+    covered: 49
     missing: 0
     waived: 0
   - scope: http
-    required: 42
-    covered: 42
+    required: 49
+    covered: 49
     missing: 0
     waived: 0
   - scope: mcp
-    required: 40
-    covered: 40
+    required: 47
+    covered: 47
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 137
-    covered: 137
+    required: 158
+    covered: 158
     missing: 0
     waived: 0
 capabilities:
@@ -60,6 +60,45 @@ capabilities:
     cases:
       - all
       - queries
+  - id: capabilities.projections
+    module: capabilities
+    kind: query
+    cache: "process, 8 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - unmet
+  - id: commands.get
+    module: commands
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - worktree-status
+  - id: commands.graph
+    module: commands
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: commands.list
+    module: commands
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - read-only
+      - one-program
   - id: continuity.state
     module: continuity
     kind: query
@@ -139,6 +178,34 @@ capabilities:
     module: distribution
     kind: query
     cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: distribution.status
+    module: distribution
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: environment.explain
+    module: environment
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - one-field
+  - id: environment.status
+    module: environment
+    kind: query
+    cache: "process, 4 entries, 3s"
     direct: covered
     mcp: covered
     http: covered

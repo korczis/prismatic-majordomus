@@ -27,6 +27,15 @@ Three independent refusals, at three moments:
   behind it (`Release::findings`) is also what `majordomus distribution validate` runs over
   every committed record.
 
+Completeness is judged **against the set the release was published against**, which the
+record snapshots in `required_targets` rather than recomputing. Adding a platform to the
+model is a promise about the next release: `v0.3.1` cannot grow a `riscv64` artifact however
+the model changes afterwards, and a check that said otherwise would turn every historical
+record invalid the day a target was added — which is what it did, until the first real
+release made it visible. The enforcement point is publication, where `release-record` sees
+the model of its own day and refuses a partial release with exit 10. A record written before
+the field existed carries no set and is judged on internal consistency alone.
+
 The public metadata is generated from that record, so a record that could not be written is
 metadata that does not exist, and `latest.json` keeps pointing at the release before it.
 

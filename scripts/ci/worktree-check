@@ -56,10 +56,10 @@ if grep -qE 'args: \[worktree, guard\]' .ai/repo/policy.yaml 2>/dev/null; then o
 else fail ".ai/repo/policy.yaml declares no enforcement entry for 'worktree guard'"; fi
 
 # 3. the doctrine and the documents name the constant's convention
+# every provider template the distribution ships, whichever they are: a list written here
+# would be one more place a new provider has to be added
 for f in .ai/repo/rules/project/worktree-topology.v1.md docs/WORKTREES.md \
-         .ai/repo/providers/agents.tmpl .ai/repo/providers/claude-code.tmpl \
-         share/providers/agents.tmpl share/providers/claude-code.tmpl share/providers/codex.tmpl \
-         share/providers/gemini.tmpl share/providers/generic.tmpl; do
+         .ai/repo/providers/*.tmpl share/providers/*.tmpl; do
   [ -f "$f" ] || { fail "$f is missing"; continue; }
   if grep -q -- "$suffix/" "$f"; then ok "$f names the container with $suffix"
   else fail "$f does not name the container with the suffix $suffix"; fi

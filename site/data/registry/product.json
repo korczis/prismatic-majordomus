@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.3.1"
   },
-  "fingerprint": "1985e9ddb366f77df5cc95ecc723ef8e7c93af9b279dcf5dec20b699859164fa",
+  "fingerprint": "7aa66128b518d35151478697c5ebf164ee1294c6c1b3f73babdbb737f2f9cc99",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
-    "providers": 5,
-    "modules": 16,
+    "providers": 6,
+    "modules": 18,
     "modules_covered": 15,
     "commands": 27,
     "commands_covered": 27,
@@ -161,6 +161,15 @@
               "tool": "majordomus_capabilities",
               "route": "GET /api/v1/capabilities",
               "cli": "majordomus capabilities list"
+            },
+            {
+              "id": "capabilities.projections",
+              "title": "Where each capability is projected",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_projections",
+              "route": "GET /api/v1/capabilities/projections",
+              "cli": "majordomus capabilities projections"
             }
           ]
         },
@@ -265,7 +274,7 @@
         },
         {
           "name": "claim",
-          "objects": 144
+          "objects": 145
         }
       ],
       "rule_refs": [
@@ -525,13 +534,13 @@
         "why"
       ],
       "counts": {
-        "capabilities": 8,
-        "mcp_tools": 8,
-        "mcp_resources": 196,
-        "http_routes": 8,
-        "cli_paths": 7,
+        "capabilities": 9,
+        "mcp_tools": 9,
+        "mcp_resources": 197,
+        "http_routes": 9,
+        "cli_paths": 8,
         "commands": 2,
-        "objects": 192,
+        "objects": 193,
         "rules": 5,
         "enforced_rules": 0,
         "docs": 3,
@@ -667,8 +676,7 @@
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_scope_classify",
-              "route": "GET /api/v1/scope/classify",
-              "cli": "majordomus scope classify"
+              "route": "GET /api/v1/scope/classify"
             }
           ]
         },
@@ -1104,7 +1112,7 @@
         "mcp_tools": 7,
         "mcp_resources": 3,
         "http_routes": 7,
-        "cli_paths": 2,
+        "cli_paths": 1,
         "commands": 0,
         "objects": 0,
         "rules": 4,
@@ -1916,7 +1924,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 8
+          "objects": 9
         },
         {
           "name": "prompt",
@@ -2249,11 +2257,11 @@
       "counts": {
         "capabilities": 1,
         "mcp_tools": 1,
-        "mcp_resources": 13,
+        "mcp_resources": 14,
         "http_routes": 1,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 12,
+        "objects": 13,
         "rules": 8,
         "enforced_rules": 6,
         "docs": 2,
@@ -2423,7 +2431,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 23
+          "objects": 25
         },
         {
           "name": "knowledge",
@@ -2431,7 +2439,7 @@
         },
         {
           "name": "document",
-          "objects": 200
+          "objects": 204
         }
       ],
       "rule_refs": [
@@ -2680,11 +2688,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 225,
+        "mcp_resources": 231,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 224,
+        "objects": 230,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2849,7 +2857,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 92
+          "objects": 95
         }
       ],
       "rule_refs": [
@@ -3170,11 +3178,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 93,
+        "mcp_resources": 96,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 92,
+        "objects": 95,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -3572,7 +3580,7 @@
       "id": "policy",
       "title": "One policy, projected into every tool's instruction file",
       "short_title": "Policy",
-      "headline": "Claude Code, Codex, Gemini CLI and any tool that reads AGENTS.md get the same rules from the same place, because their instruction files are generated from one policy and never written by hand.",
+      "headline": "Every provider the tool declares — an agent, an orchestrator that runs agents, any tool that reads AGENTS.md — gets the same rules from the same place, because their instruction files are generated from one policy and never written by hand; the providers are the table in docs/generated/providers.md.",
       "summary": "A provider-neutral policy and four execution profiles are the one source; majordomus update renders each provider bootstrap from its template, stamps it with the policy hash and the hash of its own content, and doctor fails a bootstrap that was hand-edited, that carries a rule corpus of its own, or that exceeds the always-loaded budget.",
       "status": "stable",
       "weight": 90,
@@ -4391,7 +4399,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 8
+          "objects": 9
         }
       ],
       "rule_refs": [
@@ -4617,11 +4625,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 8,
+        "mcp_resources": 9,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 8,
+        "objects": 9,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4749,6 +4757,15 @@
               "tool": "majordomus_releases",
               "route": "GET /api/v1/distribution/releases",
               "cli": "majordomus distribution releases"
+            },
+            {
+              "id": "distribution.status",
+              "title": "Whether the published installation works",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_install_status",
+              "route": "GET /api/v1/distribution/status",
+              "cli": "majordomus distribution status"
             }
           ]
         }
@@ -4900,11 +4917,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 1,
-        "http_routes": 4,
-        "cli_paths": 4,
+        "http_routes": 5,
+        "cli_paths": 5,
         "commands": 3,
         "objects": 1,
         "rules": 3,
@@ -5002,11 +5019,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 14
+          "objects": 15
         },
         {
           "name": "issue",
-          "objects": 176
+          "objects": 184
         }
       ],
       "rule_refs": [
@@ -5149,11 +5166,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 190,
+        "mcp_resources": 199,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 190,
+        "objects": 199,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -5298,8 +5315,7 @@
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_scope_classify",
-              "route": "GET /api/v1/scope/classify",
-              "cli": "majordomus scope classify"
+              "route": "GET /api/v1/scope/classify"
             }
           ]
         }
@@ -5597,7 +5613,7 @@
         "mcp_tools": 4,
         "mcp_resources": 30,
         "http_routes": 4,
-        "cli_paths": 2,
+        "cli_paths": 1,
         "commands": 1,
         "objects": 27,
         "rules": 6,
@@ -7289,6 +7305,11 @@
         ]
       },
       {
+        "id": "commands",
+        "title": "Command graph",
+        "features": []
+      },
+      {
         "id": "continuity",
         "title": "Continuity",
         "features": [
@@ -7313,6 +7334,11 @@
         "features": [
           "install"
         ]
+      },
+      {
+        "id": "environment",
+        "title": "Repository environment",
+        "features": []
       },
       {
         "id": "graph",
@@ -7598,7 +7624,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (23)",
+        "title": "adr (25)",
         "features": [
           "knowledge"
         ]
@@ -7626,7 +7652,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (144)",
+        "title": "claim (145)",
         "features": [
           "declare-once"
         ]
@@ -7666,7 +7692,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (176)",
+        "title": "issue (184)",
         "features": [
           "planning"
         ]
@@ -7680,7 +7706,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (14)",
+        "title": "milestone (15)",
         "features": [
           "planning"
         ]
@@ -7720,7 +7746,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (92)",
+        "title": "rule (95)",
         "features": [
           "doctrine"
         ]
@@ -7734,7 +7760,7 @@
       },
       {
         "id": "session",
-        "title": "session (8)",
+        "title": "session (9)",
         "features": [
           "continuity",
           "provenance"
@@ -7774,7 +7800,23 @@
           "always_loaded": true
         }
       ],
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
+    },
+    {
+      "id": "bb",
+      "title": "bb",
+      "bootstraps": [
+        {
+          "target": ".bb/AGENTS.md",
+          "mode": "file",
+          "always_loaded": false
+        }
+      ],
+      "hooks": [],
+      "scratch_roots": [
+        "${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees"
+      ]
     },
     {
       "id": "claude-code",
@@ -7790,6 +7832,9 @@
       "hooks": [
         "prompt-capture",
         "session-lifecycle"
+      ],
+      "scratch_roots": [
+        "<primary>/.claude/worktrees"
       ]
     },
     {
@@ -7797,20 +7842,23 @@
       "title": "Codex",
       "bootstraps": [],
       "client_config": ".codex/config.toml",
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     },
     {
       "id": "gemini",
       "title": "Gemini CLI",
       "bootstraps": [],
       "client_config": ".gemini/settings.json",
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     },
     {
       "id": "generic",
       "title": "A worker with no convention of its own",
       "bootstraps": [],
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     }
   ],
   "rules": [
@@ -8419,6 +8467,11 @@
       "route": "/cockpit/capabilities"
     },
     {
+      "id": "commands",
+      "title": "Commands",
+      "route": "/cockpit/commands"
+    },
+    {
       "id": "objects",
       "title": "Objects",
       "route": "/cockpit/objects"
@@ -8460,47 +8513,47 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1054,
-    "builtin": 42,
-    "declarative": 1012,
-    "modules": 16,
-    "mcp_tools": 40,
-    "mcp_resources": 1028,
-    "http_routes": 42,
-    "cli_commands": 59,
+    "capabilities": 1087,
+    "builtin": 49,
+    "declarative": 1038,
+    "modules": 18,
+    "mcp_tools": 47,
+    "mcp_resources": 1055,
+    "http_routes": 49,
+    "cli_commands": 76,
     "shell_commands": 27,
     "kinds": 27,
-    "objects": 1012,
+    "objects": 1038,
     "by_kind": {
-      "adr": 23,
+      "adr": 25,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 144,
+      "claim": 145,
       "command": 28,
       "context": 26,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 200,
+      "document": 204,
       "feature": 20,
-      "implementation": 42,
-      "issue": 176,
+      "implementation": 44,
+      "issue": 184,
       "knowledge": 1,
-      "milestone": 14,
+      "milestone": 15,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 92,
+      "rule": 95,
       "scope": 1,
-      "session": 8,
+      "session": 9,
       "skill": 3,
       "taxonomy": 10,
-      "test": 112,
+      "test": 116,
       "use-case": 40
     },
-    "providers": 5,
+    "providers": 6,
     "features": 19,
     "web_surfaces": 8
   },

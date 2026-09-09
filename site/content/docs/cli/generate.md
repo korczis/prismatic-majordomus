@@ -1,7 +1,7 @@
 +++
 title = "majordomus generate"
 description = "Write the committed projections of the registry (docs/generated), or check that they are current"
-weight = 9
+weight = 10
 [extra]
 route = "/docs/cli/generate/"
 command = "majordomus generate"

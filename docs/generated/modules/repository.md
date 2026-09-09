@@ -58,7 +58,6 @@ Whether a repository-relative path is in or out of the scope, the reason when it
 | stability | behaviorally_verified |
 | MCP tool | `majordomus_scope_classify` |
 | HTTP | `GET /api/v1/scope/classify` |
-| CLI | `majordomus scope classify` |
 | cache | — |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::repository |

@@ -4,10 +4,16 @@
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
 //!
-//! What *is* written here is the ten areas: Overview, Capabilities, Objects,
+//! What *is* written here is the eleven areas: Overview, Capabilities, Commands, Objects,
 //! Directories, Graphs, Continuity, Worktrees, Health, Artifacts, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
+//!
+//! Every section is presented alphabetically by label. The order a section is *built* in is
+//! an accident of its source — the order the modules were composed in, the order the graph
+//! derivations are declared in — and an accident is not a reading order. Sorted by name, an
+//! entry is found under the name the reader already has. The sort is applied to the
+//! sections as a whole, so a section added later is ordered without being told to be.
 
 use crate::capability::registry::ModuleSource;
 use crate::capability::Context;
@@ -22,6 +28,8 @@ pub enum Area {
     Overview,
     /// The capability explorer and the runner.
     Capabilities,
+    /// Every command of every program here, and where each one is projected.
+    Commands,
     /// The declarative objects of the layer.
     Objects,
     /// The layer's directory contracts and their hierarchy.
@@ -72,6 +80,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Capabilities",
             href: "/cockpit/capabilities",
             area: Area::Capabilities,
+        },
+        AreaInfo {
+            id: "commands",
+            label: "Commands",
+            href: "/cockpit/commands",
+            area: Area::Commands,
         },
         AreaInfo {
             id: "objects",
@@ -240,8 +254,21 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
         sections: [areas, modules, kinds, graphs]
             .into_iter()
             .filter(|s| !s.items.is_empty())
+            .map(alphabetical)
             .collect(),
     }
+}
+
+/// One section's entries by label: case-folded first, so `API` sits with `Artifacts` rather
+/// than ahead of every lowercase kind, then by the label itself to break the fold's ties.
+fn alphabetical(mut section: Section) -> Section {
+    section.items.sort_by(|a, b| {
+        a.label
+            .to_lowercase()
+            .cmp(&b.label.to_lowercase())
+            .then_with(|| a.label.cmp(&b.label))
+    });
+    section
 }
 
 fn item(label: &str, href: &str, area: Area, count: Option<usize>, here: &str) -> Item {
@@ -296,6 +323,39 @@ mod tests {
             .collect();
         assert_eq!(current.len(), 1);
         assert_eq!(current[0].label, "Health");
+    }
+
+    #[test]
+    fn every_section_reads_alphabetically() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build(&ctx, "/cockpit");
+        assert!(!nav.sections().is_empty(), "there is something to order");
+        for section in nav.sections() {
+            let labels: Vec<String> = section
+                .items
+                .iter()
+                .map(|i| i.label.to_lowercase())
+                .collect();
+            let mut sorted = labels.clone();
+            sorted.sort();
+            assert_eq!(labels, sorted, "section {} is out of order", section.title);
+        }
+    }
+
+    #[test]
+    fn the_areas_are_ordered_by_name_and_not_by_the_order_they_are_written_in() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build(&ctx, "/cockpit");
+        let areas = nav
+            .sections()
+            .iter()
+            .find(|s| s.title == "Cockpit")
+            .expect("the area section");
+        let labels: Vec<&str> = areas.items.iter().map(|i| i.label.as_str()).collect();
+        assert_eq!(labels.first(), Some(&"API"));
+        assert_eq!(labels.last(), Some(&"Worktrees"));
     }
 
     #[test]

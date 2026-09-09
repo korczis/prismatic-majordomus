@@ -51,6 +51,13 @@ run_quiet() {
 # octal permission bits of a file, GNU stat first (BSD stat has no -c and fails), then BSD
 file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 
+# The SHA-256 of a file, for a case that must prove a file did not change rather than that a
+# command said it did not. sha256sum on Linux, shasum on macOS.
+sha256_of_file() {
+  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
+  else shasum -a 256 "$1" | cut -d' ' -f1; fi
+}
+
 # The Rust executable a case drives. MAJORDOMUS_BIN names a prebuilt one (CI hands the
 # artifact of its rust job to a later job this way, a person points at a release build);
 # without it the crate is built once, debug profile, and the target path is printed.
@@ -73,6 +80,22 @@ rust_bin() {
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
 rust_bin_exit() { [ "$1" = 3 ] && { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }; exit 1; }
+
+# The whole workflow declaration of this repository, written to a file a case can grep.
+#
+# The root justfile imports one file per bounded context, so a case that reads only the root
+# file is reading a fragment of the declaration and will report a recipe missing the day it
+# is moved rather than the day it is removed. The generated bridge is not read: it is not
+# tracked, it is a projection of the command graph, and a case asserting what it contains
+# would be asserting what `majordomus commands bridge` writes rather than what this
+# repository declares.
+#   JF="$(just_declaration)"
+just_declaration() {
+  local out
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.just.XXXXXX")"
+  cat "$ROOT/justfile" "$ROOT"/.just/*.just > "$out" 2>/dev/null
+  printf '%s' "$out"
+}
 
 # restore the seeded policy and profiles from the skeleton after a case mutated them; the
 # files belong to the repository after init, so init itself never rewrites them

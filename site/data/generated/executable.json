@@ -52,6 +52,74 @@
       "tool": "majordomus_capabilities"
     },
     {
+      "api_anchor": "/docs/api/#op-capabilities-projections",
+      "claims": [],
+      "cli": "majordomus capabilities projections",
+      "id": "capabilities.projections",
+      "kind": "query",
+      "module": "capabilities",
+      "module_route": "/registry/modules/capabilities/",
+      "resource": null,
+      "route": "/registry/capabilities/capabilities-projections/",
+      "slug": "capabilities-projections",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
+      "tests": [],
+      "title": "Where each capability is projected",
+      "tool": "majordomus_projections"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commands-get",
+      "claims": [],
+      "cli": null,
+      "id": "commands.get",
+      "kind": "query",
+      "module": "commands",
+      "module_route": "/registry/modules/commands/",
+      "resource": null,
+      "route": "/registry/capabilities/commands-get/",
+      "slug": "commands-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "tests": [],
+      "title": "One command in full",
+      "tool": "majordomus_command"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commands-graph",
+      "claims": [],
+      "cli": null,
+      "id": "commands.graph",
+      "kind": "query",
+      "module": "commands",
+      "module_route": "/registry/modules/commands/",
+      "resource": null,
+      "route": "/registry/capabilities/commands-graph/",
+      "slug": "commands-graph",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "tests": [],
+      "title": "The whole command graph",
+      "tool": "majordomus_command_graph"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commands-list",
+      "claims": [],
+      "cli": null,
+      "id": "commands.list",
+      "kind": "query",
+      "module": "commands",
+      "module_route": "/registry/modules/commands/",
+      "resource": null,
+      "route": "/registry/capabilities/commands-list/",
+      "slug": "commands-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "tests": [],
+      "title": "Every command, one line each",
+      "tool": "majordomus_commands"
+    },
+    {
       "api_anchor": "/docs/api/#op-continuity-state",
       "claims": [],
       "cli": null,
@@ -203,6 +271,57 @@
       "tests": [],
       "title": "Published releases",
       "tool": "majordomus_releases"
+    },
+    {
+      "api_anchor": "/docs/api/#op-distribution-status",
+      "claims": [],
+      "cli": "majordomus distribution status",
+      "id": "distribution.status",
+      "kind": "query",
+      "module": "distribution",
+      "module_route": "/registry/modules/distribution/",
+      "resource": null,
+      "route": "/registry/capabilities/distribution-status/",
+      "slug": "distribution-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "tests": [],
+      "title": "Whether the published installation works",
+      "tool": "majordomus_install_status"
+    },
+    {
+      "api_anchor": "/docs/api/#op-environment-explain",
+      "claims": [],
+      "cli": null,
+      "id": "environment.explain",
+      "kind": "query",
+      "module": "environment",
+      "module_route": "/registry/modules/environment/",
+      "resource": null,
+      "route": "/registry/capabilities/environment-explain/",
+      "slug": "environment-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "tests": [],
+      "title": "Where an environment value came from",
+      "tool": "majordomus_environment_explain"
+    },
+    {
+      "api_anchor": "/docs/api/#op-environment-status",
+      "claims": [],
+      "cli": null,
+      "id": "environment.status",
+      "kind": "query",
+      "module": "environment",
+      "module_route": "/registry/modules/environment/",
+      "resource": "majordomus://environment",
+      "route": "/registry/capabilities/environment-status/",
+      "slug": "environment-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "tests": [],
+      "title": "The repository environment",
+      "tool": "majordomus_environment"
     },
     {
       "api_anchor": "/docs/api/#op-graph-get",
@@ -543,7 +662,7 @@
     {
       "api_anchor": "/docs/api/#op-repository-scope_classify",
       "claims": [],
-      "cli": "majordomus scope classify",
+      "cli": null,
       "id": "repository.scope_classify",
       "kind": "query",
       "module": "repository",
@@ -996,9 +1115,9 @@
     ]
   },
   "counts": {
-    "capabilities": 42,
+    "capabilities": 49,
     "claims": 35,
-    "modules": 16
+    "modules": 18
   },
   "generator": "majordomus-cli 0.3.1",
   "modules": [
@@ -1029,6 +1148,11 @@
           "id": "capabilities.list",
           "route": "/registry/capabilities/capabilities-list/",
           "slug": "capabilities-list"
+        },
+        {
+          "id": "capabilities.projections",
+          "route": "/registry/capabilities/capabilities-projections/",
+          "slug": "capabilities-projections"
         }
       ],
       "claims": [],
@@ -1038,6 +1162,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "commands.get",
+          "route": "/registry/capabilities/commands-get/",
+          "slug": "commands-get"
+        },
+        {
+          "id": "commands.graph",
+          "route": "/registry/capabilities/commands-graph/",
+          "slug": "commands-graph"
+        },
+        {
+          "id": "commands.list",
+          "route": "/registry/capabilities/commands-list/",
+          "slug": "commands-list"
+        }
+      ],
+      "claims": [],
+      "id": "commands",
+      "route": "/registry/modules/commands/",
+      "slug": "commands",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "title": "Command graph"
     },
     {
       "capabilities": [
@@ -1118,6 +1268,11 @@
           "id": "distribution.releases",
           "route": "/registry/capabilities/distribution-releases/",
           "slug": "distribution-releases"
+        },
+        {
+          "id": "distribution.status",
+          "route": "/registry/capabilities/distribution-status/",
+          "slug": "distribution-status"
         }
       ],
       "claims": [],
@@ -1127,6 +1282,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "title": "Distribution"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "environment.explain",
+          "route": "/registry/capabilities/environment-explain/",
+          "slug": "environment-explain"
+        },
+        {
+          "id": "environment.status",
+          "route": "/registry/capabilities/environment-status/",
+          "slug": "environment-status"
+        }
+      ],
+      "claims": [],
+      "id": "environment",
+      "route": "/registry/modules/environment/",
+      "slug": "environment",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "title": "Repository environment"
     },
     {
       "capabilities": [

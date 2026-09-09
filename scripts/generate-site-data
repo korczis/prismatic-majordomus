@@ -18,13 +18,24 @@
 #
 #   scripts/generate-site-data            write site/data/generated/*.json
 #   scripts/generate-site-data --check    write to a temp dir and diff against the committed files
+#   scripts/generate-site-data --no-scenarios
+#                                         derive without executing the use-case scenarios
+#
+# --no-scenarios exists for the cases that test *derivation*: they mutate a canonical input
+# and prove the derived data followed it. Some of those mutations necessarily break the
+# behaviour the scenarios exercise — 12c removes a module's reference to a state file to
+# watch the graph edge disappear, and that same edit stops the command working — so running
+# the scenarios there reports a failure about the fixture rather than about derivation. The
+# data it writes carries no demonstrations and says so, and the published site never uses it:
+# the site build runs without the flag, and `--check` compares like with like.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Generation is transactional. Everything is written into a staging directory and only moved
 # into place once every step has succeeded, so a failure half way through (a claim without its
 # detail document, a renamed README heading) leaves the previous generated artifacts intact
 # rather than truncated. --check never publishes; it stages and diffs.
-CHECK=0; PUBLISH=1
+CHECK=0; PUBLISH=1; SCENARIOS=1
+case " $* " in *" --no-scenarios "*) SCENARIOS=0 ;; esac
 DEST_DATA="$ROOT/site/data/generated"
 [ "${1:-}" = --check ] && { CHECK=1; PUBLISH=0; }
 # --out writes the data somewhere else and publishes nothing: no content pages, no
@@ -892,10 +903,24 @@ jq -R -n '
     | walk(if type == "object" and (keys | all(test("^[0-9]+$"))) and (keys | length) > 0 then to_entries | sort_by(.key | tonumber) | map(.value) else . end)' "$TAXf" > "$STAGE/taxonomy.json"
 # the scenarios, executed now, against this tree's own tool: what the pages show is what
 # the tool did, and --check proves it again; timings are dropped so the data is stable
+if [ "$SCENARIOS" = 0 ]; then
+  # no demonstrations, and the data says so rather than looking like a run in which every
+  # scenario happened to be absent
+  echo '{"results":[],"scenarios":"skipped"}' > "$STAGE/uc-run.json"; : > "$STAGE/uc-run.err"
+else
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase run --json > "$STAGE/uc-run.json" 2> "$STAGE/uc-run.err" || {
   echo "generate-site-data: a use-case scenario failed; the site does not show a demonstration that does not hold:" >&2
-  jq -r '.results[] | select(.result != "pass") | "  \(.use_case): \(.steps | map(select(.result != "pass")) | .[0].reason // .reason // "setup failed")"' "$STAGE/uc-run.json" 2>/dev/null >&2 || cat "$STAGE/uc-run.err" >&2
+  # `jq` exits 0 over a document with no failing result — and over `{}` — so its own status
+  # says nothing about whether anything was printed. A run that died before writing valid
+  # JSON leaves an empty file, and reporting that as an empty list is how this failure
+  # reached CI with nothing after the colon. Decide on the output, not on the exit status.
+  detail="$(jq -r '.results[]? | select(.result != "pass") | "  \(.use_case): \(.steps | map(select(.result != "pass")) | .[0].reason // .reason // "setup failed")"' "$STAGE/uc-run.json" 2>/dev/null || true)"
+  if [ -n "$detail" ]; then printf '%s\n' "$detail" >&2; else
+    echo "  the run wrote no usable result; its stderr follows" >&2
+    sed 's/^/  /' "$STAGE/uc-run.err" >&2 || true
+  fi
   exit 10; }
+fi
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
 jq -n \
   --slurpfile ucs <(jq -s . "$STAGE/uc.jsonl") \
@@ -1073,8 +1098,12 @@ DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md
 # they have no page, and deciding a route by the presence of our own output makes the first
 # pass disagree with every later one — which is exactly what --check then reports as drift.
 GENERATED_DOCS="SITE_CLAIMS.md PLAN_STATUS.md PAGES_STATUS.md"
+# A function rather than a `case` inside the substitution below: bash 3.2 re-parses the body
+# of `$(...)` at run time and reads the `)` of a case pattern as the end of the substitution,
+# which is a syntax error on every macOS runner and on no Linux one.
+is_generated_doc() { case " $GENERATED_DOCS " in *" $1 "*) return 0 ;; esac; return 1; }
 DOC_ROUTES="$(printf '%s' "$DOCS" | jq -r '.[].path' | grep -E '^[A-Z_]+\.md$' | while read -r p; do
-  if [ ! -f "$ROOT/docs/$p" ]; then case " $GENERATED_DOCS " in *" $p "*) ;; *) continue ;; esac; fi
+  if [ ! -f "$ROOT/docs/$p" ] && ! is_generated_doc "$p"; then continue; fi
   n="${p%.md}"
   printf '%s\t/docs/%s/\n' "$p" "$(doc_slug "$n")"
 done | jq -Rn '[inputs | split("\t") | {key: .[0], value: .[1]}] | from_entries')"

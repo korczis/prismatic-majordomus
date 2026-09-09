@@ -14,7 +14,16 @@ majordomus doctor        # tells you exactly which hook lines are missing
 ```
 
 Add the two hook lines `init` printed. Run `doctor` again; it should report zero
-failures. Commit `.ai/repo/` and the generated files. `.ai/local/` is this checkout's own
+failures.
+
+> **This does not hold today.** Measured against the published `v0.3.1`, a repository that
+> follows these steps exactly sees 109 failures, citing Majordomus's own development
+> apparatus rather than anything the repository owes. The finding, its reproduction and the
+> decision it needs are in [`ADOPTION_FIRST_RUN.md`](ADOPTION_FIRST_RUN.md). Until that is
+> settled, read the `doctor` output here for the `wiring` lines, which are about your
+> repository, and expect the `doctrine` lines to be noise.
+
+Commit `.ai/repo/` and the generated files. `.ai/local/` is this checkout's own
 state — the task record, ledger, checkpoints, handovers — and `init` ignores it; it never
 travels through git, and a fresh clone starts without it.
 
