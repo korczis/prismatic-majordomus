@@ -42,6 +42,7 @@ pub(crate) mod executions;
 pub(crate) mod graph;
 pub mod health;
 pub mod objects;
+pub mod obligations;
 pub(crate) mod peers;
 pub(crate) mod perf;
 pub mod plan;
@@ -91,6 +92,10 @@ pub use objects::{
     ObjectStanding, Resolved, ResourceView, SearchHit, SearchInput, SearchResult, VerifyInput,
     VerifyReport, SEARCH_DEFAULT_LIMIT, SEARCH_MAX_LIMIT,
 };
+pub use obligations::{
+    Closure, Evidence, Obligation, ObligationClosure, ObligationState, Vocabulary, CLOSURE_URI,
+    OBLIGATIONS_URI,
+};
 pub use peers::{AnnounceInput, PeerList};
 pub use plan::{PlanIssueFilter, PlanMilestoneFilter, PlanRecordInput, PLAN_URI};
 pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
@@ -118,6 +123,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         graph,
         health,
         continuity,
+        obligations,
         deploy,
         executions,
         peers,
