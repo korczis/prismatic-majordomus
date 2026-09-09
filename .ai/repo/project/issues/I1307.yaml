@@ -31,4 +31,14 @@ evidence_required:
   - chain_proved_both_ways
 risk: "Low, once the links exist."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-09-09T20:37:43Z
+started_at: 2026-09-09T20:37:28Z
+verified_at: 2026-09-09T20:37:35Z
+completed_at: 2026-09-09T20:37:43Z
+evidence:
+  - covers: chain_proved_both_ways
+    type: test
+    command: "bash test/run.sh 99_work_graph_chain"
+    result: "one synthetic issue carried outcome -> issue -> branch -> commit -> pull request -> evidence -> accepted, then walked back from both the work commit and the merge commit to the issue and milestone they served; a commit with no contract reports unattributed rather than being dropped; completion is refused while required evidence is missing even though the fixture remote has the issue closed, and the projection reports that disagreement as DRIFT closed rather than resolving it either way; the case runs offline against fixture remotes with no token"
+    commit: 40eb9719acdb89b23a7f0bedbe8a7951149b6e90
+    recorded_at: 2026-09-09T20:37:32Z
