@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0023
+id: adr-0028
 kind: adr
 title: The crate's public surface is measured by the crate, and absence from the API is a decision
 status: accepted
@@ -28,7 +28,7 @@ provenance:
   origin: authored
 ---
 
-# 23. The crate's public surface is measured by the crate, and absence from the API is a decision
+# 28. The crate's public surface is measured by the crate, and absence from the API is a decision
 
 ## Context
 

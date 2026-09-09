@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.3.1
 coverage:
   - scope: direct
-    required: 49
-    covered: 49
+    required: 50
+    covered: 50
     missing: 0
     waived: 0
   - scope: http
-    required: 49
-    covered: 49
+    required: 50
+    covered: 50
     missing: 0
     waived: 0
   - scope: mcp
-    required: 47
-    covered: 47
+    required: 48
+    covered: 48
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 158
-    covered: 158
+    required: 161
+    covered: 161
     missing: 0
     waived: 0
 capabilities:
@@ -362,6 +362,15 @@ capabilities:
     module: product
     kind: query
     cache: "process, 2 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: quality.report
+    module: quality
+    kind: query
+    cache: "process, 8 entries, 10s"
     direct: covered
     mcp: covered
     http: covered

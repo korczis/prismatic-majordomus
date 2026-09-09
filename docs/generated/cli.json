@@ -11793,6 +11793,215 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "quality"
+        ],
+        "route": "/docs/cli/quality/",
+        "executable": false,
+        "usage": "majordomus quality <COMMAND>",
+        "about": "What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry",
+        "args": [],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "quality",
+              "report"
+            ],
+            "route": "/docs/cli/quality/report/",
+            "executable": true,
+            "usage": "majordomus quality report [OPTIONS]",
+            "about": "Measure the crate and report every finding, with the rule it breaks and what to do about it",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              },
+              {
+                "name": "code",
+                "long": "code",
+                "positional": false,
+                "help": "Only findings carrying this code, e.g. RUST_PUBLIC_MISSING_EXAMPLE",
+                "value_name": "CODE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "path",
+                "long": "path",
+                "positional": false,
+                "help": "Only findings under this repository-relative path prefix",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "summary",
+                "long": "summary",
+                "positional": false,
+                "help": "Print the counts and leave the findings out",
+                "value_name": "SUMMARY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "include_baselined",
+                "long": "include-baselined",
+                "positional": false,
+                "help": "Show the findings the baseline already accepts, which are left out by default",
+                "value_name": "INCLUDE_BASELINED",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "write_baseline",
+                "long": "write-baseline",
+                "positional": false,
+                "help": "Record today's findings as the accepted baseline, so the debt can shrink and cannot grow",
+                "value_name": "WRITE_BASELINE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "quality-summary",
+                "title": "Where the crate's public surface stands",
+                "description": "The counts alone: how much of the exported surface is documented and exampled, how many modules something exercises, and how the canonical operations stand against the command line, HTTP, OpenAPI and MCP. Exits 10 when any finding stands outside the recorded baseline.",
+                "argv": [
+                  "quality",
+                  "report",
+                  "--summary"
+                ],
+                "command": "majordomus quality report --summary",
+                "setup": [],
+                "expectation": "exits 0"
+              },
+              {
+                "id": "quality-code-json",
+                "title": "One kind of finding, with the rule and the remedy",
+                "description": "Filtered to one violation code. Every finding carries the rule that requires it, where it is, why it matters and what to do — which is what lets a person and an agent act on the same report.",
+                "argv": [
+                  "quality",
+                  "report",
+                  "--code",
+                  "RUST_MODULE_MISSING_EXAMPLE",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus quality report --code RUST_MODULE_MISSING_EXAMPLE --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /measured, /passes, /report/schema"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   }

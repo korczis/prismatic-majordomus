@@ -88,6 +88,12 @@
           "command": "majordomus product",
           "name": "product",
           "route": "/docs/cli/product/"
+        },
+        {
+          "about": "What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry",
+          "command": "majordomus quality",
+          "name": "quality",
+          "route": "/docs/cli/quality/"
         }
       ],
       "command": "majordomus",
@@ -13559,13 +13565,257 @@
       ],
       "route": "/docs/cli/product/validate/",
       "usage": "majordomus product validate [OPTIONS]"
+    },
+    {
+      "about": "What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Measure the crate and report every finding, with the rule it breaks and what to do about it",
+          "command": "majordomus quality report",
+          "name": "report",
+          "route": "/docs/cli/quality/report/"
+        }
+      ],
+      "command": "majordomus quality",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "quality",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "quality"
+      ],
+      "route": "/docs/cli/quality/",
+      "usage": "majordomus quality <COMMAND>"
+    },
+    {
+      "about": "Measure the crate and report every finding, with the rule it breaks and what to do about it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus quality",
+          "name": "quality",
+          "route": "/docs/cli/quality/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only findings carrying this code, e.g. RUST_PUBLIC_MISSING_EXAMPLE",
+          "long": "code",
+          "name": "code",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CODE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only findings under this repository-relative path prefix",
+          "long": "path",
+          "name": "path",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print the counts and leave the findings out",
+          "long": "summary",
+          "name": "summary",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "SUMMARY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Show the findings the baseline already accepts, which are left out by default",
+          "long": "include-baselined",
+          "name": "include_baselined",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "INCLUDE_BASELINED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Record today's findings as the accepted baseline, so the debt can shrink and cannot grow",
+          "long": "write-baseline",
+          "name": "write_baseline",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "WRITE_BASELINE"
+        }
+      ],
+      "children": [],
+      "command": "majordomus quality report",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "quality",
+            "report",
+            "--summary"
+          ],
+          "command": "majordomus quality report --summary",
+          "description": "The counts alone: how much of the exported surface is documented and exampled, how many modules something exercises, and how the canonical operations stand against the command line, HTTP, OpenAPI and MCP. Exits 10 when any finding stands outside the recorded baseline.",
+          "expectation": "exits 0",
+          "id": "quality-summary",
+          "setup": [],
+          "title": "Where the crate's public surface stands"
+        },
+        {
+          "argv": [
+            "quality",
+            "report",
+            "--code",
+            "RUST_MODULE_MISSING_EXAMPLE",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus quality report --code RUST_MODULE_MISSING_EXAMPLE --format json",
+          "description": "Filtered to one violation code. Every finding carries the rule that requires it, where it is, why it matters and what to do — which is what lets a person and an agent act on the same report.",
+          "expectation": "exits 0; prints one JSON document carrying /measured, /passes, /report/schema",
+          "id": "quality-code-json",
+          "setup": [],
+          "title": "One kind of finding, with the rule and the remedy"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "report",
+      "parent_route": "/docs/cli/quality/",
+      "path": [
+        "majordomus",
+        "quality",
+        "report"
+      ],
+      "route": "/docs/cli/quality/report/",
+      "usage": "majordomus quality report [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 604,
-    "commands": 80,
-    "examples": 88,
-    "runnable": 76
+    "arguments": 614,
+    "commands": 82,
+    "examples": 90,
+    "runnable": 77
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.3.1",

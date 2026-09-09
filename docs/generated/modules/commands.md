@@ -56,6 +56,7 @@ The commands this repository offers, filtered by the program that runs them, by 
 | kind | query |
 | stability | implemented |
 | MCP tool | `majordomus_commands` |
+| MCP resource | `majordomus://commands` |
 | HTTP | `GET /api/v1/commands` |
 | cache | — |
 | benchmark | required |

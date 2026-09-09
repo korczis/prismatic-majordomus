@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 49 | 49 | 0 | 0 |
-| http | 49 | 49 | 0 | 0 |
-| mcp | 47 | 47 | 0 | 0 |
+| direct | 50 | 50 | 0 | 0 |
+| http | 50 | 50 | 0 | 0 |
+| mcp | 48 | 48 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 158 | 158 | 0 | 0 |
+| total | 161 | 161 | 0 | 0 |
 
 ## Capabilities
 
@@ -54,6 +54,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
+| `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
