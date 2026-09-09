@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, Stability};
+use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::command_graph::load;
 use crate::command_graph::model::{
@@ -254,7 +254,17 @@ pub fn module() -> ModuleDescriptor {
                 output: CommandIndex,
                 stability: Stability::Implemented,
                 exposure: Exposure {
-                    mcp: mcp("majordomus_commands"),
+                    // A tool for a client that asks a question, and a resource for one that
+                    // wants the index in its context without asking: the summary is small by
+                    // construction — an id, a summary and an effect per command — which is
+                    // what makes it safe to read whole, and what the detail capability is for.
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_commands".into()),
+                        resource: Some(McpResource {
+                            uri: COMMANDS_URI.into(),
+                            name: "commands".into(),
+                        }),
+                    }),
                     http: get("/api/v1/commands"),
                     cli: None,
                 },

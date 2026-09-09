@@ -43,17 +43,17 @@
 //! changes and the untracked files are the same on the other side. Every mutation holds one
 //! repository-scoped [`lock::WorktreeLock`], so two agents cannot half-register one path.
 
-pub mod error;
+pub(crate) mod error;
 pub mod fingerprint;
-pub mod git;
-pub mod identity;
-pub mod lock;
-pub mod migrate;
-pub mod model;
-pub mod path;
-pub mod service;
+pub(crate) mod git;
+pub(crate) mod identity;
+pub(crate) mod lock;
+pub(crate) mod migrate;
+pub(crate) mod model;
+pub(crate) mod path;
+pub(crate) mod service;
 pub mod state;
-pub mod topology;
+pub(crate) mod topology;
 
 pub use error::{Result, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
 pub use fingerprint::WorktreeFingerprint;

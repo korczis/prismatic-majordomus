@@ -325,3 +325,40 @@ pub fn module() -> ModuleDescriptor {
         ],
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The declaration is the only place the id, the tool name, the resource URI and the
+    /// route exist. A refactor that dropped one of them would still compile, and every
+    /// suite that tests the report itself would still pass; this is the assertion that
+    /// would not — which is what `project.rust-command-tested-in-file` asks of a command.
+    #[test]
+    fn the_declaration_yields_the_identity_and_the_projections_it_claims() {
+        let m = module();
+        assert_eq!(m.id.as_str(), "artifacts");
+        let ids: Vec<&str> = m
+            .capabilities
+            .iter()
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        assert_eq!(ids, ["artifacts.list"]);
+
+        let c = &m.capabilities[0].capability;
+        let mcp = c.exposure.mcp.as_ref().expect("an MCP projection");
+        assert_eq!(mcp.tool.as_deref(), Some("majordomus_artifacts"));
+        assert_eq!(
+            mcp.resource.as_ref().map(|r| r.uri.as_str()),
+            Some(ARTIFACTS_URI)
+        );
+        assert_eq!(
+            c.exposure.http.as_ref().map(|h| h.path.as_str()),
+            Some("/api/v1/artifacts")
+        );
+        // read-only, and the registry refuses an executable capability that is not
+        assert!(c.kind.is_read_only() && c.kind.is_executable());
+        // and the module stamps its own namespace on what it composes
+        assert!(ids.iter().all(|id| id.starts_with("artifacts.")));
+    }
+}

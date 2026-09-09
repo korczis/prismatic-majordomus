@@ -78,8 +78,15 @@ scripts/generate-site-data                     # the site's skills.json and page
 `doctor`, through the doctrine `majordomus.skill-integrity`) refuses an unknown key, a
 wrong schema version, a non-integer version, a status outside the closed set, an id that
 is not the directory name, a missing or empty required section, two skills with one id,
-a `related` id that names nothing, and an example without a heading. A repository with no
-skills is reported as such, never passed silently.
+two skills whose descriptions do not tell them apart, a `related` id that names nothing,
+and an example without a heading. A repository with no skills is reported as such, never
+passed silently.
+
+A description is what a worker selects on, so two skills that describe themselves the same
+way cannot both be chosen and the one that was wanted is unreachable. Descriptions are
+compared folded to lower case, with runs of whitespace collapsed and trailing sentence
+punctuation dropped: the difference has to be in what the description says, not in how it
+is typed.
 
 ## What is derived, and must not be edited
 

@@ -10,7 +10,7 @@ use std::path::Path;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::{Archive, Model, Project};
+use super::Model;
 use crate::error::{Error, Result};
 use crate::index::Index;
 use crate::metadata::yaml;
@@ -309,8 +309,12 @@ impl Releases {
         self.releases.iter().find(|r| r.is_stable_candidate())
     }
 
-    /// A release by tag.
-    pub fn by_tag(&self, tag: &str) -> Option<&Release> {
+    /// A release by tag; `None` when no record carries it.
+    ///
+    /// Test support, and compiled only for tests: this module's own suite names one record
+    /// among several with it, and nothing in the shipped binary asks the question that way.
+    #[cfg(test)]
+    pub(crate) fn by_tag(&self, tag: &str) -> Option<&Release> {
         self.releases.iter().find(|r| r.tag == tag)
     }
 
@@ -355,13 +359,4 @@ fn version_key(version: &str) -> (u64, u64, u64, u8, String) {
 /// pinned release's metadata, so that the installer has one parser and not two.
 pub fn latest_json(release: &Release, model: &Model) -> String {
     release.public_json(model)
-}
-
-/// The conventional aggregate digest file, in `sha256sum -c` order.
-pub fn checksums(release: &Release, _project: &Project, _archive: &Archive) -> String {
-    let mut s = String::new();
-    for a in &release.artifacts {
-        s.push_str(&format!("{}  {}\n", a.sha256, a.name));
-    }
-    s
 }

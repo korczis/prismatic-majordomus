@@ -1,5 +1,58 @@
-//! The descriptor: identity, kind, schemas, provenance, exposure, stability. Plain data,
-//! serialisable, with no handler and no transport type in it.
+//! The descriptor: everything a projection may say about a capability, and nothing else.
+//!
+//! # What this module owns
+//!
+//! [`Capability`] is the value the whole executable is a projection of. It carries identity
+//! ([`CapabilityId`], [`ModuleId`]), what the thing is ([`CapabilityKind`]), the canonical
+//! schemas of its input and output, where it came from ([`Provenance`]), where it is
+//! projected ([`Exposure`]), where it means anything ([`Availability`]), who it is for
+//! ([`Visibility`]), where it stands ([`Stability`]), and the two operational policies a
+//! call is subject to ([`CachePolicy`], [`BenchmarkPolicy`]).
+//!
+//! # What it deliberately does not own
+//!
+//! There is no handler here and no transport type. A descriptor is plain data: it
+//! serialises, it round-trips, and it can be read by something that cannot execute
+//! anything — which is what lets the generated reference, the site dataset and the OpenAPI
+//! document be built from the same value the executor dispatches on. Execution lives in
+//! [`super::handler`]; the collection and its invariants live in [`super::registry`].
+//!
+//! # Declared against classified
+//!
+//! Two fields are *classified* rather than declared: [`Availability::classify`] and
+//! [`Visibility::classify`] compute their values from the kind and the exposures the
+//! declaration already carries. Asking each declaration to restate them would be the same
+//! knowledge written twice, and the second copy is the one that goes wrong. Both matches are
+//! exhaustive with no fallback arm on purpose, so a new kind or a new transport is a compile
+//! error here rather than a silent default in a page that then links to nothing.
+//!
+//! # Invariants
+//!
+//! Nothing in this module enforces anything: a descriptor can be built wrong and the
+//! registry is what refuses it. What lives here is the vocabulary each check is written
+//! against — the grammar of an id, the shape of a route, the states a policy may be in —
+//! each with its own validator returning the reason it failed rather than a boolean.
+//!
+//! ```
+//! use majordomus_cli::capability::{
+//!     Availability, CapabilityId, CapabilityKind, CliExposure, Exposure, Visibility,
+//! };
+//!
+//! let id = CapabilityId::parse("repository.info").unwrap();
+//! assert_eq!(id.namespace(), "repository");
+//!
+//! // a capability offered only on the command line is developer-facing, and needs a
+//! // process to answer at all — neither of which its declaration had to say
+//! let exposure = Exposure {
+//!     cli: Some(CliExposure { path: vec!["scope".into()] }),
+//!     ..Default::default()
+//! };
+//! assert_eq!(Visibility::classify(&exposure), Visibility::Developer);
+//! assert_eq!(
+//!     Availability::classify(CapabilityKind::Query, &exposure),
+//!     Availability::Runtime
+//! );
+//! ```
 
 use std::fmt;
 

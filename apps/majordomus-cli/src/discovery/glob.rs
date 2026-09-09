@@ -1,7 +1,38 @@
-//! The `:(glob)` pathspec subset the repository uses: `*` and `?` never cross `/`, `**`
-//! matches any number of path segments, and a bracket expression `[0-9]` or `[!a-z]`
-//! matches one character of the class, as git's own matcher reads it. Matching is on
-//! repository-relative paths.
+//! The `:(glob)` pathspec subset the repository's `sources.yaml` is written in.
+//!
+//! Deliberately small, and the smallness is the point: this has to agree with what git
+//! matches for the same pathspec, because discovery asks git for the tracked files and then
+//! judges them here. `*` and `?` match within one path segment and never cross a `/`; `**`
+//! is a segment of its own and matches any number of segments, none included; and a bracket
+//! expression — `[0-9]`, `[abc]`, `[!x]`, `[^x]` — matches one character of its class,
+//! inside a segment, as git's own matcher reads it. There is no brace expansion and no
+//! negation of a whole pattern: a pattern this cannot express is a pattern the layer does
+//! not use.
+//!
+//! Matching is on repository-relative paths, always with `/`, never with a leading `./`.
+//!
+//! ```
+//! use majordomus_cli::discovery::glob::Glob;
+//!
+//! let rules = Glob::new(".ai/repo/rules/**/*.md");
+//! assert!(rules.matches(".ai/repo/rules/project/scope.v1.md"));
+//! assert!(rules.matches(".ai/repo/rules/vendor/majordomus/rules/adr.v1.md"));
+//! assert!(!rules.matches(".ai/repo/rules/project/scope.v1.yaml"), "the extension decides");
+//!
+//! // a single star stays inside its segment, which is what keeps `*.md` from matching a tree
+//! let flat = Glob::new(".ai/repo/*.yaml");
+//! assert!(flat.matches(".ai/repo/policy.yaml"));
+//! assert!(!flat.matches(".ai/repo/ci/gates.yaml"));
+//!
+//! // a bracket expression matches one character of its class, and negates with ! or ^
+//! let versioned = Glob::new(".ai/repo/rules/**/*.v[0-9].md");
+//! assert!(versioned.matches(".ai/repo/rules/project/scope.v1.md"));
+//! assert!(!versioned.matches(".ai/repo/rules/project/scope.vx.md"));
+//!
+//! // and a walk can skip a directory the pattern could never match under
+//! assert!(rules.could_match_under(".ai/repo/rules"));
+//! assert!(!rules.could_match_under("docs"));
+//! ```
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Segment {
