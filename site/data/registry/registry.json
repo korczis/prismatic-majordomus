@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "aeca074d6aeee5b73d1fea5b6624b2a4784781cb281bc07ce785d9ca62046432",
+    "fingerprint": "0ab5edf594941d84309bb3524479e182a93d39b51a1616b16cd8f7aa4d789c35",
     "summary": {
-      "total": 1175,
+      "total": 1181,
       "builtin": 71,
-      "declarative": 1104,
+      "declarative": 1110,
       "by_kind": {
         "command": 3,
         "query": 68,
-        "resource": 1104
+        "resource": 1110
       },
       "by_stability": {
         "behaviorally_verified": 66,
-        "implemented": 1109
+        "implemented": 1115
       },
       "mcp_tools": 69,
-      "mcp_resources": 1128,
+      "mcp_resources": 1134,
       "http_routes": 71,
       "cli_commands": 31,
       "modules": 51,
@@ -25733,7 +25733,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 105,
+        "capabilities": 108,
         "capability_ids": []
       },
       {
@@ -25773,7 +25773,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 130,
+        "capabilities": 133,
         "capability_ids": []
       },
       {
@@ -25853,7 +25853,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7cca01b7c0a7516c6fb7437fade063f7aa7e64ad5636e0972f2d319063fb0574",
+    "fingerprint": "ca4fa41f40c91225cf6954ea87e381aaa747999b0d7fe087c939a45a41b3142e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -25896,12 +25896,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 105,
+      "rule": 108,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 130,
+      "test": 133,
       "use-case": 41,
       "workspace": 1
     },
@@ -28963,7 +28963,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 3807
+        "bytes": 5475
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -28972,7 +28972,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 3096
+        "bytes": 4764
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -29215,7 +29215,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 22182
+        "bytes": 23257
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -31113,7 +31113,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 32719
+        "bytes": 37239
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -31153,7 +31153,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 54737
+        "bytes": 58883
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -35478,6 +35478,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
+        "kind": "rule",
+        "identity": "project.destructive-sweeps-fail-closed@1",
+        "title": "A sweep that deletes fails closed on what it could not read",
+        "description": "Any script that selects paths for deletion by a measured predicate — age, size, staleness — treats a predicate input it could not read as false, never as an extreme value; it names what it is about to delete and the measurement behind the verdict before deleting, and it reports how many candidates it skipped for want of a readable input.",
+        "path": ".ai/repo/rules/project/destructive-sweeps-fail-closed.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3552,
+        "tags": [
+          "safety",
+          "tooling"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "kind": "rule",
         "identity": "project.diagnostics-decide-the-exit@1",
@@ -35506,6 +35521,22 @@
           "distribution",
           "release",
           "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "rule",
+        "identity": "project.empty-is-not-failure@1",
+        "title": "An empty result and a failed command must not look alike",
+        "description": "A command that could not answer is reported as a command that could not answer, never as a command that answered nothing; a caller that cannot tell the two apart acts on a confident wrong answer.",
+        "path": ".ai/repo/rules/project/empty-is-not-failure.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3781,
+        "tags": [
+          "evidence",
+          "shell",
+          "diagnostics"
         ]
       },
       {
@@ -36137,6 +36168,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "rule",
+        "identity": "project.work-is-claimed-before-it-is-built@1",
+        "title": "What already claims a path is checked before that path is built",
+        "description": "Before implementing something that creates a new module, command group, document kind or generated artifact, a worker asks what already claims those paths across every local and remote branch (scripts/collision-check --new <paths>), not only who the peer board says is working now, and announces its own intent afterwards.",
+        "path": ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3689,
+        "tags": [
+          "coordination",
+          "process"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.worktree-topology@1",
         "kind": "rule",
         "identity": "project.worktree-topology@1",
@@ -36582,6 +36628,14 @@
         "bytes": 4466
       },
       {
+        "uri": "majordomus://test/test/cases/106_context_peers.sh",
+        "kind": "test",
+        "identity": "test/cases/106_context_peers.sh",
+        "path": "test/cases/106_context_peers.sh",
+        "source_class": "case",
+        "bytes": 5379
+      },
+      {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
         "kind": "test",
         "identity": "test/cases/107_design_tokens.sh",
@@ -36811,7 +36865,7 @@
         "identity": "test/cases/32_schema_integrity.sh",
         "path": "test/cases/32_schema_integrity.sh",
         "source_class": "case",
-        "bytes": 5725
+        "bytes": 6231
       },
       {
         "uri": "majordomus://test/test/cases/33_event_registry.sh",
@@ -36820,6 +36874,14 @@
         "path": "test/cases/33_event_registry.sh",
         "source_class": "case",
         "bytes": 7485
+      },
+      {
+        "uri": "majordomus://test/test/cases/33_stale_executable.sh",
+        "kind": "test",
+        "identity": "test/cases/33_stale_executable.sh",
+        "path": "test/cases/33_stale_executable.sh",
+        "source_class": "case",
+        "bytes": 2644
       },
       {
         "uri": "majordomus://test/test/cases/34_command_fixtures.sh",
@@ -37324,6 +37386,14 @@
         "path": "test/cases/93_rust_provider_projections.sh",
         "source_class": "case",
         "bytes": 3472
+      },
+      {
+        "uri": "majordomus://test/test/cases/93_schema_integrity.sh",
+        "kind": "test",
+        "identity": "test/cases/93_schema_integrity.sh",
+        "path": "test/cases/93_schema_integrity.sh",
+        "source_class": "case",
+        "bytes": 1523
       },
       {
         "uri": "majordomus://test/test/cases/93_scope_policy.sh",
@@ -38157,7 +38227,7 @@
         "id",
         "version"
       ],
-      "objects": 105
+      "objects": 108
     },
     {
       "name": "scope",
@@ -38212,7 +38282,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 130
+      "objects": 133
     },
     {
       "name": "use-case",
