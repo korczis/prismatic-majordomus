@@ -21,6 +21,7 @@ Current version: **0.4.0**
 
 ### Added
 
+- **rules**: an empty result and a failed command must not look alike (`824223cb5`)
 - **ci**: three failures of one session, turned into checks (`1e96e91b7`)
 - **peers**: a session is told it has not announced, and doctor names the work that exists on one disk (`1487d729e`)
 - **design**: one declaration for the design, and every surface projects it (`2b3b9fffa`)
@@ -58,6 +59,8 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **site-check**: a route is named on the API page whatever it is styled with (`9fcd06f8f`)
+- **runtime**: a stale runtime says so, on the lease and on the way in (`53b21b4bb`)
 - **release**: the module asserts the two projections it documents (`98f6606ce`)
 - **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
 - **design,adr**: the three failures this session hit, each with the gate that would have caught it (`1cbb36869`)
@@ -151,6 +154,7 @@ Current version: **0.4.0**
 ### Housekeeping
 
 - **derive**: the projections follow the master merge (`3a2aeab52`)
+- **derive**: the projections follow the merge (`f2b018f26`)
 - **derive**: the projections follow the final master merge (`cdc859654`)
 - **derive**: the projections follow the master merge (`5e6d324c1`)
 - **adr,test**: renumber to the identities the board actually left free (`50f276bc3`)

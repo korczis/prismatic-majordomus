@@ -43,6 +43,11 @@ sections:
         rank: 0
         changes:
           - kind: feat
+            scope: rules
+            subject: an empty result and a failed command must not look alike
+            breaking: false
+            commit: 824223cb5
+          - kind: feat
             scope: ci
             subject: "three failures of one session, turned into checks"
             breaking: false
@@ -216,6 +221,16 @@ sections:
         heading: Fixed
         rank: 1
         changes:
+          - kind: fix
+            scope: site-check
+            subject: a route is named on the API page whatever it is styled with
+            breaking: false
+            commit: 9fcd06f8f
+          - kind: fix
+            scope: runtime
+            subject: "a stale runtime says so, on the lease and on the way in"
+            breaking: false
+            commit: 53b21b4bb
           - kind: fix
             scope: release
             subject: the module asserts the two projections it documents
@@ -636,6 +651,11 @@ sections:
             subject: the projections follow the master merge
             breaking: false
             commit: 3a2aeab52
+          - kind: chore
+            scope: derive
+            subject: the projections follow the merge
+            breaking: false
+            commit: f2b018f26
           - kind: chore
             scope: derive
             subject: the projections follow the final master merge
