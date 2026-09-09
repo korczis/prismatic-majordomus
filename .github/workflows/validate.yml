@@ -22,6 +22,9 @@ on:
 
 permissions:
   contents: read
+  # scripts/ci/github-check reads the repository's issues and milestones to prove the
+  # canonical project model and its GitHub projection still agree.
+  issues: read
 
 # A newer commit of the same pull request supersedes the runs of the older ones. Every
 # other run (master, the schedule, a dispatch) is its own group: it neither waits for nor
@@ -125,6 +128,8 @@ jobs:
       # from the plan rather than listed here, so a gate declared in the model cannot be
       # reported as run and never executed, which is what happened to four of them.
       - name: the structure gates of the plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job structure
       - if: always()
         run: scripts/ci/summary --job structure --timings timings.tsv

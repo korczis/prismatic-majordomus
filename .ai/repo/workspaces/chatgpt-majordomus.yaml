@@ -1,0 +1,44 @@
+schema: workspace/v1
+kind: workspace
+id: chatgpt-majordomus
+title: The Majordomus project in ChatGPT
+description: The operator's own ChatGPT Project holding design conversation about this repository, read so that what was decided there can be cited, carried and promoted here.
+status: declared
+
+vendor:
+  id: chatgpt
+  name: ChatGPT
+  origins:
+    - https://chatgpt.com
+
+upstream:
+  # The vendor's own identifier, carried opaquely. The slug the URL appends after it is a
+  # rendering of the display name and is deliberately not part of the identity: a project
+  # renamed upstream is the same project.
+  id: g-p-6a9afb4f933081919d2dfef5c6ce848f
+  kind: project
+  url: https://chatgpt.com/g/g-p-6a9afb4f933081919d2dfef5c6ce848f-majordomus/project
+
+authorisation:
+  asserted_by: Tomas Korcak
+  asserted_at: 2026-09-09
+  statement: "The operator's own ChatGPT account and his own project within it, read only: conversations, messages, project instructions and attachment metadata. No other account, no other project, no write of any kind."
+  write: false
+
+access:
+  # A label the operator's own configuration resolves to an already-authenticated browser
+  # profile, outside this repository. Not a path, not an environment variable, not a
+  # credential.
+  browser_profile: default
+  transports:
+    - browser
+
+capabilities:
+  - workspace.read
+  - conversations.read
+  - messages.read
+  - instructions.read
+  - files.read
+
+created_at: 2026-09-09
+updated_at: 2026-09-09

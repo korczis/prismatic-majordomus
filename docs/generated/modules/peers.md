@@ -28,7 +28,7 @@ Tell the other peers of this shared server what the calling session is doing and
 | `scope` | array | no | Repository-relative paths the peer expects to touch. Informational: other peers
 read it to avoid a collision; nothing here enforces it. |
 
-Output: `Peer`.
+Output: `Announced`.
 
 ## `peers.list` — List peers
 

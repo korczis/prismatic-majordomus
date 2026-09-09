@@ -424,12 +424,7 @@ pub fn statistic(
 
 /// The word for a capability kind, as a badge.
 pub fn kind_badge(kind: CapabilityKind) -> El {
-    let (word, label) = match kind {
-        CapabilityKind::Query => ("query", "query"),
-        CapabilityKind::Command => ("command", "command"),
-        CapabilityKind::Resource => ("resource", "resource"),
-    };
-    badge(word, label)
+    badge(kind.as_str(), kind.as_str())
 }
 
 /// A `<details>` block, closed by default.
