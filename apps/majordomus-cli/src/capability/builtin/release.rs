@@ -129,3 +129,65 @@ fn version(ctx: &Context, _: Empty) -> Result<VersionReport, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
     Ok(release::version::report(root, &ctx.index.objects))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Two capabilities, and every surface that carries them is derived from this
+    /// declaration: the MCP tools, the changelog resource, the HTTP routes, the OpenAPI
+    /// operations. A refactor that renamed a route, dropped the resource or added a third
+    /// would still compile, and the suites that exercise the changelog behind it would
+    /// still pass. This is the assertion that would not.
+    #[test]
+    fn the_declaration_yields_the_projections_it_claims() {
+        let m = module();
+        assert_eq!(m.id.as_str(), "release");
+        let expected: &[(&str, &str, &str)] = &[
+            (
+                "release.changelog",
+                "majordomus_changelog",
+                "/api/v1/changelog",
+            ),
+            (
+                "release.version",
+                "majordomus_release_version",
+                "/api/v1/release/version",
+            ),
+        ];
+        let ids: Vec<&str> = m
+            .capabilities
+            .iter()
+            .map(|e| e.capability.id.as_str())
+            .collect();
+        let want: Vec<&str> = expected.iter().map(|(id, _, _)| *id).collect();
+        assert_eq!(
+            ids, want,
+            "the module declares a different set of capabilities"
+        );
+        for (executable, (id, tool, path)) in m.capabilities.iter().zip(expected) {
+            let exposure = &executable.capability.exposure;
+            assert_eq!(
+                exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+                Some(*tool),
+                "{id} lost or renamed its MCP tool"
+            );
+            assert_eq!(
+                exposure.http.as_ref().map(|h| h.path.as_str()),
+                Some(*path),
+                "{id} lost or renamed its HTTP route"
+            );
+        }
+        // the changelog is also a resource, so a client may read it without calling a tool
+        let changelog = &m.capabilities[0].capability.exposure;
+        assert_eq!(
+            changelog
+                .mcp
+                .as_ref()
+                .and_then(|m| m.resource.as_ref())
+                .map(|r| r.uri.as_str()),
+            Some(CHANGELOG_URI),
+            "the changelog stopped being an MCP resource"
+        );
+    }
+}

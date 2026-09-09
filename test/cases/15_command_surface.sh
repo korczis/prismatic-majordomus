@@ -43,6 +43,34 @@ expect_grep 'version: unknown option --no-such-option'
 # an unknown command is a usage error, not a silent no-op
 expect_exit 2 "$MJ" nonsense
 expect_grep 'unknown command: nonsense'
+expect_grep 'usage: majordomus <command>'
+
+# Two programs answer to the name `majordomus`, and the repository's own instructions name
+# commands of both, so an unknown command that belongs to the Rust executable must say which
+# program has it and how to reach it — a worker who followed those instructions and got only
+# "unknown command" has nowhere to go. The command probed with is read from the projection of
+# the clap declaration rather than written here: a command name in a test is the catalogue
+# project.commands-are-projections forbids.
+CLI_DOC="$ROOT/docs/generated/cli.yaml"
+if [ -f "$CLI_DOC" ]; then
+  # the first item of the `subcommands:` list directly under `cli:`; its path is the program
+  # and the command, and the deeper indentation of a nested list keeps that list out of this
+  native="$(awk '
+    /^  subcommands:$/ { top = 1; next }
+    top && /^    - path:$/ { n = 0; inpath = 1; next }
+    inpath && /^        - / { n += 1; if (n == 2) { s = $0; sub(/^ *- */, "", s); print s; exit } }
+  ' "$CLI_DOC")"
+  [ -n "$native" ] || { echo "    $CLI_DOC names no command of the Rust executable"; exit 1; }
+  if printf '%s\n' "$COMMANDS" | grep -qx "$native"; then
+    echo "    $native is dispatched by both programs; this check needs one that is not"; exit 1
+  fi
+  expect_exit 2 "$MJ" "$native"
+  expect_grep "$native is a command of the Rust executable"
+  # and it names the launcher that runs it, which builds the executable when it must
+  expect_grep "bin/majordomus-cli $native"
+  # the pointer is the answer, so the usage text of the wrong program is not also dumped
+  expect_no_grep 'usage: majordomus <command>'
+fi
 
 # every command refuses an argument it does not know rather than ignoring it. Commands with
 # subcommands report an unknown subcommand; the rest report an unknown option. Either way

@@ -70,6 +70,39 @@ exit codes: 0 ok · 2 usage · 10 contract unmet · 11 drift found · 12 missing
 USAGE
 }
 
+# Two programs answer to the name `majordomus` here: this shell tool and the Rust executable
+# under apps/majordomus-cli. The repository's own instructions name commands of both —
+# `majordomus worktree`, `majordomus generate`, `majordomus mcp`, `majordomus serve` — so a
+# command this tool does not know is more often the other program's than a typo, and a worker
+# who followed those instructions gets "unknown command" and nowhere to go.
+#
+# Which commands are the other program's is read, never listed here: docs/generated/cli.yaml
+# is the tracked projection of the clap declaration, and project.commands-are-projections
+# forbids a surface keeping a catalogue of its own. A release package ships bin/, lib/,
+# libexec/ and share/ and no docs/, so an installed tool finds no projection and says only
+# that the command is unknown; a checkout — which is where those instructions are read — can
+# also name the launcher that runs it. Both files are required before anything is claimed:
+# advice that names a launcher which is not there is worse than none.
+mj_rust_command() {
+  local doc="$MJ_BIN_DIR/../docs/generated/cli.yaml"
+  [ -f "$doc" ] && [ -x "$MJ_BIN_DIR/majordomus-cli" ] || return 1
+  # The executable's top-level commands are the `path` of each item of the `subcommands:`
+  # list directly under `cli:` — two elements, the program and the command. A nested
+  # subcommand's path has three and its list is indented further, so indentation is what
+  # tells `majordomus web` from `majordomus web list`.
+  awk -v want="$1" '
+    /^  subcommands:$/ { top = 1; next }
+    top && /^    - path:$/ { n = 0; inpath = 1; next }
+    inpath && /^        - / {
+      n += 1
+      if (n == 2) { name = $0; sub(/^ *- */, "", name); if (name == want) { found = 1; exit } }
+      next
+    }
+    { inpath = 0 }
+    END { if (found) exit 0; exit 1 }
+  ' "$doc"
+}
+
 # global options may precede the command
 pre=()
 while [ $# -gt 0 ]; do
@@ -96,5 +129,15 @@ case "$cmd" in
     . "$MJ_LIB_DIR/$cmd.sh"
     "mj_cmd_$cmd" "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"
     ;;
-  *) mj_err "unknown command: $cmd"; usage >&2; exit "$MJ_EX_USAGE" ;;
+  *)
+    mj_err "unknown command: $cmd"
+    if mj_rust_command "$cmd"; then
+      # The launcher, spelled the way the caller would type it: relative when it is under the
+      # directory they are standing in, which is what `bin/majordomus-cli` is from the root.
+      # It builds the executable when it must, so this is one command and not a preparation.
+      rust_cli="$MJ_BIN_DIR/majordomus-cli"
+      mj_err "$cmd is a command of the Rust executable, not of this tool; run: ${rust_cli#"$PWD/"} $cmd"
+      exit "$MJ_EX_USAGE"
+    fi
+    usage >&2; exit "$MJ_EX_USAGE" ;;
 esac
