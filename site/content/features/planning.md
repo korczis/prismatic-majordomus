@@ -15,7 +15,11 @@ source = ".ai/repo/features/planning.md"
 that breaks its schema; `plan next` answers which issues may be executed now; `plan roadmap`
 draws the milestone graph the website renders. A branch created for an issue is named after
 it, so the worktree topology can read the issue back from the branch, and an issue is done
-only with the evidence its contract requires.
+only with the evidence its contract requires. Above the branch the same edge is read in
+both directions and stored nowhere: the `trace` capability module derives an issue's
+branches and commits from git, `scripts/traceability` joins the pull requests GitHub holds,
+and a commit no execution contract accounts for is reported as unattributed rather than
+quietly left out.
 
 ## What it does not do
 

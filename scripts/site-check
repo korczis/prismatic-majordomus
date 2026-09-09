@@ -676,4 +676,24 @@ else
 fi
 [ "$distbad" = 0 ] && ok install "/install.sh is served as the model's URL names it, the homepage and the installation page show the command it composes, and every published release is complete"
 
+# 18. a publication offers no surface it cannot answer for. Every route the projection
+# declares `served-only` needs a running process, so this site may name it and must not
+# link it: a link here is a promise nobody keeps, and the reason it is not linked belongs
+# in the surface's declared availability rather than in a test on the page's own address.
+# The root is the one mount a publication answers for with another surface — its
+# application owns `/` — so a link there lands on a page rather than on a promise, and the
+# check leaves it alone.
+OA="$SITE/data/generated/openapi.json"; surfbad=0
+served="$(jq -r '.infrastructure[] | select(.availability=="served-only" and .path != "/") | .path' "$OA")"
+[ -n "$served" ] || { bad surface "no route declares itself served-only; the availability is not reaching this page"; surfbad=1; }
+for route in $served; do
+  # the mount itself, and anything under it, as a link a reader could follow
+  if grep -rhoE 'href="[^"]*"' $pages | grep -qE "href=\"($PREFIX)?$route(/[^\"]*)?\"" ; then
+    bad surface "a published page links $route, which only a running server answers"; surfbad=1
+  fi
+  grep -qF "<code class=\"font-mono text-heading\">$route</code>" "$PUB/docs/api/index.html" || { bad surface "$route is not named on /docs/api/"; surfbad=1; }
+done
+grep -qF 'while a server runs' "$PUB/docs/api/index.html" || { bad surface "/docs/api/ does not say which routes need a server"; surfbad=1; }
+[ "$surfbad" = 0 ] && ok surface "every served-only route is named on /docs/api/ and linked from nowhere: $(printf '%s ' $served)"
+
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

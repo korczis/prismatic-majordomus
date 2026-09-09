@@ -1,7 +1,7 @@
 +++
 title = "What the MCP server serves is decided by the manifest, the declared source classes and each file's front matter, so an object added to the layer is served with no change to the executable"
 description = "The executable names no repository file beyond the two conventions the layer documents, .ai/manifest.yaml and sources.yaml under the knowledge section. The manifest says which sections exist, sources.yaml says which files carry which kind, the same share/allow/<kind>.txt the shell tool uses says which keys a kind may carry, and the executable's embedded schema/kinds.yaml says how a kind is read. Write a rule under .ai/repo/rules/project/, track it, restart the server, and it is majordomus://rule/<id>@<version> with its own provenance. Declare a new class of a known kind in sources.yaml and it is served too."
-weight = 104
+weight = 105
 [extra]
 claim_id = "mcp-data-driven"
 status = "guaranteed"

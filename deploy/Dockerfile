@@ -17,6 +17,15 @@ WORKDIR /app
 COPY --from=build /src/apps/majordomus-cli/target/release/majordomus /usr/local/bin/majordomus
 COPY share /app/share
 COPY .ai /app/.ai
+COPY docs /app/docs
+COPY lib /app/lib
+COPY bin /app/bin
+COPY test /app/test
+COPY README.md /app/README.md
+COPY AGENTS.md /app/AGENTS.md
+COPY CLAUDE.md /app/CLAUDE.md
+COPY CONTRIBUTING.md /app/CONTRIBUTING.md
+COPY SECURITY.md /app/SECURITY.md
 USER majordomus
 EXPOSE 8080
 # The address, the port and the interface are the object's; this command names the
