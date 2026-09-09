@@ -9,6 +9,18 @@
       "unreleased": true,
       "decisions": [
         {
+          "id": "adr-0032",
+          "title": "An external workspace is not a provider: the term, the dependency posture, and where synced content lives",
+          "status": "proposed",
+          "date": "2026-09-09"
+        },
+        {
+          "id": "adr-0031",
+          "title": "The design is one declaration and every surface is a projection of it",
+          "status": "accepted",
+          "date": "2026-09-09"
+        },
+        {
           "id": "adr-0030",
           "title": "A task owes obligations, and the evidence that discharges them goes stale",
           "status": "proposed",
@@ -47,10 +59,38 @@
           "changes": [
             {
               "kind": "feat",
+              "scope": "ci",
+              "subject": "three failures of one session, turned into checks",
+              "breaking": false,
+              "commit": "1e96e91b7"
+            },
+            {
+              "kind": "feat",
+              "scope": "peers",
+              "subject": "a session is told it has not announced, and doctor names the work that exists on one disk",
+              "breaking": false,
+              "commit": "1487d729e"
+            },
+            {
+              "kind": "feat",
+              "scope": "design",
+              "subject": "one declaration for the design, and every surface projects it",
+              "breaking": false,
+              "commit": "2b3b9fffa"
+            },
+            {
+              "kind": "feat",
               "scope": "closure",
               "subject": "a task owes obligations, and the evidence that discharges them goes stale",
               "breaking": false,
               "commit": "cf1ee94ca"
+            },
+            {
+              "kind": "feat",
+              "scope": "peers",
+              "subject": "an announcement outlives the connection that made it, and a claim is answered rather than merely recorded",
+              "breaking": false,
+              "commit": "6aeec67b1"
             },
             {
               "kind": "feat",
@@ -75,6 +115,13 @@
             },
             {
               "kind": "feat",
+              "scope": "ci",
+              "subject": "the GitHub projection has a gate, so it cannot rot green again",
+              "breaking": false,
+              "commit": "597ebe4e5"
+            },
+            {
+              "kind": "feat",
               "scope": "skills",
               "subject": "a description that does not tell two skills apart is a finding",
               "breaking": false,
@@ -82,10 +129,24 @@
             },
             {
               "kind": "feat",
+              "scope": "plan",
+              "subject": "the projection to GitHub becomes a gated, identified, traversable milestone",
+              "breaking": false,
+              "commit": "209a82c30"
+            },
+            {
+              "kind": "feat",
               "scope": "completion",
               "subject": "the shell integration installs itself, and takes itself out again",
               "breaking": false,
               "commit": "2a7af4272"
+            },
+            {
+              "kind": "feat",
+              "scope": "workspace",
+              "subject": "a workspace is a kind, and only its content is local",
+              "breaking": false,
+              "commit": "f9bbc636a"
             },
             {
               "kind": "feat",
@@ -166,6 +227,13 @@
             },
             {
               "kind": "feat",
+              "scope": "execution",
+              "subject": "an execution is a watched capability call, not a second registry",
+              "breaking": false,
+              "commit": "65dded963"
+            },
+            {
+              "kind": "feat",
               "scope": "commands",
               "subject": "one canonical command graph, and every surface derives from it",
               "breaking": false,
@@ -194,6 +262,13 @@
             },
             {
               "kind": "feat",
+              "scope": "web",
+              "subject": "every projection route carries its availability, and the served-only ones are checked",
+              "breaking": false,
+              "commit": "ade9050e6"
+            },
+            {
+              "kind": "feat",
               "scope": "env",
               "subject": "a direnv adapter that carries no repository logic, and a modular justfile",
               "breaking": false,
@@ -212,6 +287,13 @@
               "subject": "one typed snapshot of what a checkout is",
               "breaking": false,
               "commit": "aa64215da"
+            },
+            {
+              "kind": "feat",
+              "scope": "generate",
+              "subject": "the composed graph is an artifact of the one plan, with a schema and nothing private",
+              "breaking": false,
+              "commit": "674b89907"
             }
           ]
         },
@@ -233,6 +315,13 @@
               "subject": "a derivation refuses a degraded index, and one pass says everything a command still needs",
               "breaking": false,
               "commit": "f6b73b05a"
+            },
+            {
+              "kind": "fix",
+              "scope": "design,adr",
+              "subject": "the three failures this session hit, each with the gate that would have caught it",
+              "breaking": false,
+              "commit": "1cbb36869"
             },
             {
               "kind": "fix",
@@ -282,6 +371,20 @@
               "subject": "an unknown command that the Rust executable provides says so and names the launcher",
               "breaking": false,
               "commit": "59f5c8b75"
+            },
+            {
+              "kind": "fix",
+              "scope": "github-sync",
+              "subject": "the protection against overwriting a person's edit was blind when the plan had moved",
+              "breaking": false,
+              "commit": "21f7ad848"
+            },
+            {
+              "kind": "fix",
+              "scope": "github-sync",
+              "subject": "a projected record carries its own identity, so a rename cannot orphan it",
+              "breaking": false,
+              "commit": "3db47f7d6"
             },
             {
               "kind": "fix",
@@ -352,6 +455,13 @@
               "subject": "the test build compiles again on master, and clippy 1.98 is satisfied",
               "breaking": false,
               "commit": "5540b762f"
+            },
+            {
+              "kind": "fix",
+              "scope": "merge",
+              "subject": "the test-only index literal gains the field master added",
+              "breaking": false,
+              "commit": "52bfbe7f0"
             },
             {
               "kind": "fix",
@@ -523,6 +633,20 @@
             },
             {
               "kind": "fix",
+              "scope": "worktree",
+              "subject": "the container test names no home directory",
+              "breaking": false,
+              "commit": "efc6a085b"
+            },
+            {
+              "kind": "fix",
+              "scope": "test",
+              "subject": "the duplicate plan test and the unformatted tests a merge left behind",
+              "breaking": false,
+              "commit": "de52b8497"
+            },
+            {
+              "kind": "fix",
               "scope": "cli",
               "subject": "the crate passes fmt, rustdoc and its test build again",
               "breaking": false,
@@ -570,6 +694,41 @@
           "heading": "Documentation",
           "rank": 4,
           "changes": [
+            {
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "I1301 is done, and I1302 may not land its schema alone",
+              "breaking": false,
+              "commit": "012fed644"
+            },
+            {
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "the projection claim splits in two, and only one of the halves was ever true",
+              "breaking": false,
+              "commit": "990bd0588"
+            },
+            {
+              "kind": "docs",
+              "scope": "plan",
+              "subject": "the external-workspaces milestone and its ten issues",
+              "breaking": false,
+              "commit": "54c5f45ee"
+            },
+            {
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "the audit withdraws two thirds of ADR 0025",
+              "breaking": false,
+              "commit": "7f75414bf"
+            },
+            {
+              "kind": "docs",
+              "scope": "adr",
+              "subject": "an external workspace is not a provider",
+              "breaking": false,
+              "commit": "a845624ad"
+            },
             {
               "kind": "docs",
               "scope": "adr",
@@ -642,6 +801,13 @@
           "changes": [
             {
               "kind": "test",
+              "scope": "workspace",
+              "subject": "the declaration is proved to carry no credential",
+              "breaking": false,
+              "commit": "3d9c929a5"
+            },
+            {
+              "kind": "test",
               "scope": "order",
               "subject": "the gate is driven against fixture trees, and driving it found five more unpinned sorts",
               "breaking": false,
@@ -653,6 +819,19 @@
               "subject": "case 56's first export is a repository too, so CI asks the same gate as a laptop",
               "breaking": false,
               "commit": "8b6b9a982"
+            },
+            {
+              "kind": "test",
+              "scope": "env",
+              "subject": "the two tests the adapter rule names, written",
+              "breaking": false,
+              "commit": "000e40d67"
+            },
+            {
+              "kind": "test",
+              "subject": "the recipe set is asked of just --dump, not of one file's text",
+              "breaking": false,
+              "commit": "010541612"
             },
             {
               "kind": "test",
@@ -684,10 +863,24 @@
             },
             {
               "kind": "test",
+              "scope": "execution",
+              "subject": "the terminal's rendering is asserted, and a surface count is derived",
+              "breaking": false,
+              "commit": "9badf2448"
+            },
+            {
+              "kind": "test",
               "scope": "commands",
               "subject": "the generated completion, loaded into a real zsh",
               "breaking": false,
               "commit": "f37da5681"
+            },
+            {
+              "kind": "test",
+              "scope": "worktree",
+              "subject": "the migration's classification, its guard, and a dirty move",
+              "breaking": false,
+              "commit": "e4ef4cba4"
             }
           ]
         },
@@ -709,6 +902,13 @@
               "subject": "the projections follow the master merge",
               "breaking": false,
               "commit": "5e6d324c1"
+            },
+            {
+              "kind": "chore",
+              "scope": "adr,test",
+              "subject": "renumber to the identities the board actually left free",
+              "breaking": false,
+              "commit": "50f276bc3"
             },
             {
               "kind": "chore",
@@ -807,6 +1007,13 @@
               "subject": "the projections follow the merge with master",
               "breaking": false,
               "commit": "d5d95779c"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow ADR 0025",
+              "breaking": false,
+              "commit": "a3a267e8e"
             },
             {
               "kind": "chore",
@@ -937,6 +1144,13 @@
             {
               "kind": "chore",
               "scope": "derive",
+              "subject": "the projections follow the merge",
+              "breaking": false,
+              "commit": "9ee7c2952"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
               "subject": "the projections follow the merge with master",
               "breaking": false,
               "commit": "bebf76f03"
@@ -979,9 +1193,71 @@
             {
               "kind": "chore",
               "scope": "derive",
+              "subject": "the projections follow",
+              "breaking": false,
+              "commit": "99ead0772"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
               "subject": "the projections follow the merge",
               "breaking": false,
               "commit": "c85c2cb0b"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge with master",
+              "breaking": false,
+              "commit": "8bafa2854"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge with master",
+              "breaking": false,
+              "commit": "e25278a71"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the merge with master",
+              "breaking": false,
+              "commit": "2365af0cf"
+            },
+            {
+              "kind": "chore",
+              "scope": "plan",
+              "subject": "I1005 done, with the evidence the contract asked for",
+              "breaking": false,
+              "commit": "27662495a"
+            }
+          ]
+        },
+        {
+          "kind": "other",
+          "heading": "Other",
+          "rank": 8,
+          "changes": [
+            {
+              "kind": "other",
+              "subject": "Merge feature/github-work-graph into int/everything, with I1305 restored to its own milestone",
+              "breaking": false,
+              "commit": "d52f43334"
+            },
+            {
+              "kind": "other",
+              "scope": "feature/graph-model",
+              "subject": "uncommitted work found in the worktree at the topology migration, committed as it was",
+              "breaking": false,
+              "commit": "034f334bf"
+            },
+            {
+              "kind": "other",
+              "scope": "feature/deployment-core",
+              "subject": "uncommitted work found in the worktree at the topology migration, committed as it was",
+              "breaking": false,
+              "commit": "6579f1978"
             }
           ]
         }
@@ -995,6 +1271,12 @@
       "commit": "45f921efb5f82c517f13467b0bf9903256349470",
       "unreleased": false,
       "decisions": [
+        {
+          "id": "adr-0033",
+          "title": "An execution is a watched capability call, not a second registry",
+          "status": "accepted",
+          "date": "2026-09-08"
+        },
         {
           "id": "adr-0028",
           "title": "The crate's public surface is measured by the crate, and absence from the API is a decision",
