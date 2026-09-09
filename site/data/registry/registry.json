@@ -6,7 +6,7 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "e8b4a2963050da29e6564519626a666ef6c14745dab3f34085e55bc06195cdf8",
+    "fingerprint": "e8d6f9962b1936d763745c9186cb131b7a9d5b04a1a139c5f119e2897ec9ca65",
     "summary": {
       "total": 1134,
       "builtin": 52,
@@ -18925,7 +18925,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f053463d26bb9d0a49ac93ae2c1afdb89a7045c3a7c642cbd7174b17692ca7a2",
+    "fingerprint": "af6c2c6099783835f7bff633a8d994b66b354f56d24b76ed500ea7679f16e936",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -22242,7 +22242,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 50592
+        "bytes": 50485
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -24135,7 +24135,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 53225
+        "bytes": 54737
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -25858,7 +25858,7 @@
         "path": ".ai/repo/project/issues/I1015.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1805
+        "bytes": 1848
       },
       {
         "uri": "majordomus://issue/I1016",
@@ -44540,11 +44540,42 @@
       }
     ],
     "infrastructure": [
-      "/",
-      "/openapi.json",
-      "/swagger",
-      "/mcp",
-      "/cockpit"
+      {
+        "id": "home",
+        "path": "/",
+        "what": "This process, and everything it serves",
+        "availability": "served-only"
+      },
+      {
+        "id": "api",
+        "path": "/api/v1",
+        "what": "The capability registry over HTTP",
+        "availability": "served-only"
+      },
+      {
+        "id": "openapi",
+        "path": "/openapi.json",
+        "what": "The OpenAPI document of the capability registry",
+        "availability": "both"
+      },
+      {
+        "id": "swagger",
+        "path": "/swagger",
+        "what": "Swagger UI over the OpenAPI document",
+        "availability": "served-only"
+      },
+      {
+        "id": "mcp",
+        "path": "/mcp",
+        "what": "MCP over HTTP for attached clients",
+        "availability": "served-only"
+      },
+      {
+        "id": "cockpit",
+        "path": "/cockpit",
+        "what": "The registry, rendered for a person",
+        "availability": "served-only"
+      }
     ],
     "openapi_path": "docs/generated/openapi.json"
   },

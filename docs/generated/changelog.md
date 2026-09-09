@@ -19,6 +19,7 @@ Current version: **0.4.0**
 
 ### Added
 
+- **peers**: a session is told it has not announced, and doctor names the work that exists on one disk (`1487d729e`)
 - **peers**: an announcement outlives the connection that made it, and a claim is answered rather than merely recorded (`6aeec67b1`)
 - **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
 - **release**: the changelog is a projection, and the version is derived from the commits (`82583eba1`)
@@ -124,6 +125,7 @@ Current version: **0.4.0**
 - **cockpit**: the sweep renders the routes the dispatcher actually answers (`4fd2d838c`)
 - **site**: the feature pages vouch for the claims the homepage used to (`ca45221c0`)
 - **commands**: the generated completion, loaded into a real zsh (`f37da5681`)
+- **worktree**: the migration's classification, its guard, and a dirty move (`e4ef4cba4`)
 
 ### Housekeeping
 

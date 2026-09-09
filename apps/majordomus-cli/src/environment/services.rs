@@ -145,8 +145,9 @@ mod tests {
         let described: Vec<&str> = descriptors().iter().map(|d| d.path).collect();
         for route in infrastructure_routes() {
             assert!(
-                described.contains(&route.as_str()),
-                "the server serves {route} and no service describes it"
+                described.contains(&route.path.as_str()),
+                "the server serves {} and no service describes it",
+                route.path
             );
         }
     }

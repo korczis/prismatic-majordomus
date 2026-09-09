@@ -2228,16 +2228,23 @@ pub fn api(ctx: &Context) -> Page {
         })
         .collect();
 
-    // the projection's own routes and what each one is, read off the surfaces that declare
-    // them: this table has never held a path of its own and must not start
+    // the projection's own routes, and where each one answers: the same resolved surfaces
+    // the OpenAPI document and the published site read, so a description written once here
+    // cannot disagree with the one written there. This table has never held a path of its
+    // own and must not start.
     let infrastructure = table(
-        &["Path", "What it is"],
-        crate::web::discover::native_all()
+        &["Path", "What it is", "Answered by"],
+        crate::web::projection_routes()
             .into_iter()
-            .map(|surface| {
+            .map(|r| {
                 row(vec![
-                    cell(mono(surface.mount.as_str())),
-                    text_cell(&surface.title),
+                    cell(mono(&r.path)),
+                    text_cell(&r.what),
+                    text_cell(if r.linkable() {
+                        "a running server, and a publication"
+                    } else {
+                        "a running server"
+                    }),
                 ])
             })
             .collect(),

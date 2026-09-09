@@ -26,26 +26,27 @@ pub const OPENAPI_VERSION: &str = "3.1.0";
 pub const OAS_DIALECT: &str = "https://spec.openapis.org/oas/3.1/dialect/base";
 
 /// The routes that are the projection's own rather than capabilities, read from the
-/// surfaces that declare them.
+/// surfaces that declare them: where each answers, what it is, and whether a publication
+/// can carry it.
 ///
 /// It was a constant list, and a constant list is how `/docs` came to mean Swagger UI in
 /// three files and documentation in a fourth. The declarations in `crate::web::discover`
-/// are the one place a mount is written; everything below reads them.
+/// are the one place a mount is written; [`crate::web::projection_routes`] reads them, and
+/// the document, the site dataset, the generated reference and the Cockpit all read that.
+/// A reader of this document is often a published page with no server behind it, so the
+/// availability travels with the route.
 ///
 /// ```
 /// use majordomus_cli::http::openapi::infrastructure_routes;
+/// use majordomus_cli::web::Availability;
 /// let routes = infrastructure_routes();
-/// assert!(routes.iter().any(|r| r == "/swagger"));
-/// assert!(!routes.iter().any(|r| r.starts_with("/api/")), "a capability route is not infrastructure");
+/// let swagger = routes.iter().find(|r| r.path == "/swagger").unwrap();
+/// assert_eq!(swagger.availability, Availability::ServedOnly);
+/// assert!(routes.iter().all(|r| !r.what.is_empty()));
+/// assert!(!routes.iter().any(|r| r.path.starts_with("/api/v1/")), "a capability route is not infrastructure");
 /// ```
-pub fn infrastructure_routes() -> Vec<String> {
-    crate::web::discover::native_all()
-        .into_iter()
-        .filter(|s| {
-            s.mount.as_str() != crate::capability::model::HttpExposure::PREFIX.trim_end_matches('/')
-        })
-        .map(|s| s.mount.to_string())
-        .collect()
+pub fn infrastructure_routes() -> Vec<crate::web::ProjectionRoute> {
+    crate::web::projection_routes()
 }
 
 /// The error statuses the router answers, by code, with the reason each one is given.

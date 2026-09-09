@@ -45,24 +45,40 @@
   },
   "infrastructure": [
     {
+      "availability": "served-only",
+      "id": "home",
       "path": "/",
-      "what": "The index: name, version, repository root, and where the document, the reference, the capabilities, the peers and MCP are."
+      "what": "This process, and everything it serves"
     },
     {
+      "availability": "served-only",
+      "id": "api",
+      "path": "/api/v1",
+      "what": "The capability registry over HTTP"
+    },
+    {
+      "availability": "both",
+      "id": "openapi",
       "path": "/openapi.json",
-      "what": "This document, rendered from the registry at every request; what Swagger UI loads."
+      "what": "The OpenAPI document of the capability registry"
     },
     {
+      "availability": "served-only",
+      "id": "swagger",
       "path": "/swagger",
-      "what": ""
+      "what": "Swagger UI over the OpenAPI document"
     },
     {
+      "availability": "served-only",
+      "id": "mcp",
       "path": "/mcp",
-      "what": "MCP over HTTP (Streamable HTTP) for a second client; the shared server only."
+      "what": "MCP over HTTP for attached clients"
     },
     {
+      "availability": "served-only",
+      "id": "cockpit",
       "path": "/cockpit",
-      "what": ""
+      "what": "The registry, rendered for a person"
     }
   ],
   "openapi": "3.1.0",

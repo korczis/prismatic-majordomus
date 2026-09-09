@@ -16046,11 +16046,42 @@
   "x-majordomus": {
     "generator": "majordomus-cli 0.4.0",
     "infrastructure": [
-      "/",
-      "/openapi.json",
-      "/swagger",
-      "/mcp",
-      "/cockpit"
+      {
+        "id": "home",
+        "path": "/",
+        "what": "This process, and everything it serves",
+        "availability": "served-only"
+      },
+      {
+        "id": "api",
+        "path": "/api/v1",
+        "what": "The capability registry over HTTP",
+        "availability": "served-only"
+      },
+      {
+        "id": "openapi",
+        "path": "/openapi.json",
+        "what": "The OpenAPI document of the capability registry",
+        "availability": "both"
+      },
+      {
+        "id": "swagger",
+        "path": "/swagger",
+        "what": "Swagger UI over the OpenAPI document",
+        "availability": "served-only"
+      },
+      {
+        "id": "mcp",
+        "path": "/mcp",
+        "what": "MCP over HTTP for attached clients",
+        "availability": "served-only"
+      },
+      {
+        "id": "cockpit",
+        "path": "/cockpit",
+        "what": "The registry, rendered for a person",
+        "availability": "served-only"
+      }
     ],
     "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
     "errors": [

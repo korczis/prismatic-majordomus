@@ -1989,7 +1989,7 @@ fn reference(registry: &CapabilityRegistry) -> String {
     s.push_str(
         &openapi::infrastructure_routes()
             .iter()
-            .map(|r| format!("`{r}`"))
+            .map(|r| format!("`{}`", r.path))
             .collect::<Vec<_>>()
             .join(", "),
     );
