@@ -18,13 +18,24 @@
 #
 #   scripts/generate-site-data            write site/data/generated/*.json
 #   scripts/generate-site-data --check    write to a temp dir and diff against the committed files
+#   scripts/generate-site-data --no-scenarios
+#                                         derive without executing the use-case scenarios
+#
+# --no-scenarios exists for the cases that test *derivation*: they mutate a canonical input
+# and prove the derived data followed it. Some of those mutations necessarily break the
+# behaviour the scenarios exercise — 12c removes a module's reference to a state file to
+# watch the graph edge disappear, and that same edit stops the command working — so running
+# the scenarios there reports a failure about the fixture rather than about derivation. The
+# data it writes carries no demonstrations and says so, and the published site never uses it:
+# the site build runs without the flag, and `--check` compares like with like.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # Generation is transactional. Everything is written into a staging directory and only moved
 # into place once every step has succeeded, so a failure half way through (a claim without its
 # detail document, a renamed README heading) leaves the previous generated artifacts intact
 # rather than truncated. --check never publishes; it stages and diffs.
-CHECK=0; PUBLISH=1
+CHECK=0; PUBLISH=1; SCENARIOS=1
+case " $* " in *" --no-scenarios "*) SCENARIOS=0 ;; esac
 DEST_DATA="$ROOT/site/data/generated"
 [ "${1:-}" = --check ] && { CHECK=1; PUBLISH=0; }
 # --out writes the data somewhere else and publishes nothing: no content pages, no
@@ -892,6 +903,11 @@ jq -R -n '
     | walk(if type == "object" and (keys | all(test("^[0-9]+$"))) and (keys | length) > 0 then to_entries | sort_by(.key | tonumber) | map(.value) else . end)' "$TAXf" > "$STAGE/taxonomy.json"
 # the scenarios, executed now, against this tree's own tool: what the pages show is what
 # the tool did, and --check proves it again; timings are dropped so the data is stable
+if [ "$SCENARIOS" = 0 ]; then
+  # no demonstrations, and the data says so rather than looking like a run in which every
+  # scenario happened to be absent
+  echo '{"results":[],"scenarios":"skipped"}' > "$STAGE/uc-run.json"; : > "$STAGE/uc-run.err"
+else
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase run --json > "$STAGE/uc-run.json" 2> "$STAGE/uc-run.err" || {
   echo "generate-site-data: a use-case scenario failed; the site does not show a demonstration that does not hold:" >&2
   # Render the failures the run recorded; when that renders nothing — the run wrote no JSON,
@@ -911,6 +927,7 @@ jq -R -n '
   fi
   echo "  reproduce: majordomus usecase run --json" >&2
   exit 10; }
+fi
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
 jq -n \
   --slurpfile ucs <(jq -s . "$STAGE/uc.jsonl") \

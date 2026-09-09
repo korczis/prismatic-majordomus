@@ -29,12 +29,23 @@ PY
 sed -i.bak 's/^# Concepts$/# Concepts CHANGED/' "$T/docs/CONCEPTS.md"; rm -f "$T/docs/CONCEPTS.md.bak"
 expect_exit 0 "$T/scripts/generate-site-data"
 G="$T/site/data/generated"
-[ "$(jq -r .version "$G/project.json")" = "9.9.9" ]
-[ "$(jq -r '.profiles[] | select(.slug=="routine") | .description' "$G/profiles.json")" = "CHANGED DESCRIPTION" ]
-[ "$(jq -r '.profiles[] | select(.slug=="routine") | .effort' "$G/profiles.json")" = "max" ]
-jq -e '.principles | index("Sessions are CHANGED PRINCIPLE")' "$G/lifecycle.json" >/dev/null
-[ "$(jq -r .context.always_loaded_budget_lines "$G/policy.json")" = 42 ]
-[ "$(jq -r '.claims[] | select(.id=="init-refuses") | .claim' "$G/capabilities.json")" = "CHANGED CLAIM TEXT" ]
+# Each derived value is named when it disagrees. A bare `[ ... ]` under `set -e` ends the
+# case with no output at all, which is how "the version mutation stopped matching" read as
+# an unexplained exit for as long as it did.
+derived() {  # <what> <want> <got>
+  [ "$3" = "$2" ] || { echo "    $1: derived $3, and the canonical value was changed to $2"; exit 1; }
+}
+derived "project.json .version" "9.9.9" "$(jq -r .version "$G/project.json")"
+derived "profiles.json routine.description" "CHANGED DESCRIPTION" \
+        "$(jq -r '.profiles[] | select(.slug=="routine") | .description' "$G/profiles.json")"
+derived "profiles.json routine.effort" "max" \
+        "$(jq -r '.profiles[] | select(.slug=="routine") | .effort' "$G/profiles.json")"
+jq -e '.principles | index("Sessions are CHANGED PRINCIPLE")' "$G/lifecycle.json" >/dev/null \
+  || { echo "    lifecycle.json principles does not carry the changed principle title"; exit 1; }
+derived "policy.json context.always_loaded_budget_lines" "42" \
+        "$(jq -r .context.always_loaded_budget_lines "$G/policy.json")"
+derived "capabilities.json claim init-refuses" "CHANGED CLAIM TEXT" \
+        "$(jq -r '.claims[] | select(.id=="init-refuses") | .claim' "$G/capabilities.json")"
 expect_grep '^title = "Concepts CHANGED"' "$T/site/content/docs/concepts.md"
 # the input hash moved, and the previous data is now reported stale
 [ "$(jq -r .source_hash "$G/source.json")" != "$(jq -r .source_hash "$T/before/source.json")" ]

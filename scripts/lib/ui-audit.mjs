@@ -92,9 +92,14 @@ export async function auditPage(page, origin, route, width) {
   const observed = await page.evaluate((tolerance) => {
     const out = { overflow: null, landmarks: {}, headings: [], duplicate_ids: [], triggers: [] };
 
-    // horizontal overflow, with the elements that cause it rather than the fact alone
+    // horizontal overflow, with the elements that cause it rather than the fact alone.
+    // The body's scroll width, not the document element's: content inside its own
+    // `overflow-x:auto` box scrolls within the page — the pattern this site uses for wide
+    // tables — and Chromium still counts that box's unclipped content in
+    // `documentElement.scrollWidth`, which reports overflow on a page that cannot be panned
+    // sideways at all. What a reader can drag is the body.
     const doc = document.documentElement;
-    if (doc.scrollWidth > doc.clientWidth + tolerance) {
+    if (document.body.scrollWidth > doc.clientWidth + tolerance) {
       const offenders = [];
       for (const el of document.querySelectorAll('body *')) {
         const box = el.getBoundingClientRect();
@@ -118,7 +123,7 @@ export async function auditPage(page, origin, route, width) {
         });
         if (offenders.length >= 5) break;
       }
-      out.overflow = { scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, offenders };
+      out.overflow = { scrollWidth: document.body.scrollWidth, clientWidth: doc.clientWidth, offenders };
     }
 
     // landmarks and heading order: a document, not a pile of divs
