@@ -1,7 +1,7 @@
 +++
 title = "Every reference a moment makes resolves against the thing it names, and one that does not is an error carrying the nearest candidate"
 description = "A moment names things: the audiences that recognise it, the operational areas it falls"
-weight = 143
+weight = 145
 [extra]
 claim_id = "why-references-resolve"
 status = "guaranteed"

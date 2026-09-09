@@ -310,6 +310,17 @@ kinds:
       field: schema
       supported: [deployment/v1]
 
+  workspace:
+    format: yaml
+    # the identity fixes the path: share/schemas/majordomus/workspace/workspace.v1.schema.json
+    schema: majordomus.workspace/v1
+    identity: [id]
+    title: title
+    description: description
+    schema_version:
+      field: schema
+      supported: [workspace/v1]
+
   distribution-model:
     format: yaml
     schema: majordomus.distribution/v1

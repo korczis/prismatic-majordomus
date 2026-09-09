@@ -1,0 +1,35 @@
+id: I1310
+milestone: external-workspaces
+title: The subsystem is documented where a person looks, and the plan is closed against the repository
+slug: workspace-docs
+priority: p2
+profile: deep-work
+parallel_safe: true
+objective: "Write docs/WORKSPACES.md, add the row to the documentation index, and re-audit the repository against this milestone: what was reinvented, what legacy duplication survives, and which of the pack's phases turned out not to apply here."
+why: "The pack this milestone came from assumes surfaces that the audit showed are unreachable for local content, and a later worker reading the pack rather than this milestone would rebuild that assumption. The documentation is where that is settled for whoever comes next."
+current_state: "ADR 0025 records the decision and its withdrawal of two earlier positions. Nothing in docs/ describes the subsystem."
+desired_state: "docs/WORKSPACES.md states what a workspace is, how it differs from a provider, the transport policy and its honesty about acquisition mode, the store and its boundary, what is deliberately not published, and how a second vendor is added. The index row exists; the site renders it; the re-audit is recorded."
+scope:
+  - docs
+  - .ai/repo/adrs
+non_scope:
+  - Documenting a capability that does not exist yet
+depends_on:
+  - I1308
+  - I1309
+acceptance_criteria:
+  - docs/WORKSPACES.md exists, is linked from the documentation index, and renders on the site
+  - The document states the distinction from ADR 0024's provider in its own words, so that a reader who never opens the ADR does not conflate them
+  - The re-audit names every place a second implementation of an existing mechanism was avoided, and every place one survives
+  - ADR 0025 is accepted or amended by a person, and its status reflects what was actually built
+validation:
+  - bash test/run.sh
+  - majordomus generate --check
+evidence_required:
+  - documented
+  - indexed
+  - reaudited
+  - adr_settled
+risk: "Documentation written from the plan rather than from the built subsystem. It is written last for that reason."
+created_at: 2026-09-09
+updated_at: 2026-09-09

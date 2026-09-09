@@ -49,6 +49,7 @@ fn query(id: &str, exposure: Exposure, stability: Stability, module: &str) -> Ex
             tags: vec![],
             benchmark: BenchmarkPolicy::Required,
             cache: CachePolicy::Disabled,
+            execution: majordomus_cli::capability::ExecutionPolicy::classify(kind),
         },
         handler: handler::<serde_json::Value, Out, _>(|_, v| {
             Ok(Out {
@@ -506,10 +507,20 @@ fn benchmark_policy_follows_the_kind() {
     let app = common::load_app(&f);
     let s = app.registry().summary();
     assert_eq!(
-        s.benchmark_required, s.builtin,
-        "every builtin is a required benchmark target"
+        s.benchmark_required + s.benchmark_waived,
+        s.builtin,
+        "every builtin is a benchmark target or a typed waiver, and nothing is neither"
     );
-    assert_eq!(s.benchmark_waived, 0);
+    for c in app.registry().iter().filter(|c| c.kind.is_executable()) {
+        if let BenchmarkPolicy::Waived { reason } = c.benchmark {
+            assert_ne!(
+                reason,
+                majordomus_cli::capability::WaiverReason::NotExecutable,
+                "{}: an executable waived as not executable",
+                c.id
+            );
+        }
+    }
     assert!(s.cached >= 1, "at least one query is cached");
 }
 

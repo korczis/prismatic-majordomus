@@ -1,0 +1,50 @@
+id: I1401
+milestone: work-graph-github
+title: The identity of a projected record is what the record carries, not what its title says
+slug: projection-identity
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make the adapter find a remote record by an identity the record itself carries, so that a person may rename an issue on GitHub without the projection losing it or creating a second one, and make reconciliation provable without a network."
+why: "Matching on a title is the one mistake a projection may not make. `remote_issue_number()` matched an `I0001 — ` prefix in the remote title, and every other question about a remote record was answered by the same prefix scan. Rename an issue on GitHub and the adapter reports it missing; run --apply and it creates a duplicate for a canonical record that already exists. The remedy must not be to write the GitHub number into the canonical file, because the adapter's own contract is that nothing here ever writes a GitHub value back into a canonical record."
+current_state: "The adapter resolved five separate questions by scanning the remote title for a canonical prefix, and recovered the number of a freshly created issue by searching GitHub for that title again. The generated region carried the hash of the record it came from and nothing that said which record that was."
+desired_state: "The generated region carries `<!-- majordomus:record <id> -->` beside its hash, so identity travels with the record and a splice rewrites it. Resolution is by that marker; a title matches once, for an issue projected before the marker existed, and that adoption is reported as its own state rather than passing as a projection that is current. A created issue takes its number from the creation itself. The remote can be a file, so which record is which is provable offline."
+scope:
+  - scripts/github-sync
+  - test/cases/45_github_projection.sh
+non_scope:
+  - Writing a GitHub number into a canonical record
+  - Any change to what the projection renders
+depends_on: []
+acceptance_criteria:
+  - A record is resolved by the identity it carries, and a renamed title neither loses it nor duplicates it
+  - An issue carrying no identity marker is adopted by its title once, reported as an adoption, and given a marker by --apply
+  - A title that merely looks canonical never captures a record that carries a different identity
+  - A created issue takes its number from the creation, with no title search anywhere in the adapter
+  - Reconciliation is provable against a fixture remote with no network and no token, and a fixture is refused for --apply
+validation:
+  - bash test/run.sh 45_github_projection
+  - scripts/github-sync --plan
+  - scripts/github-sync --check
+evidence_required:
+  - identity_stable
+  - offline_provable
+risk: "The 19 issues projected before the marker existed must be adopted, never re-created; the adoption path is the acceptance criterion that guards it."
+created_at: 2026-09-09
+updated_at: 2026-09-09T17:10:28Z
+started_at: 2026-09-09T17:10:06Z
+verified_at: 2026-09-09T17:10:21Z
+completed_at: 2026-09-09T17:10:28Z
+evidence:
+  - covers: identity_stable
+    type: test
+    command: "bash test/run.sh 45_github_projection"
+    result: "a record under a fully rewritten remote title is resolved by its marker and reported as body drift, not as missing; an issue with no marker is adopted by title once and reported as adopt; a canonical-looking title does not capture a record carrying a different identity"
+    commit: 209a82c30116cde8393e045e4f9fbc048ddf0076
+    recorded_at: 2026-09-09T17:10:13Z
+  - covers: offline_provable
+    type: test
+    command: "MJ_GH_FIXTURE_ISSUES=<tsv> MJ_GH_FIXTURE_MILESTONES=<tsv> scripts/github-sync --check"
+    result: "reconciliation runs against a fixture remote with no network and no token; --apply refuses a fixture with exit 15"
+    commit: 209a82c30116cde8393e045e4f9fbc048ddf0076
+    recorded_at: 2026-09-09T17:10:17Z

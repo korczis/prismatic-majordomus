@@ -29,7 +29,7 @@ pub fn run(args: BenchArgs) -> Result<u8> {
                     write!(out, "{}", coverage.render()).map_err(Error::Transport)?
                 }
             }
-            if check && !coverage.is_complete() {
+            if check && !coverage.has_no_missing() {
                 return Ok(10);
             }
             Ok(0)

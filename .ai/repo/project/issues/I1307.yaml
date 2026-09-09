@@ -1,0 +1,36 @@
+id: I1307
+milestone: external-workspaces
+title: The ChatGPT shape is mapped from evidence and never becomes the canonical model
+slug: chatgpt-mapper
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Map what a ChatGPT Project actually exposes — the project, its conversations, the message graph, content parts, attachment metadata, project instructions — onto the canonical record model, mapping only what an observation supports."
+why: "The vendor's own shape is a transport detail with a fingerprint (I1305). If it reaches the store or a capability, then the day the vendor reorganises its message graph the repository's model changes with it, and every consumer breaks for a reason none of them can see."
+current_state: "Nothing exists. No observation has been taken."
+desired_state: "One mapper turns observed vendor records into the canonical model of I1302. A message graph with branches is preserved as a graph rather than flattened into a list. Content parts keep their type. Attachment metadata is mapped; content is downloaded only where the declaration says downloading is authorised. Anything the evidence does not support is absent, not guessed."
+scope:
+  - scripts/lib
+  - test/cases
+non_scope:
+  - Any canonical field invented to match a vendor field with no consumer
+  - Downloading attachment content where the declaration does not authorise it
+depends_on:
+  - I1302
+  - I1305
+acceptance_criteria:
+  - No vendor DTO field reaches the store or a capability without passing through the mapper
+  - A branched conversation keeps its graph; no branch is silently dropped or linearised
+  - Content parts keep a typed discriminator rather than being concatenated into text
+  - A field the evidence does not support is absent rather than defaulted
+  - The mapper is proven against sanitised fixtures with no live account
+validation:
+  - bash test/run.sh
+evidence_required:
+  - mapper_boundary
+  - graph_preserved
+  - parts_typed
+  - fixtures_prove_it
+risk: "Mapping ahead of evidence. Every field here must point at an observation that was actually taken, or it is a guess with a schema around it."
+created_at: 2026-09-09
+updated_at: 2026-09-09
