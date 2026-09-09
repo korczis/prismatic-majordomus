@@ -728,6 +728,57 @@
       "tool": "majordomus_scope_classify"
     },
     {
+      "api_anchor": "/docs/api/#op-trace-commit",
+      "claims": [],
+      "cli": null,
+      "id": "trace.commit",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": null,
+      "route": "/registry/capabilities/trace-commit/",
+      "slug": "trace-commit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "What contract this commit served",
+      "tool": "majordomus_trace_commit"
+    },
+    {
+      "api_anchor": "/docs/api/#op-trace-issue",
+      "claims": [],
+      "cli": null,
+      "id": "trace.issue",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": null,
+      "route": "/registry/capabilities/trace-issue/",
+      "slug": "trace-issue",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "What realised this issue",
+      "tool": "majordomus_trace_issue"
+    },
+    {
+      "api_anchor": "/docs/api/#op-trace-report",
+      "claims": [],
+      "cli": null,
+      "id": "trace.report",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": "majordomus://traceability",
+      "route": "/registry/capabilities/trace-report/",
+      "slug": "trace-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "The whole work graph above the branch",
+      "tool": "majordomus_traceability"
+    },
+    {
       "api_anchor": "/docs/api/#op-web-surfaces",
       "claims": [],
       "cli": null,
@@ -1166,9 +1217,9 @@
     ]
   },
   "counts": {
-    "capabilities": 52,
+    "capabilities": 55,
     "claims": 35,
-    "modules": 20
+    "modules": 21
   },
   "generator": "majordomus-cli 0.4.0",
   "modules": [
@@ -1571,6 +1622,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "trace.commit",
+          "route": "/registry/capabilities/trace-commit/",
+          "slug": "trace-commit"
+        },
+        {
+          "id": "trace.issue",
+          "route": "/registry/capabilities/trace-issue/",
+          "slug": "trace-issue"
+        },
+        {
+          "id": "trace.report",
+          "route": "/registry/capabilities/trace-report/",
+          "slug": "trace-report"
+        }
+      ],
+      "claims": [],
+      "id": "trace",
+      "route": "/registry/modules/trace/",
+      "slug": "trace",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "title": "Traceability"
     },
     {
       "capabilities": [

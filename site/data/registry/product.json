@@ -5,15 +5,15 @@
     "id": "majordomus-cli",
     "version": "0.4.0"
   },
-  "fingerprint": "2bf28acd7b81cf027a5fb363a050d90048a92c71d1c50d61c30b59ae075f07b8",
+  "fingerprint": "1c6b12d057bba8eaf920724fac964cd752ca0b2901d084da96d3f6cb3e34e325",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 20,
-    "modules_covered": 15,
+    "modules": 21,
+    "modules_covered": 16,
     "commands": 27,
     "commands_covered": 27,
     "kinds": 25,
@@ -30,7 +30,7 @@
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 12
+      "features": 13
     },
     {
       "id": "mcp",
@@ -42,7 +42,7 @@
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 13
+      "features": 14
     },
     {
       "id": "docs",
@@ -4957,7 +4957,9 @@
         "work-tracking"
       ],
       "audiences": [],
-      "modules": [],
+      "modules": [
+        "trace"
+      ],
       "commands": [
         "plan"
       ],
@@ -5005,12 +5007,47 @@
       "source": ".ai/repo/features/planning.md",
       "surfaces": {
         "cli": true,
-        "api": false,
+        "api": true,
         "mcp": true,
-        "cockpit": false,
+        "cockpit": true,
         "docs": true
       },
-      "module_refs": [],
+      "module_refs": [
+        {
+          "id": "trace",
+          "title": "Traceability",
+          "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+          "capabilities": [
+            {
+              "id": "trace.commit",
+              "title": "What contract this commit served",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_trace_commit",
+              "route": "GET /api/v1/trace/commit"
+            },
+            {
+              "id": "trace.issue",
+              "title": "What realised this issue",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_trace_issue",
+              "route": "GET /api/v1/trace/issue"
+            },
+            {
+              "id": "trace.report",
+              "title": "The whole work graph above the branch",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_traceability",
+              "resource": "majordomus://traceability",
+              "route": "GET /api/v1/trace"
+            }
+          ]
+        }
+      ],
       "command_refs": [
         {
           "id": "plan",
@@ -5167,10 +5204,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 0,
-        "mcp_tools": 0,
-        "mcp_resources": 219,
-        "http_routes": 0,
+        "capabilities": 3,
+        "mcp_tools": 3,
+        "mcp_resources": 220,
+        "http_routes": 3,
         "cli_paths": 0,
         "commands": 1,
         "objects": 219,
@@ -5187,7 +5224,9 @@
           "guaranteed": 7,
           "rejected": 1
         },
-        "modules": {}
+        "modules": {
+          "behaviorally_verified": 1
+        }
       }
     },
     {
@@ -7149,14 +7188,16 @@
         "status": "stable",
         "surfaces": {
           "cli": true,
-          "api": false,
+          "api": true,
           "mcp": true,
-          "cockpit": false,
+          "cockpit": true,
           "docs": true
         },
         "exposed": [
           "cli",
+          "api",
           "mcp",
+          "cockpit",
           "docs"
         ]
       },
@@ -7402,6 +7443,13 @@
         "features": [
           "interfaces",
           "context"
+        ]
+      },
+      {
+        "id": "trace",
+        "title": "Traceability",
+        "features": [
+          "planning"
         ]
       },
       {
@@ -8531,17 +8579,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1134,
-    "builtin": 52,
-    "declarative": 1082,
-    "modules": 20,
-    "mcp_tools": 50,
-    "mcp_resources": 1102,
-    "http_routes": 52,
+    "capabilities": 1138,
+    "builtin": 55,
+    "declarative": 1083,
+    "modules": 21,
+    "mcp_tools": 53,
+    "mcp_resources": 1104,
+    "http_routes": 55,
     "cli_commands": 81,
     "shell_commands": 27,
     "kinds": 28,
-    "objects": 1082,
+    "objects": 1083,
     "by_kind": {
       "adr": 30,
       "application": 5,
@@ -8568,7 +8616,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 122,
+      "test": 123,
       "use-case": 40,
       "workspace": 1
     },

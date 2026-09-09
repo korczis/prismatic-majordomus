@@ -48,6 +48,7 @@ pub mod quality;
 pub mod release;
 pub mod repository;
 mod scope;
+pub mod trace;
 mod views;
 pub mod web;
 pub(crate) mod worktree;
@@ -87,6 +88,7 @@ pub use peers::{AnnounceInput, PeerList};
 pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
+pub use trace::{TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI};
 pub(crate) mod why;
 
 pub use commands::{CommandGraphReport, CommandIndex, CommandSummary};
@@ -119,6 +121,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         why,
         web,
         worktree,
+        trace,
         product
     ]
 }

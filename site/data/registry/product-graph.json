@@ -723,6 +723,15 @@
       "status": "behaviorally_verified"
     },
     {
+      "id": "module:trace",
+      "kind": "module",
+      "label": "trace",
+      "summary": "Traceability",
+      "route": "/registry/modules/trace/",
+      "source": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "status": "behaviorally_verified"
+    },
+    {
       "id": "module:web",
       "kind": "module",
       "label": "web",
@@ -1428,6 +1437,11 @@
     },
     {
       "source": "feature:planning",
+      "target": "module:trace",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:planning",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -2057,6 +2071,21 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:trace",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:trace",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:trace",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:web",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2113,8 +2142,8 @@
     }
   ],
   "metadata": {
-    "nodes": 89,
-    "edges": 266,
+    "nodes": 90,
+    "edges": 270,
     "acyclic": false,
     "truncated": false
   },
