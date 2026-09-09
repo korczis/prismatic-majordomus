@@ -33,8 +33,20 @@ if [ ! -x "$bin" ]; then
   # here: a shell prompt is not the place to start a compiler. Plain text, because the
   # one thing that must never happen on a `cd` is an escape sequence somebody's terminal
   # does not understand.
-  printf 'majordomus: the executable is not built; run `just build`\n' >&2
+  #
+  # It names what is gone, not only what is missing: everything this repository shows a
+  # person — the banner, `just`, the completion, the shared server — is a projection of
+  # this one file, so they all disappear together and none of them says why.
+  printf 'majordomus: the executable is not built, so the banner, the `just` bridge, the completion and the shared server are all unavailable; run `just build`\n' >&2
   exit 0
+fi
+
+# Present, but older than the sources it was built from. This is the quieter half of the
+# same failure and the more misleading one: everything still answers, and answers with code
+# that is no longer in the tree. Nothing is built here either — entering a directory must
+# not start a compiler — so this is one line, and the work goes on with what is there.
+if mj_rust_stale "$root" "$bin"; then
+  printf 'majordomus: the executable is older than the sources; what follows is the previous build. Run `just build`\n' >&2
 fi
 
 # The log is off unless somebody asked for it: entering a directory must not print
