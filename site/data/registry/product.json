@@ -828,7 +828,7 @@
         },
         {
           "id": "mcp-lease-resilience",
-          "claim": "Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies",
+          "claim": "Nothing a client leaves behind locks another client out of the shared server, and no server answers from code the tree no longer has; a corrupt, empty, stale, abandoned, outdated or superseded lease is taken over and named, a server whose executable is rebuilt underneath it stops on its own, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies",
           "status": "guaranteed"
         },
         {

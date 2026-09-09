@@ -12,7 +12,7 @@ use crate::error::Result;
 use crate::http::mcp::McpEndpoint;
 use crate::http::server::{self, Running};
 use crate::http::Router;
-use crate::lease::Lease;
+use crate::lease::{ExecutableIdentity, Lease};
 
 /// How often the server looks for expired sessions while it waits for peers to leave.
 pub const REAP_INTERVAL: Duration = Duration::from_millis(500);
@@ -22,6 +22,7 @@ pub struct SharedServer {
     running: Running,
     endpoint: Arc<McpEndpoint>,
     lease: Lease,
+    started_as: ExecutableIdentity,
 }
 
 impl SharedServer {
@@ -67,17 +68,41 @@ impl SharedServer {
             running,
             endpoint,
             lease,
+            started_as: ExecutableIdentity::now(),
         })
+    }
+
+    /// Is this process still the executable on disk?
+    ///
+    /// A server outlives its own binary: `cargo build` replaces the file, the process keeps
+    /// the code it loaded, and every client that attaches from then on is answered by a
+    /// version nobody can find in the tree. On 2026-09-09 one such process served eight
+    /// sessions for four and a half hours, 58 commits behind the checkout it sat in, and
+    /// the only visible symptom was that things "had worked before". Nothing outside the
+    /// process can end it — a client that killed servers would kill other people's
+    /// sessions — so the process ends itself, releasing the lease, and every bridged client
+    /// elects again on its next message, which is the failover they already have.
+    pub fn is_current(&self) -> bool {
+        !self.started_as.replaced_on_disk()
+    }
+
+    /// Sleep one reap interval, reaping expired sessions; `false` when this process's
+    /// executable has been replaced meanwhile and the caller should stop serving.
+    pub fn tick(&self) -> bool {
+        std::thread::sleep(REAP_INTERVAL);
+        self.endpoint.reap();
+        if self.is_current() {
+            return true;
+        }
+        tracing::warn!(
+            "the executable this server was started from has been replaced on disk; stopping, so that the next client elects a server built from the current code"
+        );
+        false
     }
 
     /// `http://host:port`.
     pub fn url(&self) -> String {
         self.running.url()
-    }
-
-    /// The MCP-over-HTTP endpoint, for whoever needs to count or reap its sessions.
-    pub fn endpoint(&self) -> &Arc<McpEndpoint> {
-        &self.endpoint
     }
 
     /// How many HTTP sessions are open right now, expired ones already forgotten.
@@ -86,7 +111,9 @@ impl SharedServer {
         self.endpoint.active()
     }
 
-    /// Block until no HTTP session remains.
+    /// Block until no HTTP session remains — or until this executable is replaced on disk,
+    /// which ends the wait the same way: the peers are better served by whoever they elect
+    /// next than by a process running code the tree no longer has.
     pub fn wait_until_peers_leave(&self) {
         let mut announced = false;
         loop {
@@ -101,7 +128,9 @@ impl SharedServer {
                 );
                 announced = true;
             }
-            std::thread::sleep(REAP_INTERVAL);
+            if !self.tick() {
+                break;
+            }
         }
     }
 

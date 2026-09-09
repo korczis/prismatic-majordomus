@@ -335,13 +335,17 @@ impl Server {
             // to eight others for exactly that reason. So the instructions say what is
             // true of THIS caller rather than what is true in general.
             let peers = board.list();
-            if !peers.iter().any(|p| Some(&p.id) == self.surface.peer() && p.announcement.is_some())
+            if !peers
+                .iter()
+                .any(|p| Some(&p.id) == self.surface.peer() && p.announcement.is_some())
             {
                 text.push_str(" You have not announced anything. If you have worked in this repository before in another session, the board does not know it: announce now, before you start, and again if this connection is ever re-established.");
             }
             let silent = peers
                 .iter()
-                .filter(|p| p.attached && p.announcement.is_none() && Some(&p.id) != self.surface.peer())
+                .filter(|p| {
+                    p.attached && p.announcement.is_none() && Some(&p.id) != self.surface.peer()
+                })
                 .count();
             if silent > 0 {
                 text.push_str(&format!(

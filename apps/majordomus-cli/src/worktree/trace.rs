@@ -803,7 +803,12 @@ mod tests {
 
     #[test]
     fn a_commit_no_issue_branch_holds_is_reported_not_omitted() {
-        let traces = vec![trace("I1305", Some("work-graph"), "feature/I1305-x", &["aaa"])];
+        let traces = vec![trace(
+            "I1305",
+            Some("work-graph"),
+            "feature/I1305-x",
+            &["aaa"],
+        )];
         let out = attribute(&[commit("aaa"), commit("zzz")], &traces);
         assert_eq!(out.len(), 2, "every examined commit is in the answer");
         assert_eq!(out[0].attribution, Attribution::Attributed);

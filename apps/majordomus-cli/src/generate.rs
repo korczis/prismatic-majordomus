@@ -694,10 +694,11 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             .iter()
             .filter(|o| o.kind == crate::deploy::KIND)
         {
-            let deployment = crate::deploy::Deployment::parse(object)
-                .map_err(|refusal| Error::InvalidDeployment {
+            let deployment = crate::deploy::Deployment::parse(object).map_err(|refusal| {
+                Error::InvalidDeployment {
                     reason: refusal.to_string(),
-                })?;
+                }
+            })?;
             out.extend(crate::deploy::render::artifacts(
                 &deployment,
                 &object.provenance.path,

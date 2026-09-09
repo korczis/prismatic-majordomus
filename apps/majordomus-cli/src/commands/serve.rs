@@ -10,7 +10,6 @@
 //! no daemon mode either way: whoever started the process owns it.
 
 use std::io::Read;
-use std::time::Duration;
 
 use crate::app::App;
 use crate::cli::ServeArgs;
@@ -68,11 +67,10 @@ pub fn run(args: ServeArgs) -> Result<u8> {
         let _ = std::io::stdin().lock().read_to_end(&mut sink);
         tracing::info!("stdin closed; stopping");
     } else {
-        tracing::info!("stdin is not a pipe; the server runs until the process is stopped");
-        loop {
-            std::thread::sleep(Duration::from_secs(1));
-            shared.endpoint().reap();
-        }
+        tracing::info!(
+            "stdin is not a pipe; the server runs until the process is stopped, or until its executable is rebuilt underneath it"
+        );
+        while shared.tick() {}
     }
     shared.wait_until_peers_leave();
     shared.stop();
