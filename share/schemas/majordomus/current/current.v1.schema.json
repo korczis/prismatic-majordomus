@@ -34,6 +34,13 @@
         "type": "string"
       }
     },
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The obligations this task owes before the outcome completed is available. Token names come from share/obligations.yaml. Absent or empty means the task owes nothing beyond the rest of the contract, which is how every task behaved before obligations existed."
+    },
     "started_at": {
       "type": "string"
     },

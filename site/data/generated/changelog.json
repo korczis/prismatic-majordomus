@@ -8,6 +8,12 @@
       "decisions": [
         {
           "date": "2026-09-09",
+          "id": "adr-0030",
+          "status": "proposed",
+          "title": "A task owes obligations, and the evidence that discharges them goes stale"
+        },
+        {
+          "date": "2026-09-09",
           "id": "adr-0029",
           "status": "proposed",
           "title": "The changelog is a projection of what the repository already records, and the version has one writer rather than one source"
@@ -34,6 +40,13 @@
       "groups": [
         {
           "changes": [
+            {
+              "breaking": false,
+              "commit": "cf1ee94ca",
+              "kind": "feat",
+              "scope": "closure",
+              "subject": "a task owes obligations, and the evidence that discharges them goes stale"
+            },
             {
               "breaking": false,
               "commit": "fbc1da919",
@@ -211,6 +224,13 @@
             },
             {
               "breaking": false,
+              "commit": "f6b73b05a",
+              "kind": "fix",
+              "scope": "gates",
+              "subject": "a derivation refuses a degraded index, and one pass says everything a command still needs"
+            },
+            {
+              "breaking": false,
               "commit": "5609ab148",
               "kind": "fix",
               "scope": "commands",
@@ -229,6 +249,13 @@
               "kind": "fix",
               "scope": "docs",
               "subject": "the semantics module documents a validation that is not an item"
+            },
+            {
+              "breaking": false,
+              "commit": "fc9864ebc",
+              "kind": "fix",
+              "scope": "share",
+              "subject": "a MAJORDOMUS_SHARE naming another worktree of this repository is refused"
             },
             {
               "breaking": false,
@@ -666,10 +693,45 @@
           "changes": [
             {
               "breaking": false,
+              "commit": "5e6d324c1",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
               "commit": "21a1203cc",
               "kind": "chore",
               "scope": "derive",
               "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "e94b760d1",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the second master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "5fe8f2ec8",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "b79363681",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge"
+            },
+            {
+              "breaking": false,
+              "commit": "f1c1b6556",
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge, with the ADR renumbered to 0030"
             },
             {
               "breaking": false,

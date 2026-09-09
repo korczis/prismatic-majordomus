@@ -30,6 +30,7 @@ CONTEXT
   session              open, inspect and close one execution episode
   context              what the next worker needs to know now, within budget    (read-only)
   checkpoint           record compact progress inside the active task
+  evidence             record that one obligation the task declared has been discharged
   handover             write an append-only continuation record (body on stdin)
 
 MEMORY
@@ -123,7 +124,7 @@ case "$cmd" in
     # version is dispatched before the option parser and has to say so for itself
     [ "$nargs" -eq 0 ] || { mj_err "version: unknown option $1"; exit "$MJ_EX_USAGE"; }
     echo "majordomus $MJ_VERSION"; exit 0 ;;
-  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|rules|bench|usecase|adr)
+  init|doctor|start|check|watch|update|handover|finish|doctrine|context|checkpoint|history|decision|question|prompt|skills|capture|search|plan|session|knowledge|migrate|rules|bench|usecase|adr|evidence)
     mj_parse_global_opts "$@"
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"
