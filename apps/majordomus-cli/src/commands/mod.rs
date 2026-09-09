@@ -35,6 +35,7 @@ pub(crate) mod command_graph;
 pub(crate) mod completion;
 pub(crate) mod distribution;
 pub(crate) mod env;
+pub(crate) mod executions;
 pub(crate) mod generate;
 pub(crate) mod mcp;
 pub(crate) mod product;
@@ -68,6 +69,8 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Product(args) => product::run(args),
         Command::Release(args) => release::run(args),
         Command::Quality(args) => quality::run(args),
+        Command::Run(args) => executions::run(args),
+        Command::Executions(args) => executions::executions(args),
     }
 }
 

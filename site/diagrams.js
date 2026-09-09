@@ -6,6 +6,25 @@
   var blocks = document.querySelectorAll('pre.mermaid');
   if (!blocks.length) { return; }
   blocks.forEach(function (b) { b.setAttribute('data-source', b.textContent); });
+  // One read of the page's own custom properties. `getPropertyValue` answers the empty
+  // string for a name no stylesheet declares, which is how the previous palette here went
+  // unnoticed: every lookup missed and every fallback was used.
+  function tok(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  // The named tokens that actually resolve, plus whatever is passed through verbatim.
+  function vars(names, extra) {
+    var out = {}, key;
+    for (key in extra) { if (Object.prototype.hasOwnProperty.call(extra, key)) out[key] = extra[key]; }
+    for (key in names) {
+      if (!Object.prototype.hasOwnProperty.call(names, key)) continue;
+      var value = tok(names[key]);
+      if (value) out[key] = value;
+    }
+    return out;
+  }
+
   function render() {
     var dark = document.documentElement.classList.contains('dark');
     blocks.forEach(function (b) { b.removeAttribute('data-processed'); b.textContent = b.getAttribute('data-source'); });
@@ -13,10 +32,21 @@
       startOnLoad: false,
       securityLevel: 'strict',
       theme: dark ? 'dark' : 'neutral',
-      fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-      themeVariables: dark
-        ? { primaryColor: '#1f2937', primaryTextColor: '#e5e7eb', primaryBorderColor: '#4b5563', lineColor: '#9ca3af', secondaryColor: '#111827', tertiaryColor: '#111827', background: '#111827', fontSize: '14px' }
-        : { primaryColor: '#f3f4f6', primaryTextColor: '#111827', primaryBorderColor: '#9ca3af', lineColor: '#4b5563', secondaryColor: '#f9fafb', tertiaryColor: '#f9fafb', background: '#ffffff', fontSize: '14px' }
+      fontFamily: tok('--font-sans'),
+      // Read from the page, not written here. These names are declared once, in
+      // share/design/tokens.yaml, and reach this script through the stylesheet the page
+      // already loaded; the block that used to sit here was a private colour table that
+      // moved whenever nobody remembered it existed. A token that does not resolve is
+      // omitted rather than guessed, and Mermaid's own theme answers for it.
+      themeVariables: vars({
+        primaryColor: '--mj-graph-surface',
+        primaryTextColor: '--mj-graph-text',
+        primaryBorderColor: '--mj-graph-line',
+        lineColor: '--mj-graph-muted',
+        secondaryColor: '--sunken',
+        tertiaryColor: '--sunken',
+        background: '--bg'
+      }, { fontSize: '14px' })
     });
     window.mermaid.run({ nodes: blocks }).catch(function () { /* leave the source visible */ });
   }

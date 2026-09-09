@@ -64,6 +64,19 @@ pub fn lease_path(repo: &Repository) -> PathBuf {
     repo.root().join(repo.local_path()).join(LEASE_PATH)
 }
 
+/// Which server is serving this repository right now, if any.
+///
+/// Read-only, unlike [`elect`]: it takes no lease, creates no file and waits for nobody, so
+/// a command that only wants to *ask* the running server something cannot accidentally
+/// become it. `None` means no lease, no URL in it, or a lease whose server does not answer
+/// for this root.
+pub fn serving(repo: &Repository) -> Option<String> {
+    let text = fs::read_to_string(lease_path(repo)).ok()?;
+    let document: Value = serde_json::from_str(&text).ok()?;
+    let url = document.get("url")?.as_str()?.to_string();
+    probe(&url, repo.root()).then_some(url)
+}
+
 /// Decide whether this process serves the repository or attaches to the process that does.
 ///
 /// An existing file is read on every attempt and classified: the lease of a live server
@@ -145,6 +158,48 @@ enum Found {
     Binding,
 }
 
+/// What the running executable is, for the lease to record: the path it was started from
+/// and the identity of the file at that path. A server outlives its own binary — a rebuild
+/// replaces the file under a process that keeps serving the code it loaded hours ago — and
+/// nothing about the process itself says so. This is what makes that visible.
+///
+/// `None` when the executable cannot be located or stat'ed; the lease then carries no
+/// claim, and [`superseded`] makes none either.
+fn executable_identity() -> Option<Value> {
+    let path = std::env::current_exe().ok()?;
+    let meta = fs::metadata(&path).ok()?;
+    let mtime = meta
+        .modified()
+        .ok()?
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .ok()?
+        .as_secs();
+    Some(json!({ "path": path, "mtime": mtime, "size": meta.len() }))
+}
+
+/// Has the executable behind a lease been replaced since that server started?
+///
+/// Only a lease naming *this process's own* executable path can answer: same path, a file
+/// that is now a different file, and the server on the other end is provably running code
+/// that no longer exists on disk. A lease naming some other path — a release install next
+/// to a debug build — makes no claim either way and is left alone, so two legitimate
+/// binaries never fight over the lease.
+fn superseded(doc: &Value) -> Option<String> {
+    let recorded = doc.get("executable")?;
+    let mine = executable_identity()?;
+    if recorded["path"] != mine["path"] {
+        return None;
+    }
+    if recorded["mtime"] == mine["mtime"] && recorded["size"] == mine["size"] {
+        return None;
+    }
+    Some(format!(
+        "superseded lease: the server was started from {} and that file has been replaced since \
+         (it is serving code that is no longer on disk)",
+        mine["path"].as_str().unwrap_or("the executable")
+    ))
+}
+
 /// Read and classify an existing lease file.
 fn inspect(path: &Path, root: &Path) -> Found {
     let text = fs::read_to_string(path).unwrap_or_default();
@@ -166,6 +221,11 @@ fn inspect(path: &Path, root: &Path) -> Found {
     };
     if !doc.is_object() || doc["schema"] != SCHEMA {
         return Found::Stale(format!("corrupt lease: not a {SCHEMA} document"));
+    }
+    // before asking whether it answers: a server that answers from a binary that has been
+    // replaced answers with yesterday's code, which is the harder failure to see
+    if let Some(reason) = superseded(&doc) {
+        return Found::Stale(reason);
     }
     match doc["url"].as_str() {
         Some(url) if probe(url, root) => Found::Live(url.to_string()),
@@ -226,6 +286,7 @@ impl Lease {
             "root": self.root,
             "url": url,
             "started_at": crate::peers::rfc3339(SystemTime::now()),
+            "executable": executable_identity(),
         })
     }
 

@@ -11,6 +11,9 @@ Current version: **0.4.0**
 
 ### Decisions
 
+- **ADR-0032** An external workspace is not a provider: the term, the dependency posture, and where synced content lives _(proposed)_
+- **ADR-0031** The design is one declaration and every surface is a projection of it _(accepted)_
+- **ADR-0030** A task owes obligations, and the evidence that discharges them goes stale _(proposed)_
 - **ADR-0029** The changelog is a projection of what the repository already records, and the version has one writer rather than one source _(proposed)_
 - **ADR-0026** A capability module's area is derived from the features that name it, not declared beside it _(accepted)_
 - **ADR-0025** Presentation order is one total order owned by the crate, not a decision each surface makes _(accepted)_
@@ -121,6 +124,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the merge of #128 (`7c3e9f9ac`)
 - **derive**: the projections follow the second master merge (`e94b760d1`)
 - **derive**: the projections follow the master merge (`5fe8f2ec8`)
 - **derive**: the projections follow the master merge (`b79363681`)
@@ -163,6 +167,7 @@ Current version: **0.4.0**
 
 ### Decisions
 
+- **ADR-0033** An execution is a watched capability call, not a second registry _(accepted)_
 - **ADR-0028** The crate's public surface is measured by the crate, and absence from the API is a decision _(accepted)_
 - **ADR-0027** A command is declared once and every surface is a projection of the command graph _(proposed)_
 - **ADR-0023** Product features are objects of the layer, and the landing page is a projection of them _(accepted)_

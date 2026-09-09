@@ -164,6 +164,7 @@ impl Cockpit {
                 Some((_, uri)) => pages::object(&self.ctx, uri),
                 None => pages::objects(&self.ctx, query),
             },
+            "/cockpit/executions" => pages::executions(&self.ctx, query),
             "/cockpit/graphs" => pages::graphs(&self.ctx),
             "/cockpit/graphs/topology" => pages::topology(&self.ctx),
             "/cockpit/continuity" => pages::continuity(&self.ctx),
@@ -176,7 +177,9 @@ impl Cockpit {
             "/cockpit/search" => pages::search(&self.ctx, query),
             "/cockpit/activity" => pages::activity(&self.ctx),
             other => {
-                if let Some(id) = other.strip_prefix("/cockpit/capabilities/") {
+                if let Some(id) = other.strip_prefix("/cockpit/executions/") {
+                    pages::execution(&self.ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/capabilities/") {
                     pages::capability(&self.ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/commands/") {
                     pages::command(&self.ctx, &percent_decode(id))

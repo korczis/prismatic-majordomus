@@ -53,6 +53,8 @@ every file it writes, uses these words and no others.
 | **verbosity** | `terse`, `concise`, `detailed`; how much the worker says, independent of how hard it thinks | `verbosity:` in a profile |
 | **presentation** | `machine`, `engineering`, `summary`; the final layer, chosen by the profile | `presentation:` in a profile |
 | **capability** | one thing the Rust executable exposes: a typed query with one handler, or a declarative object of the layer read as a resource; defined once, with a canonical id, and projected to MCP, HTTP, OpenAPI, the command line and the generated reference | `apps/majordomus-cli/src/capability/`, `majordomus capabilities list` |
+| **execution** | one call of one capability that was given an identity so that it can be watched rather than waited for: a lifecycle, an input as it was stored, typed events, and an output or an error. It lives in the process that accepted it and does not outlive it | `majordomus run`, `majordomus executions`, `/api/v1/executions*`, `/cockpit/executions` |
+| **execution event** | one typed fact about an execution — created, started, a step, progress, a log line, a diagnostic, cancelled, completed, failed — in an envelope with a protocol version and a dense sequence number; the same value whether it is read over the live channel, over HTTP or on the command line | `majordomus executions events`, `GET /events` |
 
 </div>
 
@@ -65,6 +67,14 @@ every file it writes, uses these words and no others.
 "We searched and found nothing" and "the source could not be searched" look alike in
 a transcript. A supervisor that cannot tell them apart cannot decide whether to retry,
 escalate, or accept. The typed field decides; prose never does.
+
+## Two words that are one word
+
+**task** is the active unit of work in a checkout, and nothing else. A capability that
+takes long enough to watch is not "a task": it is a capability whose handler reports as it
+goes and stops when it is asked to, and one call of it is an **execution**. The word was
+available and was not taken, because a vocabulary with one word for two things is the thing
+this table exists to prevent.
 
 ## What is deliberately not a concept
 

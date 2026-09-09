@@ -5,7 +5,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md).
 
-Generated from canonical inputs `5a4c6202f9a3`.
+Generated from canonical inputs `e5aab49d52cc`.
 
 ## Controlled budget
 
@@ -42,6 +42,7 @@ held to it.
 - `LICENSE`
 - `README.md`
 - `SECURITY.md`
+- `apps/majordomus-cli/src/web/tokens.css`
 - `assets/**`
 - `bin/**`
 - `docs/**`
@@ -50,8 +51,10 @@ held to it.
 - `lib/**`
 - `package-lock.json`
 - `package.json`
+- `scripts/ci/design-check`
 - `scripts/cockpit-assets`
 - `scripts/cockpit-probe`
+- `scripts/design-tokens`
 - `scripts/generate-site-data`
 - `scripts/github-sync`
 - `scripts/lib/**`
@@ -69,6 +72,7 @@ held to it.
 - `share/**`
 - `share/allow/**`
 - `share/cockpit/**`
+- `share/design/**`
 - `site/**`
 - `site/data/registry/**`
 - `test/**`

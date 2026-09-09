@@ -139,6 +139,71 @@ fn the_lease_is_held_probed_published_and_released() {
     assert!(!path.exists(), "dropping the lease removes the file");
 }
 
+/// The regression this exists for: a server held the lease for four and a half hours while
+/// its own binary was rebuilt under it, and every client that attached got answers from the
+/// code it had loaded before the rebuild. The lease recorded a pid, and the pid was alive,
+/// so nothing objected. Answering is not the same as being current.
+#[test]
+fn a_server_whose_binary_was_replaced_loses_the_lease() {
+    let f = Fixture::new();
+    let repo = Repository::discover(&f.root()).unwrap();
+    let path = lease::lease_path(&repo);
+    let Role::Server(held) = lease::elect(&repo).unwrap() else {
+        panic!("nobody holds the lease yet")
+    };
+    let (running, _endpoint) = bound(&f);
+    let url = running.url();
+    held.publish(&url).unwrap();
+
+    let published: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    assert_eq!(
+        published["executable"]["path"],
+        json!(std::env::current_exe().unwrap()),
+        "the lease records the executable it was started from"
+    );
+
+    // the control: an answering server whose binary is untouched is attached to
+    match lease::elect(&repo).unwrap() {
+        Role::Peer { url: seen } => assert_eq!(seen, url),
+        Role::Server(_) => panic!("an intact, answering lease makes the next process a peer"),
+    }
+
+    // the same server, still answering, but the file it was started from is now a
+    // different file: the lease is taken over rather than joined
+    let mut replaced = published.clone();
+    replaced["executable"]["mtime"] = json!(published["executable"]["mtime"].as_u64().unwrap() + 1);
+    std::fs::write(&path, replaced.to_string()).unwrap();
+    let role = lease::elect(&repo).unwrap();
+    assert!(
+        matches!(role, Role::Server(_)),
+        "a server running code that is no longer on disk loses the lease, even though it answers"
+    );
+    drop(role);
+
+    // a lease naming some other executable — a release install beside a debug build —
+    // makes no claim: two legitimate binaries must not fight over the lease
+    let mut elsewhere = published.clone();
+    elsewhere["executable"]["path"] = json!("/nowhere/majordomus");
+    std::fs::write(&path, elsewhere.to_string()).unwrap();
+    match lease::elect(&repo).unwrap() {
+        Role::Peer { url: seen } => assert_eq!(seen, url),
+        Role::Server(_) => panic!("a lease naming another executable is left alone"),
+    }
+
+    // and a lease that records no executable at all — one written by a server older than
+    // this field — is judged exactly as it was before
+    let mut silent = published.clone();
+    silent["executable"] = Value::Null;
+    std::fs::write(&path, silent.to_string()).unwrap();
+    match lease::elect(&repo).unwrap() {
+        Role::Peer { url: seen } => assert_eq!(seen, url),
+        Role::Server(_) => panic!("a lease predating the executable field is still joinable"),
+    }
+
+    std::fs::remove_file(&path).unwrap();
+    running.stop();
+}
+
 #[test]
 fn the_endpoint_opens_reaps_and_closes_sessions() {
     let f = Fixture::new();
