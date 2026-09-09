@@ -165,6 +165,13 @@
   .mj-nav-list {
     @apply space-y-px;
   }
+  /* The heading of a group inside a section: the operational area a set of capability
+     modules serves. Quieter than the section's own heading, and indented with its
+     members rather than above them. */
+  .mj-nav-group {
+    @apply mt-3 mb-0.5 px-2 text-[10px] font-medium uppercase tracking-[0.12em] first:mt-0;
+    color: var(--mj-text-faint, var(--mj-text-muted));
+  }
   .mj-nav-link {
     @apply flex items-center justify-between gap-2 rounded px-2 py-1 no-underline;
     color: var(--mj-text-muted);

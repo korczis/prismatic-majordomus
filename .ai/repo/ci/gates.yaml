@@ -61,7 +61,7 @@ gates:
 
   - id: rust-check
     job: rust
-    implies: [rust-integration]
+    implies: [rust-integration, rust-quality]
     runs: scripts/rust-check --ci
     summary: fmt, clippy with warnings denied, the suites and doc examples, rustdoc, the benchmarks building, the registry checks, the benchmark runner through every transport
 
@@ -69,6 +69,11 @@ gates:
     job: structure
     runs: scripts/ci/rust-command-check --strict
     summary: every composed command module asserts, in the file that declares it, that it is what it claims
+
+  - id: rust-quality
+    job: structure
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
+    summary: the crate's own exported surface — documentation beyond the signature, an executable example on everything that carries behaviour, a module boundary something exercises — and every command of the command line accounted for against the capability registry
 
   - id: rust-coverage
     job: coverage
@@ -108,6 +113,11 @@ gates:
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
 
+  - id: order-check
+    job: structure
+    runs: scripts/ci/order-check
+    summary: a collection has one order — no case-folded comparator outside order.rs, no sort key that renders markup, no locale-collated comparison, and the ordering debt does not grow
+
   - id: providers-data
     job: structure
     runs: scripts/ci/providers-check
@@ -143,6 +153,17 @@ gates:
   # release proves the same thing in its own smoke phase, at the moment of publication;
   # this is what notices afterwards, when a release was never retried or a deployment
   # regressed and every tree-level gate stayed green.
+  # The other gate that measures the published site rather than this tree, and the one that
+  # was missing: is what GitHub Pages serves a projection of master at all? On 2026-09-09 the
+  # public site served a commit from an unmerged branch for about half an hour and every
+  # tree-level gate stayed green throughout, because the tree was fine — what was wrong was
+  # which tree had been published. A person noticed by eye. No class selects it, for the same
+  # reason installer-live has none: no change to a tree can make it true or false.
+  - id: pages-live
+    job: install
+    runs: scripts/ci/pages-check
+    summary: the site GitHub Pages serves was built from a commit on master, and the live site is serving what gh-pages published
+
   - id: installer-live
     job: install
     runs: scripts/ci/install-check --wait 300
@@ -153,6 +174,16 @@ gates:
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
+  # The release's own declarations, which `generate --check` cannot reach: it proves the
+  # written changelog matches the tree, not that the two version sites the crate writes are
+  # the two the release script reads, nor that they still agree. Until this gate, the second
+  # question was asked only when a tag was cut, so a half-applied bump lived on the default
+  # branch until somebody tried to publish. File reads only; it belongs in the structure job.
+  - id: release-check
+    job: structure
+    runs: scripts/ci/release-check
+    summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, and the tree is not behind what was published
+
 classes:
   # the pipeline itself: a change here can only be validated by running everything
   - id: ci
@@ -161,8 +192,8 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
@@ -177,7 +208,7 @@ classes:
   # union of every matching class, so both apply.
   - id: cockpit
     paths: [share/cockpit/**, scripts/cockpit-assets, scripts/cockpit-probe, scripts/lib/cockpit-probe.mjs]
-    gates: [cockpit-assets, cockpit-probe, rust-check, site-build, design]
+    gates: [cockpit-assets, cockpit-probe, rust-check, site-build, order-check, design]
 
   # the design tokens and their projections. The canonical file reaches every surface, so a
   # change here is selected by the site, the Cockpit and the crate at once; the class exists
@@ -196,7 +227,7 @@ classes:
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit]
+    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
@@ -212,7 +243,7 @@ classes:
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
     paths: [site/**, assets/**, package.json, package-lock.json, .nojekyll, scripts/site-build, scripts/site-check, scripts/site-basepath-check, scripts/site-probe, scripts/site-serve, scripts/ui, scripts/lib/ui-*.mjs]
-    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, design]
+    gates: [shell-suite, site-basepath, site-build, site-probe, ui-audit, order-check, design]
 
   # the release pipeline's own scripts: they pack, verify and record what a tag publishes,
   # and they ask the executable for every name they use, so the crate's registry checks and
@@ -230,3 +261,12 @@ classes:
   - id: inert
     paths: [.gitignore, .editorconfig, .github/ISSUE_TEMPLATE/**, .github/pull_request_template.md]
     gates: []
+
+  # the release as a projection: the module that composes the changelog and writes the two
+  # version sites, the sites themselves, and the records the changelog is composed from.
+  # Every path here is already in `rust`, `shell` or `layer`; the overlap is deliberate and
+  # can only widen a plan, and it is what keeps the class readable as one subject rather
+  # than as four edits to lists that are about something else.
+  - id: release
+    paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, bin/majordomus, .ai/repo/releases/**]
+    gates: [release-check]

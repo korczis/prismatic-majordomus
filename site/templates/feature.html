@@ -59,6 +59,8 @@
           </li>
           {%- endfor %}
         </ul>
+        {#- `break-all`: a source path has no spaces to break at, so at 320px it paints past
+            the viewport and the page scrolls sideways. -#}
         <p class="mt-2 break-all font-mono text-xs text-body-subtle">{{ mod.source_path }}</p>
       </section>
       {%- endfor %}

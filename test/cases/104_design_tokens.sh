@@ -143,6 +143,19 @@ printf '<a href="#features">f</a>\n' > site/page.html
 git add -A >/dev/null 2>&1
 expect_exit 0 "$DC" --root "$T"
 
+# neither is a pull request. `#117` is three hexadecimal digits at a word boundary, and this
+# repository has it in a test fixture in the crate; a three-digit colour is only a colour in
+# a value position, after a colon, a bracket or a comma.
+mkdir -p src
+printf 'assert_eq!(c.subject, "Merge pull request #117 from korczis/int");\n' > src/commits.rs
+git add -A >/dev/null 2>&1
+expect_exit 0 "$DC" --root "$T"
+printf 'a { color: #fff; }\n' > site/short.css
+git add -A >/dev/null 2>&1
+expect_exit 10 "$DC" --root "$T"
+rm -f site/short.css
+git add -A >/dev/null 2>&1
+
 # composition over tokens is not a new colour
 printf '.x { background: color-mix(in oklch, var(--fg) 40%%, transparent); }\n' > site/mix.css
 git add -A >/dev/null 2>&1

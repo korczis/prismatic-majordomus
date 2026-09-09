@@ -83,5 +83,5 @@ token passes; `color-mix()` over tokens passes and a literal inside one does not
 `href="#features"` is not mistaken for a colour, because a gate that cries wolf is a gate
 somebody turns off. Two of its assertions are regressions for real bugs in the generator —
 a quote stripper that broke a font stack, and a comment stripper that ate `#fff` — both of
-which produced CSS that failed in silence. ADR 0029 records the decision and what it left
+which produced CSS that failed in silence. ADR 0030 records the decision and what it left
 undone.

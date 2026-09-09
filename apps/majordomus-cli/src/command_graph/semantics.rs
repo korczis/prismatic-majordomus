@@ -101,6 +101,15 @@ pub const SEMANTICS: &[Semantics] = &[
         interactivity: Interactivity::NonInteractive,
         requires: &[],
     },
+    // Raising the version writes two tracked files, which is a repository mutation and is
+    // why no capability declares it: the policy keeps repository mutations off every machine
+    // surface, so the bump is a command a person runs and nothing reachable over MCP or HTTP.
+    Semantics {
+        path: &["release", "bump"],
+        effect: Effect::RepositoryMutation,
+        interactivity: Interactivity::NonInteractive,
+        requires: &[Requirement::Repository],
+    },
     // Packaging writes into the build directory.
     Semantics {
         path: &["distribution", "build"],

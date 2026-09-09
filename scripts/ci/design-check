@@ -42,7 +42,7 @@
 #
 # Exit: 0 clean, 10 a projection is stale or a surface carries its own colour.
 #
-# The rule is project.design-tokens-declared-once; ADR 0029 records the decision.
+# The rule is project.design-tokens-declared-once; ADR 0030 records the decision.
 set -eu
 # Where the scripts are is not where the tree under test is. `--root DIR` moves the second
 # and never the first, so the case in test/cases drives the real gate over a fixture.
@@ -57,10 +57,20 @@ echo "== the projections are current"
 "$HERE/scripts/design-tokens" --root "$ROOT" --check || status=10
 
 echo "== no surface carries a colour of its own"
-# A literal is a hexadecimal colour of three, six or eight digits ending at a word
-# boundary — so `#features` in an href is not one — or a colour function. The set of files
-# asked is every tracked source that can put a colour on a screen.
-LITERAL='#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b|\b(rgba?|hsla?|oklch|oklab|lch)\('
+# What counts as a literal, and what deliberately does not:
+#
+#   #rrggbb, #rrggbbaa   always. Six hexadecimal digits in a row are a colour and nothing
+#                        else anybody writes.
+#   #rgb                 only in a value position — after `:`, `(` or `,`. Three hexadecimal
+#                        digits are also a pull request (`#117`), an issue, an anchor
+#                        (`#features` is `#fea` followed by more letters, which the word
+#                        boundary already excludes) and a C preprocessor line. A gate that
+#                        cannot tell `--bg: #fff` from `Merge pull request #117` is a gate
+#                        somebody switches off, and then it protects nothing.
+#   rgb() hsl() oklch()  always. A colour function is only ever a colour.
+#
+# The set of files asked is every tracked source that can put a colour on a screen.
+LITERAL='#([0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b|[:(,][[:space:]]*#[0-9a-fA-F]{3}\b|\b(rgba?|hsla?|oklch|oklab|lch)\('
 found=0
 for file in $(git ls-files -- '*.css' '*.html' '*.rs' '*.js' '*.mjs' '*.tera' 2>/dev/null); do
   case "$file" in

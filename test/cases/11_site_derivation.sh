@@ -11,23 +11,14 @@ sed -i.bak -E 's/^MJ_VERSION="[^"]*"/MJ_VERSION="9.9.9"/' "$T/bin/majordomus"; r
 grep -q '^MJ_VERSION="9.9.9"$' "$T/bin/majordomus" || { echo "    the version mutation did not apply"; exit 1; }
 # 2. a profile description and effort
 sed -i.bak 's/^description: .*/description: CHANGED DESCRIPTION/; s/^effort: low$/effort: max/' "$T/share/skeleton/profiles/routine.yaml"; rm -f "$T/share/skeleton/profiles/routine.yaml.bak"
-# 3. a principle label (the title of the rule tagged principle in the standard package)
-# The package records a hash per rule and refuses a rule that does not match it, so editing
-# the file alone is not an edit to the package — it is a corrupt package, and every scenario
-# that runs `init`, `doctor` or `watch` then fails for that reason instead of the one under
-# test. The fixture updates the manifest the way an explicit package update would.
-PRINCIPLE_RULE="share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md"
-sed -i.bak 's/^title: Sessions are workers, not memory$/title: Sessions are CHANGED PRINCIPLE/' "$T/$PRINCIPLE_RULE"; rm -f "$T/$PRINCIPLE_RULE.bak"
-python3 - "$T/share/standard/majordomus/manifest.yaml" "rules/principle-01-sessions-are-workers.v1.md" \
-         "$(shasum -a 256 "$T/$PRINCIPLE_RULE" | cut -d' ' -f1)" <<'PY'
-import re, sys
-manifest, rule_file, digest = sys.argv[1], sys.argv[2], sys.argv[3]
-text = open(manifest).read()
-pattern = re.compile(r'(file:\s*' + re.escape(rule_file) + r'\n\s*sha256:\s*)[0-9a-f]{64}')
-text, n = pattern.subn(lambda m: m.group(1) + digest, text)
-assert n == 1, f'{n} manifest entries for {rule_file}'
-open(manifest, 'w').write(text)
-PY
+# 3. a principle label (the title of the rule tagged principle in the standard package).
+#    The package is hash-pinned: its manifest carries the hash of every rule file and a hand
+#    edit is refused until the package is rewritten. Editing the rule and stopping there made
+#    every scenario that reads the rules fail, and the generator refused with eight of them
+#    named — which is the package integrity doctrine working, not this mutation failing. So
+#    re-pin, the way the maintainer of the package would.
+sed -i.bak 's/^title: Sessions are workers, not memory$/title: Sessions are CHANGED PRINCIPLE/' "$T/share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md"; rm -f "$T/share/standard/majordomus/rules/principle-01-sessions-are-workers.v1.md.bak"
+( cd "$T" && ./scripts/rules-package write >/dev/null ) || { echo "    the rule package could not be re-pinned after the edit"; exit 1; }
 # 4. a policy value
 sed -i.bak 's/always_loaded_budget_lines: 150/always_loaded_budget_lines: 42/' "$T/share/skeleton/policy.yaml"; rm -f "$T/share/skeleton/policy.yaml.bak"
 # 5. a claim status
