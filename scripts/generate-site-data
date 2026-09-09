@@ -1073,8 +1073,12 @@ DOCS="$(awk '/^## Reference files/{exit} /^\| \[`/{print}' "$ROOT/docs/README.md
 # they have no page, and deciding a route by the presence of our own output makes the first
 # pass disagree with every later one — which is exactly what --check then reports as drift.
 GENERATED_DOCS="SITE_CLAIMS.md PLAN_STATUS.md PAGES_STATUS.md"
+# A function rather than a `case` inside the substitution below: bash 3.2 re-parses the body
+# of `$(...)` at run time and reads the `)` of a case pattern as the end of the substitution,
+# which is a syntax error on every macOS runner and on no Linux one.
+is_generated_doc() { case " $GENERATED_DOCS " in *" $1 "*) return 0 ;; esac; return 1; }
 DOC_ROUTES="$(printf '%s' "$DOCS" | jq -r '.[].path' | grep -E '^[A-Z_]+\.md$' | while read -r p; do
-  if [ ! -f "$ROOT/docs/$p" ]; then case " $GENERATED_DOCS " in *" $p "*) ;; *) continue ;; esac; fi
+  if [ ! -f "$ROOT/docs/$p" ] && ! is_generated_doc "$p"; then continue; fi
   n="${p%.md}"
   printf '%s\t/docs/%s/\n' "$p" "$(doc_slug "$n")"
 done | jq -Rn '[inputs | split("\t") | {key: .[0], value: .[1]}] | from_entries')"

@@ -866,7 +866,7 @@ impl ProductModel {
                     .unwrap_or_default()
                     .as_bytes(),
             );
-            h.update([b'\n']);
+            h.update(b"\n");
         }
         format!("{:x}", h.finalize())
     }
