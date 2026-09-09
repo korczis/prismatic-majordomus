@@ -2,55 +2,97 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://majordomus.dev/schemas/generated/web-topology.schema.json",
   "title": "Web topology",
-  "description": "docs/generated/web.json: every web surface this repository exposes, resolved once from its producer — the routes the executable answers itself, the static trees a generator writes under the generated root, and the application that owns the site — with the mount each claims, in route-precedence order (ADR 0013). Written by `majordomus generate web`.",
+  "description": "docs/generated/web.{json,yaml}: every web surface this repository exposes — its kind, where it is mounted, what produced it, whether it is served or published, and the routes the executable reserves for itself — resolved once and written by `majordomus generate web`.",
   "type": "object",
-  "required": ["schema", "generated", "generator", "generated_root", "reserved", "surfaces"],
+  "required": [
+    "schema",
+    "generated",
+    "generator",
+    "generated_root",
+    "reserved",
+    "surfaces"
+  ],
   "properties": {
-    "schema": { "const": "majordomus/web-topology/v1" },
-    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
-    "generator": { "type": "string", "minLength": 1 },
+    "schema": {
+      "const": "majordomus/web-topology/v1"
+    },
+    "generated": {
+      "type": "string",
+      "pattern": "^GENERATED FILE"
+    },
+    "generator": {
+      "type": "string",
+      "minLength": 1
+    },
     "generated_root": {
       "type": "string",
-      "minLength": 1,
-      "description": "The directory a producer writes a static surface into, repository-relative."
+      "minLength": 1
     },
     "reserved": {
       "type": "object",
-      "description": "The mounts the executable keeps for itself, by the name each is known by; a discovered surface may not claim one."
+      "description": "The routes the executable owns, so that a producer cannot claim one.",
+      "required": [
+        "home",
+        "documentation",
+        "swagger",
+        "openapi",
+        "capabilities"
+      ],
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^/"
+      }
     },
     "surfaces": {
       "type": "array",
+      "description": "In route-precedence order: the order a router consults them in.",
       "items": {
         "type": "object",
         "required": [
           "id",
-          "title",
-          "category",
-          "visibility",
           "kind",
+          "title",
           "mount",
           "producer",
-          "availability"
+          "provenance",
+          "availability",
+          "visibility"
         ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "title": { "type": "string", "minLength": 1 },
-          "category": { "type": "string", "minLength": 1 },
-          "visibility": { "type": "string", "minLength": 1 },
-          "kind": { "type": "string", "minLength": 1 },
-          "mount": { "type": "string", "pattern": "^/" },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
           "producer": {
             "type": "string",
-            "minLength": 1,
-            "description": "What writes or answers this surface; the owner a reader goes to."
-          },
-          "availability": {
-            "enum": ["both", "served-only", "published-only"],
-            "description": "Where the surface means anything: served by the running executable and published as files, answered only by the process, or published as files it also serves."
+            "minLength": 1
           },
           "provenance": {
             "type": "object",
-            "description": "Where each value of this surface came from, by field."
+            "description": "Where each resolved value came from — the registry, the site configuration, the filesystem or a default — one entry per value, so a surface can say why it is what it is.",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "path": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

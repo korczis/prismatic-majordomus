@@ -42,10 +42,12 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `installer` | `text` | — | share/distribution.yaml and the release records |
 | `modules/artifacts` | `markdown` | — | the `artifacts` module of the canonical Majordomus capability registry |
 | `modules/capabilities` | `markdown` | — | the `capabilities` module of the canonical Majordomus capability registry |
+| `modules/commands` | `markdown` | — | the `commands` module of the canonical Majordomus capability registry |
 | `modules/continuity` | `markdown` | — | the `continuity` module of the canonical Majordomus capability registry |
 | `modules/deploy` | `markdown` | — | the `deploy` module of the canonical Majordomus capability registry |
 | `modules/directories` | `markdown` | — | the `directories` module of the canonical Majordomus capability registry |
 | `modules/distribution` | `markdown` | — | the `distribution` module of the canonical Majordomus capability registry |
+| `modules/environment` | `markdown` | — | the `environment` module of the canonical Majordomus capability registry |
 | `modules/graph` | `markdown` | — | the `graph` module of the canonical Majordomus capability registry |
 | `modules/health` | `markdown` | — | the `health` module of the canonical Majordomus capability registry |
 | `modules/objects` | `markdown` | — | the `objects` module of the canonical Majordomus capability registry |
@@ -54,6 +56,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `modules/plan` | `markdown` | — | the `plan` module of the canonical Majordomus capability registry |
 | `modules/product` | `markdown` | — | the `product` module of the canonical Majordomus capability registry |
 | `modules/repository` | `markdown` | — | the `repository` module of the canonical Majordomus capability registry |
+| `modules/trace` | `markdown` | — | the `trace` module of the canonical Majordomus capability registry |
 | `modules/web` | `markdown` | — | the `web` module of the canonical Majordomus capability registry |
 | `modules/why` | `markdown` | — | the `why` module of the canonical Majordomus capability registry |
 | `modules/worktree` | `markdown` | — | the `worktree` module of the canonical Majordomus capability registry |
@@ -101,20 +104,22 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
-| `docs/generated/benchmarks.json` | `benchmarks` | json | 15992 | `12207efff14775bd` |
-| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 7786 | `a425e5e3017975d2` |
-| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 11468 | `a05c4ba4569ebc32` |
-| `docs/generated/capabilities.md` | `capabilities` | markdown | 12765 | `e2499b8c2ab5bdef` |
-| `docs/generated/cli.json` | `cli` | json | 365663 | `9924a603db982475` |
-| `docs/generated/cli.md` | `cli` | markdown | 151217 | `6a74559fd9e62eb1` |
-| `docs/generated/cli.yaml` | `cli` | yaml | 284543 | `971571d4a253ba32` |
+| `docs/generated/benchmarks.json` | `benchmarks` | json | 17968 | `994d6d98022e3300` |
+| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 8554 | `85dbc7c013105936` |
+| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 12824 | `279d6e1394c90cad` |
+| `docs/generated/capabilities.md` | `capabilities` | markdown | 14317 | `a073824e05e51904` |
+| `docs/generated/cli.json` | `cli` | json | 440020 | `bca46c126d5f8d10` |
+| `docs/generated/cli.md` | `cli` | markdown | 183664 | `577106a5dbec855b` |
+| `docs/generated/cli.yaml` | `cli` | yaml | 342105 | `b50897a954d04d50` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `b900b116d861813a` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `6b5db1a51c39bbba` |
+| `docs/generated/modules/commands.md` | `modules/commands` | markdown | 3379 | `fd8f30722bd9768f` |
 | `docs/generated/modules/continuity.md` | `modules/continuity` | markdown | 1519 | `d9b0f913e9be3b3e` |
 | `docs/generated/modules/deploy.md` | `modules/deploy` | markdown | 2737 | `41c2bdddaae0fc0b` |
 | `docs/generated/modules/directories.md` | `modules/directories` | markdown | 1653 | `65b6e352abcacfd4` |
 | `docs/generated/modules/distribution.md` | `modules/distribution` | markdown | 4534 | `40785d4763fee110` |
+| `docs/generated/modules/environment.md` | `modules/environment` | markdown | 2714 | `0e1b0114e0a84bdf` |
 | `docs/generated/modules/graph.md` | `modules/graph` | markdown | 1797 | `9f69eab6821cefef` |
 | `docs/generated/modules/health.md` | `modules/health` | markdown | 2449 | `053f540d8fed9770` |
 | `docs/generated/modules/objects.md` | `modules/objects` | markdown | 2793 | `d9be2088002fe494` |
@@ -123,16 +128,17 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/plan.md` | `modules/plan` | markdown | 8538 | `8838c86c32ede940` |
 | `docs/generated/modules/product.md` | `modules/product` | markdown | 6010 | `1384da4065c236b8` |
 | `docs/generated/modules/repository.md` | `modules/repository` | markdown | 2484 | `152c4d0588bdd32b` |
+| `docs/generated/modules/trace.md` | `modules/trace` | markdown | 4578 | `ce9e60417dfba011` |
 | `docs/generated/modules/web.md` | `modules/web` | markdown | 1462 | `008784296b1d2b56` |
 | `docs/generated/modules/why.md` | `modules/why` | markdown | 6121 | `d09554e51b34a51b` |
 | `docs/generated/modules/worktree.md` | `modules/worktree` | markdown | 4892 | `ab8c023b51098ab6` |
-| `docs/generated/openapi.json` | `openapi` | json | 479904 | `cce89ff1c8938b92` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 371365 | `aca28be34dc46500` |
+| `docs/generated/openapi.json` | `openapi` | json | 577311 | `585440e0d085b49d` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 447254 | `ce1adda7710e5dbc` |
 | `docs/generated/providers.json` | `providers` | json | 2008 | `8785ceccb0b2131d` |
 | `docs/generated/providers.md` | `providers` | markdown | 2301 | `6e5de1d9df98227b` |
 | `docs/generated/providers.yaml` | `providers` | yaml | 1753 | `ee95e249aa7246ca` |
-| `docs/generated/registry.json` | `registry` | json | 605947 | `56c6a1df9d4d48a4` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 464229 | `b6bac79343e5f1ba` |
+| `docs/generated/registry.json` | `registry` | json | 750203 | `4a6cafe2db72dd52` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 575154 | `da7e833c3e7db6d0` |
 | `docs/generated/web.json` | `web` | json | 4063 | `203ec053614bc9d2` |
 | `docs/generated/web.yaml` | `web` | yaml | 3130 | `f2dd80b4216fcaea` |
 | `share/allow/adr.txt` | `allow/adr` | text | 372 | `1fc4068683403a69` |
@@ -177,9 +183,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `03087ecdccd04cee` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `bdba56212ef6061e` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 59513 | `27f201baa9dbde23` |
-| `site/data/registry/product.json` | `site-product` | json | 300262 | `2f8a459b57289792` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1711754 | `1c73043c2ced4abd` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 60223 | `776c5ce3805a819a` |
+| `site/data/registry/product.json` | `site-product` | json | 302692 | `a8014afe5b23d2a5` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1964600 | `9dddb96dae8acb19` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `fb5f4204da2c1cea` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `a655ee48696ea407` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |

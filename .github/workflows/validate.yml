@@ -34,12 +34,21 @@ concurrency:
   group: validate-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Every job carries a timeout. GitHub's default is six hours, which is not a bound: a job
+# that hangs holds a runner for a shift, and while any job of a run is still going the run's
+# logs cannot be read at all — so the one failure a person needs to see is hidden by the
+# hang beside it. The minutes below are the observed maximum of twenty completed runs plus
+# headroom, not a target: they exist to turn a hang into a failure, and a healthy job should
+# never come near them. Raise one when the work legitimately grows; do not raise one to make
+# a hang pass.
+
 jobs:
   # ------------------------------------------------------------------ plan
   # What this change can affect, from the model: a pull request is planned from its diff
   # against the base it will merge into (HEAD^1 of the merge commit); everything else, and a
   # pull request labelled ci:full, runs the full plan. The plan is the artifact ci-plan.
   plan:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     outputs:
       mode: ${{ steps.plan.outputs.mode }}
@@ -51,6 +60,7 @@ jobs:
       web_topology: ${{ steps.plan.outputs.web_topology }}
       rust_coverage: ${{ steps.plan.outputs.rust_coverage }}
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
+      command_graph: ${{ steps.plan.outputs.command_graph }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
@@ -97,6 +107,7 @@ jobs:
   # offline GitHub projection and the derived site data, through scripts/ci/core-check.
   structure:
     needs: plan
+    timeout-minutes: 25
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -137,6 +148,7 @@ jobs:
   suite:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true'
+    timeout-minutes: 100
     runs-on: ubuntu-latest
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
@@ -177,7 +189,8 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true'
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -186,6 +199,7 @@ jobs:
         with:
           components: rustfmt, clippy
       - name: rust-check
+        if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
         env:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
@@ -193,15 +207,16 @@ jobs:
         with:
           name: ci-plan
       # The other gates the model assigns to this job — the ones that need the executable
-      # the step above built: projection-closure, web-topology. rust-check and
-      # rust-integration are the step above, with the mode and the artifact argument the
-      # model's line does not carry, so they are the only two skipped here.
+      # the step above built: projection-closure, web-topology, command-graph. rust-check
+      # and rust-integration are the step above, with the mode and the artifact argument
+      # the model's line does not carry, so they are the only two skipped here.
       - name: the rust gates of the plan
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
         run: |
           echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@v4
+      - if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: majordomus-cli-${{ steps.target.outputs.triple }}
           path: dist
@@ -220,6 +235,7 @@ jobs:
   coverage:
     needs: plan
     if: needs.plan.outputs.rust_coverage == 'true'
+    timeout-minutes: 25
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -242,6 +258,7 @@ jobs:
   bench:
     needs: plan
     if: needs.plan.outputs.rust_bench == 'true'
+    timeout-minutes: 25
     runs-on: macos-latest
     defaults:
       run:
@@ -261,6 +278,7 @@ jobs:
   site:
     needs: plan
     if: needs.plan.outputs.site_build == 'true'
+    timeout-minutes: 50
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -335,6 +353,7 @@ jobs:
   cockpit:
     needs: plan
     if: needs.plan.outputs.cockpit_probe == 'true'
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -367,6 +386,7 @@ jobs:
   macos:
     needs: plan
     if: needs.plan.outputs.macos == 'true'
+    timeout-minutes: 110
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -412,6 +432,7 @@ jobs:
       fail-fast: false
       matrix:
         runner: [ubuntu-latest, macos-latest]
+    timeout-minutes: 20
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -430,6 +451,7 @@ jobs:
   ci:
     needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos, install]
     if: always()
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

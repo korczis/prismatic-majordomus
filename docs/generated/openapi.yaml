@@ -25,6 +25,8 @@ tags:
     description: "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list."
   - name: capabilities
     description: "The registry seen through itself: every capability with its kind, stability, provenance, exposures, benchmark and cache policy, and one capability in full."
+  - name: commands
+    description: "Every command this repository offers, from whichever program offers it: the Rust executable, the shell tool that carries the task lifecycle, and the workflows the repository declares for a person to run. Composed from the three declarations that already exist — the clap tree, the shipped command registry and the workflow runner's own dump — never from a list. Each command carries what running it changes, what it needs, where its argument values come from, and every surface that carries it, with the reason when one does not."
   - name: continuity
     description: "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
   - name: deploy
@@ -33,6 +35,8 @@ tags:
     description: "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved."
   - name: distribution
     description: "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own."
+  - name: environment
+    description: "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
   - name: graph
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
   - name: health
@@ -49,6 +53,8 @@ tags:
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
   - name: repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
+  - name: trace
+    description: "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name."
   - name: web
     description: "What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication."
   - name: why
@@ -329,6 +335,192 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_capability
       x-majordomus-cli: capabilities describe
+  "/api/v1/command":
+    get:
+      operationId: commands.get
+      summary: One command in full
+      description: "One command by its canonical identity: its arguments with the source of each one's values, what running it changes, what it needs, where it came from, and every surface that carries it — with the reason a machine surface withholds it when one does."
+      tags:
+        - commands
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The identity, `executable.worktree.status`."
+          examples:
+            worktree-status:
+              value: executable.worktree.status
+      responses:
+        "200":
+          description: "One command in full: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CommandNode"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: commands.get
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::commands
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_command
+  "/api/v1/commands":
+    get:
+      operationId: commands.list
+      summary: "Every command, one line each"
+      description: "The commands this repository offers, filtered by the program that runs them, by what running them changes, or by text. A summary rather than the whole graph: enough to choose a command, and never so much that a client has to read every argument of every command to find one."
+      tags:
+        - commands
+      parameters:
+        - name: origin
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only the commands of one program: `executable`, `tool` or `workflow`."
+          examples:
+            one-program:
+              value: executable
+        - name: effect
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only the commands whose effect is at most this one: `read_only`,\n`local_mutation`, `repository_mutation`, `network_mutation`, `destructive`."
+          examples:
+            read-only:
+              value: read_only
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Only the commands matching this text in their invocation, summary, tags or identity."
+      responses:
+        "200":
+          description: "Every command, one line each: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CommandIndex"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: commands.list
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::commands
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_commands
+  "/api/v1/commands/graph":
+    get:
+      operationId: commands.graph
+      summary: The whole command graph
+      description: "The graph as one document, with its fingerprint and every diagnostic its build found: a duplicate identity, a recipe name two commands would take, an annotation that names a command which no longer exists. Deterministic — two builds over one tree produce the same document — so a client may cache against the fingerprint."
+      tags:
+        - commands
+      parameters: []
+      responses:
+        "200":
+          description: "The whole command graph: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CommandGraphReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: commands.graph
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::commands
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_command_graph
   "/api/v1/continuity":
     get:
       operationId: continuity.state
@@ -915,6 +1107,132 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_install_status
       x-majordomus-cli: distribution status
+  "/api/v1/environment":
+    get:
+      operationId: environment.status
+      summary: The repository environment
+      description: "One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services with the address a running server published. Every value carries where it came from."
+      tags:
+        - environment
+      parameters:
+        - name: probe_services
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Contact the local address a running server published, to say whether it answers.\nOff by default: a served request should not open a socket to another server on\nbehalf of its caller, and the caller usually is that server."
+          examples:
+            default:
+              value: false
+      responses:
+        "200":
+          description: "The repository environment: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RepositoryEnvironment"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: environment.status
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::environment
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 4
+        ttl_seconds: 3
+      x-majordomus-mcp:
+        tool: majordomus_environment
+        resource:
+          uri: majordomus://environment
+          name: environment
+  "/api/v1/environment/explain":
+    get:
+      operationId: environment.explain
+      summary: Where an environment value came from
+      description: "The provenance of the snapshot: for each field, what decided it — a compile-time constant, a file, a command, or the cache — which resolver read it, and how far it can be trusted. Narrow it to one field, or to a prefix, by name."
+      tags:
+        - environment
+      parameters:
+        - name: field
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The field in dotted form (`services.url`, `capabilities.objects`); every field when\nabsent."
+          examples:
+            one-field:
+              value: project.version
+      responses:
+        "200":
+          description: "Where an environment value came from: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/EnvironmentProvenance"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: environment.explain
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::environment
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_environment_explain
   "/api/v1/graph":
     get:
       operationId: graph.get
@@ -2561,6 +2879,191 @@ paths:
         max_entries: 64
       x-majordomus-mcp:
         tool: majordomus_search
+  "/api/v1/trace":
+    get:
+      operationId: trace.report
+      summary: The whole work graph above the branch
+      description: "Every issue at least one branch names with its branches and commits, every declared issue no branch names, and the newest stretch of the trunk with each commit attributed to the issue whose branches hold it or reported as unattributed. The tallies count both sides, so the proportion of the trunk that no execution contract accounts for is a number rather than an impression. Read from git on every call: the history changes outside this process."
+      tags:
+        - trace
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many trunk commits to attribute, newest first. Default: 50. Anything above 2000\nis read as 2000 — a traceability report is a reading, not a history export."
+          examples:
+            ten:
+              value: 10
+      responses:
+        "200":
+          description: "The whole work graph above the branch: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/TraceReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: trace.report
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::trace
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_traceability
+        resource:
+          uri: majordomus://traceability
+          name: traceability
+  "/api/v1/trace/commit":
+    get:
+      operationId: trace.commit
+      summary: What contract this commit served
+      description: "One commit with the issue and milestone it served, or the fact that none can be found. Attributed when exactly one issue's branches hold it, ambiguous when branches naming two issues do, and unattributed when no branch naming an issue holds it at all — which is either work committed without an execution contract or a branch deleted after its merge, and the answer says so rather than guessing between them."
+      tags:
+        - trace
+      parameters:
+        - name: commit
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Anything git resolves to a commit: a full or abbreviated object name, a ref, `HEAD`,\n`master~3`."
+          examples:
+            head:
+              value: HEAD
+      responses:
+        "200":
+          description: "What contract this commit served: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CommitAttribution"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: trace.commit
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::trace
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_trace_commit
+  "/api/v1/trace/issue":
+    get:
+      operationId: trace.issue
+      summary: What realised this issue
+      description: "One issue with the branches that name it — local, and remote-tracking where only the remote still has the branch — and, for each, the commits it holds that the trunk did not: measured against the trunk while the branch is open, and against the first parent of the merge commit that brought it in once it is merged. A branch that reached the trunk without a merge commit of its own says so and claims nothing, because its commits cannot be told from the trunk's. The milestone comes from the canonical issue record, which is the one edge here that git does not hold, and `declared` says whether the project model has this id at all — a repository with no plan still gets the branches, and a typo still cannot read as work nobody did."
+      tags:
+        - trace
+      parameters:
+        - name: issue
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The issue id, as the project model spells it (`I1305`). An id the model does not\ndeclare is answered with `declared: false` rather than refused, and rather than\nanswered with a bare empty trace: a typo that read as \"nothing realised this issue\"\nis the one answer this capability must never give."
+          examples:
+            first-issue:
+              value: I0001
+      responses:
+        "200":
+          description: "What realised this issue: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IssueTrace"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: trace.issue
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::trace
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_trace_issue
   "/api/v1/web/surfaces":
     get:
       operationId: web.surfaces
@@ -3635,6 +4138,18 @@ components:
         - source
         - state
       description: "One generated file, as the manifest declares it and as the tree has it."
+    Attribution:
+      oneOf:
+        - type: string
+          const: attributed
+          description: "Exactly one issue's branches contain it."
+        - type: string
+          const: unattributed
+          description: No branch naming an issue contains it.
+        - type: string
+          const: ambiguous
+          description: Branches naming more than one issue contain it.
+      description: What is known about the contract one commit served.
     AudienceList:
       type: object
       properties:
@@ -3787,6 +4302,43 @@ components:
         - trunk
         - cleanup_eligible
       description: "One local branch, with or without a work tree."
+    BranchTrace:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The ref, short: `feature/I1305-traceability`, or `origin/feature/I1305-traceability`\nwhen only the remote still has it."
+        remote:
+          type: boolean
+          description: "True when the ref is a remote-tracking one and no local branch of the same name\nstands for it."
+        head:
+          type: string
+          description: The commit the ref points at.
+        integration:
+          "$ref": "#/components/schemas/Integration"
+          description: How it stands to the trunk.
+        merge_commit:
+          type:
+            - string
+            - "null"
+          description: "The merge commit that brought it into the trunk, when one did."
+        note:
+          type:
+            - string
+            - "null"
+          description: "Why the commit list is what it is, when it is worth a sentence."
+        commits:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommitRef"
+          description: "The commits this branch holds and the trunk did not, newest first, merges excluded."
+      required:
+        - name
+        - remote
+        - head
+        - integration
+        - commits
+      description: "One branch that names an issue, with the commits it holds."
     Budgets:
       type: object
       additionalProperties: false
@@ -4399,6 +4951,424 @@ components:
         - title
         - route
       description: One area of the Cockpit the feature names.
+    CommandArgument:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The argument's id."
+        long:
+          type:
+            - string
+            - "null"
+          description: "`--long`, without the dashes."
+        short:
+          type:
+            - string
+            - "null"
+          minLength: 1
+          maxLength: 1
+          description: "`-s`, without the dash."
+        positional:
+          type: boolean
+          description: Given by position rather than by flag.
+        takes_value:
+          type: boolean
+          description: Takes a value at all; a flag does not.
+        required:
+          type: boolean
+          description: Must be given.
+        variadic:
+          type: boolean
+          description: Takes any number of values.
+        global:
+          type: boolean
+          description: Accepted by every command under the one that declares it.
+        help:
+          type: string
+          description: "The help text, one line."
+        value_name:
+          type:
+            - string
+            - "null"
+          description: "The placeholder, `PATH`."
+        values:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommandValueChoice"
+          description: "The values the declaration carries, each with its help."
+        defaults:
+          type: array
+          items:
+            type: string
+          description: "The defaults, as the declaration renders them."
+        source:
+          "$ref": "#/components/schemas/CommandValueSource"
+          description: Where further values come from.
+        secrecy:
+          "$ref": "#/components/schemas/CommandSecrecy"
+          description: How openly the value may be handled.
+      required:
+        - name
+        - positional
+        - takes_value
+        - required
+        - variadic
+        - global
+        - help
+        - source
+        - secrecy
+      description: "One argument of a command, as the declaration gives it plus what can be inferred."
+    CommandAvailability:
+      type: object
+      properties:
+        available:
+          type: boolean
+          description: "Can it be run here, now?"
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why not, in one line, when it cannot."
+        requires:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommandRequirement"
+          description: "What it needs, whether or not that is satisfied here."
+      required:
+        - available
+      description: "Where a command means anything, and why not when it does not.\n\nDerived from the repository environment rather than declared per command, so that a\nprojection reads a field instead of re-deciding. The reason is carried because the\nanswer a person needs is never `false`."
+    CommandDeprecation:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: "Why, in one line."
+        replaced_by:
+          anyOf:
+            - "$ref": "#/components/schemas/CommandId"
+            - type: "null"
+          description: What to use instead.
+      required:
+        - reason
+      description: A command that is no longer the name to use.
+    CommandDiagnostic:
+      type: object
+      properties:
+        severity:
+          "$ref": "#/components/schemas/CommandDiagnosticSeverity"
+          description: How bad.
+        code:
+          type: string
+          description: "A stable code, for a gate to match on."
+        message:
+          type: string
+          description: "What is wrong, in one line."
+        commands:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommandId"
+          description: The nodes it is about.
+        remedy:
+          type:
+            - string
+            - "null"
+          description: What to do about it.
+      required:
+        - severity
+        - code
+        - message
+      description: One thing the build found.
+    CommandDiagnosticSeverity:
+      oneOf:
+        - type: string
+          const: error
+          description: The graph is wrong and a projection built from it would be wrong.
+        - type: string
+          const: warning
+          description: Worth saying; the graph stands.
+        - type: string
+          const: info
+          description: A fact a reader may want.
+      description: How bad a finding is.
+    CommandEffect:
+      oneOf:
+        - type: string
+          const: read_only
+          description: Reads and answers. Changes nothing anywhere.
+        - type: string
+          const: local_mutation
+          description: "Writes only where the repository keeps a checkout's own state — the process's\nmemory, `.ai/local/`, a build directory. Nothing a commit would carry."
+        - type: string
+          const: repository_mutation
+          description: "Writes tracked files: generated artifacts, the worktree, git itself."
+        - type: string
+          const: network_mutation
+          description: "Reaches the network with an effect on the far side: a push, a deploy, a release."
+        - type: string
+          const: destructive
+          description: Removes something a person would have to reconstruct.
+      description: "What running a command changes. The one thing a surface policy is allowed to ask.\n\nThe order is the order of increasing consequence, and it is the order the derived\nexposure policy reads: a surface declares the strongest effect it will carry, and\nevery node at or below it is projected there. Nothing configures a surface per\ncommand."
+    CommandExecution:
+      type: object
+      properties:
+        origin:
+          "$ref": "#/components/schemas/CommandOrigin"
+          description: Which program.
+        argv:
+          type: array
+          items:
+            type: string
+          description: "The words that precede the caller's arguments, the program's own name excluded."
+      required:
+        - origin
+        - argv
+      description: "How a command is actually run: the program and the words before the caller's own.\n\nThis is what forbids a cycle. A projection renders an invocation from the execution\ndescriptor, so a generated bridge always spells the *canonical* program — never the\nsurface it is a bridge for."
+    CommandGraph:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: The schema of this document.
+        fingerprint:
+          type: string
+          description: "A hash of the semantic content: the identity a cache and a generated projection\nkey on. Nothing that varies between two runs over the same tree is in it."
+        commands:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommandNode"
+          description: "Every command, in a deterministic order: origin, then path."
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommandDiagnostic"
+          description: What the build found.
+      required:
+        - schema
+        - fingerprint
+        - commands
+        - diagnostics
+      description: The whole graph.
+    CommandGraphReport:
+      type: object
+      properties:
+        graph:
+          "$ref": "#/components/schemas/CommandGraph"
+          description: The graph.
+        errors:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many findings are errors; a projection refuses to write while this is not zero.
+      required:
+        - graph
+        - errors
+      description: "The whole graph, with what its build found."
+    CommandId:
+      type: string
+      description: "The canonical identity of one command.\n\nConstructed from the origin and the command path, never written by hand, so that a\nprojection cannot invent one and a rename of a display string cannot change one."
+    CommandIndex:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: The schema of the graph these came from.
+        fingerprint:
+          type: string
+          description: "The fingerprint of that graph: a client may cache against it."
+        total:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many commands the graph holds, before the filter."
+        commands:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommandSummary"
+          description: "The commands that matched, in graph order."
+      required:
+        - schema
+        - fingerprint
+        - total
+        - commands
+      description: "The commands this repository offers, filtered."
+    CommandInteractivity:
+      oneOf:
+        - type: string
+          const: non_interactive
+          description: "Runs, answers, exits. Safe to call from a machine surface."
+        - type: string
+          const: interactive
+          description: "Asks the person something, or reads the body of a record from a terminal. A\nmachine surface that offered it would hang."
+        - type: string
+          const: long_running
+          description: Serves until it is stopped. A request/response surface cannot carry it.
+      description: "How a command behaves towards the caller's terminal and the caller's patience."
+    CommandNode:
+      type: object
+      properties:
+        id:
+          "$ref": "#/components/schemas/CommandId"
+          description: The canonical identity.
+        origin:
+          "$ref": "#/components/schemas/CommandOrigin"
+          description: Which program runs it.
+        path:
+          type: array
+          items:
+            type: string
+          description: "The words after the program's own name."
+        invocation:
+          type: string
+          description: "The command line a person types, rendered once here."
+        summary:
+          type: string
+          description: One line.
+        description:
+          type:
+            - string
+            - "null"
+          description: "The longer description, when the declaration carries one."
+        runnable:
+          type: boolean
+          description: "Can it be run on its own, or does it only group the commands under it?"
+        arguments:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommandArgument"
+          description: "The arguments, in declaration order."
+        execution:
+          "$ref": "#/components/schemas/CommandExecution"
+          description: How it is run.
+        effect:
+          "$ref": "#/components/schemas/CommandEffect"
+          description: What it changes.
+        interactivity:
+          "$ref": "#/components/schemas/CommandInteractivity"
+          description: How it behaves towards a terminal.
+        stability:
+          "$ref": "#/components/schemas/Stability"
+          description: Where it stands.
+        availability:
+          "$ref": "#/components/schemas/CommandAvailability"
+          description: Where it means anything.
+        group:
+          type:
+            - string
+            - "null"
+          description: "The group a person finds it under, when the declaration has groups."
+        tags:
+          type: array
+          items:
+            type: string
+          description: Free tags.
+        aliases:
+          type: array
+          items:
+            type: string
+          description: "Other names that resolve to this node, declared once here and honoured by every\nprojection that has a use for one."
+        deprecation:
+          anyOf:
+            - "$ref": "#/components/schemas/CommandDeprecation"
+            - type: "null"
+          description: Whether this is still the name to use.
+        provenance:
+          "$ref": "#/components/schemas/CommandProvenance"
+          description: Where it came from.
+        projections:
+          "$ref": "#/components/schemas/CommandProjections"
+          description: Where it appears.
+        entrypoint:
+          type:
+            - boolean
+            - "null"
+          description: Is this command an entry point of its group — the one a newcomer is offered?
+      required:
+        - id
+        - origin
+        - path
+        - invocation
+        - summary
+        - runnable
+        - arguments
+        - execution
+        - effect
+        - interactivity
+        - stability
+        - availability
+        - provenance
+        - projections
+      description: "One command, from whichever program offers it."
+    CommandOrigin:
+      oneOf:
+        - type: string
+          const: executable
+          description: "The Rust executable, `apps/majordomus-cli`: the read-only interfaces, generation,\nintrospection, the servers. Declared by clap."
+        - type: string
+          const: tool
+          description: "The shell tool, `bin/majordomus`: the task lifecycle. Declared by the shipped\ncommand registry and dispatched by the tool itself."
+        - type: string
+          const: workflow
+          description: "A workflow the repository declares for a person to run — a `just` recipe that is\nnot a generated bridge. Declared by the justfile and read from the runner's dump."
+      description: "Which program runs a command. Part of the identity, because the three are different\nprograms that share one name on the path."
+    CommandProjections:
+      type: object
+      properties:
+        cli:
+          type:
+            - string
+            - "null"
+          description: "The command line, as typed."
+        workflow:
+          type:
+            - string
+            - "null"
+          description: "The generated workflow bridge's recipe name."
+        mcp:
+          type:
+            - string
+            - "null"
+          description: "The MCP tool name, when the capability behind it declares one."
+        http:
+          type:
+            - string
+            - "null"
+          description: "The HTTP route, when the capability behind it declares one."
+        cockpit:
+          type:
+            - string
+            - "null"
+          description: "The Cockpit address, when the surface carries it."
+        docs:
+          type: string
+          description: The page on the site. Every command has one.
+        withheld:
+          type:
+            - string
+            - "null"
+          description: "Why a machine surface does not carry it, when one does not."
+      required:
+        - docs
+      description: "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph."
+    CommandProvenance:
+      type: object
+      properties:
+        declared_in:
+          type: string
+          description: The repository-relative file that declares it.
+        read_by:
+          type:
+            - string
+            - "null"
+          description: "The command that reads that declaration, when a reader wants to reproduce it."
+        capability:
+          anyOf:
+            - "$ref": "#/components/schemas/CapabilityId"
+            - type: "null"
+          description: "The capability this command runs, when it runs one."
+      required:
+        - declared_in
+      description: "Where a node came from, in enough detail to open the file."
     CommandRef:
       type: object
       properties:
@@ -4421,6 +5391,261 @@ components:
         - summary
         - read_only
       description: "One public command of the shell tool the feature names, as `share/commands.yaml`\ndeclares it."
+    CommandRequirement:
+      oneOf:
+        - type: string
+          const: repository
+          description: A git repository.
+        - type: string
+          const: layer
+          description: "The `.ai/` layer, initialised."
+        - type: string
+          const: task
+          description: An active task record.
+        - type: string
+          const: executable
+          description: "The Rust executable, built."
+        - type: string
+          const: workflow_runner
+          description: "The workflow runner, installed."
+        - type: string
+          const: rust_toolchain
+          description: A cargo workspace and a toolchain to build it.
+        - type: string
+          const: site
+          description: The site sources and its generator.
+      description: One thing a command needs before it can run.
+    CommandSecrecy:
+      oneOf:
+        - type: string
+          const: public
+          description: "Ordinary: may be logged, completed, shown."
+        - type: string
+          const: sensitive
+          description: "A path or an identifier that names something private. Shown, never logged."
+        - type: string
+          const: secret
+          description: "A credential. Never completed, never logged, never cached."
+      description: How openly a value may be handled.
+    CommandSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The canonical identity.
+        invocation:
+          type: string
+          description: The command line a person types.
+        summary:
+          type: string
+          description: One line.
+        origin:
+          type: string
+          description: Which program runs it.
+        effect:
+          type: string
+          description: What running it changes.
+        group:
+          type:
+            - string
+            - "null"
+          description: The group it is found under.
+        projections:
+          "$ref": "#/components/schemas/CommandProjections"
+          description: Where it appears.
+      required:
+        - id
+        - invocation
+        - summary
+        - origin
+        - effect
+        - projections
+      description: "One command, as an index shows it: enough to choose, never enough to have to skim."
+    CommandValueChoice:
+      type: object
+      properties:
+        value:
+          type: string
+          description: The value as typed.
+        description:
+          type:
+            - string
+            - "null"
+          description: "Its help, when the declaration carries one."
+      required:
+        - value
+      description: "One value an argument accepts, from the declaration."
+    CommandValueSource:
+      oneOf:
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: free
+          required:
+            - kind
+          description: Nothing here knows the set; the caller types a value.
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: enumerated
+          required:
+            - kind
+          description: The declaration carries the values; they are on the argument.
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: path
+          required:
+            - kind
+          description: A path in the filesystem.
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: repository_path
+          required:
+            - kind
+          description: A path inside the repository.
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: capability
+          required:
+            - kind
+          description: "A capability id, from the registry."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: command
+          required:
+            - kind
+          description: "A command id, from this graph."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: rule
+          required:
+            - kind
+          description: "A rule id, from the effective rule set."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: object_kind
+          required:
+            - kind
+          description: "An object kind, from the index."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: branch
+          required:
+            - kind
+          description: A git branch in this repository.
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: graph
+          required:
+            - kind
+          description: "A graph id, from the graph registry."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: moment
+          required:
+            - kind
+          description: "A moment id, from the why catalogue."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: shell
+          required:
+            - kind
+          description: "A shell name, from the shells the activation supports."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: secret
+          required:
+            - kind
+          description: "A secret. Never enumerated, never cached, never suggested."
+      description: "Where a value for an argument comes from, when something in this repository knows the\nset.\n\nThis is the completion contract, and it is a property of the *argument*, not of a shell\nscript: the same source answers a shell's TAB, a generated form's select and a machine\nsurface's enumeration of what it will accept. Inference from the declaration comes\nfirst — a value-enum argument carries its own values, a `PATH` placeholder is a path —\nand only what cannot be inferred is annotated beside the command."
+    CommitAttribution:
+      type: object
+      properties:
+        commit:
+          "$ref": "#/components/schemas/CommitRef"
+          description: The commit.
+        attribution:
+          "$ref": "#/components/schemas/Attribution"
+          description: What is known.
+        issue:
+          type:
+            - string
+            - "null"
+          description: "The issue, when exactly one claims it."
+        milestone:
+          type:
+            - string
+            - "null"
+          description: "The milestone that issue belongs to, filled by the caller that has the index."
+        issues:
+          type: array
+          items:
+            type: string
+          description: "Every issue whose branches contain it: one when attributed, none when unattributed,\nmore than one when ambiguous."
+        branches:
+          type: array
+          items:
+            type: string
+          description: "The branches that contain it, by the names their refs carry."
+        reason:
+          type: string
+          description: "Why the verdict is what it is, in one line a person can act on."
+      required:
+        - commit
+        - attribution
+        - issues
+        - branches
+        - reason
+      description: "One commit and the contract it served, or the fact that none can be found."
+    CommitRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The full object name.
+        short:
+          type: string
+          description: "The abbreviated object name, as this repository abbreviates it."
+        author:
+          type: string
+          description: "The author, as the commit records them."
+        date:
+          type: string
+          description: "The author date, ISO 8601 as the commit records it."
+        subject:
+          type: string
+          description: The subject line.
+      required:
+        - id
+        - short
+        - author
+        - date
+        - subject
+      description: "One commit, exactly as git names it. Nothing here is stored anywhere: the whole record\nis re-read from the object database on every call."
     Concurrency:
       type: object
       additionalProperties: false
@@ -4435,6 +5660,18 @@ components:
         - soft_limit
         - hard_limit
       description: "When the edge considers a machine loaded, in requests."
+    Confidence:
+      oneOf:
+        - type: string
+          const: exact
+          description: Read from its canonical source during this resolution.
+        - type: string
+          const: cached
+          description: Read from a cache whose fingerprint still matches its inputs.
+        - type: string
+          const: unknown
+          description: Not resolved.
+      description: How far a resolved value can be trusted.
     ContainerView:
       type: object
       properties:
@@ -5355,6 +6592,21 @@ components:
         - reason
         - local
       description: "One contract in a directory's effective chain, in the order it is applied."
+    EnvironmentProvenance:
+      type: object
+      properties:
+        resolution:
+          "$ref": "#/components/schemas/Resolution"
+          description: How the snapshot behind these entries was resolved.
+        fields:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FieldSource"
+          description: "One entry per field, in the order the resolver produced them."
+      required:
+        - resolution
+        - fields
+      description: Where the values of one snapshot came from.
     ErrorBody:
       type: object
       properties:
@@ -5728,6 +6980,32 @@ components:
         - counts
         - evidence
       description: "One feature as a listing shows it: everything a card needs and nothing a page needs."
+    FieldSource:
+      type: object
+      properties:
+        field:
+          type: string
+          description: "The field, in dotted form: `services.cockpit.url`, `vcs.branch`."
+        value:
+          type:
+            - string
+            - "null"
+          description: "The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing."
+        source:
+          type: string
+          description: "What decided it: a file, a command, a compile-time constant, the cache."
+        resolver:
+          type: string
+          description: The part of this executable that read it.
+        confidence:
+          "$ref": "#/components/schemas/Confidence"
+          description: How certain the value is.
+      required:
+        - field
+        - source
+        - resolver
+        - confidence
+      description: "Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \"why does it say that\"\nis answered by the tool rather than by reading its source."
     Finding:
       type: object
       properties:
@@ -5858,6 +7136,77 @@ components:
             - reason
           description: "`git` could not be asked, or the root is not a work tree; the reason says which."
       description: "What git says about the repository, or why it could not be asked."
+    GitWorkingTree:
+      type: object
+      properties:
+        head:
+          type:
+            - string
+            - "null"
+          description: "The commit HEAD names, or `None` in a repository with no commits yet."
+        branch:
+          type:
+            - string
+            - "null"
+          description: "The branch, or `None` when HEAD is detached or unborn."
+        detached:
+          type: boolean
+          description: Whether HEAD names a commit directly rather than a branch.
+        upstream:
+          type:
+            - string
+            - "null"
+          description: "The upstream the branch tracks, when it tracks one."
+        ahead:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: "Commits this branch has that its upstream does not; `None` without an upstream."
+        behind:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: "Commits the upstream has that this branch does not; `None` without an upstream."
+        staged:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Tracked files with staged changes.
+        modified:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Tracked files changed in the work tree and not staged.
+        untracked:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Files git does not track and is not ignoring.
+        conflicted:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: Files with an unresolved merge.
+        clean:
+          type: boolean
+          description: "Whether nothing at all is staged, modified, untracked or conflicted."
+        changed_paths:
+          type: array
+          items:
+            type: string
+          description: "Every path that is not clean, repository-relative, in git's order. Used to decide\nwhether the cached tier is still valid, and shown to nobody."
+      required:
+        - detached
+        - staged
+        - modified
+        - untracked
+        - conflicted
+        - clean
+      description: "The state of one work tree, as porcelain v2 reports it."
     Graph:
       type: object
       properties:
@@ -6214,6 +7563,21 @@ components:
         - latest_url
         - checks
       description: "Whether the advertised one-line installation works right now, and if not, what is missing.\n\nThis answers the operator's actual question — *can a machine that has never seen this\nproject install it with the published command?* — from local state alone. It performs no\nnetwork access: a repository can be offline and this still answers, because everything it\nneeds is the distribution model and the release records the repository itself carries.\nWhat it cannot see it reports as `unknown` rather than guessing; the public half of the\nquestion is answered by the release workflow's smoke phase, which installs from the\npublished URL on every native runner and is the only thing that proves the public path."
+    Integration:
+      oneOf:
+        - type: string
+          const: open
+          description: "Not reachable from the trunk: its commits are the ones the trunk does not have."
+        - type: string
+          const: merged
+          description: "Reachable from the trunk through a merge commit, which the trace names: its commits\nare the ones that merge brought in."
+        - type: string
+          const: absorbed
+          description: "Reachable from the trunk with no merge commit of its own — fast-forwarded, or\nrebased onto it. Its commits cannot be told from the trunk's and none are claimed."
+        - type: string
+          const: unknown
+          description: "The trunk is unknown, so there is nothing to measure the branch against."
+      description: "How a branch stands to the trunk, which is what decides which commits are its own."
     Interface:
       oneOf:
         - type: string
@@ -6223,6 +7587,60 @@ components:
           const: all
           description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
       description: Which interface a process listens on.
+    IssueTrace:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: "The issue id, as the project model spells it."
+        declared:
+          type: boolean
+          description: "True when the project model declares this id. False is not an error and not an\nempty answer: it says the id was looked for and the model does not have it, which a\ncaller must be able to tell apart from \"declared, and nothing has realised it yet\".\nA repository with no project model at all answers `false` for every id rather than\nrefusing, because the branches naming an id are still derivable there."
+        milestone:
+          type:
+            - string
+            - "null"
+          description: "The milestone the canonical issue record names. Git does not hold this edge and\nnothing here derives it: the caller with the index fills it in, and it is `null` in\na repository whose issue record does not name one."
+        trunk:
+          type:
+            - string
+            - "null"
+          description: The trunk every branch was measured against.
+        branches:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BranchTrace"
+          description: "The branches that name it, local first."
+        commits:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many distinct commits the branches hold between them.
+        complete:
+          type: boolean
+          description: "True when every branch's commits could be derived. False when at least one reached\nthe trunk without a merge commit, so part of the work is not distinguishable."
+      required:
+        - issue
+        - declared
+        - branches
+        - commits
+        - complete
+      description: "Everything git knows about one issue's realisation."
+    KindCount:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: "The kind, as `share/kinds.yaml` declares it."
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many objects of it the index holds.
+      required:
+        - kind
+        - count
+      description: How many valid objects of one kind the layer holds.
     KindRef:
       type: object
       properties:
@@ -6238,6 +7656,46 @@ components:
         - name
         - objects
       description: "One object kind the feature names, with how many objects of it the layer holds."
+    LayerSummary:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/TierState"
+          description: Where these numbers came from.
+        kinds:
+          type: array
+          items:
+            "$ref": "#/components/schemas/KindCount"
+          description: "One entry per kind present, sorted by kind."
+        objects:
+          type:
+            - integer
+            - "null"
+          format: uint
+          minimum: 0
+          description: How many objects the index holds.
+        capabilities:
+          type:
+            - integer
+            - "null"
+          format: uint
+          minimum: 0
+          description: How many capabilities the registry holds.
+        invalid:
+          type:
+            - integer
+            - "null"
+          format: uint
+          minimum: 0
+          description: How many files the layer declared that did not become objects.
+        degraded:
+          type:
+            - boolean
+            - "null"
+          description: Whether the layer read cleanly.
+      required:
+        - state
+      description: "What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on."
     Libc:
       oneOf:
         - type: string
@@ -7976,6 +9434,58 @@ components:
         - counts
         - findings
       description: "What the model's own validation found."
+    ProjectIdentity:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The product name.
+        version:
+          type: string
+          description: "The version of this executable, from the crate manifest."
+        summary:
+          type: string
+          description: "One sentence: what this is."
+        license:
+          type: string
+          description: The SPDX licence identifier.
+        repository:
+          type: string
+          description: The source repository.
+        target:
+          type: string
+          description: The Rust target triple this executable was built for.
+        profile:
+          type: string
+          description: The cargo profile it was built with.
+        commit:
+          type: string
+          description: "The commit it was built from, or `unknown` outside a work tree."
+      required:
+        - name
+        - version
+        - summary
+        - license
+        - repository
+        - target
+        - profile
+        - commit
+      description: "What the project is, from the crate manifest and the prose written once in\n[`crate::about`]. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers."
+    ProjectionState:
+      oneOf:
+        - type: string
+          const: current
+          description: The file matches the rendering byte for byte.
+        - type: string
+          const: stale
+          description: "The file differs: it was hand-edited, or the policy moved under it."
+        - type: string
+          const: absent
+          description: The file is not there.
+        - type: string
+          const: unknown
+          description: "It could not be rendered, so nothing can be said."
+      description: Where one provider projection stands against its policy.
     Provenance:
       oneOf:
         - type: object
@@ -8087,6 +9597,27 @@ components:
           const: fly
           description: Fly.io.
       description: "The hosting provider. One is supported; a second is an object of its own rather than an\nabstraction over this one."
+    ProviderState:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The provider id, as the policy names it: `agents`, `claude-code`."
+        target:
+          type: string
+          description: The repository-relative file it renders to.
+        state:
+          "$ref": "#/components/schemas/ProjectionState"
+          description: Whether the file matches what the policy renders now.
+        always_loaded:
+          type: boolean
+          description: Whether the provider loads this file into every context.
+      required:
+        - id
+        - target
+        - state
+        - always_loaded
+      description: "One provider projection the policy declares, and whether the file on disk still matches\nwhat the policy renders."
     Readiness:
       type: object
       properties:
@@ -8331,6 +9862,104 @@ components:
         - count
         - releases
       description: "The releases this repository recorded, and the one an unpinned installation resolves to."
+    RepositoryEnvironment:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "The contract this document follows, `majordomus/repository-environment/v1`."
+        generated_at:
+          type: string
+          description: "When it was taken, RFC 3339 in UTC."
+        resolution:
+          "$ref": "#/components/schemas/Resolution"
+          description: How completely it was resolved.
+        project:
+          "$ref": "#/components/schemas/ProjectIdentity"
+          description: What the project is.
+        repository:
+          "$ref": "#/components/schemas/RepositoryIdentity"
+          description: What the checkout is.
+        vcs:
+          "$ref": "#/components/schemas/VcsState"
+          description: What version control says.
+        toolchains:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ToolchainState"
+          description: "The toolchains the repository declares, sorted by id."
+        layer:
+          "$ref": "#/components/schemas/LayerSummary"
+          description: What the layer holds.
+        workflows:
+          "$ref": "#/components/schemas/WorkflowCatalogue"
+          description: The workflows a person can run.
+        providers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProviderState"
+          description: "The provider projections the policy declares, in the policy's order."
+        services:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ServiceState"
+          description: "The local services, in the order the service table declares them."
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Diagnostic"
+          description: "Everything that went wrong or is worth knowing, in the order it was found."
+        provenance:
+          type: array
+          items:
+            "$ref": "#/components/schemas/FieldSource"
+          description: Where every field came from.
+      required:
+        - schema
+        - generated_at
+        - resolution
+        - project
+        - repository
+        - vcs
+        - toolchains
+        - layer
+        - workflows
+        - providers
+        - services
+        - diagnostics
+        - provenance
+      description: "The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n[`RepositoryEnvironment::generated_at`]."
+    RepositoryIdentity:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The name a person calls it: the base name of the root directory."
+        root:
+          type: string
+          description: "The root, absolute. The same value `repository.info` reports."
+        layer_schema:
+          type: string
+          description: "The manifest's `schema`, `ai-repository/v1`."
+        sections:
+          type: object
+          additionalProperties:
+            type: string
+          description: "Section name to repository-relative path, as the manifest declares them."
+        local_path:
+          type: string
+          description: "The checkout-local half of the layer, repository-relative. Never tracked, and\nwhere anything this checkout alone knows — the server's lease, this snapshot's\ncache — is kept."
+        linked_worktree:
+          type: boolean
+          description: Whether this checkout is a linked work tree rather than the main one.
+      required:
+        - name
+        - root
+        - layer_schema
+        - sections
+        - local_path
+        - linked_worktree
+      description: The checkout this snapshot is of.
     RepositoryInfo:
       type: object
       properties:
@@ -8488,6 +10117,15 @@ components:
         - git_common_dir
         - name
       description: "The repository's identity, as the topology reports it."
+    Resolution:
+      oneOf:
+        - type: string
+          const: fast
+          description: Only what is cheap enough for a shell prompt; the rest from the cache.
+        - type: string
+          const: full
+          description: "Everything, including the index. Writes the cache."
+      description: "How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \"there is no server running\" from \"nobody looked\"."
     ResolvedRefs:
       type: object
       properties:
@@ -8915,6 +10553,44 @@ components:
         - limit
         - hits
       description: "The answer of `objects.search`."
+    ServiceAvailability:
+      oneOf:
+        - type: string
+          const: available
+          description: The address accepted a connection.
+        - type: string
+          const: not_running
+          description: "No server holds the repository's lease, or the address refused the connection."
+        - type: string
+          const: unknown
+          description: "The probe did not finish in its budget, or this resolution did not probe."
+      description: "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions."
+    ServiceState:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "A stable id, `[a-z][a-z0-9-]*`."
+        title:
+          type: string
+          description: The short name a person reads.
+        path:
+          type: string
+          description: The absolute path the router serves it under.
+        url:
+          type:
+            - string
+            - "null"
+          description: "The full URL, when a server is running and published its address."
+        availability:
+          "$ref": "#/components/schemas/ServiceAvailability"
+          description: Whether anything answers there.
+      required:
+        - id
+        - title
+        - path
+        - availability
+      description: "One local service of this repository: what it is, where it is, and whether anything\nanswers there. The path is the one the router serves; the URL exists only while a\nserver does."
     Severity:
       oneOf:
         - type: string
@@ -9469,6 +11145,61 @@ components:
         - status
         - artifact
       description: "One target, as every projection shows it: what it is, what it is called in prose, and\nthe artifact name the naming function derives for a tag yet to be chosen."
+    TierState:
+      oneOf:
+        - type: string
+          const: resolved
+          description: Read from its canonical source during this resolution.
+        - type: string
+          const: cached
+          description: Taken from the cache written by an earlier full resolution.
+        - type: string
+          const: unavailable
+          description: Neither available; the values are absent and the reason is a diagnostic.
+      description: "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero."
+    ToolchainAvailability:
+      oneOf:
+        - type: string
+          const: installed
+          description: "Installed, and its version answered."
+        - type: string
+          const: missing
+          description: The executable is not on the path.
+        - type: string
+          const: unknown
+          description: "Nobody asked: this resolution may not run a subprocess for it, and no cache held it."
+      description: Whether a declared toolchain is usable here.
+    ToolchainState:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "A stable id, `[a-z][a-z0-9-]*`: `rust`, `node`."
+        title:
+          type: string
+          description: The short name a person reads.
+        declared:
+          type:
+            - string
+            - "null"
+          description: "The version the repository declares, when it declares one."
+        declared_by:
+          type: string
+          description: The repository-relative file that declares it.
+        installed:
+          type:
+            - string
+            - "null"
+          description: "The version installed here, when it could be asked and the answer is not stale."
+        availability:
+          "$ref": "#/components/schemas/ToolchainAvailability"
+          description: Where the installed version stands.
+      required:
+        - id
+        - title
+        - declared_by
+        - availability
+      description: "A toolchain the repository declares, and what is installed for it. The three are kept\napart on purpose: a repository can declare a version nobody has, and a machine can have\na version no repository asked for, and reporting either as the other is how a version\nmismatch stays invisible for a week."
     TopologyDiagnostic:
       type: object
       properties:
@@ -9588,6 +11319,91 @@ components:
         - errors
         - warnings
       description: How many work trees and branches are in each state.
+    TraceReport:
+      type: object
+      properties:
+        trunk:
+          type:
+            - string
+            - "null"
+          description: The trunk every branch and commit was measured against.
+        examined:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many trunk commits were attributed.
+        issues:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IssueTrace"
+          description: "The issues that at least one branch names, in id order."
+        without_branch:
+          type: array
+          items:
+            type: string
+          description: "The issue ids the project model declares that no ref names. Not a fault: an issue\nnobody has started has no branch yet."
+        commits:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommitAttribution"
+          description: "The examined trunk commits, newest first."
+        tallies:
+          "$ref": "#/components/schemas/TraceTallies"
+          description: "The counts, so a caller need not add them up."
+      required:
+        - examined
+        - issues
+        - without_branch
+        - commits
+        - tallies
+      description: "The whole traceability answer: every issue git can say something about, and every commit\nof a stretch of the trunk with the contract it served or the fact that it has none."
+    TraceTallies:
+      type: object
+      properties:
+        issues_declared:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Issue ids the project model declares.
+        issues_with_branch:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, the ones at least one ref names."
+        branches:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Branches naming an issue.
+        branch_commits:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Distinct commits those branches claim.
+        attributed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Examined trunk commits with exactly one issue.
+        unattributed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Examined trunk commits no branch naming an issue contains.
+        ambiguous:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Examined trunk commits more than one issue claims.
+      required:
+        - issues_declared
+        - issues_with_branch
+        - branches
+        - branch_commits
+        - attributed
+        - unattributed
+        - ambiguous
+      description: The counts of one report.
     Transport:
       oneOf:
         - type: string
@@ -9710,6 +11526,30 @@ components:
         - counts
         - findings
       description: "What the catalogue's own validation found."
+    VcsState:
+      oneOf:
+        - "$ref": "#/components/schemas/GitWorkingTree"
+          type: object
+          properties:
+            state:
+              type: string
+              const: git
+          required:
+            - state
+          description: "`git` answered."
+        - type: object
+          properties:
+            reason:
+              type: string
+              description: What went wrong.
+            state:
+              type: string
+              const: unavailable
+          required:
+            - state
+            - reason
+          description: "`git` could not be asked, or this is not a work tree."
+      description: "What version control says about the checkout, or why it could not be asked."
     Verdict:
       oneOf:
         - type: string
@@ -9731,6 +11571,107 @@ components:
           const: external_dependency
           description: The capability talks to something the benchmark host cannot provide.
       description: "Why an executable capability is not benchmarked. Typed, so that a waiver is a\nreviewable statement and never a convenience; `not_executable` is the registry's own\nreason for resources and is never written by hand."
+    WorkflowCatalogue:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/TierState"
+          description: Where these came from.
+        source:
+          type:
+            - string
+            - "null"
+          description: "The command that produced them, when one did."
+        workflows:
+          type: array
+          items:
+            "$ref": "#/components/schemas/WorkflowDescriptor"
+          description: "Every public workflow, sorted by name."
+        entrypoints:
+          type: array
+          items:
+            "$ref": "#/components/schemas/WorkflowEntrypoint"
+          description: "The entry point of each group, in the order the groups are declared: what a person\nnew to the repository runs first. Derived, never listed anywhere."
+      required:
+        - state
+      description: "The workflows a person can run here, as the workflow runner itself describes them."
+    WorkflowDescriptor:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The name a person types after `just`."
+        namespace:
+          type:
+            - string
+            - "null"
+          description: "The module path, for a recipe in an imported module; empty at the root."
+        description:
+          type:
+            - string
+            - "null"
+          description: "The recipe's doc comment, when it has one."
+        group:
+          type:
+            - string
+            - "null"
+          description: "The `[group(...)]` it belongs to, when it declares one."
+        parameters:
+          type: array
+          items:
+            "$ref": "#/components/schemas/WorkflowParameter"
+          description: "Its parameters, in declaration order."
+        dependencies:
+          type: array
+          items:
+            type: string
+          description: "The recipes it runs first, in order."
+        confirm:
+          type: boolean
+          description: "Whether it asks before it runs (`[confirm]`)."
+      required:
+        - name
+        - confirm
+      description: "One workflow: a recipe of the repository's `justfile`, as `just` describes it."
+    WorkflowEntrypoint:
+      type: object
+      properties:
+        group:
+          type: string
+          description: "The group, as the justfile declares it."
+        workflow:
+          type: string
+          description: The workflow that stands for the group.
+        command:
+          type: string
+          description: The command a person types.
+        description:
+          type:
+            - string
+            - "null"
+          description: "The workflow's description, when it has one."
+      required:
+        - group
+        - workflow
+        - command
+      description: "The entry point of one group of workflows: what the group is, and the one workflow that\nstands for it."
+    WorkflowParameter:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name.
+        variadic:
+          type: boolean
+          description: "Whether it may be repeated (`*args`, `+args`)."
+        required:
+          type: boolean
+          description: Whether it must be given.
+      required:
+        - name
+        - variadic
+        - required
+      description: One parameter of a workflow.
     WorktreeFingerprint:
       type: object
       properties:

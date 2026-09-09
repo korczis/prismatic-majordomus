@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 52 | 52 | 0 | 0 |
-| http | 52 | 52 | 0 | 0 |
-| mcp | 50 | 50 | 0 | 0 |
+| direct | 60 | 60 | 0 | 0 |
+| http | 60 | 60 | 0 | 0 |
+| mcp | 58 | 58 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 167 | 167 | 0 | 0 |
+| total | 191 | 191 | 0 | 0 |
 
 ## Capabilities
 
@@ -23,6 +23,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `capabilities.describe` | capabilities | query | — | covered | covered | covered | `repository-info` |
 | `capabilities.list` | capabilities | query | process, 16 entries | covered | covered | covered | `all`, `queries` |
 | `capabilities.projections` | capabilities | query | process, 8 entries | covered | covered | covered | `all`, `unmet` |
+| `commands.get` | commands | query | — | covered | covered | covered | `worktree-status` |
+| `commands.graph` | commands | query | — | covered | covered | covered | `default` |
+| `commands.list` | commands | query | — | covered | covered | covered | `all`, `read-only`, `one-program` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
@@ -33,6 +36,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
+| `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
+| `environment.status` | environment | query | process, 4 entries, 3s | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
@@ -60,6 +65,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `trace.commit` | trace | query | — | covered | covered | covered | `head` |
+| `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
+| `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |
 | `web.surfaces` | web | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `why.areas` | why | query | process, 4 entries | covered | covered | covered | `default` |
 | `why.audiences` | why | query | process, 4 entries | covered | covered | covered | `default` |

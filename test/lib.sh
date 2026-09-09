@@ -81,6 +81,22 @@ rust_bin() {
 #   RB="$(rust_bin)" || rust_bin_exit $?
 rust_bin_exit() { [ "$1" = 3 ] && { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }; exit 1; }
 
+# The whole workflow declaration of this repository, written to a file a case can grep.
+#
+# The root justfile imports one file per bounded context, so a case that reads only the root
+# file is reading a fragment of the declaration and will report a recipe missing the day it
+# is moved rather than the day it is removed. The generated bridge is not read: it is not
+# tracked, it is a projection of the command graph, and a case asserting what it contains
+# would be asserting what `majordomus commands bridge` writes rather than what this
+# repository declares.
+#   JF="$(just_declaration)"
+just_declaration() {
+  local out
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.just.XXXXXX")"
+  cat "$ROOT/justfile" "$ROOT"/.just/*.just > "$out" 2>/dev/null
+  printf '%s' "$out"
+}
+
 # restore the seeded policy and profiles from the skeleton after a case mutated them; the
 # files belong to the repository after init, so init itself never rewrites them
 reset_policy() {

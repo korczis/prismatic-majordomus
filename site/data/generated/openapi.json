@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 52,
-    "schemas": 218,
-    "tags": 17
+    "operations": 60,
+    "schemas": 269,
+    "tags": 20
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -738,6 +738,32 @@
       "variants": []
     },
     {
+      "description": "What is known about the contract one commit served.",
+      "is_enum": true,
+      "name": "Attribution",
+      "properties": [],
+      "type": "\"attributed\" | \"unattributed\" | \"ambiguous\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommitAttribution"
+      ],
+      "values": [
+        {
+          "description": "Exactly one issue's branches contain it.",
+          "value": "attributed"
+        },
+        {
+          "description": "No branch naming an issue contains it.",
+          "value": "unattributed"
+        },
+        {
+          "description": "Branches naming more than one issue contain it.",
+          "value": "ambiguous"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Every audience.",
       "is_enum": false,
       "name": "AudienceList",
@@ -998,6 +1024,73 @@
       "used_by": [],
       "used_by_schemas": [
         "RepositoryTopology"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One branch that names an issue, with the commits it holds.",
+      "is_enum": false,
+      "name": "BranchTrace",
+      "properties": [
+        {
+          "description": "The ref, short: `feature/I1305-traceability`, or `origin/feature/I1305-traceability`\nwhen only the remote still has it.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the ref is a remote-tracking one and no local branch of the same name\nstands for it.",
+          "name": "remote",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The commit the ref points at.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it stands to the trunk.",
+          "name": "integration",
+          "refs": [
+            "Integration"
+          ],
+          "required": true,
+          "type": "Integration"
+        },
+        {
+          "description": "The merge commit that brought it into the trunk, when one did.",
+          "name": "merge_commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why the commit list is what it is, when it is worth a sentence.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commits this branch holds and the trunk did not, newest first, merges excluded.",
+          "name": "commits",
+          "refs": [
+            "CommitRef"
+          ],
+          "required": true,
+          "type": "array of CommitRef"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssueTrace"
       ],
       "values": [],
       "variants": []
@@ -1442,7 +1535,8 @@
       "used_by": [],
       "used_by_schemas": [
         "Capability",
-        "CapabilitySummary"
+        "CapabilitySummary",
+        "CommandProvenance"
       ],
       "values": [],
       "variants": []
@@ -2181,6 +2275,801 @@
       "variants": []
     },
     {
+      "description": "One argument of a command, as the declaration gives it plus what can be inferred.",
+      "is_enum": false,
+      "name": "CommandArgument",
+      "properties": [
+        {
+          "description": "The argument's id.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`--long`, without the dashes.",
+          "name": "long",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`-s`, without the dash.",
+          "name": "short",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Given by position rather than by flag.",
+          "name": "positional",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Takes a value at all; a flag does not.",
+          "name": "takes_value",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Must be given.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Takes any number of values.",
+          "name": "variadic",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Accepted by every command under the one that declares it.",
+          "name": "global",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The help text, one line.",
+          "name": "help",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The placeholder, `PATH`.",
+          "name": "value_name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The values the declaration carries, each with its help.",
+          "name": "values",
+          "refs": [
+            "CommandValueChoice"
+          ],
+          "required": false,
+          "type": "array of CommandValueChoice"
+        },
+        {
+          "description": "The defaults, as the declaration renders them.",
+          "name": "defaults",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Where further values come from.",
+          "name": "source",
+          "refs": [
+            "CommandValueSource"
+          ],
+          "required": true,
+          "type": "CommandValueSource"
+        },
+        {
+          "description": "How openly the value may be handled.",
+          "name": "secrecy",
+          "refs": [
+            "CommandSecrecy"
+          ],
+          "required": true,
+          "type": "CommandSecrecy"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a command means anything, and why not when it does not.\n\nDerived from the repository environment rather than declared per command, so that a\nprojection reads a field instead of re-deciding. The reason is carried because the\nanswer a person needs is never `false`.",
+      "is_enum": false,
+      "name": "CommandAvailability",
+      "properties": [
+        {
+          "description": "Can it be run here, now?",
+          "name": "available",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not, in one line, when it cannot.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What it needs, whether or not that is satisfied here.",
+          "name": "requires",
+          "refs": [
+            "CommandRequirement"
+          ],
+          "required": false,
+          "type": "array of CommandRequirement"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A command that is no longer the name to use.",
+      "is_enum": false,
+      "name": "CommandDeprecation",
+      "properties": [
+        {
+          "description": "Why, in one line.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to use instead.",
+          "name": "replaced_by",
+          "refs": [
+            "CommandId"
+          ],
+          "required": false,
+          "type": "CommandId | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing the build found.",
+      "is_enum": false,
+      "name": "CommandDiagnostic",
+      "properties": [
+        {
+          "description": "How bad.",
+          "name": "severity",
+          "refs": [
+            "CommandDiagnosticSeverity"
+          ],
+          "required": true,
+          "type": "CommandDiagnosticSeverity"
+        },
+        {
+          "description": "A stable code, for a gate to match on.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is wrong, in one line.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The nodes it is about.",
+          "name": "commands",
+          "refs": [
+            "CommandId"
+          ],
+          "required": false,
+          "type": "array of CommandId"
+        },
+        {
+          "description": "What to do about it.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandGraph"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How bad a finding is.",
+      "is_enum": true,
+      "name": "CommandDiagnosticSeverity",
+      "properties": [],
+      "type": "\"error\" | \"warning\" | \"info\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandDiagnostic"
+      ],
+      "values": [
+        {
+          "description": "The graph is wrong and a projection built from it would be wrong.",
+          "value": "error"
+        },
+        {
+          "description": "Worth saying; the graph stands.",
+          "value": "warning"
+        },
+        {
+          "description": "A fact a reader may want.",
+          "value": "info"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What running a command changes. The one thing a surface policy is allowed to ask.\n\nThe order is the order of increasing consequence, and it is the order the derived\nexposure policy reads: a surface declares the strongest effect it will carry, and\nevery node at or below it is projected there. Nothing configures a surface per\ncommand.",
+      "is_enum": true,
+      "name": "CommandEffect",
+      "properties": [],
+      "type": "\"read_only\" | \"local_mutation\" | \"repository_mutation\" | \"network_mutation\" | \"destructive\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandNode"
+      ],
+      "values": [
+        {
+          "description": "Reads and answers. Changes nothing anywhere.",
+          "value": "read_only"
+        },
+        {
+          "description": "Writes only where the repository keeps a checkout's own state — the process's\nmemory, `.ai/local/`, a build directory. Nothing a commit would carry.",
+          "value": "local_mutation"
+        },
+        {
+          "description": "Writes tracked files: generated artifacts, the worktree, git itself.",
+          "value": "repository_mutation"
+        },
+        {
+          "description": "Reaches the network with an effect on the far side: a push, a deploy, a release.",
+          "value": "network_mutation"
+        },
+        {
+          "description": "Removes something a person would have to reconstruct.",
+          "value": "destructive"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How a command is actually run: the program and the words before the caller's own.\n\nThis is what forbids a cycle. A projection renders an invocation from the execution\ndescriptor, so a generated bridge always spells the *canonical* program — never the\nsurface it is a bridge for.",
+      "is_enum": false,
+      "name": "CommandExecution",
+      "properties": [
+        {
+          "description": "Which program.",
+          "name": "origin",
+          "refs": [
+            "CommandOrigin"
+          ],
+          "required": true,
+          "type": "CommandOrigin"
+        },
+        {
+          "description": "The words that precede the caller's arguments, the program's own name excluded.",
+          "name": "argv",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The whole graph.",
+      "is_enum": false,
+      "name": "CommandGraph",
+      "properties": [
+        {
+          "description": "The schema of this document.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "A hash of the semantic content: the identity a cache and a generated projection\nkey on. Nothing that varies between two runs over the same tree is in it.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Every command, in a deterministic order: origin, then path.",
+          "name": "commands",
+          "refs": [
+            "CommandNode"
+          ],
+          "required": true,
+          "type": "array of CommandNode"
+        },
+        {
+          "description": "What the build found.",
+          "name": "diagnostics",
+          "refs": [
+            "CommandDiagnostic"
+          ],
+          "required": true,
+          "type": "array of CommandDiagnostic"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandGraphReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The whole graph, with what its build found.",
+      "is_enum": false,
+      "name": "CommandGraphReport",
+      "properties": [
+        {
+          "description": "The graph.",
+          "name": "graph",
+          "refs": [
+            "CommandGraph"
+          ],
+          "required": true,
+          "type": "CommandGraph"
+        },
+        {
+          "description": "How many findings are errors; a projection refuses to write while this is not zero.",
+          "name": "errors",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "commands.graph"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The canonical identity of one command.\n\nConstructed from the origin and the command path, never written by hand, so that a\nprojection cannot invent one and a rename of a display string cannot change one.",
+      "is_enum": false,
+      "name": "CommandId",
+      "properties": [],
+      "type": "string",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandDeprecation",
+        "CommandDiagnostic",
+        "CommandNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The commands this repository offers, filtered.",
+      "is_enum": false,
+      "name": "CommandIndex",
+      "properties": [
+        {
+          "description": "The schema of the graph these came from.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The fingerprint of that graph: a client may cache against it.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many commands the graph holds, before the filter.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The commands that matched, in graph order.",
+          "name": "commands",
+          "refs": [
+            "CommandSummary"
+          ],
+          "required": true,
+          "type": "array of CommandSummary"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "commands.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How a command behaves towards the caller's terminal and the caller's patience.",
+      "is_enum": true,
+      "name": "CommandInteractivity",
+      "properties": [],
+      "type": "\"non_interactive\" | \"interactive\" | \"long_running\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandNode"
+      ],
+      "values": [
+        {
+          "description": "Runs, answers, exits. Safe to call from a machine surface.",
+          "value": "non_interactive"
+        },
+        {
+          "description": "Asks the person something, or reads the body of a record from a terminal. A\nmachine surface that offered it would hang.",
+          "value": "interactive"
+        },
+        {
+          "description": "Serves until it is stopped. A request/response surface cannot carry it.",
+          "value": "long_running"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One command, from whichever program offers it.",
+      "is_enum": false,
+      "name": "CommandNode",
+      "properties": [
+        {
+          "description": "The canonical identity.",
+          "name": "id",
+          "refs": [
+            "CommandId"
+          ],
+          "required": true,
+          "type": "CommandId"
+        },
+        {
+          "description": "Which program runs it.",
+          "name": "origin",
+          "refs": [
+            "CommandOrigin"
+          ],
+          "required": true,
+          "type": "CommandOrigin"
+        },
+        {
+          "description": "The words after the program's own name.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The command line a person types, rendered once here.",
+          "name": "invocation",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The longer description, when the declaration carries one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Can it be run on its own, or does it only group the commands under it?",
+          "name": "runnable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The arguments, in declaration order.",
+          "name": "arguments",
+          "refs": [
+            "CommandArgument"
+          ],
+          "required": true,
+          "type": "array of CommandArgument"
+        },
+        {
+          "description": "How it is run.",
+          "name": "execution",
+          "refs": [
+            "CommandExecution"
+          ],
+          "required": true,
+          "type": "CommandExecution"
+        },
+        {
+          "description": "What it changes.",
+          "name": "effect",
+          "refs": [
+            "CommandEffect"
+          ],
+          "required": true,
+          "type": "CommandEffect"
+        },
+        {
+          "description": "How it behaves towards a terminal.",
+          "name": "interactivity",
+          "refs": [
+            "CommandInteractivity"
+          ],
+          "required": true,
+          "type": "CommandInteractivity"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "stability",
+          "refs": [
+            "Stability"
+          ],
+          "required": true,
+          "type": "Stability"
+        },
+        {
+          "description": "Where it means anything.",
+          "name": "availability",
+          "refs": [
+            "CommandAvailability"
+          ],
+          "required": true,
+          "type": "CommandAvailability"
+        },
+        {
+          "description": "The group a person finds it under, when the declaration has groups.",
+          "name": "group",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Other names that resolve to this node, declared once here and honoured by every\nprojection that has a use for one.",
+          "name": "aliases",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether this is still the name to use.",
+          "name": "deprecation",
+          "refs": [
+            "CommandDeprecation"
+          ],
+          "required": false,
+          "type": "CommandDeprecation | null"
+        },
+        {
+          "description": "Where it came from.",
+          "name": "provenance",
+          "refs": [
+            "CommandProvenance"
+          ],
+          "required": true,
+          "type": "CommandProvenance"
+        },
+        {
+          "description": "Where it appears.",
+          "name": "projections",
+          "refs": [
+            "CommandProjections"
+          ],
+          "required": true,
+          "type": "CommandProjections"
+        },
+        {
+          "description": "Is this command an entry point of its group — the one a newcomer is offered?",
+          "name": "entrypoint",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "commands.get"
+      ],
+      "used_by_schemas": [
+        "CommandGraph"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which program runs a command. Part of the identity, because the three are different\nprograms that share one name on the path.",
+      "is_enum": true,
+      "name": "CommandOrigin",
+      "properties": [],
+      "type": "\"executable\" | \"tool\" | \"workflow\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandExecution",
+        "CommandNode"
+      ],
+      "values": [
+        {
+          "description": "The Rust executable, `apps/majordomus-cli`: the read-only interfaces, generation,\nintrospection, the servers. Declared by clap.",
+          "value": "executable"
+        },
+        {
+          "description": "The shell tool, `bin/majordomus`: the task lifecycle. Declared by the shipped\ncommand registry and dispatched by the tool itself.",
+          "value": "tool"
+        },
+        {
+          "description": "A workflow the repository declares for a person to run — a `just` recipe that is\nnot a generated bridge. Declared by the justfile and read from the runner's dump.",
+          "value": "workflow"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Where one command appears, derived from its effect, its interactivity and its origin.\n\nEvery field is computed by [`super::policy`]. Nothing declares a projection, and no\nsurface keeps a list of what it carries: a surface asks the graph.",
+      "is_enum": false,
+      "name": "CommandProjections",
+      "properties": [
+        {
+          "description": "The command line, as typed.",
+          "name": "cli",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The generated workflow bridge's recipe name.",
+          "name": "workflow",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The MCP tool name, when the capability behind it declares one.",
+          "name": "mcp",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The HTTP route, when the capability behind it declares one.",
+          "name": "http",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The Cockpit address, when the surface carries it.",
+          "name": "cockpit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The page on the site. Every command has one.",
+          "name": "docs",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why a machine surface does not carry it, when one does not.",
+          "name": "withheld",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandNode",
+        "CommandSummary"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a node came from, in enough detail to open the file.",
+      "is_enum": false,
+      "name": "CommandProvenance",
+      "properties": [
+        {
+          "description": "The repository-relative file that declares it.",
+          "name": "declared_in",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that reads that declaration, when a reader wants to reproduce it.",
+          "name": "read_by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The capability this command runs, when it runs one.",
+          "name": "capability",
+          "refs": [
+            "CapabilityId"
+          ],
+          "required": false,
+          "type": "CapabilityId | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One public command of the shell tool the feature names, as `share/commands.yaml`\ndeclares it.",
       "is_enum": false,
       "name": "CommandRef",
@@ -2223,6 +3112,469 @@
       "variants": []
     },
     {
+      "description": "One thing a command needs before it can run.",
+      "is_enum": true,
+      "name": "CommandRequirement",
+      "properties": [],
+      "type": "\"repository\" | \"layer\" | \"task\" | \"executable\" | \"workflow_runner\" | \"rust_toolchain\" | \"site\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandAvailability"
+      ],
+      "values": [
+        {
+          "description": "A git repository.",
+          "value": "repository"
+        },
+        {
+          "description": "The `.ai/` layer, initialised.",
+          "value": "layer"
+        },
+        {
+          "description": "An active task record.",
+          "value": "task"
+        },
+        {
+          "description": "The Rust executable, built.",
+          "value": "executable"
+        },
+        {
+          "description": "The workflow runner, installed.",
+          "value": "workflow_runner"
+        },
+        {
+          "description": "A cargo workspace and a toolchain to build it.",
+          "value": "rust_toolchain"
+        },
+        {
+          "description": "The site sources and its generator.",
+          "value": "site"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How openly a value may be handled.",
+      "is_enum": true,
+      "name": "CommandSecrecy",
+      "properties": [],
+      "type": "\"public\" | \"sensitive\" | \"secret\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandArgument"
+      ],
+      "values": [
+        {
+          "description": "Ordinary: may be logged, completed, shown.",
+          "value": "public"
+        },
+        {
+          "description": "A path or an identifier that names something private. Shown, never logged.",
+          "value": "sensitive"
+        },
+        {
+          "description": "A credential. Never completed, never logged, never cached.",
+          "value": "secret"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One command, as an index shows it: enough to choose, never enough to have to skim.",
+      "is_enum": false,
+      "name": "CommandSummary",
+      "properties": [
+        {
+          "description": "The canonical identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command line a person types.",
+          "name": "invocation",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which program runs it.",
+          "name": "origin",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What running it changes.",
+          "name": "effect",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The group it is found under.",
+          "name": "group",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where it appears.",
+          "name": "projections",
+          "refs": [
+            "CommandProjections"
+          ],
+          "required": true,
+          "type": "CommandProjections"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandIndex"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One value an argument accepts, from the declaration.",
+      "is_enum": false,
+      "name": "CommandValueChoice",
+      "properties": [
+        {
+          "description": "The value as typed.",
+          "name": "value",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its help, when the declaration carries one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandArgument"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a value for an argument comes from, when something in this repository knows the\nset.\n\nThis is the completion contract, and it is a property of the *argument*, not of a shell\nscript: the same source answers a shell's TAB, a generated form's select and a machine\nsurface's enumeration of what it will accept. Inference from the declaration comes\nfirst — a value-enum argument carries its own values, a `PATH` placeholder is a path —\nand only what cannot be inferred is annotated beside the command.",
+      "is_enum": false,
+      "name": "CommandValueSource",
+      "properties": [],
+      "type": "one of 13 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "CommandArgument"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Nothing here knows the set; the caller types a value.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"free\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The declaration carries the values; they are on the argument.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"enumerated\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A path in the filesystem.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"path\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A path inside the repository.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"repository_path\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A capability id, from the registry.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"capability\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A command id, from this graph.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"command\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A rule id, from the effective rule set.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"rule\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "An object kind, from the index.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"object_kind\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A git branch in this repository.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"branch\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A graph id, from the graph registry.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"graph\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A moment id, from the why catalogue.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"moment\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A shell name, from the shells the activation supports.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"shell\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A secret. Never enumerated, never cached, never suggested.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"secret\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "One commit and the contract it served, or the fact that none can be found.",
+      "is_enum": false,
+      "name": "CommitAttribution",
+      "properties": [
+        {
+          "description": "The commit.",
+          "name": "commit",
+          "refs": [
+            "CommitRef"
+          ],
+          "required": true,
+          "type": "CommitRef"
+        },
+        {
+          "description": "What is known.",
+          "name": "attribution",
+          "refs": [
+            "Attribution"
+          ],
+          "required": true,
+          "type": "Attribution"
+        },
+        {
+          "description": "The issue, when exactly one claims it.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestone that issue belongs to, filled by the caller that has the index.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every issue whose branches contain it: one when attributed, none when unattributed,\nmore than one when ambiguous.",
+          "name": "issues",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The branches that contain it, by the names their refs carry.",
+          "name": "branches",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Why the verdict is what it is, in one line a person can act on.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "trace.commit"
+      ],
+      "used_by_schemas": [
+        "TraceReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One commit, exactly as git names it. Nothing here is stored anywhere: the whole record\nis re-read from the object database on every call.",
+      "is_enum": false,
+      "name": "CommitRef",
+      "properties": [
+        {
+          "description": "The full object name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The abbreviated object name, as this repository abbreviates it.",
+          "name": "short",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The author, as the commit records them.",
+          "name": "author",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The author date, ISO 8601 as the commit records it.",
+          "name": "date",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The subject line.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BranchTrace",
+        "CommitAttribution"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "When the edge considers a machine loaded, in requests.",
       "is_enum": false,
       "name": "Concurrency",
@@ -2252,6 +3604,32 @@
         "Fly"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "How far a resolved value can be trusted.",
+      "is_enum": true,
+      "name": "Confidence",
+      "properties": [],
+      "type": "\"exact\" | \"cached\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "FieldSource"
+      ],
+      "values": [
+        {
+          "description": "Read from its canonical source during this resolution.",
+          "value": "exact"
+        },
+        {
+          "description": "Read from a cache whose fingerprint still matches its inputs.",
+          "value": "cached"
+        },
+        {
+          "description": "Not resolved.",
+          "value": "unknown"
+        }
+      ],
       "variants": []
     },
     {
@@ -3128,6 +4506,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "RepositoryEnvironment",
         "RepositoryReport"
       ],
       "values": [],
@@ -3787,6 +5166,38 @@
       "variants": []
     },
     {
+      "description": "Where the values of one snapshot came from.",
+      "is_enum": false,
+      "name": "EnvironmentProvenance",
+      "properties": [
+        {
+          "description": "How the snapshot behind these entries was resolved.",
+          "name": "resolution",
+          "refs": [
+            "Resolution"
+          ],
+          "required": true,
+          "type": "Resolution"
+        },
+        {
+          "description": "One entry per field, in the order the resolver produced them.",
+          "name": "fields",
+          "refs": [
+            "FieldSource"
+          ],
+          "required": true,
+          "type": "array of FieldSource"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "environment.explain"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -3807,6 +5218,9 @@
         "capabilities.list",
         "capabilities.projections",
         "capabilities.describe",
+        "commands.get",
+        "commands.list",
+        "commands.graph",
         "continuity.state",
         "deploy.get",
         "deploy.list",
@@ -3817,6 +5231,8 @@
         "distribution.build",
         "distribution.releases",
         "distribution.status",
+        "environment.status",
+        "environment.explain",
         "graph.get",
         "graph.list",
         "health.report",
@@ -3844,6 +5260,9 @@
         "repository.scope",
         "repository.scope_classify",
         "objects.search",
+        "trace.report",
+        "trace.commit",
+        "trace.issue",
         "web.surfaces",
         "why.list",
         "why.areas",
@@ -4458,6 +5877,58 @@
       "variants": []
     },
     {
+      "description": "Where one field of the snapshot came from. This is what makes an inferred system\ndebuggable: every fact can name the thing that decided it, so \"why does it say that\"\nis answered by the tool rather than by reading its source.",
+      "is_enum": false,
+      "name": "FieldSource",
+      "properties": [
+        {
+          "description": "The field, in dotted form: `services.cockpit.url`, `vcs.branch`.",
+          "name": "field",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The value as it appears in the snapshot, rendered for a person; absent for a field\nthat resolved to nothing.",
+          "name": "value",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What decided it: a file, a command, a compile-time constant, the cache.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The part of this executable that read it.",
+          "name": "resolver",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How certain the value is.",
+          "name": "confidence",
+          "refs": [
+            "Confidence"
+          ],
+          "required": true,
+          "type": "Confidence"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EnvironmentProvenance",
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One thing wrong with the catalogue, named where it is, with the nearest candidate when\nthere is one. A finding always carries enough to fix it without searching.",
       "is_enum": false,
       "name": "Finding",
@@ -4682,6 +6153,104 @@
           "type": "object"
         }
       ]
+    },
+    {
+      "description": "The state of one work tree, as porcelain v2 reports it.",
+      "is_enum": false,
+      "name": "GitWorkingTree",
+      "properties": [
+        {
+          "description": "The commit HEAD names, or `None` in a repository with no commits yet.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch, or `None` when HEAD is detached or unborn.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether HEAD names a commit directly rather than a branch.",
+          "name": "detached",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The upstream the branch tracks, when it tracks one.",
+          "name": "upstream",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Commits this branch has that its upstream does not; `None` without an upstream.",
+          "name": "ahead",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Commits the upstream has that this branch does not; `None` without an upstream.",
+          "name": "behind",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Tracked files with staged changes.",
+          "name": "staged",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Tracked files changed in the work tree and not staged.",
+          "name": "modified",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Files git does not track and is not ignoring.",
+          "name": "untracked",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Files with an unresolved merge.",
+          "name": "conflicted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Whether nothing at all is staged, modified, untracked or conflicted.",
+          "name": "clean",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every path that is not clean, repository-relative, in git's order. Used to decide\nwhether the cached tier is still valid, and shown to nobody.",
+          "name": "changed_paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VcsState"
+      ],
+      "values": [],
+      "variants": []
     },
     {
       "description": "A derived graph: what it is, where it came from, what its vocabularies mean, and the\nnodes and edges themselves.",
@@ -5330,6 +6899,36 @@
       "variants": []
     },
     {
+      "description": "How a branch stands to the trunk, which is what decides which commits are its own.",
+      "is_enum": true,
+      "name": "Integration",
+      "properties": [],
+      "type": "\"open\" | \"merged\" | \"absorbed\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BranchTrace"
+      ],
+      "values": [
+        {
+          "description": "Not reachable from the trunk: its commits are the ones the trunk does not have.",
+          "value": "open"
+        },
+        {
+          "description": "Reachable from the trunk through a merge commit, which the trace names: its commits\nare the ones that merge brought in.",
+          "value": "merged"
+        },
+        {
+          "description": "Reachable from the trunk with no merge commit of its own — fast-forwarded, or\nrebased onto it. Its commits cannot be told from the trunk's and none are claimed.",
+          "value": "absorbed"
+        },
+        {
+          "description": "The trunk is unknown, so there is nothing to measure the branch against.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Which interface a process listens on.",
       "is_enum": true,
       "name": "Interface",
@@ -5349,6 +6948,101 @@
           "value": "all"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Everything git knows about one issue's realisation.",
+      "is_enum": false,
+      "name": "IssueTrace",
+      "properties": [
+        {
+          "description": "The issue id, as the project model spells it.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the project model declares this id. False is not an error and not an\nempty answer: it says the id was looked for and the model does not have it, which a\ncaller must be able to tell apart from \"declared, and nothing has realised it yet\".\nA repository with no project model at all answers `false` for every id rather than\nrefusing, because the branches naming an id are still derivable there.",
+          "name": "declared",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The milestone the canonical issue record names. Git does not hold this edge and\nnothing here derives it: the caller with the index fills it in, and it is `null` in\na repository whose issue record does not name one.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The trunk every branch was measured against.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branches that name it, local first.",
+          "name": "branches",
+          "refs": [
+            "BranchTrace"
+          ],
+          "required": true,
+          "type": "array of BranchTrace"
+        },
+        {
+          "description": "How many distinct commits the branches hold between them.",
+          "name": "commits",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "True when every branch's commits could be derived. False when at least one reached\nthe trunk without a merge commit, so part of the work is not distinguishable.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "trace.issue"
+      ],
+      "used_by_schemas": [
+        "TraceReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How many valid objects of one kind the layer holds.",
+      "is_enum": false,
+      "name": "KindCount",
+      "properties": [
+        {
+          "description": "The kind, as `share/kinds.yaml` declares it.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many objects of it the index holds.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LayerSummary"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -5375,6 +7069,66 @@
       "used_by": [],
       "used_by_schemas": [
         "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on.",
+      "is_enum": false,
+      "name": "LayerSummary",
+      "properties": [
+        {
+          "description": "Where these numbers came from.",
+          "name": "state",
+          "refs": [
+            "TierState"
+          ],
+          "required": true,
+          "type": "TierState"
+        },
+        {
+          "description": "One entry per kind present, sorted by kind.",
+          "name": "kinds",
+          "refs": [
+            "KindCount"
+          ],
+          "required": false,
+          "type": "array of KindCount"
+        },
+        {
+          "description": "How many objects the index holds.",
+          "name": "objects",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many capabilities the registry holds.",
+          "name": "capabilities",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many files the layer declared that did not become objects.",
+          "name": "invalid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether the layer read cleanly.",
+          "name": "degraded",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
       ],
       "values": [],
       "variants": []
@@ -8399,6 +10153,106 @@
       "variants": []
     },
     {
+      "description": "What the project is, from the crate manifest and the prose written once in\n[`crate::about`]. Every field here is a compile-time constant of this executable: there\nis no file to read, nothing to parse, and nothing that can disagree with the binary\nthat answers.",
+      "is_enum": false,
+      "name": "ProjectIdentity",
+      "properties": [
+        {
+          "description": "The product name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version of this executable, from the crate manifest.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One sentence: what this is.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The SPDX licence identifier.",
+          "name": "license",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The source repository.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The Rust target triple this executable was built for.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The cargo profile it was built with.",
+          "name": "profile",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit it was built from, or `unknown` outside a work tree.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one provider projection stands against its policy.",
+      "is_enum": true,
+      "name": "ProjectionState",
+      "properties": [],
+      "type": "\"current\" | \"stale\" | \"absent\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProviderState"
+      ],
+      "values": [
+        {
+          "description": "The file matches the rendering byte for byte.",
+          "value": "current"
+        },
+        {
+          "description": "The file differs: it was hand-edited, or the policy moved under it.",
+          "value": "stale"
+        },
+        {
+          "description": "The file is not there.",
+          "value": "absent"
+        },
+        {
+          "description": "It could not be rendered, so nothing can be said.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code.",
       "is_enum": false,
       "name": "Provenance",
@@ -8611,6 +10465,50 @@
           "value": "fly"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One provider projection the policy declares, and whether the file on disk still matches\nwhat the policy renders.",
+      "is_enum": false,
+      "name": "ProviderState",
+      "properties": [
+        {
+          "description": "The provider id, as the policy names it: `agents`, `claude-code`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The repository-relative file it renders to.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the file matches what the policy renders now.",
+          "name": "state",
+          "refs": [
+            "ProjectionState"
+          ],
+          "required": true,
+          "type": "ProjectionState"
+        },
+        {
+          "description": "Whether the provider loads this file into every context.",
+          "name": "always_loaded",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -9061,6 +10959,189 @@
       "variants": []
     },
     {
+      "description": "The snapshot: what this checkout is, right now.\n\nEvery surface that reports any of this renders this value. Collections are in a\ndocumented, stable order — kinds and workflows by name, services and providers in the\norder their canonical source declares them, diagnostics in the order they were found —\nso that two snapshots of the same repository serialise identically apart from\n[`RepositoryEnvironment::generated_at`].",
+      "is_enum": false,
+      "name": "RepositoryEnvironment",
+      "properties": [
+        {
+          "description": "The contract this document follows, `majordomus/repository-environment/v1`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was taken, RFC 3339 in UTC.",
+          "name": "generated_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How completely it was resolved.",
+          "name": "resolution",
+          "refs": [
+            "Resolution"
+          ],
+          "required": true,
+          "type": "Resolution"
+        },
+        {
+          "description": "What the project is.",
+          "name": "project",
+          "refs": [
+            "ProjectIdentity"
+          ],
+          "required": true,
+          "type": "ProjectIdentity"
+        },
+        {
+          "description": "What the checkout is.",
+          "name": "repository",
+          "refs": [
+            "RepositoryIdentity"
+          ],
+          "required": true,
+          "type": "RepositoryIdentity"
+        },
+        {
+          "description": "What version control says.",
+          "name": "vcs",
+          "refs": [
+            "VcsState"
+          ],
+          "required": true,
+          "type": "VcsState"
+        },
+        {
+          "description": "The toolchains the repository declares, sorted by id.",
+          "name": "toolchains",
+          "refs": [
+            "ToolchainState"
+          ],
+          "required": true,
+          "type": "array of ToolchainState"
+        },
+        {
+          "description": "What the layer holds.",
+          "name": "layer",
+          "refs": [
+            "LayerSummary"
+          ],
+          "required": true,
+          "type": "LayerSummary"
+        },
+        {
+          "description": "The workflows a person can run.",
+          "name": "workflows",
+          "refs": [
+            "WorkflowCatalogue"
+          ],
+          "required": true,
+          "type": "WorkflowCatalogue"
+        },
+        {
+          "description": "The provider projections the policy declares, in the policy's order.",
+          "name": "providers",
+          "refs": [
+            "ProviderState"
+          ],
+          "required": true,
+          "type": "array of ProviderState"
+        },
+        {
+          "description": "The local services, in the order the service table declares them.",
+          "name": "services",
+          "refs": [
+            "ServiceState"
+          ],
+          "required": true,
+          "type": "array of ServiceState"
+        },
+        {
+          "description": "Everything that went wrong or is worth knowing, in the order it was found.",
+          "name": "diagnostics",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": true,
+          "type": "array of Diagnostic"
+        },
+        {
+          "description": "Where every field came from.",
+          "name": "provenance",
+          "refs": [
+            "FieldSource"
+          ],
+          "required": true,
+          "type": "array of FieldSource"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "environment.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The checkout this snapshot is of.",
+      "is_enum": false,
+      "name": "RepositoryIdentity",
+      "properties": [
+        {
+          "description": "The name a person calls it: the base name of the root directory.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The root, absolute. The same value `repository.info` reports.",
+          "name": "root",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The manifest's `schema`, `ai-repository/v1`.",
+          "name": "layer_schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Section name to repository-relative path, as the manifest declares them.",
+          "name": "sections",
+          "refs": [],
+          "required": true,
+          "type": "map of string"
+        },
+        {
+          "description": "The checkout-local half of the layer, repository-relative. Never tracked, and\nwhere anything this checkout alone knows — the server's lease, this snapshot's\ncache — is kept.",
+          "name": "local_path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether this checkout is a linked work tree rather than the main one.",
+          "name": "linked_worktree",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the index knows about the repository it was built from.",
       "is_enum": false,
       "name": "RepositoryInfo",
@@ -9337,6 +11418,29 @@
         "StatusReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "How completely a snapshot was resolved. Carried in the snapshot because a consumer must\nbe able to tell \"there is no server running\" from \"nobody looked\".",
+      "is_enum": true,
+      "name": "Resolution",
+      "properties": [],
+      "type": "\"fast\" | \"full\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "EnvironmentProvenance",
+        "RepositoryEnvironment"
+      ],
+      "values": [
+        {
+          "description": "Only what is cheap enough for a shell prompt; the rest from the cache.",
+          "value": "fast"
+        },
+        {
+          "description": "Everything, including the index. Writes the cache.",
+          "value": "full"
+        }
+      ],
       "variants": []
     },
     {
@@ -10058,6 +12162,83 @@
       "variants": []
     },
     {
+      "description": "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions.",
+      "is_enum": true,
+      "name": "ServiceAvailability",
+      "properties": [],
+      "type": "\"available\" | \"not_running\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServiceState"
+      ],
+      "values": [
+        {
+          "description": "The address accepted a connection.",
+          "value": "available"
+        },
+        {
+          "description": "No server holds the repository's lease, or the address refused the connection.",
+          "value": "not_running"
+        },
+        {
+          "description": "The probe did not finish in its budget, or this resolution did not probe.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One local service of this repository: what it is, where it is, and whether anything\nanswers there. The path is the one the router serves; the URL exists only while a\nserver does.",
+      "is_enum": false,
+      "name": "ServiceState",
+      "properties": [
+        {
+          "description": "A stable id, `[a-z][a-z0-9-]*`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The absolute path the router serves it under.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The full URL, when a server is running and published its address.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether anything answers there.",
+          "name": "availability",
+          "refs": [
+            "ServiceAvailability"
+          ],
+          "required": true,
+          "type": "ServiceAvailability"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.",
       "is_enum": true,
       "name": "Severity",
@@ -10123,7 +12304,8 @@
       "used_by": [],
       "used_by_schemas": [
         "Capability",
-        "CapabilitySummary"
+        "CapabilitySummary",
+        "CommandNode"
       ],
       "values": [
         {
@@ -11068,6 +13250,117 @@
       "variants": []
     },
     {
+      "description": "Where a tier of the snapshot came from. A tier the active resolution cannot reach is\n[`TierState::Unavailable`] with the reason, and its values are absent rather than zero.",
+      "is_enum": true,
+      "name": "TierState",
+      "properties": [],
+      "type": "\"resolved\" | \"cached\" | \"unavailable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LayerSummary",
+        "WorkflowCatalogue"
+      ],
+      "values": [
+        {
+          "description": "Read from its canonical source during this resolution.",
+          "value": "resolved"
+        },
+        {
+          "description": "Taken from the cache written by an earlier full resolution.",
+          "value": "cached"
+        },
+        {
+          "description": "Neither available; the values are absent and the reason is a diagnostic.",
+          "value": "unavailable"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Whether a declared toolchain is usable here.",
+      "is_enum": true,
+      "name": "ToolchainAvailability",
+      "properties": [],
+      "type": "\"installed\" | \"missing\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ToolchainState"
+      ],
+      "values": [
+        {
+          "description": "Installed, and its version answered.",
+          "value": "installed"
+        },
+        {
+          "description": "The executable is not on the path.",
+          "value": "missing"
+        },
+        {
+          "description": "Nobody asked: this resolution may not run a subprocess for it, and no cache held it.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A toolchain the repository declares, and what is installed for it. The three are kept\napart on purpose: a repository can declare a version nobody has, and a machine can have\na version no repository asked for, and reporting either as the other is how a version\nmismatch stays invisible for a week.",
+      "is_enum": false,
+      "name": "ToolchainState",
+      "properties": [
+        {
+          "description": "A stable id, `[a-z][a-z0-9-]*`: `rust`, `node`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The short name a person reads.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version the repository declares, when it declares one.",
+          "name": "declared",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The repository-relative file that declares it.",
+          "name": "declared_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version installed here, when it could be asked and the answer is not stale.",
+          "name": "installed",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where the installed version stands.",
+          "name": "availability",
+          "refs": [
+            "ToolchainAvailability"
+          ],
+          "required": true,
+          "type": "ToolchainAvailability"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One thing wrong with, or worth knowing about, the topology.",
       "is_enum": false,
       "name": "TopologyDiagnostic",
@@ -11239,6 +13532,131 @@
       "used_by": [],
       "used_by_schemas": [
         "RepositoryTopology"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The whole traceability answer: every issue git can say something about, and every commit\nof a stretch of the trunk with the contract it served or the fact that it has none.",
+      "is_enum": false,
+      "name": "TraceReport",
+      "properties": [
+        {
+          "description": "The trunk every branch and commit was measured against.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many trunk commits were attributed.",
+          "name": "examined",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The issues that at least one branch names, in id order.",
+          "name": "issues",
+          "refs": [
+            "IssueTrace"
+          ],
+          "required": true,
+          "type": "array of IssueTrace"
+        },
+        {
+          "description": "The issue ids the project model declares that no ref names. Not a fault: an issue\nnobody has started has no branch yet.",
+          "name": "without_branch",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The examined trunk commits, newest first.",
+          "name": "commits",
+          "refs": [
+            "CommitAttribution"
+          ],
+          "required": true,
+          "type": "array of CommitAttribution"
+        },
+        {
+          "description": "The counts, so a caller need not add them up.",
+          "name": "tallies",
+          "refs": [
+            "TraceTallies"
+          ],
+          "required": true,
+          "type": "TraceTallies"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "trace.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The counts of one report.",
+      "is_enum": false,
+      "name": "TraceTallies",
+      "properties": [
+        {
+          "description": "Issue ids the project model declares.",
+          "name": "issues_declared",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, the ones at least one ref names.",
+          "name": "issues_with_branch",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Branches naming an issue.",
+          "name": "branches",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct commits those branches claim.",
+          "name": "branch_commits",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Examined trunk commits with exactly one issue.",
+          "name": "attributed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Examined trunk commits no branch naming an issue contains.",
+          "name": "unattributed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Examined trunk commits more than one issue claims.",
+          "name": "ambiguous",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TraceReport"
       ],
       "values": [],
       "variants": []
@@ -11469,6 +13887,53 @@
       "variants": []
     },
     {
+      "description": "What version control says about the checkout, or why it could not be asked.",
+      "is_enum": false,
+      "name": "VcsState",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "`git` answered.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"git\""
+            }
+          ],
+          "type": "GitWorkingTree"
+        },
+        {
+          "description": "`git` could not be asked, or this is not a work tree.",
+          "properties": [
+            {
+              "description": "What went wrong.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"unavailable\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "In or out.",
       "is_enum": true,
       "name": "Verdict",
@@ -11514,6 +13979,196 @@
           "value": "external_dependency"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The workflows a person can run here, as the workflow runner itself describes them.",
+      "is_enum": false,
+      "name": "WorkflowCatalogue",
+      "properties": [
+        {
+          "description": "Where these came from.",
+          "name": "state",
+          "refs": [
+            "TierState"
+          ],
+          "required": true,
+          "type": "TierState"
+        },
+        {
+          "description": "The command that produced them, when one did.",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every public workflow, sorted by name.",
+          "name": "workflows",
+          "refs": [
+            "WorkflowDescriptor"
+          ],
+          "required": false,
+          "type": "array of WorkflowDescriptor"
+        },
+        {
+          "description": "The entry point of each group, in the order the groups are declared: what a person\nnew to the repository runs first. Derived, never listed anywhere.",
+          "name": "entrypoints",
+          "refs": [
+            "WorkflowEntrypoint"
+          ],
+          "required": false,
+          "type": "array of WorkflowEntrypoint"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One workflow: a recipe of the repository's `justfile`, as `just` describes it.",
+      "is_enum": false,
+      "name": "WorkflowDescriptor",
+      "properties": [
+        {
+          "description": "The name a person types after `just`.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The module path, for a recipe in an imported module; empty at the root.",
+          "name": "namespace",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The recipe's doc comment, when it has one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The `[group(...)]` it belongs to, when it declares one.",
+          "name": "group",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its parameters, in declaration order.",
+          "name": "parameters",
+          "refs": [
+            "WorkflowParameter"
+          ],
+          "required": false,
+          "type": "array of WorkflowParameter"
+        },
+        {
+          "description": "The recipes it runs first, in order.",
+          "name": "dependencies",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether it asks before it runs (`[confirm]`).",
+          "name": "confirm",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WorkflowCatalogue"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The entry point of one group of workflows: what the group is, and the one workflow that\nstands for it.",
+      "is_enum": false,
+      "name": "WorkflowEntrypoint",
+      "properties": [
+        {
+          "description": "The group, as the justfile declares it.",
+          "name": "group",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The workflow that stands for the group.",
+          "name": "workflow",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command a person types.",
+          "name": "command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The workflow's description, when it has one.",
+          "name": "description",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WorkflowCatalogue"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One parameter of a workflow.",
+      "is_enum": false,
+      "name": "WorkflowParameter",
+      "properties": [
+        {
+          "description": "The name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it may be repeated (`*args`, `+args`).",
+          "name": "variadic",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether it must be given.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WorkflowDescriptor"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -12066,6 +14721,213 @@
           "result_schema": "Capability",
           "stability": "behaviorally_verified",
           "summary": "Describe one capability"
+        }
+      ]
+    },
+    {
+      "description": "Every command this repository offers, from whichever program offers it: the Rust executable, the shell tool that carries the task lifecycle, and the workflows the repository declares for a person to run. Composed from the three declarations that already exist — the clap tree, the shipped command registry and the workflow runner's own dump — never from a list. Each command carries what running it changes, what it needs, where its argument values come from, and every surface that carries it, with the reason when one does not.",
+      "name": "commands",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/command?id=executable.worktree.status\"",
+          "description": "One command by its canonical identity: its arguments with the source of each one's values, what running it changes, what it needs, where it came from, and every surface that carries it — with the reason a machine surface withholds it when one does.",
+          "id": "commands.get",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_command",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The identity, `executable.worktree.status`.",
+              "examples": [
+                {
+                  "case": "worktree-status",
+                  "value": "\"executable.worktree.status\""
+                }
+              ],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/command",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::commands",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "One command in full: the result.",
+              "schema": "CommandNode",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CommandNode",
+          "stability": "implemented",
+          "summary": "One command in full"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commands?origin=executable&effect=read_only\"",
+          "description": "The commands this repository offers, filtered by the program that runs them, by what running them changes, or by text. A summary rather than the whole graph: enough to choose a command, and never so much that a client has to read every argument of every command to find one.",
+          "id": "commands.list",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_commands",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only the commands of one program: `executable`, `tool` or `workflow`.",
+              "examples": [
+                {
+                  "case": "one-program",
+                  "value": "\"executable\""
+                }
+              ],
+              "name": "origin",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only the commands whose effect is at most this one: `read_only`,\n`local_mutation`, `repository_mutation`, `network_mutation`, `destructive`.",
+              "examples": [
+                {
+                  "case": "read-only",
+                  "value": "\"read_only\""
+                }
+              ],
+              "name": "effect",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only the commands matching this text in their invocation, summary, tags or identity.",
+              "examples": [],
+              "name": "search",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/commands",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::commands",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Every command, one line each: the result.",
+              "schema": "CommandIndex",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CommandIndex",
+          "stability": "implemented",
+          "summary": "Every command, one line each"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/commands/graph\"",
+          "description": "The graph as one document, with its fingerprint and every diagnostic its build found: a duplicate identity, a recipe name two commands would take, an annotation that names a command which no longer exists. Deterministic — two builds over one tree produce the same document — so a client may cache against the fingerprint.",
+          "id": "commands.graph",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_command_graph",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/commands/graph",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::commands",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The whole command graph: the result.",
+              "schema": "CommandGraphReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CommandGraphReport",
+          "stability": "implemented",
+          "summary": "The whole command graph"
         }
       ]
     },
@@ -12694,6 +15556,145 @@
           "result_schema": "InstallabilityReport",
           "stability": "behaviorally_verified",
           "summary": "Whether the published installation works"
+        }
+      ]
+    },
+    {
+      "description": "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value.",
+      "name": "environment",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4, ttl_seconds=3",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/environment?probe_services=false\"",
+          "description": "One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services with the address a running server published. Every value carries where it came from.",
+          "id": "environment.status",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "environment",
+            "uri": "majordomus://environment"
+          },
+          "mcp_tool": "majordomus_environment",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Contact the local address a running server published, to say whether it answers.\nOff by default: a served request should not open a socket to another server on\nbehalf of its caller, and the caller usually is that server.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "false"
+                }
+              ],
+              "name": "probe_services",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/environment",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::environment",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The repository environment: the result.",
+              "schema": "RepositoryEnvironment",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "RepositoryEnvironment",
+          "stability": "behaviorally_verified",
+          "summary": "The repository environment"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/environment/explain?field=project.version\"",
+          "description": "The provenance of the snapshot: for each field, what decided it — a compile-time constant, a file, a command, or the cache — which resolver read it, and how far it can be trusted. Narrow it to one field, or to a prefix, by name.",
+          "id": "environment.explain",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_environment_explain",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The field in dotted form (`services.url`, `capabilities.objects`); every field when\nabsent.",
+              "examples": [
+                {
+                  "case": "one-field",
+                  "value": "\"project.version\""
+                }
+              ],
+              "name": "field",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/environment/explain",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::environment",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Where an environment value came from: the result.",
+              "schema": "EnvironmentProvenance",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EnvironmentProvenance",
+          "stability": "behaviorally_verified",
+          "summary": "Where an environment value came from"
         }
       ]
     },
@@ -14484,6 +17485,210 @@
           "result_schema": "Classification",
           "stability": "behaviorally_verified",
           "summary": "Judge a path against the scope"
+        }
+      ]
+    },
+    {
+      "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name.",
+      "name": "trace",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/trace?limit=10\"",
+          "description": "Every issue at least one branch names with its branches and commits, every declared issue no branch names, and the newest stretch of the trunk with each commit attributed to the issue whose branches hold it or reported as unattributed. The tallies count both sides, so the proportion of the trunk that no execution contract accounts for is a number rather than an impression. Read from git on every call: the history changes outside this process.",
+          "id": "trace.report",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "traceability",
+            "uri": "majordomus://traceability"
+          },
+          "mcp_tool": "majordomus_traceability",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "How many trunk commits to attribute, newest first. Default: 50. Anything above 2000\nis read as 2000 — a traceability report is a reading, not a history export.",
+              "examples": [
+                {
+                  "case": "ten",
+                  "value": "10"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint)"
+            }
+          ],
+          "path": "/api/v1/trace",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::trace",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The whole work graph above the branch: the result.",
+              "schema": "TraceReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "TraceReport",
+          "stability": "behaviorally_verified",
+          "summary": "The whole work graph above the branch"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/trace/commit?commit=HEAD\"",
+          "description": "One commit with the issue and milestone it served, or the fact that none can be found. Attributed when exactly one issue's branches hold it, ambiguous when branches naming two issues do, and unattributed when no branch naming an issue holds it at all — which is either work committed without an execution contract or a branch deleted after its merge, and the answer says so rather than guessing between them.",
+          "id": "trace.commit",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_trace_commit",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Anything git resolves to a commit: a full or abbreviated object name, a ref, `HEAD`,\n`master~3`.",
+              "examples": [
+                {
+                  "case": "head",
+                  "value": "\"HEAD\""
+                }
+              ],
+              "name": "commit",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/trace/commit",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::trace",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What contract this commit served: the result.",
+              "schema": "CommitAttribution",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CommitAttribution",
+          "stability": "behaviorally_verified",
+          "summary": "What contract this commit served"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/trace/issue?issue=I0001\"",
+          "description": "One issue with the branches that name it — local, and remote-tracking where only the remote still has the branch — and, for each, the commits it holds that the trunk did not: measured against the trunk while the branch is open, and against the first parent of the merge commit that brought it in once it is merged. A branch that reached the trunk without a merge commit of its own says so and claims nothing, because its commits cannot be told from the trunk's. The milestone comes from the canonical issue record, which is the one edge here that git does not hold, and `declared` says whether the project model has this id at all — a repository with no plan still gets the branches, and a typo still cannot read as work nobody did.",
+          "id": "trace.issue",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_trace_issue",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The issue id, as the project model spells it (`I1305`). An id the model does not\ndeclare is answered with `declared: false` rather than refused, and rather than\nanswered with a bare empty trace: a typo that read as \"nothing realised this issue\"\nis the one answer this capability must never give.",
+              "examples": [
+                {
+                  "case": "first-issue",
+                  "value": "\"I0001\""
+                }
+              ],
+              "name": "issue",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/trace/issue",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::trace",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What realised this issue: the result.",
+              "schema": "IssueTrace",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IssueTrace",
+          "stability": "behaviorally_verified",
+          "summary": "What realised this issue"
         }
       ]
     },

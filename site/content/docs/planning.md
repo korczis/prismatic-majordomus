@@ -130,6 +130,71 @@ the issue's own file, beside the contract it satisfies, with the commit it was r
 What this does not do: rerun the command. The tool records what a worker says a command
 produced. The commit hash stored beside it is what makes a false record checkable later.
 
+## Traceability: what realised an issue, and what an issue realised
+
+The model reaches as far as a branch on its own: a branch path component equal to an issue id
+(`feature/I1305-traceability` → `I1305`) is the one edge the topology already reads and the
+pre-commit guard already enforces. Everything above it — the commits, the pull requests — is
+**derived on every read and stored nowhere**. No canonical record under
+`.ai/repo/project/` names a branch, a commit, a pull request or a check run, and none may:
+git and GitHub already hold those facts, and a record repeating one is a second truth that
+starts rotting the moment history is rewritten.
+
+Two systems hold the two halves, and the boundary between them is the same boundary
+`scripts/github-sync` respects — the executable, `bin/`, `lib/`, `share/` and `test/` make no
+network call, and `test/cases/08_no_forbidden_constructs.sh` proves it:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| half | source | where it lives |
+|---|---|---|
+| branches and commits | `git for-each-ref`, `git log` | the `trace` capability module of the Rust executable |
+| pull requests | the GitHub API, through `gh` | `scripts/traceability` |
+
+</div>
+
+
+```text
+issue ──names──▶ branch ──contains──▶ commit          derived from git
+  ▲                 ▲
+  │                 └── head branch of ─── pull request   derived from GitHub
+  └── milestone, the one edge git does not hold: the canonical issue record declares it
+```
+
+A branch's commits are the commits it holds that the trunk did not: measured against the
+trunk while the branch is open, and against the first parent of the merge commit that brought
+it in once it is merged. Read backwards, a commit belongs to the issue whose branches hold it.
+
+Three answers are states rather than failures, and each is reported by name rather than
+silently dropped:
+
+- **absorbed** — the branch reached the trunk with no merge commit of its own (fast-forwarded,
+  or rebased onto it). Its commits cannot be told from the trunk's, so none are claimed and
+  the trace says it is incomplete.
+- **unattributed** — no branch naming an issue holds the commit, and no pull request's head
+  branch names one. That is either work committed with no execution contract or a branch
+  deleted after its merge, and the answer says so rather than choosing between them. Work
+  with no contract is the thing a traceability report exists to make visible; omitting it
+  would defeat the report.
+- **ambiguous** — branches naming two different issues hold the same commit. The branch-name
+  edge cannot decide, so it does not.
+
+```text
+scripts/traceability                 every issue, and the trunk commits nothing accounts for
+scripts/traceability --issue I1305   its branches, its commits and its pull requests
+scripts/traceability --commit <rev>  the issue and milestone it served, or unattributed
+scripts/traceability --pull 42       the same, from the pull request's side
+scripts/traceability --no-github     the git half alone: no token, no network
+scripts/traceability --strict        exit 10 when something has no contract; the shape of a gate
+```
+
+The git half is `majordomus_trace_issue`, `majordomus_trace_commit` and
+`majordomus_traceability` on MCP and `/api/v1/trace`, `/api/v1/trace/issue`,
+`/api/v1/trace/commit` on HTTP; the script is a client of them rather than a second
+implementation. `MJ_GH_FIXTURE_PULLS` reads the pull requests from a file in the shape the
+live read produces, so the join is provable with no network and no token — the same seam
+`scripts/github-sync` uses, and what `test/cases/98_traceability.sh` exercises.
+
 ## Projections
 
 The canonical files are the only source. Everything else is generated from them by one

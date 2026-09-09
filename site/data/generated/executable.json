@@ -69,6 +69,57 @@
       "tool": "majordomus_projections"
     },
     {
+      "api_anchor": "/docs/api/#op-commands-get",
+      "claims": [],
+      "cli": null,
+      "id": "commands.get",
+      "kind": "query",
+      "module": "commands",
+      "module_route": "/registry/modules/commands/",
+      "resource": null,
+      "route": "/registry/capabilities/commands-get/",
+      "slug": "commands-get",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "tests": [],
+      "title": "One command in full",
+      "tool": "majordomus_command"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commands-graph",
+      "claims": [],
+      "cli": null,
+      "id": "commands.graph",
+      "kind": "query",
+      "module": "commands",
+      "module_route": "/registry/modules/commands/",
+      "resource": null,
+      "route": "/registry/capabilities/commands-graph/",
+      "slug": "commands-graph",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "tests": [],
+      "title": "The whole command graph",
+      "tool": "majordomus_command_graph"
+    },
+    {
+      "api_anchor": "/docs/api/#op-commands-list",
+      "claims": [],
+      "cli": null,
+      "id": "commands.list",
+      "kind": "query",
+      "module": "commands",
+      "module_route": "/registry/modules/commands/",
+      "resource": null,
+      "route": "/registry/capabilities/commands-list/",
+      "slug": "commands-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "tests": [],
+      "title": "Every command, one line each",
+      "tool": "majordomus_commands"
+    },
+    {
       "api_anchor": "/docs/api/#op-continuity-state",
       "claims": [],
       "cli": null,
@@ -237,6 +288,40 @@
       "tests": [],
       "title": "Whether the published installation works",
       "tool": "majordomus_install_status"
+    },
+    {
+      "api_anchor": "/docs/api/#op-environment-explain",
+      "claims": [],
+      "cli": null,
+      "id": "environment.explain",
+      "kind": "query",
+      "module": "environment",
+      "module_route": "/registry/modules/environment/",
+      "resource": null,
+      "route": "/registry/capabilities/environment-explain/",
+      "slug": "environment-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "tests": [],
+      "title": "Where an environment value came from",
+      "tool": "majordomus_environment_explain"
+    },
+    {
+      "api_anchor": "/docs/api/#op-environment-status",
+      "claims": [],
+      "cli": null,
+      "id": "environment.status",
+      "kind": "query",
+      "module": "environment",
+      "module_route": "/registry/modules/environment/",
+      "resource": "majordomus://environment",
+      "route": "/registry/capabilities/environment-status/",
+      "slug": "environment-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "tests": [],
+      "title": "The repository environment",
+      "tool": "majordomus_environment"
     },
     {
       "api_anchor": "/docs/api/#op-graph-get",
@@ -728,6 +813,57 @@
       "tool": "majordomus_scope_classify"
     },
     {
+      "api_anchor": "/docs/api/#op-trace-commit",
+      "claims": [],
+      "cli": null,
+      "id": "trace.commit",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": null,
+      "route": "/registry/capabilities/trace-commit/",
+      "slug": "trace-commit",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "What contract this commit served",
+      "tool": "majordomus_trace_commit"
+    },
+    {
+      "api_anchor": "/docs/api/#op-trace-issue",
+      "claims": [],
+      "cli": null,
+      "id": "trace.issue",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": null,
+      "route": "/registry/capabilities/trace-issue/",
+      "slug": "trace-issue",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "What realised this issue",
+      "tool": "majordomus_trace_issue"
+    },
+    {
+      "api_anchor": "/docs/api/#op-trace-report",
+      "claims": [],
+      "cli": null,
+      "id": "trace.report",
+      "kind": "query",
+      "module": "trace",
+      "module_route": "/registry/modules/trace/",
+      "resource": "majordomus://traceability",
+      "route": "/registry/capabilities/trace-report/",
+      "slug": "trace-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "tests": [],
+      "title": "The whole work graph above the branch",
+      "tool": "majordomus_traceability"
+    },
+    {
       "api_anchor": "/docs/api/#op-web-surfaces",
       "claims": [],
       "cli": null,
@@ -1166,9 +1302,9 @@
     ]
   },
   "counts": {
-    "capabilities": 52,
+    "capabilities": 60,
     "claims": 35,
-    "modules": 17
+    "modules": 20
   },
   "generator": "majordomus-cli 0.3.1",
   "modules": [
@@ -1213,6 +1349,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/capabilities.rs",
       "title": "Capabilities"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "commands.get",
+          "route": "/registry/capabilities/commands-get/",
+          "slug": "commands-get"
+        },
+        {
+          "id": "commands.graph",
+          "route": "/registry/capabilities/commands-graph/",
+          "slug": "commands-graph"
+        },
+        {
+          "id": "commands.list",
+          "route": "/registry/capabilities/commands-list/",
+          "slug": "commands-list"
+        }
+      ],
+      "claims": [],
+      "id": "commands",
+      "route": "/registry/modules/commands/",
+      "slug": "commands",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "title": "Command graph"
     },
     {
       "capabilities": [
@@ -1307,6 +1469,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "title": "Distribution"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "environment.explain",
+          "route": "/registry/capabilities/environment-explain/",
+          "slug": "environment-explain"
+        },
+        {
+          "id": "environment.status",
+          "route": "/registry/capabilities/environment-status/",
+          "slug": "environment-status"
+        }
+      ],
+      "claims": [],
+      "id": "environment",
+      "route": "/registry/modules/environment/",
+      "slug": "environment",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "title": "Repository environment"
     },
     {
       "capabilities": [
@@ -1538,6 +1721,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/repository.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/repository.rs",
       "title": "Repository"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "trace.commit",
+          "route": "/registry/capabilities/trace-commit/",
+          "slug": "trace-commit"
+        },
+        {
+          "id": "trace.issue",
+          "route": "/registry/capabilities/trace-issue/",
+          "slug": "trace-issue"
+        },
+        {
+          "id": "trace.report",
+          "route": "/registry/capabilities/trace-report/",
+          "slug": "trace-report"
+        }
+      ],
+      "claims": [],
+      "id": "trace",
+      "route": "/registry/modules/trace/",
+      "slug": "trace",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/trace.rs",
+      "title": "Traceability"
     },
     {
       "capabilities": [

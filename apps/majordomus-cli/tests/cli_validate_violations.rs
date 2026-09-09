@@ -21,6 +21,7 @@ fn ok_command(name: &str) -> CommandDoc {
         long_about: Some("does a thing, at length".to_string()),
         args: Vec::new(),
         examples: vec![ok_example(name)],
+        aliases: Vec::new(),
         subcommands: Vec::new(),
     }
 }
@@ -64,6 +65,7 @@ fn root(children: Vec<CommandDoc>) -> CommandDoc {
         long_about: Some("the tool, at length".to_string()),
         args: Vec::new(),
         examples: Vec::new(),
+        aliases: Vec::new(),
         subcommands: children,
     }
 }
