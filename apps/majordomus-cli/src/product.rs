@@ -869,7 +869,12 @@ impl ProductModel {
     }
 
     /// The area a capability module serves, or `None` for a module no feature with an area
-    /// names. Derived by [`Self::derive_module_areas`]; the Cockpit's sidebar groups by it.
+    /// names.
+    ///
+    /// Derived when the model is built, from the features that name the module, resolved by
+    /// the areas' own weight; the Cockpit's sidebar groups by it. The derivation is private
+    /// and this text does not link to it: rustdoc refuses a public link to a private item,
+    /// and the public fact is the answer rather than the route to it.
     pub fn module_area(&self, module: &str) -> Option<&str> {
         self.module_areas.get(module).map(String::as_str)
     }

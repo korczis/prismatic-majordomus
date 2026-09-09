@@ -13,6 +13,12 @@
 #   SITE_PROBE_TIMEOUT=N          seconds a browser process may take for one route before it is
 #                                 killed and the route reported as unanswered (default 90)
 #
+# A finding names what caused it. An absolutely positioned element is clipped by its
+# offsetParent chain, not by its parent chain — a .sr-only span inside a scrolling table is
+# laid out against the page, escapes the scroller, and pushes the document sideways while
+# looking, to a parent walk, like something the scroller clips. Ten such findings sat unread
+# as "(none)" until the chain was walked the way the browser does.
+#
 # One browser process measures one route: the three widths are three iframes of that route side
 # by side in one page, each measured by the same script (viewport against scroll width, the
 # elements and text runs past the right edge, the diagrams rendered against the diagrams
@@ -58,7 +64,7 @@ if [ "${1:-}" = --route ]; then
 <!doctype html><title>probe</title><style>body{margin:0}#row{display:flex;align-items:flex-start}iframe{height:900px;border:0;flex:none}</style>
 <div id=row><iframe id=f320 src="$PREFIX$r" style="width:320px"></iframe><iframe id=f390 src="$PREFIX$r" style="width:390px"></iframe><iframe id=f1280 src="$PREFIX$r" style="width:1280px"></iframe></div>
 <script>const W=[320,390,1280];let loaded=0;
-function measure(f){const d=f.contentDocument;const vw=d.documentElement.clientWidth,sw=d.documentElement.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const nm=e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.');const clipped=e=>{for(let p=e;p;p=p.parentElement){const o=getComputedStyle(p);if(o.overflowX==='auto'||o.overflowX==='scroll'||o.overflowX==='hidden')return true}return false};const x=[...d.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>vw+1&&!clipped(e.parentElement||e)).slice(0,2).map(nm);const tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),rg=d.createRange(),tx=[];let nd;while((nd=tw.nextNode())){if(!nd.nodeValue.trim()||clipped(nd.parentElement))continue;rg.selectNodeContents(nd);if(rg.getBoundingClientRect().right>vw+1)tx.push('text \\''+nd.nodeValue.trim().slice(0,22)+'\\' in '+nm(nd.parentElement))}return 'vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none')}
+function measure(f){const d=f.contentDocument;const vw=d.documentElement.clientWidth,sw=d.documentElement.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const nm=e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.');const cb=e=>{const s=getComputedStyle(e);return (s.position==='absolute'||s.position==='fixed')?e.offsetParent:e.parentElement};const clipped=e=>{for(let p=cb(e);p;p=cb(p)){const o=getComputedStyle(p).overflowX;if(o==='auto'||o==='scroll'||o==='hidden')return true}return false};const x=[...d.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>vw+1&&!clipped(e.parentElement||e)).slice(0,2).map(nm);const tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),rg=d.createRange(),tx=[];let nd;while((nd=tw.nextNode())){if(!nd.nodeValue.trim()||clipped(nd.parentElement))continue;rg.selectNodeContents(nd);if(rg.getBoundingClientRect().right>vw+1)tx.push('text \\''+nd.nodeValue.trim().slice(0,22)+'\\' in '+nm(nd.parentElement))}return 'vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none')}
 W.forEach(w=>document.getElementById('f'+w).addEventListener('load',()=>{loaded++;if(loaded===W.length)setTimeout(()=>{document.title=W.map(w=>'w'+w+' '+measure(document.getElementById('f'+w))).join(' ;; ')},2500)}));</script>
 HTML
   t="$(dump_title "http://127.0.0.1:$PORT/p$n.html" 2100)"
