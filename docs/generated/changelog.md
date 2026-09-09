@@ -21,6 +21,7 @@ Current version: **0.4.0**
 
 ### Added
 
+- **obligations**: what a task owes, and whether its evidence still describes this tree, over every surface (`dc14dd0d3`)
 - **rules**: an empty result and a failed command must not look alike (`824223cb5`)
 - **ci**: three failures of one session, turned into checks (`1e96e91b7`)
 - **plan**: one issue walks the whole chain and back, and a remote close still does not complete it (`67d6298c2`)
@@ -162,6 +163,7 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
+- **derive**: the projections follow the master merge (`789e95ab8`)
 - **derive**: the projections follow the merge of #142 (`c1a3e7930`)
 - **derive**: the projections follow the master merge (`08348b0c1`)
 - **derive**: the projections follow the master merge (`c4b6d0715`)
@@ -234,6 +236,7 @@ Current version: **0.4.0**
 
 ### Other
 
+- Merge origin/master into feature/github-work-graph (`6b5c2eb45`)
 - Merge feature/github-work-graph into int/everything, with I1305 restored to its own milestone (`d52f43334`)
 - **feature/graph-model**: uncommitted work found in the worktree at the topology migration, committed as it was (`034f334bf`)
 - **feature/deployment-core**: uncommitted work found in the worktree at the topology migration, committed as it was (`6579f1978`)

@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 71 | 68 | 0 | 3 |
-| http | 71 | 68 | 0 | 3 |
-| mcp | 69 | 66 | 0 | 3 |
+| direct | 73 | 70 | 0 | 3 |
+| http | 73 | 70 | 0 | 3 |
+| mcp | 71 | 68 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 224 | 215 | 0 | 9 |
+| total | 230 | 221 | 0 | 9 |
 
 ## Capabilities
 
@@ -54,6 +54,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
 | `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
+| `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `obligations.vocabulary` | obligations | query | process, 2 entries | covered | covered | covered | `default` |
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |
