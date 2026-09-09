@@ -259,3 +259,5 @@ mj_report_overlap_from_current() {
 . "$MJ_LIB_DIR/commands.sh"
 # shellcheck source=usecase.sh
 . "$MJ_LIB_DIR/usecase.sh"
+# shellcheck source=evidence.sh
+. "$MJ_LIB_DIR/evidence.sh"

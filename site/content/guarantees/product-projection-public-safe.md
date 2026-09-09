@@ -1,7 +1,7 @@
 +++
 title = "The dataset the website is rendered from carries only fields an allow-list names, so a feature's prose, a machine path or a field nobody allowed cannot reach a published page"
 description = "site/data/registry/product.json is not the product model serialised. It is a field-by-field"
-weight = 158
+weight = 160
 [extra]
 claim_id = "product-projection-public-safe"
 status = "guaranteed"

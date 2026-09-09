@@ -161,7 +161,51 @@ fn worker(server: &Server, router: &Router, stopping: &AtomicBool) {
     }
 }
 
-fn answer(router: &Router, mut request: tiny_http::Request) {
+fn answer(router: &Router, request: tiny_http::Request) {
+    if let Some(request) = upgrade(router, request) {
+        answer_http(router, request);
+    }
+}
+
+/// Hand the socket to the live channel when the request asks for it, on a thread of its
+/// own so the worker goes back to answering requests.
+///
+/// Returns the request when it was not an upgrade, and nothing when the socket has been
+/// given away. This is the one thing the router cannot do for itself: `tiny_http` yields
+/// the stream only by consuming the request.
+fn upgrade(router: &Router, request: tiny_http::Request) -> Option<tiny_http::Request> {
+    let headers: Vec<(String, String)> = request
+        .headers()
+        .iter()
+        .map(|h| (h.field.as_str().to_string(), h.value.as_str().to_string()))
+        .collect();
+    let probe =
+        super::Request::parse_target(&request.method().to_string(), request.url(), Vec::new())
+            .with_headers(headers);
+    let accepted = match router.websocket(&probe) {
+        None => return Some(request),
+        Some(Ok(accepted)) => accepted,
+        Some(Err(response)) => {
+            respond(request, response, false);
+            return None;
+        }
+    };
+    let key = accepted.accept.clone();
+    let response = HttpResponse::empty(101).with_header(
+        Header::from_bytes("Sec-WebSocket-Accept", key.as_bytes())
+            .expect("the accept value is header-safe"),
+    );
+    let socket = request.upgrade("websocket", response);
+    let spawned = std::thread::Builder::new()
+        .name("events".into())
+        .spawn(move || accepted.serve(Box::new(socket)));
+    if let Err(e) = spawned {
+        tracing::warn!("a live channel could not be started: {e}");
+    }
+    None
+}
+
+fn answer_http(router: &Router, mut request: tiny_http::Request) {
     let method = request.method().to_string();
     let head = method == "HEAD";
     let method = if head { "GET".to_string() } else { method };
@@ -190,6 +234,11 @@ fn answer(router: &Router, mut request: tiny_http::Request) {
         router.handle(&super::Request::parse_target(&method, &target, body).with_headers(headers))
     };
     tracing::debug!(method = %method, target = %target, status = response.status, "response");
+    respond(request, response, head);
+}
+
+/// Write one response and let the client go.
+fn respond(request: tiny_http::Request, response: super::router::Response, head: bool) {
     // always Content-Length, never chunked: one less thing a small client must decode;
     // a HEAD gets the GET's headers and no body
     let body: Vec<u8> = if head {

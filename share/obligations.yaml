@@ -1,0 +1,101 @@
+# The obligation vocabulary: every token a task may declare in `requires`, what discharges
+# it, and which files its evidence is taken over. Shipped with the tool, beside
+# share/events.yaml and share/commands.yaml.
+#
+# A task's `scope` says where a worker may write. This file backs `requires`, which says
+# what the worker owes before the outcome `completed` is available. The two are different
+# promises and are kept apart deliberately: a change can be perfectly inside its scope and
+# still be sitting uncommitted on a laptop.
+#
+# Nothing here is a checklist a person keeps current. A token is discharged by a command
+# that already exists — git, `generate --check`, `pages current`, `pages verify`,
+# `usecase impact` — and `doctor` proves in both directions that every token names a
+# reachable check and that no check hides under no token.
+#
+# fields:
+#   discharged_by  the command that produces the evidence; a person may run it or a
+#                  wrapper may, but the evidence names it
+#   inputs         pathspecs whose content the evidence is hashed over, so that changing
+#                  any of them makes the evidence stale rather than merely old. Absent for
+#                  a token whose fact is remote (a push, a publication, a deployment):
+#                  those are bound to a commit, not to a tree
+#   remote         true when the fact cannot be established from the working tree alone
+#   summary        what a worker is being asked to have done
+version: 1
+
+obligations:
+  - id: implementation
+    title: The change exists
+    summary: The work the task promised is present in the tree.
+    discharged_by: none
+    inputs: ["*"]
+    remote: false
+    note: Held by the scope and note lines of the contract; listed so that a report can say it rather than leave a hole.
+
+  - id: tests
+    title: The cases the change obliges were run
+    summary: The scenarios and behavioural cases `usecase impact` names for the changed files were executed and passed.
+    discharged_by: usecase impact
+    inputs: ["lib/**", "bin/majordomus", "share/**", "apps/majordomus-cli/src/**", "test/cases/**"]
+    remote: false
+    note: This is the discharge for project.use-case-evidence, whose Required behaviour has named this obligation since it was written and has never had a validator.
+
+  - id: docs
+    title: The documentation a reader needs was written
+    summary: The authored documents the change affects were updated, and every reference in them resolves.
+    discharged_by: scripts/ci/reference-check
+    inputs: ["docs/**", "README.md", ".ai/repo/**/README.md"]
+    remote: false
+
+  - id: generated
+    title: The projections are current
+    summary: Every derived artifact matches its canonical source, byte for byte.
+    discharged_by: majordomus generate --check
+    inputs: ["share/**", ".ai/repo/**", "docs/CLAIMS.yaml"]
+    remote: false
+    note: Paired with `scripts/pages current`, which answers the same question for the site half against its own input hash.
+
+  - id: rules
+    title: A changed invariant is declared where invariants live
+    summary: An architectural invariant the change introduces is a rule, with a validator or a named holder.
+    discharged_by: majordomus doctrine status
+    inputs: [".ai/repo/rules/**", "share/standard/**"]
+    remote: false
+
+  - id: commit
+    title: The work is committed
+    summary: The task's changes are in the branch's history, not in the working tree.
+    discharged_by: git
+    remote: false
+
+  - id: push
+    title: The commit reached the remote
+    summary: The branch's head exists on the remote it tracks.
+    discharged_by: git
+    remote: true
+
+  - id: target
+    title: The trunk contains the work
+    summary: The repository's default branch reaches the commit.
+    discharged_by: git
+    remote: true
+    note: A feature branch that is clean and pushed is not integrated. This token is what stops a report calling it so.
+
+  - id: pages
+    title: The published site serves this commit
+    summary: The site published to GitHub Pages names the commit the task produced.
+    discharged_by: scripts/pages verify
+    remote: true
+
+  - id: deploy
+    title: The application is running the expected revision
+    summary: The environment the change targets is serving the revision the task produced.
+    discharged_by: majordomus deployment
+    remote: true
+
+  - id: verify
+    title: The deployed result was looked at
+    summary: A live check against the deployed thing succeeded after it was deployed.
+    discharged_by: scripts/pages verify
+    remote: true
+    note: Separate from `tests` on purpose. A test proves the implementation under controlled conditions; verification proves the thing in the place it was sent to.

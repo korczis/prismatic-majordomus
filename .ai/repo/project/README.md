@@ -22,6 +22,12 @@ is generated. Everything downstream is: the ready set, the Mermaid diagrams, the
 issues and milestones and the website's roadmap all come from `majordomus plan`, which
 reads these files and nothing else.
 
+The roadmap and the diagrams are regenerated with the tree. GitHub is not: it receives the
+projection when somebody runs `scripts/github-sync --apply`, deliberately. The gate that
+holds the two together is `scripts/ci/github-check`, which reads the remote and fails when
+it has stopped agreeing — because for five days it did, and nothing noticed
+(`project.github-projection-gated@1`).
+
 No status is stored. An issue records what happened to it — `started_at`, `verified_at`,
 `completed_at`, its evidence — and the engine derives BLOCKED, READY, ACTIVE, VERIFY,
 DONE or CANCELLED from those facts and from its dependencies. A status field would be a

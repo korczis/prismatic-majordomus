@@ -1,0 +1,61 @@
+id: external-workspaces
+title: An external workspace is read the way this repository reads anything else, and its content never becomes public by accident
+slug: external-workspaces
+order: 85
+priority: p2
+problem: "The operator holds work in vendor-hosted workspaces — a ChatGPT Project first, others after — and has no machine access to it. Whatever is decided there is invisible to every instrument this repository has: it cannot be searched, cited, carried into a handover, or linked to the decision it produced. The obvious repair is the wrong one twice over. Scraping a page produces a corpus with no identity, no provenance and no way to tell a change from a re-render; and building the corpus into the layer the way tracked content is built would publish, on a public website, a body of private conversation the vendor holds under an authenticated session. ADR 0025 settles the shape: the catalogue of workspaces is the repository's own statement and is tracked; the content is this checkout's state and is not."
+outcome: "A workspace is a declared object of the layer — vendor, identity, what the operator authorised, which browser profile reaches it, which capabilities it is expected to have — and rides the existing kind pipeline onto every surface with no code that special-cases it. Its content is synced by the Node tooling layer that already drives the system browser, lands under `.ai/local/workspaces/`, carries provenance and a support level on every record, and is read back through exactly one capability shaped like `continuity`: served, never published. A sync is incremental from a durable checkpoint, idempotent on replay, fails closed when an observed contract breaks, and never writes a credential anywhere."
+current_state: "Nothing exists. There is no workspace kind, no adapter, no store, no capability and no gate. The repository does drive a browser — Playwright over the system Chrome, in `scripts/lib/ui-audit.mjs` and `scripts/lib/cockpit-probe.mjs`, wired into CI and skipping cleanly where Chrome is absent — and it has no convention at all for holding a credential, only a negative one that fails the site build when a secret-shaped string reaches rendered output."
+desired_state: "`majordomus workspaces` lists what is declared and what is synced, with the age and the support level of each. A sync is one command in the tooling layer, resumable, bounded, and provable from sanitised fixtures in CI without touching a live account. Adding a second vendor means writing an adapter and a declaration, not editing every consumer. Nothing under `.ai/local/workspaces/` reaches the website, the generated documentation, or any published projection, and a gate proves it rather than a sentence promising it."
+scope:
+  - .ai/repo/adrs
+  - .ai/repo/project
+  - .ai/repo/rules/project
+  - .ai/repo/policy.yaml
+  - .ai/repo/ci/gates.yaml
+  - apps/majordomus-cli/src/capability/builtin
+  - share/kinds.yaml
+  - share/allow
+  - share/schemas
+  - scripts
+  - docs
+  - test/cases
+non_scope:
+  - Any write to the vendor — no message is sent, no file is uploaded, no conversation is renamed
+  - Any dependency added to majordomus-cli; the boundary of ADR 0025 is the point
+  - Any credential, cookie, token or authorisation header stored anywhere in the tree or the state directory
+  - Any bypass of authentication, multi-factor prompts, rate limits or anti-abuse controls
+  - Publishing synced content to the website or any public projection
+  - A second vendor adapter before the first one is proven
+acceptance_criteria:
+  - A workspace declaration is a tracked object of a declared kind, closed by an allow file, described by a schema, and reaches the object surface with no code that special-cases it
+  - Every synced record carries its upstream identity, a local identity that does not depend on a title, a content hash, the transport that produced it and a support level, all as typed fields rather than prose
+  - The store under .ai/local/workspaces/ has a declared layout, a checkpoint, a retention cap in policy and a doctor stanza that measures it
+  - A sync resumes from its checkpoint, produces the same store when replayed, and marks a record removed upstream rather than deleting it silently
+  - An observed contract that breaks fails closed and falls back to the browser transport; no partial parse is ever persisted
+  - CI proves the mapper and the sync from sanitised fixtures, with no live account and no network
+  - No credential reaches the repository, the state directory, a fixture, a log or a snapshot, and a gate greps for it
+  - A gate fails if majordomus-cli gains a dependency, and a gate fails if any published projection reaches .ai/local/workspaces/
+  - The subsystem is documented in docs/ and every rule it states is enforced by a check CI executes
+validation:
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+evidence_required:
+  - workspace_kind_declared
+  - identity_and_provenance_typed
+  - store_bounded
+  - sync_idempotent
+  - fails_closed
+  - fixtures_prove_it
+  - credentials_isolated
+  - boundary_gated
+  - rules_enforced
+risks:
+  - "The vendor's private surface is not a contract and will change without notice. Anything that treats an observed shape as canonical will break loudly and, worse, silently. The observed shape is a transport detail with a fingerprint and a compatibility state; the canonical model is this repository's."
+  - "A synced corpus is the largest body of text this repository has ever held and the only one it did not write. Every mechanism that walks files must be told about it explicitly, because none of them will notice it on their own."
+  - "The distance between reading one's own authorised workspace and automating a vendor's site is a policy, not a technicality. The declaration names what was authorised; the adapter never exceeds it."
+  - "The tooling layer is a devDependency of this checkout, not part of the released tool. A feature that only works where node_modules is installed must say so rather than appear broken."
+created_at: 2026-09-09
+updated_at: 2026-09-09

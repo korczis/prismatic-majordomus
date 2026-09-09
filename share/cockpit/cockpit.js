@@ -84,14 +84,19 @@ export function explainMissing(element, error) {
 /** Read the tokens the stylesheet defines, so a drawing uses the page's own palette. */
 export function palette() {
   const style = getComputedStyle(document.documentElement);
+  // The fallback is the page's own computed colour, never a literal. A hexadecimal here
+  // would be a sixth copy of a decision share/design/tokens.yaml owns, and a copy that
+  // only ever appears when the stylesheet failed to load is a copy nobody would notice
+  // going stale. If the tokens are missing the drawing is monochrome, which is honest.
+  const body = getComputedStyle(document.body);
   const read = (name, fallback) => (style.getPropertyValue(name) || fallback).trim();
   return {
-    background: read('--mj-bg-sunken', '#f9fafb'),
-    surface: read('--mj-bg-raised', '#ffffff'),
-    border: read('--mj-border', '#e5e7eb'),
-    text: read('--mj-text', '#111827'),
-    muted: read('--mj-text-muted', '#6b7280'),
-    accent: read('--color-accent-500', '#3b82f6'),
+    background: read('--mj-bg-sunken', body.backgroundColor),
+    surface: read('--mj-bg-raised', body.backgroundColor),
+    border: read('--mj-border', body.color),
+    text: read('--mj-text', body.color),
+    muted: read('--mj-text-muted', body.color),
+    accent: read('--color-accent-500', body.color),
     dark: document.documentElement.classList.contains('dark'),
   };
 }

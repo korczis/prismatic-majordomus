@@ -209,6 +209,7 @@ fn echo<I: serde::de::DeserializeOwned + 'static>(
             tags: vec![],
             benchmark: BenchmarkPolicy::Required,
             cache: CachePolicy::Disabled,
+            execution: majordomus_cli::capability::ExecutionPolicy::classify(kind),
         },
         handler: handler::<I, Echoed, _>(|_, _| Ok(Echoed { foo: "x".into() })),
         cases: |_| vec![],
@@ -658,7 +659,23 @@ fn the_site_dataset_carries_every_surface_and_follows_a_descriptor_mutation() {
     let paths: BTreeSet<String> = doc["paths"].as_object().unwrap().keys().cloned().collect();
     let ds_paths: BTreeSet<String> = ds.http.routes.iter().map(|r| r.path.clone()).collect();
     assert_eq!(paths, ds_paths);
-    assert!(ds.http.infrastructure.iter().any(|r| r == "/openapi.json"));
+    // the projection's own routes carry where they answer, so a published page can tell a
+    // link from a promise
+    let openapi_route = ds
+        .http
+        .infrastructure
+        .iter()
+        .find(|r| r.path == "/openapi.json")
+        .expect("the document's own route is a projection route");
+    assert!(!openapi_route.what.is_empty());
+    // the document is the one native route a publication carries; the rest need a server
+    assert!(openapi_route.linkable());
+    assert!(ds
+        .http
+        .infrastructure
+        .iter()
+        .filter(|r| r.id != "openapi")
+        .all(|r| !r.linkable()));
 
     // the registry: every builtin descriptor in full, with the file it was composed in;
     // every module's ids are descriptors of the dataset
