@@ -8,8 +8,12 @@ fixture_repo "$T" AGENTS.md docs
 mkdir -p "$T/site/data" "$T/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$T/site/data/"; cp -R "$ROOT/site/content-src" "$T/site/"; cp -R "$ROOT/test/cases" "$T/test/"
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 A="$T/site/data/generated/architecture.json"; C="$T/site/data/generated/claims-graph.json"
+# --no-scenarios throughout: this case proves the graphs are derived by breaking the sources
+# they are scanned from — it removes a module's reference to a state file to watch the edge
+# disappear, and that same edit stops the command working. Executing the behavioural
+# scenarios over a tree edited like that reports the fixture, not the derivation.
 
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 
 # the entry point reaches every command that has a module of its own
 for c in start finish doctor; do
@@ -23,14 +27,14 @@ jq -e '[.nodes[] | select(.kind=="module" and .command != null) | select(.route 
 # a new dependency between two modules becomes an edge
 [ "$(jq -r '[.edges[] | select(.source=="lib/history.sh" and .target=="lib/search.sh")] | length' "$A")" = 0 ]
 printf '. "$MJ_LIB_DIR/search.sh"\n' >> "$T/lib/history.sh"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ "$(jq -r '[.edges[] | select(.source=="lib/history.sh" and .target=="lib/search.sh" and .kind=="sources")] | length' "$A")" = 1 ] \
   || { echo "    a new module dependency did not appear in the graph"; exit 1; }
 
 # a module that stops naming a state file loses its edge to it
 [ "$(jq -r '[.edges[] | select(.source=="lib/question.sh" and .target==".ai/local/state/open-questions.md")] | length' "$A")" = 1 ]
 grep -v 'MJ_STATE_DIR/open-questions.md' "$T/lib/question.sh" > "$T/lib/question.sh.new" && mv "$T/lib/question.sh.new" "$T/lib/question.sh"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ "$(jq -r '[.edges[] | select(.source=="lib/question.sh" and .target==".ai/local/state/open-questions.md")] | length' "$A")" = 0 ] \
   || { echo "    the graph kept an edge for a reference that is no longer in the source"; exit 1; }
 
@@ -49,7 +53,7 @@ jq -e '[.nodes[] | select(.kind=="claim" and .status=="guaranteed") | .id] as $g
 
 # a claim whose status changes moves in the graph without any hand edit
 sed -i.bak 's/^    status: guaranteed$/    status: advisory/' "$T/docs/CLAIMS.yaml"; rm -f "$T/docs/CLAIMS.yaml.bak"
-expect_exit 0 "$T/scripts/generate-site-data"
+expect_exit 0 "$T/scripts/generate-site-data" --no-scenarios
 [ "$(jq '[.nodes[] | select(.kind=="claim" and .status=="guaranteed")] | length' "$C")" = 0 ] \
   || { echo "    claim status in the graph does not follow docs/CLAIMS.yaml"; exit 1; }
 

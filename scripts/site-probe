@@ -59,12 +59,18 @@ dump_title() {
 # dispatching. The verdict is the file.
 if [ "${1:-}" = --route ]; then
   n="$2"; r="$3"; WORK="$SITE_PROBE_WORK"; PREFIX="$SITE_PROBE_PREFIX"; PORT="$SITE_PROBE_PORT"
+  # `sw` below is the body's scroll width, not the document element's. Content inside its
+  # own `overflow-x:auto` box scrolls within the page — the pattern this site uses for wide
+  # tables, and the one the accessibility pass puts in the tab order — but Chromium still
+  # counts that box's unclipped content in `documentElement.scrollWidth`. That reported
+  # overflow on pages which cannot be panned sideways at all (`window.scrollX` stays 0), and
+  # named no offender, because the attribution below already discounts clipped elements.
   page="$WORK/srv/p$n.html"; out="$WORK/res/$n"; : > "$out"
   cat > "$page" <<HTML
 <!doctype html><title>probe</title><style>body{margin:0}#row{display:flex;align-items:flex-start}iframe{height:900px;border:0;flex:none}</style>
 <div id=row><iframe id=f320 src="$PREFIX$r" style="width:320px"></iframe><iframe id=f390 src="$PREFIX$r" style="width:390px"></iframe><iframe id=f1280 src="$PREFIX$r" style="width:1280px"></iframe></div>
 <script>const W=[320,390,1280];let loaded=0;
-function measure(f){const d=f.contentDocument;const vw=d.documentElement.clientWidth,sw=d.documentElement.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const nm=e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.');const cb=e=>{const s=getComputedStyle(e);return (s.position==='absolute'||s.position==='fixed')?e.offsetParent:e.parentElement};const clipped=e=>{for(let p=cb(e);p;p=cb(p)){const o=getComputedStyle(p).overflowX;if(o==='auto'||o==='scroll'||o==='hidden')return true}return false};const x=[...d.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>vw+1&&!clipped(e.parentElement||e)).slice(0,2).map(nm);const tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),rg=d.createRange(),tx=[];let nd;while((nd=tw.nextNode())){if(!nd.nodeValue.trim()||clipped(nd.parentElement))continue;rg.selectNodeContents(nd);if(rg.getBoundingClientRect().right>vw+1)tx.push('text \\''+nd.nodeValue.trim().slice(0,22)+'\\' in '+nm(nd.parentElement))}return 'vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none')}
+function measure(f){const d=f.contentDocument;const vw=d.documentElement.clientWidth,sw=d.body.scrollWidth;const pres=d.querySelectorAll('pre.mermaid').length,svg=d.querySelectorAll('pre.mermaid svg').length;const nm=e=>e.tagName.toLowerCase()+'.'+(e.className||'').toString().split(' ').slice(0,2).join('.');const cb=e=>{const s=getComputedStyle(e);return (s.position==='absolute'||s.position==='fixed')?e.offsetParent:e.parentElement};const clipped=e=>{for(let p=cb(e);p;p=cb(p)){const o=getComputedStyle(p).overflowX;if(o==='auto'||o==='scroll'||o==='hidden')return true}return false};const x=[...d.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>vw+1&&!clipped(e.parentElement||e)).slice(0,2).map(nm);const tw=d.createTreeWalker(d.body,NodeFilter.SHOW_TEXT),rg=d.createRange(),tx=[];let nd;while((nd=tw.nextNode())){if(!nd.nodeValue.trim()||clipped(nd.parentElement))continue;rg.selectNodeContents(nd);if(rg.getBoundingClientRect().right>vw+1)tx.push('text \\''+nd.nodeValue.trim().slice(0,22)+'\\' in '+nm(nd.parentElement))}return 'vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none')}
 W.forEach(w=>document.getElementById('f'+w).addEventListener('load',()=>{loaded++;if(loaded===W.length)setTimeout(()=>{document.title=W.map(w=>'w'+w+' '+measure(document.getElementById('f'+w))).join(' ;; ')},2500)}));</script>
 HTML
   t="$(dump_title "http://127.0.0.1:$PORT/p$n.html" 2100)"

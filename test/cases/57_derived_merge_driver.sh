@@ -46,10 +46,12 @@ uncovered="$(xargs git -C "$ROOT" check-attr merge -- < "$T/artifacts.txt" | gre
 attr="$(git -C "$ROOT" check-attr merge -- lib/common.sh | sed 's/.*: //')"
 [ "$attr" != derived ] || { echo "    lib/common.sh is marked merge=derived"; exit 1; }
 
-# `just derive-merge-driver` is how a clone declares it; the recipe has to name the script
-grep -q 'derive-merge-driver' "$ROOT/justfile" || {
-  echo "    the justfile has no derive-merge-driver recipe to wire the driver"; exit 1; }
-grep -q 'merge-derived' "$ROOT/justfile" || {
+# `just derive-merge-driver` is how a clone declares it; the recipe has to name the script.
+# The declaration is modular, so the whole of it is read rather than the root file alone.
+JF="$(just_declaration)"
+grep -q 'derive-merge-driver' "$JF" || {
+  echo "    no workflow declares derive-merge-driver to wire the driver"; exit 1; }
+grep -q 'merge-derived' "$JF" || {
   echo "    the derive-merge-driver recipe does not name scripts/merge-derived"; exit 1; }
 
 # ---------------------------------------------------------------- it resolves, in a real merge
