@@ -54,7 +54,7 @@ pub(crate) mod path;
 pub(crate) mod service;
 pub mod state;
 pub(crate) mod topology;
-pub mod trace;
+pub(crate) mod trace;
 
 pub use error::{Result, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
 pub use fingerprint::WorktreeFingerprint;

@@ -1,50 +1,68 @@
 id: I1301
-milestone: work-graph-github
-title: The identity of a projected record is what the record carries, not what its title says
-slug: projection-identity
+milestone: external-workspaces
+title: A workspace is a declared object of the layer; only its content is local
+slug: workspace-kind
 priority: p0
-profile: implementation
-parallel_safe: false
-objective: "Make the adapter find a remote record by an identity the record itself carries, so that a person may rename an issue on GitHub without the projection losing it or creating a second one, and make reconciliation provable without a network."
-why: "Matching on a title is the one mistake a projection may not make. `remote_issue_number()` matched an `I0001 — ` prefix in the remote title, and every other question about a remote record was answered by the same prefix scan. Rename an issue on GitHub and the adapter reports it missing; run --apply and it creates a duplicate for a canonical record that already exists. The remedy must not be to write the GitHub number into the canonical file, because the adapter's own contract is that nothing here ever writes a GitHub value back into a canonical record."
-current_state: "The adapter resolved five separate questions by scanning the remote title for a canonical prefix, and recovered the number of a freshly created issue by searching GitHub for that title again. The generated region carried the hash of the record it came from and nothing that said which record that was."
-desired_state: "The generated region carries `<!-- majordomus:record <id> -->` beside its hash, so identity travels with the record and a splice rewrites it. Resolution is by that marker; a title matches once, for an issue projected before the marker existed, and that adoption is reported as its own state rather than passing as a projection that is current. A created issue takes its number from the creation itself. The remote can be a file, so which record is which is provable offline."
+profile: deep-work
+parallel_safe: true
+objective: "Register `workspace` as a kind — allowed keys, schema, directory contract — and declare the first workspace under .ai/repo/workspaces/, so that the catalogue of what may be synced is the repository's own tracked statement while the synced content stays out of the tracked tree."
+why: "ADR 0025 established that .ai/local reaches no surface: the Rust index knows one discovery, tracked files through the git index, and excludes the local half at three points. A synced corpus therefore cannot ride the kind pipeline — but the declaration of which workspace exists, who holds it, what the operator authorised and how it is reached carries none of the private content and all of the useful metadata. Declared as a kind it is indexed, readable, listable and projectable for free, exactly as tests/external_extension.rs proves for any other kind."
+current_state: "No workspace kind, no .ai/repo/workspaces directory, no allow file and no schema exist."
+desired_state: "A workspace object states vendor, workspace identity, the human name, what the operator authorised, the browser profile reference by name only, and the capabilities the adapter is expected to negotiate. It is indexed, closed by an allow file, and carries a context README per ADR 0011."
 scope:
-  - scripts/github-sync
-  - test/cases/45_github_projection.sh
+  - .ai/repo/workspaces
+  - share/kinds.yaml
+  - share/allow/workspace.txt
+  - share/schemas
 non_scope:
-  - Writing a GitHub number into a canonical record
-  - Any change to what the projection renders
+  - Any synced content; the store is I1303
+  - Any credential, cookie or token value; the declaration names a profile, it does not hold one
+  - Any Rust that special-cases the kind
 depends_on: []
 acceptance_criteria:
-  - A record is resolved by the identity it carries, and a renamed title neither loses it nor duplicates it
-  - An issue carrying no identity marker is adopted by its title once, reported as an adoption, and given a marker by --apply
-  - A title that merely looks canonical never captures a record that carries a different identity
-  - A created issue takes its number from the creation, with no title search anywhere in the adapter
-  - Reconciliation is provable against a fixture remote with no network and no token, and a fixture is refused for --apply
+  - The object states vendor, upstream workspace identity, display name, the authorisation the operator asserts, the browser profile reference by name, and the expected capability set
+  - Keys are closed by share/allow/workspace.txt and an unknown key is refused
+  - The directory carries a context README stating what is authoritative and what is generated, per ADR 0011
+  - The object is listed and read through the existing object surface with no code that special-cases it
+  - No secret value and no credential name appears in the object or its schema
 validation:
-  - bash test/run.sh 45_github_projection
-  - scripts/github-sync --plan
-  - scripts/github-sync --check
+  - bash test/run.sh
+  - bin/majordomus doctor
+  - majordomus generate --check
 evidence_required:
-  - identity_stable
-  - offline_provable
-risk: "The 19 issues projected before the marker existed must be adopted, never re-created; the adoption path is the acceptance criterion that guards it."
+  - kind_registered
+  - keys_closed
+  - directory_contract
+  - object_indexed
+risk: "A schema written for ChatGPT becomes a ChatGPT file with a generic name. It has to state only what a second vendor would plausibly restate, and push everything else into a named vendor block."
 created_at: 2026-09-09
-updated_at: 2026-09-09T17:10:28Z
-started_at: 2026-09-09T17:10:06Z
-verified_at: 2026-09-09T17:10:21Z
-completed_at: 2026-09-09T17:10:28Z
+updated_at: 2026-09-09T18:26:36Z
+started_at: 2026-09-09T18:25:15Z
+verified_at: 2026-09-09T18:26:21Z
+completed_at: 2026-09-09T18:26:36Z
 evidence:
-  - covers: identity_stable
+  - covers: kind_registered
     type: test
-    command: "bash test/run.sh 45_github_projection"
-    result: "a record under a fully rewritten remote title is resolved by its marker and reported as body drift, not as missing; an issue with no marker is adopted by title once and reported as adopt; a canonical-looking title does not capture a record carrying a different identity"
-    commit: 209a82c30116cde8393e045e4f9fbc048ddf0076
-    recorded_at: 2026-09-09T17:10:13Z
-  - covers: offline_provable
+    command: "grep -A8 '^  workspace:' share/kinds.yaml"
+    result: "the workspace kind is declared with schema majordomus.workspace/v1 and identity [id]"
+    commit: 3d9c929a5b962817b0383c4bf2f991e1725932da
+    recorded_at: 2026-09-09T18:25:41Z
+  - covers: keys_closed
+    type: build
+    command: "majordomus generate"
+    result: "share/allow/workspace.txt generated from the schema; 23 key patterns, additionalProperties false"
+    commit: 3d9c929a5b962817b0383c4bf2f991e1725932da
+    recorded_at: 2026-09-09T18:25:49Z
+  - covers: directory_contract
+    type: artifact
+    command: "cat .ai/repo/workspaces/README.md"
+    result: "context/v1 document, tracks the schema and share/kinds.yaml, states what is authoritative and what is never here"
+    artifact: ".ai/repo/workspaces/README.md"
+    commit: 3d9c929a5b962817b0383c4bf2f991e1725932da
+    recorded_at: 2026-09-09T18:25:55Z
+  - covers: object_indexed
     type: test
-    command: "MJ_GH_FIXTURE_ISSUES=<tsv> MJ_GH_FIXTURE_MILESTONES=<tsv> scripts/github-sync --check"
-    result: "reconciliation runs against a fixture remote with no network and no token; --apply refuses a fixture with exit 15"
-    commit: 209a82c30116cde8393e045e4f9fbc048ddf0076
-    recorded_at: 2026-09-09T17:10:17Z
+    command: "bash test/run.sh 93_workspace_kind"
+    result: "1 passed; majordomus://workspace/chatgpt-majordomus is indexed and served on the deployed /registry/ page with no Rust written for it"
+    commit: 3d9c929a5b962817b0383c4bf2f991e1725932da
+    recorded_at: 2026-09-09T18:26:04Z

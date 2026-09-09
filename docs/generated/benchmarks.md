@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 63 | 63 | 0 | 0 |
-| http | 63 | 63 | 0 | 0 |
-| mcp | 61 | 61 | 0 | 0 |
+| direct | 71 | 68 | 0 | 3 |
+| http | 71 | 68 | 0 | 3 |
+| mcp | 69 | 66 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 200 | 200 | 0 | 0 |
+| total | 224 | 215 | 0 | 9 |
 
 ## Capabilities
 
@@ -38,6 +38,13 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
 | `environment.status` | environment | query | process, 4 entries, 3s | covered | covered | covered | `default` |
+| `executions.cancel` | executions | command | — | waived | waived | waived | — |
+| `executions.demonstrate` | executions | query | — | covered | covered | covered | `immediate` |
+| `executions.events` | executions | query | — | waived | waived | waived | — |
+| `executions.get` | executions | query | — | waived | waived | waived | — |
+| `executions.list` | executions | query | — | covered | covered | covered | `recent` |
+| `executions.protocol` | executions | query | — | covered | covered | covered | `default` |
+| `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |
@@ -46,6 +53,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |
 | `objects.list` | objects | query | — | covered | covered | covered | `all`, `first-kind` |
 | `objects.search` | objects | query | process, 64 entries | covered | covered | covered | `common-word`, `no-hit` |
+| `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |

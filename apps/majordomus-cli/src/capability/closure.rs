@@ -349,6 +349,9 @@ mod tests {
             id: CapabilityId::unchecked(id),
             module: ModuleId::unchecked(id.split('.').next().unwrap()),
             kind: CapabilityKind::Query,
+            // Capability grew this field while this test helper was written; it is
+            // classified from the kind everywhere else, and so it is here.
+            execution: crate::capability::ExecutionPolicy::classify(CapabilityKind::Query),
             title: "T".into(),
             description: "D".into(),
             input: CanonicalSchema::of::<()>(),

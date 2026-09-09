@@ -19,6 +19,7 @@ use crate::cockpit::Cockpit;
 use crate::web::discover::Runtime;
 use crate::web::home;
 
+use super::events;
 use super::mcp::McpEndpoint;
 use super::surfaces::{Bound, Native, Served};
 use super::{openapi, swagger};
@@ -397,6 +398,26 @@ impl Router {
         }
     }
 
+    /// Does this request open the live channel, and may it?
+    ///
+    /// The server asks before it reads a body or writes a response, because an upgrade is
+    /// the one thing a router cannot answer: it hands the socket over. `None` means the
+    /// request is not for the live channel at all and is routed normally.
+    pub fn websocket(&self, req: &Request) -> Option<Result<events::Accepted, Response>> {
+        if req.path != events::PATH {
+            return None;
+        }
+        if !super::ws::is_upgrade(req) {
+            return None;
+        }
+        // a process whose topology does not resolve serves nothing, the live channel
+        // included: the same answer every other path gets
+        if let Err(reason) = self.resolution() {
+            return Some(Err(Response::error(500, "internal", reason)));
+        }
+        Some(events::accept(self.ctx.executions.store(), req))
+    }
+
     fn openapi(&self) -> Response {
         let rendered = self.openapi.get_or_init(|| {
             let cases = CaseContext {
@@ -448,7 +469,7 @@ impl Router {
         // nothing else claims, and it answers those with a 404 that names what is served
         let single_path = matches!(
             bound,
-            Bound::Route(Native::OpenApi | Native::Swagger | Native::Mcp)
+            Bound::Route(Native::OpenApi | Native::Swagger | Native::Mcp | Native::Events)
         );
         if single_path && !exact {
             return error_response(
@@ -486,6 +507,18 @@ impl Router {
                     "internal",
                     "the MCP surface is served with no endpoint behind it",
                 ),
+            },
+            // the upgrade itself never reaches here: the server answers it before routing,
+            // because handing the socket over is something only the server can do. What
+            // reaches here is a request that did not ask to be upgraded, and the reply says
+            // what this path is and where the same events are readable over HTTP.
+            Bound::Route(Native::Events) => match events::accept(self.ctx.executions.store(), req) {
+                Ok(_) => Response::error(
+                    500,
+                    "internal",
+                    "a WebSocket upgrade reached the router; the server answers it before routing",
+                ),
+                Err(response) => response,
             },
             Bound::Route(Native::Cockpit) => match &self.cockpit {
                 Some(cockpit) => cockpit.handle(req),

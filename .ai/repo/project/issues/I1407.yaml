@@ -1,0 +1,44 @@
+id: I1407
+milestone: work-graph-github
+title: One issue travels the whole path and back, as an executable case
+slug: work-graph-end-to-end
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Prove the milestone with a case that carries one synthetic issue from outcome to accepted completion and then traverses the same chain backwards, offline, against fixtures."
+why: "Every claim in this milestone is about a chain, and a chain is only proved end to end. Testing each link separately is how a model passes its tests and still cannot answer which outcome a merged pull request served."
+current_state: "test/cases/45_github_projection.sh covers the adapter's rendering and its refusal to overwrite. Nothing covers the path from milestone through branch, commit and pull request to accepted evidence."
+desired_state: "A case builds a synthetic repository, walks the chain forwards and backwards, and fails if any link cannot be derived."
+scope:
+  - test/cases
+  - apps/majordomus-cli/tests
+  - .ai/repo/use-cases
+non_scope:
+  - A test that reaches the network by default
+depends_on:
+  - I1404
+  - I1405
+  - I1406
+acceptance_criteria:
+  - The forward path is derived: milestone, issue, branch, worktree, commits, pull request, checks, evidence, accepted
+  - The backward path is derived from a merged commit to the acceptance criteria it satisfied and the outcome it served
+  - The case runs offline against fixtures and is deterministic
+  - Completion is refused when evidence is absent even though the remote issue is closed, proved by the case
+validation:
+  - bash test/run.sh
+  - majordomus usecase coverage
+evidence_required:
+  - chain_proved_both_ways
+risk: "Low, once the links exist."
+created_at: 2026-09-09
+updated_at: 2026-09-09T22:00:58Z
+started_at: 2026-09-09T22:00:42Z
+verified_at: 2026-09-09T22:00:54Z
+completed_at: 2026-09-09T22:00:58Z
+evidence:
+  - covers: chain_proved_both_ways
+    type: test
+    command: "bash test/run.sh 99_work_graph_chain"
+    result: "one synthetic issue carried outcome to accepted completion and walked back from both the work commit and the merge commit to the issue and milestone they served; a commit with no contract reports unattributed rather than being dropped; completion is refused while required evidence is missing even though the fixture remote has the issue closed, and the projection reports that as DRIFT closed; offline, no token"
+    commit: 0df29dbcf5f4319195ae7ee8f5c4bf582e414513
+    recorded_at: 2026-09-09T22:00:51Z

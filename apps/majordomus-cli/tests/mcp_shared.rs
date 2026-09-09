@@ -275,6 +275,17 @@ fn one_server_per_repository_and_peers_see_each_other() {
         instructions.contains("majordomus_announce"),
         "{instructions}"
     );
+    // A session that has announced nothing is told so, here, on every initialize — which
+    // is also every reconnect. A re-established transport keeps the work and loses the
+    // place on the board, and this is the only moment the protocol can say it.
+    assert!(
+        instructions.contains("You have not announced anything"),
+        "a silent peer is not told it is silent: {instructions}"
+    );
+    assert!(
+        instructions.contains("again if this connection is ever re-established"),
+        "the reconnect case is not named: {instructions}"
+    );
 
     let (status, index) = get_json(&url, "/");
     assert_eq!(status, 200);

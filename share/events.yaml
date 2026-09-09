@@ -156,6 +156,14 @@ events:
     public: true
     note: Counts only; the evidence files carry each step's command, exit code, output and assertions.
 
+  - id: task.evidence
+    title: Evidence recorded against an obligation
+    summary: One obligation the task declared was discharged, by the command named, over the inputs whose hash is recorded.
+    emitted_by: evidence
+    requires: [task, covers, kind, inputs_hash]
+    public: true
+    note: The envelope's head and the recorded inputs_hash are what make this go stale. A later reader recomputes the hash over the obligation's declared inputs and labels the head against the current one; evidence that no longer describes the tree is a failure, not merely an old line.
+
   - id: adr.proposed
     title: Architecture decision proposed
     summary: A decision record was written with status proposed; accepting it is a person's act on the file.

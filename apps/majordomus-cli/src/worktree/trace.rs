@@ -699,10 +699,9 @@ pub fn attribute(commits: &[CommitRef], traces: &[IssueTrace]) -> Vec<CommitAttr
     let mut owners: BTreeMap<&str, BTreeSet<(&str, &str)>> = BTreeMap::new();
     // A commit belongs to the issue whose branch carries it — and a merge commit belongs to
     // the issue whose branch it merged, though no branch contains it. The merge commit is
-    // the one a reader is most likely to hold: it is what lands on the trunk, what a
-    // release note names, and what a person means by "this change". Leaving it
-    // unattributed would answer "which outcome did this serve?" with silence for exactly
-    // the commit the question is usually asked about.
+    // the one a reader is most likely to hold: it is what lands on the trunk and what a
+    // release note names. Leaving it unattributed answered "which outcome did this serve?"
+    // with silence for exactly the commit the question is usually asked about.
     for t in traces {
         for b in &t.branches {
             for c in &b.commits {

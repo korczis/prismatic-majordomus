@@ -299,6 +299,23 @@ commands:
     demo: prompt-render
     note: An unknown token, or a block token used inline, is an error rather than a literal left in the output.
 
+  - id: evidence
+    title: evidence
+    summary: Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.
+    category: task
+    stage: work
+    visibility: public
+    class: local-mutation
+    requires_repository: true
+    requires_installed: true
+    requires_task: active
+    json: true
+    syntax: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
+    reads: [share/obligations.yaml, .ai/local/state/current.yaml]
+    writes: [.ai/local/state/ledger.jsonl]
+    exit_codes: [0, 2, 12, 15]
+    demo: obligation-evidence
+
   - id: skills
     title: skills
     summary: The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.

@@ -1,53 +1,37 @@
 id: I1306
-milestone: work-graph-github
-title: The plan's derivations are capabilities, so every surface reads the readiness the terminal reads
-slug: plan-derivations-as-capabilities
+milestone: external-workspaces
+title: A sync resumes, repeats itself without harm, and says how fresh it is
+slug: incremental-sync
 priority: p1
-profile: implementation
+profile: deep-work
 parallel_safe: false
-objective: "Make status, ready, blocked, waves, next and roadmap answerable through the capability registry, so that MCP, HTTP, OpenAPI and the Cockpit read the derived plan rather than only the raw documents."
-why: "Issues and milestones are already served as objects: `majordomus://issue/I0001` returns the record. What is not served is everything that makes the model worth having. The derivations live in lib/plan.sh and lib/project.awk, the Rust executable opens `.ai/repo/project/issues/` only to read filenames, and an agent asking the server what to work on next cannot be told."
-current_state: "lib/plan.sh, 520 lines, computes the derived states. apps/majordomus-cli/src/worktree/state.rs line 190 is the only place the executable touches the project directory, and it reads the directory listing. There is no plan capability and therefore no plan tool, route or Cockpit page."
-desired_state: "The derivations are declared where every other capability is declared and projected by the same generator. The shell keeps its command surface by calling the executable, or the two agree by construction and a test proves they agree."
+objective: "Implement the sync: incremental from a durable checkpoint, idempotent on replay, bounded in what one run may fetch, and honest about how each change was acquired."
+why: "Polling is not a subscription. A run that cannot resume will either re-fetch a whole workspace every time or silently skip what it missed, and a store that changes when nothing upstream changed cannot be diffed by anyone."
+current_state: "Nothing exists."
+desired_state: "A run reads its checkpoint, fetches only what changed, writes records that are byte-identical when nothing changed, records the acquisition mode of every change, bounds itself by count and by wall clock, and leaves a checkpoint an interrupted run can resume from."
 scope:
-  - apps/majordomus-cli/src/capability/builtin
-  - apps/majordomus-cli/src
-  - lib/plan.sh
-  - docs/CAPABILITIES.md
+  - scripts/lib
+  - scripts
   - test/cases
 non_scope:
-  - Changing what the derivations mean
-  - A second plan implementation that may disagree with the first
-depends_on: []
+  - Any write to the vendor
+  - Watch semantics that call polling a subscription
+depends_on:
+  - I1303
+  - I1305
 acceptance_criteria:
-  - The derivations are declared once and projected to MCP, HTTP and OpenAPI with no transport registry edited by hand
-  - The executable and the shell answer identically for every record in this repository, proved by a test that compares them
-  - majordomus generate --check is clean after the declaration is added
-  - The Cockpit shows the derived plan and its drift
-completion: "Three of the four acceptance criteria are met and the fourth is not. Met: the eight derivations are declared once in apps/majordomus-cli/src/capability/builtin/plan.rs and reach MCP as tools and a majordomus://plan resource, HTTP as eight routes and the OpenAPI document through the generator alone, with no transport registry, OpenAPI file or documentation table edited by hand; generate --check is in sync; and test/cases/99_plan_capabilities.sh runs both engines over every record of this repository and over a fixture carrying a cancellation, a milestone gate, a scope overlap, an unknown dependency and a cycle, comparing status, wave, both dependency lists, milestone counts, roadmap rank and order, the active milestone, the next ready issue, the waves and every finding, byte for byte. Not met: the Cockpit shows nothing of the derived plan. apps/majordomus-cli/src/cockpit/ was held by another session for the whole of this work and editing it would have collided with a landing in progress, so the page was left undone rather than written into a file somebody else was moving. What remains is a Cockpit page over plan.model and plan.validate; the capabilities it would read exist and are projected, so the remaining work is a view and not a derivation. The plan's command line is also unchanged: every capability here declares cli: None, because the command line is declared a second time in clap in cli.rs, that file was likewise held, and a CliExposure claiming a subcommand clap does not carry is a broken promise the closure check refuses. The shell tool keeps its own plan surface, which is what the equality test holds the executable to."
+  - A second run over an unchanged workspace leaves the store byte-identical
+  - An interrupted run resumes from its checkpoint without re-fetching what it already had
+  - Every change records the acquisition mode that produced it, and a poll is never reported as a push
+  - A run is bounded by count and by wall clock and says what it did not reach
+  - Replaying a captured run over fixtures reproduces the same store
 validation:
-  - cargo test --workspace --all-features
-  - majordomus generate --check
   - bash test/run.sh
 evidence_required:
-  - derivations_projected
-  - shell_and_executable_agree
-risk: "Two implementations of one derivation is the failure this repository exists to prevent; the equality test is the acceptance criterion, not a nicety."
+  - idempotent_replay
+  - resumable
+  - acquisition_honest
+  - bounded
+risk: "Bounds that are too tight make the first sync of a large workspace impossible to finish; bounds that are too loose make a broken adapter expensive. Both are tuned against a measured first run, not chosen in advance."
 created_at: 2026-09-09
-updated_at: 2026-09-09T19:33:06Z
-started_at: 2026-09-09T19:32:48Z
-verified_at: 2026-09-09T19:33:03Z
-completed_at: 2026-09-09T19:33:06Z
-evidence:
-  - covers: derivations_projected
-    type: test
-    command: "env -u MAJORDOMUS_SHARE ./bin/majordomus-cli generate --check && bash test/run.sh 99_plan_capabilities"
-    result: "generate --check reports every projection in sync after the plan module was declared: the eight capabilities reach MCP as tools plus a majordomus://plan resource, HTTP as eight /api/v1/plan routes and the OpenAPI document, and docs/generated/modules/plan.md appeared, with no transport registry, OpenAPI file or documentation table edited by hand. The case asserts the same from outside: every plan capability carries an MCP tool and an HTTP path, plan.model carries the resource URI, and all eight routes are in docs/generated/openapi.json."
-    commit: 990bd0588a13f17a0dd0087080af3c422e3b1e37
-    recorded_at: 2026-09-09T19:32:51Z
-  - covers: shell_and_executable_agree
-    type: test
-    command: "env -u MAJORDOMUS_SHARE bash test/run.sh 99_plan_capabilities"
-    result: "ok, 1 passed. The case runs lib/project.awk and apps/majordomus-cli/src/plan.rs over every record of this repository (16 milestones, 192 issues) and over a fixture carrying a cancelled issue, a completion without its evidence, a milestone gate blocking the work underneath it, two issues of one wave sharing a path, an unknown dependency and a cycle. It compares, byte for byte: every issue's status, wave, milestone, priority, title, depends_on and blocked_by; every milestone's status, title and counts keyed by the declared vocabulary; the active milestone and the next ready issue; the roadmap's rank and order for every milestone; the whole wave layering; and every finding's level, code, subject and message in derivation order. It also proves no plan capability writes to the repository."
-    commit: 990bd0588a13f17a0dd0087080af3c422e3b1e37
-    recorded_at: 2026-09-09T19:33:02Z
+updated_at: 2026-09-09

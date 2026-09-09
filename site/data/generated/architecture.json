@@ -250,6 +250,16 @@
       "external": false
     },
     {
+      "id": "lib/evidence.sh",
+      "kind": "module",
+      "label": "evidence",
+      "command": "evidence",
+      "summary": "record that one obligation the task declared has been discharged",
+      "read_only": null,
+      "route": "/commands/evidence/",
+      "external": false
+    },
+    {
       "id": ".ai/repo/policy.yaml",
       "kind": "artifact",
       "label": "repo/policy.yaml",
@@ -842,6 +852,11 @@
       "kind": "reads"
     },
     {
+      "source": "lib/evidence.sh",
+      "target": ".ai/local/state/ledger.jsonl",
+      "kind": "reads"
+    },
+    {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/checkpoints",
       "kind": "reads"
@@ -959,6 +974,11 @@
     {
       "source": "bin/majordomus",
       "target": "lib/doctrine.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "bin/majordomus",
+      "target": "lib/evidence.sh",
       "kind": "sources"
     },
     {
@@ -1094,6 +1114,11 @@
     {
       "source": "lib/check.sh",
       "target": "lib/doctrine.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": "lib/evidence.sh",
       "kind": "sources"
     },
     {

@@ -1646,6 +1646,19 @@
       "test_case": "95_skills"
     },
     {
+      "id": "obligation-closure",
+      "claim": "A task that declares obligations reaches the outcome completed only when each one has evidence recorded against it, and evidence taken over files that have since changed, or at a commit the branch has since left, no longer discharges anything",
+      "source": "docs/CLI.md",
+      "implementation": "lib/evidence.sh",
+      "test": "test/cases/103_obligations.sh",
+      "status": "guaranteed",
+      "note": "The obligation vocabulary is share/obligations.yaml, so a token is added there and not in shell. Evidence is a task.evidence ledger line carrying the hash of the tracked files the obligation names; the validator recomputes that hash and reports both values when they differ, the way the site's own currency check already does. An obligation whose fact is remote is bound to the commit it was taken at instead, and judged with mj_git_label rather than a fifth staleness vocabulary. An outcome other than completed is never refused for owing something.",
+      "responsibility": "finish",
+      "source_route": "/docs/cli/",
+      "command": "evidence",
+      "test_case": "103_obligations"
+    },
+    {
       "id": "skill-check",
       "claim": "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed",
       "source": "docs/CLI.md",

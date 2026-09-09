@@ -5,18 +5,18 @@
     "id": "majordomus-cli",
     "version": "0.4.0"
   },
-  "fingerprint": "30450092751440555b0372a305d7120741dfcbadd2be8fb261d3c311c9cf5aef",
+  "fingerprint": "e519c04a6b7f059ab557680a0b44305297bbfa769ea03e1aa1de0460b126ffd2",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 22,
+    "modules": 23,
     "modules_covered": 16,
-    "commands": 27,
+    "commands": 28,
     "commands_covered": 27,
-    "kinds": 24,
+    "kinds": 25,
     "kinds_covered": 22
   },
   "surfaces": [
@@ -270,11 +270,11 @@
         },
         {
           "name": "command",
-          "objects": 28
+          "objects": 29
         },
         {
           "name": "claim",
-          "objects": 146
+          "objects": 147
         }
       ],
       "rule_refs": [
@@ -536,11 +536,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 198,
+        "mcp_resources": 200,
         "http_routes": 9,
         "cli_paths": 8,
         "commands": 2,
-        "objects": 194,
+        "objects": 196,
         "rules": 5,
         "enforced_rules": 0,
         "docs": 3,
@@ -710,6 +710,14 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_search",
               "route": "GET /api/v1/search"
+            },
+            {
+              "id": "objects.verify",
+              "title": "Verify the index against the working tree",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_verify_objects",
+              "route": "GET /api/v1/objects/verify"
             }
           ]
         },
@@ -1108,10 +1116,10 @@
         "declare-once"
       ],
       "counts": {
-        "capabilities": 7,
-        "mcp_tools": 7,
+        "capabilities": 8,
+        "mcp_tools": 8,
         "mcp_resources": 3,
-        "http_routes": 7,
+        "http_routes": 8,
         "cli_paths": 1,
         "commands": 0,
         "objects": 0,
@@ -2431,7 +2439,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 29
+          "objects": 33
         },
         {
           "name": "knowledge",
@@ -2439,7 +2447,7 @@
         },
         {
           "name": "document",
-          "objects": 207
+          "objects": 209
         }
       ],
       "rule_refs": [
@@ -2688,11 +2696,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 238,
+        "mcp_resources": 244,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 237,
+        "objects": 243,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -2857,7 +2865,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 101
+          "objects": 105
         }
       ],
       "rule_refs": [
@@ -3178,11 +3186,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 1,
-        "mcp_resources": 102,
+        "mcp_resources": 106,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 5,
-        "objects": 101,
+        "objects": 105,
         "rules": 5,
         "enforced_rules": 3,
         "docs": 2,
@@ -5059,11 +5067,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 16
+          "objects": 17
         },
         {
           "name": "issue",
-          "objects": 192
+          "objects": 202
         }
       ],
       "rule_refs": [
@@ -5206,11 +5214,11 @@
       "counts": {
         "capabilities": 3,
         "mcp_tools": 3,
-        "mcp_resources": 209,
+        "mcp_resources": 220,
         "http_routes": 3,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 208,
+        "objects": 219,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -5373,7 +5381,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 26
+          "objects": 27
         },
         {
           "name": "scope",
@@ -5653,11 +5661,11 @@
       "counts": {
         "capabilities": 4,
         "mcp_tools": 4,
-        "mcp_resources": 30,
+        "mcp_resources": 31,
         "http_routes": 4,
         "cli_paths": 1,
         "commands": 1,
-        "objects": 27,
+        "objects": 28,
         "rules": 6,
         "enforced_rules": 3,
         "docs": 2,
@@ -5751,7 +5759,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 40
+          "objects": 41
         },
         {
           "name": "application",
@@ -5863,11 +5871,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 55,
+        "mcp_resources": 56,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 55,
+        "objects": 56,
         "rules": 3,
         "enforced_rules": 2,
         "docs": 2,
@@ -7385,6 +7393,11 @@
         "features": []
       },
       {
+        "id": "executions",
+        "title": "Executions",
+        "features": []
+      },
+      {
         "id": "graph",
         "title": "Graphs",
         "features": [
@@ -7552,6 +7565,11 @@
         ]
       },
       {
+        "id": "evidence",
+        "title": "evidence",
+        "features": []
+      },
+      {
         "id": "finish",
         "title": "finish",
         "features": [
@@ -7690,7 +7708,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (29)",
+        "title": "adr (33)",
         "features": [
           "knowledge"
         ]
@@ -7718,21 +7736,21 @@
       },
       {
         "id": "claim",
-        "title": "claim (146)",
+        "title": "claim (147)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "command",
-        "title": "command (28)",
+        "title": "command (29)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "context",
-        "title": "context (26)",
+        "title": "context (27)",
         "features": [
           "context"
         ]
@@ -7758,7 +7776,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (192)",
+        "title": "issue (202)",
         "features": [
           "planning"
         ]
@@ -7772,7 +7790,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (16)",
+        "title": "milestone (17)",
         "features": [
           "planning"
         ]
@@ -7812,7 +7830,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (101)",
+        "title": "rule (105)",
         "features": [
           "doctrine"
         ]
@@ -7848,10 +7866,15 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (40)",
+        "title": "use-case (41)",
         "features": [
           "use-cases"
         ]
+      },
+      {
+        "id": "workspace",
+        "title": "workspace (1)",
+        "features": []
       }
     ]
   },
@@ -8579,49 +8602,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1134,
-    "builtin": 63,
-    "declarative": 1071,
-    "modules": 22,
-    "mcp_tools": 61,
-    "mcp_resources": 1093,
-    "http_routes": 63,
-    "cli_commands": 81,
-    "shell_commands": 27,
-    "kinds": 27,
-    "objects": 1071,
+    "capabilities": 1175,
+    "builtin": 71,
+    "declarative": 1104,
+    "modules": 23,
+    "mcp_tools": 69,
+    "mcp_resources": 1128,
+    "http_routes": 71,
+    "cli_commands": 88,
+    "shell_commands": 28,
+    "kinds": 28,
+    "objects": 1104,
     "by_kind": {
-      "adr": 29,
+      "adr": 33,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 146,
-      "command": 28,
-      "context": 26,
+      "claim": 147,
+      "command": 29,
+      "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 207,
+      "document": 209,
       "feature": 20,
-      "implementation": 44,
-      "issue": 192,
+      "implementation": 45,
+      "issue": 202,
       "knowledge": 1,
-      "milestone": 16,
+      "milestone": 17,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 101,
+      "rule": 105,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 124,
-      "use-case": 40
+      "test": 130,
+      "use-case": 41,
+      "workspace": 1
     },
     "providers": 6,
     "features": 19,
-    "web_surfaces": 8
+    "web_surfaces": 9
   },
   "valid": true
 }

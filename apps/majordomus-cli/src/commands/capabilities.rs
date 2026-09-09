@@ -318,8 +318,26 @@ pub fn run(args: CapabilitiesArgs) -> Result<u8> {
             let projection = crate::bench::BenchmarkProjection::from_context(ctx);
             let coverage = crate::bench::Coverage::compute(ctx, &projection);
             let total = coverage.tallies.get("total").cloned().unwrap_or_default();
-            if coverage.is_complete() {
-                w(&mut out, format!("OK   benchmarks  {} target(s) cover {} requirement(s) — every executable timed directly and on every transport it is exposed on, plus the transports' own operations", projection.targets.len(), total.required))?;
+            // a waiver is typed, reported and never counted — the rule
+            // `project.rust-benchmark-coverage` says so, and what decides the verdict is
+            // therefore whether anything is *missing*, not whether anything is waived
+            if coverage.has_no_missing() {
+                w(&mut out, format!("OK   benchmarks  {} target(s) cover {} requirement(s), {} waived — every executable timed directly and on every transport it is exposed on, plus the transports' own operations", projection.targets.len(), total.required, total.waived))?;
+                for line in coverage
+                    .lines
+                    .iter()
+                    .filter(|l| l.state == crate::bench::CoverageState::Waived)
+                {
+                    w(
+                        &mut out,
+                        format!(
+                            "     waived   {} on {} — {}",
+                            line.subject,
+                            line.transport.name(),
+                            line.reason.as_deref().unwrap_or("no reason")
+                        ),
+                    )?;
+                }
             } else {
                 failures += 1;
                 w(&mut out, format!("FAIL benchmarks  {} of {} requirement(s) missing, {} waived — a case must exist for every exposed executable  [reproduce: majordomus bench coverage]", total.missing, total.required, total.waived))?;

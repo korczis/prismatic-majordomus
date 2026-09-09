@@ -1,44 +1,36 @@
 id: I1307
-milestone: work-graph-github
-title: One issue travels the whole path and back, as an executable case
-slug: work-graph-end-to-end
+milestone: external-workspaces
+title: The ChatGPT shape is mapped from evidence and never becomes the canonical model
+slug: chatgpt-mapper
 priority: p1
-profile: implementation
-parallel_safe: false
-objective: "Prove the milestone with a case that carries one synthetic issue from outcome to accepted completion and then traverses the same chain backwards, offline, against fixtures."
-why: "Every claim in this milestone is about a chain, and a chain is only proved end to end. Testing each link separately is how a model passes its tests and still cannot answer which outcome a merged pull request served."
-current_state: "test/cases/45_github_projection.sh covers the adapter's rendering and its refusal to overwrite. Nothing covers the path from milestone through branch, commit and pull request to accepted evidence."
-desired_state: "A case builds a synthetic repository, walks the chain forwards and backwards, and fails if any link cannot be derived."
+profile: deep-work
+parallel_safe: true
+objective: "Map what a ChatGPT Project actually exposes — the project, its conversations, the message graph, content parts, attachment metadata, project instructions — onto the canonical record model, mapping only what an observation supports."
+why: "The vendor's own shape is a transport detail with a fingerprint (I1305). If it reaches the store or a capability, then the day the vendor reorganises its message graph the repository's model changes with it, and every consumer breaks for a reason none of them can see."
+current_state: "Nothing exists. No observation has been taken."
+desired_state: "One mapper turns observed vendor records into the canonical model of I1302. A message graph with branches is preserved as a graph rather than flattened into a list. Content parts keep their type. Attachment metadata is mapped; content is downloaded only where the declaration says downloading is authorised. Anything the evidence does not support is absent, not guessed."
 scope:
+  - scripts/lib
   - test/cases
-  - apps/majordomus-cli/tests
-  - .ai/repo/use-cases
 non_scope:
-  - A test that reaches the network by default
+  - Any canonical field invented to match a vendor field with no consumer
+  - Downloading attachment content where the declaration does not authorise it
 depends_on:
-  - I1304
+  - I1302
   - I1305
-  - I1306
 acceptance_criteria:
-  - The forward path is derived: milestone, issue, branch, worktree, commits, pull request, checks, evidence, accepted
-  - The backward path is derived from a merged commit to the acceptance criteria it satisfied and the outcome it served
-  - The case runs offline against fixtures and is deterministic
-  - Completion is refused when evidence is absent even though the remote issue is closed, proved by the case
+  - No vendor DTO field reaches the store or a capability without passing through the mapper
+  - A branched conversation keeps its graph; no branch is silently dropped or linearised
+  - Content parts keep a typed discriminator rather than being concatenated into text
+  - A field the evidence does not support is absent rather than defaulted
+  - The mapper is proven against sanitised fixtures with no live account
 validation:
   - bash test/run.sh
-  - majordomus usecase coverage
 evidence_required:
-  - chain_proved_both_ways
-risk: "Low, once the links exist."
+  - mapper_boundary
+  - graph_preserved
+  - parts_typed
+  - fixtures_prove_it
+risk: "Mapping ahead of evidence. Every field here must point at an observation that was actually taken, or it is a guess with a schema around it."
 created_at: 2026-09-09
-updated_at: 2026-09-09T20:37:43Z
-started_at: 2026-09-09T20:37:28Z
-verified_at: 2026-09-09T20:37:35Z
-completed_at: 2026-09-09T20:37:43Z
-evidence:
-  - covers: chain_proved_both_ways
-    type: test
-    command: "bash test/run.sh 99_work_graph_chain"
-    result: "one synthetic issue carried outcome -> issue -> branch -> commit -> pull request -> evidence -> accepted, then walked back from both the work commit and the merge commit to the issue and milestone they served; a commit with no contract reports unattributed rather than being dropped; completion is refused while required evidence is missing even though the fixture remote has the issue closed, and the projection reports that disagreement as DRIFT closed rather than resolving it either way; the case runs offline against fixture remotes with no token"
-    commit: 40eb9719acdb89b23a7f0bedbe8a7951149b6e90
-    recorded_at: 2026-09-09T20:37:32Z
+updated_at: 2026-09-09

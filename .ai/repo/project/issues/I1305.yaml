@@ -1,46 +1,37 @@
 id: I1305
-milestone: work-graph-github
-title: A pull request names the issue it realises, and the edge is derived rather than remembered
-slug: pull-request-issue-edge
+milestone: external-workspaces
+title: An observed contract has a fingerprint, a compatibility state and a fixture
+slug: observed-contracts
 priority: p1
-profile: implementation
-parallel_safe: false
-objective: "Derive the relation between an issue and the pull requests, branches and commits that realised it, from git and from GitHub, and make it traversable in both directions."
-why: "The model reaches as far as a branch: `worktree/state.rs` reads an issue id out of a branch name and the topology gate enforces it. Above the branch there is nothing. A merged pull request does not lead back to the acceptance criteria it satisfied, and an outcome does not lead forward to the code that reached it, which is the question the whole model exists to answer."
-current_state: "Evidence carries an optional `commit` string written by hand. No canonical record names a pull request, a check run or a branch. `issue_of()` in apps/majordomus-cli/src/worktree/state.rs infers the issue from a branch path component and is the only edge that exists."
-desired_state: "Given an issue, the branches, commits and pull requests that realised it are derivable. Given a merged commit or a pull request, the issue and the outcome it served are derivable. Nothing is stored that git or GitHub already knows."
+profile: deep-work
+parallel_safe: true
+objective: "Record what the browser observed as a versioned contract: a fingerprint of the shape, a compatibility state, and a sanitised fixture that CI replays — so that a private surface changing is a diagnosable event rather than a silent wrong answer."
+why: "A vendor's undocumented surface is not a contract and will change. The failure this must prevent is not the loud one; it is a parse that half succeeds and writes plausible nonsense into the store."
+current_state: "Nothing exists."
+desired_state: "Each observed operation carries a schema fingerprint and a state — compatible, degraded, incompatible. A shape that no longer matches marks the contract degraded, refuses to persist a partial parse, falls back to the browser transport, and captures a new sanitised observation for a person to review. No observation ever promotes itself to a production contract."
 scope:
-  - apps/majordomus-cli/src/worktree
-  - apps/majordomus-cli/src/git
-  - apps/majordomus-cli/src/graph.rs
-  - scripts/github-sync
+  - scripts/lib
   - test/cases
   - docs
 non_scope:
-  - Requiring a branch to encode an issue id where doctrine does not already require it
-  - Storing a commit list in a canonical record; git owns commits
+  - Hardcoding any endpoint path taken from a prompt, a gist or documentation rather than from observed authorised traffic
+  - Automatic promotion of a new observed shape
 depends_on:
-  - I1301
+  - I1304
 acceptance_criteria:
-  - Given an issue id, the branches, commits and pull requests that realised it are listed, derived from git and GitHub
-  - Given a commit or a pull request, the issue and the milestone it served are named, or it is reported as unattributed
-  - Work with no execution contract is reported as unattributed rather than silently omitted
-  - The derivation reads no stored edge that git or GitHub already holds
+  - Every observed operation has a fingerprint over its shape and a compatibility state
+  - A mismatched shape fails closed; nothing partial is persisted
+  - A degraded contract falls back to the browser transport where one exists, and reports unavailability where none does
+  - Fixtures are sanitised at capture time and CI replays them with no network and no account
+  - Promoting a new contract requires a person and a passing test, and the mechanism cannot do it alone
 validation:
-  - cargo test --workspace --all-features
   - bash test/run.sh
 evidence_required:
-  - traceability_both_ways
-risk: "A commit-to-issue edge inferred from a branch name is only as good as the branch discipline; unattributed must be a reported state, not an assumption."
+  - fingerprinted
+  - fails_closed
+  - fallback_proven
+  - fixtures_sanitised
+  - promotion_manual
+risk: "A fixture is a recording of private conversation. Sanitisation that runs after capture is sanitisation that has already failed; it runs before anything reaches disk."
 created_at: 2026-09-09
-updated_at: 2026-09-09T18:55:36Z
-started_at: 2026-09-09T18:55:15Z
-verified_at: 2026-09-09T18:55:34Z
-completed_at: 2026-09-09T18:55:36Z
-evidence:
-  - covers: traceability_both_ways
-    type: test
-    command: "env -u MAJORDOMUS_SHARE bash test/run.sh 98_traceability"
-    result: "ok 98_traceability: over real MCP frames, I0001 (merged with a merge commit) lists its branch, its merge commit and its two commits; I0002 (open) is measured against the trunk; I0003 (fast-forwarded) reports itself absorbed and claims none of the trunk's commits; I0004 (declared, unstarted) traces to nothing and stays declared; I9999 answers declared:false. Backwards, a commit of the merged branch names I0001 and milestone M0, and the commit made straight on the trunk is reported unattributed with a reason. The report's buckets sum to the commits examined, and the absorbed branch's commit is present in it rather than omitted. Then scripts/traceability over a pull-request fixture joins PR #1 to I0001, answers #2 with I0002 and M0, reports #3 (head branch chore/tidy-up) unattributed rather than dropping it, tallies 3 read / 2 attributed / 1 unattributed, and exits 10 under --strict on a commit with no contract. Finally: no canonical record under .ai/repo/project/ names a branch after the run, and git status is unchanged."
-    commit: 990bd0588a13f17a0dd0087080af3c422e3b1e37
-    recorded_at: 2026-09-09T18:55:28Z
+updated_at: 2026-09-09
