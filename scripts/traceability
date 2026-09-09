@@ -143,14 +143,21 @@ REPORT="$T/report.json"
 mcp_call majordomus_traceability "$(printf '{"limit":%s}' "$LIMIT")" > "$REPORT"
 IDS="$(jq -r '[(.issues[].issue), (.without_branch[])] | .[]' "$REPORT")"
 
-# every pull request, with the issue its head branch names or the empty string
+# Every pull request, with the issue its head branch names appended as an eighth column.
+#
+# The line is never split by the shell. Tab is an IFS *whitespace* character, so
+# `IFS=$'\t' read -r a b c ...` collapses a run of tabs into one delimiter and drops empty
+# fields — which is exactly what an open pull request has two of (no merged-at, no merge
+# commit), and the columns after them then shift left by two. `cut` reads the one field
+# this loop needs and the rest of the line is passed through untouched.
 PULLS_ATTRIBUTED="$T/pulls.attributed.tsv"
 : > "$PULLS_ATTRIBUTED"
-while IFS="$(printf '\t')" read -r number head state merged_at merge_sha title url; do
-  [ -n "${number:-}" ] || continue
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  head="$(printf '%s' "$line" | cut -f2)"
   # shellcheck disable=SC2086
   issue="$(issue_of "$head" $IDS)"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$number" "$head" "$state" "$merged_at" "$merge_sha" "$title" "$url" "$issue" >> "$PULLS_ATTRIBUTED"
+  printf '%s\t%s\n' "$line" "$issue" >> "$PULLS_ATTRIBUTED"
 done < "$PULLS"
 
 pulls_of() { awk -F'\t' -v id="$1" '$8 == id' "$PULLS_ATTRIBUTED"; }

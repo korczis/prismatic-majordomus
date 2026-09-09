@@ -188,9 +188,19 @@ jq -e '.issue.commits == 2 and .issue.milestone == "M0"' "$S/t1.json" >/dev/null
 run_quiet "$S/t3.err" run_trace --pull 3 --format json > "$S/t3.json"
 jq -e '.attribution == "unattributed" and .issue == null and .branch == "chore/tidy-up"' "$S/t3.json" >/dev/null \
   || { echo "    a pull request with no execution contract must be reported as unattributed:"; cat "$S/t3.json"; exit 1; }
+# An open pull request has two empty columns in a row — no merged-at, no merge commit — and
+# every column after them must still be itself. Tab is an IFS whitespace character, so a
+# shell that splits the line on IFS collapses that run and shifts the title and the url two
+# places left; the bug is invisible on a merged pull request, which is why this asserts the
+# open one's title and url rather than only its issue.
 run_quiet "$S/t2.err" run_trace --pull 2 --format json > "$S/t2.json"
-jq -e '.issue == "I0002" and .milestone == "M0"' "$S/t2.json" >/dev/null \
-  || { echo "    an open pull request does not lead to its issue and milestone:"; cat "$S/t2.json"; exit 1; }
+jq -e '.issue == "I0002" and .milestone == "M0" and .state == "open"
+       and .merged_at == null and .merge_commit == null
+       and .title == "feat(d): I0002" and .url == "https://example.invalid/2"' "$S/t2.json" >/dev/null \
+  || { echo "    an open pull request loses its columns or its issue:"; cat "$S/t2.json"; exit 1; }
+# and the one with a single empty column, which collapses just as readily
+jq -e '.title == "chore: tidy up" and .url == "https://example.invalid/3" and .merge_commit == null' "$S/t3.json" >/dev/null \
+  || { echo "    a pull request with an empty merge commit loses its columns:"; cat "$S/t3.json"; exit 1; }
 
 # the whole report counts both halves, and names the unattributed pull request
 run_quiet "$S/t4.err" run_trace --format json > "$S/t4.json"
