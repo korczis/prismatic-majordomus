@@ -19,6 +19,7 @@ Current version: **0.4.0**
 
 ### Added
 
+- **peers**: an announcement outlives the connection that made it, and a claim is answered rather than merely recorded (`6aeec67b1`)
 - **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
 - **release**: the changelog is a projection, and the version is derived from the commits (`82583eba1`)
 - **skills**: a description that does not tell two skills apart is a finding (`7af039a4a`)

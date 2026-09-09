@@ -105,10 +105,14 @@ gates:
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
 
-  - id: order-check
+  # The one structural gate that reads the remote. It needs a token (issues:read) and says
+  # so rather than passing when it has none: a projection gate that skips quietly is the
+  # disease it was written to cure — --check has exited 11 on drift since the adapter was
+  # written, and nothing ever called it.
+  - id: github-projection
     job: structure
-    runs: scripts/ci/order-check
-    summary: a collection has one order — no case-folded comparator outside order.rs, no sort key that renders markup, no locale-collated comparison, and the ordering debt does not grow
+    runs: scripts/ci/github-check
+    summary: the GitHub projection still agrees with the canonical model — no record behind, edited, in conflict or unmanaged, and the backlog of unprojected records no larger than its baseline
 
   - id: providers-data
     job: structure
@@ -201,13 +205,13 @@ classes:
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check]
+gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check, github-projection]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
   - id: layer
     paths: [.ai/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
