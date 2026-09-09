@@ -95,9 +95,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
-| `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `bed894c9c26ecce4` |
-| `AGENTS.md` | `providers/agents` | markdown | 3807 | `07a824ca015cb1b5` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 3096 | `bee76a617c719f0b` |
+| `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `1af7cda8801d7388` |
+| `AGENTS.md` | `providers/agents` | markdown | 3807 | `5b22a667f98d7e43` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 3096 | `fd231d4285895bcf` |
 | `docs/INSTALL.md` | `install-guide` | markdown | 9530 | `bb1ff360c4eaf84b` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
@@ -140,7 +140,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/adr.txt` | `allow/adr` | text | 372 | `1fc4068683403a69` |
 | `share/allow/application.txt` | `allow/application` | text | 383 | `61dc0ff1e34a5616` |
 | `share/allow/context.txt` | `allow/context` | text | 446 | `fadfa4432f41c1c4` |
-| `share/allow/current.txt` | `allow/current` | text | 336 | `a4b6ce3dc95323ee` |
+| `share/allow/current.txt` | `allow/current` | text | 358 | `2031e272309c99a0` |
 | `share/allow/deployment.txt` | `allow/deployment` | text | 1021 | `87aa76f5399de523` |
 | `share/allow/distribution.txt` | `allow/distribution` | text | 996 | `85a73337bb57f7fb` |
 | `share/allow/document.txt` | `allow/document` | text | 273 | `0a90ba480eb1f07b` |
@@ -179,9 +179,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `03087ecdccd04cee` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `bdba56212ef6061e` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 59513 | `1519fe35d81f1472` |
-| `site/data/registry/product.json` | `site-product` | json | 300462 | `c04f5f8babd26c06` |
-| `site/data/registry/registry.json` | `site-registry` | json | 1804325 | `ca01ee7a8797a619` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 59513 | `0dc38b682ddc8462` |
+| `site/data/registry/product.json` | `site-product` | json | 300557 | `a2f15fdbbf23d156` |
+| `site/data/registry/registry.json` | `site-registry` | json | 1808669 | `775e40342c097fad` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `fb5f4204da2c1cea` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `a655ee48696ea407` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |

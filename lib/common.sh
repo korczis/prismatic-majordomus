@@ -37,6 +37,17 @@ mj_warn()  { mj_finding WARN  "$@"; }
 mj_info()  { mj_finding INFO  "$@"; }
 mj_drift() { mj_finding DRIFT "$@"; }
 
+# The fingerprint of a set of files: one line "<path> <hash>" per path in the order given,
+# then the hash of that stream. One hashing process for the whole list rather than one per
+# file — the difference between a fifth of a second and eight, and the question is asked on
+# every deployment and on every obligation checked. Paths are used as given, so the caller
+# decides what they are relative to. The line format is the one source_hash has always been
+# computed from, so a value produced here is comparable with every source.json ever written.
+mj_inputs_hash() {
+  printf '%s\0' "$@" | mj_sha256_many | awk -F'\t' '{ printf "%s %s\n", $2, $1 }' \
+    | { mj_sha256 /dev/stdin 2>/dev/null || shasum -a 256 | cut -d' ' -f1; }
+}
+
 mj_json_esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\n'; }
 
 # ---------------------------------------------------------------- options

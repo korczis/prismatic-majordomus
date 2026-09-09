@@ -1140,6 +1140,15 @@
       "note": "share/kinds.yaml declares the kind, share/schemas/majordomus/skill/skill.v1.schema.json its contract, and the source classes skill and skill_example in .ai/repo/knowledge/sources.yaml which files carry it. Nothing else names a skill. lib/skills.sh derives one catalogue from that discovery for `skills list|show|check`, the doctrine validator and scripts/generate-site-data; the Rust index serves the same files as majordomus://skill/<id> resources, through majordomus_list and majordomus_get, with no code that knows the kind. The case adds, breaks, renames and removes a skill and watches every surface follow."
     },
     {
+      "id": "claim:obligation-closure",
+      "kind": "claim",
+      "label": "A task that declares obligations reaches the outcome completed only when each one has evidence recorded against it, and evidence taken over files that have since changed, or at a commit the branch has since left, no longer discharges anything",
+      "status": "guaranteed",
+      "route": "/guarantees/obligation-closure/",
+      "external": false,
+      "note": "The obligation vocabulary is share/obligations.yaml, so a token is added there and not in shell. Evidence is a task.evidence ledger line carrying the hash of the tracked files the obligation names; the validator recomputes that hash and reports both values when they differ, the way the site's own currency check already does. An obligation whose fact is remote is bound to the commit it was taken at instead, and judged with mj_git_label rather than a fifth staleness vocabulary. An outcome other than completed is never refused for owing something."
+    },
+    {
       "id": "claim:skill-check",
       "kind": "claim",
       "label": "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed",
@@ -1589,6 +1598,13 @@
       "id": "impl:lib/doctrine.sh",
       "kind": "implementation",
       "label": "lib/doctrine.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/evidence.sh",
+      "kind": "implementation",
+      "label": "lib/evidence.sh",
       "route": null,
       "external": false
     },
@@ -2151,6 +2167,13 @@
       "label": "test/cases/08_no_forbidden_constructs.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/08_no_forbidden_constructs.sh"
+    },
+    {
+      "id": "test:test/cases/103_obligations.sh",
+      "kind": "test",
+      "label": "test/cases/103_obligations.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/103_obligations.sh"
     },
     {
       "id": "test:test/cases/12_site_build.sh",
@@ -3186,6 +3209,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:obligation-closure",
+      "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:skill-check",
       "target": "source:docs/CLI.md",
       "kind": "specified_by"
@@ -3871,6 +3899,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:obligation-closure",
+      "target": "impl:lib/evidence.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:skill-check",
       "target": "impl:lib/skills.sh",
       "kind": "implemented_by"
@@ -4553,6 +4586,11 @@
     {
       "source": "claim:skill-catalogue",
       "target": "test:test/cases/95_skills.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:obligation-closure",
+      "target": "test:test/cases/103_obligations.sh",
       "kind": "proved_by"
     },
     {

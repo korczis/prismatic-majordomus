@@ -114,17 +114,17 @@ for f in $INPUTS; do [ -f "$ROOT/$f" ] || { echo "generate-site-data: canonical 
 # difference between a fifth of a second and eight, and the freshness question is asked on
 # every Pages deployment. The line format is the one source_hash has always been computed
 # from, so the value is comparable with every source.json ever written.
-mj_inputs_hash() {
-  ( cd "$ROOT" && printf '%s\0' $INPUTS | mj_sha256_many | awk -F'\t' '{ printf "%s %s\n", $2, $1 }' ) \
-    | { mj_sha256 /dev/stdin 2>/dev/null || shasum -a 256 | cut -d' ' -f1; }
-}
+# The list is this script's; the hashing is common.sh's, so the site and an obligation's
+# evidence are fingerprinted by one implementation and stay comparable.
+# shellcheck disable=SC2086  # the list is intentionally word-split into arguments
+mj_site_inputs_hash() { ( cd "$ROOT" && mj_inputs_hash $INPUTS ); }
 # --fingerprint prints the hash of the canonical inputs and exits, without generating
 # anything. It is the same value gen:source.json writes as source_hash below, computed the
 # same way over the same list, in one hashing process instead of one per file: a reader that
 # only needs to know whether the committed data is current pays a fifth of a second rather
 # than a full generation. Byte-identical output is what test/cases/10_site_data.sh holds it to.
 if [ "${1:-}" = --fingerprint ]; then
-  mj_inputs_hash; exit 0
+  mj_site_inputs_hash; exit 0
 fi
 
 # The route of a document page, and the one reservation in it. /docs/cli/ is the *native*
@@ -1394,7 +1394,7 @@ fi
 mj_phase_end "gen:plan.json_the_execution_mode" "$GEN_T0"
 # ---------------------------------------------------------------- source.json
 GEN_T0="$(mj_phase_begin "gen:source.json")"
-HASH="$(mj_inputs_hash)"
+HASH="$(mj_site_inputs_hash)"
 # No commit here either: a committed derived file that names the commit it was generated at
 # is stale the moment it lands (test/cases/51_derived_artifacts_committed.sh holds every
 # derived file to that), and the site generator would then never be idempotent on a clean

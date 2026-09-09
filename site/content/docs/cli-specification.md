@@ -627,6 +627,43 @@ EOF
 .ai/repo/sessions/20260904T171402Z--s-20260904153733-fc51--master--3c9ba2f--c0ffee1234567890.md
 ```
 
+## `majordomus evidence`
+
+Record that one obligation the active task declared has been discharged.
+
+```
+majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
+```
+
+A task's `scope` says where a worker may write; its `requires` says what the worker owes
+before the outcome `completed` is available. The tokens are declared in
+`share/obligations.yaml` — implementation, tests, docs, generated, rules, commit, push,
+target, pages, deploy, verify — each naming the command that discharges it and, where the
+fact is local, the pathspecs its evidence is taken over.
+
+`--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary
+does not declare exits `2`; a token the active task never promised exits `15`, because
+recording evidence for something nobody asked for is how a checklist grows entries nobody
+wanted.
+
+**Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,
+the command or artifact, and the hash of the tracked files the obligation names. Nothing
+else is written; the ledger is already append-only, ordered and integrity-checked, and its
+envelope already carries the head, the branch and the session.
+
+That hash is the point. Evidence discharges an obligation only while the recomputed hash of
+its inputs equals the recorded one, so a change to any file the obligation names takes the
+proof away rather than leaving it behind — the same currency question the site's own
+`source_hash` asks, asked of a test result. An obligation whose fact is remote (a push, an
+integration, a publication, a deployment) has no inputs and is bound instead to the commit
+it was taken at, judged `exact | advanced | diverged | different_context` like every other
+record here.
+
+`check` and `finish` evaluate every obligation on every run through the doctrine
+`majordomus.obligation-closure`, so a stale evidence is visible before someone builds on
+it; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,
+and refusing that would teach them to claim `completed` instead.
+
 ## `majordomus checkpoint`
 
 Record compact progress inside an active task. Append-only; the body arrives on stdin.
