@@ -115,9 +115,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/benchmarks.md` | `benchmarks` | markdown | 8831 | `0f80c504782ebbe5` |
 | `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 13268 | `76366b8e140422b2` |
 | `docs/generated/capabilities.md` | `capabilities` | markdown | 15493 | `13c28f795babf05d` |
-| `docs/generated/changelog.json` | `changelog` | json | 223062 | `4bcbf7a6759da060` |
-| `docs/generated/changelog.md` | `changelog` | markdown | 80396 | `07ad77d3101f11cf` |
-| `docs/generated/changelog.yaml` | `changelog` | yaml | 169676 | `2f2dbb4b35b6bc3c` |
+| `docs/generated/changelog.json` | `changelog` | json | 223580 | `d51d30c2800be706` |
+| `docs/generated/changelog.md` | `changelog` | markdown | 80592 | `5d2ed9158fda966a` |
+| `docs/generated/changelog.yaml` | `changelog` | yaml | 170076 | `f881ce4cb5fdcf5e` |
 | `docs/generated/cli.json` | `cli` | json | 500420 | `02ded72a89df9e7f` |
 | `docs/generated/cli.md` | `cli` | markdown | 210107 | `02afac4bf17792a9` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 389169 | `78fd41c6c1e812df` |
@@ -197,9 +197,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `d06856785900aae7` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `d5dc7da86ab749a1` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 60224 | `80fb437726e8d426` |
-| `site/data/registry/product.json` | `site-product` | json | 303381 | `4035a14411fc133e` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2161799 | `b06d5cd1dde7d921` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 60224 | `9f55e9b68ccf4f9f` |
+| `site/data/registry/product.json` | `site-product` | json | 303381 | `dff18162806cc3fe` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2162731 | `3ed6d20da1edb1de` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `58f7d0d6945968ba` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `626b03ff72b5b235` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |

@@ -27,7 +27,9 @@ else
 fi
 rc=0
 printf '==> derive-check: majordomus generate --check\n'
-"$RB" generate --repo "$ROOT" --check || rc=10
+# --strict for the same reason derive uses it: a check that reads a degraded index
+# would compare the committed projections against a tree that has lost documents.
+"$RB" generate --repo "$ROOT" --check --strict || rc=10
 printf '==> derive-check: scripts/generate-site-data --check\n'
 "$ROOT/scripts/generate-site-data" --check || rc=10
 if [ "$rc" = 0 ]; then printf '==> derive-check: every derived artifact is current\n'

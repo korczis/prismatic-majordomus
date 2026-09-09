@@ -135,6 +135,11 @@ sections:
             breaking: false
             commit: 675068f01
           - kind: feat
+            scope: execution
+            subject: "an execution is a watched capability call, not a second registry"
+            breaking: false
+            commit: 65dded963
+          - kind: feat
             scope: commands
             subject: "one canonical command graph, and every surface derives from it"
             breaking: false
@@ -544,6 +549,11 @@ sections:
             subject: the feature pages vouch for the claims the homepage used to
             breaking: false
             commit: ca45221c0
+          - kind: test
+            scope: execution
+            subject: "the terminal's rendering is asserted, and a surface count is derived"
+            breaking: false
+            commit: 9badf2448
           - kind: test
             scope: commands
             subject: "the generated completion, loaded into a real zsh"

@@ -55,12 +55,12 @@ else
   step_done
 fi
 step "stage A: majordomus generate (code-only projections)"
-"$RB" generate --repo "$ROOT" >/dev/null
+"$RB" generate --repo "$ROOT" --strict >/dev/null
 step_done
 step "stage B: scripts/generate-site-data (site data, content, derived documents)"
 "$ROOT/scripts/generate-site-data"
 step_done
 step "stage C: majordomus generate (the site dataset and the benchmark matrix over the index)"
-"$RB" generate --repo "$ROOT" >/dev/null
+"$RB" generate --repo "$ROOT" --strict >/dev/null
 step_done
 printf '==> derive: done in %ss; scripts/derive-check proves it\n' "$(( $(now) - RUN_T0 ))" >&2

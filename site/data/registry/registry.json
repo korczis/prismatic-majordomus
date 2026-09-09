@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "7a26f7b72bd5911b247c73c71414171053a7bf87c1226e71ff56cdf0683a540f",
+    "fingerprint": "7e9c7ad675897b8d24c4f086bd6f277985bf8ed4d781f3fb895319edf959e3fd",
     "summary": {
-      "total": 1151,
+      "total": 1153,
       "builtin": 63,
-      "declarative": 1088,
+      "declarative": 1090,
       "by_kind": {
         "command": 3,
         "query": 60,
-        "resource": 1088
+        "resource": 1090
       },
       "by_stability": {
         "behaviorally_verified": 58,
-        "implemented": 1093
+        "implemented": 1095
       },
       "mcp_tools": 61,
-      "mcp_resources": 1111,
+      "mcp_resources": 1113,
       "http_routes": 63,
       "cli_commands": 31,
       "modules": 50,
@@ -23428,7 +23428,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 102,
+        "capabilities": 103,
         "capability_ids": []
       },
       {
@@ -23468,7 +23468,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 124,
+        "capabilities": 125,
         "capability_ids": []
       },
       {
@@ -23548,7 +23548,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5d917e6d95e9771b0f7321897fc8c3a04ba7d17c71e43982ea044916f1eb5e41",
+    "fingerprint": "f62aaa3eb8a2177cf2b8220492b51353b47c5f5e7061871f41de4fd970806552",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -23591,12 +23591,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 102,
+      "rule": 103,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 124,
+      "test": 125,
       "use-case": 40,
       "workspace": 1
     },
@@ -26586,7 +26586,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 2446
+        "bytes": 4271
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -33070,6 +33070,21 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.diagnostics-decide-the-exit@1",
+        "kind": "rule",
+        "identity": "project.diagnostics-decide-the-exit@1",
+        "title": "A return code is not the diagnostic channel",
+        "description": "A command that emits an error diagnostic does not exit zero; every derivation and every check runs so that an error in the layer stops it.",
+        "path": ".ai/repo/rules/project/a-return-code-is-not-the-diagnostic-channel.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 2545,
+        "tags": [
+          "gates",
+          "diagnostics"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.distribution-canonical@1",
         "kind": "rule",
         "identity": "project.distribution-canonical@1",
@@ -34141,6 +34156,14 @@
         "path": "test/cases/103_release_projection.sh",
         "source_class": "case",
         "bytes": 18953
+      },
+      {
+        "uri": "majordomus://test/test/cases/104_strict_derivation.sh",
+        "kind": "test",
+        "identity": "test/cases/104_strict_derivation.sh",
+        "path": "test/cases/104_strict_derivation.sh",
+        "source_class": "case",
+        "bytes": 4466
       },
       {
         "uri": "majordomus://test/test/cases/10_site_data.sh",
@@ -35675,7 +35698,7 @@
         "id",
         "version"
       ],
-      "objects": 102
+      "objects": 103
     },
     {
       "name": "scope",
@@ -35730,7 +35753,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 124
+      "objects": 125
     },
     {
       "name": "use-case",

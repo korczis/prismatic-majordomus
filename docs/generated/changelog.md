@@ -39,6 +39,7 @@ Current version: **0.4.0**
 - **quality**: the crate measures its own public surface from its syntax tree (`94b0c22fc`)
 - **commands**: the palette, fish, and the cost measured rather than claimed (`8e7faed93`)
 - **product**: product features are objects of the layer, and the landing page is a projection of them (`675068f01`)
+- **execution**: an execution is a watched capability call, not a second registry (`65dded963`)
 - **commands**: one canonical command graph, and every surface derives from it (`427b73248`)
 - **capabilities**: projection closure as a capability, a gate and a ratchet (`d05b1eafe`)
 - **capabilities**: the command line is compared with the registry, not with itself (`d2ac127a7`)
@@ -130,6 +131,7 @@ Current version: **0.4.0**
 - **gate**: the registry half needs a repository, not just a tree (`b7f88c73e`)
 - **cockpit**: the sweep renders the routes the dispatcher actually answers (`4fd2d838c`)
 - **site**: the feature pages vouch for the claims the homepage used to (`ca45221c0`)
+- **execution**: the terminal's rendering is asserted, and a surface count is derived (`9badf2448`)
 - **commands**: the generated completion, loaded into a real zsh (`f37da5681`)
 - **worktree**: the migration's classification, its guard, and a dirty move (`e4ef4cba4`)
 

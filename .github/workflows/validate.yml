@@ -68,6 +68,7 @@ jobs:
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
       macos: ${{ steps.plan.outputs.macos }}
       installer_live: ${{ steps.plan.outputs.installer_live }}
+      pages_live: ${{ steps.plan.outputs.pages_live }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -443,13 +444,31 @@ jobs:
       - name: the advertised install command, from the published site
         run: scripts/ci/install-check --wait 300
 
+  # ------------------------------------------------------------------ pages
+  # Is what GitHub Pages serves a projection of this branch at all? One runner, because the
+  # answer is not platform-dependent, and selected in the same full mode as `install` for the
+  # same reason: no change to a tree can make it true or false. It is the gate that was
+  # missing on 2026-09-09, when the public site served an unmerged branch for half an hour
+  # with every tree-level gate green.
+  pages:
+    needs: plan
+    if: needs.plan.outputs.pages_live == 'true'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: the published site came from master, and is being served
+        run: scripts/ci/pages-check
+
   # ------------------------------------------------------------------ ci
   # The one status to require: green only when planning succeeded, every selected gate's job
   # succeeded, and no job that ran failed or was cancelled. Always runs, so a required check
   # is never left pending by a skipped job. It also gathers the jobs' timing rows into the
   # artifact ci-performance-metrics.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos, install]
+    needs: [plan, structure, suite, rust, coverage, bench, site, cockpit, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest
