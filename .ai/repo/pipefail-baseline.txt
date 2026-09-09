@@ -4,11 +4,14 @@
 # Written by scripts/ci/pipefail-check --write-baseline; never by hand. The set may
 # only shrink: adding pipefail to one of these is the deliberate act of having
 # checked that its pipelines still mean what they meant.
-bin/majordomus-cli
+lib/doctor.sh
 scripts/ci-baseline
 scripts/ci-plan
 scripts/ci/command-furnished
 scripts/ci/core-check
+scripts/ci/design-check
+scripts/ci/generation-converges
+scripts/ci/github-check
 scripts/ci/install-check
 scripts/ci/order-check
 scripts/ci/projection-check
@@ -22,6 +25,7 @@ scripts/ci/verdict
 scripts/ci/worktree-check
 scripts/cockpit-assets
 scripts/cockpit-probe
+scripts/collision-check
 scripts/generate-site-data
 scripts/github-sync
 scripts/pages
@@ -32,4 +36,5 @@ scripts/site-build
 scripts/site-check
 scripts/site-deploy
 scripts/site-probe
+scripts/traceability
 scripts/ui
