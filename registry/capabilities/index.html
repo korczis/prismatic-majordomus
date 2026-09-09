@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.3.1</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.4.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -589,6 +589,41 @@
       <span class="rounded border border-default px-1 text-body">cli</span>
       <span class="rounded border border-default px-1 text-body">cached</span>
     </span>
+  </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/registry/modules/quality/" class="font-mono hover:underline">quality</a> <span class="text-base font-normal text-body">Public API quality</span></h2>
+<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/quality-report/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">quality.report</code>
+    <span class="mt-1 break-words text-sm text-body">The crate&#39;s exported surface measured against the repository&#39;s rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">behaviorally_verified</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      <span class="rounded border border-default px-1 text-body">cli</span>
+      <span class="rounded border border-default px-1 text-body">cached</span>
+    </span>
+  </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/registry/modules/release/" class="font-mono hover:underline">release</a> <span class="text-base font-normal text-body">Release</span></h2>
+<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/release-changelog/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">release.changelog</code>
+    <span class="mt-1 break-words text-sm text-body">Every release the layer records, newest first, with the work that has not been released leading. A section&#39;s decisions are the ADRs dated inside that release&#39;s window, its changes the conventional commits in its range, its artifacts the record&#39;s own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">implemented</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      
+    </span>
+  </a></li><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/release-version/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">release.version</code>
+    <span class="mt-1 break-words text-sm text-body">The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">implemented</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      
+      
+    </span>
   </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://korczis.github.io/prismatic-majordomus/registry/modules/repository/" class="font-mono hover:underline">repository</a> <span class="text-base font-normal text-body">Repository</span></h2>
 <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://korczis.github.io/prismatic-majordomus/registry/capabilities/repository-info/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <code class="break-all font-mono font-semibold text-heading">repository.info</code>
@@ -763,7 +798,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1529143d42aea7a6746d6068c5be5c3c93ff7b10" class="font-mono underline">1529143</a> · inputs <span class="font-mono">d68839b41ee4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4cca3577dd32170cb3054dadca31a7cc241854b1" class="font-mono underline">4cca357</a> · inputs <span class="font-mono">5d4ccd2b4fbe</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 

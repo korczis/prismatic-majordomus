@@ -29,7 +29,7 @@
     <a href="https://korczis.github.io/prismatic-majordomus/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <svg viewBox="0 0 64 64" class="h-7 w-7 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 32h16"/><path d="M32 12 46 52H18Z"/><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.3.1</span>
+      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v0.4.0</span>
     </a>
     <div class="flex items-center gap-2 md:order-2">
       <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
@@ -203,7 +203,7 @@
   <p class="mt-3 text-sm text-body-subtle">This page shows what is generated, not what the bytes hash to right now: a size and a hash are facts of a moment, and this site is built from a commit. The sizes and hashes are in <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/artifacts.md" class="inline-block break-all py-1 font-mono text-fg-brand hover:underline">docs/generated/artifacts.md</a>, and they are answered live by <code class="font-mono">majordomus generate --check</code>, which compares every one of these files byte for byte and refuses a stale tree, and by <code class="font-mono">majordomus_artifacts</code> over MCP and <code class="font-mono">GET /api/v1/artifacts</code>, which reconcile the manifest with the working tree.</p>
 
   <h2 id="documents" class="mt-10 scroll-mt-24 text-xl font-semibold tracking-tight text-heading">Documents</h2>
-  <p class="mt-2 max-w-3xl text-sm text-body">81 documents, 92 files. A document that names a schema satisfies the contract published for it under <code class="font-mono">share/schemas/generated/</code>, and the generator refuses to write one that does not.</p>
+  <p class="mt-2 max-w-3xl text-sm text-body">84 documents, 97 files. A document that names a schema satisfies the contract published for it under <code class="font-mono">share/schemas/generated/</code>, and the generator refuses to write one that does not.</p>
   <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[36rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">document</th><th class="px-3 py-2">encodings</th><th class="px-3 py-2">schema</th><th class="px-3 py-2">derived from</th></tr></thead>
@@ -343,6 +343,11 @@
         <td class="px-3 py-2 font-mono text-xs text-body">—</td>
         <td class="px-3 py-2 break-words text-xs text-body">the canonical Majordomus capability registry</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">changelog</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">yaml</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">majordomus/changelog/v1</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the layer&#39;s release records, the decisions dated in each release&#39;s window, and the commits in its range</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2"><code class="break-all font-mono text-heading">cli</code></td>
         <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">json</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">yaml</span></td>
         <td class="px-3 py-2 font-mono text-xs text-body">majordomus/cli/v1</td>
@@ -432,6 +437,16 @@
         <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
         <td class="px-3 py-2 font-mono text-xs text-body">—</td>
         <td class="px-3 py-2 break-words text-xs text-body">the `product` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/quality</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `quality` module of the canonical Majordomus capability registry</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/release</code></td>
+        <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">—</td>
+        <td class="px-3 py-2 break-words text-xs text-body">the `release` module of the canonical Majordomus capability registry</td>
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2"><code class="break-all font-mono text-heading">modules/repository</code></td>
         <td class="px-3 py-2"><span class="mr-1 inline-block rounded bg-neutral-secondary-soft px-1.5 py-0.5 font-mono text-xs text-body">markdown</span></td>
@@ -677,6 +692,21 @@
         <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
         <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/changelog.json" class="inline-block break-all py-1 font-mono text-fg-brand hover:underline">docs/generated/changelog.json</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">changelog</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">json</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/changelog/v1</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/changelog.md" class="inline-block break-all py-1 font-mono text-fg-brand hover:underline">docs/generated/changelog.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">changelog</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/changelog.yaml" class="inline-block break-all py-1 font-mono text-fg-brand hover:underline">docs/generated/changelog.yaml</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">changelog</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yaml</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">majordomus/changelog/v1</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.json" class="inline-block break-all py-1 font-mono text-fg-brand hover:underline">docs/generated/cli.json</a></td>
         <td class="px-3 py-2 font-mono text-xs text-body">cli</td>
         <td class="px-3 py-2 font-mono text-xs text-body">json</td>
@@ -764,6 +794,16 @@
       </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/product.md" class="inline-block break-all py-1 font-mono text-fg-brand hover:underline">docs/generated/modules/product.md</a></td>
         <td class="px-3 py-2 font-mono text-xs text-body">modules/product</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/quality.md" class="inline-block break-all py-1 font-mono text-fg-brand hover:underline">docs/generated/modules/quality.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/quality</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
+        <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/release.md" class="inline-block break-all py-1 font-mono text-fg-brand hover:underline">docs/generated/modules/release.md</a></td>
+        <td class="px-3 py-2 font-mono text-xs text-body">modules/release</td>
         <td class="px-3 py-2 font-mono text-xs text-body">markdown</td>
         <td class="px-3 py-2 font-mono text-xs text-body-subtle">—</td>
       </tr><tr class="border-t border-default align-top">
@@ -1102,7 +1142,7 @@
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.3.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1529143d42aea7a6746d6068c5be5c3c93ff7b10" class="font-mono underline">1529143</a> · inputs <span class="font-mono">d68839b41ee4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.4.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/4cca3577dd32170cb3054dadca31a7cc241854b1" class="font-mono underline">4cca357</a> · inputs <span class="font-mono">5d4ccd2b4fbe</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
