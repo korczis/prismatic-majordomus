@@ -209,10 +209,24 @@
           "changes": [
             {
               "kind": "fix",
+              "scope": "runtime",
+              "subject": "a stale runtime says so, on the lease and on the way in",
+              "breaking": false,
+              "commit": "53b21b4bb"
+            },
+            {
+              "kind": "fix",
               "scope": "release",
               "subject": "the module asserts the two projections it documents",
               "breaking": false,
               "commit": "98f6606ce"
+            },
+            {
+              "kind": "fix",
+              "scope": "gates",
+              "subject": "a derivation refuses a degraded index, and one pass says everything a command still needs",
+              "breaking": false,
+              "commit": "f6b73b05a"
             },
             {
               "kind": "fix",
@@ -234,6 +248,13 @@
               "subject": "the semantics module documents a validation that is not an item",
               "breaking": false,
               "commit": "ed649c769"
+            },
+            {
+              "kind": "fix",
+              "scope": "share",
+              "subject": "a MAJORDOMUS_SHARE naming another worktree of this repository is refused",
+              "breaking": false,
+              "commit": "fc9864ebc"
             },
             {
               "kind": "fix",
@@ -675,6 +696,27 @@
               "subject": "the projections follow the master merge",
               "breaking": false,
               "commit": "21a1203cc"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the second master merge",
+              "breaking": false,
+              "commit": "e94b760d1"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge",
+              "breaking": false,
+              "commit": "5fe8f2ec8"
+            },
+            {
+              "kind": "chore",
+              "scope": "derive",
+              "subject": "the projections follow the master merge",
+              "breaking": false,
+              "commit": "b79363681"
             },
             {
               "kind": "chore",

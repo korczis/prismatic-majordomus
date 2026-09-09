@@ -44,10 +44,13 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **runtime**: a stale runtime says so, on the lease and on the way in (`53b21b4bb`)
 - **release**: the module asserts the two projections it documents (`98f6606ce`)
+- **gates**: a derivation refuses a degraded index, and one pass says everything a command still needs (`f6b73b05a`)
 - **commands**: the module asserts the three projections it documents (`5609ab148`)
 - **site**: the changelog page reads the groups the document carries (`b551a3327`)
 - **docs**: the semantics module documents a validation that is not an item (`ed649c769`)
+- **share**: a MAJORDOMUS_SHARE naming another worktree of this repository is refused (`fc9864ebc`)
 - **derive**: every stage names itself as it begins and reports what it cost (`59aa3769c`)
 - **ci**: ci-plan tells a bare path list which spelling it wanted (`5bd2f77bc`)
 - **cli**: an unknown command that the Rust executable provides says so and names the launcher (`59f5c8b75`)
@@ -119,6 +122,9 @@ Current version: **0.4.0**
 ### Housekeeping
 
 - **derive**: the projections follow the master merge (`21a1203cc`)
+- **derive**: the projections follow the second master merge (`e94b760d1`)
+- **derive**: the projections follow the master merge (`5fe8f2ec8`)
+- **derive**: the projections follow the master merge (`b79363681`)
 - **derive**: the projections follow the entry-point fixes (`691fab7db`)
 - **derive**: the projections follow the merge with master (`44468dbc1`)
 - **order**: the merge brought three modules and fourteen comparators; two are adopted and the baseline says what the rest are (`c72d294cc`)
