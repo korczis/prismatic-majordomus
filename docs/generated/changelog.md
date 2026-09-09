@@ -18,6 +18,7 @@ Current version: **0.4.0**
 
 ### Added
 
+- **ci**: a gate says the published site came from master, and is being served (`fbc1da919`)
 - **release**: the version rises to 0.4.0, and the projection gains its page, gate and record (`957a6ff5a`)
 - **release**: the changelog is a projection, and the version is derived from the commits (`82583eba1`)
 - **skills**: a description that does not tell two skills apart is a finding (`7af039a4a`)
@@ -43,6 +44,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **site**: the changelog page reads the groups the document carries (`b551a3327`)
 - **ui**: a scroll container is a containing block for what it positions, and the finding that says so names it (`2d328460b`)
 - **ci**: a job that hangs fails instead of holding a runner for a shift (`1ea8da126`)
 - **completion**: TAB in this repository asks a program that can answer it (`ff2d64e57`)
