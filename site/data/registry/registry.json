@@ -6,7 +6,7 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "9aa062e935af2d76b321458fbb95c525aac786accbcb1a57a6fa73bcfc0cab01",
+    "fingerprint": "2e1cfde4f20862e03ee3b1e53ac08bfcd524940ffa506baa63e29aee60a4ef2a",
     "summary": {
       "total": 1105,
       "builtin": 52,
@@ -16483,6 +16483,17 @@
                       "type": "string"
                     },
                     "description": "What differs between the two; empty when verified."
+                  },
+                  "envrc": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/EnvrcApproval"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout's approval carried there, or why it was not. Only on a moved step."
                   }
                 },
                 "required": [
@@ -16826,6 +16837,94 @@
                   "ignored_manifest_digest"
                 ],
                 "description": "What a work tree held at one moment, reduced to digests."
+              },
+              "EnvrcApproval": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "const": "approved"
+                      }
+                    },
+                    "required": [
+                      "outcome"
+                    ],
+                    "description": "direnv accepted it: the next `cd` loads the environment."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "const": "no_envrc"
+                      }
+                    },
+                    "required": [
+                      "outcome"
+                    ],
+                    "description": "The worktree has no `.envrc`; there is nothing to approve and nothing is blocked."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "const": "direnv_absent"
+                      }
+                    },
+                    "required": [
+                      "outcome"
+                    ],
+                    "description": "direnv is not on the PATH; nothing was done, and nothing is blocked either, because\nnothing would load the file."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "const": "differs"
+                      }
+                    },
+                    "required": [
+                      "outcome"
+                    ],
+                    "description": "The worktree's `.envrc` is not the primary checkout's, so the approval given there\ndoes not carry. `direnv allow` in the worktree, after reading it, is the person's."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "const": "not_approved_in_primary"
+                      }
+                    },
+                    "required": [
+                      "outcome"
+                    ],
+                    "description": "The primary checkout's `.envrc` is not approved, so there is no approval to carry."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "description": "direnv's standard error, or the error running it."
+                      },
+                      "outcome": {
+                        "type": "string",
+                        "const": "failed"
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "message"
+                    ],
+                    "description": "direnv was asked and refused, or could not be run; the message is its own."
+                  }
+                ],
+                "description": "What became of the `.envrc` of a worktree that was just created, found, or moved."
               }
             }
           }
@@ -18795,7 +18894,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3e0a4f60b60e764c4445bdd24509b850c5880d532cde2e9529d40b392a24b584",
+    "fingerprint": "cb43e715a3f6e629214416b65342b0ec9b1eac350b2c0ae899f258fb46cbb4d8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -22211,7 +22310,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 22019
+        "bytes": 23596
       },
       {
         "uri": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -29820,7 +29919,7 @@
         "identity": "test/cases/96_worktree_topology.sh",
         "path": "test/cases/96_worktree_topology.sh",
         "source_class": "case",
-        "bytes": 8898
+        "bytes": 12476
       },
       {
         "uri": "majordomus://test/test/cases/97_install_gate.sh",

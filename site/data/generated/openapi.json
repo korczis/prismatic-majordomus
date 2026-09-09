@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 52,
-    "schemas": 260,
+    "schemas": 261,
     "tags": 20
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -4986,6 +4986,105 @@
       "variants": []
     },
     {
+      "description": "What became of the `.envrc` of a worktree that was just created, found, or moved.",
+      "is_enum": false,
+      "name": "EnvrcApproval",
+      "properties": [],
+      "type": "one of 6 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "MigrationStep"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "direnv accepted it: the next `cd` loads the environment.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"approved\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The worktree has no `.envrc`; there is nothing to approve and nothing is blocked.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"no_envrc\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "direnv is not on the PATH; nothing was done, and nothing is blocked either, because\nnothing would load the file.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"direnv_absent\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The worktree's `.envrc` is not the primary checkout's, so the approval given there\ndoes not carry. `direnv allow` in the worktree, after reading it, is the person's.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"differs\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The primary checkout's `.envrc` is not approved, so there is no approval to carry.",
+          "properties": [
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"not_approved_in_primary\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "direnv was asked and refused, or could not be run; the message is its own.",
+          "properties": [
+            {
+              "description": "direnv's standard error, or the error running it.",
+              "name": "message",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "outcome",
+              "refs": [],
+              "required": true,
+              "type": "\"failed\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "The body of every error response.",
       "is_enum": false,
       "name": "ErrorBody",
@@ -7392,6 +7491,15 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout's approval carried there, or why it was not. Only on a moved step.",
+          "name": "envrc",
+          "refs": [
+            "EnvrcApproval"
+          ],
+          "required": false,
+          "type": "EnvrcApproval | null"
         }
       ],
       "type": "object",

@@ -8968,6 +8968,94 @@
         ],
         "description": "Where the values of one snapshot came from."
       },
+      "EnvrcApproval": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "const": "approved"
+              }
+            },
+            "required": [
+              "outcome"
+            ],
+            "description": "direnv accepted it: the next `cd` loads the environment."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "const": "no_envrc"
+              }
+            },
+            "required": [
+              "outcome"
+            ],
+            "description": "The worktree has no `.envrc`; there is nothing to approve and nothing is blocked."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "const": "direnv_absent"
+              }
+            },
+            "required": [
+              "outcome"
+            ],
+            "description": "direnv is not on the PATH; nothing was done, and nothing is blocked either, because\nnothing would load the file."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "const": "differs"
+              }
+            },
+            "required": [
+              "outcome"
+            ],
+            "description": "The worktree's `.envrc` is not the primary checkout's, so the approval given there\ndoes not carry. `direnv allow` in the worktree, after reading it, is the person's."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "outcome": {
+                "type": "string",
+                "const": "not_approved_in_primary"
+              }
+            },
+            "required": [
+              "outcome"
+            ],
+            "description": "The primary checkout's `.envrc` is not approved, so there is no approval to carry."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "description": "direnv's standard error, or the error running it."
+              },
+              "outcome": {
+                "type": "string",
+                "const": "failed"
+              }
+            },
+            "required": [
+              "outcome",
+              "message"
+            ],
+            "description": "direnv was asked and refused, or could not be run; the message is its own."
+          }
+        ],
+        "description": "What became of the `.envrc` of a worktree that was just created, found, or moved."
+      },
       "ErrorBody": {
         "type": "object",
         "properties": {
@@ -10818,6 +10906,17 @@
               "type": "string"
             },
             "description": "What differs between the two; empty when verified."
+          },
+          "envrc": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnvrcApproval"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What became of its `.envrc` under direnv once it was at its new path: the primary\ncheckout's approval carried there, or why it was not. Only on a moved step."
           }
         },
         "required": [

@@ -44,6 +44,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **release**: the module asserts the two projections it documents (`98f6606ce`)
 - **commands**: the module asserts the three projections it documents (`5609ab148`)
 - **site**: the changelog page reads the groups the document carries (`b551a3327`)
 - **docs**: the semantics module documents a validation that is not an item (`ed649c769`)
