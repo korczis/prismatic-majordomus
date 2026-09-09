@@ -5,22 +5,22 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 47,
-      "covered": 47,
+      "required": 52,
+      "covered": 52,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "http",
-      "required": 47,
-      "covered": 47,
+      "required": 52,
+      "covered": 52,
       "missing": 0,
       "waived": 0
     },
     {
       "scope": "mcp",
-      "required": 45,
-      "covered": 45,
+      "required": 50,
+      "covered": 50,
       "missing": 0,
       "waived": 0
     },
@@ -33,8 +33,8 @@
     },
     {
       "scope": "total",
-      "required": 152,
-      "covered": 152,
+      "required": 167,
+      "covered": 167,
       "missing": 0,
       "waived": 0
     }
@@ -89,6 +89,44 @@
       "cases": [
         "all",
         "unmet"
+      ]
+    },
+    {
+      "id": "commands.get",
+      "module": "commands",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "worktree-status"
+      ]
+    },
+    {
+      "id": "commands.graph",
+      "module": "commands",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "commands.list",
+      "module": "commands",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "read-only",
+        "one-program"
       ]
     },
     {
@@ -207,6 +245,31 @@
       "module": "distribution",
       "kind": "query",
       "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "environment.explain",
+      "module": "environment",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "one-field"
+      ]
+    },
+    {
+      "id": "environment.status",
+      "module": "environment",
+      "kind": "query",
+      "cache": "process, 4 entries, 3s",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
