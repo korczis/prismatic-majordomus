@@ -21,8 +21,7 @@ Current version: **0.4.0**
 
 ### Added
 
-- **rules**: an empty result and a failed command must not look alike (`824223cb5`)
-- **ci**: three failures of one session, turned into checks (`1e96e91b7`)
+- **context**: the board reaches the worker who never asked for it (`8ad5bb6a7`)
 - **peers**: a session is told it has not announced, and doctor names the work that exists on one disk (`1487d729e`)
 - **design**: one declaration for the design, and every surface projects it (`2b3b9fffa`)
 - **closure**: a task owes obligations, and the evidence that discharges them goes stale (`cf1ee94ca`)
@@ -124,6 +123,7 @@ Current version: **0.4.0**
 
 ### Documentation
 
+- **bootstrap**: every worker is told it is not alone, and told to push before it is (`e6571df53`)
 - **plan**: I1301 is done, and I1302 may not land its schema alone (`012fed644`)
 - **plan**: the projection claim splits in two, and only one of the halves was ever true (`990bd0588`)
 - **plan**: the external-workspaces milestone and its ten issues (`54c5f45ee`)
@@ -156,14 +156,13 @@ Current version: **0.4.0**
 
 ### Housekeeping
 
-- **derive**: the projections follow the master merge (`c4b6d0715`)
-- **derive**: the projections follow the master merge (`8c53e2b11`)
-- **derive**: the projections follow the master merge (`a4f9780b0`)
-- **derive**: the projections follow the master merge (`16cc159c7`)
-- **derive**: the projections follow the master merge (`91b4e8be6`)
-- **derive**: the projections follow the master merge (`3a2aeab52`)
+- **derive**: the projections follow master once more (`f36420c30`)
+- **derive**: the projections follow eight branches and current master (`98f3dfbda`)
+- **derive**: the projections follow six branches folded together (`e15b311e7`)
+- **derive**: the projections follow the master merge (`c114a92f3`)
+- **derive**: the projections follow the master merge (`341451cb7`)
 - **derive**: the projections follow the merge (`f2b018f26`)
-- **derive**: the projections follow the two merges, and the baseline records lib/doctor.sh (`501ea2d41`)
+- **derive**: the projections follow the merge of origin/master (`11fc8bf2b`)
 - **derive**: the projections follow the master merge, and the baseline records three scripts that arrived with it (`8ddb6496d`)
 - **derive**: the projections follow the final master merge (`cdc859654`)
 - **derive**: the projections follow the master merge (`5e6d324c1`)
@@ -221,6 +220,7 @@ Current version: **0.4.0**
 - Merge feature/github-work-graph into int/everything, with I1305 restored to its own milestone (`d52f43334`)
 - **feature/graph-model**: uncommitted work found in the worktree at the topology migration, committed as it was (`034f334bf`)
 - **feature/deployment-core**: uncommitted work found in the worktree at the topology migration, committed as it was (`6579f1978`)
+- **chore/derive-master**: uncommitted work found in the worktree at the topology migration, committed as it was (`1410a0c79`)
 
 
 ## v0.3.1 — 2026-09-08

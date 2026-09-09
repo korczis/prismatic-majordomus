@@ -118,6 +118,9 @@ mj_context_sections() {
   } > "$MJ_CTX_TMP/10.git"
   MJ_CTX_LABEL="${label:-none}"
 
+  # 1b. peers — who else is in this repository right now, and what of it they claim.
+  mj_context_peers "$have_task"
+
   # 2. task
   if [ "$have_task" = 0 ]; then
     printf '## TASK\nnone active — run: majordomus start "<task>" --scope <paths>\n' > "$MJ_CTX_TMP/20.task"
@@ -295,8 +298,11 @@ mj_ctx_verification() {
 # named in EXCLUDED. Bodies of authored records degrade to a pointer rather than vanish.
 # The document chain is derived, not evidence: it is dropped after the derived listings and
 # before any authored record body, and the worker is told the one command that rebuilds it.
-MJ_CTX_DROP_ORDER="90.history 80.files 35.documents 50.decisions 60.checkpoint 70.handover"
-MJ_CTX_ORDER="10.git 20.task 30.profile 35.documents 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
+# `15.peers` sits between git and the task on purpose: another worker holding your paths
+# right now outranks your own records the way git does, and it is dropped late for the same
+# reason — a collision in flight is worth more than history.
+MJ_CTX_DROP_ORDER="90.history 80.files 35.documents 50.decisions 60.checkpoint 70.handover 15.peers"
+MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 35.documents 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
 # governs what a worker actually receives, so the count must be of this file and not of
@@ -315,6 +321,90 @@ mj_ctx_render() {
   } > "$out"
   # the count includes the budget line about to be appended
   printf '%s of %s lines%s\n' "$(( $(mj_lines "$out") + 1 ))" "$budget" "${dropped:+ (dropped:$dropped)}" >> "$out"
+}
+
+# The other workers attached to this repository's shared server, and specifically the ones
+# whose claimed paths meet this task's scope.
+#
+# Co-operation between concurrent workers failed today not because the board did not exist
+# but because looking at it was voluntary: a session announced, its connection was
+# re-established, and it was invisible to eight others for three hours; two sessions built
+# the same subsystem because neither read the board first. So the board arrives where every
+# worker is already told to look — `majordomus context`, the first thing the bootstrap asks
+# for — rather than waiting to be asked for.
+#
+# It degrades to nothing rather than to noise. No lease, no server, no jq, no curl, a server
+# that does not answer within two seconds, or a board holding nobody but the caller: the
+# section is not written at all, because a repository with one worker in it must not grow a
+# section about being alone. Nothing here fails a command: a coordination hint that can
+# break `context` would be worse than no hint.
+mj_context_peers() {
+  local have_task="$1"
+  # The lease is repository-scoped and `.ai/local/` is checkout-scoped, so a linked worktree
+  # looking for the shared server in its own state finds nothing: one server serves the
+  # repository, and its lease is written by whoever started it, in the primary checkout.
+  # `--git-common-dir` is the one thing that names that checkout from any worktree.
+  local common primary lease
+  common="$(git -C "$MJ_ROOT" rev-parse --git-common-dir 2>/dev/null)" || return 0
+  case "$common" in /*) ;; *) common="$MJ_ROOT/$common" ;; esac
+  primary="$(dirname "$common")"
+  lease="$MJ_STATE_DIR/mcp/server.json"
+  [ -f "$lease" ] || lease="$primary/.ai/local/state/mcp/server.json"
+  [ -f "$lease" ] || return 0
+  mj_has jq || return 0
+  mj_has curl || return 0
+  local url; url="$(jq -r '.url // empty' "$lease" 2>/dev/null)" || return 0
+  [ -n "$url" ] || return 0
+  local board; board="$(curl -fsS --max-time 2 "$url/api/v1/peers" 2>/dev/null)" || return 0
+  printf '%s' "$board" | jq -e '.peers' >/dev/null 2>&1 || return 0
+
+  # one line per peer: id, attached?, last seen, intent (first sentence), scope
+  local rows; rows="$(printf '%s' "$board" | jq -r '
+    .peers[]
+    | [ .id,
+        (if .attached == false then "gone" else "here" end),
+        (.last_seen_seconds_ago | tostring),
+        ((.announcement.intent // "(said nothing)") | split(". ")[0] | .[0:110]),
+        ((.announcement.scope // []) | join(" "))
+      ] | @tsv' 2>/dev/null)" || return 0
+  [ -n "$rows" ] || return 0
+
+  # what of it meets this task's scope — the part a reader must not miss
+  local mine="" meets="" pid pscope s m
+  if [ "$have_task" = 1 ]; then mine="$(mj_ylist "$MJ_CUR_FLAT" scope)"; fi
+  if [ -n "$mine" ]; then
+    while IFS="$(printf '\t')" read -r pid _ _ _ pscope; do
+      [ -n "$pscope" ] || continue
+      for s in $pscope; do
+        for m in $mine; do
+          if mj_path_contains "$m" "$s" || mj_path_contains "$s" "$m"; then
+            meets="$meets$pid claims $s, inside your $m\n"; break 2
+          fi
+        done
+      done
+    done <<EOF
+$rows
+EOF
+  fi
+
+  {
+    # The shell tool has no peer identity of its own — it reads the board over HTTP and the
+    # board answers sessions, not commands — so it cannot subtract the reader from the list.
+    # Saying so is cheaper and more honest than guessing which line is you.
+    printf '## PEERS\n'
+    printf '# the board of the shared server; one of these sessions is you\n'
+    printf '%s\n' "$rows" | while IFS="$(printf '\t')" read -r pid att age intent pscope; do
+      printf '%-4s %-5s %4ss  %s\n' "$pid" "$att" "$age" "$intent"
+      [ -n "$pscope" ] && printf '            claims %s\n' "$pscope"
+    done
+    if [ -n "$meets" ]; then
+      printf '\nOVERLAP  another worker claims ground this task claims:\n'
+      printf "$meets" | sed 's/^/  /'
+      printf '  a claim is not a lock; talk to them before you both write it\n'
+      printf '  (your own claim appears here too — the board answers sessions, not commands)\n'
+    fi
+  } > "$MJ_CTX_TMP/15.peers"
+  return 0
 }
 
 mj_context_emit() {
