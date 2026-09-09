@@ -45,6 +45,14 @@ site/content/docs/site-claims.md    merge=derived
 # rewritten whenever the registry moves.
 site/content/registry/**            merge=derived
 
+# The whole documentation tree the site serves: `scripts/generate-site-data` deletes and
+# rewrites site/content/docs on every run — the long-form pages are the canonical Markdown
+# under docs/ with a generated front matter, and the CLI reference is one page per command
+# whose `weight` is a function of where that command sits in the whole list. Adding a
+# command anywhere renumbers every page after it, so two branches that each add one
+# conflict on every page between them, over a number neither of them decides.
+site/content/docs/**                merge=derived
+
 # The schema, allow-list and section projections: `majordomus generate` writes all three out
 # of the kind and capability declarations, and they conflict for the same reason the rest of
 # this file exists — the merged tree's answer appears in neither side.
@@ -64,3 +72,8 @@ CLAUDE.md                           merge=derived
 # platform declarations, and both carry a fingerprint of the tree they were generated from.
 docs/INSTALL.md                     merge=derived
 site/static/install.sh              merge=derived
+
+# The release metadata the site publishes: `majordomus generate distribution` writes one
+# file per release plus latest.json out of the release declarations, so two branches that
+# cut or record a release conflict here on content neither of them decides.
+site/static/releases/**             merge=derived

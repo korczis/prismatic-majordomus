@@ -1210,12 +1210,20 @@ jq -e '.openapi | startswith("3.1")' "$OA" >/dev/null 2>&1 || { echo "generate-s
 # every operation is documented in full: a tag with a description, every response described,
 # and an example for what takes input. An operation without an example is a capability
 # without a benchmark case, which the crate does not compile; this catches a stale document.
+#
+# The exception is an operation whose descriptor waived its benchmark, with a typed reason:
+# the waiver *is* the declaration that this capability has no case (an execution to read
+# cannot be staged by a benchmark host). The waiver is reported by `bench coverage` and the
+# reason is on the operation as `x-majordomus-benchmark`, so the exemption is read from the
+# document rather than from a list of operation ids here.
 jq -r '(.tags // [] | map(.name)) as $tags
        | .paths | to_entries[] | .key as $p | .value | to_entries[] | .key as $m | .value
+       | ((.["x-majordomus-benchmark"].policy // "required") == "waived") as $waived
        | (if ((.tags // []) | length) == 0 then "\($m) \($p): no tag"
           elif ((.tags // []) - $tags | length) > 0 then "\($m) \($p): tag \((.tags - $tags)[0]) is not declared with a description"
           elif ((.responses // {}) | length) == 0 then "\($m) \($p): no responses"
           elif ([.responses[] | select((.description // "") == "")] | length) > 0 then "\($m) \($p): a response without a description"
+          elif $waived then empty
           elif $m == "post" and ((.requestBody.content["application/json"].examples // {}) | length) == 0 then "\($m) \($p): a POST without a request body example"
           elif $m == "get" and ((.parameters // []) | length) > 0 and ([.parameters[] | select((.examples // {}) | length > 0)] | length) == 0 then "\($m) \($p): parameters without a single example"
           else empty end)' "$OA" | while read -r problem; do

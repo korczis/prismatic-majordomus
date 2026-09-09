@@ -537,12 +537,16 @@
   .mj-badge--ok,
   .mj-badge--declared,
   .mj-badge--query,
+  .mj-badge--succeeded,
+  .mj-badge--completed,
   .mj-badge--current {
     @apply text-green-700 dark:text-green-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
   }
   .mj-badge--warn,
   .mj-badge--command,
+  .mj-badge--cancelled,
+  .mj-badge--cancelling,
   .mj-badge--stale,
   .mj-badge--not-generated {
     @apply text-amber-700 dark:text-amber-300;
@@ -550,6 +554,7 @@
   }
   .mj-badge--fail,
   .mj-badge--error,
+  .mj-badge--failed,
   .mj-badge--missing {
     @apply text-red-700 dark:text-red-300;
     border-color: color-mix(in oklch, currentColor 40%, transparent);
@@ -560,6 +565,8 @@
   }
   .mj-badge--info,
   .mj-badge--resource,
+  .mj-badge--queued,
+  .mj-badge--running,
   .mj-badge--generated,
   .mj-badge--cached,
   .mj-badge--present,
@@ -569,6 +576,8 @@
   }
   :where(.dark) .mj-badge--info,
   :where(.dark) .mj-badge--resource,
+  :where(.dark) .mj-badge--queued,
+  :where(.dark) .mj-badge--running,
   :where(.dark) .mj-badge--generated,
   :where(.dark) .mj-badge--cached,
   :where(.dark) .mj-badge--present,
@@ -780,5 +789,68 @@
     @apply px-4 py-2 text-[11px];
     color: var(--mj-text-muted);
     border-top: 1px solid var(--mj-border);
+  }
+
+  /* --- executions: a progress bar, a log that scrolls inside itself, and a connection
+     indicator that says what it means in a word as well as in a shape. Nothing here is
+     wider than its container: a path in a log line wraps rather than widening the page. */
+  .mj-progress {
+    @apply relative flex h-4 w-full max-w-xs items-center overflow-hidden rounded;
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-progress-bar {
+    @apply absolute inset-y-0 left-0;
+    background: color-mix(in oklch, var(--color-accent-500) 45%, transparent);
+    transition: width 150ms linear;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mj-progress-bar {
+      transition: none;
+    }
+  }
+  .mj-progress-text {
+    @apply relative z-10 w-full text-center font-mono text-[10px];
+  }
+  .mj-log {
+    @apply max-h-96 overflow-y-auto rounded p-2 font-mono text-[11.5px];
+    background: var(--mj-bg-sunken);
+    border: 1px solid var(--mj-border);
+  }
+  .mj-log-line {
+    @apply flex flex-wrap items-baseline gap-2 py-0.5;
+  }
+  .mj-log-time {
+    @apply shrink-0 text-[10px];
+    color: var(--mj-text-muted);
+  }
+  .mj-log-stream {
+    @apply shrink-0 rounded px-1 text-[10px] uppercase tracking-wider;
+    border: 1px solid var(--mj-border);
+  }
+  .mj-log-stream--stderr {
+    @apply text-red-700 dark:text-red-300;
+  }
+  .mj-log-text {
+    @apply min-w-0 break-words whitespace-pre-wrap;
+  }
+  .mj-connection {
+    @apply mb-2 flex items-center gap-1.5 text-[11.5px];
+    color: var(--mj-text-muted);
+  }
+  .mj-connection-mark {
+    @apply font-mono;
+  }
+  .mj-connection-mark--live {
+    @apply text-green-700 dark:text-green-300;
+  }
+  .mj-connection-mark--reconnecting {
+    @apply text-amber-700 dark:text-amber-300;
+  }
+  .mj-live {
+    @apply text-[12.5px];
+  }
+  .mj-filters {
+    @apply flex flex-wrap items-end gap-3;
   }
 }

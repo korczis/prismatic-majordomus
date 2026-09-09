@@ -14,13 +14,25 @@ build:
   package: majordomus-cli
   binary: majordomus
   profile: release
-  # The build context, and nothing else: the executable's own sources, the tool
-  # distribution it reads at run time, and the layer it serves.
+  # The build context, and nothing else. The package's own directory is what the builder
+  # stage compiles; every other input is what the running process reads — the tool
+  # distribution, the layer, and the files this repository's source classes point at, so
+  # that the deployed index is the same shape as the one here.
   inputs:
     - apps/majordomus-cli
     - share
     - .ai
-  site: site/public
+    - docs
+    - lib
+    - bin
+    - test
+    - README.md
+    - AGENTS.md
+    - CLAUDE.md
+    - CONTRIBUTING.md
+    - SECURITY.md
+  # No `site:` yet. The image does not carry the built site, and declaring one it does not
+  # serve would be the drift this kind exists to prevent (I0912 owns it).
 
 listen:
   # One port. The process, the image and the provider configuration all read this.

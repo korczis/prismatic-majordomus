@@ -1,7 +1,7 @@
 +++
 title = "How each declarative kind is read and which keys it may carry is data read at run time, and a repository adds a kind with its JSON Schema without a code change"
 description = "The Rust executable compiles nothing about kinds or keys. On every start it locates the tool distribution's share directory and reads kinds.yaml (for each kind: the format, the front-matter rule, the identity, title and description fields, the version field and its supported values, the schema it must satisfy) and schemas/<name>.schema.json, one JSON Schema per contract, validated with a JSON Schema validator. A repository adds kinds under .ai/repo/knowledge/kinds.yaml and schemas under .ai/repo/knowledge/schemas/, declares a class for them in sources.yaml, and the objects are served; a kind or schema the distribution already declares cannot be redefined."
-weight = 108
+weight = 109
 [extra]
 claim_id = "schema-driven-kinds"
 status = "guaranteed"

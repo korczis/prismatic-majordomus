@@ -441,6 +441,14 @@ fn every_route_answers_its_benchmark_cases_and_the_document_shows_them() {
             .cases(c.id.as_str())
             .unwrap_or_else(|| panic!("{}: an executable on the wire has a case provider", c.id));
         let inputs = provider(&cases);
+        if matches!(
+            c.benchmark,
+            majordomus_cli::capability::BenchmarkPolicy::Waived { .. }
+        ) {
+            // a waiver is the declaration that this capability has no case to run in a
+            // loop; the coverage projection reports it, and it is not a route defect
+            continue;
+        }
         assert!(
             !inputs.is_empty(),
             "{}: at least one case in this repository",
