@@ -1,7 +1,7 @@
 +++
 title = "First run in a foreign repository"
 description = "forensic finding: what `doctor` reports in a repository that is not this one, why 109 of its findings cannot be satisfied there, and the decision that needs making"
-weight = 25
+weight = 26
 [extra]
 source = "docs/ADOPTION_FIRST_RUN.md"
 +++

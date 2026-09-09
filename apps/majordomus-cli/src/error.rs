@@ -225,6 +225,18 @@ pub enum Error {
         /// What is wrong, and what to do about it.
         reason: String,
     },
+    /// A Rust source file of the crate under inspection cannot be read or parsed, so the
+    /// quality inventory would be built over less than the whole crate. Reported rather
+    /// than skipped: a partial inventory that looked clean would be the one result this
+    /// subsystem must never produce.
+    #[error("rust source {path}: {reason}")]
+    InvalidSource {
+        /// The file, crate-relative when it is inside the crate.
+        path: String,
+        /// What is wrong, and what to do about it.
+        reason: String,
+    },
+
     /// `generate --check` found committed projections that differ from the registry, or are missing.
     #[error("generated artifact(s) stale: {} (run: majordomus generate)", files.join(", "))]
     Stale {
@@ -254,6 +266,7 @@ impl Error {
             | Error::InvalidDeployment { .. }
             | Error::InvalidDistribution { .. }
             | Error::InvalidRelease { .. }
+            | Error::InvalidSource { .. }
             | Error::Stale { .. } => 10,
             Error::CapabilityNotFound { .. }
             | Error::NotFound { .. }

@@ -6,6 +6,29 @@
 //! object or a projection exists, and an edge exists because one of them names another.
 //! A derivation that would need a file listing its own nodes belongs somewhere else.
 //!
+//! ```
+//! use majordomus_cli::graph::{Builder, Node};
+//!
+//! fn thing(id: &str) -> Node {
+//!     Node { id: id.into(), kind: "thing".into(), label: id.to_uppercase(), summary: None,
+//!            route: None, source: None, status: None, external: false, facts: Default::default() }
+//! }
+//!
+//! let mut builder = Builder::new("demo", "Demo", "Two things and the edge between them.", "example")
+//!     .node_kind("thing", "one of the things")
+//!     .edge_kind("names", "the source names the target");
+//! builder.node(thing("a"));
+//! builder.node(thing("b"));
+//! builder.edge("a", "b", "names");
+//! // an edge to something the derivation never added is dropped rather than dangling
+//! builder.edge("a", "never-added", "names");
+//!
+//! let graph = builder.finish();
+//! assert_eq!(graph.nodes.len(), 2);
+//! assert_eq!(graph.edges.len(), 1, "the dangling edge is gone");
+//! assert!(graph.nodes.windows(2).all(|w| w[0].id <= w[1].id), "sorted, so two runs agree");
+//! ```
+//!
 //! Determinism is a contract: the same tree and the same executable produce the same
 //! bytes. Nodes and edges are sorted by their identities, never by discovery order, and
 //! no derivation reads a clock.

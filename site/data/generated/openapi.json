@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 49,
-    "schemas": 246,
-    "tags": 18
+    "operations": 52,
+    "schemas": 260,
+    "tags": 20
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -32,7 +32,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://korczis.github.io/prismatic-majordomus/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.3.1",
+  "generated_by": "majordomus-cli 0.4.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -41,7 +41,7 @@
     "license": "MIT",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.3.1"
+    "version": "0.4.0"
   },
   "infrastructure": [
     {
@@ -202,86 +202,6 @@
       "variants": []
     },
     {
-      "description": "What `announce` answers: the peer as recorded, and who else is on that ground.",
-      "is_enum": false,
-      "name": "Announced",
-      "properties": [
-        {
-          "description": "`p1`, `p2`, ...",
-          "name": "id",
-          "refs": [
-            "PeerId"
-          ],
-          "required": true,
-          "type": "PeerId"
-        },
-        {
-          "description": "The client behind it.",
-          "name": "client",
-          "refs": [
-            "ClientInfo"
-          ],
-          "required": true,
-          "type": "ClientInfo"
-        },
-        {
-          "description": "How it is attached.",
-          "name": "transport",
-          "refs": [
-            "Transport"
-          ],
-          "required": true,
-          "type": "Transport"
-        },
-        {
-          "description": "When it attached, RFC 3339, UTC.",
-          "name": "connected_at",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "Seconds since its last message.",
-          "name": "last_seen_seconds_ago",
-          "refs": [],
-          "required": true,
-          "type": "integer (uint64)"
-        },
-        {
-          "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.",
-          "name": "attached",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "Its announcement, when it made one.",
-          "name": "announcement",
-          "refs": [
-            "Announcement"
-          ],
-          "required": false,
-          "type": "Announcement | null"
-        },
-        {
-          "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case.",
-          "name": "overlaps",
-          "refs": [
-            "Overlap"
-          ],
-          "required": false,
-          "type": "array of Overlap"
-        }
-      ],
-      "type": "object",
-      "used_by": [
-        "peers.announce"
-      ],
-      "used_by_schemas": [],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "What a peer said it is working on.",
       "is_enum": false,
       "name": "Announcement",
@@ -311,7 +231,6 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "Announced",
         "Peer"
       ],
       "values": [],
@@ -2192,7 +2111,6 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "Announced",
         "Peer"
       ],
       "values": [],
@@ -5088,6 +5006,7 @@
         "capabilities.list",
         "capabilities.projections",
         "capabilities.describe",
+        "release.changelog",
         "commands.get",
         "commands.list",
         "commands.graph",
@@ -5117,7 +5036,9 @@
         "product.matrix",
         "product.providers",
         "product.validate",
+        "quality.report",
         "health.ready",
+        "release.version",
         "repository.info",
         "repository.scope",
         "repository.scope_classify",
@@ -5211,6 +5132,34 @@
       "used_by": [],
       "used_by_schemas": [
         "MomentDetail"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A group of items the example policy does not apply to, with the reason it does not.",
+      "is_enum": false,
+      "name": "Exemption",
+      "properties": [
+        {
+          "description": "The reason, as the policy names it.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many items it covers.",
+          "name": "items",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PublicApiQuality"
       ],
       "values": [],
       "variants": []
@@ -7468,6 +7417,48 @@
       "variants": []
     },
     {
+      "description": "What the exported module surface looks like.",
+      "is_enum": false,
+      "name": "ModuleQuality",
+      "properties": [
+        {
+          "description": "Modules the crate exports, the crate root included.",
+          "name": "modules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, how many carry a `//!` header.",
+          "name": "documented",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many carry an executable example in that header.",
+          "name": "exampled",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many something exercises: an in-file test, or a test that names them.",
+          "name": "behaviourally_tested",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "QualityReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One capability module the feature names.",
       "is_enum": false,
       "name": "ModuleRef",
@@ -8329,6 +8320,76 @@
       "variants": []
     },
     {
+      "description": "What the canonical operations look like against the transports that project them.",
+      "is_enum": false,
+      "name": "OperationParity",
+      "properties": [
+        {
+          "description": "Executable capabilities in the registry.",
+          "name": "canonical",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, how many declare a command-line projection.",
+          "name": "cli",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many declare an HTTP route.",
+          "name": "http",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many the OpenAPI document describes.",
+          "name": "openapi",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many declare an MCP tool.",
+          "name": "mcp",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Commands of the command line, leaves and runnable parents.",
+          "name": "cli_commands",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, how many are the projection of a capability.",
+          "name": "cli_from_capability",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are declared to belong to the command line alone, with a reason.",
+          "name": "cli_local",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "QualityReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where the declaration was read from.",
       "is_enum": true,
       "name": "Origin",
@@ -8522,81 +8583,6 @@
       "variants": []
     },
     {
-      "description": "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch.",
-      "is_enum": false,
-      "name": "Overlap",
-      "properties": [
-        {
-          "description": "The other peer.",
-          "name": "peer",
-          "refs": [
-            "PeerId"
-          ],
-          "required": true,
-          "type": "PeerId"
-        },
-        {
-          "description": "Whether that peer is still attached. An overlap with a departed peer is a weaker\nsignal than one with a live session, and the reader is told which it is.",
-          "name": "attached",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
-          "description": "What it said it was doing.",
-          "name": "intent",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The claims that meet: one line per pair, `yours` and `theirs`.",
-          "name": "paths",
-          "refs": [
-            "OverlapPath"
-          ],
-          "required": true,
-          "type": "array of OverlapPath"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Announced",
-        "PeerList"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
-      "description": "One pair of claims that contain one another.",
-      "is_enum": false,
-      "name": "OverlapPath",
-      "properties": [
-        {
-          "description": "The path the announcing peer claimed.",
-          "name": "yours",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        },
-        {
-          "description": "The path the other peer claimed.",
-          "name": "theirs",
-          "refs": [],
-          "required": true,
-          "type": "string"
-        }
-      ],
-      "type": "object",
-      "used_by": [],
-      "used_by_schemas": [
-        "Overlap"
-      ],
-      "values": [],
-      "variants": []
-    },
-    {
       "description": "One peer as the board lists it.",
       "is_enum": false,
       "name": "Peer",
@@ -8643,13 +8629,6 @@
           "type": "integer (uint64)"
         },
         {
-          "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.",
-          "name": "attached",
-          "refs": [],
-          "required": true,
-          "type": "boolean"
-        },
-        {
           "description": "Its announcement, when it made one.",
           "name": "announcement",
           "refs": [
@@ -8660,7 +8639,9 @@
         }
       ],
       "type": "object",
-      "used_by": [],
+      "used_by": [
+        "peers.announce"
+      ],
       "used_by_schemas": [
         "PeerList"
       ],
@@ -8675,8 +8656,6 @@
       "type": "string",
       "used_by": [],
       "used_by_schemas": [
-        "Announced",
-        "Overlap",
         "Peer",
         "PeerList"
       ],
@@ -8705,22 +8684,13 @@
           "type": "PeerId | null"
         },
         {
-          "description": "The peers, in attachment order; `p1` started the server. A peer that announced\nsomething and then went away is still here, with `attached: false`.",
+          "description": "The peers, in attachment order; `p1` started the server.",
           "name": "peers",
           "refs": [
             "Peer"
           ],
           "required": true,
           "type": "array of Peer"
-        },
-        {
-          "description": "Every pair of peers whose claimed scope meets, each pair once. Empty is the\nordinary case, and a reader who sees an entry here is looking at two sessions\nabout to do the same work.",
-          "name": "overlaps",
-          "refs": [
-            "Overlap"
-          ],
-          "required": false,
-          "type": "array of Overlap"
         }
       ],
       "type": "object",
@@ -9445,6 +9415,194 @@
       "variants": []
     },
     {
+      "description": "What the exported item surface looks like.",
+      "is_enum": false,
+      "name": "PublicApiQuality",
+      "properties": [
+        {
+          "description": "Items the crate exports, of every kind.",
+          "name": "items",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, how many carry documentation.",
+          "name": "documented",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many owe an executable example under the policy.",
+          "name": "owe_example",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Of those, how many have one that counts.",
+          "name": "exampled",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many are exempt from the example policy for a structural reason, and why, by\nreason, so that the exemptions are visible rather than implied by a subtraction.",
+          "name": "exempt",
+          "refs": [
+            "Exemption"
+          ],
+          "required": true,
+          "type": "array of Exemption"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "QualityReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer: the measurement, or the reason there was not one.",
+      "is_enum": false,
+      "name": "QualityAnswer",
+      "properties": [
+        {
+          "description": "Whether a crate was found and measured. `false` is a complete answer, not a failure:\nthe layer installs into repositories that carry no Rust crate, and a doctrine that\ncannot apply is not a violation.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why nothing was measured, when nothing was.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The measurement. Present and empty-of-findings when `measured` is false, so that a\nconsumer reads one shape either way and `measured` is the only question it must ask.",
+          "name": "report",
+          "refs": [
+            "QualityReport"
+          ],
+          "required": true,
+          "type": "QualityReport"
+        },
+        {
+          "description": "Whether the report as filtered leaves nothing blocking. Answered here so that a\ncaller over any transport reads the verdict rather than deriving it, and so that the\ncommand line's exit code and this field can never disagree.",
+          "name": "passes",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The findings the ratchet accepts because they stood when the rule landed. A finding\noutside this count is what fails the gate.",
+          "name": "baselined",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "quality.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One measurement of one crate, and everything found wrong in it.",
+      "is_enum": false,
+      "name": "QualityReport",
+      "properties": [
+        {
+          "description": "[`SCHEMA`].",
+          "name": "schema",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "What was measured: the crate directory, repository-relative.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The exported item surface.",
+          "name": "public_api",
+          "refs": [
+            "PublicApiQuality"
+          ],
+          "required": true,
+          "type": "PublicApiQuality"
+        },
+        {
+          "description": "The exported module surface.",
+          "name": "modules",
+          "refs": [
+            "ModuleQuality"
+          ],
+          "required": true,
+          "type": "ModuleQuality"
+        },
+        {
+          "description": "The canonical operations against their transports.",
+          "name": "operations",
+          "refs": [
+            "OperationParity"
+          ],
+          "required": true,
+          "type": "OperationParity"
+        },
+        {
+          "description": "Every finding, errors first, then by file and line.",
+          "name": "violations",
+          "refs": [
+            "Violation"
+          ],
+          "required": true,
+          "type": "array of Violation"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "QualityAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning.",
+      "is_enum": true,
+      "name": "QualitySeverity",
+      "properties": [],
+      "type": "\"error\" | \"warning\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Violation"
+      ],
+      "values": [
+        {
+          "description": "The gate fails.",
+          "value": "error"
+        },
+        {
+          "description": "Reported, and the gate passes.",
+          "value": "warning"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The answer to \"can this process serve traffic\": the local initialisation a request\nwould need, and nothing beyond this process. A readiness check that grew a dependency\nprobe fails a deployment because an unrelated service is down.",
       "is_enum": false,
       "name": "Readiness",
@@ -9775,6 +9933,417 @@
       "type": "object",
       "used_by": [
         "distribution.artifact"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One change, from one commit.",
+      "is_enum": false,
+      "name": "ReleaseChange",
+      "properties": [
+        {
+          "description": "What it did.",
+          "name": "kind",
+          "refs": [
+            "ReleaseChangeKind"
+          ],
+          "required": true,
+          "type": "ReleaseChangeKind"
+        },
+        {
+          "description": "The area it did it in, when the subject named one: `commands`, `ci`, `site`.",
+          "name": "scope",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The subject, without the type and scope that prefixed it.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer.",
+          "name": "breaking",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The abbreviated commit.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseChangeGroup",
+        "ReleaseVersionReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The changes of one kind, with the heading and the rank that decide where they are shown.\n\nThe grouping is in the document rather than in each renderer. It was in the Markdown\nrenderer alone, and the site — which cannot see a Rust function — grouped alphabetically\ninstead, so the same changelog read in two orders depending on which surface showed it.\nA presentation order stated once and carried is the only kind that survives a projection.",
+      "is_enum": false,
+      "name": "ReleaseChangeGroup",
+      "properties": [
+        {
+          "description": "What the changes in it did.",
+          "name": "kind",
+          "refs": [
+            "ReleaseChangeKind"
+          ],
+          "required": true,
+          "type": "ReleaseChangeKind"
+        },
+        {
+          "description": "The heading it is shown under.",
+          "name": "heading",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it sorts among the other groups; ascending.",
+          "name": "rank",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint8)"
+        },
+        {
+          "description": "The changes, in the order the commits were read.",
+          "name": "changes",
+          "refs": [
+            "ReleaseChange"
+          ],
+          "required": true,
+          "type": "array of ReleaseChange"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission.",
+      "is_enum": true,
+      "name": "ReleaseChangeKind",
+      "properties": [],
+      "type": "\"feat\" | \"fix\" | \"perf\" | \"refactor\" | \"docs\" | \"test\" | \"chore\" | \"ci\" | \"other\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseChange",
+        "ReleaseChangeGroup"
+      ],
+      "values": [
+        {
+          "description": "A capability a person did not have before.",
+          "value": "feat"
+        },
+        {
+          "description": "Behaviour that was wrong and is not any more.",
+          "value": "fix"
+        },
+        {
+          "description": "Performance, with the behaviour unchanged.",
+          "value": "perf"
+        },
+        {
+          "description": "Structure, with the behaviour unchanged.",
+          "value": "refactor"
+        },
+        {
+          "description": "Documentation.",
+          "value": "docs"
+        },
+        {
+          "description": "Tests.",
+          "value": "test"
+        },
+        {
+          "description": "The build, the pipeline, the tooling.",
+          "value": "chore"
+        },
+        {
+          "description": "Continuous integration.",
+          "value": "ci"
+        },
+        {
+          "description": "A commit whose subject does not parse as a conventional commit.",
+          "value": "other"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The whole changelog.",
+      "is_enum": false,
+      "name": "ReleaseChangelog",
+      "properties": [
+        {
+          "description": "The schema this document satisfies.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version the tree currently declares.",
+          "name": "current",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Newest first, the unreleased section leading when there is one.",
+          "name": "sections",
+          "refs": [
+            "ReleaseSection"
+          ],
+          "required": true,
+          "type": "array of ReleaseSection"
+        },
+        {
+          "description": "What could not be read, said rather than hidden: a repository with no git history,\na release record that names no commit, a tag that is not in this clone.",
+          "name": "diagnostics",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "release.changelog"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One published artifact, from the release record's own evidence.",
+      "is_enum": false,
+      "name": "ReleaseChangelogArtifact",
+      "properties": [
+        {
+          "description": "The platform triple the record names.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its SHA-256, as the record read it off the file.",
+          "name": "sha256",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One decision, as the layer's own ADR object states it.",
+      "is_enum": false,
+      "name": "ReleaseDecision",
+      "properties": [
+        {
+          "description": "`adr-0027`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The decision, in its own words.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`proposed`, `accepted`, `superseded`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The date the record carries.",
+          "name": "date",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseSection"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One version's worth of changelog.",
+      "is_enum": false,
+      "name": "ReleaseSection",
+      "properties": [
+        {
+          "description": "The version, or `unreleased`.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The tag, when one was published.",
+          "name": "tag",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it was published, from the record.",
+          "name": "date",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit it was published from.",
+          "name": "commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether this section is the work that has not been released.",
+          "name": "unreleased",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The decisions dated inside this release's window.",
+          "name": "decisions",
+          "refs": [
+            "ReleaseDecision"
+          ],
+          "required": true,
+          "type": "array of ReleaseDecision"
+        },
+        {
+          "description": "The changes, from the commits in this release's range, grouped by what they did and\nordered by the rank each group carries. The flat list is the concatenation of the\ngroups' own; nothing holds it twice.",
+          "name": "groups",
+          "refs": [
+            "ReleaseChangeGroup"
+          ],
+          "required": true,
+          "type": "array of ReleaseChangeGroup"
+        },
+        {
+          "description": "What was published, when this section is a release.",
+          "name": "artifacts",
+          "refs": [
+            "ReleaseChangelogArtifact"
+          ],
+          "required": true,
+          "type": "array of ReleaseChangelogArtifact"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReleaseChangelog"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the version is, and what the commits since the last release imply it should become.",
+      "is_enum": false,
+      "name": "ReleaseVersionReport",
+      "properties": [
+        {
+          "description": "The version the crate manifest declares — the authority.",
+          "name": "declared",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version `bin/majordomus` prints.",
+          "name": "tool",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the two agree. `scripts/release-version --check` is the gate; this is the\nsame question asked by the executable, so every surface can show the answer.",
+          "name": "agree",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The last release the layer records.",
+          "name": "last_release",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the commits since it imply: `major`, `minor`, `patch`, or `none`.",
+          "name": "bump",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version that bump would produce.",
+          "name": "next",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many commits since the last release, and of what kind — the evidence for the\nbump, so that a surprising answer can be checked rather than believed.",
+          "name": "changes",
+          "refs": [
+            "ReleaseChange"
+          ],
+          "required": true,
+          "type": "array of ReleaseChange"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "release.version"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -12477,7 +13046,6 @@
       "type": "\"stdio\" | \"http\"",
       "used_by": [],
       "used_by_schemas": [
-        "Announced",
         "Peer"
       ],
       "values": [
@@ -12760,6 +13328,161 @@
         {
           "description": "Never read; the reason says why.",
           "value": "out"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One finding: what, where, why, and what to do.",
+      "is_enum": false,
+      "name": "Violation",
+      "properties": [
+        {
+          "description": "The stable code.",
+          "name": "code",
+          "refs": [
+            "ViolationCode"
+          ],
+          "required": true,
+          "type": "ViolationCode"
+        },
+        {
+          "description": "How bad it is.",
+          "name": "severity",
+          "refs": [
+            "QualitySeverity"
+          ],
+          "required": true,
+          "type": "QualitySeverity"
+        },
+        {
+          "description": "The canonical id of the rule that requires this.",
+          "name": "rule",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is, repository-relative; empty when the finding is not about a file.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The line, 1-based; `None` when the finding is not about a line.",
+          "name": "line",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The item's full path, or the command, or the capability id: what the finding is about.",
+          "name": "symbol",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One sentence, specific to this occurrence.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why it matters, from the code.",
+          "name": "why",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What to do, from the code.",
+          "name": "remediation",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "QualityReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What is wrong, as a stable machine-readable code.\n\nThe codes are the contract between the validator and everything downstream: CI\nannotations, Cockpit filters, documentation anchors and an agent deciding what to fix.\nA code is never renamed once it has shipped; a rule that stops existing takes its code\nwith it.",
+      "is_enum": true,
+      "name": "ViolationCode",
+      "properties": [],
+      "type": "\"RUST_PUBLIC_MISSING_DOCS\" | \"RUST_PUBLIC_THIN_DOCS\" | \"RUST_PUBLIC_MISSING_EXAMPLE\" | \"RUST_EXAMPLE_NOT_EXECUTABLE\" | \"RUST_EXAMPLE_PLACEHOLDER\" | \"RUST_EXAMPLE_DOES_NOT_NAME_SUBJECT\" | \"RUST_MODULE_MISSING_DOCS\" | \"RUST_MODULE_MISSING_EXAMPLE\" | \"RUST_MODULE_MISSING_BEHAVIOURAL_TEST\" | \"OPERATION_CLI_UNCLASSIFIED\" | \"OPERATION_CLASSIFICATION_STALE\" | \"OPERATION_CLASSIFICATION_CONFLICT\" | \"OPERATION_MISSING_OPENAPI\" | \"OPERATION_PROJECTION_MISSING\" | \"OPERATION_PROJECTION_ORPHAN\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Violation"
+      ],
+      "values": [
+        {
+          "description": "An exported item carries no documentation at all.",
+          "value": "RUST_PUBLIC_MISSING_DOCS"
+        },
+        {
+          "description": "An exported item's documentation says nothing its signature had not already said.",
+          "value": "RUST_PUBLIC_THIN_DOCS"
+        },
+        {
+          "description": "An exported item that carries behaviour has no executable example.",
+          "value": "RUST_PUBLIC_MISSING_EXAMPLE"
+        },
+        {
+          "description": "Every example an item has is `ignore`d or is prose in a fenced box.",
+          "value": "RUST_EXAMPLE_NOT_EXECUTABLE"
+        },
+        {
+          "description": "An example asserts nothing, or asserts something that is true of any program.",
+          "value": "RUST_EXAMPLE_PLACEHOLDER"
+        },
+        {
+          "description": "An example never names the item it is documenting.",
+          "value": "RUST_EXAMPLE_DOES_NOT_NAME_SUBJECT"
+        },
+        {
+          "description": "An exported module carries no module-level documentation.",
+          "value": "RUST_MODULE_MISSING_DOCS"
+        },
+        {
+          "description": "An exported module has no module-level executable example.",
+          "value": "RUST_MODULE_MISSING_EXAMPLE"
+        },
+        {
+          "description": "No test names an exported module, and it declares none of its own.",
+          "value": "RUST_MODULE_MISSING_BEHAVIOURAL_TEST"
+        },
+        {
+          "description": "A command of the command line is neither a canonical capability nor classified as\nbelonging to the command line alone.",
+          "value": "OPERATION_CLI_UNCLASSIFIED"
+        },
+        {
+          "description": "A command is classified as belonging to the command line alone, and the command\nline no longer has it.",
+          "value": "OPERATION_CLASSIFICATION_STALE"
+        },
+        {
+          "description": "A command is classified as local *and* bound to a capability: two answers to one\nquestion.",
+          "value": "OPERATION_CLASSIFICATION_CONFLICT"
+        },
+        {
+          "description": "A capability declares an HTTP route and the OpenAPI document does not describe it.",
+          "value": "OPERATION_MISSING_OPENAPI"
+        },
+        {
+          "description": "A capability declares a projection that the projection itself does not carry.",
+          "value": "OPERATION_PROJECTION_MISSING"
+        },
+        {
+          "description": "A projection carries an entry the registry does not hold.",
+          "value": "OPERATION_PROJECTION_ORPHAN"
         }
       ],
       "variants": []
@@ -13614,7 +14337,10 @@
           "description": "The commands this repository offers, filtered by the program that runs them, by what running them changes, or by text. A summary rather than the whole graph: enough to choose a command, and never so much that a client has to read every argument of every command to find one.",
           "id": "commands.list",
           "kind": "query",
-          "mcp_resource": "",
+          "mcp_resource": {
+            "name": "commands",
+            "uri": "majordomus://commands"
+          },
           "mcp_tool": "majordomus_commands",
           "method": "GET",
           "parameters": [
@@ -15146,7 +15872,7 @@
           "responses": [
             {
               "description": "Announce what this peer is working on: the result.",
-              "schema": "Announced",
+              "schema": "Peer",
               "status": "200"
             },
             {
@@ -15175,7 +15901,7 @@
               "status": "default"
             }
           ],
-          "result_schema": "Announced",
+          "result_schema": "Peer",
           "stability": "behaviorally_verified",
           "summary": "Announce what this peer is working on"
         }
@@ -15584,6 +16310,232 @@
           "result_schema": "ProductValidationReport",
           "stability": "behaviorally_verified",
           "summary": "Validate the model"
+        }
+      ]
+    },
+    {
+      "description": "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them.",
+      "name": "quality",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=8, ttl_seconds=10",
+          "cli": "quality report",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/quality?summary_only=false&include_baselined=false\"",
+          "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.",
+          "id": "quality.report",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "quality",
+            "uri": "majordomus://quality"
+          },
+          "mcp_tool": "majordomus_quality",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only findings carrying this code (`RUST_PUBLIC_MISSING_EXAMPLE`). All of them when\nabsent. A code nothing recognises is refused rather than answered with an empty\nlist, so a typo cannot read as a clean report.",
+              "examples": [],
+              "name": "code",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only findings whose file path starts with this, repository-relative\n(`apps/majordomus-cli/src/web`). All of them when absent.",
+              "examples": [],
+              "name": "path",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Answer with the counts and leave the findings out. For a caller that wants the\nstate of the crate and not the list of what to do about it.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "false"
+                }
+              ],
+              "name": "summary_only",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Include the findings the ratchet already accepts, which are left out by default.\n\nThe default is what a gate wants: only what is new. This is what a person paying the\ndebt down wants, and it is what `--write-baseline` must ask for — a baseline written\nfrom a report that had the baseline applied to it would empty the file, accepting\nnothing and failing on everything the next time it ran.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "false"
+                }
+              ],
+              "name": "include_baselined",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/quality",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::quality",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Public API quality report: the result.",
+              "schema": "QualityAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "QualityAnswer",
+          "stability": "behaviorally_verified",
+          "summary": "Public API quality report"
+        }
+      ]
+    },
+    {
+      "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become.",
+      "name": "release",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/changelog?version=0.3.1\"",
+          "description": "Every release the layer records, newest first, with the work that has not been released leading. A section's decisions are the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty.",
+          "id": "release.changelog",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "changelog",
+            "uri": "majordomus://changelog"
+          },
+          "mcp_tool": "majordomus_changelog",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One version, or `unreleased`; every section when absent.",
+              "examples": [
+                {
+                  "case": "one-version",
+                  "value": "\"0.3.1\""
+                }
+              ],
+              "name": "version",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/changelog",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::release",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The changelog: the result.",
+              "schema": "ReleaseChangelog",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReleaseChangelog",
+          "stability": "implemented",
+          "summary": "The changelog"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/version\"",
+          "description": "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+          "id": "release.version",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_release_version",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/release/version",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::release",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The version, and the one the commits imply: the result.",
+              "schema": "ReleaseVersionReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ReleaseVersionReport",
+          "stability": "implemented",
+          "summary": "The version, and the one the commits imply"
         }
       ]
     },

@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "0.3.1",
+    "version": "0.4.0",
     "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
     "description": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
@@ -81,6 +81,14 @@
     {
       "name": "product",
       "description": "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
+    },
+    {
+      "name": "quality",
+      "description": "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them."
+    },
+    {
+      "name": "release",
+      "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become."
     },
     {
       "name": "repository",
@@ -525,6 +533,104 @@
         "x-majordomus-cli": "capabilities describe"
       }
     },
+    "/api/v1/changelog": {
+      "get": {
+        "operationId": "release.changelog",
+        "summary": "The changelog",
+        "description": "Every release the layer records, newest first, with the work that has not been released leading. A section's decisions are the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "One version, or `unreleased`; every section when absent.",
+            "examples": {
+              "one-version": {
+                "value": "0.3.1"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The changelog: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseChangelog"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.changelog",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "implemented",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_changelog",
+          "resource": {
+            "uri": "majordomus://changelog",
+            "name": "changelog"
+          }
+        }
+      }
+    },
     "/api/v1/command": {
       "get": {
         "operationId": "commands.get",
@@ -732,7 +838,11 @@
           "policy": "disabled"
         },
         "x-majordomus-mcp": {
-          "tool": "majordomus_commands"
+          "tool": "majordomus_commands",
+          "resource": {
+            "uri": "majordomus://commands",
+            "name": "commands"
+          }
         }
       }
     },
@@ -3250,6 +3360,141 @@
         "x-majordomus-cli": "product validate"
       }
     },
+    "/api/v1/quality": {
+      "get": {
+        "operationId": "quality.report",
+        "summary": "Public API quality report",
+        "description": "The crate's exported surface measured against the repository's rules: how many items are documented and exampled, how many modules are documented, exampled and behaviourally tested, how the canonical operations stand against the command line, HTTP, OpenAPI and MCP, and one finding per violation carrying a stable code, the rule that requires it, its file and line, why it matters and what to do about it.",
+        "tags": [
+          "quality"
+        ],
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only findings carrying this code (`RUST_PUBLIC_MISSING_EXAMPLE`). All of them when\nabsent. A code nothing recognises is refused rather than answered with an empty\nlist, so a typo cannot read as a clean report."
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only findings whose file path starts with this, repository-relative\n(`apps/majordomus-cli/src/web`). All of them when absent."
+          },
+          {
+            "name": "summary_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Answer with the counts and leave the findings out. For a caller that wants the\nstate of the crate and not the list of what to do about it.",
+            "examples": {
+              "default": {
+                "value": false
+              }
+            }
+          },
+          {
+            "name": "include_baselined",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include the findings the ratchet already accepts, which are left out by default.\n\nThe default is what a gate wants: only what is new. This is what a person paying the\ndebt down wants, and it is what `--write-baseline` must ask for — a baseline written\nfrom a report that had the baseline applied to it would empty the file, accepting\nnothing and failing on everything the next time it ran.",
+            "examples": {
+              "default": {
+                "value": false
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Public API quality report: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QualityAnswer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "quality.report",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::quality"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 8,
+          "ttl_seconds": 10
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_quality",
+          "resource": {
+            "uri": "majordomus://quality",
+            "name": "quality"
+          }
+        },
+        "x-majordomus-cli": "quality report"
+      }
+    },
     "/api/v1/ready": {
       "get": {
         "operationId": "health.ready",
@@ -3323,6 +3568,85 @@
         },
         "x-majordomus-cache": {
           "policy": "disabled"
+        }
+      }
+    },
+    "/api/v1/release/version": {
+      "get": {
+        "operationId": "release.version",
+        "summary": "The version, and the one the commits imply",
+        "description": "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+        "tags": [
+          "release"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The version, and the one the commits imply: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseVersionReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "release.version",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "implemented",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::release"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_release_version"
         }
       }
     },
@@ -8766,6 +9090,26 @@
         ],
         "description": "One concrete situation, in one audience, with what happens today and what happens\ninstead."
       },
+      "Exemption": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "The reason, as the policy names it."
+          },
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many items it covers."
+          }
+        },
+        "required": [
+          "reason",
+          "items"
+        ],
+        "description": "A group of items the example policy does not apply to, with the reason it does not."
+      },
       "Exposure": {
         "type": "object",
         "properties": {
@@ -10550,6 +10894,42 @@
         "type": "string",
         "description": "A module identity: the namespace of every capability the module composes, matching\n`[a-z][a-z0-9_-]*`. Builtin modules declare theirs in `module!`; a declarative\nobject's module is its kind."
       },
+      "ModuleQuality": {
+        "type": "object",
+        "properties": {
+          "modules": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Modules the crate exports, the crate root included."
+          },
+          "documented": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of those, how many carry a `//!` header."
+          },
+          "exampled": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many carry an executable example in that header."
+          },
+          "behaviourally_tested": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many something exercises: an in-file test, or a test that names them."
+          }
+        },
+        "required": [
+          "modules",
+          "documented",
+          "exampled",
+          "behaviourally_tested"
+        ],
+        "description": "What the exported module surface looks like."
+      },
       "ModuleRef": {
         "type": "object",
         "properties": {
@@ -11227,6 +11607,70 @@
           "foreign"
         ],
         "description": "The open episode of this worktree, when there is one."
+      },
+      "OperationParity": {
+        "type": "object",
+        "properties": {
+          "canonical": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Executable capabilities in the registry."
+          },
+          "cli": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of those, how many declare a command-line projection."
+          },
+          "http": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many declare an HTTP route."
+          },
+          "openapi": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many the OpenAPI document describes."
+          },
+          "mcp": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many declare an MCP tool."
+          },
+          "cli_commands": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Commands of the command line, leaves and runnable parents."
+          },
+          "cli_from_capability": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of those, how many are the projection of a capability."
+          },
+          "cli_local": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many are declared to belong to the command line alone, with a reason."
+          }
+        },
+        "required": [
+          "canonical",
+          "cli",
+          "http",
+          "openapi",
+          "mcp",
+          "cli_commands",
+          "cli_from_capability",
+          "cli_local"
+        ],
+        "description": "What the canonical operations look like against the transports that project them."
       },
       "Origin": {
         "oneOf": [
@@ -12095,6 +12539,143 @@
         ],
         "description": "One provider projection the policy declares, and whether the file on disk still matches\nwhat the policy renders."
       },
+      "PublicApiQuality": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Items the crate exports, of every kind."
+          },
+          "documented": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of those, how many carry documentation."
+          },
+          "owe_example": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many owe an executable example under the policy."
+          },
+          "exampled": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Of those, how many have one that counts."
+          },
+          "exempt": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Exemption"
+            },
+            "description": "How many are exempt from the example policy for a structural reason, and why, by\nreason, so that the exemptions are visible rather than implied by a subtraction."
+          }
+        },
+        "required": [
+          "items",
+          "documented",
+          "owe_example",
+          "exampled",
+          "exempt"
+        ],
+        "description": "What the exported item surface looks like."
+      },
+      "QualityAnswer": {
+        "type": "object",
+        "properties": {
+          "measured": {
+            "type": "boolean",
+            "description": "Whether a crate was found and measured. `false` is a complete answer, not a failure:\nthe layer installs into repositories that carry no Rust crate, and a doctrine that\ncannot apply is not a violation."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why nothing was measured, when nothing was."
+          },
+          "report": {
+            "$ref": "#/components/schemas/QualityReport",
+            "description": "The measurement. Present and empty-of-findings when `measured` is false, so that a\nconsumer reads one shape either way and `measured` is the only question it must ask."
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "Whether the report as filtered leaves nothing blocking. Answered here so that a\ncaller over any transport reads the verdict rather than deriving it, and so that the\ncommand line's exit code and this field can never disagree."
+          },
+          "baselined": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "The findings the ratchet accepts because they stood when the rule landed. A finding\noutside this count is what fails the gate."
+          }
+        },
+        "required": [
+          "measured",
+          "report",
+          "passes",
+          "baselined"
+        ],
+        "description": "The answer: the measurement, or the reason there was not one."
+      },
+      "QualityReport": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "[`SCHEMA`].",
+            "default": ""
+          },
+          "target": {
+            "type": "string",
+            "description": "What was measured: the crate directory, repository-relative."
+          },
+          "public_api": {
+            "$ref": "#/components/schemas/PublicApiQuality",
+            "description": "The exported item surface."
+          },
+          "modules": {
+            "$ref": "#/components/schemas/ModuleQuality",
+            "description": "The exported module surface."
+          },
+          "operations": {
+            "$ref": "#/components/schemas/OperationParity",
+            "description": "The canonical operations against their transports."
+          },
+          "violations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Violation"
+            },
+            "description": "Every finding, errors first, then by file and line."
+          }
+        },
+        "required": [
+          "target",
+          "public_api",
+          "modules",
+          "operations",
+          "violations"
+        ],
+        "description": "One measurement of one crate, and everything found wrong in it."
+      },
+      "QualitySeverity": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "error",
+            "description": "The gate fails."
+          },
+          {
+            "type": "string",
+            "const": "warning",
+            "description": "Reported, and the gate passes."
+          }
+        ],
+        "description": "How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning."
+      },
       "Readiness": {
         "type": "object",
         "properties": {
@@ -12347,6 +12928,323 @@
           "url"
         ],
         "description": "The artifact a target and a tag name, and the directory it unpacks into."
+      },
+      "ReleaseChange": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ReleaseChangeKind",
+            "description": "What it did."
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The area it did it in, when the subject named one: `commands`, `ci`, `site`."
+          },
+          "subject": {
+            "type": "string",
+            "description": "The subject, without the type and scope that prefixed it."
+          },
+          "breaking": {
+            "type": "boolean",
+            "description": "Whether the commit marked itself breaking, with `!` or a `BREAKING CHANGE:` trailer."
+          },
+          "commit": {
+            "type": "string",
+            "description": "The abbreviated commit."
+          }
+        },
+        "required": [
+          "kind",
+          "subject",
+          "breaking",
+          "commit"
+        ],
+        "description": "One change, from one commit."
+      },
+      "ReleaseChangeGroup": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ReleaseChangeKind",
+            "description": "What the changes in it did."
+          },
+          "heading": {
+            "type": "string",
+            "description": "The heading it is shown under."
+          },
+          "rank": {
+            "type": "integer",
+            "format": "uint8",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "Where it sorts among the other groups; ascending."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseChange"
+            },
+            "description": "The changes, in the order the commits were read."
+          }
+        },
+        "required": [
+          "kind",
+          "heading",
+          "rank",
+          "changes"
+        ],
+        "description": "The changes of one kind, with the heading and the rank that decide where they are shown.\n\nThe grouping is in the document rather than in each renderer. It was in the Markdown\nrenderer alone, and the site — which cannot see a Rust function — grouped alphabetically\ninstead, so the same changelog read in two orders depending on which surface showed it.\nA presentation order stated once and carried is the only kind that survives a projection."
+      },
+      "ReleaseChangeKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "feat",
+            "description": "A capability a person did not have before."
+          },
+          {
+            "type": "string",
+            "const": "fix",
+            "description": "Behaviour that was wrong and is not any more."
+          },
+          {
+            "type": "string",
+            "const": "perf",
+            "description": "Performance, with the behaviour unchanged."
+          },
+          {
+            "type": "string",
+            "const": "refactor",
+            "description": "Structure, with the behaviour unchanged."
+          },
+          {
+            "type": "string",
+            "const": "docs",
+            "description": "Documentation."
+          },
+          {
+            "type": "string",
+            "const": "test",
+            "description": "Tests."
+          },
+          {
+            "type": "string",
+            "const": "chore",
+            "description": "The build, the pipeline, the tooling."
+          },
+          {
+            "type": "string",
+            "const": "ci",
+            "description": "Continuous integration."
+          },
+          {
+            "type": "string",
+            "const": "other",
+            "description": "A commit whose subject does not parse as a conventional commit."
+          }
+        ],
+        "description": "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+      },
+      "ReleaseChangelog": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "The schema this document satisfies."
+          },
+          "current": {
+            "type": "string",
+            "description": "The version the tree currently declares."
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseSection"
+            },
+            "description": "Newest first, the unreleased section leading when there is one."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What could not be read, said rather than hidden: a repository with no git history,\na release record that names no commit, a tag that is not in this clone."
+          }
+        },
+        "required": [
+          "schema",
+          "current",
+          "sections",
+          "diagnostics"
+        ],
+        "description": "The whole changelog."
+      },
+      "ReleaseChangelogArtifact": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "The platform triple the record names."
+          },
+          "name": {
+            "type": "string",
+            "description": "The file name."
+          },
+          "sha256": {
+            "type": "string",
+            "description": "Its SHA-256, as the record read it off the file."
+          }
+        },
+        "required": [
+          "target",
+          "name",
+          "sha256"
+        ],
+        "description": "One published artifact, from the release record's own evidence."
+      },
+      "ReleaseDecision": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`adr-0027`."
+          },
+          "title": {
+            "type": "string",
+            "description": "The decision, in its own words."
+          },
+          "status": {
+            "type": "string",
+            "description": "`proposed`, `accepted`, `superseded`."
+          },
+          "date": {
+            "type": "string",
+            "description": "The date the record carries."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "date"
+        ],
+        "description": "One decision, as the layer's own ADR object states it."
+      },
+      "ReleaseSection": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "The version, or `unreleased`."
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The tag, when one was published."
+          },
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "When it was published, from the record."
+          },
+          "commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit it was published from."
+          },
+          "unreleased": {
+            "type": "boolean",
+            "description": "Whether this section is the work that has not been released."
+          },
+          "decisions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseDecision"
+            },
+            "description": "The decisions dated inside this release's window."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseChangeGroup"
+            },
+            "description": "The changes, from the commits in this release's range, grouped by what they did and\nordered by the rank each group carries. The flat list is the concatenation of the\ngroups' own; nothing holds it twice."
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseChangelogArtifact"
+            },
+            "description": "What was published, when this section is a release."
+          }
+        },
+        "required": [
+          "version",
+          "unreleased",
+          "decisions",
+          "groups",
+          "artifacts"
+        ],
+        "description": "One version's worth of changelog."
+      },
+      "ReleaseVersionReport": {
+        "type": "object",
+        "properties": {
+          "declared": {
+            "type": "string",
+            "description": "The version the crate manifest declares — the authority."
+          },
+          "tool": {
+            "type": "string",
+            "description": "The version `bin/majordomus` prints."
+          },
+          "agree": {
+            "type": "boolean",
+            "description": "Whether the two agree. `scripts/release-version --check` is the gate; this is the\nsame question asked by the executable, so every surface can show the answer."
+          },
+          "last_release": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The last release the layer records."
+          },
+          "bump": {
+            "type": "string",
+            "description": "What the commits since it imply: `major`, `minor`, `patch`, or `none`."
+          },
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version that bump would produce."
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReleaseChange"
+            },
+            "description": "How many commits since the last release, and of what kind — the evidence for the\nbump, so that a surprising answer can be checked rather than believed."
+          }
+        },
+        "required": [
+          "declared",
+          "tool",
+          "agree",
+          "bump",
+          "changes"
+        ],
+        "description": "What the version is, and what the commits since the last release imply it should become."
       },
       "ReleaseView": {
         "type": "object",
@@ -14648,6 +15546,143 @@
         ],
         "description": "In or out."
       },
+      "Violation": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ViolationCode",
+            "description": "The stable code."
+          },
+          "severity": {
+            "$ref": "#/components/schemas/QualitySeverity",
+            "description": "How bad it is."
+          },
+          "rule": {
+            "type": "string",
+            "description": "The canonical id of the rule that requires this."
+          },
+          "path": {
+            "type": "string",
+            "description": "Where it is, repository-relative; empty when the finding is not about a file."
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint",
+            "minimum": 0,
+            "description": "The line, 1-based; `None` when the finding is not about a line."
+          },
+          "symbol": {
+            "type": "string",
+            "description": "The item's full path, or the command, or the capability id: what the finding is about."
+          },
+          "message": {
+            "type": "string",
+            "description": "One sentence, specific to this occurrence."
+          },
+          "why": {
+            "type": "string",
+            "description": "Why it matters, from the code."
+          },
+          "remediation": {
+            "type": "string",
+            "description": "What to do, from the code."
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "rule",
+          "path",
+          "symbol",
+          "message",
+          "why",
+          "remediation"
+        ],
+        "description": "One finding: what, where, why, and what to do."
+      },
+      "ViolationCode": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "RUST_PUBLIC_MISSING_DOCS",
+            "description": "An exported item carries no documentation at all."
+          },
+          {
+            "type": "string",
+            "const": "RUST_PUBLIC_THIN_DOCS",
+            "description": "An exported item's documentation says nothing its signature had not already said."
+          },
+          {
+            "type": "string",
+            "const": "RUST_PUBLIC_MISSING_EXAMPLE",
+            "description": "An exported item that carries behaviour has no executable example."
+          },
+          {
+            "type": "string",
+            "const": "RUST_EXAMPLE_NOT_EXECUTABLE",
+            "description": "Every example an item has is `ignore`d or is prose in a fenced box."
+          },
+          {
+            "type": "string",
+            "const": "RUST_EXAMPLE_PLACEHOLDER",
+            "description": "An example asserts nothing, or asserts something that is true of any program."
+          },
+          {
+            "type": "string",
+            "const": "RUST_EXAMPLE_DOES_NOT_NAME_SUBJECT",
+            "description": "An example never names the item it is documenting."
+          },
+          {
+            "type": "string",
+            "const": "RUST_MODULE_MISSING_DOCS",
+            "description": "An exported module carries no module-level documentation."
+          },
+          {
+            "type": "string",
+            "const": "RUST_MODULE_MISSING_EXAMPLE",
+            "description": "An exported module has no module-level executable example."
+          },
+          {
+            "type": "string",
+            "const": "RUST_MODULE_MISSING_BEHAVIOURAL_TEST",
+            "description": "No test names an exported module, and it declares none of its own."
+          },
+          {
+            "type": "string",
+            "const": "OPERATION_CLI_UNCLASSIFIED",
+            "description": "A command of the command line is neither a canonical capability nor classified as\nbelonging to the command line alone."
+          },
+          {
+            "type": "string",
+            "const": "OPERATION_CLASSIFICATION_STALE",
+            "description": "A command is classified as belonging to the command line alone, and the command\nline no longer has it."
+          },
+          {
+            "type": "string",
+            "const": "OPERATION_CLASSIFICATION_CONFLICT",
+            "description": "A command is classified as local *and* bound to a capability: two answers to one\nquestion."
+          },
+          {
+            "type": "string",
+            "const": "OPERATION_MISSING_OPENAPI",
+            "description": "A capability declares an HTTP route and the OpenAPI document does not describe it."
+          },
+          {
+            "type": "string",
+            "const": "OPERATION_PROJECTION_MISSING",
+            "description": "A capability declares a projection that the projection itself does not carry."
+          },
+          {
+            "type": "string",
+            "const": "OPERATION_PROJECTION_ORPHAN",
+            "description": "A projection carries an entry the registry does not hold."
+          }
+        ],
+        "description": "What is wrong, as a stable machine-readable code.\n\nThe codes are the contract between the validator and everything downstream: CI\nannotations, Cockpit filters, documentation anchors and an agent deciding what to fix.\nA code is never renamed once it has shipped; a rule that stops existing takes its code\nwith it."
+      },
       "WaiverReason": {
         "oneOf": [
           {
@@ -15009,7 +16044,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 0.3.1",
+    "generator": "majordomus-cli 0.4.0",
     "infrastructure": [
       "/",
       "/openapi.json",
@@ -15042,5 +16077,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.3.1"
+  "x-majordomus-generator": "majordomus-cli 0.4.0"
 }

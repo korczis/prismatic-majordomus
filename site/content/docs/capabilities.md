@@ -1,7 +1,7 @@
 +++
 title = "Capabilities"
 description = "the Rust executable's capability model: one definition, and MCP, HTTP, OpenAPI, Swagger UI, the command line and the generated reference derived from it; what is canonical, how to extend it, how it fails"
-weight = 30
+weight = 31
 [extra]
 source = "docs/CAPABILITIES.md"
 +++
@@ -41,6 +41,14 @@ DERIVED PROJECTIONS         MCP · HTTP · OpenAPI → Swagger UI · CLI · the 
 
 A contributor adding one capability edits one `capability!` block (with its typed input
 and output and the input's benchmark cases) and runs `majordomus generate`. Nothing else.
+
+A contributor adding a **command** has one more thing to say, and only one: whether it is
+the projection of a capability (a `CliExposure` on that capability's declaration) or belongs
+to the command line alone, in which case `cli::LOCAL` in
+[`src/cli/local.rs`](../apps/majordomus-cli/src/cli/local.rs) carries the reason and
+`majordomus quality report` checks it. A command that says neither is a gate failure rather
+than an operation quietly missing from the API — the rule is
+`project.operation-transport-parity` and the working reference is [`QUALITY.md`](@/docs/quality.md).
 
 ## What is canonical, what is derived, what is not authoritative
 
