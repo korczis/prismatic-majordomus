@@ -33,7 +33,15 @@ while [ $# -gt 0 ]; do
     --format) FORMAT="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
     --check) CHECK=1; shift ;;
-    *) echo "ci-plan: unknown option $1" >&2; exit 2 ;;
+    # A bare path list — `ci-plan a.sh b.sh` — is the obvious guess, and it is the one thing
+    # the parser cannot take: the paths a plan is computed over come from one of three named
+    # sources, so that a plan always records what it was computed from. An argument that does
+    # not start with a dash is that guess rather than a misspelt option, and naming the
+    # spelling it wanted costs one branch.
+    -*) echo "ci-plan: unknown option $1" >&2; exit 2 ;;
+    *) echo "ci-plan: paths are not given as arguments; --files takes a file of them, one per line, and --files - reads stdin" >&2
+       echo "ci-plan:   printf '%s\\n' $1 ... | scripts/ci-plan --files -" >&2
+       exit 2 ;;
   esac
 done
 case "$FORMAT" in json|text|github) ;; *) echo "ci-plan: --format is json, text or github" >&2; exit 2 ;; esac
