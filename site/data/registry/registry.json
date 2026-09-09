@@ -6,22 +6,22 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "afe8a9c1404d995087bc41a040d4bfe286549defe383e850bf79f854b0209ef3",
+    "fingerprint": "7f3255d5fe474ecf398723e9f3e9511554c4418e1adc42ea9072747163162ab5",
     "summary": {
-      "total": 1081,
+      "total": 1083,
       "builtin": 44,
-      "declarative": 1037,
+      "declarative": 1039,
       "by_kind": {
         "command": 1,
         "query": 43,
-        "resource": 1037
+        "resource": 1039
       },
       "by_stability": {
         "behaviorally_verified": 44,
-        "implemented": 1037
+        "implemented": 1039
       },
       "mcp_tools": 42,
-      "mcp_resources": 1053,
+      "mcp_resources": 1055,
       "http_routes": 44,
       "cli_commands": 24,
       "modules": 43,
@@ -14700,7 +14700,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 93,
+        "capabilities": 94,
         "capability_ids": []
       },
       {
@@ -14740,7 +14740,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 113,
+        "capabilities": 114,
         "capability_ids": []
       },
       {
@@ -14798,7 +14798,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9a6b72f31bda05759a9a85a9740a330691dd7fb34bc57d3667c4981d5ce628f0",
+    "fingerprint": "3616b962bb63532dc98e57aa97b3e1e97bbf23b8b4a6c3ffa9fa4bea0b6d72d7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14841,12 +14841,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 93,
+      "rule": 94,
       "scope": 1,
       "session": 9,
       "skill": 3,
       "taxonomy": 10,
-      "test": 113,
+      "test": 114,
       "use-case": 40
     },
     "diagnostics": {},
@@ -17976,7 +17976,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 46875
+        "bytes": 47078
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -22099,7 +22099,7 @@
         "path": ".ai/repo/project/issues/I1303.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1986
+        "bytes": 2139
       },
       {
         "uri": "majordomus://issue/I1304",
@@ -22110,7 +22110,7 @@
         "path": ".ai/repo/project/issues/I1304.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2032
+        "bytes": 3675
       },
       {
         "uri": "majordomus://issue/I1305",
@@ -24015,6 +24015,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.github-projection-gated@1",
+        "kind": "rule",
+        "identity": "project.github-projection-gated@1",
+        "title": "The GitHub projection is checked by a gate, not by somebody remembering to run it",
+        "description": "A projection this repository claims is generated from the canonical model is proved by a gate that reads the remote and fails on drift; a detector that exists but is never called is not enforcement, and a gate that cannot reach the remote reports that it cannot rather than passing.",
+        "path": ".ai/repo/rules/project/github-projection-gated.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3878,
+        "tags": [
+          "projection",
+          "github",
+          "enforcement",
+          "drift"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.hot-path-reads-once@1",
         "kind": "rule",
         "identity": "project.hot-path-reads-once@1",
@@ -25624,6 +25641,14 @@
         "bytes": 8898
       },
       {
+        "uri": "majordomus://test/test/cases/97_github_gate.sh",
+        "kind": "test",
+        "identity": "test/cases/97_github_gate.sh",
+        "path": "test/cases/97_github_gate.sh",
+        "source_class": "case",
+        "bytes": 4950
+      },
+      {
         "uri": "majordomus://test/test/cases/97_install_gate.sh",
         "kind": "test",
         "identity": "test/cases/97_install_gate.sh",
@@ -26322,7 +26347,7 @@
         "id",
         "version"
       ],
-      "objects": 93
+      "objects": 94
     },
     {
       "name": "scope",
@@ -26377,7 +26402,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 113
+      "objects": 114
     },
     {
       "name": "use-case",

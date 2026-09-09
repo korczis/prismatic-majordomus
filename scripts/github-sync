@@ -164,7 +164,14 @@ if [ "$FIXTURE" = 0 ]; then
 fi
 
 DRIFT=0
-note() { printf '%-6s %-7s %s\n' "$1" "$2" "$3"; [ "$1" = DRIFT ] && DRIFT=$((DRIFT + 1)); return 0; }
+note() { printf '%-6s %-9s %s\n' "$1" "$2" "$3"; [ "$1" = DRIFT ] && DRIFT=$((DRIFT + 1)); return 0; }
+
+# A backfill is hundreds of mutations in a row, and GitHub answers that with a secondary
+# rate limit rather than a clean error. Pace them. MJ_GH_PACE overrides; 0 disables. The
+# adapter is idempotent, so a run that trips a limit and stops is resumed by running it
+# again — nothing is created twice, because identity travels with the record.
+PACE="${MJ_GH_PACE:-1}"
+pace() { [ "$MODE" = apply ] && [ "$PACE" != 0 ] && sleep "$PACE"; return 0; }
 
 REMOTE_MS="$(mktemp "${TMPDIR:-/tmp}/mj.ms.XXXXXX")"
 REMOTE_IS="$(mktemp "${TMPDIR:-/tmp}/mj.is.XXXXXX")"
@@ -283,6 +290,7 @@ for id in $(selected_milestones); do
     if [ "$MODE" = apply ]; then
       gh api -X POST "repos/$REPO/milestones" -f title="$(title_of "$id")" -f description="$desc" >/dev/null
       note OK created "milestone $id"
+      pace
     fi
   else
     have="$(awk -F'\t' -v n="$num" '$1==n { print $3 }' "$REMOTE_MS")"
@@ -332,6 +340,7 @@ for id in $(selected_issues); do
         gh issue close "$num" --repo "$REPO" >/dev/null 2>&1 || true
       fi
       note OK created "issue $id${num:+ (#$num)}"
+      pace
     fi
     continue
   fi
@@ -373,6 +382,7 @@ for id in $(selected_issues); do
     [ "$want_state" = open ] && [ "$have_state" = closed ] && gh issue reopen "$num" --repo "$REPO" >/dev/null 2>&1 || true
     rm -f "$tmp" "$hostf" "$bodyf"
     note OK updated "issue $id (#$num)"
+    pace
   fi
   [ "$changed" = 0 ] && note OK insync "issue $id (#$num)"
 done

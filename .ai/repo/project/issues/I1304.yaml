@@ -18,18 +18,36 @@ scope:
 non_scope:
   - Applying the projection from CI, which stays a deliberate human act
 depends_on:
-  - I1303
+  - I1302
 acceptance_criteria:
-  - The gate runs the drift check on every change to the model or the adapter and fails on any finding
+  - The gate runs the drift check on every change to the model or the adapter, refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets missing and adopt against a committed baseline
   - A missing or unauthorised token is reported as an unusable gate, never as a passing one
   - A rule states that the projection is gated, and doctor verifies the gate is wired rather than merely present
   - Introducing a canonical issue without projecting it turns the gate red, proved by a case
+  - Moving a canonical record that was already projected turns the gate red, proved by a case
+  - The baseline may fall and may never rise, and the gate refuses to run without one
 validation:
   - scripts/ci/core-check
   - majordomus doctrine
   - bash test/run.sh
 evidence_required:
   - drift_gated
-risk: "Wiring this before I1303 makes master red. The dependency is the mitigation."
+risk: "Wiring a zero-tolerance gate before the backfill would make master red on a backlog nobody introduced today. The two tolerances are the mitigation: the states that mean new drift are refused from the first run, and the backlog is ratcheted against a committed baseline that may only fall. That inverts the dependency — the gate no longer waits for I1303, and I1303 becomes the act that lowers the baseline to zero."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-09-09T17:37:41Z
+started_at: 2026-09-09T17:37:02Z
+verified_at: 2026-09-09T17:37:27Z
+completed_at: 2026-09-09T17:37:41Z
+evidence:
+  - covers: drift_gated
+    type: test
+    command: "bash test/run.sh 97_github_gate"
+    result: "the gate refuses a record whose canonical text moved, breaks the ratchet on a record added to the model and never projected, refuses an edited region and an unmanaged remote issue, passes at the baseline, and refuses to run with no baseline; all proved offline against a fixture remote"
+    commit: 21f7ad848b073ca25871758290a0756277b9aeb7
+    recorded_at: 2026-09-09T17:37:13Z
+  - covers: drift_gated
+    type: ci
+    command: "scripts/ci/github-check"
+    result: "green on this tree at the committed baseline (missing 181, adopt 19); wired as gate github-projection in .ai/repo/ci/gates.yaml, selected by the layer and shell path classes, with issues:read and GH_TOKEN added to the structure job"
+    commit: 21f7ad848b073ca25871758290a0756277b9aeb7
+    recorded_at: 2026-09-09T17:37:21Z

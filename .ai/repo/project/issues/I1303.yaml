@@ -11,16 +11,19 @@ current_state: "GitHub holds 8 milestones and 19 issues against 15 milestones an
 desired_state: "`scripts/github-sync --check` exits 0. Every canonical record holds the number it was projected onto. The run is recorded as evidence with its date and the count it created."
 scope:
   - .ai/repo/project
+  - .ai/repo/ci/github-drift-baseline.txt
 non_scope:
   - Any change to the adapter, which I1301 and I1302 own
   - Closing or reopening a GitHub issue by hand
 depends_on:
   - I1301
   - I1302
+  - I1304
 acceptance_criteria:
   - The dry run is read and its counts agree with the check before anything is applied
   - The 19 existing issues are adopted, not duplicated, and the issue count after the run equals the canonical count
   - scripts/github-sync --check exits 0 immediately after the run
+  - The gate's baseline is lowered to zero in the same commit, so the backlog cannot silently return
   - The run is recorded as evidence naming the date, the counts and the commit
 validation:
   - scripts/github-sync --plan
