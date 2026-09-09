@@ -98,7 +98,7 @@ pub fn project(
         out.workflow = Some(node.path.join("-"));
     }
 
-    let (withheld, machine_ok) = machine_verdict(node);
+    let (mut withheld, machine_ok) = machine_verdict(node);
     if machine_ok {
         if let Some((mcp, http)) = capability {
             out.mcp.clone_from(mcp);
@@ -108,6 +108,18 @@ pub fn project(
         // page is where a generated form for it already lives.
         if out.http.is_some() {
             out.cockpit = Some("/cockpit/commands".into());
+        }
+        // A command the policy admits and no machine surface carries is withheld for the
+        // one remaining reason, and saying so is the point: a surface that executes needs
+        // a typed input schema to execute from, and only a capability supplies one. Left
+        // unsaid, this is the case that reads as an unexplained gap — the policy allowed
+        // it, and it is absent anyway.
+        if withheld.is_none() && out.mcp.is_none() && out.http.is_none() {
+            withheld = Some(
+                "no capability declares this command line, so no machine surface has a typed \
+                 input schema to execute from"
+                    .into(),
+            );
         }
     }
     out.withheld = withheld;
