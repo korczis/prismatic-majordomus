@@ -37,9 +37,7 @@ use serde_json::Value;
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{
-    CachePolicy, Exposure, McpResource, Stability,
-};
+use crate::capability::model::{CachePolicy, Exposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::index::Index;
 use crate::worktree::trace::{
@@ -74,7 +72,7 @@ impl BenchmarkCases for TraceIssueInput {
         // second declaration of this repository's own plan. A repository with no issues at
         // all still gets a case — an empty list would read to the coverage gate as a
         // capability nobody benchmarks, and timing the refusal is a real measurement.
-        let issue = first_issue(&ctx.index).unwrap_or_else(|| "I0001".to_string());
+        let issue = first_issue(ctx.index).unwrap_or_else(|| "I0001".to_string());
         vec![NamedCase::new("first-issue", TraceIssueInput { issue })]
     }
 }
@@ -113,12 +111,7 @@ impl BenchmarkCases for TraceReportInput {
     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         vec![
             NamedCase::new("default", TraceReportInput { limit: None }),
-            NamedCase::new(
-                "ten",
-                TraceReportInput {
-                    limit: Some(10),
-                },
-            ),
+            NamedCase::new("ten", TraceReportInput { limit: Some(10) }),
         ]
     }
 }
@@ -180,7 +173,10 @@ fn with_milestones(index: &Index, mut traces: Vec<IssueTrace>) -> Vec<IssueTrace
 }
 
 /// The same, for an attribution: the milestone follows the issue it named.
-fn attribution_milestones(index: &Index, mut commits: Vec<CommitAttribution>) -> Vec<CommitAttribution> {
+fn attribution_milestones(
+    index: &Index,
+    mut commits: Vec<CommitAttribution>,
+) -> Vec<CommitAttribution> {
     for c in &mut commits {
         c.milestone = c.issue.as_deref().and_then(|i| milestone_of(index, i));
     }
@@ -210,7 +206,10 @@ fn trace_issue(ctx: &Context, input: TraceIssueInput) -> Result<IssueTrace, Capa
     Ok(t)
 }
 
-fn trace_commit(ctx: &Context, input: TraceCommitInput) -> Result<CommitAttribution, CapabilityError> {
+fn trace_commit(
+    ctx: &Context,
+    input: TraceCommitInput,
+) -> Result<CommitAttribution, CapabilityError> {
     let tracer = tracer_of(ctx)?;
     let Some(commit) = tracer.commit(&input.commit).map_err(refused)? else {
         return Err(CapabilityError::NotFound(format!(
@@ -316,7 +315,11 @@ mod tests {
         let m = module();
         assert_eq!(m.id.as_str(), "trace");
         let expected: &[(&str, &str, &str)] = &[
-            ("trace.issue", "majordomus_trace_issue", "/api/v1/trace/issue"),
+            (
+                "trace.issue",
+                "majordomus_trace_issue",
+                "/api/v1/trace/issue",
+            ),
             (
                 "trace.commit",
                 "majordomus_trace_commit",
