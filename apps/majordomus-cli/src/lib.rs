@@ -38,6 +38,7 @@ pub mod model;
 pub mod order;
 pub mod peers;
 pub mod perf;
+pub mod plan;
 pub mod policy;
 pub mod product;
 pub mod proto;

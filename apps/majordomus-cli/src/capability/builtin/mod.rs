@@ -45,6 +45,7 @@ pub mod objects;
 pub mod obligations;
 pub(crate) mod peers;
 pub(crate) mod perf;
+pub mod plan;
 pub(crate) mod product;
 pub mod quality;
 pub mod release;
@@ -96,6 +97,7 @@ pub use obligations::{
     OBLIGATIONS_URI,
 };
 pub use peers::{AnnounceInput, PeerList};
+pub use plan::{PlanIssueFilter, PlanMilestoneFilter, PlanRecordInput, PLAN_URI};
 pub use quality::{QualityAnswer, QualityInput, QUALITY_URI};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
@@ -126,6 +128,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         executions,
         peers,
         perf,
+        plan,
         directories,
         artifacts,
         environment,
