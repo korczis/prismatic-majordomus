@@ -79,7 +79,7 @@
   {#- --------------------------------------------------------------- the providers -#}
   <section class="mt-14" aria-labelledby="providers-h">
     <h2 id="providers-h" class="text-2xl font-bold tracking-tight text-heading">The tools this answers</h2>
-    <p class="mt-2 max-w-3xl text-body">The set is the adapters the distribution ships. What this repository does with each — the instruction files its policy renders, the client configuration at its root — is read from the policy and the tree, never listed here.</p>
+    <p class="mt-2 max-w-3xl text-body">The set is the adapters the distribution ships, agents and orchestrators alike. What this repository does with each — the instruction files its policy renders, the client configuration at its root — is read from the policy and the tree, never listed here; what the tool declares about each — its name, the configuration it reads, the scratch roots it creates checkouts under — is read from one declaration beside the templates.</p>
     <ul class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {%- for p in model.providers %}
       <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -92,6 +92,7 @@
         {%- endif %}
         {%- if p.client_config %}<p class="mt-2 break-all font-mono text-xs text-body-subtle">{{ p.client_config }}</p>{% endif -%}
         {%- if p.hooks | length %}<p class="mt-2 font-mono text-xs text-body-subtle">{{ p.hooks | length }} hook(s) wired</p>{% endif -%}
+        {%- if p.scratch_roots | length %}<p class="mt-2 break-all font-mono text-xs text-body-subtle" title="scratch roots: checkouts here are a session's own and are never moved">scratch: {{ p.scratch_roots | join(sep=", ") }}</p>{% endif -%}
       </li>
       {%- endfor %}
     </ul>

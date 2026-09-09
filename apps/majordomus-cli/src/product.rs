@@ -458,6 +458,11 @@ pub struct ProductProvider {
     pub client_config: Option<String>,
     /// The enforcement entries of the policy wired by this provider's hooks.
     pub hooks: Vec<String>,
+    /// The scratch roots this provider creates checkouts of its own under, as declared:
+    /// the worktree topology reports a checkout there as a session's scratch checkout and
+    /// never moves it (ADR 0024).
+    #[serde(default)]
+    pub scratch_roots: Vec<String>,
 }
 
 /// One bootstrap a provider renders.
@@ -470,19 +475,6 @@ pub struct ProviderBootstrap {
     /// Loaded by every worker without asking.
     pub always_loaded: bool,
 }
-
-/// The providers this tool knows by name, and the file each one reads a project-scoped
-/// MCP client configuration from. A contract, not a mirror: what Claude Code, Codex and
-/// Gemini CLI read is decided by their vendors and cannot be discovered from anything in
-/// this repository; the *set* of providers is still the set of templates the distribution
-/// ships, and a template this table does not know is a provider named by its file.
-const KNOWN_PROVIDERS: &[(&str, &str, Option<&str>)] = &[
-    ("agents", "Any tool that reads AGENTS.md", None),
-    ("claude-code", "Claude Code", Some(".mcp.json")),
-    ("codex", "Codex", Some(".codex/config.toml")),
-    ("gemini", "Gemini CLI", Some(".gemini/settings.json")),
-    ("generic", "A worker with no convention of its own", None),
-];
 
 // ---------------------------------------------------------------- findings
 
@@ -727,6 +719,35 @@ impl ProductModel {
             m.by_id.insert(r.feature.id.clone(), i);
         }
         m.providers = providers(index);
+        for decl in &index.providers {
+            if !decl.template {
+                m.findings.push(ProductFinding {
+                    severity: Severity::Error,
+                    code: "provider_without_template".into(),
+                    path: "share/providers.yaml".into(),
+                    id: Some(decl.id.clone()),
+                    field: Some("providers".into()),
+                    message: format!(
+                        "provider '{}' is declared and the distribution ships no share/providers/{}.tmpl; a provider with no bootstrap is a name and nothing else",
+                        decl.id, decl.id
+                    ),
+                    did_you_mean: None,
+                });
+            } else if !decl.declared {
+                m.findings.push(ProductFinding {
+                    severity: Severity::Warning,
+                    code: "provider_undeclared".into(),
+                    path: format!("share/providers/{}.tmpl", decl.id),
+                    id: Some(decl.id.clone()),
+                    field: None,
+                    message: format!(
+                        "provider '{}' has a template and no entry in share/providers.yaml; it is named by its file and declares no title, client configuration or scratch root",
+                        decl.id
+                    ),
+                    did_you_mean: None,
+                });
+            }
+        }
         m.coverage(registry, &lookups);
         m.findings.sort_by(|a, b| {
             b.severity
@@ -1400,9 +1421,11 @@ fn resolve(
     )
 }
 
-/// The providers, derived: one per template the distribution ships, decorated with what
-/// this repository's policy renders through it, the client configuration it carries and
-/// the hooks the policy wires. Reads the policy as the index holds it — an object of kind
+/// The providers, derived: one per template the distribution ships or declaration it
+/// carries, decorated with what this repository's policy renders through it, the client
+/// configuration it carries and the hooks the policy wires. The title, the client
+/// configuration's name and the scratch roots are the declaration's (`share/providers.yaml`);
+/// whether the configuration is present is a fact of the tree. Reads the policy as the index holds it — an object of kind
 /// `policy` whose metadata is the whole file — and the repository root for the client
 /// configurations, which are tracked files and therefore facts of the tree.
 fn providers(index: &Index) -> Vec<ProductProvider> {
@@ -1444,19 +1467,18 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
         .unwrap_or_default();
     let root = Path::new(&index.repository.root);
     let mut out: Vec<ProductProvider> = index
-        .provider_templates
+        .providers
         .iter()
-        .map(|id| {
-            let known = KNOWN_PROVIDERS.iter().find(|(k, _, _)| k == id);
-            let client_config = known
-                .and_then(|(_, _, c)| *c)
+        .map(|decl| {
+            let id = &decl.id;
+            let client_config = decl
+                .client_config
+                .as_deref()
                 .filter(|c| root.join(c).is_file())
                 .map(str::to_string);
             ProductProvider {
                 id: id.clone(),
-                title: known
-                    .map(|(_, t, _)| (*t).to_string())
-                    .unwrap_or_else(|| id.clone()),
+                title: decl.title.clone(),
                 bootstraps: projections
                     .iter()
                     .filter(|(p, _, _, _)| p == id)
@@ -1472,6 +1494,7 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
                     .filter(|(p, _)| p == id)
                     .map(|(_, n)| n.clone())
                     .collect(),
+                scratch_roots: decl.scratch_roots.clone(),
             }
         })
         .collect();

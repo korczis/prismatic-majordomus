@@ -6,22 +6,22 @@
     "version": "0.3.1"
   },
   "registry": {
-    "fingerprint": "0e8800fc5856e3ceb93cd3e2cf9ac789a5369414625d6f133bc8ab9523b6d16d",
+    "fingerprint": "757e56c48df3f2ddab98c3d884cf5c4253b9c2b2c50d407b1d1b5dba9a9dd8da",
     "summary": {
-      "total": 1070,
+      "total": 1071,
       "builtin": 44,
-      "declarative": 1026,
+      "declarative": 1027,
       "by_kind": {
         "command": 1,
         "query": 43,
-        "resource": 1026
+        "resource": 1027
       },
       "by_stability": {
         "behaviorally_verified": 44,
-        "implemented": 1026
+        "implemented": 1027
       },
       "mcp_tools": 42,
-      "mcp_resources": 1042,
+      "mcp_resources": 1043,
       "http_routes": 44,
       "cli_commands": 24,
       "modules": 43,
@@ -8260,6 +8260,14 @@
                       "type": "string"
                     },
                     "description": "The enforcement entries of the policy wired by this provider's hooks."
+                  },
+                  "scratch_roots": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The scratch roots this provider creates checkouts of its own under, as declared:\nthe worktree topology reports a checkout there as a session's scratch checkout and\nnever moves it (ADR 0024).",
+                    "default": []
                   }
                 },
                 "required": [
@@ -14356,7 +14364,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 23,
+        "capabilities": 24,
         "capability_ids": []
       },
       {
@@ -14790,7 +14798,7 @@
     ]
   },
   "index": {
-    "fingerprint": "3f8923dfb465fa1469d1d43f22cd65b32c667201a39882f363440d27eaf4f279",
+    "fingerprint": "bd625044cfc5597850fd587d257e428a80399a7f2243f8bf6d5621cd4f018066",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -14813,7 +14821,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 23,
+      "adr": 24,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -15205,6 +15213,22 @@
           "site",
           "projections",
           "architecture"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0024",
+        "kind": "adr",
+        "identity": "adr-0024",
+        "title": "An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts",
+        "description": "An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts",
+        "path": ".ai/repo/adrs/0024-an-orchestrator-is-a-provider-only-at-the-bootstrap-level-an.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9030,
+        "tags": [
+          "architecture",
+          "provider",
+          "worktree"
         ]
       },
       {
@@ -17718,7 +17742,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 32595
+        "bytes": 32669
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -17781,7 +17805,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 93895
+        "bytes": 94115
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -17826,7 +17850,7 @@
         "title": "Prismatic Majordomus",
         "path": "docs/DESIGN.md",
         "source_class": "document",
-        "bytes": 34626
+        "bytes": 34703
       },
       {
         "uri": "majordomus://document/docs/DISTRIBUTION.md",
@@ -17916,7 +17940,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 20158
+        "bytes": 20355
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -18069,7 +18093,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 20845
+        "bytes": 21780
       },
       {
         "uri": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -19602,7 +19626,7 @@
         "path": ".ai/repo/features/policy.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2640,
+        "bytes": 2644,
         "tags": [
           "policy",
           "providers",
@@ -22876,7 +22900,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 4504
+        "bytes": 4547
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -25983,7 +26007,7 @@
       "identity": [
         "id"
       ],
-      "objects": 23
+      "objects": 24
     },
     {
       "name": "application",
@@ -26261,6 +26285,12 @@
     {
       "provider": "claude-code",
       "target": "CLAUDE.md",
+      "mode": "file",
+      "always_loaded": false
+    },
+    {
+      "provider": "bb",
+      "target": ".bb/AGENTS.md",
       "mode": "file",
       "always_loaded": false
     }

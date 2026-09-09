@@ -137,6 +137,7 @@ layout and names it.
   (Claude Code)  (Codex)       (Gemini, Cursor, local ...)
       |             |             |
       +-------------+-------------+
+        an orchestrator (bb) runs any of them; the agent stays the worker
                     |
                     v
           Verified, accepted outcomes

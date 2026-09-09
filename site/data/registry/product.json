@@ -11,7 +11,7 @@
     "features": 19,
     "features_all": 20,
     "featured": 9,
-    "providers": 5,
+    "providers": 6,
     "modules": 16,
     "modules_covered": 15,
     "commands": 27,
@@ -3580,7 +3580,7 @@
       "id": "policy",
       "title": "One policy, projected into every tool's instruction file",
       "short_title": "Policy",
-      "headline": "Claude Code, Codex, Gemini CLI and any tool that reads AGENTS.md get the same rules from the same place, because their instruction files are generated from one policy and never written by hand.",
+      "headline": "Claude Code, Codex, Gemini CLI, bb and any tool that reads AGENTS.md get the same rules from the same place, because their instruction files are generated from one policy and never written by hand.",
       "summary": "A provider-neutral policy and four execution profiles are the one source; majordomus update renders each provider bootstrap from its template, stamps it with the policy hash and the hash of its own content, and doctor fails a bootstrap that was hand-edited, that carries a rule corpus of its own, or that exceeds the always-loaded budget.",
       "status": "stable",
       "weight": 90,
@@ -7790,7 +7790,23 @@
           "always_loaded": true
         }
       ],
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
+    },
+    {
+      "id": "bb",
+      "title": "bb",
+      "bootstraps": [
+        {
+          "target": ".bb/AGENTS.md",
+          "mode": "file",
+          "always_loaded": false
+        }
+      ],
+      "hooks": [],
+      "scratch_roots": [
+        "${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees"
+      ]
     },
     {
       "id": "claude-code",
@@ -7806,6 +7822,9 @@
       "hooks": [
         "prompt-capture",
         "session-lifecycle"
+      ],
+      "scratch_roots": [
+        "<primary>/.claude/worktrees"
       ]
     },
     {
@@ -7813,20 +7832,23 @@
       "title": "Codex",
       "bootstraps": [],
       "client_config": ".codex/config.toml",
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     },
     {
       "id": "gemini",
       "title": "Gemini CLI",
       "bootstraps": [],
       "client_config": ".gemini/settings.json",
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     },
     {
       "id": "generic",
       "title": "A worker with no convention of its own",
       "bootstraps": [],
-      "hooks": []
+      "hooks": [],
+      "scratch_roots": []
     }
   ],
   "rules": [
@@ -8516,7 +8538,7 @@
       "test": 113,
       "use-case": 40
     },
-    "providers": 5,
+    "providers": 6,
     "features": 19,
     "web_surfaces": 8
   },

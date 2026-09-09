@@ -3,14 +3,14 @@ schema: adr/v1
 id: adr-0024
 kind: adr
 title: An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts
-status: proposed
+status: accepted
 date: 2026-09-09
 tags:
   - architecture
   - provider
   - worktree
 provenance:
-  origin: extracted
+  origin: authored
   derived_from:
     - decision:adr-0009
     - decision:adr-0015

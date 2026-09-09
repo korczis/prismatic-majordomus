@@ -1021,7 +1021,9 @@ A repository holds itself to this by declaring an `enforcement` entry with
 and because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.
 Only Claude Code has an adapter today. Codex and Gemini are reported `unsupported` rather
 than assumed, and no other surface — the web, the desktop app, another machine — is
-observable from here at all.
+observable from here at all. An orchestrator such as bb has no adapter by design: it hands
+no prompt to a command before the model, and the agent it runs keeps its own hooks, so a
+Claude Code thread under bb is captured as `claude-code` (ADR 0024).
 
 ### `capture session` — the episode boundary
 

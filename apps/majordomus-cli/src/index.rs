@@ -80,11 +80,12 @@ pub struct Index {
     /// kinds and the schemas, not discovered in the repository, so that an installed copy
     /// answers the same questions a checkout does.
     pub distribution: Option<crate::distribution::Model>,
-    /// The provider templates the tool distribution ships, by id (the template's file
-    /// stem): the providers the tool has an adapter for. Read from the tool's data
-    /// directory beside the kinds and the schemas, like the distribution model, so that the
-    /// product model can say which providers exist without a second discovery.
-    pub provider_templates: Vec<String>,
+    /// The providers the tool distribution ships an adapter for: one per template under
+    /// `share/providers/`, joined with what `share/providers.yaml` declares about it. Read
+    /// from the tool's data directory beside the kinds and the schemas, like the
+    /// distribution model, so that the product model can say which providers exist without
+    /// a second discovery.
+    pub providers: Vec<crate::share::ProviderDeclaration>,
 }
 
 impl Index {
@@ -186,7 +187,7 @@ impl Index {
             fingerprint,
             scoped: Scoped { scope, tally },
             distribution: None,
-            provider_templates: Vec::new(),
+            providers: Vec::new(),
         })
     }
 

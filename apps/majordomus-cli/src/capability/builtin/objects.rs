@@ -153,7 +153,7 @@ fn pretty_json(v: &Value) -> String {
 ///         scope_origin: majordomus_cli::scope::Origin::Distribution, scope_path: String::new(),
 ///     },
 ///     objects: vec![], diagnostics: vec![], state: State::Ok, fingerprint: String::new(),
-///     scoped: Default::default(), distribution: None, provider_templates: Vec::new(),
+///     scoped: Default::default(), distribution: None, providers: Vec::new(),
 /// };
 /// let registry = CapabilityRegistry::builder().with_builtin(builtin::all()).with_index(&index).build().unwrap();
 /// let ctx = Context::new(Arc::new(index), Arc::new(registry));

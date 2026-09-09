@@ -13,6 +13,10 @@ pub const SHARE_ENV: &str = "MAJORDOMUS_SHARE";
 /// The kinds file inside the share directory.
 pub const KINDS_FILE: &str = "kinds.yaml";
 
+/// The provider declarations inside the share directory: what a provider is beyond its
+/// template — its title, the client configuration it reads, the scratch roots it creates.
+pub const PROVIDERS_FILE: &str = "providers.yaml";
+
 /// The JSON Schema directory inside the share directory.
 pub const SCHEMAS_DIR: &str = "schemas";
 
@@ -140,6 +144,187 @@ impl Share {
         out.sort();
         out
     }
+
+    /// `<share>/providers.yaml`.
+    pub fn providers_path(&self) -> PathBuf {
+        self.dir.join(PROVIDERS_FILE)
+    }
+
+    /// The provider declarations the distribution ships, joined with its templates: one
+    /// [`ProviderDeclaration`] per id that has either, sorted by id. A distribution without
+    /// the file declares nothing and every template is a provider named by its file; a
+    /// file that does not parse is an error naming it, because a declaration half-read is
+    /// worse than none.
+    pub fn providers(&self) -> Result<ProviderDeclarations> {
+        let path = self.providers_path();
+        let file: ProvidersFile = match std::fs::read_to_string(&path) {
+            Ok(text) => {
+                crate::metadata::yaml::parse_into(&text).map_err(|reason| Error::KindSchema {
+                    reason: format!("{}: {reason}", path.display()),
+                })?
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => ProvidersFile::default(),
+            Err(e) => return Err(Error::io(&path, e)),
+        };
+        let templates = self.provider_templates();
+        let mut ids: Vec<String> = templates.clone();
+        ids.extend(file.providers.keys().cloned());
+        ids.sort();
+        ids.dedup();
+        let providers = ids
+            .into_iter()
+            .map(|id| {
+                let decl = file.providers.get(&id);
+                ProviderDeclaration {
+                    title: decl
+                        .and_then(|d| d.title.clone())
+                        .unwrap_or_else(|| id.clone()),
+                    client_config: decl.and_then(|d| d.client_config.clone()),
+                    scratch_roots: decl.map(|d| d.scratch_roots.clone()).unwrap_or_default(),
+                    template: templates.contains(&id),
+                    declared: decl.is_some(),
+                    id,
+                }
+            })
+            .collect();
+        Ok(ProviderDeclarations {
+            scratch_roots: file.scratch_roots,
+            providers,
+        })
+    }
+}
+
+/// `share/providers.yaml` as written.
+#[derive(Debug, Default, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProvidersFile {
+    #[serde(default)]
+    #[allow(dead_code)]
+    version: u64,
+    #[serde(default)]
+    scratch_roots: Vec<String>,
+    #[serde(default)]
+    providers: std::collections::BTreeMap<String, ProviderEntry>,
+}
+
+#[derive(Debug, Default, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProviderEntry {
+    #[serde(default)]
+    title: Option<String>,
+    #[serde(default)]
+    client_config: Option<String>,
+    #[serde(default)]
+    scratch_roots: Vec<String>,
+}
+
+/// What the distribution declares about its providers, joined with the templates it ships.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ProviderDeclarations {
+    /// The tool's own scratch roots, unexpanded (see the file's header for the grammar).
+    pub scratch_roots: Vec<String>,
+    /// Every provider, sorted by id.
+    pub providers: Vec<ProviderDeclaration>,
+}
+
+/// One provider: the template's file stem, and what the declaration adds to it.
+#[derive(
+    Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+pub struct ProviderDeclaration {
+    /// The id: the template's file stem, and the key in the declarations.
+    pub id: String,
+    /// The name a person knows it by; the id when nothing is declared.
+    pub title: String,
+    /// The file it reads a project-scoped MCP client configuration from, when it has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_config: Option<String>,
+    /// The scratch roots it creates checkouts under, unexpanded.
+    #[serde(default)]
+    pub scratch_roots: Vec<String>,
+    /// The distribution ships a template for it.
+    pub template: bool,
+    /// The distribution declares it.
+    pub declared: bool,
+}
+
+impl ProviderDeclarations {
+    /// Every scratch root — the tool's own and every provider's — expanded against
+    /// `primary` (the repository's primary checkout) and the environment, in declaration
+    /// order, with the provider that declared each. A root whose expansion needs a variable
+    /// the environment does not hold is skipped, not an error.
+    pub fn scratch_roots(&self, primary: &Path) -> Vec<(Option<String>, PathBuf)> {
+        let mut out = Vec::new();
+        for r in &self.scratch_roots {
+            if let Some(p) = expand_root(r, primary) {
+                out.push((None, p));
+            }
+        }
+        for p in &self.providers {
+            for r in &p.scratch_roots {
+                if let Some(path) = expand_root(r, primary) {
+                    out.push((Some(p.id.clone()), path));
+                }
+            }
+        }
+        out
+    }
+}
+
+/// Expand one declared root: `<primary>/`, `~/`, `${NAME:-default}` and `$NAME`, nothing
+/// else. `None` when a variable without a default is unset.
+///
+/// ```
+/// # use std::path::Path;
+/// use majordomus_cli::share::expand_root;
+/// std::env::set_var("MJ_DOCTEST_ROOT", "/srv/x");
+/// std::env::remove_var("MJ_DOCTEST_UNSET");
+/// let primary = Path::new("/repo");
+/// assert_eq!(expand_root("<primary>/.claude/worktrees", primary).unwrap(), Path::new("/repo/.claude/worktrees"));
+/// assert_eq!(expand_root("$MJ_DOCTEST_ROOT/wt", primary).unwrap(), Path::new("/srv/x/wt"));
+/// assert_eq!(expand_root("${MJ_DOCTEST_UNSET:-/d}/wt", primary).unwrap(), Path::new("/d/wt"));
+/// assert!(expand_root("$MJ_DOCTEST_UNSET/wt", primary).is_none());
+/// assert_eq!(expand_root("/tmp", primary).unwrap(), Path::new("/tmp"));
+/// ```
+pub fn expand_root(root: &str, primary: &Path) -> Option<PathBuf> {
+    let mut out = String::new();
+    let mut rest = root;
+    while !rest.is_empty() {
+        if let Some(r) = rest.strip_prefix("<primary>") {
+            out.push_str(&primary.to_string_lossy());
+            rest = r;
+        } else if let Some(r) = rest.strip_prefix('~') {
+            let home = std::env::var_os("HOME")?;
+            out.push_str(&home.to_string_lossy());
+            rest = r;
+        } else if let Some(r) = rest.strip_prefix("${") {
+            let end = r.find('}')?;
+            let (name, default) = match r[..end].split_once(":-") {
+                Some((n, d)) => (n, Some(d)),
+                None => (&r[..end], None),
+            };
+            match std::env::var(name) {
+                Ok(v) if !v.is_empty() => {
+                    out.push_str(&expand_root(&v, primary)?.to_string_lossy())
+                }
+                _ => out.push_str(&expand_root(default?, primary)?.to_string_lossy()),
+            }
+            rest = &r[end + 1..];
+        } else if let Some(r) = rest.strip_prefix('$') {
+            let end = r
+                .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
+                .unwrap_or(r.len());
+            let v = std::env::var(&r[..end]).ok().filter(|v| !v.is_empty())?;
+            out.push_str(&v);
+            rest = &r[end..];
+        } else {
+            let end = rest.find(['<', '~', '$']).unwrap_or(rest.len());
+            let end = if end == 0 { 1 } else { end };
+            out.push_str(&rest[..end]);
+            rest = &rest[end..];
+        }
+    }
+    Some(PathBuf::from(out))
 }
 
 /// Every `<vendor>/<name>/<name>.v<n>.schema.json` under a schema root, parsed, keyed by

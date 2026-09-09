@@ -123,6 +123,7 @@ adds nouns becomes the thing it was meant to supervise.
   (Claude Code)  (Codex)       (Gemini, Cursor, local ...)
       |             |             |
       +-------------+-------------+
+        an orchestrator (bb) runs any of them; the agent stays the worker
                     |
                     v
           Verified, accepted outcomes
@@ -646,7 +647,7 @@ v0.1 ships exactly:
 - the subcommands `majordomus --help` lists, in portable shell, with behavioural tests
 - `doctor` dispatching every doctrine the effective rule set declares, including enforcement wiring reconciliation and the vendored package's integrity
 - `watch` with the drift table above
-- `update` producing projections for Claude Code, Codex, Gemini, and generic Markdown,
+- `update` producing projections for Claude Code, Codex, Gemini, bb and generic Markdown,
   each stamped with its provenance
 - a README that lists, in equal prominence, what v0.1 guarantees, what it only
   observes, and what it refuses to do

@@ -211,6 +211,10 @@ documents:
     source: "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
     formats:
       - markdown
+  - id: providers/bb
+    source: "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
+    formats:
+      - markdown
   - id: providers/claude-code
     source: "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
     formats:
@@ -331,18 +335,24 @@ documents:
       - json
       - yaml
 artifacts:
+  - path: .bb/AGENTS.md
+    document: providers/bb
+    format: markdown
+    source: "the policy `.ai/repo/policy.yaml` and the `bb` template, stamped by the projection itself"
+    bytes: 1476
+    sha256: bed894c9c26ecce4bb5f010751637e80f05fa15091ab5e1a2f969665a2739a95
   - path: AGENTS.md
     document: providers/agents
     format: markdown
     source: "the policy `.ai/repo/policy.yaml` and the `agents` template, stamped by the projection itself"
     bytes: 3807
-    sha256: 16a6f6fcc6869fb990d76a9ff6c763035b907b6a6c6f3024b0990d017bc2376b
+    sha256: 07a824ca015cb1b55a8ea6f8657ca8a07faf12e300454177dc45310574216969
   - path: CLAUDE.md
     document: providers/claude-code
     format: markdown
     source: "the policy `.ai/repo/policy.yaml` and the `claude-code` template, stamped by the projection itself"
     bytes: 3096
-    sha256: c3ce98decbfc03c00b2eeb4072403b79ab2a3d4da9b40a64e7f416e170ee06e7
+    sha256: bee76a617c719f0b0a69571f791b55c66146d91aab7b1930b44c90d488675842
   - path: docs/INSTALL.md
     document: install-guide
     format: markdown
@@ -518,28 +528,28 @@ artifacts:
     document: openapi
     format: json
     source: the canonical Majordomus capability registry
-    bytes: 428092
-    sha256: cd9cf5fb4e6d43212ea0c396781169df522606707e544391cbcf280e691f085e
+    bytes: 428481
+    sha256: 29f7cc7e982a4578cb74409c27d0e9978413acc82c247fe57c3e72eec0b3766c
   - path: docs/generated/openapi.yaml
     document: openapi
     format: yaml
     source: the canonical Majordomus capability registry
-    bytes: 331051
-    sha256: e0e9e5f1311b4b036b64bff656cb92205c76c335fb75a1ff92d1f371c0384f56
+    bytes: 331378
+    sha256: 25c5f2ed66a4c77849c3b2a21f488d2574b04d7997fb54c160910e16c7f606ab
   - path: docs/generated/registry.json
     document: registry
     format: json
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 522855
-    sha256: a2f7b39449e98eebdc27ba84121a39ac5eb952dfba3efa4c43760810aa3a49e0
+    bytes: 523292
+    sha256: 494bded48866a3a5cdb294580633f4276a374880fb5076f46fcff2ad2d16c922
   - path: docs/generated/registry.yaml
     document: registry
     format: yaml
     schema: majordomus/capability-registry/v1
     source: the canonical capability registry
-    bytes: 399239
-    sha256: 78085b113e0b778cb7abc2c6efd03be6fa814cd40eb4179ed1f6aa947f9932e3
+    bytes: 399602
+    sha256: bcf9027e5522b3e485c354156a8b21864c83a2a63d06d149f03bf55cb2ce4bd2
   - path: docs/generated/web.json
     document: web
     format: json
@@ -811,21 +821,21 @@ artifacts:
     format: json
     source: "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
     bytes: 59513
-    sha256: fc98548ca00250953006c95802288de869cc0fc6f2c38af3fb60991f55f11f2c
+    sha256: 66cbd5940fd9693c28aba9b3a8079740e8ef79abd790a8fc0224646cfa8d3639
   - path: site/data/registry/product.json
     document: site-product
     format: json
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
-    bytes: 299524
-    sha256: c35984fcf8ec31e5fcde1de7d1dba0e44bffbce767148ff97b34c16683fcc4a8
+    bytes: 300044
+    sha256: 334717d759c32e2e11a4721d9cd3459a5457cadd31c53417630877865c4dd084
   - path: site/data/registry/registry.json
     document: site-registry
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 1591509
-    sha256: 3249bc3b77ccc26ce103afd0c9c1b5da179648c998a5edbc0ee0582dbc5819e1
+    bytes: 1592723
+    sha256: 24f27da17cfcbe0b96185cea435762765b7bf3b0d6f02b49aaac462ea52445b3
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json
