@@ -54,6 +54,7 @@ pub mod path;
 pub mod service;
 pub mod state;
 pub mod topology;
+pub mod trace;
 
 pub use error::{Result, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
 pub use fingerprint::WorktreeFingerprint;
@@ -69,3 +70,7 @@ pub use model::{
 pub use path::{container_root, detached_label, expected_path, BranchName, CONTAINER_SUFFIX};
 pub use service::{CreateReport, CreateRequest, Detail, RemoveReport, WorktreeService};
 pub use topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
+pub use trace::{
+    Attribution, BranchTrace, CommitAttribution, CommitRef, Integration, IssueTrace, TraceReport,
+    TraceTallies, Tracer,
+};

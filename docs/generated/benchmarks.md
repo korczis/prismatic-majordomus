@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 44 | 44 | 0 | 0 |
-| http | 44 | 44 | 0 | 0 |
-| mcp | 42 | 42 | 0 | 0 |
+| direct | 47 | 47 | 0 | 0 |
+| http | 47 | 47 | 0 | 0 |
+| mcp | 45 | 45 | 0 | 0 |
 | system | 13 | 13 | 0 | 0 |
-| total | 143 | 143 | 0 | 0 |
+| total | 152 | 152 | 0 | 0 |
 
 ## Capabilities
 
@@ -52,6 +52,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `repository.info` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope` | repository | query | — | covered | covered | covered | `default` |
 | `repository.scope_classify` | repository | query | — | covered | covered | covered | `layer-file`, `local-half`, `secret`, `undeclared`, `first-object` |
+| `trace.commit` | trace | query | — | covered | covered | covered | `head` |
+| `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
+| `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |
 | `web.surfaces` | web | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `why.areas` | why | query | process, 4 entries | covered | covered | covered | `default` |
 | `why.audiences` | why | query | process, 4 entries | covered | covered | covered | `default` |

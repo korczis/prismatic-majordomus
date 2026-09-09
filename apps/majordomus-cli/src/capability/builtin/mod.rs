@@ -19,6 +19,7 @@ pub mod perf;
 pub mod product;
 pub mod repository;
 mod scope;
+pub mod trace;
 mod views;
 pub mod web;
 pub mod worktree;
@@ -56,6 +57,9 @@ pub use objects::{
 pub use peers::{AnnounceInput, PeerList};
 pub use repository::{RepositoryReport, REPOSITORY_URI};
 pub use scope::{normalise_path, ClassifyInput, ScopeReport, SCOPE_URI};
+pub use trace::{
+    TraceCommitInput, TraceIssueInput, TraceReportInput, TRACEABILITY_URI,
+};
 pub mod why;
 
 pub use views::{Empty, ObjectSummary, ObjectView};
@@ -83,6 +87,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         why,
         web,
         worktree,
+        trace,
         product
     ]
 }

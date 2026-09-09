@@ -47,6 +47,8 @@ tags:
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
   - name: repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
+  - name: trace
+    description: "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name."
   - name: web
     description: "What this repository exposes over HTTP, resolved from the producers that make it rather than from a register anybody maintains: the routes the executable answers itself, the documentation build, and every generated report that declared its own mount. The same resolution serves the router, renders the home page and composes a publication."
   - name: why
@@ -2084,6 +2086,191 @@ paths:
         max_entries: 64
       x-majordomus-mcp:
         tool: majordomus_search
+  "/api/v1/trace":
+    get:
+      operationId: trace.report
+      summary: The whole work graph above the branch
+      description: "Every issue at least one branch names with its branches and commits, every declared issue no branch names, and the newest stretch of the trunk with each commit attributed to the issue whose branches hold it or reported as unattributed. The tallies count both sides, so the proportion of the trunk that no execution contract accounts for is a number rather than an impression. Read from git on every call: the history changes outside this process."
+      tags:
+        - trace
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many trunk commits to attribute, newest first. Default: 50. Anything above 2000\nis read as 2000 — a traceability report is a reading, not a history export."
+          examples:
+            ten:
+              value: 10
+      responses:
+        "200":
+          description: "The whole work graph above the branch: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/TraceReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: trace.report
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::trace
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_traceability
+        resource:
+          uri: majordomus://traceability
+          name: traceability
+  "/api/v1/trace/commit":
+    get:
+      operationId: trace.commit
+      summary: What contract this commit served
+      description: "One commit with the issue and milestone it served, or the fact that none can be found. Attributed when exactly one issue's branches hold it, ambiguous when branches naming two issues do, and unattributed when no branch naming an issue holds it at all — which is either work committed without an execution contract or a branch deleted after its merge, and the answer says so rather than guessing between them."
+      tags:
+        - trace
+      parameters:
+        - name: commit
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "Anything git resolves to a commit: a full or abbreviated object name, a ref, `HEAD`,\n`master~3`."
+          examples:
+            head:
+              value: HEAD
+      responses:
+        "200":
+          description: "What contract this commit served: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CommitAttribution"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: trace.commit
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::trace
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_trace_commit
+  "/api/v1/trace/issue":
+    get:
+      operationId: trace.issue
+      summary: What realised this issue
+      description: "One issue with the branches that name it — local, and remote-tracking where only the remote still has the branch — and, for each, the commits it holds that the trunk did not: measured against the trunk while the branch is open, and against the first parent of the merge commit that brought it in once it is merged. A branch that reached the trunk without a merge commit of its own says so and claims nothing, because its commits cannot be told from the trunk's. The milestone comes from the canonical issue record, which is the one edge here that git does not hold, and `declared` says whether the project model has this id at all — a repository with no plan still gets the branches, and a typo still cannot read as work nobody did."
+      tags:
+        - trace
+      parameters:
+        - name: issue
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The issue id, as the project model spells it (`I1305`). An id the model does not\ndeclare is answered with `declared: false` rather than refused, and rather than\nanswered with a bare empty trace: a typo that read as \"nothing realised this issue\"\nis the one answer this capability must never give."
+          examples:
+            first-issue:
+              value: I0001
+      responses:
+        "200":
+          description: "What realised this issue: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IssueTrace"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: trace.issue
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::trace
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_trace_issue
   "/api/v1/web/surfaces":
     get:
       operationId: web.surfaces
@@ -3158,6 +3345,18 @@ components:
         - source
         - state
       description: "One generated file, as the manifest declares it and as the tree has it."
+    Attribution:
+      oneOf:
+        - type: string
+          const: attributed
+          description: "Exactly one issue's branches contain it."
+        - type: string
+          const: unattributed
+          description: No branch naming an issue contains it.
+        - type: string
+          const: ambiguous
+          description: Branches naming more than one issue contain it.
+      description: What is known about the contract one commit served.
     AudienceList:
       type: object
       properties:
@@ -3310,6 +3509,43 @@ components:
         - trunk
         - cleanup_eligible
       description: "One local branch, with or without a work tree."
+    BranchTrace:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The ref, short: `feature/I1305-traceability`, or `origin/feature/I1305-traceability`\nwhen only the remote still has it."
+        remote:
+          type: boolean
+          description: "True when the ref is a remote-tracking one and no local branch of the same name\nstands for it."
+        head:
+          type: string
+          description: The commit the ref points at.
+        integration:
+          "$ref": "#/components/schemas/Integration"
+          description: How it stands to the trunk.
+        merge_commit:
+          type:
+            - string
+            - "null"
+          description: "The merge commit that brought it into the trunk, when one did."
+        note:
+          type:
+            - string
+            - "null"
+          description: "Why the commit list is what it is, when it is worth a sentence."
+        commits:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommitRef"
+          description: "The commits this branch holds and the trunk did not, newest first, merges excluded."
+      required:
+        - name
+        - remote
+        - head
+        - integration
+        - commits
+      description: "One branch that names an issue, with the commits it holds."
     Budgets:
       type: object
       additionalProperties: false
@@ -3944,6 +4180,70 @@ components:
         - summary
         - read_only
       description: "One public command of the shell tool the feature names, as `share/commands.yaml`\ndeclares it."
+    CommitAttribution:
+      type: object
+      properties:
+        commit:
+          "$ref": "#/components/schemas/CommitRef"
+          description: The commit.
+        attribution:
+          "$ref": "#/components/schemas/Attribution"
+          description: What is known.
+        issue:
+          type:
+            - string
+            - "null"
+          description: "The issue, when exactly one claims it."
+        milestone:
+          type:
+            - string
+            - "null"
+          description: "The milestone that issue belongs to, filled by the caller that has the index."
+        issues:
+          type: array
+          items:
+            type: string
+          description: "Every issue whose branches contain it: one when attributed, none when unattributed,\nmore than one when ambiguous."
+        branches:
+          type: array
+          items:
+            type: string
+          description: "The branches that contain it, by the names their refs carry."
+        reason:
+          type: string
+          description: "Why the verdict is what it is, in one line a person can act on."
+      required:
+        - commit
+        - attribution
+        - issues
+        - branches
+        - reason
+      description: "One commit and the contract it served, or the fact that none can be found."
+    CommitRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The full object name.
+        short:
+          type: string
+          description: "The abbreviated object name, as this repository abbreviates it."
+        author:
+          type: string
+          description: "The author, as the commit records them."
+        date:
+          type: string
+          description: "The author date, ISO 8601 as the commit records it."
+        subject:
+          type: string
+          description: The subject line.
+      required:
+        - id
+        - short
+        - author
+        - date
+        - subject
+      description: "One commit, exactly as git names it. Nothing here is stored anywhere: the whole record\nis re-read from the object database on every call."
     Concurrency:
       type: object
       additionalProperties: false
@@ -5737,6 +6037,21 @@ components:
         - latest_url
         - checks
       description: "Whether the advertised one-line installation works right now, and if not, what is missing.\n\nThis answers the operator's actual question — *can a machine that has never seen this\nproject install it with the published command?* — from local state alone. It performs no\nnetwork access: a repository can be offline and this still answers, because everything it\nneeds is the distribution model and the release records the repository itself carries.\nWhat it cannot see it reports as `unknown` rather than guessing; the public half of the\nquestion is answered by the release workflow's smoke phase, which installs from the\npublished URL on every native runner and is the only thing that proves the public path."
+    Integration:
+      oneOf:
+        - type: string
+          const: open
+          description: "Not reachable from the trunk: its commits are the ones the trunk does not have."
+        - type: string
+          const: merged
+          description: "Reachable from the trunk through a merge commit, which the trace names: its commits\nare the ones that merge brought in."
+        - type: string
+          const: absorbed
+          description: "Reachable from the trunk with no merge commit of its own — fast-forwarded, or\nrebased onto it. Its commits cannot be told from the trunk's and none are claimed."
+        - type: string
+          const: unknown
+          description: "The trunk is unknown, so there is nothing to measure the branch against."
+      description: "How a branch stands to the trunk, which is what decides which commits are its own."
     Interface:
       oneOf:
         - type: string
@@ -5746,6 +6061,45 @@ components:
           const: all
           description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
       description: Which interface a process listens on.
+    IssueTrace:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: "The issue id, as the project model spells it."
+        declared:
+          type: boolean
+          description: "True when the project model declares this id. False is not an error and not an\nempty answer: it says the id was looked for and the model does not have it, which a\ncaller must be able to tell apart from \"declared, and nothing has realised it yet\".\nA repository with no project model at all answers `false` for every id rather than\nrefusing, because the branches naming an id are still derivable there."
+        milestone:
+          type:
+            - string
+            - "null"
+          description: "The milestone the canonical issue record names. Git does not hold this edge and\nnothing here derives it: the caller with the index fills it in, and it is `null` in\na repository whose issue record does not name one."
+        trunk:
+          type:
+            - string
+            - "null"
+          description: The trunk every branch was measured against.
+        branches:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BranchTrace"
+          description: "The branches that name it, local first."
+        commits:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many distinct commits the branches hold between them.
+        complete:
+          type: boolean
+          description: "True when every branch's commits could be derived. False when at least one reached\nthe trunk without a merge commit, so part of the work is not distinguishable."
+      required:
+        - issue
+        - declared
+        - branches
+        - commits
+        - complete
+      description: "Everything git knows about one issue's realisation."
     KindRef:
       type: object
       properties:
@@ -8561,6 +8915,91 @@ components:
         - errors
         - warnings
       description: How many work trees and branches are in each state.
+    TraceReport:
+      type: object
+      properties:
+        trunk:
+          type:
+            - string
+            - "null"
+          description: The trunk every branch and commit was measured against.
+        examined:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many trunk commits were attributed.
+        issues:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IssueTrace"
+          description: "The issues that at least one branch names, in id order."
+        without_branch:
+          type: array
+          items:
+            type: string
+          description: "The issue ids the project model declares that no ref names. Not a fault: an issue\nnobody has started has no branch yet."
+        commits:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CommitAttribution"
+          description: "The examined trunk commits, newest first."
+        tallies:
+          "$ref": "#/components/schemas/TraceTallies"
+          description: "The counts, so a caller need not add them up."
+      required:
+        - examined
+        - issues
+        - without_branch
+        - commits
+        - tallies
+      description: "The whole traceability answer: every issue git can say something about, and every commit\nof a stretch of the trunk with the contract it served or the fact that it has none."
+    TraceTallies:
+      type: object
+      properties:
+        issues_declared:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Issue ids the project model declares.
+        issues_with_branch:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of those, the ones at least one ref names."
+        branches:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Branches naming an issue.
+        branch_commits:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Distinct commits those branches claim.
+        attributed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Examined trunk commits with exactly one issue.
+        unattributed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Examined trunk commits no branch naming an issue contains.
+        ambiguous:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Examined trunk commits more than one issue claims.
+      required:
+        - issues_declared
+        - issues_with_branch
+        - branches
+        - branch_commits
+        - attributed
+        - unattributed
+        - ambiguous
+      description: The counts of one report.
     Transport:
       oneOf:
         - type: string

@@ -1,0 +1,305 @@
+#!/usr/bin/env bash
+# traceability — the work graph above the branch, in both directions.
+#
+# Given an issue: the branches, the commits and the pull requests that realised it.
+# Given a commit or a pull request: the issue and the milestone it served, or the fact that
+# it served none. Nothing is stored. Every edge is read at the moment it is asked for, from
+# the two systems that already hold it:
+#
+#   git      the branches whose names contain an issue id, and the commits each one holds
+#            that the trunk did not — read through the Rust executable's `trace` capability
+#            module, which is where that derivation lives once
+#   GitHub   the pull requests, with the head branch each one was opened from
+#
+# The seam between them is the branch name. Neither half writes it down, and no canonical
+# record under .ai/repo/project/ names a branch, a commit or a pull request — that is the
+# invariant this script exists to respect rather than to work around.
+#
+#   scripts/traceability                 every issue, and the trunk commits nothing accounts for
+#   scripts/traceability --issue I1305   one issue: its branches, commits and pull requests
+#   scripts/traceability --commit <rev>  one commit: the issue and milestone it served
+#   scripts/traceability --pull 42       one pull request: the issue and milestone it served
+#   scripts/traceability --limit 200     how many trunk commits the report attributes
+#   scripts/traceability --format json   the same answers as one JSON document
+#   scripts/traceability --no-github     the git half alone; no token and no network
+#   scripts/traceability --repo <dir>    answer about that repository (default: this directory)
+#
+# Why a script. The executable, bin/, lib/, share/ and test/ make no network call, and
+# test/cases/08_no_forbidden_constructs.sh proves it; scripts/ is the one layer allowed to
+# talk to GitHub, which is why scripts/github-sync lives here too. The git half is therefore
+# not reimplemented here: this script is a client of `majordomus_traceability`,
+# `majordomus_trace_issue` and `majordomus_trace_commit` over MCP, the same three
+# capabilities any other client calls.
+#
+#   MJ_GH_FIXTURE_PULLS=<tsv>   read the pull requests from a file instead of the network,
+#     so the join is provable offline, with no token. The columns are the ones the live read
+#     produces: number, head branch, state, merged-at, merge commit, title, url.
+#
+# Exit codes: 0 the report was produced; 10 nothing accounts for part of what was asked
+# under --strict; 12 a prerequisite is missing.
+set -eu
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+MJ_VERSION="traceability"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
+export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+
+MODE=report; ISSUE=""; COMMIT=""; PULL=""; LIMIT=50; FORMAT=text; GITHUB=1; STRICT=0
+# The repository the questions are about, which is not necessarily the checkout this script
+# lives in: the tool answers about where it is run, and finds its own executable and share
+# directory beside itself.
+REPO="$(pwd)"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --issue)  [ $# -ge 2 ] || { echo "traceability: --issue needs an id" >&2; exit 2; }; MODE=issue; ISSUE="$2"; shift 2 ;;
+    --commit) [ $# -ge 2 ] || { echo "traceability: --commit needs a revision" >&2; exit 2; }; MODE=commit; COMMIT="$2"; shift 2 ;;
+    --pull)   [ $# -ge 2 ] || { echo "traceability: --pull needs a number" >&2; exit 2; }; MODE=pull; PULL="$2"; shift 2 ;;
+    --limit)  [ $# -ge 2 ] || { echo "traceability: --limit needs a number" >&2; exit 2; }; LIMIT="$2"; shift 2 ;;
+    --format) [ $# -ge 2 ] || { echo "traceability: --format needs text or json" >&2; exit 2; }; FORMAT="$2"; shift 2 ;;
+    --no-github) GITHUB=0; shift ;;
+    --strict) STRICT=1; shift ;;
+    --repo)   [ $# -ge 2 ] || { echo "traceability: --repo needs a directory" >&2; exit 2; }; REPO="$2"; shift 2 ;;
+    -h|--help) sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "traceability: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+case "$FORMAT" in text|json) ;; *) echo "traceability: --format is text or json" >&2; exit 2 ;; esac
+
+command -v jq >/dev/null 2>&1 || { echo "traceability: jq is required" >&2; exit 12; }
+
+T="$(mktemp -d "${TMPDIR:-/tmp}/mj.trace.XXXXXX")"
+trap 'rm -rf "$T"' EXIT
+
+# ---------------------------------------------------------------- the git half, over MCP
+# One capability call is one MCP session: initialize, the notification the protocol requires,
+# then the call. The server is started --standalone so that asking a question never attaches
+# to the shared server, announces a peer or writes anything anywhere.
+RB="${MAJORDOMUS_BIN:-}"
+if [ -z "$RB" ]; then
+  RB="$ROOT/apps/majordomus-cli/target/debug/majordomus"
+  [ -x "$RB" ] || RB="$ROOT/libexec/majordomus-cli"
+fi
+[ -x "$RB" ] || { echo "traceability: no Rust executable; build it with bin/majordomus-cli --help, or set MAJORDOMUS_BIN" >&2; exit 12; }
+[ -n "${MAJORDOMUS_SHARE:-}" ] || { MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE; }
+
+mcp_call() { # tool arguments-json -> the capability's typed answer on stdout
+  local tool="$1" args="$2" out
+  out="$T/mcp.out"
+  {
+    printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"traceability","version":"0"}}}\n'
+    printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"%s","arguments":%s}}\n' "$tool" "$args"
+  } | "$RB" mcp --standalone --repo "$REPO" > "$out" 2>"$T/mcp.err" || {
+    echo "traceability: the executable exited non-zero answering $tool" >&2; sed 's/^/  | /' "$T/mcp.err" >&2; exit 12; }
+  local frame; frame="$(sed -n 2p "$out")"
+  [ -n "$frame" ] || { echo "traceability: $tool answered nothing" >&2; sed 's/^/  | /' "$T/mcp.err" >&2; exit 12; }
+  printf '%s' "$frame" | jq -e '.result.isError == false' >/dev/null 2>&1 || {
+    echo "traceability: $tool refused: $(printf '%s' "$frame" | jq -r '.result.content[0].text // .error.message // "no reason given"')" >&2
+    exit 12; }
+  printf '%s' "$frame" | jq '.result.structuredContent'
+}
+
+# ---------------------------------------------------------------- the GitHub half
+# Pull requests, with the head branch each was opened from. A fixture is a remote to observe:
+# nothing here writes to GitHub, so there is no --apply to refuse.
+PULLS="$T/pulls.tsv"
+: > "$PULLS"
+GH_STATE=none
+read_pulls() {
+  if [ -n "${MJ_GH_FIXTURE_PULLS:-}" ]; then
+    cat "$MJ_GH_FIXTURE_PULLS" > "$PULLS"; GH_STATE=fixture; return 0
+  fi
+  [ "$GITHUB" = 1 ] || { GH_STATE=skipped; return 0; }
+  command -v gh >/dev/null 2>&1 || { GH_STATE=unavailable; return 0; }
+  gh auth status >/dev/null 2>&1 || { GH_STATE=unauthenticated; return 0; }
+  local repo; repo="$(cd "$REPO" && gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null || true)"
+  [ -n "$repo" ] || { GH_STATE=unavailable; return 0; }
+  gh api --paginate "repos/$repo/pulls?state=all&per_page=100" \
+    --jq '.[] | [(.number|tostring), .head.ref, .state, (.merged_at // ""), (.merge_commit_sha // ""), .title, .html_url] | @tsv' \
+    > "$PULLS" 2>"$T/gh.err" || { GH_STATE=unavailable; : > "$PULLS"; return 0; }
+  GH_STATE=live
+}
+read_pulls
+
+# The issue a branch names: the same rule the executable applies, and the reason it is worth
+# repeating here in six lines rather than storing the answer anywhere — a path component
+# equal to an issue id, or beginning with the id followed by a hyphen. Nothing else counts.
+issue_of() { # branch id... -> the id, or nothing
+  local branch="$1"; shift
+  local rest="$branch" component id
+  while [ -n "$rest" ]; do
+    component="${rest%%/*}"
+    case "$rest" in */*) rest="${rest#*/}" ;; *) rest="" ;; esac
+    for id in "$@"; do
+      case "$component" in
+        "$id"|"$id"-*) printf '%s' "$id"; return 0 ;;
+      esac
+    done
+  done
+  return 0
+}
+
+# ---------------------------------------------------------------- the join
+REPORT="$T/report.json"
+mcp_call majordomus_traceability "$(printf '{"limit":%s}' "$LIMIT")" > "$REPORT"
+IDS="$(jq -r '[(.issues[].issue), (.without_branch[])] | .[]' "$REPORT")"
+
+# every pull request, with the issue its head branch names or the empty string
+PULLS_ATTRIBUTED="$T/pulls.attributed.tsv"
+: > "$PULLS_ATTRIBUTED"
+while IFS="$(printf '\t')" read -r number head state merged_at merge_sha title url; do
+  [ -n "${number:-}" ] || continue
+  # shellcheck disable=SC2086
+  issue="$(issue_of "$head" $IDS)"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$number" "$head" "$state" "$merged_at" "$merge_sha" "$title" "$url" "$issue" >> "$PULLS_ATTRIBUTED"
+done < "$PULLS"
+
+pulls_of() { awk -F'\t' -v id="$1" '$8 == id' "$PULLS_ATTRIBUTED"; }
+milestone_of() { jq -r --arg i "$1" '(.issues[] | select(.issue == $i) | .milestone) // ""' "$REPORT" | head -1; }
+
+pulls_json() { # issue-or-empty -> the pull requests as a JSON array
+  local id="${1:-}"
+  if [ -n "$id" ]; then pulls_of "$id"; else cat "$PULLS_ATTRIBUTED"; fi \
+    | jq -R -s 'split("\n") | map(select(length > 0) | split("\t")
+        | {number: (.[0] | tonumber), branch: .[1], state: .[2],
+           merged_at: (if .[3] == "" then null else .[3] end),
+           merge_commit: (if .[4] == "" then null else .[4] end),
+           title: .[5], url: .[6],
+           issue: (if .[7] == "" then null else .[7] end),
+           attribution: (if .[7] == "" then "unattributed" else "attributed" end)})'
+}
+
+# ---------------------------------------------------------------- rendering
+gh_note() {
+  case "$GH_STATE" in
+    live)           printf 'pull requests: read from GitHub\n' ;;
+    fixture)        printf 'pull requests: read from the fixture %s\n' "$MJ_GH_FIXTURE_PULLS" ;;
+    skipped)        printf 'pull requests: not read (--no-github); the pull-request half of every answer below is absent, not empty\n' ;;
+    unauthenticated) printf 'pull requests: gh is not authenticated; the pull-request half of every answer below is absent, not empty\n' ;;
+    *)              printf 'pull requests: unavailable; the pull-request half of every answer below is absent, not empty\n' ;;
+  esac
+}
+
+render_issue_text() { # issue-json pulls-json
+  local i="$1" p="$2"
+  jq -r '
+    "issue        \(.issue)",
+    "milestone    \(.milestone // "(none)")",
+    "trunk        \(.trunk // "(unknown)")",
+    "commits      \(.commits)\(if .complete then "" else "  (incomplete: a branch reached the trunk with no merge commit of its own)" end)",
+    (if (.branches | length) == 0 then "branches     (none: no ref names this issue)" else empty end),
+    (.branches[] | "branch       \(.name)\(if .remote then "  [remote only]" else "" end)  \(.integration)\(if .merge_commit then "  merged by \(.merge_commit[0:9])" else "" end)",
+                   (if .note then "             \(.note)" else empty end),
+                   (.commits[] | "  commit     \(.short)  \(.subject)"))
+  ' "$i"
+  jq -r '
+    if (. | length) == 0 then "pulls        (none)"
+    else (.[] | "pull         #\(.number)  \(.state)  \(.branch)  \(.title)") end
+  ' "$p"
+}
+
+case "$MODE" in
+  issue)
+    ISSUE_JSON="$T/issue.json"
+    mcp_call majordomus_trace_issue "$(jq -c -n --arg i "$ISSUE" '{issue: $i}')" > "$ISSUE_JSON"
+    P="$T/issue.pulls.json"; pulls_json "$ISSUE" > "$P"
+    if [ "$FORMAT" = json ]; then
+      jq -n --slurpfile i "$ISSUE_JSON" --slurpfile p "$P" --arg gh "$GH_STATE" \
+        '{issue: $i[0], pulls: $p[0], pull_requests_source: $gh}'
+    else
+      gh_note; echo; render_issue_text "$ISSUE_JSON" "$P"
+    fi
+    ;;
+
+  commit)
+    C="$T/commit.json"
+    mcp_call majordomus_trace_commit "$(jq -c -n --arg c "$COMMIT" '{commit: $c}')" > "$C"
+    # a commit GitHub merged is named by the pull request that merged it; that is the half
+    # git cannot answer once the head branch has been deleted
+    sha="$(jq -r '.commit.id' "$C")"
+    P="$T/commit.pulls.json"
+    awk -F'\t' -v s="$sha" '$5 == s' "$PULLS_ATTRIBUTED" \
+      | jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {number: (.[0]|tonumber), branch: .[1], issue: (if .[7] == "" then null else .[7] end), url: .[6]})' > "$P"
+    if [ "$FORMAT" = json ]; then
+      jq -n --slurpfile c "$C" --slurpfile p "$P" --arg gh "$GH_STATE" \
+        '{commit: $c[0], merged_by: $p[0], pull_requests_source: $gh}'
+    else
+      gh_note; echo
+      jq -r '
+        "commit       \(.commit.short)  \(.commit.subject)",
+        "author       \(.commit.author)  \(.commit.date)",
+        "attribution  \(.attribution)",
+        "issue        \(.issue // "(none)")",
+        "milestone    \(.milestone // "(none)")",
+        (if (.branches | length) > 0 then "branches     \(.branches | join(", "))" else empty end),
+        "reason       \(.reason)"
+      ' "$C"
+      jq -r '.[] | "merged by    #\(.number)  \(.branch)  \(.issue // "unattributed")"' "$P"
+    fi
+    [ "$STRICT" = 1 ] && [ "$(jq -r '.attribution' "$C")" != attributed ] && exit 10
+    ;;
+
+  pull)
+    line="$(awk -F'\t' -v n="$PULL" '$1 == n' "$PULLS_ATTRIBUTED")"
+    [ -n "$line" ] || { echo "traceability: no pull request $PULL in what was read ($GH_STATE)" >&2; exit 12; }
+    issue="$(printf '%s' "$line" | cut -f8)"
+    milestone=""; [ -n "$issue" ] && milestone="$(milestone_of "$issue")"
+    if [ "$FORMAT" = json ]; then
+      printf '%s\n' "$line" | jq -R --arg m "$milestone" --arg gh "$GH_STATE" 'split("\t")
+        | {number: (.[0]|tonumber), branch: .[1], state: .[2],
+           merged_at: (if .[3] == "" then null else .[3] end),
+           merge_commit: (if .[4] == "" then null else .[4] end),
+           title: .[5], url: .[6],
+           issue: (if .[7] == "" then null else .[7] end),
+           milestone: (if $m == "" then null else $m end),
+           attribution: (if .[7] == "" then "unattributed" else "attributed" end),
+           pull_requests_source: $gh}'
+    else
+      gh_note; echo
+      printf 'pull         #%s\n' "$(printf '%s' "$line" | cut -f1)"
+      printf 'branch       %s\n' "$(printf '%s' "$line" | cut -f2)"
+      printf 'state        %s\n' "$(printf '%s' "$line" | cut -f3)"
+      printf 'attribution  %s\n' "$([ -n "$issue" ] && echo attributed || echo unattributed)"
+      printf 'issue        %s\n' "${issue:-(none: its head branch names no issue of the project model)}"
+      printf 'milestone    %s\n' "${milestone:-(none)}"
+    fi
+    [ "$STRICT" = 1 ] && [ -z "$issue" ] && exit 10
+    ;;
+
+  report)
+    ALL_P="$T/all.pulls.json"; pulls_json > "$ALL_P"
+    if [ "$FORMAT" = json ]; then
+      jq -n --slurpfile r "$REPORT" --slurpfile p "$ALL_P" --arg gh "$GH_STATE" '
+        ($p[0]) as $pulls |
+        {git: $r[0],
+         pulls: $pulls,
+         pull_requests_source: $gh,
+         tallies: ($r[0].tallies + {
+           pulls: ($pulls | length),
+           pulls_attributed: ([$pulls[] | select(.issue != null)] | length),
+           pulls_unattributed: ([$pulls[] | select(.issue == null)] | length)})}'
+    else
+      gh_note; echo
+      jq -r '
+        "trunk        \(.trunk // "(unknown)")",
+        "issues       \(.tallies.issues_declared) declared, \(.tallies.issues_with_branch) with a branch",
+        "branches     \(.tallies.branches) naming an issue, holding \(.tallies.branch_commits) commits",
+        "attributed   \(.tallies.attributed) of \(.examined) examined trunk commits",
+        "unattributed \(.tallies.unattributed)",
+        "ambiguous    \(.tallies.ambiguous)",
+        "",
+        (.issues[] | "issue        \(.issue)  \(.milestone // "(no milestone)")  \(.branches | length) branch(es), \(.commits) commit(s)"),
+        (if (.without_branch | length) > 0 then "", "no branch    \(.without_branch | join(" "))" else empty end),
+        "",
+        (.commits[] | select(.attribution != "attributed")
+          | "\(.attribution)  \(.commit.short)  \(.commit.subject)")
+      ' "$REPORT"
+      jq -r '
+        ([.[] | select(.issue == null)]) as $u
+        | "", "pulls        \(. | length) read, \($u | length) whose head branch names no issue",
+          ($u[] | "unattributed #\(.number)  \(.branch)  \(.title)")
+      ' "$ALL_P"
+    fi
+    if [ "$STRICT" = 1 ] && [ "$(jq -r '.tallies.unattributed' "$REPORT")" != 0 ]; then exit 10; fi
+    ;;
+esac
+exit 0

@@ -33,4 +33,14 @@ evidence_required:
   - traceability_both_ways
 risk: "A commit-to-issue edge inferred from a branch name is only as good as the branch discipline; unattributed must be a reported state, not an assumption."
 created_at: 2026-09-09
-updated_at: 2026-09-09
+updated_at: 2026-09-09T18:55:36Z
+started_at: 2026-09-09T18:55:15Z
+verified_at: 2026-09-09T18:55:34Z
+completed_at: 2026-09-09T18:55:36Z
+evidence:
+  - covers: traceability_both_ways
+    type: test
+    command: "env -u MAJORDOMUS_SHARE bash test/run.sh 98_traceability"
+    result: "ok 98_traceability: over real MCP frames, I0001 (merged with a merge commit) lists its branch, its merge commit and its two commits; I0002 (open) is measured against the trunk; I0003 (fast-forwarded) reports itself absorbed and claims none of the trunk's commits; I0004 (declared, unstarted) traces to nothing and stays declared; I9999 answers declared:false. Backwards, a commit of the merged branch names I0001 and milestone M0, and the commit made straight on the trunk is reported unattributed with a reason. The report's buckets sum to the commits examined, and the absorbed branch's commit is present in it rather than omitted. Then scripts/traceability over a pull-request fixture joins PR #1 to I0001, answers #2 with I0002 and M0, reports #3 (head branch chore/tidy-up) unattributed rather than dropping it, tallies 3 read / 2 attributed / 1 unattributed, and exits 10 under --strict on a commit with no contract. Finally: no canonical record under .ai/repo/project/ names a branch after the run, and git status is unchanged."
+    commit: 990bd0588a13f17a0dd0087080af3c422e3b1e37
+    recorded_at: 2026-09-09T18:55:28Z

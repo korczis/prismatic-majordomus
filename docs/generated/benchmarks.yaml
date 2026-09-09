@@ -6,18 +6,18 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.3.1
 coverage:
   - scope: direct
-    required: 44
-    covered: 44
+    required: 47
+    covered: 47
     missing: 0
     waived: 0
   - scope: http
-    required: 44
-    covered: 44
+    required: 47
+    covered: 47
     missing: 0
     waived: 0
   - scope: mcp
-    required: 42
-    covered: 42
+    required: 45
+    covered: 45
     missing: 0
     waived: 0
   - scope: system
@@ -26,8 +26,8 @@ coverage:
     missing: 0
     waived: 0
   - scope: total
-    required: 143
-    covered: 143
+    required: 152
+    covered: 152
     missing: 0
     waived: 0
 capabilities:
@@ -350,6 +350,34 @@ capabilities:
       - secret
       - undeclared
       - first-object
+  - id: trace.commit
+    module: trace
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - head
+  - id: trace.issue
+    module: trace
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-issue
+  - id: trace.report
+    module: trace
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - ten
   - id: web.surfaces
     module: web
     kind: query
