@@ -417,7 +417,7 @@ ok nav "every navigation link on the homepage resolves"
 # redirected to, and the render fixture is a test surface that is not part of the site.
 nav_orphans=0
 nav_exempt=" images js render-test releases "
-for redirect in $(sed -n 's/^from = "\/\([^/"]*\).*/\1/p' "$SITE/data/nav.toml" | sort -u); do
+for redirect in $(sed -n 's/^from = "\/\([^/"]*\).*/\1/p' "$SITE/data/nav.toml" | LC_ALL=C sort -u); do
   nav_exempt="$nav_exempt$redirect "
 done
 for dir in "$PUB"/*/; do

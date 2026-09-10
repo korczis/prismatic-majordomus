@@ -6,6 +6,7 @@
 # site and pages gates cover the static and published sites. This script makes that coverage
 # fail closed when a future change removes one piece from the gate model or from the tests.
 set -eu
+set -o pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
