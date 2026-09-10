@@ -1399,4 +1399,570 @@ mod tests {
         let sibling = ResolvedPath::of(home.path().join("sibling"));
         assert!(svc.ephemeral_root_of(&sibling).is_none(), "the repository lives in the temporary directory, so nothing beside it is a scratch checkout");
     }
+
+    // ------------------------------------------------------- judging, case by case
+
+    /// A repository whose primary checkout is nested one level inside a temporary
+    /// directory, so that the container — its *sibling* — is still inside the fixture and
+    /// goes away with it. The trunk is `master` by name: the only conventional branch that
+    /// exists here.
+    struct Fixture {
+        _home: tempfile::TempDir,
+        home: PathBuf,
+        primary: PathBuf,
+        container: PathBuf,
+        svc: WorktreeService,
+    }
+
+    fn fixture() -> Fixture {
+        let home_dir = tempfile::tempdir().unwrap();
+        let primary = home_dir.path().join("elsewhere/repo");
+        std::fs::create_dir_all(&primary).unwrap();
+        let run = |args: &[&str]| {
+            assert!(std::process::Command::new("git")
+                .arg("-C")
+                .arg(&primary)
+                .args(args)
+                .status()
+                .unwrap()
+                .success());
+        };
+        run(&["init", "-q", "-b", "master", "."]);
+        run(&[
+            "-c",
+            "user.email=t@example.com",
+            "-c",
+            "user.name=t",
+            "commit",
+            "-q",
+            "--allow-empty",
+            "-m",
+            "i",
+        ]);
+        let identity = RepositoryIdentity::discover(&primary).unwrap();
+        // No scratch roots: the fixture itself lives under the temporary directory, and a
+        // case that wants an ephemeral checkout declares the root it wants.
+        let svc = WorktreeService::over_with(identity, Vec::new()).unwrap();
+        let container = svc.container().path.clone();
+        // Every path a test compares against a rendered one is git's own form: on this
+        // platform the temporary directory is reached through a symbolic link, and the two
+        // spellings would differ in every message.
+        let primary = svc.identity().primary_worktree().path.clone();
+        let home = primary.parent().unwrap().parent().unwrap().to_path_buf();
+        Fixture {
+            home,
+            _home: home_dir,
+            primary,
+            container,
+            svc,
+        }
+    }
+
+    fn record(path: &Path, branch: Option<&str>) -> WorktreeRecord {
+        WorktreeRecord {
+            path: path.to_path_buf(),
+            head: Some("abc123456789def".into()),
+            branch: branch.map(str::to_string),
+            bare: false,
+            detached: branch.is_none(),
+            locked: None,
+            prunable: None,
+        }
+    }
+
+    fn codes(state: &WorktreeState) -> Vec<DiagnosticCode> {
+        state.diagnostics.iter().map(|d| d.code).collect()
+    }
+
+    fn judge(f: &Fixture, r: &WorktreeRecord) -> WorktreeState {
+        f.svc.judge(r, Detail::Fast, &BTreeMap::new())
+    }
+
+    /// The primary checkout on the trunk is the shape the whole topology is defined against.
+    /// It is exempt from the path rule and it reports *no* expected path: printing one would
+    /// tell a person that the repository itself belongs inside its own container, and
+    /// `worktree migrate` reads exactly this field to decide what to move.
+    #[test]
+    fn the_primary_checkout_on_the_trunk_is_in_place_and_claims_no_canonical_path() {
+        let f = fixture();
+        let state = judge(&f, &record(&f.primary, Some("master")));
+        assert_eq!(state.standing, Standing::Primary);
+        assert_eq!(state.kind, WorktreeKind::Primary);
+        assert_eq!(state.diagnostics, Vec::new());
+        assert_eq!(
+            state.expected_path, None,
+            "the primary checkout hosts the trunk; it has no path under the container"
+        );
+        assert!(state.exists);
+        assert!(is_in_place(&state, f.svc.identity().trunk().source));
+    }
+
+    /// The primary checkout on a feature branch is an error, not a preference: the trunk
+    /// has nowhere else to be, and the branch has a canonical worktree of its own. The
+    /// diagnostic has to name both branches and the path the feature belongs at, because
+    /// the remedy is two commands and a person needs the arguments for them.
+    #[test]
+    fn the_primary_checkout_on_a_feature_branch_is_an_error_naming_both_branches() {
+        let f = fixture();
+        let state = judge(&f, &record(&f.primary, Some("feature/x")));
+        assert_eq!(state.standing, Standing::Primary);
+        assert_eq!(codes(&state), vec![DiagnosticCode::PrimaryOnNonTrunk]);
+        let d = &state.diagnostics[0];
+        assert_eq!(d.severity, Severity::Error);
+        assert!(
+            d.message.contains("feature/x") && d.message.contains("master"),
+            "{}",
+            d.message
+        );
+        assert_eq!(
+            state.expected_path.as_deref(),
+            Some(display(&f.container.join("feature/x")).as_str()),
+            "the branch still has a canonical worktree; the primary checkout is just not it"
+        );
+        assert!(
+            !is_in_place(&state, f.svc.identity().trunk().source),
+            "the guard has to refuse a commit made here"
+        );
+        assert!(
+            is_in_place(&state, TrunkSource::Unknown),
+            "with no trunk to hold it to, the primary checkout is not judged against one"
+        );
+    }
+
+    /// A linked worktree at exactly its branch's derived path is the whole point of the
+    /// topology, and it must be silent: one spurious diagnostic here turns `worktree
+    /// validate` red for every repository in order.
+    #[test]
+    fn a_linked_worktree_at_its_derived_path_is_canonical_and_says_nothing() {
+        let f = fixture();
+        let at = f.container.join("feature/providers/openai");
+        std::fs::create_dir_all(&at).unwrap();
+        let state = judge(&f, &record(&at, Some("feature/providers/openai")));
+        assert_eq!(state.standing, Standing::Canonical);
+        assert_eq!(state.kind, WorktreeKind::Linked);
+        assert_eq!(state.diagnostics, Vec::new());
+        assert_eq!(state.expected_path.as_deref(), Some(display(&at).as_str()));
+        assert_eq!(
+            state.label, "feature/providers/openai",
+            "the hierarchy is kept, never flattened into one directory name"
+        );
+        assert!(is_in_place(&state, f.svc.identity().trunk().source));
+    }
+
+    /// A worktree somewhere else is misplaced, and the diagnostic carries the destination.
+    /// `worktree migrate` builds its step from `expected_path`; if this were `None` the
+    /// worktree would be reported as wrong and never offered a way home.
+    #[test]
+    fn a_worktree_somewhere_else_is_misplaced_and_carries_where_it_belongs() {
+        let f = fixture();
+        let elsewhere = f.home.join("some/other/place");
+        std::fs::create_dir_all(&elsewhere).unwrap();
+        let state = judge(&f, &record(&elsewhere, Some("fix/cockpit")));
+        assert_eq!(state.standing, Standing::Misplaced);
+        assert_eq!(codes(&state), vec![DiagnosticCode::PathMismatch]);
+        assert_eq!(
+            state.expected_path.as_deref(),
+            Some(display(&f.container.join("fix/cockpit")).as_str())
+        );
+        assert_eq!(state.diagnostics[0].severity, Severity::Error);
+        assert_eq!(state.diagnostics[0].remedy, "majordomus worktree migrate");
+        assert!(!is_in_place(&state, f.svc.identity().trunk().source));
+    }
+
+    /// A worktree *inside* the primary checkout is the failure the absolute-path rule in
+    /// `git.rs` exists to prevent, and it is worse than an ordinary misplacement: git's own
+    /// status in the primary checkout starts reporting the nested checkout's files. It gets
+    /// a second diagnostic saying so, on top of the path mismatch.
+    #[test]
+    fn a_worktree_nested_inside_the_primary_checkout_says_that_as_well() {
+        let f = fixture();
+        let nested = f.primary.join("scratch/wt");
+        std::fs::create_dir_all(&nested).unwrap();
+        let state = judge(&f, &record(&nested, Some("fix/nested")));
+        assert_eq!(state.standing, Standing::Misplaced);
+        assert_eq!(
+            codes(&state),
+            vec![DiagnosticCode::PathMismatch, DiagnosticCode::Nested]
+        );
+        assert!(
+            state.diagnostics[1]
+                .message
+                .contains("inside the primary checkout"),
+            "{}",
+            state.diagnostics[1].message
+        );
+    }
+
+    /// A worktree that occupies the container path itself cannot be migrated like the
+    /// others: every other destination is *inside* it. It is diagnosed under its own code so
+    /// that the planner can order it first, and the ordinary path mismatch is not also
+    /// reported — one condition, one diagnostic.
+    #[test]
+    fn a_worktree_that_is_the_container_is_diagnosed_under_its_own_code() {
+        let f = fixture();
+        std::fs::create_dir_all(&f.container).unwrap();
+        let state = judge(&f, &record(&f.container, Some("feature/oops")));
+        assert_eq!(state.standing, Standing::Misplaced);
+        assert_eq!(codes(&state), vec![DiagnosticCode::ContainerOccupied]);
+        assert_eq!(state.diagnostics[0].severity, Severity::Error);
+    }
+
+    /// A registration whose directory is gone, and one git itself calls prunable, are two
+    /// different facts and get two different codes — but both are `Missing`, because in
+    /// both cases there is nothing to move and `worktree repair` is the answer.
+    #[test]
+    fn a_gone_directory_and_a_prunable_registration_are_told_apart_but_both_are_missing() {
+        let f = fixture();
+        let gone = f.container.join("feature/vanished");
+        let state = judge(&f, &record(&gone, Some("feature/vanished")));
+        assert_eq!(state.standing, Standing::Missing);
+        assert!(!state.exists);
+        assert_eq!(codes(&state), vec![DiagnosticCode::Missing]);
+        assert_eq!(state.diagnostics[0].severity, Severity::Warning);
+        assert_eq!(state.diagnostics[0].remedy, "majordomus worktree repair");
+
+        let here = f.container.join("feature/stale");
+        std::fs::create_dir_all(&here).unwrap();
+        let mut r = record(&here, Some("feature/stale"));
+        r.prunable = Some("gitdir file points to non-existent location".into());
+        let state = judge(&f, &r);
+        assert_eq!(state.standing, Standing::Missing);
+        assert_eq!(codes(&state), vec![DiagnosticCode::StaleRegistration]);
+        assert!(
+            state.diagnostics[0]
+                .message
+                .contains("non-existent location"),
+            "git's own reason is carried through: {}",
+            state.diagnostics[0].message
+        );
+        assert!(!is_in_place(&state, f.svc.identity().trunk().source));
+    }
+
+    /// A detached HEAD has no branch, so there is no name to derive a path from and nothing
+    /// ever moves it. Reporting an expected path for it would make the migration plan
+    /// invent a destination out of a commit id.
+    #[test]
+    fn a_detached_worktree_has_no_canonical_path_and_is_never_moved() {
+        let f = fixture();
+        let at = f.home.join("detached-here");
+        std::fs::create_dir_all(&at).unwrap();
+        let state = judge(&f, &record(&at, None));
+        assert_eq!(state.standing, Standing::Detached);
+        assert_eq!(codes(&state), vec![DiagnosticCode::Detached]);
+        assert_eq!(state.diagnostics[0].severity, Severity::Info);
+        assert_eq!(state.expected_path, None);
+        assert_eq!(
+            state.label, "detached/abc123456789",
+            "it is shown under its commit, shortened"
+        );
+        assert!(
+            is_in_place(&state, f.svc.identity().trunk().source),
+            "there is no rule for it to break"
+        );
+    }
+
+    /// A session's scratch checkout holds a branch away from where it belongs, so it is
+    /// reported — but the harness that made it owns it, and a migration that moved it out
+    /// from under a running session would break that session. It is `Ephemeral`: a warning,
+    /// not in place, and left alone unless asked for. The message names the provider so a
+    /// person knows whose directory it is.
+    #[test]
+    fn a_scratch_checkout_is_reported_with_its_provider_and_still_fails_the_path_rule() {
+        let f = fixture();
+        let root = f.home.join("agent-scratch");
+        let at = root.join("session-1/repo");
+        std::fs::create_dir_all(&at).unwrap();
+        let svc = WorktreeService::over_with(
+            f.svc.identity().clone(),
+            vec![ScratchRoot {
+                provider: Some("claude-code".into()),
+                path: root.clone(),
+            }],
+        )
+        .unwrap();
+        let state = svc.judge(
+            &record(&at, Some("feature/scratch")),
+            Detail::Fast,
+            &BTreeMap::new(),
+        );
+        assert_eq!(state.standing, Standing::Ephemeral);
+        assert_eq!(codes(&state), vec![DiagnosticCode::Ephemeral]);
+        assert_eq!(state.diagnostics[0].severity, Severity::Warning);
+        assert!(
+            state.diagnostics[0]
+                .message
+                .contains("created by claude-code"),
+            "{}",
+            state.diagnostics[0].message
+        );
+        assert_eq!(
+            state.expected_path.as_deref(),
+            Some(display(&f.container.join("feature/scratch")).as_str()),
+            "it still has a canonical path; nothing moves it there unasked"
+        );
+        assert!(!is_in_place(&state, svc.identity().trunk().source));
+        assert_eq!(
+            svc.ephemeral_root_of(&ResolvedPath::of(&at)),
+            Some(ResolvedPath::of(&root).path),
+            "the root is answered resolved, as the diagnostic prints it"
+        );
+    }
+
+    /// A branch git accepted that this executable cannot derive a path for is named rather
+    /// than assumed away. Falling through to `Canonical` would let the guard wave it
+    /// through; falling through with an expected path would let the planner move a worktree
+    /// to a derived path nobody validated.
+    #[test]
+    fn a_branch_whose_name_does_not_derive_is_diagnosed_and_given_no_destination() {
+        let f = fixture();
+        let at = f.home.join("odd");
+        std::fs::create_dir_all(&at).unwrap();
+        let state = judge(&f, &record(&at, Some("a b")));
+        assert_eq!(state.standing, Standing::Misplaced);
+        assert_eq!(codes(&state), vec![DiagnosticCode::InvalidBranchName]);
+        assert_eq!(
+            state.expected_path, None,
+            "no path was derived, so none is offered"
+        );
+        assert!(!is_in_place(&state, f.svc.identity().trunk().source));
+    }
+
+    /// A locked worktree is diagnosed only when it is misplaced — that is when the lock
+    /// matters, because git will refuse to move it — and the message has to distinguish a
+    /// lock git recorded a reason for from one it did not.
+    #[test]
+    fn a_lock_is_reported_when_it_would_block_a_move_and_not_otherwise() {
+        let f = fixture();
+        let canonical = f.container.join("feature/at-home");
+        std::fs::create_dir_all(&canonical).unwrap();
+        let mut r = record(&canonical, Some("feature/at-home"));
+        r.locked = Some("in use".into());
+        let state = judge(&f, &r);
+        assert_eq!(state.standing, Standing::Canonical);
+        assert_eq!(
+            state.diagnostics,
+            Vec::new(),
+            "a lock on a worktree that is already home blocks nothing"
+        );
+        assert_eq!(state.locked.as_deref(), Some("in use"));
+
+        // A different branch, whose canonical path is free: the lock is then the only
+        // thing standing between this worktree and its home.
+        let elsewhere = f.home.join("held-elsewhere");
+        std::fs::create_dir_all(&elsewhere).unwrap();
+        let mut r = record(&elsewhere, Some("feature/held"));
+        r.locked = Some("in use".into());
+        let state = judge(&f, &r);
+        assert_eq!(
+            codes(&state),
+            vec![DiagnosticCode::PathMismatch, DiagnosticCode::Locked]
+        );
+        assert!(
+            state.diagnostics[1].message.contains("(in use)"),
+            "{}",
+            state.diagnostics[1].message
+        );
+
+        r.locked = Some(String::new());
+        let state = judge(&f, &r);
+        assert!(
+            !state.diagnostics[1].message.contains("()"),
+            "git records an empty reason and an empty reason is not a reason: {}",
+            state.diagnostics[1].message
+        );
+    }
+
+    /// The trunk belongs in the primary checkout. A linked worktree holding it is not a
+    /// path error — the trunk's canonical path *is* the primary checkout — so it is a
+    /// separate warning, and the expected path it reports is the primary checkout itself.
+    #[test]
+    fn the_trunk_in_a_linked_worktree_is_pointed_back_at_the_primary_checkout() {
+        let f = fixture();
+        let at = f.container.join("master");
+        std::fs::create_dir_all(&at).unwrap();
+        let state = judge(&f, &record(&at, Some("master")));
+        assert!(
+            codes(&state).contains(&DiagnosticCode::TrunkInLinkedWorktree),
+            "{:?}",
+            codes(&state)
+        );
+        let d = state
+            .diagnostics
+            .iter()
+            .find(|d| d.code == DiagnosticCode::TrunkInLinkedWorktree)
+            .unwrap();
+        assert_eq!(d.severity, Severity::Warning);
+        assert_eq!(d.expected.as_deref(), Some(display(&f.primary).as_str()));
+    }
+
+    /// What stands in the way of a destination decides whether a person is told to look, or
+    /// told to migrate something else first. Every shape gets its own words; a single
+    /// "occupied" would leave them opening a terminal to find out which.
+    #[test]
+    fn a_destination_conflict_says_what_is_in_the_way_in_words() {
+        let f = fixture();
+        let at = f.container.join("feature/dest");
+        std::fs::create_dir_all(at.parent().unwrap()).unwrap();
+
+        assert!(
+            f.svc.destination_conflict(&at, None).is_none(),
+            "nothing there is not a conflict"
+        );
+
+        std::fs::create_dir(&at).unwrap();
+        let d = f.svc.destination_conflict(&at, None).unwrap();
+        assert_eq!(d.code, DiagnosticCode::DestinationConflict);
+        assert!(d.message.contains("an empty directory"), "{}", d.message);
+
+        std::fs::write(at.join("something"), "x").unwrap();
+        let d = f.svc.destination_conflict(&at, None).unwrap();
+        assert!(
+            d.message.contains("an unrelated directory with content"),
+            "{}",
+            d.message
+        );
+
+        std::fs::write(at.join(".git"), "gitdir: /elsewhere").unwrap();
+        let d = f.svc.destination_conflict(&at, None).unwrap();
+        assert!(
+            d.message
+                .contains("a git checkout this repository has not registered"),
+            "{}",
+            d.message
+        );
+        assert!(
+            d.remedy.contains("ls -la"),
+            "the remedy is to look: {}",
+            d.remedy
+        );
+
+        std::fs::remove_dir_all(&at).unwrap();
+        std::fs::write(&at, "a file").unwrap();
+        let d = f.svc.destination_conflict(&at, None).unwrap();
+        assert!(d.message.contains("a file"), "{}", d.message);
+    }
+
+    /// A symbolic link at the canonical path is a conflict *whatever it points at*,
+    /// including at the very worktree that belongs there. The canonical path has to be the
+    /// directory, not a name for it somewhere else — otherwise a link would let a worktree
+    /// live anywhere and still pass every check.
+    #[cfg(unix)]
+    #[test]
+    fn a_symbolic_link_at_the_canonical_path_is_a_conflict_even_pointing_at_the_right_tree() {
+        let f = fixture();
+        let real = f.home.join("the-real-one");
+        std::fs::create_dir_all(&real).unwrap();
+        let at = f.container.join("feature/linked");
+        std::fs::create_dir_all(at.parent().unwrap()).unwrap();
+        std::os::unix::fs::symlink(&real, &at).unwrap();
+        let d = f.svc.destination_conflict(&at, None).unwrap();
+        assert!(d.message.contains("a symbolic link"), "{}", d.message);
+    }
+
+    /// A worktree reached through a symbolic link inside the container resolves to the
+    /// canonical path and would otherwise be called canonical. It is not: the container has
+    /// to hold the directory itself, or `-wt/feature/x` could be a link to anywhere on the
+    /// machine and the topology would still report itself valid.
+    #[cfg(unix)]
+    #[test]
+    fn a_link_component_inside_the_container_does_not_make_a_worktree_canonical() {
+        let f = fixture();
+        let real = f.home.join("real-feature-dir");
+        std::fs::create_dir_all(&real).unwrap();
+        std::fs::create_dir_all(&f.container).unwrap();
+        let linked = f.container.join("feature");
+        std::os::unix::fs::symlink(&real, &linked).unwrap();
+        assert!(symlink_below(&f.container, &linked.join("x")));
+        assert!(
+            !symlink_below(&f.container, &f.container.join("elsewhere/x")),
+            "a path with no link component is not below one"
+        );
+        assert!(
+            !symlink_below(&f.container, Path::new("/somewhere/else")),
+            "a path that is not under the container at all is not below a link in it"
+        );
+    }
+
+    /// The upstream shown beside a worktree comes from the branch table read once for the
+    /// whole repository, not from a subprocess per worktree. A worktree whose branch is not
+    /// in the table shows none rather than a fabricated zero.
+    #[test]
+    fn the_upstream_is_taken_from_the_branch_table_and_absent_when_the_branch_is_not_in_it() {
+        let f = fixture();
+        let at = f.container.join("feature/tracked");
+        std::fs::create_dir_all(&at).unwrap();
+        let mut branches = BTreeMap::new();
+        branches.insert(
+            "feature/tracked".to_string(),
+            BranchRef {
+                name: "feature/tracked".into(),
+                head: "abc".into(),
+                upstream: Some(crate::worktree::UpstreamState {
+                    name: "origin/feature/tracked".into(),
+                    ahead: Some(2),
+                    behind: Some(1),
+                    gone: false,
+                }),
+                worktree: Some(at.clone()),
+            },
+        );
+        let state = f.svc.judge(
+            &record(&at, Some("feature/tracked")),
+            Detail::Fast,
+            &branches,
+        );
+        let u = state.upstream.expect("the table had it");
+        assert_eq!(
+            (u.name.as_str(), u.ahead, u.behind),
+            ("origin/feature/tracked", Some(2), Some(1))
+        );
+
+        let other = f.container.join("feature/untracked");
+        std::fs::create_dir_all(&other).unwrap();
+        let state = f.svc.judge(
+            &record(&other, Some("feature/untracked")),
+            Detail::Fast,
+            &branches,
+        );
+        assert!(state.upstream.is_none());
+    }
+
+    /// `Detail::Fast` is what the guard and `worktree status` on every directory change run,
+    /// and its whole point is that it spends no subprocess per worktree. Counting dirtiness
+    /// there would put a `git status` of every checkout on the path of every shell prompt.
+    #[test]
+    fn the_fast_detail_spends_no_subprocess_counting_uncommitted_work() {
+        let f = fixture();
+        let state = judge(&f, &record(&f.primary, Some("master")));
+        assert!(
+            state.dirty.is_none(),
+            "Detail::Fast answered with a dirty count, which costs a git status per worktree"
+        );
+        let full = f.svc.judge(
+            &record(&f.primary, Some("master")),
+            Detail::Full,
+            &BTreeMap::new(),
+        );
+        assert!(
+            full.dirty.is_some(),
+            "Detail::Full is the one that pays for it"
+        );
+        assert!(
+            full.dirty.unwrap().clean,
+            "the fixture has nothing uncommitted"
+        );
+    }
+
+    /// `git` prints paths and empty lines alike, and every consumer of a list of refs or
+    /// paths here goes through this. A blank line kept would become a branch named "" and a
+    /// trailing space would make two spellings of one branch.
+    #[test]
+    fn the_line_reader_drops_blanks_and_trims_rather_than_inventing_entries() {
+        assert_eq!(
+            lines_of(b"master\n  feature/x  \n\n\nfix/y\n"),
+            vec!["master", "feature/x", "fix/y"]
+        );
+        assert!(lines_of(b"").is_empty());
+        assert!(lines_of(b"\n  \n").is_empty(), "whitespace is not an entry");
+    }
 }
