@@ -390,19 +390,150 @@ mj_adr_show() {
 
 # ---------------------------------------------------------------- propose
 # The identity is allocated under an exclusive lock over the decisions directory: mkdir is
-# the one create-or-fail primitive every POSIX filesystem gives us, so two worktrees
-# proposing in the same second get two identities rather than one. The file is written to a
-# temporary beside its destination and moved into place, so a reader never sees half a
-# record and an interrupted propose leaves nothing.
-mj_adr_next_id() {
-  local n max=0 num
-  for n in "$MJ_ADRS_DIR"/[0-9][0-9][0-9][0-9]-*.md; do
-    [ -e "$n" ] || continue
-    num="${n##*/}"; num="${num%%-*}"
-    num="$(printf '%s' "$num" | sed 's/^0*//')"; [ -z "$num" ] && num=0
-    [ "$num" -gt "$max" ] && max="$num"
+# the one create-or-fail primitive every POSIX filesystem gives us, so two proposes in this
+# checkout get two identities rather than one. The file is written to a temporary beside its
+# destination and moved into place, so a reader never sees half a record and an interrupted
+# propose leaves nothing.
+#
+# The lock is where the identity is serialised; it is not where the identity comes from.
+# Each checkout has its own decisions directory and therefore its own lock, so what the lock
+# protects is one read-modify-write in one worktree — and reading that one directory for the
+# next free number is not allocation at all. It is a race whose window is the whole time
+# between choosing a number and pushing the branch that holds it, and on 2026-09-09 three
+# sessions took 0028 within a day of one another, each having read a directory in which 0028
+# was free. Nothing said so: the merge brought the records together, the index excluded both
+# with code=duplicate_identity, and the run still exited 0 because a diagnostic is not a
+# return code. The loss was found by grepping a log.
+#
+# So the number is allocated against every claim this clone knows — the working tree, every
+# local branch, every remote-tracking branch, merged or not — and never against the working
+# tree alone. What is left is the number a colleague holds on a branch that has not reached
+# this clone; mj_adr_cross_check refuses that one the moment it arrives, which is before the
+# merge rather than after it.
+
+# mj_adr_claims — every decision file this clone knows of, one row each:
+#   NNNN <TAB> repository-relative path <TAB> where
+# `where` is `here` for the working tree and for any ref that is only an earlier state of it
+# (the current branch under any remote, and anything sitting on HEAD's own commit): a record
+# renamed in this working copy must not read as a foreign claim upon itself. Every other row
+# names the branch that holds it.
+#
+# One `git ls-tree` per distinct state of the section directory rather than one per ref —
+# twenty-four listings for a hundred and twenty-four refs in this repository, about two
+# seconds — and only the operations that can collide ever pay it.
+mj_adr_claims() {
+  local dir f b branch head refs names t
+  dir="$(mj_rel "$MJ_ADRS_DIR")"
+  for f in "$MJ_ADRS_DIR"/[0-9][0-9][0-9][0-9]-*.md; do
+    [ -e "$f" ] || continue
+    b="${f##*/}"; printf '%s\t%s/%s\there\n' "${b%%-*}" "$dir" "$b"
   done
-  printf '%04d' "$((max + 1))"
+  mj_git rev-parse --git-dir >/dev/null 2>&1 || return 0
+  branch="$(mj_git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  if [ "$branch" = HEAD ]; then branch=""; fi
+  head="$(mj_git rev-parse --verify --quiet HEAD 2>/dev/null || true)"
+  refs="$(mktemp "${TMPDIR:-/tmp}/mj.adrr.XXXXXX")"
+  names="$(mktemp "${TMPDIR:-/tmp}/mj.adrn.XXXXXX")"
+  # one batch lookup of <ref>:<dir> for every ref, then one listing per distinct tree
+  mj_git for-each-ref --format='%(objectname) %(refname:short)' refs/heads refs/remotes 2>/dev/null \
+    | awk -v dir="$dir" -v head="$head" -v br="$branch" '
+        { sha = $1; ref = $2
+          if (ref == "") next
+          if (head != "" && sha == head) next
+          if (br != "" && (ref == br || substr(ref, length(ref) - length(br)) == "/" br)) next
+          printf "%s:%s %s\n", sha, dir, ref }' \
+    | mj_git_cat_file_batch_check > "$refs" || true
+  cut -f1 "$refs" 2>/dev/null | LC_ALL=C sort -u | while IFS= read -r t; do
+    [ -n "$t" ] || continue
+    mj_git ls-tree --name-only "$t" 2>/dev/null | sed "s|^|$t\t|" || true
+  done > "$names"
+  awk -F'\t' -v dir="$dir" '
+    NR == FNR { r[$1] = r[$1] "\n" $2; next }
+    $2 ~ /^[0-9][0-9][0-9][0-9]-.*\.md$/ {
+      n = split(r[$1], a, "\n")
+      for (i = 1; i <= n; i++) if (a[i] != "") printf "%s\t%s/%s\t%s\n", substr($2, 1, 4), dir, $2, a[i]
+    }' "$refs" "$names"
+  rm -f "$refs" "$names"
+  return 0
+}
+# a function because the pipeline above needs `mj_git` on the right-hand side of a pipe and
+# the format string carries the parentheses shellcheck reads as a subshell otherwise
+mj_git_cat_file_batch_check() {
+  mj_git cat-file --batch-check='%(objectname) %(objecttype) %(rest)' 2>/dev/null \
+    | awk '$2 == "tree" { print $1 "\t" $3 }'
+}
+
+# mj_adr_next_number FILE — the first number no row of that claim file holds
+mj_adr_next_number() {
+  awk -F'\t' '{ n = $1 + 0; if (n > max) max = n } END { printf "%04d", max + 1 }' "$1"
+}
+
+mj_adr_next_id() {
+  local c out
+  c="$(mktemp "${TMPDIR:-/tmp}/mj.adrx.XXXXXX")"
+  mj_adr_claims > "$c"
+  out="$(mj_adr_next_number "$c")"
+  rm -f "$c"
+  printf '%s' "$out"
+}
+
+# mj_adr_cross_check REPORTER — the identities this working tree introduces that another
+# branch already holds for a different record.
+#
+# The two checks in mj_adr_examine catch a duplicate that is two files in one tree. They
+# cannot catch a duplicate that is still one file per branch, and that is the shape every
+# collision this repository has had actually took: each side reads a directory in which the
+# number is free, and the two records only meet at the merge, where the index drops both and
+# says so in a diagnostic nobody reads. Refusing here moves that from after the merge to
+# before the commit, because `doctor` runs in the pre-commit hook.
+#
+# Only numbers the trunk does not already carry are examined, so editing or accepting an
+# existing decision costs one `git ls-tree` and no ref scan; and only numbers are compared,
+# never content, because the same record on two branches is the ordinary case.
+mj_adr_cross_check() {
+  local report="$1" dir trunk r f b mine all known new next num path others op ow rc=0
+  mj_git rev-parse --git-dir >/dev/null 2>&1 || return 0
+  dir="$(mj_rel "$MJ_ADRS_DIR")"
+  mine="$(mktemp "${TMPDIR:-/tmp}/mj.adrm.XXXXXX")"
+  for f in "$MJ_ADRS_DIR"/[0-9][0-9][0-9][0-9]-*.md; do
+    [ -e "$f" ] || continue
+    b="${f##*/}"; printf '%s\t%s/%s\n' "${b%%-*}" "$dir" "$b"
+  done > "$mine"
+  [ -s "$mine" ] || { rm -f "$mine"; return 0; }
+  trunk=""
+  for r in origin/master origin/main master main; do
+    if mj_git rev-parse --verify --quiet "$r^{commit}" >/dev/null 2>&1; then trunk="$r"; break; fi
+  done
+  if [ -n "$trunk" ]; then
+    # the set through a file, never through awk -v: a value with newlines in it is a
+    # syntax error to the awk macOS ships, and the diagnostic reads as a broken program
+    known="$(mktemp "${TMPDIR:-/tmp}/mj.adrk.XXXXXX")"
+    mj_git ls-tree --name-only "$trunk:$dir" 2>/dev/null | cut -c1-4 | LC_ALL=C sort -u > "$known" || true
+    new="$(mktemp "${TMPDIR:-/tmp}/mj.adrw.XXXXXX")"
+    awk -F'\t' 'NR == FNR { have[$1] = 1; next } !($1 in have)' "$known" "$mine" > "$new" || true
+    rm -f "$known"
+    if [ ! -s "$new" ]; then rm -f "$mine" "$new"; return 0; fi
+    mv "$new" "$mine"
+  fi
+  all="$(mktemp "${TMPDIR:-/tmp}/mj.adra.XXXXXX")"
+  mj_adr_claims > "$all"
+  next="$(mj_adr_next_number "$all")"
+  while IFS="$MJ_TAB" read -r num path; do
+    [ -n "$num" ] || continue
+    others="$(awk -F'\t' -v n="$num" -v p="$path" '
+      $3 != "here" && $1 == n && $2 != p { c[$2] = c[$2] ", " $3 }
+      END { for (k in c) printf "%s\t%s\n", k, substr(c[k], 3) }' "$all" | LC_ALL=C sort)"
+    [ -n "$others" ] || continue
+    while IFS="$MJ_TAB" read -r op ow; do
+      [ -n "$op" ] || continue
+      "$report" "$path" "identity adr-$num is claimed on another branch too: $op on $ow. Two records cannot share a number, and the merge that brings them together drops both from the index — renumber this record to $next, which no branch claims"
+      MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1
+    done <<EOF
+$others
+EOF
+  done < "$mine"
+  rm -f "$mine" "$all"
+  return "$rc"
 }
 
 mj_adr_slug() {
@@ -451,6 +582,9 @@ mj_adr_propose() {
   slug="$(mj_adr_slug "$title")"
   [ -n "$slug" ] || slug="decision"
   dest="$MJ_ADRS_DIR/$num-$slug.md"
+  # the number came from every claim git knows, so nothing may already stand there; if
+  # something does, the allocation was wrong and overwriting it would destroy a decision
+  [ -e "$dest" ] && mj_die "$MJ_EX_REFUSED" "adr propose: $(mj_rel "$dest") already exists; the identity $num was allocated over every branch this clone knows and is still taken, so nothing here may be written over it"
   tmp="$dest.tmp.$$"
   [ -n "$refs" ] || origin=authored
 
@@ -575,6 +709,9 @@ EOF
       esac
     done
   done < "$MJ_ADR_ROWS"
+  # and the identities no single tree can see: a number another branch already holds for a
+  # different record. Cheap unless this tree introduces a number the trunk does not have.
+  mj_adr_cross_check "$report" || rc=1
   return "$rc"
 }
 
