@@ -47,6 +47,8 @@ pub enum Command {
     Web(WebArgs),
     /// The operational moments this tool answers: the catalogue, one moment, the audiences and areas, a diagnosis of your own week, and the catalogue's own validation
     Why(WhyArgs),
+    /// One issue or one milestone as an executable development scope: what was authored, where the plan graph puts it, what happened to it, whether a worker may start it — with the origin of every value on the value
+    Devtask(DevtaskArgs),
     /// How this project is packaged, published and installed: the platforms, the artifact names, the installer, the releases
     Distribution(DistributionArgs),
     /// What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
@@ -430,6 +432,41 @@ pub enum WhyCommand {
     },
     /// Every finding over the catalogue; exit 10 when any is an error
     Validate,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus devtask`. The output shape is global, so a person writes it where it reads
+/// naturally — `devtask issue I0901 --format json` — and it is declared once.
+pub struct DevtaskArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `issue` or `milestone`.
+    pub command: DevtaskCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus devtask`.
+pub enum DevtaskCommand {
+    /// One issue as an executable development task, every field carrying where it came from
+    Issue {
+        /// The issue id, as the canonical model spells it. An id the model does not declare is answered, not refused.
+        id: String,
+        /// Answer from the canonical records alone, without consulting git — a deterministic answer that is the same on every machine
+        #[arg(long = "no-git")]
+        no_git: bool,
+    },
+    /// One milestone as an executable dependency graph: ready, blocked, parallelizable, critical blockers, cycles
+    Milestone {
+        /// The milestone id, as the canonical model spells it
+        id: String,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -2113,6 +2150,61 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::Success,
         }],
+    },
+    CommandExamples {
+        command: "devtask issue",
+        examples: &[
+            ExampleDoc {
+                id: "devtask-issue",
+                title: "One issue as work to be done, not as metadata",
+                description: "Identity, intent, status, milestone, dependencies, blockers, branches, commits, sessions and readiness in one answer, composed from the derivations that already own each half — the plan for the graph, `trace` for git, the canonical record for everything a person wrote. Nothing is manufactured: a key the record does not carry is `unknown` with the reason, never an empty string that reads as authored.",
+                argv: &["devtask", "issue", "I0001"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["readiness", "explicit"]),
+            },
+            ExampleDoc {
+                id: "devtask-issue-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "One domain model behind every projection: this document is what `GET /api/v1/devtask/issue` returns and what the `majordomus_devtask` tool answers, with the four groups kept apart by the type — what a person authored, what the plan derives, what happened locally, and where the external projection stands — and a provenance on every field.",
+                argv: &["devtask", "issue", "I0001", "--no-git", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&[
+                    "/declaration/title/provenance",
+                    "/position/status/provenance",
+                    "/readiness/state",
+                    "/attestation/explicit",
+                ]),
+            },
+            ExampleDoc {
+                id: "devtask-issue-undeclared",
+                title: "An id the model does not declare is answered, not refused",
+                description: "A typo that read as \"nothing has been authored\" is the one answer a work surface must never give, so an unknown id answers with `declared: false`, the readiness `undeclared`, and every canonical field `unknown` with the reason on it.",
+                argv: &["devtask", "issue", "I9999", "--no-git"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["undeclared"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "devtask milestone",
+        examples: &[
+            ExampleDoc {
+                id: "devtask-milestone",
+                title: "What to work on next in one outcome, and what to unblock first",
+                description: "The issues partitioned by readiness, the critical blockers ordered by how much unfinished work each holds back, and the startable work partitioned into subsets that may genuinely run at the same time. A pure function of the canonical records — no git, no clock, no network — so two runs on two machines produce the same bytes and a reader derives nothing itself.",
+                argv: &["devtask", "milestone", "foundation"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["READINESS"]),
+            },
+            ExampleDoc {
+                id: "devtask-milestone-json",
+                title: "The graph, as the shape the API and MCP answer with",
+                description: "Every partition the plan implies and no surface should recompute: `ready`, `blocked`, `waiting`, `active`, `review`, `completion_blocked`, `complete`, `cancelled`, plus `critical_blockers`, `parallelizable` with the scope path behind each serialisation, and `cycles` as strongly connected components.",
+                argv: &["devtask", "milestone", "foundation", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/counts/total", "/ready", "/critical_blockers", "/parallelizable"]),
+            },
+        ],
     },
     CommandExamples {
         command: "why",

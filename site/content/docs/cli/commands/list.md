@@ -1,7 +1,7 @@
 +++
 title = "majordomus commands list"
 description = "Every command, one line each: what it is, what running it changes, and where it is projected"
-weight = 52
+weight = 55
 [extra]
 route = "/docs/cli/commands/list/"
 command = "majordomus commands list"

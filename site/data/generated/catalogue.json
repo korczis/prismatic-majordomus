@@ -1251,7 +1251,10 @@
         "prove-what-a-task-owed-before-calling-it-done",
         "say-what-reached-the-remote-and-what-did-not",
         "checkpoint-long-work"
-      ]
+      ],
+      "applications": [],
+      "claims": [],
+      "responsibilities": []
     },
     {
       "id": "serve-the-layer-to-ai-clients",
@@ -5889,7 +5892,7 @@
             "stdin": null,
             "exit": 0,
             "expected_exit": 0,
-            "output": "INFO capture     .claude/hooks/majordomus-capture — written and made executable\nINFO capture     .claude/hooks/majordomus-session-start — written and made executable\nINFO capture     .claude/hooks/majordomus-session-end — written and made executable\nINFO capture     .claude/hooks/majordomus-session-compact — written and made executable\nINFO capture     .claude/settings.json — written with the UserPromptSubmit, SessionStart, SessionEnd, PreCompact hook(s)",
+            "output": "INFO capture     .claude/hooks/majordomus-capture — written and made executable (inline)\nINFO capture     .claude/hooks/majordomus-session-start — written and made executable (inline)\nINFO capture     .claude/hooks/majordomus-session-end — written and made executable (inline)\nINFO capture     .claude/hooks/majordomus-session-compact — written and made executable (inline)\nINFO capture     .claude/settings.json — written with the UserPromptSubmit, SessionStart, SessionEnd, PreCompact hook(s)",
             "assertions": [
               {
                 "kind": "exit",
@@ -8964,6 +8967,24 @@
       },
       {
         "class": "mcp_tool",
+        "id": "majordomus_devtask",
+        "use_cases": 0,
+        "executable": 0,
+        "evidence": 0,
+        "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
+        "id": "majordomus_devtask_milestone",
+        "use_cases": 0,
+        "executable": 0,
+        "evidence": 0,
+        "status": "gap",
+        "policy": "advisory"
+      },
+      {
+        "class": "mcp_tool",
         "id": "majordomus_directories",
         "use_cases": 1,
         "executable": 1,
@@ -9476,7 +9497,7 @@
         "policy": "advisory"
       }
     ],
-    "total": 193,
+    "total": 195,
     "covered": 138,
     "partial": 0,
     "gaps_required": 0
