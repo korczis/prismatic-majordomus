@@ -7,8 +7,14 @@
 # sessions built the same subsystem because neither read the board. So the board arrives in
 # the one command every worker is already told to run. What this case holds is that it
 # arrives, that it names the collision rather than merely the peers, and above all that it
-# is never load-bearing: no lease, no server, a server that does not answer, or a board that
-# says nothing must all leave `context` exactly as it was.
+# is never load-bearing: no lease, no server, a server that does not answer, an executable
+# that is not built, or a board that says nothing must all leave `context` exactly as it
+# was.
+#
+# Where the server is now comes from `serve status`, the executable's one typed reading of
+# the lease (ADR 0035, project.the-lease-is-read-once); the lease this case plants is read
+# by that reader rather than by the shell. Everything asserted below is asserted about the
+# same contract as before the move, which is the point of leaving the assertions alone.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
 command -v curl >/dev/null 2>&1 || { echo "    curl absent; skipping"; exit 0; }
@@ -23,6 +29,13 @@ expect_exit 0 "$MJ" context
 expect_no_grep '^## PEERS'
 order=$(printf '%s\n' "$LAST_OUT" | grep -E '^## ' | tr '\n' ' ')
 case "$order" in "## GIT ## TASK"*) ;; *) echo "    a repository with one worker grew a section about it: $order"; exit 1 ;; esac
+
+# --- an executable that is not built is the same answer, and it is proved above: the
+# section is asked for from `serve status` and there is nothing to ask, so `context` is
+# exactly what it was. That half of the contract is what a tree without a build can hold;
+# the board itself needs the reader, so the rest is a skip rather than a failure.
+BIN="${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}"
+[ -x "$BIN" ] || { echo "    no built executable to read the lease with; the never-load-bearing half is proved above"; exit 0; }
 
 # --- a board with one peer whose claim is inside this task's scope
 board="$T/board.json"

@@ -360,16 +360,6 @@
       "external": false
     },
     {
-      "id": ".ai/local/state/mcp/server.json",
-      "kind": "artifact",
-      "label": "local/state/mcp/server.json",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
       "id": "lib/deployment.sh",
       "kind": "module",
       "label": "deployment",
@@ -833,11 +823,6 @@
     },
     {
       "source": "lib/context.sh",
-      "target": ".ai/local/state/mcp/server.json",
-      "kind": "reads"
-    },
-    {
-      "source": "lib/context.sh",
       "target": ".ai/local/state/open-questions.md",
       "kind": "reads"
     },
@@ -1199,6 +1184,11 @@
     {
       "source": "lib/context.sh",
       "target": "lib/prompt.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {

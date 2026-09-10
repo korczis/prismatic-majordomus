@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "aa1807819f2a21ee103f002089c36e73ce52fc0cc7c8515f0e01c80224ada5de",
+    "fingerprint": "af8c211586c1981330331d560014117fad8eae0eb81442a903c8e3074e200f81",
     "summary": {
-      "total": 1188,
+      "total": 1190,
       "builtin": 74,
-      "declarative": 1114,
+      "declarative": 1116,
       "by_kind": {
         "command": 3,
         "query": 71,
-        "resource": 1114
+        "resource": 1116
       },
       "by_stability": {
         "behaviorally_verified": 69,
-        "implemented": 1119
+        "implemented": 1121
       },
       "mcp_tools": 72,
-      "mcp_resources": 1141,
+      "mcp_resources": 1143,
       "http_routes": 74,
       "cli_commands": 32,
       "modules": 53,
@@ -26712,7 +26712,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 108,
+        "capabilities": 109,
         "capability_ids": []
       },
       {
@@ -26764,7 +26764,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 135,
+        "capabilities": 136,
         "capability_ids": []
       },
       {
@@ -26844,7 +26844,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2251cba591f8edb0044fd1fb5b1b3f73c5c90962637b2efab991ca502b183c4b",
+    "fingerprint": "f40afaf2d2bf27c1daf44bf8c8a44d405da11df39464ae314d893cc803a03f97",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -26887,12 +26887,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 108,
+      "rule": 109,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 135,
+      "test": 136,
       "use-case": 41,
       "workspace": 1
     },
@@ -32129,7 +32129,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 37239
+        "bytes": 38213
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -37088,6 +37088,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.the-lease-is-read-once@1",
+        "kind": "rule",
+        "identity": "project.the-lease-is-read-once@1",
+        "title": "The shared server's lease has one reader",
+        "description": "The file that says which process serves a checkout and at which address is parsed by one typed reader in the executable and served from there; no other file in this repository opens it, and a caller that needs the address asks `serve status`.",
+        "path": ".ai/repo/rules/project/the-lease-is-read-once.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5314,
+        "tags": [
+          "mcp",
+          "coordination",
+          "derived",
+          "gates"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.ui-conformance@1",
         "kind": "rule",
         "identity": "project.ui-conformance@1",
@@ -37649,7 +37666,7 @@
         "identity": "test/cases/106_context_peers.sh",
         "path": "test/cases/106_context_peers.sh",
         "source_class": "case",
-        "bytes": 5379
+        "bytes": 6328
       },
       {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
@@ -37690,6 +37707,14 @@
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
         "bytes": 6597
+      },
+      {
+        "uri": "majordomus://test/test/cases/110_lease_reader.sh",
+        "kind": "test",
+        "identity": "test/cases/110_lease_reader.sh",
+        "path": "test/cases/110_lease_reader.sh",
+        "source_class": "case",
+        "bytes": 6873
       },
       {
         "uri": "majordomus://test/test/cases/11_site_derivation.sh",
@@ -39259,7 +39284,7 @@
         "id",
         "version"
       ],
-      "objects": 108
+      "objects": 109
     },
     {
       "name": "scope",
@@ -39314,7 +39339,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 135
+      "objects": 136
     },
     {
       "name": "use-case",
