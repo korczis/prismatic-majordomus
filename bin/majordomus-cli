@@ -57,5 +57,8 @@ if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
   fi
 fi
 
-[ -x "$bin" ] || { printf 'majordomus-cli: %s is not an executable\n' "$bin" >&2; exit 12; }
+# Still not there: either it could not be built, or it was never this checkout's to begin
+# with and whoever owns it has since removed it. Which of those, and what it means for
+# whatever the caller was about to measure, is said in one place for every caller.
+[ -x "$bin" ] || { mj_rust_bin_missing "$root" "$bin" 'majordomus-cli: '; exit 12; }
 exec "$bin" "$@"
