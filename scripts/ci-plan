@@ -7,7 +7,15 @@
 #   scripts/ci-plan --base A --head B       the paths that differ between two revisions
 #   scripts/ci-plan --files LIST            the paths listed in LIST (`-` for stdin), one per
 #                                           line; this is how the tests drive it
-#   scripts/ci-plan --full [why]            every gate, with the reason recorded
+#   scripts/ci-plan --full [why]            every gate but the on-demand ones, with the reason
+#                                           recorded
+#   --on-demand                             also plan the gates the model marks `on-demand`:
+#                                           the ones whose runner this repository cannot get
+#                                           on demand (the macOS jobs). The schedule, a
+#                                           dispatch and a pull request labelled ci:full pass
+#                                           it; a routine push does not, because three macOS
+#                                           jobs per push is demand no runner pool answers and
+#                                           the verdict that needs them then never arrives
 #   --format json|text|github               json (default): the plan; text: one line per gate;
 #                                           github: name=value lines for $GITHUB_OUTPUT
 #   --model FILE                            another model (the tests mutate a copy)
@@ -23,13 +31,14 @@ MJ_VERSION="ci-plan"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_
 . "$ROOT/lib/common.sh"
 command -v jq >/dev/null || { echo "ci-plan: jq is required" >&2; exit 12; }
 
-MODEL="$ROOT/.ai/repo/ci/gates.yaml"; BASE=""; HEAD=""; FILES=""; FULL=0; WHY=""; FORMAT=json; CHECK=0
+MODEL="$ROOT/.ai/repo/ci/gates.yaml"; BASE=""; HEAD=""; FILES=""; FULL=0; WHY=""; FORMAT=json; CHECK=0; ONDEMAND=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --base) BASE="$2"; shift 2 ;;
     --head) HEAD="$2"; shift 2 ;;
     --files) FILES="$2"; shift 2 ;;
     --full) FULL=1; shift; if [ $# -gt 0 ] && [ "${1#--}" = "$1" ]; then WHY="$1"; shift; fi ;;
+    --on-demand) ONDEMAND=1; shift ;;
     --format) FORMAT="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
     --check) CHECK=1; shift ;;
@@ -58,6 +67,12 @@ for g in $gate_ids; do
   i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
   [ -n "$(mj_yget "$FLAT" "gates.$i.job")" ] || { echo "ci-plan: gate $g names no job" >&2; bad=1; }
   [ -n "$(mj_yget "$FLAT" "gates.$i.runs")" ] || { echo "ci-plan: gate $g names no command (runs)" >&2; bad=1; }
+  # `on-demand: false` would be a gate that says it is on demand and is not; the field is
+  # present and true, or absent. A gate cannot be both always and on demand.
+  od="$(mj_yget "$FLAT" "gates.$i.on-demand")"
+  [ -z "$od" ] || [ "$od" = true ] || { echo "ci-plan: gate $g: on-demand is true or absent, not $od" >&2; bad=1; }
+  [ "$od" != true ] || [ "$(mj_yget "$FLAT" "gates.$i.always")" != true ] \
+    || { echo "ci-plan: gate $g is both always and on-demand" >&2; bad=1; }
   for ref in $(mj_ylist "$FLAT" "gates.$i.implies") $(mj_ylist "$FLAT" "gates.$i.requires"); do
     printf '%s\n' "$gate_ids" | grep -x "$ref" >/dev/null || { echo "ci-plan: gate $g refers to a gate that does not exist: $ref" >&2; bad=1; }
   done
@@ -79,7 +94,12 @@ done
 [ "$bad" = 0 ] || exit 10
 gate_jobs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.job$/ { split($1, a, "."); job[a[2]] = $2 } END { for (i in id) print id[i] "\t" job[i] }' "$FLAT")"
 gate_runs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.runs$/ { split($1, a, "."); r[a[2]] = substr($0, length($1) + 2) } END { for (i in id) print id[i] "\t" r[i] }' "$FLAT")"
-[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates, $n_classes classes, every reference resolves"; exit 0; }
+ondemand_ids="$(awk -F= '
+  $1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 }
+  $1 ~ /^gates\.[0-9]+\.on-demand$/ && $2 == "true" { split($1, a, "."); od[a[2]] = 1 }
+  END { for (i in id) if (i in od) print id[i] }' "$FLAT" | sort | tr '\n' ' ')"
+on_demand() { case " $ondemand_ids " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
+[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates ($(printf '%s' "$ondemand_ids" | wc -w | tr -d ' ') on demand), $n_classes classes, every reference resolves"; exit 0; }
 
 # ---------------------------------------------------------------- the change
 LIST="$(mktemp "${TMPDIR:-/tmp}/mj-ci-plan-files.XXXXXX")"
@@ -145,6 +165,11 @@ elif printf '%s\n' "$MATCH" | grep -q '^unclassified'; then
 elif [ ! -s "$LIST" ]; then
   reason="no changed path; only the gates that always run"
 fi
+if [ "$mode" = full ] && [ "$ONDEMAND" = 0 ] && [ -n "$ondemand_ids" ]; then
+  # the escalation reasons end in a space (`tr '\n' ' '` above); strip it so the note
+  # reads as one sentence rather than as two with a gap between them
+  reason="${reason% } (without the on-demand gates: ${ondemand_ids% })"
+fi
 
 # ---------------------------------------------------------------- the selection
 selected=""; why_of=""
@@ -152,6 +177,14 @@ add() { case " $selected " in *" $1 "*) ;; *) selected="$selected $1" ;; esac; w
 $1	$2"; }
 for g in $gate_ids; do
   i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+  # An on-demand gate is left out of every plan that did not ask for it — including the full
+  # one — and says so, so that a reader of the plan sees a gate that was not planned rather
+  # than a job that will be pending for ever.
+  if [ "$ONDEMAND" = 0 ] && on_demand "$g"; then
+    why_of="$why_of
+$g	on demand only: its runner is not available on demand; the schedule, a dispatch and a pull request labelled ci:full plan it"
+    continue
+  fi
   if [ "$mode" = full ]; then add "$g" "full"
   elif [ "$(mj_yget "$FLAT" "gates.$i.always")" = true ]; then add "$g" "always"
   else
@@ -168,6 +201,11 @@ changed=1; while [ "$changed" = 1 ]; do
     for ref in $(mj_ylist "$FLAT" "gates.$i.requires"); do case " $selected " in *" $ref "*) ;; *) add "$ref" "required by $g"; changed=1 ;; esac; done
   done
 done
+# ... but nothing implies or requires its way past the plan the caller asked for: an
+# on-demand gate stays out, whoever named it.
+if [ "$ONDEMAND" = 0 ] && [ -n "$ondemand_ids" ]; then
+  kept=""; for g in $selected; do on_demand "$g" || kept="$kept $g"; done; selected="$kept"
+fi
 selected="${selected# }"
 
 # ---------------------------------------------------------------- the output
@@ -176,7 +214,13 @@ case "$FORMAT" in
     printf 'mode: %s (%s)\nbase: %s\nhead: %s\nchanged: %s path(s)\n' "$mode" "$reason" "$BASE" "$HEAD" "$(wc -l < "$LIST" | tr -d ' ')"
     for g in $gate_ids; do
       w="$(printf '%s\n' "$why_of" | awk -F'\t' -v g="$g" '$1==g {print $2; exit}')"
-      if [ -n "$w" ]; then printf '  run   %-17s %s\n' "$g" "$w"; else printf '  skip  %-17s no changed path in a class that needs it\n' "$g"; fi
+      # run or skip is read from the selection, never from the presence of a reason: an
+      # on-demand gate carries a reason and is not selected, and printing it as `run` is how
+      # a reader is told a gate ran that never did.
+      case " $selected " in
+        *" $g "*) printf '  run   %-17s %s\n' "$g" "$w" ;;
+        *) printf '  skip  %-17s %s\n' "$g" "${w:-no changed path in a class that needs it}" ;;
+      esac
     done ;;
   github)
     printf 'mode=%s\n' "$mode"

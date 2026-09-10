@@ -70,9 +70,24 @@ Two execution classes, both evidence-driven:
 - **affected** — a pull request: the gates of the classes its changed paths fall in. Nothing
   is skipped on a hope; a gate is left out only when no changed path is in a class that
   names it, and the plan says so for every gate.
-- **full** — every gate: a push to master, the weekly schedule, a manual dispatch, a pull
-  request labelled `ci:full`, a change to the pipeline itself (the workflow, the actions,
-  `scripts/ci/`, the planner, the model, the runner), or a path the model does not know.
+- **full** — every gate but the on-demand ones: a push to master, the nightly schedule, a
+  manual dispatch, a pull request labelled `ci:full`, a change to the pipeline itself (the
+  workflow, the actions, `scripts/ci/`, the planner, the model, the runner), or a path the
+  model does not know.
+
+A third distinction cuts across both. A gate the model marks `on-demand: true` is planned
+only when the plan is asked for it (`scripts/ci-plan --on-demand`), which the nightly
+schedule, a dispatch and a `ci:full` pull request do and a routine push does not. Three
+gates carry it — `macos`, `rust-bench` and `installer-live` — and what they share is a macOS
+runner rather than a subject. The reason is arithmetic, and the model states it: this
+repository pushes to master about every seven minutes, the macOS suite runs for about 106
+minutes, and three macOS jobs per push is demand no shared runner pool answers. On
+2026-09-10 four master runs had every Linux job finished — five of them red — while their
+`ci` job had not started, because it needs those three and they had been queued for hours;
+master carried the defects overnight with every check apparently green, because a run that
+never reported and a run that reported green look identical in the interface. The gates were
+not weakened: they run in full every night and on request, which is more often than they
+were completing. `ci` still needs their jobs and still turns red when one of them does.
 
 To force full validation of a pull request, add the label `ci:full`; the `labeled` event
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the
@@ -201,11 +216,16 @@ commit and finishing an older one would publish an older tree.
 Linux is the blocking path for everything that does not depend on the platform: lints,
 documentation, coverage, the benchmark runner. macOS runs what does: the behavioural suite
 under the stock macOS shell (bash 3.2) and BSD userland, and the crate's own suites there
-(files, signals, the lease, the spawned processes), when a change is in a class that can
-reach them (the shell tool, the distribution, the crate, the pipeline) and in every full
-plan. The benchmark check against a committed baseline runs on macOS, the one platform
-with a baseline under `.ai/repo/benchmarks/rust/`. `docs/HARDCODING_LEDGER.yaml` records
-the platform list as a deliberate decision.
+(files, signals, the lease, the spawned processes). The benchmark check against a committed
+baseline runs on macOS, the one platform with a baseline under `.ai/repo/benchmarks/rust/`.
+`docs/HARDCODING_LEDGER.yaml` records the platform list as a deliberate decision.
+
+The macOS gates are the on-demand ones (above): the nightly schedule, a dispatch and a
+`ci:full` pull request plan them, a routine push does not, because a macOS runner is what
+this repository waits hours for and a gate queued behind one reports nothing at all. A
+change that is likely to be platform-dependent — the shell tool, the distribution, the
+crate's process and file handling — should carry the `ci:full` label rather than wait for
+the night, and that is a judgement a reviewer makes, not one the model can.
 
 ## Telemetry and budgets
 
