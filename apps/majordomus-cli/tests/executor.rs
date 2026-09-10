@@ -273,3 +273,64 @@ fn canonical_json_is_the_normal_form_of_an_input() {
         }
     }
 }
+
+/// A call answers from the distribution *this process* located, and not from one the
+/// handler resolves for itself.
+///
+/// The witness is a stand-in distribution that nothing else could reach: the shipped one,
+/// with an obligation vocabulary of a single token that exists in no file this repository
+/// ships. The application is pointed at it, and what comes back has to be that token.
+///
+/// A handler that resolved its own would walk the conventions from the repository root —
+/// which the fixture, being a repository and not a distribution, ships no `share/` in —
+/// down to `<the executable>/../share`: a cargo target directory here, an installation
+/// directory for a released binary. It would then answer with the shipped vocabulary when
+/// the environment happened to name one and fail outright when it did not, so the answer
+/// would be a function of where the binary lives and of who started it. That last step of
+/// the ladder is what a released binary run inside a foreign repository needs, which is why
+/// the process's distribution is handed to the handler rather than the ladder being changed.
+#[test]
+fn a_call_answers_from_the_distribution_the_process_located() {
+    let _serial = serial();
+    let f = Fixture::new();
+
+    // the shipped distribution, with one file of it replaced
+    let stand_in = tempfile::tempdir().expect("a directory for the stand-in distribution");
+    for entry in std::fs::read_dir(common::dist_share()).expect("the shipped distribution") {
+        let entry = entry.expect("an entry of the shipped distribution");
+        if entry.file_name() == std::ffi::OsStr::new(VOCABULARY_FILE) {
+            continue;
+        }
+        std::os::unix::fs::symlink(entry.path(), stand_in.path().join(entry.file_name()))
+            .expect("the shipped file, linked into the stand-in");
+    }
+    std::fs::write(
+        stand_in.path().join(VOCABULARY_FILE),
+        "version: 1\nobligations:\n  - id: stand-in-only\n    title: The token only this distribution declares\n    summary: It exists in no file this repository ships.\n    discharged_by: none\n    remote: false\n",
+    )
+    .expect("the stand-in vocabulary");
+
+    let app = majordomus_cli::app::App::load(&majordomus_cli::cli::RepoArgs {
+        repo: Some(f.root()),
+        share: Some(stand_in.path().to_path_buf()),
+        ..Default::default()
+    })
+    .expect("the application loads over the stand-in distribution");
+    let answer = app
+        .context
+        .execute("obligations.vocabulary", json!({}))
+        .expect("the vocabulary is read");
+
+    assert_eq!(
+        answer["obligations"]
+            .as_array()
+            .map(|o| o.iter().map(|t| t["id"].clone()).collect::<Vec<_>>()),
+        Some(vec![json!("stand-in-only")]),
+        "the answer is the vocabulary of the distribution the process was given: {answer}"
+    );
+    assert_eq!(answer["count"], json!(1), "counted from the same file");
+}
+
+/// The vocabulary file of a distribution, named here so the test above can replace it
+/// without the module under test exporting its own path.
+const VOCABULARY_FILE: &str = "obligations.yaml";
