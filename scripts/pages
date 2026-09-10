@@ -15,7 +15,9 @@
 #                                         this platform under .ai/repo/benchmarks/pages/
 #   scripts/pages report --timings FILE   the SLO verdict for a run, as a Markdown fragment
 #   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
-#                                         poll the public site until it serves that commit
+#                                         poll the public site until it serves that commit;
+#                                         --timeout 0 is a single probe. 0 it serves it,
+#                                         10 it serves something else, 12 it never answered
 #
 # The model is .ai/repo/ci/pages.yaml. Nothing here carries a path list, a budget or a gate
 # name of its own. Exit 0 ok, 2 usage, 10 a refusal or a budget exceeded, 12 something missing.
@@ -266,8 +268,20 @@ cmd_report() {
 # Workflow success is not publication. The site serves its own identity at deploy.identity —
 # the commit it was built from — so the moment that file names this commit is the moment the
 # deployment is publicly observable, measured from outside with the cache defeated.
+#
+# Two failures, told apart deliberately. A site that answers and names another commit has not
+# published this one — a refusal, exit 10. A site that never answered at all was not measured,
+# and saying "it still serves nothing" about a laptop with no network is a verdict the run did
+# not earn — exit 12, the code this script already reserves for something missing. The
+# obligation validator, which is the second caller this command has ever had, depends on that
+# distinction: one is work that is not published, the other is a check that could not be made.
+#
+# `--timeout 0` is a single probe, because the loop reads the site before it looks at the
+# clock — that is what makes this affordable inside a validator. Each probe is bounded by
+# --max-time, so an unreachable host costs a known number of seconds instead of curl's
+# default of waiting for a connection that will never open.
 cmd_verify() {
-  local url="" commit="" timeout=180 quiet=0 t0 waited served
+  local url="" commit="" timeout=180 quiet=0 t0 waited served body reached=0
   while [ $# -gt 0 ]; do case "$1" in
     --url) url="$2"; shift 2 ;;
     --commit) commit="$2"; shift 2 ;;
@@ -280,15 +294,25 @@ cmd_verify() {
   command -v curl >/dev/null || { echo "pages verify: curl is required" >&2; return 12; }
   t0="$(now)"
   while :; do
-    served="$(curl -fsSL -H 'Cache-Control: no-cache' "${url%/}/$IDENTITY?t=$(now)" 2>/dev/null | jq -r '.commit // empty' 2>/dev/null || true)"
-    if [ "$served" = "$commit" ]; then
+    body="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}/$IDENTITY?t=$(now)" 2>/dev/null || true)"
+    if [ -n "$body" ]; then
+      reached=1
+      served="$(printf '%s' "$body" | jq -r '.commit // empty' 2>/dev/null || true)"
+    else
+      served=""
+    fi
+    if [ -n "$served" ] && [ "$served" = "$commit" ]; then
       waited=$(( $(now) - t0 ))
       [ "$quiet" = 1 ] || printf 'pages verify: %s serves %s after %s s\n' "${url%/}/$IDENTITY" "${commit:0:12}" "$waited"
       printf '%s\n' "$waited" > "${MJ_PAGES_WAITED:-/dev/null}"
       return 0
     fi
     [ $(( $(now) - t0 )) -lt "$timeout" ] || {
-      printf 'pages verify: after %s s %s still serves %s, not %s\n' "$timeout" "${url%/}/$IDENTITY" "${served:-nothing}" "${commit:0:12}" >&2
+      if [ "$reached" = 0 ]; then
+        printf 'pages verify: %s could not be reached within %s s; publication was not measured\n' "${url%/}/$IDENTITY" "$timeout" >&2
+        return 12
+      fi
+      printf 'pages verify: after %s s %s still serves %s, not %s\n' "$timeout" "${url%/}/$IDENTITY" "${served:-no commit}" "${commit:0:12}" >&2
       return 10; }
     sleep 2
   done
@@ -306,6 +330,6 @@ case "${1:-}" in
   benchmark)   shift; cmd_benchmark "$@" ;;
   report)      shift; cmd_report "$@" ;;
   verify)      shift; cmd_verify "$@" ;;
-  -h|--help|"") sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//' ;;
+  -h|--help|"") sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) echo "pages: unknown command $1 (scripts/pages --help)" >&2; exit 2 ;;
 esac

@@ -34,7 +34,10 @@
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CSS="$ROOT/site/static/app.css"
-MJ="${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}"
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
+# cargo does not necessarily build into apps/majordomus-cli/target; ask it where
+MJ="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$ROOT/apps/majordomus-cli" ask-cargo)/debug/majordomus}"
 
 # Every static directory the executable serves, as `<id> <mount> <absolute dir>` lines, read
 # from the topology — the one place a mount is written. A surface whose producer has not run
@@ -206,7 +209,7 @@ process.exitCode = total ? 10 : 0;
   status="${status:-0}"
   rm -f "$surf"
   if [ "$render" = 1 ]; then
-    "${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}" web report ui --from "$out" --repo "$ROOT"
+    "$MJ" web report ui --from "$out" --repo "$ROOT"
   fi
   exit "$status"
 fi
