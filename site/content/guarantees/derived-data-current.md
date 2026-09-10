@@ -1,7 +1,7 @@
 +++
 title = "A commit whose derived data is behind its canonical inputs is refused before it exists, and a repository that unwires that gate is a doctor failure"
 description = "The site's data is a projection of the tree it was generated from. A commit that moves one of the generator's canonical inputs and does not regenerate leaves the projection describing a tree that no longer exists — and the publication path, which refuses exactly that, then refuses everything downstream of it. The gate moves that refusal to the moment the commit is made, in the checkout of the person who caused it."
-weight = 137
+weight = 138
 [extra]
 claim_id = "derived-data-current"
 status = "guaranteed"

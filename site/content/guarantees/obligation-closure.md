@@ -1,7 +1,7 @@
 +++
 title = "A task that declares obligations reaches the outcome completed only when each one has evidence recorded against it, and evidence taken over files that have since changed, or at a commit the branch has since left, no longer discharges anything"
 description = "A task may declare requires beside scope. Scope is a containment promise — where a"
-weight = 141
+weight = 142
 [extra]
 claim_id = "obligation-closure"
 status = "guaranteed"

@@ -11,6 +11,7 @@
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant, SystemTime};
 
@@ -527,22 +528,71 @@ fn take_over(path: &Path, seen: &LeaseFile) -> Result<()> {
     }
 }
 
+/// Set by [`lost`], never cleared: a lease this process was given and no longer has.
+///
+/// Distinct from `held().is_none()`, which is also true of a process that never took a
+/// lease at all — a test, a one-off command, a bridged client. Only a process that *had*
+/// the lease and lost it must change how it behaves, so only that one is recorded here.
+static LOST: AtomicBool = AtomicBool::new(false);
+
+/// The key the index answers [`was_lost`]'s converse under: whether the server answering
+/// still holds the lease of the checkout it serves. Named once, read by [`probe`] and
+/// written by the index route, so the two cannot drift apart.
+pub const LEASEHOLDER_KEY: &str = "leaseholder";
+
 /// This process's lease was taken over by another process: from now on a signal must not
-/// unlink the file, which is somebody else's. Called by the server's own reader when it
-/// finds the file no longer carries its token; nothing else about the process changes — it
-/// serves the peers it has and ends with them.
+/// unlink the file, which is somebody else's, and this process stops claiming to be the
+/// checkout's server — [`held`] answers `None` and [`was_lost`] answers `true` from here
+/// on. It serves the peers it has and ends with them; what it must not do is take on new
+/// ones, or answer a stranger's probe as though it were still the one.
 ///
 /// ```
 /// // a process that holds no lease has nothing to lose; saying so twice changes nothing
 /// majordomus_cli::lease::lost();
 /// majordomus_cli::lease::lost();
 /// assert!(majordomus_cli::lease::held().is_none());
+/// assert!(majordomus_cli::lease::was_lost(), "it was told the lease is gone");
 /// ```
 pub fn lost() {
+    LOST.store(true, Ordering::SeqCst);
+    if let Ok(mut published) = published().lock() {
+        *published = None;
+    }
     signals::release();
 }
 
-/// Does a Majordomus server answer at `url` for the repository at `root`?
+/// Did this process hold the checkout's lease and lose it?
+///
+/// The one question a server asks before taking on work that outlives the request. A
+/// process that never held a lease answers `false` and goes on serving whoever asked it —
+/// a test, a bridged client, a one-off command. One that was superseded answers `true`,
+/// and from then on refuses to become anybody's server again. It never resets: a lease
+/// that was taken over is not given back.
+///
+/// ```
+/// // nothing has taken a lease away from the process running this example; `lost()` in
+/// // the doctest above runs in a process of its own
+/// assert!(!majordomus_cli::lease::was_lost());
+/// ```
+pub fn was_lost() -> bool {
+    LOST.load(Ordering::SeqCst)
+}
+
+/// Does a Majordomus server answer at `url` for the repository at `root`, *as* that
+/// repository's server?
+///
+/// Three questions, and the third is the one a remembered address needs: it is a
+/// Majordomus server, it serves this root, and it still holds this checkout's lease.
+/// Without the third, a process whose lease was taken over answers every probe exactly as
+/// the current server does — same name, same `repository_id`, its own peer board, its own
+/// generation of the layer — and a client holding an address from before the takeover is
+/// served plausible answers by a server nobody else is talking to. That was measured on
+/// 2026-09-10: two servers of one checkout, one lease, and the older one indistinguishable
+/// from the current one on this endpoint.
+///
+/// A server too old to answer the question is accepted. It cannot be told from a current
+/// one here, and refusing it would be the worse failure: a live server taken for dead is
+/// taken over, which is how one checkout comes to have two.
 pub fn probe(url: &str, root: &Path) -> bool {
     match bridge::request(url, "GET", "/", &[], None, PROBE_TIMEOUT) {
         Ok(reply) if reply.status == 200 => {
@@ -551,6 +601,7 @@ pub fn probe(url: &str, root: &Path) -> bool {
             // without telling every caller where the checkout sits
             v["name"] == "majordomus"
                 && v["repository_id"].as_str() == Some(crate::repository::identity(root).as_str())
+                && v[LEASEHOLDER_KEY] != Value::Bool(false)
         }
         _ => false,
     }
