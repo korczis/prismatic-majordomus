@@ -82,12 +82,26 @@ rather than argued:
 
 # Failure behaviour
 
-`scripts/ci/pages-check`, registered as the `pages-live` gate, decides the published half:
-the commit gh-pages names must be an ancestor of master, and the commit the live pages name
-must be the one gh-pages published — which is the failure a token-authored push causes, where
-no workflow starts at all and every check on the tree stays green. It runs in the full plan
-beside `installer-live`, never in a path-triggered one: a live-network gate on every push
-fails collectively when an origin is slow, and a gate that cries wolf is waived.
+`scripts/ci/pages-check`, registered as the `pages-live` gate, decides the published half.
+Four things, because publication has failed in four ways here: the commit gh-pages names must
+be an ancestor of master; master must not have moved past it, on a path that can change the
+site, for longer than the deploy window; the commit the live pages name must be the one
+gh-pages published — the failure a token-authored push causes, where no workflow starts at
+all and every check on the tree stays green; and GitHub's own build of gh-pages must not have
+errored, which is the half of publishing this repository does not own and which no workflow
+of ours goes red for.
+
+The second of those is clause 5 made mechanical, and it is the one that was missing. Ancestry
+alone was a one-way check: a publication that is on master is on master however old it is, so
+on 2026-09-10 the gate said `ok` all afternoon while the site sat hours behind. The window is
+what separates the deploy in flight that clause 5 excuses from the deploy that is not coming;
+it is thirty minutes, sized from a twenty-five-minute Actions queue observed that day, and a
+commit that cannot change the site owes no publication at all — the paths that can are
+`scripts/pages paths`, which is also the publication workflow's own trigger.
+
+It runs in the full plan beside `installer-live`, never in a path-triggered one: a
+live-network gate on every push fails collectively when an origin is slow, and a gate that
+cries wolf is waived.
 
 The rest is decided by review and by the record on the shared server's board. A gate cannot
 tell that a branch waited for a batch, and inventing one would be a worse cure than the
@@ -97,9 +111,12 @@ disease.
 
 `test/cases/104_published_site.sh` holds `scripts/ci/pages-check` to what it claims, against
 fixture repositories rather than the network: a publication from the trunk is accepted, one
-from a branch that is not on it is refused with the cause and the remedy named, a deploy
-commit that does not say where it came from is refused as unauditable rather than guessed
-at, and the gate carries neither a URL nor an identity path of its own — both are read from
+from a branch that is not on it is refused with the cause and the remedy named, a trunk that
+has moved past the publication is accepted while the deploy is young and refused once it is
+older than the window — both over one fixture, so the judgement is the age and not the tree —
+a deploy commit that does not say where it came from is refused as unauditable rather than
+guessed at, a measurement the gate could not make is reported as a note and never as an `ok`,
+and the gate carries neither a URL nor an identity path of its own — both are read from
 the declarations that already hold them. The case was proved non-vacuous by removing the
 refusal from the gate and watching it fail.
 
@@ -107,7 +124,11 @@ The live half is not simulated: a case standing up an HTTP server would be testi
 fixture, and one reaching the real site would fail whenever the network did. `--offline` is
 the seam, and the case asserts the seam announces itself rather than skipping silently.
 
-`test/cases/97_pages_fast_path.sh` holds the publication path itself. The
+`test/cases/97_pages_fast_path.sh` holds the publication path itself, including the two
+halves of its concurrency: a push cancels the run it supersedes, a dispatch — the recovery
+deploy — cancels nothing, and the run states whether it pushed gh-pages before it ended,
+because a cancelled run is not a failure and fourteen of the seventeen cancelled runs of
+2026-09-09/10 had already published. The
 derived-merge-driver behaviour is `test/cases/57_derived_merge_driver.sh`, and
 `test/cases/111_unblock.sh` holds `scripts/unblock` to clause 2: a conflict on an authored
 file is refused with the files named and the branch left where it was, the scratch worktree

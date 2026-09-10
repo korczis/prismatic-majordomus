@@ -210,6 +210,13 @@ gates:
   # tree-level gate stayed green throughout, because the tree was fine — what was wrong was
   # which tree had been published. A person noticed by eye. No class selects it, for the same
   # reason installer-live has none: no change to a tree can make it true or false.
+  #
+  # It was a one-way check until 2026-09-10: it asked whether the published commit is ON
+  # master and printed how far behind master's head it was as part of saying so. Twenty pull
+  # requests landed that afternoon, the site sat hours behind, and this gate said `ok` every
+  # time it ran. A publication owed for longer than the deploy window is a refusal now, and
+  # GitHub's own build of gh-pages — the half of publishing this repository does not own, and
+  # which errored at 17:35 that day with nothing red anywhere — is read rather than inferred.
   - id: version-surface
     job: structure
     runs: scripts/ci/version-matches-surface
@@ -218,7 +225,7 @@ gates:
   - id: pages-live
     job: pages
     runs: scripts/ci/pages-check
-    summary: the site GitHub Pages serves was built from a commit on master, and the live site is serving what gh-pages published
+    summary: the site GitHub Pages serves was built from a commit on master, no publication has been owed longer than the deploy window, the live site is serving what gh-pages published, and GitHub's own build of that branch did not error
 
   # On demand: half of its matrix is a macOS runner, and `needs.install.result` is one value
   # over both legs, so the whole job is as scarce as its scarcest leg. It loses least by

@@ -6,7 +6,7 @@
 # because of a deployment, and none of them notices when the published site stops being a
 # projection of the default branch.
 #
-# Two failures this exists for, both of which happened:
+# Four failures this exists for, every one of them observed:
 #
 #   1. An UNMERGED REF WAS PUBLISHED. On 2026-09-09 the public site served a commit from
 #      feature/external-workspaces for about half an hour — `scripts/site-deploy --any-ref`
@@ -17,12 +17,31 @@
 #      commit can land with the Pages build never running. gh-pages then says one commit and
 #      the live site serves an older one, and nothing says so.
 #
-# So: the branch says which commit it was built from, and this asserts that commit is on
-# master; then it asks the live site what it is serving and asserts the two agree.
+#   3. THE PUBLICATION IS SIMPLY OWED. On 2026-09-10 twenty pull requests landed in one
+#      afternoon and the site sat behind master for hours with every commit-level check
+#      green. This gate was already running and said `ok` throughout, because it only asked
+#      whether the published commit is ON master — and it printed how far behind the head it
+#      was as part of that `ok`. A relation checked in one direction with the converse owned
+#      by nobody is this repository's most repeated defect class; the converse is checked
+#      here now. A deploy run that was cancelled, failed, or never started leaves master
+#      moved and gh-pages still naming the old commit, and that is a refusal once the
+#      publication is older than the deploy window rather than merely young.
 #
-#   scripts/ci/pages-check                 both checks; needs network for the second
-#   scripts/ci/pages-check --offline       the ancestry check alone, from the local clone
+#   4. GITHUB'S OWN BUILD ERRORED. Publishing is two steps and the second is GitHub's:
+#      pushing gh-pages is a workflow this repository writes, building and serving it is
+#      "pages build and deployment", which this repository does not. On 2026-09-10 at
+#      17:35 the workflow published dfd9c989c and GitHub's build of it errored; the site
+#      served the previous commit for 27 minutes with nothing red anywhere. The build has
+#      its own API and its own status, so it is asked directly rather than inferred.
+#
+# So: the branch says which commit it was built from, and this asserts that commit is on
+# master; that master has not moved past it beyond the deploy window; that the live site is
+# serving it; and that GitHub's own build of it did not error.
+#
+#   scripts/ci/pages-check                 every check; needs network for two of them
+#   scripts/ci/pages-check --offline       the two decidable from the clone alone
 #   scripts/ci/pages-check --url URL       ask a different origin (a preview, a fork)
+#   scripts/ci/pages-check --owed-after N  seconds master may be ahead before it is a refusal
 #
 # Exit: 0 ok · 2 usage · 10 the published site is not a projection of master · 12 something
 # needed could not be read (no gh-pages, no network when one was required).
@@ -37,12 +56,21 @@ URL=""
 # deploy window and reports a mismatch that is merely young — and a gate that cries wolf is
 # a gate that gets waived. `installer-live` waits 300 for the same reason.
 WAIT="${PAGES_CHECK_WAIT:-300}"
+# How long master may be ahead of the publication before that is a refusal rather than a
+# deploy in flight. Not taste: on 2026-09-10 a pages run sat in the Actions queue from
+# 17:09:21 to 17:34:05 — 25 minutes before a runner was allocated — and the whole deploy,
+# queue included, then took another five. A window shorter than the queue would turn every
+# busy afternoon red, and a gate that cries wolf is a gate that gets waived. Thirty minutes
+# is that measurement with a little room; it is a bound on lateness, not a target, and the
+# target lives in .ai/repo/ci/pages.yaml as `budget.end_to_end`.
+OWED_AFTER="${PAGES_CHECK_OWED_AFTER:-1800}"
 while [ $# -gt 0 ]; do
   case "$1" in
     --offline) OFFLINE=1; shift ;;
     --wait) WAIT="${2:?--wait needs seconds}"; shift 2 ;;
+    --owed-after) OWED_AFTER="${2:?--owed-after needs seconds}"; shift 2 ;;
     --url) URL="${2:?--url needs a value}"; shift 2 ;;
-    -h|--help) sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,44p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "pages-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -54,7 +82,11 @@ TRUNK="${PAGES_CHECK_TRUNK:-master}"
 say()  { printf '%s\n' "$*"; }
 ok()   { printf 'ok    %s\n' "$*"; }
 bad()  { printf 'FAIL  %s\n' "$*"; fail=1; }
+# Something this gate wanted to measure and could not. It is never silent and never an `ok`:
+# a check that is absent must not be readable as a check that passed.
+note() { printf 'note  %s\n' "$*"; }
 fail=0
+on_trunk=0
 
 # ---------------------------------------------------------------- 1. what was published
 git fetch -q "$REMOTE" "$BRANCH" "$TRUNK" 2>/dev/null || true
@@ -78,7 +110,10 @@ fi
 if ! git cat-file -e "$source_sha^{commit}" 2>/dev/null; then
   bad "the published commit $source_sha is not in this clone; fetch, or it was never pushed"
 elif git merge-base --is-ancestor "$source_sha" "$REMOTE/$TRUNK" 2>/dev/null; then
+  on_trunk=1
   behind="$(git rev-list --count "$source_sha..$REMOTE/$TRUNK")"
+  # How far behind is stated here and judged in 3: this half answers *which tree*, not *how
+  # old*. Printing the distance as part of an `ok` was how an hours-old site read as healthy.
   ok "the published commit $source_sha is on $TRUNK ($behind commit(s) behind its head)"
 else
   bad "the published commit $source_sha is NOT on $TRUNK — an unmerged ref is being served"
@@ -150,5 +185,92 @@ else
   fi
 fi
 
+# ------------------------------------------------------- 3. is the publication still current
+#
+# The converse of 1, and the half nobody owned. Being a projection of master is two claims —
+# the published tree is on master, and master has not moved past it — and only the first was
+# ever asked. A deploy that was cancelled, that failed, or that never started leaves the
+# second false while the first stays true, which is what an afternoon of merges did.
+#
+# Not every commit owes a publication: the site can only differ when an input of it differs,
+# and that set is declared once, in .ai/repo/ci/pages.yaml, computed by `scripts/pages paths`
+# and used verbatim as the workflow's own trigger. Reading it here rather than writing a
+# second list is the only way the gate and the trigger can agree about what a deploy is for.
+#
+# The refusal is by age, not by distance: a publication owed for ninety seconds is a deploy in
+# flight and a publication owed for an hour is a deploy that is not coming.
+git fetch -q "$REMOTE" "$TRUNK" 2>/dev/null || true
+if [ "$on_trunk" = 1 ]; then
+  trigger=""
+  if [ -x scripts/pages ]; then trigger="$(scripts/pages paths 2>/dev/null || true)"; fi
+  # `foo/**` is this repository's way of writing a subtree; git spells the same thing `foo/`,
+  # and every other pattern (`scripts/lib/ui-*.mjs`) is already a pathspec.
+  set -f
+  # shellcheck disable=SC2046 # deliberate: the list is one pathspec per line, globbing off
+  set -- $(printf '%s' "$trigger" | sed 's|/\*\*$|/|')
+  set +f
+  if [ "$#" = 0 ]; then
+    note "the trigger paths could not be read from the publication model; every commit ahead counts"
+  fi
+  owed="$(git log -1 --first-parent --format='%H %ct' "$source_sha..$REMOTE/$TRUNK" -- "$@" 2>/dev/null || true)"
+  if [ -z "$owed" ]; then
+    ok "no publication is owed: nothing $TRUNK gained since $source_sha changes what the site is built from"
+  else
+    owed_sha="${owed%% *}"
+    owed_at="${owed##* }"
+    age=$(( $(date +%s) - owed_at ))
+    count="$(git rev-list --count --first-parent "$source_sha..$REMOTE/$TRUNK" -- "$@" 2>/dev/null || echo '?')"
+    if [ "$age" -lt "$OWED_AFTER" ]; then
+      ok "a publication is owed for ${owed_sha:0:12} and is ${age}s old; inside the ${OWED_AFTER}s deploy window"
+    else
+      bad "the site owes a publication: ${owed_sha:0:12} changed what it is built from ${age}s ago"
+      say "      $count commit(s) on $TRUNK since ${source_sha:0:12} touch the publication's inputs,"
+      say "      and $BRANCH still names ${source_sha:0:12}. The deploy did not happen: a run was"
+      say "      cancelled by the next push, failed, or was never triggered. Dispatch the pages"
+      say "      workflow on $TRUNK, or run scripts/site-deploy, and fix why it did not run."
+    fi
+  fi
+fi
+
+# ------------------------------------------------------- 4. GitHub's own build of the branch
+#
+# Publishing is two steps owned by two parties: this repository pushes gh-pages, and GitHub's
+# "pages build and deployment" turns that branch into the served site. The second can error on
+# a branch that was pushed perfectly, and when it does the workflow that pushed is green, the
+# branch is right, and the site is a commit behind — which is 2026-09-10 17:35 exactly. Its
+# status is a fact with an API, so it is read rather than guessed at from the symptom.
+if [ "$OFFLINE" = 1 ]; then
+  ok "GitHub's own Pages build was not asked (--offline)"
+elif ! command -v gh >/dev/null 2>&1; then
+  note "gh is not installed, so GitHub's own Pages build was not read"
+else
+  slug="${GITHUB_REPOSITORY:-}"
+  if [ -z "$slug" ]; then
+    slug="$(git remote get-url "$REMOTE" 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+  fi
+  head_sha="$(git rev-parse "$REMOTE/$BRANCH" 2>/dev/null || true)"
+  build="$(gh api "repos/$slug/pages/builds" --jq '.[0] | "\(.status) \(.commit) \(.error.message // "no message")"' 2>/dev/null || true)"
+  if [ -z "$build" ]; then
+    note "GitHub's Pages build for $slug could not be read (no token, or no pages:read); not measured"
+  else
+    b_status="${build%% *}"
+    b_rest="${build#* }"
+    b_commit="${b_rest%% *}"
+    b_error="${b_rest#* }"
+    if [ "$b_status" = "errored" ] && [ "$b_commit" = "$head_sha" ]; then
+      bad "GitHub's own Pages build of ${b_commit:0:12} — the head of $BRANCH — errored: $b_error"
+      say "      the branch is right and the site is not; re-run the build by dispatching the"
+      say "      pages workflow, or push $BRANCH again. Nothing in this repository's own"
+      say "      workflow goes red for this, which is why it is asked here."
+    elif [ "$b_status" = "errored" ]; then
+      note "an older Pages build (${b_commit:0:12}) errored; the head of $BRANCH is ${head_sha:0:12}"
+    elif [ "$b_commit" != "$head_sha" ]; then
+      note "GitHub's newest Pages build is of ${b_commit:0:12} ($b_status), not the head of $BRANCH ${head_sha:0:12}"
+    else
+      ok "GitHub's own Pages build of ${b_commit:0:12} is $b_status"
+    fi
+  fi
+fi
+
 [ "$fail" = 0 ] || exit 10
-say "pages-check: the published site is a projection of $TRUNK, and is being served"
+say "pages-check: the published site is a projection of $TRUNK, is current, and is being served"

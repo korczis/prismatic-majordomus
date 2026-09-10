@@ -478,17 +478,28 @@ jobs:
   # answer is not platform-dependent, and selected in the same full mode as `install` for the
   # same reason: no change to a tree can make it true or false. It is the gate that was
   # missing on 2026-09-09, when the public site served an unmerged branch for half an hour
-  # with every tree-level gate green.
+  # with every tree-level gate green — and the gate that stayed green through 2026-09-10, when
+  # the site was hours behind master, until it was taught to ask the converse as well.
+  #
+  # `pages: read` is the second half of publication: the push to gh-pages is this repository's
+  # and the build of it is GitHub's, and the gate reads that build's own status rather than
+  # inferring it from the symptom. The whole history is needed, so `fetch-depth: 0` stays: the
+  # gate walks master back to the published commit to decide whether a deploy is owed.
   pages:
     needs: plan
     if: needs.plan.outputs.pages_live == 'true'
     timeout-minutes: 10
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: the published site came from master, and is being served
+      - name: the published site came from master, is current, and is being served
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: scripts/ci/pages-check
 
   # ------------------------------------------------------------------ ci
