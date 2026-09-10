@@ -101,6 +101,22 @@ enforcement:
     path: bin/majordomus
     args: [capture, session]
     wired_by: provider-hook:claude-code:session
+  # The other two providers this repository is worked in. Each is a separate entry because
+  # each is a separate wiring that can break on its own: a shim removed from one provider's
+  # hook directory, or an entry dropped from one provider's configuration, is invisible in
+  # every other provider's answer.
+  - name: prompt-capture-codex
+    path: bin/majordomus
+    args: [capture, prompt]
+    wired_by: provider-hook:codex
+  - name: session-lifecycle-codex
+    path: bin/majordomus
+    args: [capture, session]
+    wired_by: provider-hook:codex:session
+  - name: session-lifecycle-gemini
+    path: bin/majordomus
+    args: [capture, session]
+    wired_by: provider-hook:gemini:session
   - name: derived-current
     path: scripts/pages
     args: [current]

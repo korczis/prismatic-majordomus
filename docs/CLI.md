@@ -591,8 +591,8 @@ episode of this checkout, aimed at the one opened here last and re-aimed by a cl
 one still open when exactly one is. Which episode a given process's commands belong to is
 resolved in `mj_session_here_file` (`lib/common.sh`): the provider session named on the
 command line, else the provider session this process is running inside when an episode with
-that key is open here (`MAJORDOMUS_PROVIDER_SESSION`, or the variable the lifecycle adapter
-declares — `CLAUDE_CODE_SESSION_ID` for Claude Code), else the pointer. Two episodes open
+that key is open here (`MAJORDOMUS_PROVIDER_SESSION`, or the variable this provider's
+lifecycle adapter declares in `share/providers.yaml`), else the pointer. Two episodes open
 and a process that can name neither is the one case nothing can resolve: the pointer names
 the one opened last, and `session status` lists the others under `Also open:` rather than
 letting a guess pass for a fact.

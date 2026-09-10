@@ -476,6 +476,30 @@ findings:
     priority: 1
     status: fixed
     resolved_by: "share/providers.yaml read by product.rs and worktree/service.rs; docs/generated/providers.{md,json,yaml} written by generate; scripts/ci/providers-check as the gate of project.providers-are-data"
+  - id: capture-adapters
+    path: lib/capture.sh
+    lines: "MJ_CAPTURE_ADAPTERS, MJ_CAPTURE_LIFECYCLE, MJ_LIFECYCLE_COLUMNS"
+    concept: which hooks a provider has, the file it reads them from, its own name for each event, and the payload key each value arrives under
+    authority: "share/providers.yaml, the `hooks` block of each provider"
+    duplicated_in:
+      - "two positional tables in lib/capture.sh, nine and thirteen whitespace-separated columns, read by a dozen awk one-liners that each had to agree about which column meant what"
+      - "the configuration writer and the refusal message, both of which rendered one provider's dialect and one provider's project-directory variable as literals"
+    risk: high
+    detail: >-
+      The same defect as provider-declarations, one file along, and it kept the tool to a
+      single provider for as long as it stood: a provider's own configuration file was a
+      shell literal, adding a second provider meant editing shell in three places, and the
+      one dialect the writer knew was the one provider it was written for. `capture session
+      --provider codex` answered `no lifecycle adapter` and exited 12 — not because Codex
+      has no such event, which it does, but because there was nowhere to declare it. What
+      stayed in shell is what is not a fact about any provider: the event kinds this tool
+      recognises, the names of the shims it writes, and one writer per configuration
+      dialect, because a file format is a syntax and a syntax is not a field.
+    recommended: MOVE_TO_CANONICAL_DATA
+    target: share/providers.yaml
+    priority: 1
+    status: fixed
+    resolved_by: "share/providers.yaml read by lib/capture.sh through mj_providers_load; declared to the executable as share::ProviderHooks so deny_unknown_fields still covers the file; test/cases/119 refuses a provider's event name, configuration file or payload key appearing in lib/capture.sh"
   - id: workflow-lists-its-gates
     path: .github/workflows/validate.yml
     lines: "the structure job's steps"

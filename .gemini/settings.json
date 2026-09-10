@@ -7,5 +7,40 @@
       "timeout": 120000,
       "trust": false
     }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${GEMINI_PROJECT_DIR}/.gemini/hooks/majordomus-session-start"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${GEMINI_PROJECT_DIR}/.gemini/hooks/majordomus-session-end"
+          }
+        ]
+      }
+    ],
+    "PreCompress": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${GEMINI_PROJECT_DIR}/.gemini/hooks/majordomus-session-compact"
+          }
+        ]
+      }
+    ]
   }
 }

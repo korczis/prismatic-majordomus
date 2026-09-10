@@ -49,6 +49,16 @@ mj_inputs_hash() {
 }
 
 mj_json_esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\n'; }
+# The same, for a value that is allowed to be more than one line: the newlines become the
+# escape rather than being dropped, and the two control characters a document actually
+# carries are escaped rather than left raw inside a JSON string. `mj_json_esc` cannot do
+# this — it exists for identities and one-line fields, where a newline is a mistake and
+# discarding one is the safe reading; a briefing is a document, and discarding its line
+# breaks would run the whole of it together.
+mj_json_esc_text() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' \
+    | LC_ALL=C awk '{ gsub(/\t/, "\\t"); gsub(/\r/, "\\r"); printf "%s%s", (NR > 1 ? "\\n" : ""), $0 }'
+}
 
 # ---------------------------------------------------------------- options
 mj_parse_global_opts() {
@@ -802,8 +812,12 @@ mj_provider_session_env() {
     [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
     local n v
     for n in $(mj_lifecycle_session_vars); do
-      # the name comes from the adapter table, never from anything a payload carries
-      eval "v=\${$n:-}"
+      # The name comes from the declaration, never from anything a payload carries — and it
+      # is read by indirect expansion rather than by `eval`, which no path here may reach
+      # (project.no-network-no-eval). A name that is not a variable name expands to nothing,
+      # which is the same answer as a variable that is unset.
+      case "$n" in ''|*[!A-Za-z0-9_]*) continue ;; esac
+      v="${!n:-}"
       if [ -n "$v" ]; then printf '%s' "$v"; return 0; fi
     done
   fi
@@ -901,7 +915,7 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
-mj_cleanup() { mj_timing_report; rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" 2>/dev/null; }
+mj_cleanup() { mj_timing_report; rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_PROV_FLAT:-}" 2>/dev/null; }
 trap mj_cleanup EXIT
 
 # ---------------------------------------------------------------- records

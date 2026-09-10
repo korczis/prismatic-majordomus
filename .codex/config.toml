@@ -7,3 +7,46 @@
 command = "./bin/majordomus-mcp"
 args = []
 startup_timeout_sec = 120
+
+# The episode boundary, drawn where Codex draws it. Each hook hands the payload to
+# `majordomus capture`, which never rejects what the person is doing; `majordomus capture
+# install` writes exactly these entries into a repository that has none.
+#
+# The command locates the shim through git rather than through a variable: Codex substitutes
+# nothing into a command string and runs it in a shell whose working directory is wherever
+# the session was started, so a relative path here would resolve against a directory that
+# `--cd`, a resume, or a session opened in a subdirectory all move.
+#
+# Two things about Codex that no configuration can fix, recorded here so that nobody has to
+# rediscover them. A hook is untrusted until somebody trusts it — through `/hooks` in the
+# TUI, which stores the hash in `~/.codex/config.toml` — and an untrusted hook does not run;
+# editing any line below invalidates that trust. And the SessionEnd hook is clamped to three
+# seconds, so a close that writes a continuation record can be killed part-way; the episode
+# then stays open and the next start event keeps it.
+
+[[hooks.UserPromptSubmit]]
+
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "sh -c 'exec \"$(git rev-parse --show-toplevel)/.codex/hooks/majordomus-capture\"'"
+
+[[hooks.SessionStart]]
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "sh -c 'exec \"$(git rev-parse --show-toplevel)/.codex/hooks/majordomus-session-start\"'"
+timeout = 30
+
+[[hooks.SessionEnd]]
+
+[[hooks.SessionEnd.hooks]]
+type = "command"
+command = "sh -c 'exec \"$(git rev-parse --show-toplevel)/.codex/hooks/majordomus-session-end\"'"
+timeout = 3
+
+[[hooks.PreCompact]]
+
+[[hooks.PreCompact.hooks]]
+type = "command"
+command = "sh -c 'exec \"$(git rev-parse --show-toplevel)/.codex/hooks/majordomus-session-compact\"'"
+timeout = 30

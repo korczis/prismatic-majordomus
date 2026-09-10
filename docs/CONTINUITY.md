@@ -290,7 +290,7 @@ without the worker asking for it, and it is the difference between a record that
 automatically and one that is also read.
 
 ```
-provider fires SessionStart
+provider fires its start event
         |
         +--> session opens (or the open one is kept)
         +--> the working context is frozen
@@ -299,13 +299,22 @@ provider fires SessionStart
         v
    work happens
         |
-provider fires PreCompact
+provider fires its compaction event
         +--> a derived checkpoint, because the conversation is about to stop holding it
         |
-provider fires SessionEnd
+provider fires its end event
         +--> a derived handover, when the task is still active
         +--> the episode closes into its envelope of references
 ```
+
+The three events are the tool's vocabulary and not any vendor's. What each provider calls
+them, which file it reads its hooks from, which key of the payload carries the session, and
+what it does with the start hook's standard output — added verbatim, or read out of one JSON
+object — is a `hooks` block per provider in `share/providers.yaml`, and adding a provider is
+that block (ADR 0024). Which providers have one is `majordomus capture status` here and
+[`generated/providers.md`](generated/providers.md) in general; neither is a list written by
+hand in this file. A provider with no such event is reported `unsupported` with the reason
+its declaration gives, and is never quietly treated as having no sessions.
 
 The episode belongs to the provider session that opened it, and not to the checkout. Two
 windows of the same provider open on one worktree are two workers: each start event opens
