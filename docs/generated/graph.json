@@ -20126,6 +20126,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I1409",
+        "kind": "issue",
+        "label": "I1409",
+        "summary": "Derived data stops hashing inputs it cannot control",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1409",
+        "source": ".ai/repo/project/issues/I1409.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A derived artifact committed at one commit is still current at that commit after an unrelated change lands on the trunk",
+            "test/cases/56_derived_current_gate.sh passes in a fixture whose object database does not contain the commit under test",
+            "The staleness check runs on the path a server-side merge takes, or the record says which decision was taken instead and why",
+            "No document claims a guard that a merge created by GitHub cannot reach"
+          ],
+          "created_at": "2026-09-10",
+          "evidence_required": [
+            "derivation_survives_an_unrelated_merge",
+            "fixture_without_history_evaluates"
+          ],
+          "milestone": "derived-data-integrity",
+          "objective": "Make a committed derivation describe something it can be a projection of, and put the staleness refusal where merges actually happen.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts",
+            "apps/majordomus-cli/src/release",
+            ".ai/repo/ci",
+            "test/cases"
+          ],
+          "slug": "derived-data-owns-its-inputs",
+          "updated_at": "2026-09-10",
+          "validation": [
+            "scripts/derive-check",
+            "scripts/pages current",
+            "test/run.sh 56_derived_current_gate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -20545,6 +20584,43 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/derived-data-integrity",
+        "kind": "milestone",
+        "label": "derived-data-integrity",
+        "summary": "A committed derivation describes something it can be a projection of",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmilestone%2Fderived-data-integrity",
+        "source": ".ai/repo/project/milestones/derived-data-integrity.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A derived artifact committed at one commit is still current at that commit after an unrelated change lands on the trunk",
+            "A fixture whose object database does not contain the commit under test can evaluate every derived artifact",
+            "The staleness refusal runs on the path a server-side merge takes, or the record names the decision taken instead",
+            "No document claims a guard that a merge created by GitHub cannot reach"
+          ],
+          "created_at": "2026-09-10",
+          "evidence_required": [
+            "derivation_survives_an_unrelated_merge",
+            "fixture_without_history_evaluates"
+          ],
+          "order": 95,
+          "priority": "p1",
+          "scope": [
+            "scripts",
+            "apps/majordomus-cli/src/release",
+            ".ai/repo/ci",
+            "test/cases",
+            "docs/CI.md"
+          ],
+          "slug": "derived-data-integrity",
+          "updated_at": "2026-09-10",
+          "validation": [
+            "scripts/derive-check",
+            "scripts/pages current",
+            "test/run.sh 56_derived_current_gate"
           ]
         }
       },
@@ -40952,6 +41028,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1409",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1409",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -41000,6 +41086,11 @@
         "source": "majordomus://milestone/cost-per-accepted-outcome",
         "target": "majordomus://milestone/execution-telemetry",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/derived-data-integrity",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/execution-telemetry",
@@ -46323,8 +46414,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1416,
-      "edges": 3200,
+      "nodes": 1418,
+      "edges": 3203,
       "acyclic": true,
       "truncated": false
     }

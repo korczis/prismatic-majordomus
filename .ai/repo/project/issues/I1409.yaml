@@ -1,0 +1,35 @@
+id: I1409
+milestone: derived-data-integrity
+title: Derived data stops hashing inputs it cannot control
+slug: derived-data-owns-its-inputs
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make a committed derivation describe something it can be a projection of, and put the staleness refusal where merges actually happen."
+why: "Four separate reds on 2026-09-10 shared one root, and the publication was down for hours because of it. A committed artifact that hashes its whole input tree is invalidated by the next merge — not because it is wrong, but because the tree moved; and one that hashes HEAD can never describe the commit it is in. apps/majordomus-cli/src/release/changelog.rs:75 already carries that sentence in its own comment, and the gate reaches past it anyway: a comment is not a constraint. The second half is structural rather than a design flaw: the derived merge driver resolves to ours on purpose and leans on scripts/pages current in .githooks/pre-commit to refuse one command later, and a pre-commit hook cannot run for a merge the server creates. Three of the last five master merges were committed by GitHub. So the guard's coverage is inverse to its usage — present on the route we tell people not to take, absent from the one we recommend — which is why nobody noticed it was missing. A note on why this is filed under a new milestone rather than an existing one: majordomus plan validate refuses an issue that names no milestone, so an area of standing work without one cannot be recorded in the plan at all - which is how a repository lands a great deal of change against a plan that never moves. Attaching this to a least-wrong parent would put a false edge in a model whose value is that status is derived from the graph."
+current_state: "master 3fb515f5c carries site/data/generated at input hash e6abaa466516 while the tree hashes to 4fe657a09b10, and three consecutive master Pages runs (3fb515f5c, 2ce8d66e5, c44c2d4c8) failed identically at the build step on that refusal; the site last answered from 5e67318db. gh api repos/korczis/prismatic-majordomus/branches/master/protection returns 404 Branch not protected, so the site gate in .ai/repo/ci/gates.yaml that does check derived-data currency is advisory and reports after the merge rather than gating it. test/cases/56_derived_current_gate.sh exports git archive HEAD into a fixture whose object database contains no commits, so the changelog composition reports fatal: Not a valid commit name and changelog.* read as differing. One branch paid three full re-derives in one evening — 185s, 1125s and 2135s — solely because master moved underneath it; the growth is machine contention, about forty concurrent suites at load 152 on 18 cores, not tree size, and no absolute timing taken on 2026-09-10 should be read as a property of any command."
+desired_state: "A committed derived artifact is a projection of inputs the commit owns, so landing another change does not invalidate it and a fixture without history can still evaluate it. The staleness refusal exists on the path merges actually take, so the first thing that says no is a check rather than the publication."
+scope:
+  - scripts
+  - apps/majordomus-cli/src/release
+  - .ai/repo/ci
+  - test/cases
+non_scope:
+  - Making the Pages build re-derive instead of refusing. Generation here is not deterministic on a given tree - machine-dependent output, %h abbreviating against the local object store, a depth-1 checkout writing a degraded changelog - so a build that re-derived could produce a third answer matching neither side. This exit will be proposed again; it is recorded here so the reason it fails is not rediscovered.
+  - Turning on branch protection. Which check is required, and what it costs a merge, is a repository setting and the operator's decision.
+  - Weakening the derived merge driver. Resolving to ours is correct; what is missing is the refusal downstream of it on the server-side path.
+acceptance_criteria:
+  - A derived artifact committed at one commit is still current at that commit after an unrelated change lands on the trunk
+  - test/cases/56_derived_current_gate.sh passes in a fixture whose object database does not contain the commit under test
+  - The staleness check runs on the path a server-side merge takes, or the record says which decision was taken instead and why
+  - No document claims a guard that a merge created by GitHub cannot reach
+validation:
+  - scripts/derive-check
+  - scripts/pages current
+  - test/run.sh 56_derived_current_gate
+evidence_required:
+  - derivation_survives_an_unrelated_merge
+  - fixture_without_history_evaluates
+risk: "Medium. The hashing change touches what every gate compares, so a wrong narrowing makes staleness undetectable rather than merely noisy - the failure would be silent in the direction that matters. The findings behind this record were measured by four sessions on 2026-09-10 and cross-checked between them; the two timing figures those sessions took for scripts/pages current disagreed sixfold on one machine twenty minutes apart, which is why no number here is offered as a benchmark."
+created_at: 2026-09-10
+updated_at: 2026-09-10

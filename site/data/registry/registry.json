@@ -6,22 +6,22 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "c2e4e85f8089ac5c41a79fd33f2b2d916fc0c87d403106dcaface2be3a5cb356",
+    "fingerprint": "da65d0ba34b137b38b97ac14a93dc226bc3263df4013457355b2f1b24e92960e",
     "summary": {
-      "total": 1212,
+      "total": 1214,
       "builtin": 78,
-      "declarative": 1134,
+      "declarative": 1136,
       "by_kind": {
         "command": 3,
         "query": 75,
-        "resource": 1134
+        "resource": 1136
       },
       "by_stability": {
         "behaviorally_verified": 73,
-        "implemented": 1139
+        "implemented": 1141
       },
       "mcp_tools": 76,
-      "mcp_resources": 1162,
+      "mcp_resources": 1164,
       "http_routes": 78,
       "cli_commands": 32,
       "modules": 54,
@@ -27843,7 +27843,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 202,
+        "capabilities": 203,
         "capability_ids": []
       },
       {
@@ -27859,7 +27859,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 17,
+        "capabilities": 18,
         "capability_ids": []
       },
       {
@@ -28166,7 +28166,7 @@
     ]
   },
   "index": {
-    "fingerprint": "53da2a289bc2e0564f6fefaab57a19418b69674a8778ec0c6ec55f456445a85d",
+    "fingerprint": "97b8af99a3c3d485807c29c09436577458727e0af0bd82089caa9f103d8768f0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -28201,9 +28201,9 @@
       "document": 213,
       "feature": 20,
       "implementation": 45,
-      "issue": 202,
+      "issue": 203,
       "knowledge": 1,
-      "milestone": 17,
+      "milestone": 18,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -31432,7 +31432,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 16371
+        "bytes": 21029
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -31666,7 +31666,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 44327
+        "bytes": 45148
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -36026,6 +36026,17 @@
         "bytes": 2543
       },
       {
+        "uri": "majordomus://issue/I1409",
+        "kind": "issue",
+        "identity": "I1409",
+        "title": "Derived data stops hashing inputs it cannot control",
+        "description": "Make a committed derivation describe something it can be a projection of, and put the staleness refusal where merges actually happen.",
+        "path": ".ai/repo/project/issues/I1409.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5194
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -36116,6 +36127,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1394
+      },
+      {
+        "uri": "majordomus://milestone/derived-data-integrity",
+        "kind": "milestone",
+        "identity": "derived-data-integrity",
+        "title": "A committed derivation describes something it can be a projection of",
+        "description": "A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site.",
+        "path": ".ai/repo/project/milestones/derived-data-integrity.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4740
       },
       {
         "uri": "majordomus://milestone/execution-telemetry",
@@ -40719,7 +40741,7 @@
       "identity": [
         "id"
       ],
-      "objects": 202
+      "objects": 203
     },
     {
       "name": "knowledge",
@@ -40739,7 +40761,7 @@
       "identity": [
         "id"
       ],
-      "objects": 17
+      "objects": 18
     },
     {
       "name": "moment",
