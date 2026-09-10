@@ -136,4 +136,23 @@ track "$F"
 expect_exit 0 env MJ_ROOT="$F" "$GATE"
 expect_grep 'nothing to measure'
 
+# --- the gate is not its own finding
+# Asserted against this checkout rather than a fixture, and deliberately, because the defect
+# only exists here: the script names the lease path, its bare file name and the schema in
+# order to search the tree for them, so read by its own subject rule it is a second parser of
+# the lease. It reported itself, `always: true` in gates.yaml made that red in every plan on
+# master, and an empty baseline could not exempt it (2026-09-10).
+#
+# What is asserted is only that the gate never names its own source as a finding. It is not
+# an assertion about this repository's readers — the header explains why that would be the
+# wrong thing to hold — so the exit status is deliberately not part of it: whatever else the
+# trunk owes, the answer may not be the auditor.
+out="$("$GATE" 2>&1 || true)"
+case "$out" in
+  *"scripts/ci/lease-reader-check"*)
+    echo "    the gate reported itself as a reader of the lease:"
+    printf '%s\n' "$out" | sed 's/^/      /'
+    exit 1 ;;
+esac
+
 echo "    the lease has one reader, and a second one is refused by name in every language it could be written in"

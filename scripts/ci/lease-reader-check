@@ -48,6 +48,16 @@ set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 READER="apps/majordomus-cli/src/lease.rs"
+# This script names the lease path, its bare file name and the schema, because that is what
+# it searches the tree for. Read by its own subject rule it is therefore a second parser of
+# the lease, and it reported itself: `always: true` in gates.yaml, so it was red in every
+# plan on master and the empty baseline could not exempt it (2026-09-10).
+#
+# Excluded by its absolute path rather than by the relative one, because `MJ_ROOT` points the
+# subject at a fixture the script does not live in: there the comparison simply never matches,
+# which is right — a fixture that plants a file at this path is planting a reader and must
+# still be caught. A rename carries the exclusion with it, so nothing here names the file.
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 BASELINE=".ai/repo/lease-reader-baseline.txt"
 MODE="report"
 while [ $# -gt 0 ]; do case "$1" in
@@ -99,6 +109,9 @@ subject() {
     [ -f "$f" ] || continue
     case "$f" in
       "$READER") continue ;;                                  # the reader
+    esac
+    [ "$ROOT/$f" != "$SELF" ] || continue                     # the gate looking for readers
+    case "$f" in
       .envrc) continue ;;                                     # watches, never opens
       *.md|docs/*|site/*|.ai/*) continue ;;                   # documentation
       apps/majordomus-cli/tests/*|test/cases/*) continue ;;    # the lease as a subject
