@@ -743,7 +743,7 @@ impl<'a> Chain<'a> {
                     match sibling.kind.as_str() {
                         "put_in_force" if is_rule => out.enforced.push(via),
                         "put_in_force" if is_test => out.tested.push(via),
-                        "proved_by" => out.tested.push(via),
+                        "tested_by" => out.tested.push(via),
                         "defined_in" => out.documented.push(via),
                         _ => {}
                     }
@@ -863,7 +863,7 @@ fn coverage_matrix(ctx: &Context, _: Empty) -> Result<CoverageMatrix, Capability
 
     // a reference that claims evidence and resolves to nothing is the other kind of gap,
     // and the resolution that found it names both ends
-    for u in crate::graph::unresolved_relations(&ctx.index.objects) {
+    for u in crate::graph::unresolved_relations(&ctx.registry, &ctx.index.objects) {
         gaps.push(format!(
             "{} [{}] -> {}: {}",
             u.declared_in, u.key, u.reference, u.correction
