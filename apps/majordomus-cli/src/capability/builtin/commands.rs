@@ -144,11 +144,12 @@ pub struct CommandGraphReport {
 /// The fast load: the cache the last materialisation wrote, or the two declarations that
 /// can be read without a subprocess. A server answering a request must not spawn one.
 fn graph_of(ctx: &Context) -> CommandGraph {
-    // The share directory is where the shell tool's command registry is shipped; the
-    // index knows where the repository is, and the registry is found the way every other
-    // reader finds it.
+    // The share directory is where the shell tool's command registry is shipped. It is the
+    // one this process located: a second resolution from the repository root alone finds
+    // another distribution, or none when the executable lives outside the repository, and
+    // the conventions are the fallback only for an index built without an application.
     let root = std::path::Path::new(&ctx.index.repository.root);
-    let share = crate::share::Share::locate(None, root).ok();
+    let share = crate::share::Share::locate(ctx.index.share.as_deref(), root).ok();
     load::fast_at(root, share.as_ref().map(|s| s.dir()))
 }
 
