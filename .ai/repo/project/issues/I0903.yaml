@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Declare the read-only deployment operations as canonical capabilities so that the CLI, the HTTP API, MCP, OpenAPI and the generated documentation all derive from one declaration."
 why: "The repository's rule is that an operation is declared once and projected; adding deployment to a transport registry, an OpenAPI file or a documentation table by hand is the defect ADR 0004 names."
-current_state: "The capability registry holds modules for capabilities, graph, health, objects, peers, perf, repository, scope and views. No deployment module exists."
+current_state: "The capability registry holds a deploy module (apps/majordomus-cli/src/capability/builtin/deploy.rs) beside the others. The statement this field used to carry -- that no deployment module exists -- was falsified before 2026-09-10 and never corrected. Measured on master 6042f4286, 2026-09-10."
 desired_state: "A deploy capability module declares the deployment reads, and every projection picks them up from generate with no second registration anywhere."
 scope:
   - apps/majordomus-cli/src/capability/builtin/deploy.rs
@@ -33,4 +33,4 @@ evidence_required:
   - benchmark_coverage
 risk: "A deployment status read wants to call flyctl, which turns a cheap capability into a network call on a hot path. Live provider state belongs behind an explicit operation with its own cost, not behind an ordinary read."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-10
