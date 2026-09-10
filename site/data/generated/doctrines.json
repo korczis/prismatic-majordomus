@@ -1110,11 +1110,36 @@
         "majordomus.verification-integrity@1"
       ],
       "source": "share/standard/majordomus/rules/obligation-closure.v1.md"
+    },
+    {
+      "id": "majordomus.completion-gates",
+      "slug": "completion-gates",
+      "title": "Completion is gated",
+      "class": "blocking",
+      "principle": "",
+      "statement": "The gates a change must pass are derived from the repository's CI model and the change's own paths; a gate known to be failing, or whose recorded run no longer describes the tree, refuses the outcome completed; a gate that has never reported is recorded as unverified and never as passing; and no surface may reach that judgement a second time.",
+      "summary": "A task reaches the outcome completed only when no validation gate its own change set selects is known to be failing, and a gate's verdict discharges nothing once the files that select it have changed since the run.",
+      "validator": "completion_gates",
+      "validator_function": "mj_validate_completion_gates",
+      "defined_in": "lib/gates.sh",
+      "category": "gate",
+      "enforced_by": [
+        "check",
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "gates_passed",
+      "claims": [],
+      "test": "test/cases/131_completion_gates.sh",
+      "depends_on": [
+        "majordomus.obligation-closure@1"
+      ],
+      "source": "share/standard/majordomus/rules/completion-gates.v1.md"
     }
   ],
   "counts": {
-    "declared": 40,
-    "blocking": 36,
+    "declared": 41,
+    "blocking": 37,
     "advisory": 4
   },
   "index": {
@@ -1157,6 +1182,7 @@
     "majordomus.task-continuity": 36,
     "majordomus.use-case-coverage": 37,
     "majordomus.verification-integrity": 38,
-    "majordomus.obligation-closure": 39
+    "majordomus.obligation-closure": 39,
+    "majordomus.completion-gates": 40
   }
 }
