@@ -571,15 +571,15 @@ fn apply(record: &mut Record, payload: &EventPayload, sequence: u64, limits: Lim
             s.error = Some(error.clone());
             s.output = None;
         }
-        EventPayload::Cancelled => {
-            if s.error.is_none() {
-                s.error = Some(ExecutionError {
-                    code: "cancelled".into(),
-                    message: "the execution was cancelled".into(),
-                    suggestion: None,
-                    correlation_id: s.correlation_id.clone(),
-                });
-            }
+        // A cancellation after a failure keeps the failure: the guard, not a nested `if`,
+        // because the arm below it is the no-op the other case already falls to.
+        EventPayload::Cancelled if s.error.is_none() => {
+            s.error = Some(ExecutionError {
+                code: "cancelled".into(),
+                message: "the execution was cancelled".into(),
+                suggestion: None,
+                correlation_id: s.correlation_id.clone(),
+            });
         }
         _ => {}
     }
