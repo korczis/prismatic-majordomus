@@ -4,12 +4,25 @@
 //! lets it say what it is working on. The board lives in the server's memory and nowhere
 //! else: it ends with the process, and nothing here touches the repository.
 //!
-//! # Why it is in memory and stays there
+//! # Why it is in memory, and what outlives the process anyway
 //!
 //! A peer board is about *now*: who is attached, what they said they are doing. Writing it
 //! into the repository would make it a record of something that has already stopped being
 //! true, and the layer's records are for what survives the session. The board ends with the
 //! process, which is exactly right for a fact about the process.
+//!
+//! One kind of fact on it is not about the process. What a peer said it was *working on* is
+//! a fact about the repository, and the board already keeps it past the socket that said it
+//! (a departed peer stays listed with `attached: false`). The same argument reaches past the
+//! process: on 2026-09-09 the shared server restarted at 23:18, nine sessions were re-issued
+//! `p1`..`p9`, every announcement was gone, and the intents that were re-announced carried
+//! the old numbers of peers that no longer existed. So each announcement is also appended to
+//! a journal under the ignored half of the layer (`.ai/local/state/mcp/board.jsonl`), stamped
+//! with the generation of the server that heard it, and the next server lists the *previous*
+//! generation's last word per peer as peers of an earlier generation: not attached, named
+//! `p4@<generation>` so they cannot be confused with the live `p4`, and defending the ground
+//! they claimed exactly as a departed peer does. The live board stays the truth about now;
+//! the journal is the truth about what was said. ADR 0034.
 //!
 //! # What a peer may say
 //!
@@ -42,9 +55,11 @@
 
 use std::collections::BTreeMap;
 use std::fmt;
+use std::io::Write as _;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -60,6 +75,13 @@ pub struct PeerId(String);
 impl PeerId {
     fn new(seq: u64) -> Self {
         PeerId(format!("p{seq}"))
+    }
+
+    /// The id of a peer of an earlier server generation: `p4@2026-09-09T21:18:39Z`. It
+    /// names the peer *and* the server that heard it, so it cannot be mistaken for the
+    /// live `p4` of this process.
+    fn earlier(id: &str, generation: &str) -> Self {
+        PeerId(format!("{id}@{generation}"))
     }
 
     /// The id as text.
@@ -156,6 +178,11 @@ pub struct Peer {
     #[serde(skip_serializing_if = "Option::is_none")]
     /// Its announcement, when it made one.
     pub announcement: Option<Announcement>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The `started_at` of the server that heard this peer, when that server is not this
+    /// one: the peer belongs to the previous generation, read back from the journal, and
+    /// its id carries the same value (`p4@<generation>`). Absent for a peer of this server.
+    pub generation: Option<String>,
 }
 
 /// Two peers that claimed the same ground.
@@ -220,6 +247,65 @@ pub fn claims_meet(a: &str, b: &str) -> bool {
     a == b || b.starts_with(&format!("{a}/")) || a.starts_with(&format!("{b}/"))
 }
 
+/// The journal file's `schema`.
+pub const JOURNAL_SCHEMA: &str = "majordomus-peer-board/v1";
+
+/// The journal's file name, beside the lease under `.ai/local/state/mcp/`.
+pub const JOURNAL_FILE: &str = "board.jsonl";
+
+/// How many lines the journal keeps. Past this the oldest are dropped when the next server
+/// opens it, for the reason [`RETAINED`] exists: a repository served for a month is not a
+/// museum, and the previous generation's last word per peer is what a reader needs.
+pub const JOURNAL_RETAINED: usize = 1000;
+
+/// One line of the journal: an announcement, and which server heard it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct JournalLine {
+    /// [`JOURNAL_SCHEMA`].
+    pub schema: String,
+    /// The `started_at` of the server that recorded it: its generation.
+    pub generation: String,
+    /// The peer's id in that generation (`p4`).
+    pub peer: String,
+    /// The client behind it.
+    pub client: ClientInfo,
+    /// How it was attached.
+    pub transport: Transport,
+    /// When it attached, RFC 3339.
+    pub connected_at: String,
+    /// What it announced.
+    #[serde(flatten)]
+    pub announcement: Announcement,
+}
+
+/// What opening the journal found.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct JournalOpened {
+    /// Peers of the previous generation now on the board.
+    pub earlier: usize,
+    /// The generation they belong to, when there is one.
+    pub previous_generation: Option<String>,
+    /// Lines that were not journal lines and were skipped.
+    pub skipped: usize,
+    /// Whether the file was rewritten to [`JOURNAL_RETAINED`] lines.
+    pub compacted: bool,
+}
+
+struct Journal {
+    path: PathBuf,
+    generation: String,
+}
+
+/// A peer of the previous generation, as the journal's last word about it.
+struct Earlier {
+    id: PeerId,
+    client: ClientInfo,
+    transport: Transport,
+    connected_at: String,
+    announcement: Announcement,
+    generation: String,
+}
+
 struct Slot {
     client: ClientInfo,
     transport: Transport,
@@ -235,11 +321,13 @@ struct Slot {
 /// slot is dropped past this. Attached peers are never dropped.
 const RETAINED: usize = 32;
 
-/// The peers of one server process.
+/// The peers of one server process, and the last word of the previous one's.
 #[derive(Default)]
 pub struct PeerBoard {
     next: AtomicU64,
     slots: Mutex<BTreeMap<u64, Slot>>,
+    journal: Mutex<Option<Journal>>,
+    earlier: Mutex<Vec<Earlier>>,
 }
 
 impl fmt::Debug for PeerBoard {
@@ -254,6 +342,86 @@ impl PeerBoard {
     /// An empty board.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Open the journal this server writes and read the previous generation out of it.
+    ///
+    /// `generation` is this server's `started_at`. Every line of another generation is a
+    /// candidate; the newest such generation is the previous one, and its last line per
+    /// peer becomes a peer of an earlier generation on this board. A line that is not a
+    /// journal line is skipped and counted, never fatal: a journal a person can corrupt
+    /// must not stop a server from starting. Past [`JOURNAL_RETAINED`] lines the file is
+    /// rewritten with the newest ones, atomically.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let path = dir.path().join("board.jsonl");
+    ///
+    /// let first = PeerBoard::new();
+    /// first.open_journal(path.clone(), "2026-09-09T21:18:39Z".into());
+    /// let a = first.attach(Transport::Http);
+    /// first.announce(&a, "the ordering rule", vec!["apps".into()]);
+    ///
+    /// let second = PeerBoard::new();
+    /// let opened = second.open_journal(path, "2026-09-09T23:18:39Z".into());
+    /// assert_eq!(opened.earlier, 1);
+    /// let listed = second.list();
+    /// assert_eq!(listed[0].id.as_str(), "p1@2026-09-09T21:18:39Z");
+    /// assert!(!listed[0].attached);
+    /// assert_eq!(listed[0].generation.as_deref(), Some("2026-09-09T21:18:39Z"));
+    /// assert_eq!(listed[0].announcement.as_ref().unwrap().intent, "the ordering rule");
+    /// ```
+    pub fn open_journal(&self, path: PathBuf, generation: String) -> JournalOpened {
+        let (lines, skipped, total) = read_journal(&path);
+        let previous = lines
+            .iter()
+            .filter(|l| l.generation != generation)
+            .map(|l| l.generation.clone())
+            .max();
+        let mut earlier: Vec<Earlier> = Vec::new();
+        if let Some(prev) = &previous {
+            // the last word per peer: later lines replace earlier ones
+            let mut last: BTreeMap<String, &JournalLine> = BTreeMap::new();
+            for l in lines.iter().filter(|l| &l.generation == prev) {
+                last.insert(l.peer.clone(), l);
+            }
+            earlier = last
+                .into_values()
+                .map(|l| Earlier {
+                    id: PeerId::earlier(&l.peer, &l.generation),
+                    client: l.client.clone(),
+                    transport: l.transport,
+                    connected_at: l.connected_at.clone(),
+                    announcement: l.announcement.clone(),
+                    generation: l.generation.clone(),
+                })
+                .collect();
+            earlier.sort_by_key(|e| peer_seq(&e.id));
+        }
+        let compacted = total > JOURNAL_RETAINED && compact_journal(&path, &lines);
+        let opened = JournalOpened {
+            earlier: earlier.len(),
+            previous_generation: previous,
+            skipped,
+            compacted,
+        };
+        *lock_of(&self.earlier) = earlier;
+        *lock_of(&self.journal) = Some(Journal { path, generation });
+        opened
+    }
+
+    /// Append one announcement to the journal, when one is open. Best effort: a journal
+    /// that cannot be written is logged and the board goes on, because an announcement
+    /// that reached the board must be answered whatever the disk says.
+    fn journal(&self, line: JournalLine) {
+        let guard = lock_of(&self.journal);
+        let Some(j) = guard.as_ref() else {
+            return;
+        };
+        if let Err(e) = append_line(&j.path, &line) {
+            tracing::debug!(path = %j.path.display(), error = %e, "the peer journal could not be written");
+        }
     }
 
     /// A session attached; it has no name until [`PeerBoard::identify`].
@@ -315,36 +483,62 @@ impl PeerBoard {
     /// assert_eq!(second.overlaps[0].intent, "the ordering rule");
     /// ```
     pub fn announce(&self, id: &PeerId, intent: &str, scope: Vec<String>) -> Option<Announced> {
-        let mut slots = self.lock();
-        if !slots.contains_key(&id.seq()) {
-            return None;
+        let (announced, line) = {
+            let mut slots = self.lock();
+            if !slots.contains_key(&id.seq()) {
+                return None;
+            }
+            let earlier = lock_of(&self.earlier);
+            let overlaps = overlaps_against(&slots, &earlier, id.seq(), &scope);
+            let s = slots.get_mut(&id.seq())?;
+            s.last_seen = Instant::now();
+            s.departed = false;
+            let announcement = Announcement {
+                intent: intent.to_string(),
+                scope,
+                at: rfc3339(SystemTime::now()),
+            };
+            s.announcement = Some(announcement.clone());
+            let generation = lock_of(&self.journal)
+                .as_ref()
+                .map(|j| j.generation.clone());
+            let line = generation.map(|generation| JournalLine {
+                schema: JOURNAL_SCHEMA.into(),
+                generation,
+                peer: id.as_str().to_string(),
+                client: s.client.clone(),
+                transport: s.transport,
+                connected_at: rfc3339(s.connected_at),
+                announcement,
+            });
+            (
+                Announced {
+                    peer: peer(id.seq(), s),
+                    overlaps,
+                },
+                line,
+            )
+        };
+        // written after the locks are released: the disk is not on the board's critical path
+        if let Some(line) = line {
+            self.journal(line);
         }
-        let overlaps = overlaps_against(&slots, id.seq(), &scope);
-        let s = slots.get_mut(&id.seq())?;
-        s.last_seen = Instant::now();
-        s.departed = false;
-        s.announcement = Some(Announcement {
-            intent: intent.to_string(),
-            scope,
-            at: rfc3339(SystemTime::now()),
-        });
-        Some(Announced {
-            peer: peer(id.seq(), s),
-            overlaps,
-        })
+        Some(announced)
     }
 
     /// Every pair of peers whose claims meet, each pair once, in peer order.
     pub fn overlaps(&self) -> Vec<Overlap> {
         let slots = self.lock();
+        let earlier = lock_of(&self.earlier);
         let mut out = Vec::new();
         for (seq, s) in slots.iter() {
             let Some(mine) = &s.announcement else {
                 continue;
             };
-            for o in overlaps_against(&slots, *seq, &mine.scope) {
-                // each pair once: report it against the later peer only
-                if o.peer.seq() < *seq {
+            for o in overlaps_against(&slots, &earlier, *seq, &mine.scope) {
+                // each pair once: report it against the later peer only, and an earlier
+                // generation's claim always against the live peer that meets it
+                if o.peer.seq() < *seq || o.peer.as_str().contains('@') {
                     out.push(o);
                 }
             }
@@ -400,9 +594,11 @@ impl PeerBoard {
         }
     }
 
-    /// Every peer, in attachment order.
+    /// Every peer of this server in attachment order, then the previous generation's.
     pub fn list(&self) -> Vec<Peer> {
-        self.lock().iter().map(|(seq, s)| peer(*seq, s)).collect()
+        let mut out: Vec<Peer> = self.lock().iter().map(|(seq, s)| peer(*seq, s)).collect();
+        out.extend(lock_of(&self.earlier).iter().map(earlier_peer));
+        out
     }
 
     /// How many peers are attached. A departed peer whose announcement the board kept is
@@ -425,20 +621,113 @@ impl PeerBoard {
         }
         peers
             .iter()
-            .map(|p| match &p.announcement {
-                Some(a) => format!(
+            .map(|p| match (&p.announcement, &p.generation) {
+                (Some(a), Some(_)) => format!(
+                    "{} {} (previous server generation: {})",
+                    p.id, p.client.name, a.intent
+                ),
+                (Some(a), None) => format!(
                     "{} {} ({:?}: {})",
                     p.id, p.client.name, p.transport, a.intent
                 ),
-                None => format!("{} {} ({:?})", p.id, p.client.name, p.transport),
+                (None, _) => format!("{} {} ({:?})", p.id, p.client.name, p.transport),
             })
             .collect::<Vec<_>>()
             .join("; ")
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, BTreeMap<u64, Slot>> {
-        self.slots.lock().unwrap_or_else(|e| e.into_inner())
+        lock_of(&self.slots)
     }
+}
+
+fn lock_of<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    m.lock().unwrap_or_else(|e| e.into_inner())
+}
+
+/// The numeric part of a peer id, `p4` and `p4@<generation>` alike; `u64::MAX` for neither.
+fn peer_seq(id: &PeerId) -> u64 {
+    id.as_str()
+        .trim_start_matches('p')
+        .split('@')
+        .next()
+        .and_then(|n| n.parse().ok())
+        .unwrap_or(u64::MAX)
+}
+
+fn earlier_peer(e: &Earlier) -> Peer {
+    Peer {
+        id: e.id.clone(),
+        client: e.client.clone(),
+        transport: e.transport,
+        connected_at: e.connected_at.clone(),
+        last_seen_seconds_ago: seconds_since(&e.announcement.at),
+        attached: false,
+        announcement: Some(e.announcement.clone()),
+        generation: Some(e.generation.clone()),
+    }
+}
+
+/// Seconds between an RFC 3339 instant and now; zero when it cannot be read or is ahead.
+fn seconds_since(at: &str) -> u64 {
+    let Some(then) = parse_rfc3339(at) else {
+        return 0;
+    };
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH + Duration::from_secs(then))
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+}
+
+/// Every well-formed line of the journal, how many were not, and how many lines there were.
+fn read_journal(path: &Path) -> (Vec<JournalLine>, usize, usize) {
+    let Ok(text) = std::fs::read_to_string(path) else {
+        return (Vec::new(), 0, 0);
+    };
+    let mut lines = Vec::new();
+    let mut skipped = 0;
+    let mut total = 0;
+    for raw in text.lines() {
+        if raw.trim().is_empty() {
+            continue;
+        }
+        total += 1;
+        match serde_json::from_str::<JournalLine>(raw) {
+            Ok(l) if l.schema == JOURNAL_SCHEMA => lines.push(l),
+            _ => skipped += 1,
+        }
+    }
+    (lines, skipped, total)
+}
+
+/// Rewrite the journal with its newest [`JOURNAL_RETAINED`] well-formed lines, atomically.
+fn compact_journal(path: &Path, lines: &[JournalLine]) -> bool {
+    let keep = &lines[lines.len().saturating_sub(JOURNAL_RETAINED)..];
+    let mut text = String::new();
+    for l in keep {
+        if let Ok(s) = serde_json::to_string(l) {
+            text.push_str(&s);
+            text.push('\n');
+        }
+    }
+    let tmp = path.with_extension("jsonl.tmp");
+    if std::fs::write(&tmp, text).is_err() {
+        return false;
+    }
+    std::fs::rename(&tmp, path).is_ok()
+}
+
+fn append_line(path: &Path, line: &JournalLine) -> std::io::Result<()> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    let mut f = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)?;
+    let text = serde_json::to_string(line).map_err(std::io::Error::other)?;
+    f.write_all(text.as_bytes())?;
+    f.write_all(b"\n")
 }
 
 fn peer(seq: u64, s: &Slot) -> Peer {
@@ -450,11 +739,18 @@ fn peer(seq: u64, s: &Slot) -> Peer {
         last_seen_seconds_ago: s.last_seen.elapsed().as_secs(),
         attached: !s.departed,
         announcement: s.announcement.clone(),
+        generation: None,
     }
 }
 
-/// Every peer other than `seq` whose announced scope meets `scope`.
-fn overlaps_against(slots: &BTreeMap<u64, Slot>, seq: u64, scope: &[String]) -> Vec<Overlap> {
+/// Every peer other than `seq` whose announced scope meets `scope`: this server's, then
+/// the previous generation's, which defend their ground as a departed peer does.
+fn overlaps_against(
+    slots: &BTreeMap<u64, Slot>,
+    earlier: &[Earlier],
+    seq: u64,
+    scope: &[String],
+) -> Vec<Overlap> {
     let mut out = Vec::new();
     for (other, s) in slots.iter() {
         if *other == seq {
@@ -463,17 +759,7 @@ fn overlaps_against(slots: &BTreeMap<u64, Slot>, seq: u64, scope: &[String]) -> 
         let Some(theirs) = &s.announcement else {
             continue;
         };
-        let mut paths: Vec<OverlapPath> = Vec::new();
-        for mine in scope {
-            for path in &theirs.scope {
-                if claims_meet(mine, path) {
-                    paths.push(OverlapPath {
-                        yours: mine.clone(),
-                        theirs: path.clone(),
-                    });
-                }
-            }
-        }
+        let paths = meeting_paths(scope, &theirs.scope);
         if !paths.is_empty() {
             out.push(Overlap {
                 peer: PeerId::new(*other),
@@ -483,7 +769,33 @@ fn overlaps_against(slots: &BTreeMap<u64, Slot>, seq: u64, scope: &[String]) -> 
             });
         }
     }
+    for e in earlier {
+        let paths = meeting_paths(scope, &e.announcement.scope);
+        if !paths.is_empty() {
+            out.push(Overlap {
+                peer: e.id.clone(),
+                attached: false,
+                intent: e.announcement.intent.clone(),
+                paths,
+            });
+        }
+    }
     out
+}
+
+fn meeting_paths(mine: &[String], theirs: &[String]) -> Vec<OverlapPath> {
+    let mut paths = Vec::new();
+    for m in mine {
+        for t in theirs {
+            if claims_meet(m, t) {
+                paths.push(OverlapPath {
+                    yours: m.clone(),
+                    theirs: t.clone(),
+                });
+            }
+        }
+    }
+    paths
 }
 
 /// A `SystemTime` as RFC 3339 in UTC, to the second (`2026-09-05T12:34:56Z`).
@@ -514,6 +826,38 @@ pub fn rfc3339(t: SystemTime) -> String {
     let mth = if mp < 10 { mp + 3 } else { mp - 9 };
     let y = if mth <= 2 { y + 1 } else { y };
     format!("{y:04}-{mth:02}-{d:02}T{h:02}:{m:02}:{s:02}Z")
+}
+
+/// The inverse of [`rfc3339`]: seconds since the epoch, for exactly that form.
+///
+/// ```
+/// use majordomus_cli::peers::{parse_rfc3339, rfc3339};
+/// use std::time::{Duration, UNIX_EPOCH};
+/// assert_eq!(parse_rfc3339("1970-01-01T00:00:00Z"), Some(0));
+/// assert_eq!(parse_rfc3339("2026-08-29T10:40:00Z"), Some(1_788_000_000));
+/// assert_eq!(parse_rfc3339(&rfc3339(UNIX_EPOCH + Duration::from_secs(1_757_500_000))), Some(1_757_500_000));
+/// assert_eq!(parse_rfc3339("yesterday"), None);
+/// ```
+pub fn parse_rfc3339(text: &str) -> Option<u64> {
+    let t = text.strip_suffix('Z')?;
+    let (date, time) = t.split_once('T')?;
+    let mut d = date.split('-').map(|p| p.parse::<i64>());
+    let (y, mth, day) = (d.next()?.ok()?, d.next()?.ok()?, d.next()?.ok()?);
+    let mut c = time.split(':').map(|p| p.parse::<i64>());
+    let (h, m, s) = (c.next()?.ok()?, c.next()?.ok()?, c.next()?.ok()?);
+    if !(1..=12).contains(&mth) || !(1..=31).contains(&day) || h > 23 || m > 59 || s > 60 {
+        return None;
+    }
+    // days-from-civil, Howard Hinnant's algorithm
+    let y = if mth <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y.rem_euclid(400);
+    let mp = if mth > 2 { mth - 3 } else { mth + 9 };
+    let doy = (153 * mp + 2) / 5 + day - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    let secs = days * 86_400 + h * 3600 + m * 60 + s;
+    u64::try_from(secs).ok()
 }
 
 #[cfg(test)]
@@ -736,5 +1080,194 @@ mod tests {
     fn announcing_as_a_peer_that_is_not_on_the_board_answers_nothing() {
         let board = PeerBoard::new();
         assert!(board.announce(&PeerId::new(99), "hello", vec![]).is_none());
+    }
+
+    // ------------------------------------------------------------ the journal
+
+    const GEN_A: &str = "2026-09-09T21:18:39Z";
+    const GEN_B: &str = "2026-09-09T23:18:39Z";
+    const GEN_C: &str = "2026-09-10T04:00:00Z";
+
+    fn line(generation: &str, peer: &str, intent: &str, scope: &[&str]) -> String {
+        serde_json::to_string(&JournalLine {
+            schema: JOURNAL_SCHEMA.into(),
+            generation: generation.into(),
+            peer: peer.into(),
+            client: ClientInfo {
+                name: "claude-code".into(),
+                version: "2".into(),
+                title: None,
+            },
+            transport: Transport::Http,
+            connected_at: generation.into(),
+            announcement: Announcement {
+                intent: intent.into(),
+                scope: scope.iter().map(|s| s.to_string()).collect(),
+                at: generation.into(),
+            },
+        })
+        .unwrap()
+    }
+
+    #[test]
+    fn an_announcement_is_journalled_and_the_next_server_reads_it_back() {
+        // The defect this exists for: the server restarted at 23:18, every announcement
+        // was gone, and nine sessions were re-issued p1..p9 as if nobody had said anything.
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("mcp").join(JOURNAL_FILE);
+
+        let first = PeerBoard::new();
+        let opened = first.open_journal(path.clone(), GEN_A.into());
+        assert_eq!(opened, JournalOpened::default(), "an absent journal is empty");
+        let a = first.attach(Transport::Http);
+        first.identify(
+            &a,
+            ClientInfo {
+                name: "claude-code".into(),
+                version: "2.1".into(),
+                title: Some("Claude Code".into()),
+            },
+        );
+        first.announce(&a, "the ordering rule", vec!["apps".into()]);
+        first.announce(&a, "the ordering rule, second word", vec!["apps/x".into()]);
+
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(text.lines().count(), 2, "one line per announce, appended");
+        let last: JournalLine = serde_json::from_str(text.lines().last().unwrap()).unwrap();
+        assert_eq!(last.schema, JOURNAL_SCHEMA);
+        assert_eq!(last.generation, GEN_A);
+        assert_eq!(last.peer, "p1");
+        assert_eq!(last.client.name, "claude-code");
+        assert_eq!(last.announcement.intent, "the ordering rule, second word");
+
+        let second = PeerBoard::new();
+        let opened = second.open_journal(path, GEN_B.into());
+        assert_eq!(opened.earlier, 1, "one peer, its last word");
+        assert_eq!(opened.previous_generation.as_deref(), Some(GEN_A));
+        assert_eq!(opened.skipped, 0);
+        let listed = second.list();
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].id.as_str(), "p1@2026-09-09T21:18:39Z");
+        assert!(!listed[0].attached);
+        assert_eq!(listed[0].generation.as_deref(), Some(GEN_A));
+        assert_eq!(
+            listed[0].announcement.as_ref().unwrap().intent,
+            "the ordering rule, second word"
+        );
+        assert_eq!(second.len(), 0, "the lifecycle counts who is here now");
+
+        // and the ground it claimed is still defended, against a live peer
+        let live = second.attach(Transport::Http);
+        let answer = second
+            .announce(&live, "something else", vec!["apps/x/y".into()])
+            .unwrap();
+        assert_eq!(answer.overlaps.len(), 1);
+        assert_eq!(answer.overlaps[0].peer.as_str(), "p1@2026-09-09T21:18:39Z");
+        assert!(!answer.overlaps[0].attached);
+        let board_wide = second.overlaps();
+        assert_eq!(board_wide.len(), 1, "{board_wide:?}");
+        assert!(second.summary().contains("previous server generation"));
+    }
+
+    #[test]
+    fn only_the_previous_generation_is_shown_and_only_its_last_word_per_peer() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(JOURNAL_FILE);
+        std::fs::write(
+            &path,
+            [
+                line(GEN_A, "p1", "old and gone", &["docs"]),
+                line(GEN_B, "p1", "first word", &["apps"]),
+                line(GEN_B, "p2", "another peer", &["site"]),
+                line(GEN_B, "p1", "last word", &["apps/x"]),
+            ]
+            .join("\n"),
+        )
+        .unwrap();
+        let board = PeerBoard::new();
+        let opened = board.open_journal(path, GEN_C.into());
+        assert_eq!(opened.previous_generation.as_deref(), Some(GEN_B));
+        let listed = board.list();
+        let ids: Vec<&str> = listed.iter().map(|p| p.id.as_str()).collect();
+        assert_eq!(
+            ids,
+            vec!["p1@2026-09-09T23:18:39Z", "p2@2026-09-09T23:18:39Z"],
+            "generation A is history, not the board"
+        );
+        assert_eq!(
+            listed[0].announcement.as_ref().unwrap().intent,
+            "last word",
+            "the last line per peer wins"
+        );
+    }
+
+    #[test]
+    fn this_generations_own_lines_are_not_its_previous_generation() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(JOURNAL_FILE);
+        std::fs::write(&path, line(GEN_B, "p1", "mine", &["apps"])).unwrap();
+        let board = PeerBoard::new();
+        let opened = board.open_journal(path, GEN_B.into());
+        assert_eq!(opened.earlier, 0);
+        assert!(opened.previous_generation.is_none());
+        assert!(board.list().is_empty());
+    }
+
+    #[test]
+    fn a_corrupt_line_is_skipped_and_counted_never_fatal() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(JOURNAL_FILE);
+        std::fs::write(
+            &path,
+            format!(
+                "{{not json\n{}\n{{\"schema\":\"something-else/v9\"}}\n\n",
+                line(GEN_A, "p3", "survives", &["lib"])
+            ),
+        )
+        .unwrap();
+        let board = PeerBoard::new();
+        let opened = board.open_journal(path, GEN_B.into());
+        assert_eq!(opened.skipped, 2);
+        assert_eq!(opened.earlier, 1);
+        assert_eq!(
+            board.list()[0].announcement.as_ref().unwrap().intent,
+            "survives"
+        );
+    }
+
+    #[test]
+    fn the_journal_is_compacted_to_the_cap_when_the_next_server_opens_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(JOURNAL_FILE);
+        let lines: Vec<String> = (0..JOURNAL_RETAINED + 50)
+            .map(|i| line(GEN_A, "p1", &format!("word {i}"), &["apps"]))
+            .collect();
+        std::fs::write(&path, lines.join("\n")).unwrap();
+        let board = PeerBoard::new();
+        let opened = board.open_journal(path.clone(), GEN_B.into());
+        assert!(opened.compacted);
+        let kept = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(kept.lines().count(), JOURNAL_RETAINED);
+        assert!(kept.lines().next().unwrap().contains("word 50"), "the oldest went");
+        assert!(kept.lines().last().unwrap().contains(&format!("word {}", JOURNAL_RETAINED + 49)));
+        assert_eq!(
+            board.list()[0].announcement.as_ref().unwrap().intent,
+            format!("word {}", JOURNAL_RETAINED + 49)
+        );
+    }
+
+    #[test]
+    fn a_board_without_a_journal_writes_nothing_anywhere() {
+        let board = PeerBoard::new();
+        let a = board.attach(Transport::Stdio);
+        assert!(board.announce(&a, "standalone", vec![]).is_some());
+        assert!(lock_of(&board.journal).is_none());
+    }
+
+    #[test]
+    fn the_seq_of_an_earlier_id_is_read_through_the_generation_suffix() {
+        assert_eq!(peer_seq(&PeerId::earlier("p4", GEN_A)), 4);
+        assert_eq!(peer_seq(&PeerId::new(7)), 7);
+        assert_eq!(peer_seq(&PeerId("nonsense".into())), u64::MAX);
     }
 }
