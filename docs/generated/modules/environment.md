@@ -40,7 +40,7 @@ One snapshot of this checkout: project identity, repository identity, version co
 | MCP tool | `majordomus_environment` |
 | MCP resource | `majordomus://environment` |
 | HTTP | `GET /api/v1/environment` |
-| cache | process, 4 entries, 3s |
+| cache | — |
 | benchmark | required |
 | provenance | builtin majordomus_cli::capability::builtin::environment |
 | tags | environment, repository, introspection |
