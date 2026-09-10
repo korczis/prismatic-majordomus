@@ -191,7 +191,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/schemas/majordomus/prompt/prompt.v1.schema.json` | `schemas/majordomus.prompt/v1` | json | 2410 | `60c535ee31be9db5` |
 | `share/schemas/majordomus/rule/rule.v1.schema.json` | `schemas/majordomus.rule/v1` | json | 5119 | `81c1c10bd9c13809` |
 | `share/schemas/majordomus/skill/skill.v1.schema.json` | `schemas/majordomus.skill/v1` | json | 4089 | `1e85190fd88aa373` |
-| `share/schemas/majordomus/use-case/use-case.v1.schema.json` | `schemas/majordomus.use-case/v1` | json | 9410 | `754562ec6f3b9c31` |
+| `share/schemas/majordomus/use-case/use-case.v1.schema.json` | `schemas/majordomus.use-case/v1` | json | 10648 | `0d7e46fb72f0bb23` |
 | `share/sections/adr.txt` | `sections/adr` | text | 319 | `beff15dfe6359c2c` |
 | `share/sections/application.txt` | `sections/application` | text | 234 | `5c88008ec86acd50` |
 | `share/sections/context.txt` | `sections/context` | text | 297 | `e1670c4475579a57` |
@@ -201,9 +201,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/skill.txt` | `sections/skill` | text | 281 | `d06856785900aae7` |
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `d5dc7da86ab749a1` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3121 | `5d94a01ea33c9e24` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 60224 | `07b1573a6ba8380f` |
-| `site/data/registry/product.json` | `site-product` | json | 303688 | `45a4586c05266ce4` |
-| `site/data/registry/registry.json` | `site-registry` | json | 2335171 | `964f9e8cae625f7c` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 60224 | `e543ebe4028613a6` |
+| `site/data/registry/product.json` | `site-product` | json | 303688 | `3b26c3d7b089dcfc` |
+| `site/data/registry/registry.json` | `site-registry` | json | 2336260 | `14ae4b073bacff5c` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `58f7d0d6945968ba` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `626b03ff72b5b235` |
 | `site/static/install.sh` | `installer` | text | 29604 | `dda528848b2fbe4a` |

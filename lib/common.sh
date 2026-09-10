@@ -272,6 +272,14 @@ mj_git_branch()  { mj_git symbolic-ref --short HEAD 2>/dev/null || printf 'DETAC
 # --verify, because plain `rev-parse HEAD` in a repository with no commits prints the
 # literal string "HEAD" on stdout and *then* fails. The fallback would append to that,
 # producing an identity field with an embedded newline and a permanently corrupt ledger line.
+# Is a name a defined shell function? A dispatcher keyed by data — a doctrine's validator,
+# an obligation's establisher — asks this before calling, so that a declaration with
+# nothing behind it is a reported defect and not a "command not found" on stderr and a
+# wrong answer downstream. It lives here rather than beside either dispatcher: it is a
+# shell predicate, every lib is entitled to it, and evidence.sh reaching for doctrine.sh's
+# copy is how the obligations of a live scenario came to report "no evidence recorded" for
+# a fact git could have settled.
+mj_is_function() { type "$1" 2>/dev/null | head -n1 | grep -q 'function'; }
 mj_git_head()    { local h; h="$(mj_git rev-parse --verify HEAD 2>/dev/null)" || h=""; [ -n "$h" ] || h=NONE; printf '%s' "$h"; }
 mj_git_dirty()   { [ -z "$(mj_git status --porcelain=v1 2>/dev/null)" ] && printf 'clean' || printf 'dirty'; }
 mj_branch_key()  { mj_git_branch | sed 's/[^A-Za-z0-9._-]/-/g'; }
