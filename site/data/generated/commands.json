@@ -1805,7 +1805,7 @@
     },
     {
       "name": "capture",
-      "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, and report what each provider actually does here.",
+      "summary": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, decide before a mutation whether this episode may make it, install those hooks, and report what each provider actually does here.",
       "category": "memory",
       "stage": "work",
       "class": "generated-output-mutating",
@@ -1816,7 +1816,7 @@
       "json_output": true,
       "syntax": "majordomus capture status [--json]",
       "demo": "capture-status",
-      "note": "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add.",
+      "note": "Every prompt is kept three times under one stem: the .json record is the provider's own spans, pretty printed and unchanged, the .md beside it is that record rendered for a person and the .yaml the same for a machine. 'capture render' rebuilds a missing rendering from its record and never writes a record. The schema identifier resolves to share/schemas/<vendor>/<name>/<name>.v<n>, as .schema.json for the record and .proto for the document. 'capture prompt' and 'capture session' never exit 2: they run inside a provider hook, where that exit code can reject the person's prompt. 'capture guard' is the one that may, and only that: before a tool call that would mutate the repository it decides whether the shared server is serving this checkout and an episode is open, exits 2 with the reason when it is not, and exits 0 every other way -- including when it cannot decide, which it says on standard error. It is off unless session.guard_before_mutation is true, and its answer is remembered under .ai/local/state/guard/ so that the reading is not paid in front of every edit. Neither writes to stdout on a start event, because the provider adds it to the model's context. install refuses to rewrite a configuration it did not write, and prints the entries to add.",
       "reads": [
         ".claude/settings.json",
         ".ai/repo/policy.yaml"
@@ -1824,6 +1824,7 @@
       "writes": [
         ".ai/local/prompts/",
         ".ai/local/session-contexts/",
+        ".ai/local/state/guard/",
         ".claude/hooks/majordomus-capture",
         ".claude/settings.json"
       ],
@@ -1838,6 +1839,7 @@
         "behaviour": [
           "108_entry_converges_on_a_server",
           "111_session_per_provider",
+          "124_the_guard_refuses_an_unready_episode",
           "29_prompt_capture",
           "54_session_lifecycle_hooks"
         ],

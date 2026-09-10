@@ -160,6 +160,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/policy.yaml",
+      "kind": "artifact",
+      "label": "repo/policy.yaml",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/check.sh",
       "kind": "module",
       "label": "check",
@@ -277,16 +287,6 @@
       "summary": "record that one obligation the task declared has been discharged",
       "read_only": null,
       "route": "/commands/evidence/",
-      "external": false
-    },
-    {
-      "id": ".ai/repo/policy.yaml",
-      "kind": "artifact",
-      "label": "repo/policy.yaml",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
       "external": false
     },
     {
@@ -1429,6 +1429,11 @@
     {
       "source": "lib/adr.sh",
       "target": ".ai/repo/adrs/.id.lock",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/capture.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
     {

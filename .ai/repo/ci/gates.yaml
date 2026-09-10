@@ -175,6 +175,19 @@ gates:
     runs: scripts/ci/entry-converges --no-suite
     summary: entry by a shell starts nothing and builds nothing, the start event ensures the server where the policy says it does, the briefing has one author and the lease one typed reader, and a server nobody owns has a bounded life
 
+  # Entry asserts readiness once, at the start of an episode, and an episode is hours long:
+  # a server killed, ended or rebuilt under a working agent leaves it editing files with
+  # nothing to say so. The pre-tool event asks again before every mutation, and every piece
+  # of that is one line away from being undone — the event dropped from the provider table,
+  # the PreToolUse row dropped from the wired configuration, the switch never taught to the
+  # schema, a shim that exec's the tool and so passes on every exit code it can have. File
+  # reads only, so it belongs beside the structure checks; the refusal itself is
+  # test/cases/124, which the suite runs, which is why the gate is given --no-suite here.
+  - id: guard-refuses-unready
+    job: structure
+    runs: scripts/ci/guard-refuses-unready --no-suite
+    summary: the pre-tool event is provider data, it is wired where doctor reconciles it, the switch that arms it is declared in the policy, the skeleton, the allow list and the schema, and the decision refuses only what it knows
+
   - id: github-projection
     job: structure
     runs: scripts/ci/github-check
@@ -285,7 +298,7 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, .ai/repo/projection-baseline.txt, scripts/rust-check, scripts/rust-coverage-threshold, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, guard-refuses-unready]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
@@ -314,18 +327,18 @@ classes:
   # the site generator
   - id: share
     paths: [share/**]
-    gates: [rust-check, rust-coverage, rust-bench, command-graph, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit, providers-data, entry-converges]
+    gates: [rust-check, rust-coverage, rust-bench, command-graph, shell-suite, site-build, site-probe, macos, worktree-topology, ui-audit, providers-data, entry-converges, guard-refuses-unready]
 
   # the shell tool, its cases and fixtures, the hooks, and the scripts written against lib/
   - id: shell
     paths: [bin/**, lib/**, test/**, .githooks/**, .envrc, scripts/generate-site-data, scripts/github-sync, scripts/rules-package, scripts/lib/**]
-    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check, github-projection, entry-converges]
+    gates: [shell-suite, rust-integration, command-graph, site-build, site-probe, macos, worktree-topology, ui-audit, order-check, github-projection, entry-converges, guard-refuses-unready]
 
   # this repository's own AI layer: policy, profiles, rules, prompts, workflows, plan, knowledge,
   # ADRs; objects of the index the registry dataset is derived from, inputs of the site
   - id: layer
     paths: [.ai/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection, entry-converges]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection, entry-converges, guard-refuses-unready]
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
@@ -352,10 +365,12 @@ classes:
     paths: [scripts/unblock]
     gates: [shell-suite]
 
-  # the MCP client configurations and the launcher they name; case 90 reads them
+  # the provider and MCP client configurations and the launcher they name; case 90 reads the
+  # MCP half, and .claude/ carries the hooks the provider runs — including the one that can
+  # refuse a tool call, which reaches every worktree of the repository the moment it is here
   - id: clients
-    paths: [.mcp.json, .codex/**, .gemini/**]
-    gates: [shell-suite]
+    paths: [.mcp.json, .codex/**, .gemini/**, .claude/**]
+    gates: [shell-suite, guard-refuses-unready]
 
   # nothing a gate reads
   - id: inert
