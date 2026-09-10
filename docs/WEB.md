@@ -136,7 +136,7 @@ The documentation under `/docs/` is the **same Zola source** GitHub Pages render
 no second copy and no second generator; the two builds differ in one argument.
 
 ```text
-site/  ──scripts/site-build───────────────────→ site/public/     base_url https://korczis.github.io/prismatic-majordomus
+site/  ──scripts/site-build───────────────────→ site/public/     base_url https://majordomus.dev
    └───scripts/site-build --serve ───────────→ target/web/docs/  base_url /docs
 ```
 
