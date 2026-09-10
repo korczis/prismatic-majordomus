@@ -68,7 +68,7 @@ that is exactly the causal thread a later reader is trying to pick up.
 
 | Record | Answers | Mutability | Where |
 |---|---|---|---|
-| **session** | what one execution episode did, between which commits, producing which records | one open per worktree, then immutable | `local/state/session-current.yaml`, then the layer’s `repo/sessions/` |
+| **session** | what one execution episode did, between which commits, producing which records | one open per provider session, then immutable | `local/state/sessions-open/<provider session>.yaml`, pointed at by `local/state/session-current.yaml`, then the layer’s `repo/sessions/` |
 | **working context** | what the worker was told when the episode opened, and what it noted while working | appended to, never rewritten | `local/session-contexts/<stamp>--<session-id>.md` |
 
 The two are not the same record and answer opposite questions. The closed session says what
@@ -299,6 +299,17 @@ provider fires SessionEnd
         +--> a derived handover, when the task is still active
         +--> the episode closes into its envelope of references
 ```
+
+The episode belongs to the provider session that opened it, and not to the checkout. Two
+windows of the same provider open on one worktree are two workers: each start event opens
+or keeps *its own* episode, each end event closes its own and no other, and each worker's
+ledger lines are stamped with its own episode id. An open episode is
+`local/state/sessions-open/<provider session>.yaml`; `local/state/session-current.yaml`
+points at the episode of this checkout, and a worker that can name its provider session
+resolves its own instead of following the pointer. Before this, `--if-open keep` returned
+the already-open episode whatever the event said: seven concurrent sessions here on
+2026-09-09 produced one record between them, stamped with whichever id happened to be first,
+and closed by whichever window was shut first.
 
 The briefing is bounded by `session.briefing_budget_lines` and carries references, labels
 and one section — never a conversation. Each of the three behaviours is a switch in the

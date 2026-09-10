@@ -15300,6 +15300,10 @@
             "type": "string",
             "description": "The provider whose event opened it, when one did."
           },
+          "provider_session": {
+            "type": "string",
+            "description": "That provider's own session identity — the string the prompt archive stamps on the\nsame worker's records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns."
+          },
           "branch": {
             "type": "string",
             "description": "The branch it opened on."
@@ -15318,7 +15322,7 @@
           "started_at",
           "foreign"
         ],
-        "description": "The open episode of this worktree, when there is one."
+        "description": "The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line."
       },
       "OperationParity": {
         "type": "object",

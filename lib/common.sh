@@ -735,6 +735,86 @@ mj_ledger_append() {
   printf '%s}\n' "$line" >> "$MJ_STATE_DIR/ledger.jsonl"
 }
 
+# ---------------------------------------------------------------- the open episode
+# One execution episode per provider session, not one per checkout.
+#
+# The episode used to be a singleton: one state/session-current.yaml, and a second provider
+# session opening one in the same checkout was folded into the first. Its ledger lines were
+# stamped with the other episode's id, and either window's end event closed the episode for
+# both. Measured on 2026-09-09 in this repository: seven concurrent sessions, one record
+# between them.
+#
+# So an open episode is a file of its own, named by the provider session that opened it,
+# under state/sessions-open/. An episode nobody named is keyed `hand`, and there is at most
+# one of those: a provider that sends no session identity is indistinguishable from a person
+# at a terminal, and inventing a distinction there would multiply episodes nobody can close.
+#
+# state/session-current.yaml stays, as a symlink into that store — the pointer to the
+# episode of this checkout. It is the path `continuity.state`, `doctor`, the schema and the
+# prose already name, and every reader of it (a sed, a YAML flattener, a whole-document
+# reader in Rust) follows a symlink without knowing it did. A symlink and not a copy,
+# because two accounts of one open episode is exactly the drift this record exists to
+# avoid.
+#
+# Which episode is this process's, in order:
+#
+#   1. MJ_SESSION_KEY — the provider session named on the command line, which a provider
+#      hook always passes. Strict: that episode or none. This is what keeps an end event
+#      from closing an episode another provider session opened.
+#   2. the provider session this process is running inside, when the provider exports one
+#      (MAJORDOMUS_PROVIDER_SESSION, or the variable the lifecycle adapter declares) AND an
+#      episode with that key is open here. It falls through when there is none, because a
+#      worker sitting in a checkout whose episode was opened by hand still has that one.
+#   3. the pointer.
+#
+# Two episodes open in one checkout and a process that can name neither is the one case
+# nothing here can resolve: the pointer names the one opened last, and that is a guess the
+# status output says out loud rather than a fact.
+mj_session_open_dir() { printf '%s' "$MJ_STATE_DIR/sessions-open"; }
+mj_session_pointer()  { printf '%s' "$MJ_STATE_DIR/session-current.yaml"; }
+
+# A provider session reduced to one path segment. The value is the provider's own string,
+# so nothing here lets one name a file outside the store; an empty or unnameable one is the
+# hand-opened episode.
+mj_session_key() {
+  local v
+  v="$(printf '%s' "${1:-}" | tr -c 'A-Za-z0-9._-' '-' | tr -s '-' | cut -c1-64 | sed -e 's/^-*//' -e 's/-*$//')"
+  if [ -n "$v" ]; then printf '%s' "$v"; else printf 'hand'; fi
+}
+mj_session_key_file() { printf '%s/%s.yaml' "$(mj_session_open_dir)" "$(mj_session_key "${1:-}")"; }
+
+# The provider session this process is running inside, when one is observable. The variable
+# names are the lifecycle adapters' own column, so the provider table stays the single
+# declaration of what a provider is; capture.sh is sourced here rather than at the top
+# because this is on the ledger's write path and the prompt path needs none of it.
+mj_provider_session_env() {
+  if [ -n "${MAJORDOMUS_PROVIDER_SESSION:-}" ]; then printf '%s' "$MAJORDOMUS_PROVIDER_SESSION"; return 0; fi
+  if [ -n "${MJ_LIB_DIR:-}" ] && [ -f "$MJ_LIB_DIR/capture.sh" ]; then
+    # shellcheck source=capture.sh
+    [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
+    local n v
+    for n in $(mj_lifecycle_session_vars); do
+      # the name comes from the adapter table, never from anything a payload carries
+      eval "v=\${$n:-}"
+      if [ -n "$v" ]; then printf '%s' "$v"; return 0; fi
+    done
+  fi
+  return 0
+}
+
+# The file holding this process's open episode, whether or not it exists.
+mj_session_here_file() {
+  local k f
+  if [ -n "${MJ_SESSION_KEY:-}" ]; then mj_session_key_file "$MJ_SESSION_KEY"; return 0; fi
+  k="$(mj_provider_session_env)"
+  if [ -n "$k" ]; then
+    f="$(mj_session_key_file "$k")"
+    if [ -f "$f" ]; then printf '%s' "$f"; return 0; fi
+  fi
+  mj_session_pointer
+  return 0
+}
+
 # The open session in THIS worktree, or nothing. Read with two seds rather than the YAML
 # parser: this runs on every ledger append, and the two fields it needs are top-level
 # scalars written by one command.
@@ -747,7 +827,7 @@ mj_ledger_append() {
 # work done outside one: sessions are optional, and nothing is attributed by proximity.
 mj_open_session_id() {
   local f w
-  f="$MJ_STATE_DIR/session-current.yaml"
+  f="$(mj_session_here_file)"
   [ -f "$f" ] || return 0
   w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
   [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
