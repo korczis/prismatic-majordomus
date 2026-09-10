@@ -14204,6 +14204,11 @@ capabilities:
             items:
               type: string
             description: "What could not be read, said rather than hidden: a repository with no git history,\na release record that names no commit, a tag that is not in this clone."
+          produced_by:
+            anyOf:
+              - "$ref": "#/$defs/ReleaseProducedBy"
+              - type: "null"
+            description: "Which capability answered, and where else the same value can be had."
         required:
           - schema
           - current
@@ -14236,6 +14241,21 @@ capabilities:
               unreleased:
                 type: boolean
                 description: Whether this section is the work that has not been released.
+              notes_url:
+                type:
+                  - string
+                  - "null"
+                description: The release notes the record names — the published release itself.
+              compare_url:
+                type:
+                  - string
+                  - "null"
+                description: "Every commit between the previous release and this one, as the forge renders it."
+              tree_url:
+                type:
+                  - string
+                  - "null"
+                description: The tree at this release.
               decisions:
                 type: array
                 items:
@@ -14273,6 +14293,16 @@ capabilities:
               date:
                 type: string
                 description: The date the record carries.
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "Where the decision itself can be read: the file in the repository. The site has no\nper-ADR page, so this is the honest destination rather than an invented route."
+              added:
+                type:
+                  - string
+                  - "null"
+                description: "The commit that added the file, which is what decides the release it belongs to. The\nfront-matter date says when the decision was made; those are different questions."
             required:
               - id
               - title
@@ -14332,6 +14362,15 @@ capabilities:
                 const: ci
                 description: Continuous integration.
               - type: string
+                const: style
+                description: "Formatting, with the behaviour unchanged."
+              - type: string
+                const: build
+                description: The build system or its dependencies.
+              - type: string
+                const: revert
+                description: A change that undoes another.
+              - type: string
                 const: other
                 description: A commit whose subject does not parse as a conventional commit.
             description: "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
@@ -14355,12 +14394,44 @@ capabilities:
               commit:
                 type: string
                 description: The abbreviated commit.
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+              references:
+                type: array
+                items:
+                  "$ref": "#/$defs/ReleaseReference"
+                description: "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
             required:
               - kind
               - subject
               - breaking
               - commit
             description: "One change, from one commit."
+          ReleaseReference:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "`issue` or `milestone`."
+              id:
+                type: string
+                description: "`I1305`, `M000`."
+              title:
+                type: string
+                description: "What it is, from the record itself."
+              route:
+                type:
+                  - string
+                  - "null"
+                description: "Where it is published on this site, when it has a page."
+            required:
+              - kind
+              - id
+              - title
+            description: "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
           ReleaseChangelogArtifact:
             type: object
             properties:
@@ -14378,6 +14449,35 @@ capabilities:
               - name
               - sha256
             description: "One published artifact, from the release record's own evidence."
+          ReleaseProducedBy:
+            type: object
+            properties:
+              capability:
+                type: string
+                description: The capability id.
+              cli:
+                type:
+                  - string
+                  - "null"
+                description: The command line that renders it.
+              http:
+                type:
+                  - string
+                  - "null"
+                description: The HTTP route that answers with it.
+              mcp_tool:
+                type:
+                  - string
+                  - "null"
+                description: The MCP tool.
+              mcp_resource:
+                type:
+                  - string
+                  - "null"
+                description: The MCP resource URI.
+            required:
+              - capability
+            description: "Which capability answered with this document, and where that capability is projected.\n\nThe document carries its own provenance so that a reader — a person on the site, a client\nover MCP — can find the same value elsewhere without anything having to enumerate the\nroutes. A page that listed them would be declaring them a second time, which is the\nfailure `site-check`'s `registry` and `cli` assertions exist to catch; it caught this one.\n\n```\nuse majordomus_cli::release::model::ProducedBy;\nlet by = ProducedBy {\n    capability: \"release.changelog\".into(),\n    cli: Some(\"majordomus release changelog\".into()),\n    http: Some(\"/api/v1/changelog\".into()),\n    mcp_tool: None,\n    mcp_resource: Some(\"majordomus://changelog\".into()),\n};\nlet json = serde_json::to_value(&by).unwrap();\nassert_eq!(json[\"capability\"], \"release.changelog\");\n// a surface the capability is not projected on is absent, not null\nassert!(json.get(\"mcp_tool\").is_none());\nassert_eq!(ProducedBy::default().capability, \"\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::release
@@ -14478,6 +14578,16 @@ capabilities:
               commit:
                 type: string
                 description: The abbreviated commit.
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "Where that commit can be read, when the repository's own URL is known. Derived from\n`about::REPOSITORY`, never written beside each entry."
+              references:
+                type: array
+                items:
+                  "$ref": "#/$defs/ReleaseReference"
+                description: "The records of the layer this commit names — issues, milestones — resolved against\nwhat the layer actually holds."
             required:
               - kind
               - subject
@@ -14511,9 +14621,40 @@ capabilities:
                 const: ci
                 description: Continuous integration.
               - type: string
+                const: style
+                description: "Formatting, with the behaviour unchanged."
+              - type: string
+                const: build
+                description: The build system or its dependencies.
+              - type: string
+                const: revert
+                description: A change that undoes another.
+              - type: string
                 const: other
                 description: A commit whose subject does not parse as a conventional commit.
             description: "What a conventional commit says it did.\n\nThe set is the one the repository's own commit convention uses; a commit whose subject\ndoes not parse is [`ChangeKind::Other`] and still appears, because a changelog that\nsilently drops what it cannot classify is a changelog that lies by omission."
+          ReleaseReference:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "`issue` or `milestone`."
+              id:
+                type: string
+                description: "`I1305`, `M000`."
+              title:
+                type: string
+                description: "What it is, from the record itself."
+              route:
+                type:
+                  - string
+                  - "null"
+                description: "Where it is published on this site, when it has a page."
+            required:
+              - kind
+              - id
+              - title
+            description: "A record of the layer that a commit names in its own text.\n\nInferred, never declared beside the commit: an issue id or a milestone id appearing in a\nsubject or a body is a reference, and the layer already holds the object it refers to. A\nreference to something the layer does not have is not carried — a link to a record that\ndoes not exist is worse than no link, because the reader cannot tell until they follow it.\n\n```\nuse majordomus_cli::release::model::Reference;\nlet r = Reference {\n    kind: \"issue\".into(),\n    id: \"I1305\".into(),\n    title: \"An observed contract has a fingerprint\".into(),\n    route: Some(\"/plan/i1305/\".into()),\n};\nlet json = serde_json::to_value(&r).unwrap();\nassert_eq!(json[\"id\"], \"I1305\");\nassert_eq!(json[\"route\"], \"/plan/i1305/\");\n// a reference the site has no page for carries no route rather than an invented one\nlet bare = Reference { route: None, ..r };\nassert!(serde_json::to_value(&bare).unwrap().get(\"route\").is_none());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::release
