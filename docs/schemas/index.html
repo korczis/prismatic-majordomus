@@ -235,6 +235,15 @@ something. A field that loses one of those is removed, not kept "for later".</p>
 <p>Conventions:</p>
 <ul>
 <li>YAML for anything a person edits. JSON Lines for anything only Majordomus appends to.</li>
+<li>The YAML is a subset, and a subset is a narrowing: no flow maps, no folding, no
+anchors. A file this repository accepts must therefore also parse as YAML for
+everyone else, because <code>share/</code> is vendored into repositories whose tools are not
+ours. Three constructs read as intended to our flatteners and are syntax errors to
+every other parser: an unquoted <code>: </code> inside a plain scalar, a plain scalar opening
+on an indicator character (<code>`</code>, <code>%</code>, <code>@</code>), and nested brackets inside a flow
+sequence. Quote the scalar — both engines strip matching surrounding quotes, so the
+value does not move. <code>test/cases/128_the_subset_is_a_subset.sh</code> asks an independent
+parser and fails when a canonical file leaves the language.</li>
 <li>Unknown keys are errors at every level.</li>
 <li>Identity fields (<code>repository_id</code>, <code>branch</code>, <code>head</code>, <code>working_tree</code>, <code>changed_files</code>)
 are always computed from git at write time. A worker or a person supplying them is an
@@ -1515,7 +1524,7 @@ the note but does not validate that block. On success the note is copied to
       </ul>
     </div>
     <hr class="my-6 border-default sm:mx-auto lg:my-8">
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/06fa25891550d6118f3446d0b33ff211388ce779" class="font-mono underline">06fa258</a> · inputs <span class="font-mono">6398a8222eb7</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.5.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/ecf5a7b7e7d4949f5cf16aa55cbb1df635797c2c" class="font-mono underline">ecf5a7b</a> · inputs <span class="font-mono">3f673d2e0fce</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
   </div>
 </footer>
 
