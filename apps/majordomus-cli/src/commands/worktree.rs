@@ -866,3 +866,235 @@ fn remove(
 pub fn path_of(svc: &WorktreeService, selector: &str) -> Result<PathBuf> {
     Ok(svc.resolve(selector).map_err(refuse)?.path)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::worktree::{
+        DiagnosticCode, DirtyState, Severity, Standing, TopologyDiagnostic, UpstreamState,
+        WorktreeKind, WorktreeState,
+    };
+
+    fn a_worktree() -> WorktreeState {
+        WorktreeState {
+            path: "/repos/project-wt/feature/x".into(),
+            kind: WorktreeKind::Linked,
+            standing: Standing::Canonical,
+            branch: Some("feature/x".into()),
+            label: "feature/x".into(),
+            head: Some("0123456789abcdef0123456789abcdef01234567".into()),
+            detached: false,
+            expected_path: None,
+            exists: true,
+            current: false,
+            locked: None,
+            prunable: None,
+            dirty: None,
+            upstream: None,
+            issue: None,
+            diagnostics: Vec::new(),
+        }
+    }
+
+    fn clean() -> DirtyState {
+        DirtyState {
+            staged: 0,
+            unstaged: 0,
+            untracked: 0,
+            conflicted: 0,
+            clean: true,
+            in_progress: None,
+        }
+    }
+
+    // ---------------------------------------------------------------- short
+
+    #[test]
+    fn a_commit_is_shown_at_twelve_characters_and_a_missing_one_as_a_dash() {
+        assert_eq!(
+            short(&Some("0123456789abcdef0123456789abcdef01234567".into())),
+            "0123456789ab"
+        );
+        assert_eq!(short(&None), "-");
+    }
+
+    #[test]
+    fn a_head_shorter_than_the_width_is_not_truncated_past_its_end() {
+        // A repository with an abbreviated or synthetic head must not panic on a slice.
+        assert_eq!(short(&Some("abc".into())), "abc");
+        assert_eq!(short(&Some(String::new())), "");
+    }
+
+    // ---------------------------------------------------------------- dirty_word
+
+    #[test]
+    fn work_that_was_not_measured_reads_as_a_dash_rather_than_as_clean() {
+        // `dirty` is absent when the caller did not pay for it; printing "clean" there would
+        // state something nobody checked.
+        assert_eq!(dirty_word(&None), "-");
+        assert_eq!(dirty_word(&Some(clean())), "clean");
+    }
+
+    #[test]
+    fn every_kind_of_uncommitted_work_is_named_in_the_summary() {
+        let d = DirtyState {
+            staged: 1,
+            unstaged: 2,
+            untracked: 3,
+            conflicted: 4,
+            clean: false,
+            in_progress: Some("rebase".into()),
+        };
+        let s = dirty_word(&Some(d));
+        for part in [
+            "1 staged",
+            "2 unstaged",
+            "3 untracked",
+            "4 conflicted",
+            "rebase in progress",
+        ] {
+            assert!(s.contains(part), "{part} is missing from {s}");
+        }
+    }
+
+    // ---------------------------------------------------------------- render_worktree_line
+
+    #[test]
+    fn a_canonical_worktree_is_one_line_and_says_nothing_more() {
+        let line = render_worktree_line(&a_worktree());
+        assert!(line.starts_with("CANONICAL"), "{line}");
+        assert!(line.contains("feature/x"), "{line}");
+        assert_eq!(line.lines().count(), 1, "a healthy worktree earned a note: {line}");
+    }
+
+    #[test]
+    fn the_worktree_the_caller_is_in_says_so() {
+        let mut w_ = a_worktree();
+        w_.current = true;
+        assert!(render_worktree_line(&w_).contains("(you are here)"));
+    }
+
+    #[test]
+    fn a_misplaced_worktree_is_told_where_it_belongs() {
+        let mut w_ = a_worktree();
+        w_.standing = Standing::Misplaced;
+        w_.expected_path = Some("/repos/project-wt/feature/x".into());
+        let line = render_worktree_line(&w_);
+        assert!(line.contains("belongs at /repos/project-wt/feature/x"), "{line}");
+    }
+
+    #[test]
+    fn a_canonical_worktree_is_not_told_where_it_belongs() {
+        // Every worktree carries an expected path; only a misplaced one is worth naming it for.
+        let mut w_ = a_worktree();
+        w_.expected_path = Some("/repos/project-wt/feature/x".into());
+        assert!(!render_worktree_line(&w_).contains("belongs at"));
+    }
+
+    #[test]
+    fn a_clean_worktree_is_not_reported_as_dirty() {
+        let mut w_ = a_worktree();
+        w_.dirty = Some(clean());
+        assert!(!render_worktree_line(&w_).contains("dirty:"));
+    }
+
+    #[test]
+    fn uncommitted_work_is_reported_with_its_counts() {
+        let mut w_ = a_worktree();
+        w_.dirty = Some(DirtyState {
+            staged: 0,
+            unstaged: 2,
+            untracked: 0,
+            conflicted: 0,
+            clean: false,
+            in_progress: None,
+        });
+        let line = render_worktree_line(&w_);
+        assert!(line.contains("dirty: 2 unstaged"), "{line}");
+    }
+
+    #[test]
+    fn an_upstream_in_step_is_not_mentioned_and_a_diverged_one_is() {
+        let mut w_ = a_worktree();
+        w_.upstream = Some(UpstreamState {
+            name: "origin/feature/x".into(),
+            ahead: Some(0),
+            behind: Some(0),
+            gone: false,
+        });
+        assert!(
+            !render_worktree_line(&w_).contains("upstream"),
+            "an upstream with nothing to say was reported"
+        );
+
+        w_.upstream = Some(UpstreamState {
+            name: "origin/feature/x".into(),
+            ahead: Some(3),
+            behind: Some(1),
+            gone: false,
+        });
+        let line = render_worktree_line(&w_);
+        assert!(line.contains("upstream origin/feature/x: ahead 3, behind 1"), "{line}");
+    }
+
+    #[test]
+    fn an_upstream_that_is_gone_says_gone_rather_than_a_distance() {
+        let mut w_ = a_worktree();
+        w_.upstream = Some(UpstreamState {
+            name: "origin/feature/x".into(),
+            ahead: None,
+            behind: None,
+            gone: true,
+        });
+        let line = render_worktree_line(&w_);
+        assert!(line.contains("upstream origin/feature/x: gone"), "{line}");
+        assert!(!line.contains("ahead"), "a gone upstream was given a distance: {line}");
+    }
+
+    #[test]
+    fn the_issue_a_branch_names_is_shown() {
+        let mut w_ = a_worktree();
+        w_.issue = Some("I0913".into());
+        assert!(render_worktree_line(&w_).contains("issue I0913"));
+    }
+
+    // ---------------------------------------------------------------- render_diagnostic
+
+    #[test]
+    fn a_diagnostic_carries_its_code_severity_and_the_command_that_fixes_it() {
+        let d = TopologyDiagnostic {
+            code: DiagnosticCode::PathMismatch,
+            severity: Severity::Error,
+            path: Some("/elsewhere/x".into()),
+            branch: Some("feature/x".into()),
+            expected: Some("/repos/project-wt/feature/x".into()),
+            message: "this work tree is not where its branch belongs".into(),
+            remedy: "majordomus worktree migrate".into(),
+        };
+        let s = render_diagnostic(&d);
+        assert!(s.starts_with("ERROR"), "{s}");
+        assert!(s.contains(DiagnosticCode::PathMismatch.as_str()), "{s}");
+        assert!(s.contains("at /elsewhere/x"), "{s}");
+        assert!(s.contains("expected /repos/project-wt/feature/x"), "{s}");
+        // The remedy is the reason a diagnostic is worth printing at all.
+        assert!(s.contains("[remedy: majordomus worktree migrate]"), "{s}");
+    }
+
+    #[test]
+    fn a_diagnostic_about_no_particular_path_still_carries_its_remedy() {
+        let d = TopologyDiagnostic {
+            code: DiagnosticCode::PathMismatch,
+            severity: Severity::Warning,
+            path: None,
+            branch: None,
+            expected: None,
+            message: "something to say".into(),
+            remedy: "majordomus worktree doctor".into(),
+        };
+        let s = render_diagnostic(&d);
+        assert!(s.starts_with("WARNING"), "{s}");
+        assert!(!s.contains("\n         at "), "{s}");
+        assert!(!s.contains("expected"), "{s}");
+        assert!(s.contains("[remedy: majordomus worktree doctor]"), "{s}");
+    }
+}

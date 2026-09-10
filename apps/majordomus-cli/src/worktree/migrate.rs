@@ -584,3 +584,219 @@ pub fn migrate_by_copy(service: &WorktreeService, from: &Path, to: &Path) -> Res
     }
     Ok(differences)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    /// A directory of this test's own, removed when it is dropped.
+    struct Temp(PathBuf);
+    impl Temp {
+        fn new(name: &str) -> Self {
+            let p = std::env::temp_dir().join(format!(
+                "mj-migrate-{name}-{}-{:?}",
+                std::process::id(),
+                std::thread::current().id()
+            ));
+            let _ = fs::remove_dir_all(&p);
+            fs::create_dir_all(&p).expect("the test's own directory");
+            Self(p)
+        }
+        fn join(&self, rel: &str) -> PathBuf {
+            self.0.join(rel)
+        }
+    }
+    impl Drop for Temp {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    // ---------------------------------------------------------------- copy_tree
+    // The copy is the fallback a cross-device move depends on, and the fingerprint compares
+    // the two trees afterwards. A copy that follows a link, drops a mode bit or flattens a
+    // directory would be reported as a difference and the original would never be removed —
+    // so the properties below are what make the fallback usable at all.
+
+    #[test]
+    fn a_copied_tree_keeps_its_shape_to_the_last_entry() {
+        let t = Temp::new("shape");
+        let from = t.join("from");
+        fs::create_dir_all(from.join("a/b")).unwrap();
+        fs::write(from.join("top.txt"), b"top").unwrap();
+        fs::write(from.join("a/one.txt"), b"one").unwrap();
+        fs::write(from.join("a/b/two.txt"), b"two").unwrap();
+
+        let to = t.join("to");
+        copy_tree(&from, &to).expect("the tree copies");
+
+        assert_eq!(fs::read(to.join("top.txt")).unwrap(), b"top");
+        assert_eq!(fs::read(to.join("a/one.txt")).unwrap(), b"one");
+        assert_eq!(fs::read(to.join("a/b/two.txt")).unwrap(), b"two");
+        assert!(to.join("a/b").is_dir(), "a nested directory stays one");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_copied_symlink_is_a_symlink_and_is_not_followed() {
+        use std::os::unix::fs::symlink;
+        let t = Temp::new("symlink");
+        let from = t.join("from");
+        fs::create_dir_all(&from).unwrap();
+        fs::write(from.join("real.txt"), b"real").unwrap();
+        symlink("real.txt", from.join("link.txt")).unwrap();
+        // A link whose target does not exist must survive the copy as a link, not as an error:
+        // a checkout carries these (node_modules pointing at a sibling that is not there yet).
+        symlink("../nowhere", from.join("dangling")).unwrap();
+
+        let to = t.join("to");
+        copy_tree(&from, &to).expect("the tree copies");
+
+        let link = fs::symlink_metadata(to.join("link.txt")).unwrap();
+        assert!(link.file_type().is_symlink(), "the link was followed");
+        assert_eq!(fs::read_link(to.join("link.txt")).unwrap(), Path::new("real.txt"));
+        assert!(
+            fs::symlink_metadata(to.join("dangling"))
+                .unwrap()
+                .file_type()
+                .is_symlink(),
+            "a dangling link did not survive the copy"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_copied_file_keeps_its_mode() {
+        use std::os::unix::fs::PermissionsExt;
+        let t = Temp::new("mode");
+        let from = t.join("from");
+        fs::create_dir_all(&from).unwrap();
+        let script = from.join("run.sh");
+        fs::write(&script, b"#!/bin/sh\n").unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o755)).unwrap();
+
+        let to = t.join("to");
+        copy_tree(&from, &to).expect("the tree copies");
+
+        let mode = fs::metadata(to.join("run.sh")).unwrap().permissions().mode() & 0o777;
+        assert_eq!(mode, 0o755, "an executable arrived without its bit");
+    }
+
+    #[test]
+    fn a_copy_onto_an_existing_directory_is_refused() {
+        let t = Temp::new("exists");
+        let from = t.join("from");
+        fs::create_dir_all(&from).unwrap();
+        let to = t.join("to");
+        fs::create_dir_all(&to).unwrap();
+        // Overwriting is the one thing a migration must never do: the destination existing
+        // means something is already there, and merging into it would lose whichever side
+        // the copy did not write.
+        assert!(copy_tree(&from, &to).is_err(), "an occupied destination was overwritten");
+    }
+
+    // ---------------------------------------------------------------- dangling_relative_links
+
+    #[cfg(unix)]
+    #[test]
+    fn only_a_relative_link_with_no_target_is_reported() {
+        use std::os::unix::fs::symlink;
+        let t = Temp::new("dangling");
+        let w = t.join("w");
+        fs::create_dir_all(w.join("real")).unwrap();
+        fs::write(w.join("file.txt"), b"x").unwrap();
+        symlink("real", w.join("resolves")).unwrap();
+        symlink("../gone", w.join("broken")).unwrap();
+        symlink("/definitely/not/here", w.join("absolute")).unwrap();
+
+        let found = dangling_relative_links(&w);
+
+        assert_eq!(
+            found,
+            vec!["broken -> ../gone".to_string()],
+            "a link that resolves, an absolute one, or a plain file was reported"
+        );
+    }
+
+    #[test]
+    fn a_directory_that_cannot_be_read_reports_nothing_rather_than_failing() {
+        // The caller is describing a move, not auditing a tree: a path that is gone is not a
+        // finding about symbolic links.
+        assert!(dangling_relative_links(Path::new("/definitely/not/here")).is_empty());
+    }
+
+    // ---------------------------------------------------------------- staging_path
+
+    #[test]
+    fn the_staging_path_sits_beside_the_container_and_names_the_process() {
+        let staged = staging_path(Path::new("/repos/project-wt"));
+        assert_eq!(
+            staged.parent(),
+            Some(Path::new("/repos")),
+            "staging must be a rename away, beside the container, not inside it"
+        );
+        let name = staged.file_name().unwrap().to_string_lossy().to_string();
+        assert!(name.starts_with("project-wt.migrating-"), "{name}");
+        assert!(
+            name.ends_with(&std::process::id().to_string()),
+            "two migrations at once must not choose the same staging path: {name}"
+        );
+    }
+
+    #[test]
+    fn a_container_at_the_filesystem_root_still_yields_a_staging_path() {
+        let staged = staging_path(Path::new("/"));
+        assert!(staged.to_string_lossy().contains("migrating-"), "{staged:?}");
+    }
+
+    // ---------------------------------------------------------------- is_cross_device
+
+    #[test]
+    fn a_cross_device_rename_is_recognised_however_git_spells_it() {
+        for stderr in [
+            "fatal: failed to move: Invalid cross-device link",
+            "fatal: rename failed: EXDEV",
+            "fatal: Cross-Device Link",
+        ] {
+            let e = WorktreeError::GitCommandFailed {
+                command: "worktree move".into(),
+                stderr: stderr.into(),
+                status: "exit status: 128".into(),
+            };
+            assert!(is_cross_device(&e), "not recognised: {stderr}");
+        }
+    }
+
+    #[test]
+    fn another_git_failure_is_not_a_cross_device_move() {
+        // Treating every git failure as cross-device would send a locked or dirty worktree
+        // down the copy path, where the original is removed after a comparison.
+        let e = WorktreeError::GitCommandFailed {
+            command: "worktree move".into(),
+            stderr: "fatal: 'x' is a main working tree".into(),
+            status: "exit status: 128".into(),
+        };
+        assert!(!is_cross_device(&e));
+        assert!(!is_cross_device(&WorktreeError::io(
+            Path::new("/tmp/x"),
+            &std::io::Error::other("no")
+        )));
+    }
+
+    // ---------------------------------------------------------------- absolute
+
+    #[test]
+    fn an_absolute_path_is_passed_to_git_unchanged() {
+        assert_eq!(absolute(Path::new("/repos/a")), "/repos/a");
+    }
+
+    #[test]
+    fn a_relative_path_is_resolved_before_git_sees_it() {
+        // git resolves a relative path against its own working directory and matches a bare
+        // name against the suffix of any registered worktree; either would move the wrong one.
+        let got = absolute(Path::new("some-branch"));
+        assert!(Path::new(&got).is_absolute(), "{got}");
+        assert!(got.ends_with("some-branch"), "{got}");
+    }
+}

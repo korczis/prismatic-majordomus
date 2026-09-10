@@ -125,11 +125,21 @@ for sh in dash bash ksh /bin/sh /bin/ash busybox; do
     busybox) command -v busybox >/dev/null 2>&1 || continue; runner="busybox sh" ;;
     *) command -v "$sh" >/dev/null 2>&1 || continue; runner="$sh" ;;
   esac
+  # A shell that carries `uname` as its own applet resolves it internally and never looks at
+  # PATH, so the fake platform does not reach the installer at all — busybox's shell is built
+  # that way. Measure whether the shim landed rather than assuming it did: where it lands, the
+  # installer must refuse the platform by name; where it cannot, the installer still has to
+  # run the whole script — detection, resolution, the network — to a clean refusal. Assuming
+  # it landed is what made this read as an installer defect for two days.
+  seen="$(env PATH="$fake:$PATH" $runner -c 'uname -m' 2>/dev/null || true)"
+  if [ "$seen" = riscv64 ]; then want='does not provide a prebuilt binary'
+  else want='Nothing was installed or replaced'; fi
   out="$(env HOME="$T/home" PATH="$fake:$PATH" \
           MAJORDOMUS_RELEASE_BASE_URL="http://127.0.0.1:1/nothing" MAJORDOMUS_INSECURE_BASE_URL=1 \
           $runner "$INSTALLER" --dry-run 2>&1 || true)"
-  printf '%s\n' "$out" | grep -q 'does not provide a prebuilt binary' \
-    || { echo "    under $runner the installer did not refuse cleanly: $out"; exit 1; }
+  printf '%s\n' "$out" | grep -q "$want" \
+    || { echo "    under $runner the installer did not refuse cleanly (expected /$want/): $out"; exit 1; }
+  [ -d "$T/home/.local" ] && { echo "    under $runner a refused run wrote into HOME"; exit 1; }
 done
 
 # --- an unknown option is refused, not ignored -------------------------------------------

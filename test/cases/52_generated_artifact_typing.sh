@@ -42,7 +42,14 @@ jq -r '.artifacts[] | [.path, (.bytes // "-"), (.sha256 // "-"), .format, .docum
   case "$document" in providers/*) continue ;; esac
   case "$format" in
     markdown) head -n 2 "$f" | grep -q '^<!-- GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
-    yaml|text) head -n 1 "$f" | grep -q '^# GENERATED FILE' || { echo "    $path carries no banner"; exit 1; } ;;
+    # A `#`-commented encoding carries the banner on its first line — unless the file is
+    # something a kernel reads before anything else does, in which case the shebang is line
+    # one and the banner is line two. site/static/install.sh is generated *and* executable;
+    # demanding the banner first would demand a script that cannot run.
+    yaml|text) head -n 2 "$f" | grep -q '^# GENERATED FILE' \
+                 && { [ "$(head -n 1 "$f" | grep -c '^\(#!\|# GENERATED FILE\)')" = 1 ] \
+                      || { echo "    $path buries its banner below something that is not a shebang"; exit 1; }; } \
+                 || { echo "    $path carries no banner"; exit 1; } ;;
     json) jq -e '(.generated // .["x-majordomus-generated"] // "") | startswith("GENERATED FILE")' "$f" >/dev/null \
             || { echo "    $path says nothing about being generated"; exit 1; } ;;
     *) echo "    $path declares the unknown encoding $format"; exit 1 ;;
@@ -58,16 +65,23 @@ for f in "$ROOT"/docs/generated/*.* "$ROOT"/docs/generated/modules/*.*; do
     || { echo "    $rel exists and the manifest does not name it"; exit 1; }
 done
 
-# --- a document with a JSON encoding has a YAML one, and the two are the same document
+# --- where a document is committed in both JSON and YAML, the two are one value
+# The rule is that a document is written in every encoding this repository commits it in,
+# from one value — not that a JSON document must also be committed as YAML. A dataset with
+# a single machine reader (the site's registry, the release build matrix a workflow reads
+# with fromJSON) is committed as JSON alone and is not in breach; what would be a breach is
+# two encodings that disagree. Paths come from the manifest rather than being composed from
+# the document id, so a document that lives outside docs/generated needs no exception.
 YAML_READER=""
 if command -v ruby >/dev/null 2>&1 && ruby -ryaml -rjson -e '' 2>/dev/null; then YAML_READER=ruby
 elif python3 -c 'import yaml' 2>/dev/null; then YAML_READER=python; fi
-for id in $(jq -r '.documents[] | select(.formats | index("json")) | .id' "$MAN"); do
-  case "$id" in providers/*|site-registry) continue ;; esac
-  jq -e --arg id "$id" '.documents[] | select(.id==$id) | .formats | index("yaml")' "$MAN" >/dev/null \
-    || { echo "    the document $id is committed as JSON and not as YAML"; exit 1; }
-  j="$ROOT/docs/generated/$id.json"; y="$ROOT/docs/generated/$id.yaml"
+pairs=0
+for id in $(jq -r '.documents[] | select((.formats | index("json")) and (.formats | index("yaml"))) | .id' "$MAN"); do
+  case "$id" in providers/*) continue ;; esac
+  j="$ROOT/$(jq -r --arg id "$id" '.artifacts[] | select(.document==$id and .format=="json") | .path' "$MAN" | head -n 1)"
+  y="$ROOT/$(jq -r --arg id "$id" '.artifacts[] | select(.document==$id and .format=="yaml") | .path' "$MAN" | head -n 1)"
   expect_file "$j"; expect_file "$y"
+  pairs=$((pairs + 1))
   case "$YAML_READER" in
     ruby)
       ruby -ryaml -rjson -e '
@@ -83,6 +97,7 @@ if j != y: sys.exit("the YAML and the JSON of %s are different documents" % sys.
 ' "$j" "$y" "$id" || exit 1 ;;
   esac
 done
+[ "$pairs" -gt 0 ] || { echo "    no document is committed in two encodings; this check has stopped checking anything"; exit 1; }
 [ -n "$YAML_READER" ] || echo "    note: no YAML parser (ruby/psych or python3/PyYAML); the encodings were compared by declaration only"
 
 # --- every schema a document names is published and pins that document

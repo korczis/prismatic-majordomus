@@ -877,7 +877,18 @@ jq -R -n '
 # the tool did, and --check proves it again; timings are dropped so the data is stable
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase run --json > "$STAGE/uc-run.json" 2> "$STAGE/uc-run.err" || {
   echo "generate-site-data: a use-case scenario failed; the site does not show a demonstration that does not hold:" >&2
-  jq -r '.results[] | select(.result != "pass") | "  \(.use_case): \(.steps | map(select(.result != "pass")) | .[0].reason // .reason // "setup failed")"' "$STAGE/uc-run.json" 2>/dev/null >&2 || cat "$STAGE/uc-run.err" >&2
+  # `jq` exits 0 when it matches nothing, so `jq || cat` printed the heading and then
+  # nothing at all whenever the runner failed before writing its JSON — which is the case
+  # that most needs the stderr. Decide on the output, not on jq's exit code.
+  # `|| true`: an assignment from a command substitution is a plain command, so under `set -e`
+  # a jq that cannot read the runner's output would end the script with jq's own status
+  # instead of this branch's — which is how a scenario failure came to report exit 5.
+  reasons="$(jq -r '.results[] | select(.result != "pass") | "  \(.use_case): \(.steps | map(select(.result != "pass")) | .[0].reason // .reason // "setup failed")"' "$STAGE/uc-run.json" 2>/dev/null || true)"
+  if [ -n "$reasons" ]; then printf '%s\n' "$reasons" >&2
+  else
+    echo "  the runner wrote no result; its stderr follows" >&2
+    sed 's/^/  /' "$STAGE/uc-run.err" >&2
+  fi
   exit 10; }
 "$ROOT/bin/majordomus" --repo "$ROOT" usecase coverage --json > "$STAGE/uc-coverage.json" 2>/dev/null || { echo "generate-site-data: usecase coverage failed" >&2; exit 10; }
 jq -n \

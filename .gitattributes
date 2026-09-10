@@ -52,3 +52,9 @@ CLAUDE.md                           merge=derived
 # platform declarations, and both carry a fingerprint of the tree they were generated from.
 docs/INSTALL.md                     merge=derived
 site/static/install.sh              merge=derived
+
+# The public release metadata — one document per tag, plus the `latest` pointer, generated
+# from the records under .ai/repo/releases/. The pattern was absent until the first release
+# actually published, because until then the directory did not exist; every branch open
+# across a release would have conflicted here for the usual reason.
+site/static/releases/**             merge=derived

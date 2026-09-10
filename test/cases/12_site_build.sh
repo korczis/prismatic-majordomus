@@ -33,7 +33,11 @@ expect_grep 'id="second-level-heading"' "$P/render-test/index.html"
 expect_grep 'overflow-x-auto' "$P/render-test/index.html"
 expect_grep 'role="note"' "$P/render-test/index.html"
 expect_grep 'footnote' "$P/render-test/index.html"
-expect_grep '<pre class="mermaid">' "$P/render-test/index.html"
+# The element and its class, not the byte-exact tag: site-build's a11y pass puts every
+# scrolling `pre` into the tab order, so the opening tag carries a tabindex the renderer did
+# not write. Pinning the exact bytes made a deliberate accessibility fix look like a
+# rendering regression.
+expect_grep '<pre[^>]*class="mermaid"' "$P/render-test/index.html"
 # navigation: five groups, dropdown menus present with Flowbite hooks; render-test is noindex
 # a dropdown per navigation group that has items; the count comes from the data, not from
 # a number written here, so adding a group to site/data/nav.toml does not break this case
@@ -48,8 +52,17 @@ expect_grep 'Install Majordomus' "$P/index.html"
 for href in $(grep -oE 'href="[^"]*/(supervises|profiles|guarantees|commands|why)/[a-z0-9_-]+/"' "$P/index.html" | sed -E 's#.*/prismatic-majordomus/##; s#"$##' | sort -u); do [ -f "$P/$href/index.html" ] || { echo "    homepage tile links to missing $href"; exit 1; }; done
 expect_grep 'href="[^"]*/supervises/"' "$P/index.html"
 [ "$(grep -oE 'href="[^"]*/supervises/[a-z]+/"' "$P/supervises/index.html" | sort -u | wc -l | tr -d ' ')" = "$(jq '.does | length' "$ROOT/site/data/generated/readme.json")" ]
-n_why=0; for f in "$ROOT"/site/content-src/why/*.md; do case "$(basename "$f")" in _index.md) ;; *) n_why=$((n_why + 1)) ;; esac; done
-[ "$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')" = "$n_why" ]
+# The homepage shows the featured moments of the Why catalogue. Counted from the dataset the
+# page is rendered from, not from a directory of hand-written pages: the catalogue became a
+# kind under .ai/repo/why/ and site/content-src/why/ was removed, and the glob that used to
+# count those files matched nothing — which in shell is not an empty set but the literal
+# pattern, so the loop counted one and the case compared 10 against 1 while saying nothing
+# about why.
+n_why="$(jq '[.moments[] | select(.featured)] | length' "$ROOT/site/data/registry/why.json")"
+[ "$n_why" -gt 0 ] || { echo "    the Why catalogue features no moment; the homepage has nothing to show"; exit 1; }
+n_links="$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | sort -u | wc -l | tr -d ' ')"
+[ "$n_links" = "$n_why" ] \
+  || { echo "    the homepage links $n_links Why pages and the catalogue features $n_why"; exit 1; }
 # every claim listed on the homepage links to its page; claim pages carry provenance and a verify command
 [ "$(grep -oE 'href="[^"]*/guarantees/[a-z-]+/"' "$P/index.html" | grep -vE '/(guaranteed|advisory|planned|rejected)/' | sort -u | wc -l | tr -d ' ')" -ge 12 ]
 expect_grep 'bash test/run.sh 03_update' "$P/guarantees/wiring-reconciliation/index.html"
