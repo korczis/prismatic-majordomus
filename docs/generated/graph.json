@@ -24989,6 +24989,46 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
+        "kind": "rule",
+        "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
+        "summary": "A generator that cannot match the tree refuses rather than rewriting it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-tool-that-cannot-match-the-tree-refuses%401",
+        "source": ".ai/repo/rules/project/a-tool-that-cannot-match-the-tree-refuses.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-files-regenerated@1"
+          ],
+          "statement": "A generator whose build does not match the tree it is asked to derive refuses, names both sides, and exits non-zero; it never writes.",
+          "tags": [
+            "derived",
+            "safety"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "kind": "rule",
+        "label": "project.a-worker-that-stops-leaves-its-work-behind@1",
+        "summary": "A worker that stops leaves its work where somebody else can find it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.a-worker-that-stops-leaves-its-work-behind%401",
+        "source": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.work-is-claimed-before-it-is-built@1"
+          ],
+          "statement": "Work is committed and pushed at the last point it was coherent, not at the point it was finished; whoever fans work out checkpoints it before it is lost.",
+          "tags": [
+            "process",
+            "integration"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.benchmarkable-commands@1",
         "kind": "rule",
         "label": "project.benchmarkable-commands@1",
@@ -25528,6 +25568,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "rule",
+        "label": "project.never-reported-is-not-green@1",
+        "summary": "A verdict that never arrived is not a verdict",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.never-reported-is-not-green%401",
+        "source": ".ai/repo/rules/project/never-reported-is-not-green.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.land-and-publish@1"
+          ],
+          "statement": "A check that has not reported is unknown, never passing; a change is merged against the trunk's measured failing set, not against silence.",
+          "tags": [
+            "process",
+            "integration",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.never-store-transcripts@1",
         "kind": "rule",
         "label": "project.never-store-transcripts@1",
@@ -25760,6 +25821,26 @@
             "documentation",
             "provider",
             "derivation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "kind": "rule",
+        "label": "project.reclaim-only-what-you-own@1",
+        "summary": "A worker reclaims only what it owns",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.reclaim-only-what-you-own%401",
+        "source": ".ai/repo/rules/project/reclaim-only-what-you-own.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.worktree-topology@1"
+          ],
+          "statement": "A worker removes build output only from the worktree it is working in, and never from the primary checkout or another branch's; disk pressure is reported, not resolved by taking someone else's tools.",
+          "tags": [
+            "process",
+            "worktrees"
           ]
         }
       },
@@ -27489,13 +27570,6 @@
         "source": "test/cases/110_lease_reader.sh"
       },
       {
-        "id": "majordomus://test/test/cases/111_design_contrast.sh",
-        "kind": "test",
-        "label": "test/cases/111_design_contrast.sh",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F111_design_contrast.sh",
-        "source": "test/cases/111_design_contrast.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/111_session_per_provider.sh",
         "kind": "test",
         "label": "test/cases/111_session_per_provider.sh",
@@ -27522,6 +27596,13 @@
         "label": "test/cases/11_site_derivation.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F11_site_derivation.sh",
         "source": "test/cases/11_site_derivation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/120_design_contrast.sh",
+        "kind": "test",
+        "label": "test/cases/120_design_contrast.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F120_design_contrast.sh",
+        "source": "test/cases/120_design_contrast.sh"
       },
       {
         "id": "majordomus://test/test/cases/12_site_build.sh",
@@ -41822,6 +41903,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
+        "target": "majordomus://rule/project.derived-files-regenerated@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.benchmarkable-commands@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42127,6 +42228,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.never-reported-is-not-green@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.never-reported-is-not-green@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.never-store-transcripts@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42244,6 +42355,16 @@
       {
         "source": "majordomus://rule/project.providers-are-data@1",
         "target": "majordomus://rule/project.no-counts-in-prose@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
+        "target": "majordomus://rule/project.worktree-topology@1",
         "kind": "depends_on"
       },
       {
@@ -42747,11 +42868,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/111_design_contrast.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/111_session_per_provider.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -42768,6 +42884,11 @@
       },
       {
         "source": "majordomus://test/test/cases/11_site_derivation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/120_design_contrast.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -46323,8 +46444,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1416,
-      "edges": 3200,
+      "nodes": 1420,
+      "edges": 3208,
       "acyclic": true,
       "truncated": false
     }
