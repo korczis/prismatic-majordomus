@@ -1,16 +1,22 @@
 //! The `design` module: the design system as a capability.
 //!
-//! Three questions, answered from the declaration compiled into this executable — the
+//! Four questions, answered from the declaration compiled into this executable — the
 //! same one every stylesheet was projected from: what the design is (its fingerprint, its
-//! identity, its theme contract, where it is projected), what tokens it holds, and what
-//! one token means. The MCP tool, the resource, the HTTP route, the OpenAPI operation and
-//! the Cockpit's Design page are projections of these three; none of them holds a token of
-//! its own.
+//! identity, its theme contract, where it is projected), what tokens it holds, what one
+//! token means, and whether the colours it pairs can be read on one another. The MCP tool,
+//! the resource, the HTTP route, the OpenAPI operation and the Cockpit's Design page are
+//! projections of these; none of them holds a token of its own.
 //!
-//! Nothing here reads the repository: the design is the tool's, not the supervised
+//! Three of the four read nothing at all: the design is the tool's, not the supervised
 //! repository's, and it ships inside the binary. Whether the *served* stylesheets carry the
 //! same fingerprint is a question for the page (`--mj-design` against
 //! `design.system.design`), which the Cockpit asks on every load.
+//!
+//! `design.contrast` is the exception, and reads only the distribution's own share
+//! directory: the pair a ratio is computed for is stated by the primitives that consume the
+//! declaration, and those stylesheets ship beside `kinds.yaml` and the obligation
+//! vocabulary. It is located the way every other reader locates it
+//! ([`crate::share::Share`]), never discovered in the supervised repository.
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -19,6 +25,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
+use crate::design::contrast::{self, ContrastReport};
 use crate::design::{render, DesignSystem, Fonts, Identity, Token, TokenKind, SOURCE};
 use crate::{capability, module};
 
@@ -241,12 +248,41 @@ fn explain(_: &Context, input: ExplainTokenInput) -> Result<Token, CapabilityErr
     })
 }
 
+/// The stylesheets that state which foreground is rendered on which ground, read from the
+/// distribution's share directory. A distribution that ships none states no pair, which is
+/// reported as a source that was not found rather than as a clean measurement.
+fn consumers(root: &std::path::Path) -> Result<Vec<(String, String)>, CapabilityError> {
+    let share = crate::share::Share::locate(None, root).map_err(|e| {
+        CapabilityError::Internal(format!("the distribution's share directory was not found: {e}"))
+    })?;
+    let mut out = Vec::new();
+    for name in contrast::CONSUMERS {
+        let path = share.dir().join(name);
+        match std::fs::read_to_string(&path) {
+            Ok(text) => out.push((format!("share/{name}"), text)),
+            Err(e) => {
+                return Err(CapabilityError::Internal(format!(
+                    "{}: {e}; the design's own primitives are what state which colour is rendered on which ground",
+                    path.display()
+                )))
+            }
+        }
+    }
+    Ok(out)
+}
+
+fn readable(ctx: &Context, _: Empty) -> Result<ContrastReport, CapabilityError> {
+    let design = compiled()?;
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    Ok(contrast::measure(design, &consumers(&root)?))
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "design",
         title: "Design system",
-        description: "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
+        description: "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
@@ -297,6 +333,21 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["design", "ui", "provenance", "introspection"],
                 handler: explain,
             },
+            capability! {
+                id: "design.contrast",
+                title: "Whether the declared colours can be read",
+                description: "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
+                input: Empty,
+                output: ContrastReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_design_contrast"),
+                    http: get("/api/v1/design/contrast"),
+                    cli: None,
+                },
+                tags: ["design", "ui", "accessibility", "introspection"],
+                handler: readable,
+            },
         ],
     }
 }
@@ -320,6 +371,11 @@ mod tests {
                 "design.explain",
                 "majordomus_design_explain",
                 "/api/v1/design/explain",
+            ),
+            (
+                "design.contrast",
+                "majordomus_design_contrast",
+                "/api/v1/design/contrast",
             ),
         ];
         let ids: Vec<&str> = m
@@ -366,6 +422,30 @@ mod tests {
             .any(|p| p.path == render::SURFACE_CSS));
         assert!(report.tallies.states > 0);
         assert_eq!(report.theme.storage_key, design.theme.storage_key);
+    }
+
+    #[test]
+    fn the_declared_colours_are_measured_against_the_standard() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        // a synthetic repository carries no share directory of its own, so the answer is
+        // either the measurement of this distribution's primitives or the sentence saying
+        // which stylesheet was missing — never a clean verdict over nothing
+        match readable(&ctx, Empty::default()) {
+            Ok(report) => {
+                assert!(report.measured > 0, "no pair was derived");
+                assert_eq!(report.minimum_text, contrast::MINIMUM_TEXT);
+                assert!(
+                    report.readable,
+                    "the declaration pairs colours that cannot be read:\n{}",
+                    report.findings.join("\n")
+                );
+            }
+            Err(CapabilityError::Internal(message)) => {
+                assert!(message.contains("share"), "{message}");
+            }
+            Err(other) => panic!("unexpected refusal: {other:?}"),
+        }
     }
 
     #[test]

@@ -3,9 +3,28 @@
      Generator: majordomus-cli 0.4.0 -->
 # Module `design` — Design system
 
-The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.
+The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.
 
-Stability: behaviorally_verified. Capabilities: 3.
+Stability: behaviorally_verified. Capabilities: 4.
+
+## `design.contrast` — Whether the declared colours can be read
+
+Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_design_contrast` |
+| HTTP | `GET /api/v1/design/contrast` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::design |
+| tags | design, ui, accessibility, introspection |
+
+Input: none.
+
+Output: `ContrastReport`.
 
 ## `design.explain` — What a design token means
 

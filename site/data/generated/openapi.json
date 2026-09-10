@@ -1,8 +1,8 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 76,
-    "schemas": 337,
+    "operations": 77,
+    "schemas": 341,
     "tags": 25
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2136,6 +2136,28 @@
         {
           "description": "Projected nowhere. It exists, it is listed as existing, and no surface offers it.",
           "value": "internal"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What a colour is doing where it was found.",
+      "is_enum": true,
+      "name": "Carries",
+      "properties": [],
+      "type": "\"text\" | \"non_text\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Measured"
+      ],
+      "values": [
+        {
+          "description": "Text: held to [`MINIMUM_TEXT`].",
+          "value": "text"
+        },
+        {
+          "description": "A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced.",
+          "value": "non_text"
         }
       ],
       "variants": []
@@ -4275,6 +4297,94 @@
       "variants": []
     },
     {
+      "description": "Every pair the declaration and its consumers state, measured.",
+      "is_enum": false,
+      "name": "ContrastReport",
+      "properties": [
+        {
+          "description": "The fingerprint of the declaration measured.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The standard the thresholds come from.",
+          "name": "standard",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The ratio asked of text.",
+          "name": "minimum_text",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "The ratio asked of a non-text element that carries meaning.",
+          "name": "minimum_non_text",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "The stylesheets read, and whether each was found.",
+          "name": "sources",
+          "refs": [
+            "Source"
+          ],
+          "required": true,
+          "type": "array of Source"
+        },
+        {
+          "description": "How many pairs were derived and measured.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every pair, in a stable order: theme, then what it carries, then the two tokens.",
+          "name": "pairs",
+          "refs": [
+            "Measured"
+          ],
+          "required": true,
+          "type": "array of Measured"
+        },
+        {
+          "description": "Declarations skipped because their value is composed at run time.",
+          "name": "composed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "One line per enforced pair that falls short, naming role, ground, theme, measured\nratio and required ratio.",
+          "name": "findings",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Whether every enforced pair reaches its threshold.",
+          "name": "readable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "design.contrast"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand.",
       "is_enum": false,
       "name": "CounterSnapshot",
@@ -5911,6 +6021,7 @@
         "deploy.list",
         "deploy.check",
         "design.system",
+        "design.contrast",
         "design.explain",
         "design.tokens",
         "directories.list",
@@ -9289,6 +9400,113 @@
       "used_by": [],
       "used_by_schemas": [
         "McpExposure"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One measured pair: a foreground on a ground, in one theme.",
+      "is_enum": false,
+      "name": "Measured",
+      "properties": [
+        {
+          "description": "The foreground token, as the declaration names it (`muted`, `ok`).",
+          "name": "foreground",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The palette entry it resolves to in this theme.",
+          "name": "foreground_entry",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The literal that entry holds.",
+          "name": "foreground_value",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The ground token.",
+          "name": "ground",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The palette entry the ground resolves to in this theme.",
+          "name": "ground_entry",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The literal that entry holds.",
+          "name": "ground_value",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`light` or `dark`.",
+          "name": "theme",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Text, or a border.",
+          "name": "carries",
+          "refs": [
+            "Carries"
+          ],
+          "required": true,
+          "type": "Carries"
+        },
+        {
+          "description": "The measured ratio, to two decimal places.",
+          "name": "ratio",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "What the standard asks of this pair.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "Whether it reaches it.",
+          "name": "passes",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether falling short is a finding. False for a border; see the module documentation.",
+          "name": "enforced",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Where the pair was read: the stylesheet and the selector that states it.",
+          "name": "seen",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ContrastReport"
       ],
       "values": [],
       "variants": []
@@ -15436,6 +15654,34 @@
       "variants": []
     },
     {
+      "description": "One stylesheet the pair set was derived from.",
+      "is_enum": false,
+      "name": "Source",
+      "properties": [
+        {
+          "description": "Where it was read from, as the caller named it.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many rules of it state a colour.",
+          "name": "rules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ContrastReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise.",
       "is_enum": true,
       "name": "Stability",
@@ -18980,7 +19226,7 @@
       ]
     },
     {
-      "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
+      "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
       "name": "design",
       "operations": [
         {
@@ -19037,6 +19283,58 @@
           "result_schema": "DesignReport",
           "stability": "behaviorally_verified",
           "summary": "The design system"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/contrast\"",
+          "description": "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
+          "id": "design.contrast",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_design_contrast",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/design/contrast",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::design",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether the declared colours can be read: the result.",
+              "schema": "ContrastReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ContrastReport",
+          "stability": "behaviorally_verified",
+          "summary": "Whether the declared colours can be read"
         },
         {
           "benchmark": "required",
