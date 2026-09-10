@@ -48,7 +48,7 @@
     },
     {
       "name": "design",
-      "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with."
+      "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with."
     },
     {
       "name": "directories",
@@ -1368,6 +1368,85 @@
             "uri": "majordomus://design",
             "name": "design"
           }
+        }
+      }
+    },
+    "/api/v1/design/contrast": {
+      "get": {
+        "operationId": "design.contrast",
+        "summary": "Whether the declared colours can be read",
+        "description": "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
+        "tags": [
+          "design"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Whether the declared colours can be read: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContrastReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "design.contrast",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_design_contrast"
         }
       }
     },
@@ -9018,6 +9097,21 @@
         ],
         "description": "Who a capability is for, and whether anything offers it.\n\nInternal is a statement, not an omission: a capability nothing projects is invisible\neither way, and the difference between deliberate and forgotten is exactly what this\nrecords."
       },
+      "Carries": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "text",
+            "description": "Text: held to [`MINIMUM_TEXT`]."
+          },
+          {
+            "type": "string",
+            "const": "non_text",
+            "description": "A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced."
+          }
+        ],
+        "description": "What a colour is doing where it was found."
+      },
       "CatalogueView": {
         "type": "object",
         "properties": {
@@ -10669,6 +10763,79 @@
           "audience"
         ],
         "description": "A directory contract as the document declares it, before anything is inherited."
+      },
+      "ContrastReport": {
+        "type": "object",
+        "properties": {
+          "fingerprint": {
+            "type": "string",
+            "description": "The fingerprint of the declaration measured."
+          },
+          "standard": {
+            "type": "string",
+            "description": "The standard the thresholds come from."
+          },
+          "minimum_text": {
+            "type": "number",
+            "format": "double",
+            "description": "The ratio asked of text."
+          },
+          "minimum_non_text": {
+            "type": "number",
+            "format": "double",
+            "description": "The ratio asked of a non-text element that carries meaning."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "description": "The stylesheets read, and whether each was found."
+          },
+          "measured": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many pairs were derived and measured."
+          },
+          "pairs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Measured"
+            },
+            "description": "Every pair, in a stable order: theme, then what it carries, then the two tokens."
+          },
+          "composed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Declarations skipped because their value is composed at run time."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "One line per enforced pair that falls short, naming role, ground, theme, measured\nratio and required ratio."
+          },
+          "readable": {
+            "type": "boolean",
+            "description": "Whether every enforced pair reaches its threshold."
+          }
+        },
+        "required": [
+          "fingerprint",
+          "standard",
+          "minimum_text",
+          "minimum_non_text",
+          "sources",
+          "measured",
+          "pairs",
+          "composed",
+          "findings",
+          "readable"
+        ],
+        "description": "Every pair the declaration and its consumers state, measured."
       },
       "CounterSnapshot": {
         "type": "object",
@@ -14645,6 +14812,81 @@
           "name"
         ],
         "description": "An MCP resource: its URI and the short name a client lists."
+      },
+      "Measured": {
+        "type": "object",
+        "properties": {
+          "foreground": {
+            "type": "string",
+            "description": "The foreground token, as the declaration names it (`muted`, `ok`)."
+          },
+          "foreground_entry": {
+            "type": "string",
+            "description": "The palette entry it resolves to in this theme."
+          },
+          "foreground_value": {
+            "type": "string",
+            "description": "The literal that entry holds."
+          },
+          "ground": {
+            "type": "string",
+            "description": "The ground token."
+          },
+          "ground_entry": {
+            "type": "string",
+            "description": "The palette entry the ground resolves to in this theme."
+          },
+          "ground_value": {
+            "type": "string",
+            "description": "The literal that entry holds."
+          },
+          "theme": {
+            "type": "string",
+            "description": "`light` or `dark`."
+          },
+          "carries": {
+            "$ref": "#/components/schemas/Carries",
+            "description": "Text, or a border."
+          },
+          "ratio": {
+            "type": "number",
+            "format": "double",
+            "description": "The measured ratio, to two decimal places."
+          },
+          "required": {
+            "type": "number",
+            "format": "double",
+            "description": "What the standard asks of this pair."
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "Whether it reaches it."
+          },
+          "enforced": {
+            "type": "boolean",
+            "description": "Whether falling short is a finding. False for a border; see the module documentation."
+          },
+          "seen": {
+            "type": "string",
+            "description": "Where the pair was read: the stylesheet and the selector that states it."
+          }
+        },
+        "required": [
+          "foreground",
+          "foreground_entry",
+          "foreground_value",
+          "ground",
+          "ground_entry",
+          "ground_value",
+          "theme",
+          "carries",
+          "ratio",
+          "required",
+          "passes",
+          "enforced",
+          "seen"
+        ],
+        "description": "One measured pair: a foreground on a ground, in one theme."
       },
       "MigrationAction": {
         "oneOf": [
@@ -19573,6 +19815,26 @@
           "text"
         ],
         "description": "One observable symptom of a moment: a question a reader can answer about their own\nweek. The questionnaire on the site and the input of `why diagnose` are these and\nnothing else."
+      },
+      "Source": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Where it was read from, as the caller named it."
+          },
+          "rules": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many rules of it state a colour."
+          }
+        },
+        "required": [
+          "path",
+          "rules"
+        ],
+        "description": "One stylesheet the pair set was derived from."
       },
       "Stability": {
         "oneOf": [

@@ -6,26 +6,26 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "6ed0b7f9d126bbe0bb59072234750765bde999a1840acb1c1beb0bbb7e1b5335",
+    "fingerprint": "288bf61c1a033d7a3c8c3b20cd860872b6a9f4369188a7f63b40c319ef280c22",
     "summary": {
-      "total": 1195,
-      "builtin": 76,
-      "declarative": 1119,
+      "total": 1197,
+      "builtin": 77,
+      "declarative": 1120,
       "by_kind": {
         "command": 3,
-        "query": 73,
-        "resource": 1119
+        "query": 74,
+        "resource": 1120
       },
       "by_stability": {
-        "behaviorally_verified": 71,
-        "implemented": 1124
+        "behaviorally_verified": 72,
+        "implemented": 1125
       },
-      "mcp_tools": 74,
-      "mcp_resources": 1146,
-      "http_routes": 76,
+      "mcp_tools": 75,
+      "mcp_resources": 1147,
+      "http_routes": 77,
       "cli_commands": 31,
       "modules": 53,
-      "benchmark_required": 73,
+      "benchmark_required": 74,
       "benchmark_waived": 3,
       "cached": 25
     },
@@ -5480,6 +5480,245 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs"
+      },
+      {
+        "id": "design.contrast",
+        "module": "design",
+        "kind": "query",
+        "title": "Whether the declared colours can be read",
+        "description": "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ContrastReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "fingerprint": {
+                "type": "string",
+                "description": "The fingerprint of the declaration measured."
+              },
+              "standard": {
+                "type": "string",
+                "description": "The standard the thresholds come from."
+              },
+              "minimum_text": {
+                "type": "number",
+                "format": "double",
+                "description": "The ratio asked of text."
+              },
+              "minimum_non_text": {
+                "type": "number",
+                "format": "double",
+                "description": "The ratio asked of a non-text element that carries meaning."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Source"
+                },
+                "description": "The stylesheets read, and whether each was found."
+              },
+              "measured": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many pairs were derived and measured."
+              },
+              "pairs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Measured"
+                },
+                "description": "Every pair, in a stable order: theme, then what it carries, then the two tokens."
+              },
+              "composed": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "Declarations skipped because their value is composed at run time."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "One line per enforced pair that falls short, naming role, ground, theme, measured\nratio and required ratio."
+              },
+              "readable": {
+                "type": "boolean",
+                "description": "Whether every enforced pair reaches its threshold."
+              }
+            },
+            "required": [
+              "fingerprint",
+              "standard",
+              "minimum_text",
+              "minimum_non_text",
+              "sources",
+              "measured",
+              "pairs",
+              "composed",
+              "findings",
+              "readable"
+            ],
+            "description": "Every pair the declaration and its consumers state, measured.",
+            "title": "ContrastReport",
+            "$defs": {
+              "Source": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Where it was read from, as the caller named it."
+                  },
+                  "rules": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many rules of it state a colour."
+                  }
+                },
+                "required": [
+                  "path",
+                  "rules"
+                ],
+                "description": "One stylesheet the pair set was derived from."
+              },
+              "Measured": {
+                "type": "object",
+                "properties": {
+                  "foreground": {
+                    "type": "string",
+                    "description": "The foreground token, as the declaration names it (`muted`, `ok`)."
+                  },
+                  "foreground_entry": {
+                    "type": "string",
+                    "description": "The palette entry it resolves to in this theme."
+                  },
+                  "foreground_value": {
+                    "type": "string",
+                    "description": "The literal that entry holds."
+                  },
+                  "ground": {
+                    "type": "string",
+                    "description": "The ground token."
+                  },
+                  "ground_entry": {
+                    "type": "string",
+                    "description": "The palette entry the ground resolves to in this theme."
+                  },
+                  "ground_value": {
+                    "type": "string",
+                    "description": "The literal that entry holds."
+                  },
+                  "theme": {
+                    "type": "string",
+                    "description": "`light` or `dark`."
+                  },
+                  "carries": {
+                    "$ref": "#/$defs/Carries",
+                    "description": "Text, or a border."
+                  },
+                  "ratio": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "The measured ratio, to two decimal places."
+                  },
+                  "required": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "What the standard asks of this pair."
+                  },
+                  "passes": {
+                    "type": "boolean",
+                    "description": "Whether it reaches it."
+                  },
+                  "enforced": {
+                    "type": "boolean",
+                    "description": "Whether falling short is a finding. False for a border; see the module documentation."
+                  },
+                  "seen": {
+                    "type": "string",
+                    "description": "Where the pair was read: the stylesheet and the selector that states it."
+                  }
+                },
+                "required": [
+                  "foreground",
+                  "foreground_entry",
+                  "foreground_value",
+                  "ground",
+                  "ground_entry",
+                  "ground_value",
+                  "theme",
+                  "carries",
+                  "ratio",
+                  "required",
+                  "passes",
+                  "enforced",
+                  "seen"
+                ],
+                "description": "One measured pair: a foreground on a ground, in one theme."
+              },
+              "Carries": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "text",
+                    "description": "Text: held to [`MINIMUM_TEXT`]."
+                  },
+                  {
+                    "type": "string",
+                    "const": "non_text",
+                    "description": "A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced."
+                  }
+                ],
+                "description": "What a colour is doing where it was found."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::design"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_design_contrast"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/design/contrast"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "design",
+          "ui",
+          "accessibility",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs"
       },
       {
         "id": "design.explain",
@@ -27117,11 +27356,12 @@
       {
         "id": "design",
         "title": "Design system",
-        "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, and what any one of them means. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
+        "description": "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 3,
+        "capabilities": 4,
         "capability_ids": [
+          "design.contrast",
           "design.explain",
           "design.system",
           "design.tokens"
@@ -27482,7 +27722,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 136,
+        "capabilities": 137,
         "capability_ids": []
       },
       {
@@ -27562,7 +27802,7 @@
     ]
   },
   "index": {
-    "fingerprint": "99aeffac1efdb599db1f81e8f8583ba5a50282ba02212773c278fb959041d945",
+    "fingerprint": "1521ff14aca8197a0a2eeaf3c4dfe593823da2f43a9b95e6fa8bd68b470f826a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -27610,7 +27850,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 136,
+      "test": 137,
       "use-case": 42,
       "workspace": 1
     },
@@ -30854,7 +31094,7 @@
         "title": "The design system — one declaration, every surface",
         "path": "docs/DESIGN_SYSTEM.md",
         "source_class": "document",
-        "bytes": 13371
+        "bytes": 14471
       },
       {
         "uri": "majordomus://document/docs/DISTRIBUTION.md",
@@ -37225,7 +37465,7 @@
         "path": ".ai/repo/rules/project/design-tokens-declared-once.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 10001,
+        "bytes": 12096,
         "tags": [
           "design",
           "ui",
@@ -38457,6 +38697,14 @@
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
         "bytes": 6597
+      },
+      {
+        "uri": "majordomus://test/test/cases/111_design_contrast.sh",
+        "kind": "test",
+        "identity": "test/cases/111_design_contrast.sh",
+        "path": "test/cases/111_design_contrast.sh",
+        "source_class": "case",
+        "bytes": 6069
       },
       {
         "uri": "majordomus://test/test/cases/11_site_derivation.sh",
@@ -40092,7 +40340,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 136
+      "objects": 137
     },
     {
       "name": "use-case",
@@ -53669,6 +53917,16 @@
         "output": "DeploymentList"
       },
       {
+        "name": "majordomus_design_contrast",
+        "id": "design.contrast",
+        "title": "Whether the declared colours can be read",
+        "description": "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "ContrastReport"
+      },
+      {
         "name": "majordomus_design_explain",
         "id": "design.explain",
         "title": "What a design token means",
@@ -54558,6 +54816,12 @@
         "method": "GET",
         "path": "/api/v1/deployments",
         "id": "deploy.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/design/contrast",
+        "id": "design.contrast",
         "kind": "query"
       },
       {
@@ -55462,6 +55726,35 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/deployments"
+      },
+      {
+        "key": "design.contrast|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "design.contrast",
+        "module": "design",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "design.contrast|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "design.contrast",
+        "module": "design",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_design_contrast"
+      },
+      {
+        "key": "design.contrast|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "design.contrast",
+        "module": "design",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/design/contrast"
       },
       {
         "key": "design.explain|direct|role",
@@ -58525,6 +58818,27 @@
           "cases": 1
         },
         {
+          "subject": "design.contrast",
+          "module": "design",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.contrast",
+          "module": "design",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "design.contrast",
+          "module": "design",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "design.explain",
           "module": "design",
           "transport": "direct",
@@ -59978,20 +60292,20 @@
       ],
       "tallies": {
         "direct": {
-          "required": 76,
-          "covered": 73,
+          "required": 77,
+          "covered": 74,
           "missing": 0,
           "waived": 3
         },
         "http": {
-          "required": 76,
-          "covered": 73,
+          "required": 77,
+          "covered": 74,
           "missing": 0,
           "waived": 3
         },
         "mcp": {
-          "required": 74,
-          "covered": 71,
+          "required": 75,
+          "covered": 72,
           "missing": 0,
           "waived": 3
         },
@@ -60002,8 +60316,8 @@
           "waived": 0
         },
         "total": {
-          "required": 239,
-          "covered": 230,
+          "required": 242,
+          "covered": 233,
           "missing": 0,
           "waived": 9
         }
