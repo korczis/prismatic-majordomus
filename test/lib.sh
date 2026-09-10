@@ -150,7 +150,18 @@ fixture_repo() {
   mkdir -p "$dst"
   cp -R "$ROOT/bin" "$ROOT/lib" "$ROOT/share" "$ROOT/scripts" "$dst/"
   mkdir -p "$dst/site"; cp -R "$ROOT/site/templates" "$dst/site/templates"
+  # The generator's own canonical inputs, minus the two sections a fixture does not carry.
+  # The use cases and applications are canonical inputs of *this* repository — it has them —
+  # but a fixture that takes them pays for every one of their scenarios, executed against the
+  # tool, on every run of every case that builds one. Where they live comes from the manifest,
+  # which owns that answer; a case that wants them passes the section as an extra path below,
+  # and then the manifest keeps naming it.
+  local uc_sec ap_sec
+  uc_sec="$(sed -n 's/^  use-cases: //p' "$ROOT/.ai/manifest.yaml")"
+  ap_sec="$(sed -n 's/^  applications: //p' "$ROOT/.ai/manifest.yaml")"
   for p in $("$ROOT/scripts/generate-site-data" --inputs); do
+    [ -n "$uc_sec" ] && case "$p" in ".ai/$uc_sec"/*) continue ;; esac
+    [ -n "$ap_sec" ] && case "$p" in ".ai/$ap_sec"/*) continue ;; esac
     mkdir -p "$dst/$(dirname "$p")"
     cp "$ROOT/$p" "$dst/$p"
   done
@@ -159,18 +170,34 @@ fixture_repo() {
     mkdir -p "$dst/$(dirname "$p")"
     cp -R "$ROOT/$p" "$dst/$p"
   done
-  # the generator validates and runs the repository's use cases through the tool, which
-  # needs the layer (manifest, policy, rules, sources), the fixtures the scenarios prepare
-  # repositories from, and the executable's registry the MCP tools resolve against
+  # The generator needs the layer: the manifest, the policy, the rules, the source classes.
+  #
+  # It does *not* need this repository's use cases, and a fixture must not carry them. They
+  # were here because the generator used to refuse a layer without them, so every fixture
+  # took all of the repository's — and then paid for every one of their scenarios, executed
+  # against the tool, on every run of every case. Nothing in a fixture wanted that: not the
+  # case, which asserts on something else, and not the generator, which renders no use-case
+  # page from a layer that has none. A case that does want them passes them as an extra path.
+  #
+  # The manifest that comes with the layer must then agree with what the layer holds: it
+  # names the sections this repository has, and a fixture that carries no use cases must not
+  # carry a manifest claiming it does. The generator refuses that disagreement, correctly.
   if [ ! -f "$dst/.ai/manifest.yaml" ]; then
     mkdir -p "$dst/.ai/repo"; cp "$ROOT/.ai/README.md" "$ROOT/.ai/manifest.yaml" "$dst/.ai/"
-    for p in README.md policy.yaml scope.yaml knowledge rules profiles prompts workflows use-cases applications adrs why; do
+    for p in README.md policy.yaml scope.yaml knowledge rules profiles prompts workflows adrs why; do
       [ -e "$ROOT/.ai/repo/$p" ] && [ ! -e "$dst/.ai/repo/$p" ] && cp -R "$ROOT/.ai/repo/$p" "$dst/.ai/repo/$p"
     done
-    for p in "$ROOT"/.ai/repo/use-cases/* "$ROOT"/.ai/repo/applications/*; do
-      [ -e "$dst/.ai/repo/${p#"$ROOT"/.ai/repo/}" ] || cp "$p" "$dst/.ai/repo/${p#"$ROOT"/.ai/repo/}"
-    done
   fi
+  # However the manifest arrived — through the input list or the block above — it must agree
+  # with what the fixture holds. A layer with no use cases may not carry a manifest that names
+  # a use-cases section; the generator refuses that disagreement, and it is right to.
+  for p in use-cases applications; do
+    [ -d "$dst/.ai/repo/$p" ] && continue            # the case asked for them: the manifest keeps naming them
+    [ -f "$dst/.ai/manifest.yaml" ] || continue
+    # sed -i takes an argument on BSD and none on GNU: rewrite through a temporary instead
+    sed "/^  $p: /d" "$dst/.ai/manifest.yaml" > "$dst/.ai/manifest.yaml.tmp" \
+      && mv "$dst/.ai/manifest.yaml.tmp" "$dst/.ai/manifest.yaml"
+  done
   [ -e "$dst/test/lib.sh" ] || { mkdir -p "$dst/test"; cp "$ROOT/test/lib.sh" "$dst/test/lib.sh"; }
   [ -e "$dst/test/fixtures" ] || { mkdir -p "$dst/test"; cp -R "$ROOT/test/fixtures" "$dst/test/fixtures"; }
   [ -e "$dst/docs/generated/registry.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/registry.json" "$dst/docs/generated/"; }
