@@ -7,7 +7,7 @@
 //! different: without them nothing can be discovered, so they are errors, not diagnostics.
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -86,6 +86,18 @@ pub struct Index {
     /// distribution model, so that the product model can say which providers exist without
     /// a second discovery.
     pub providers: crate::share::ProviderDeclarations,
+    /// The distribution directory this process located, absolute, when one was located.
+    ///
+    /// The share is a fact about the invocation, not about the repository: it is what
+    /// `--share`, `MAJORDOMUS_SHARE`, the repository or the installation resolved to, and
+    /// [`crate::app::App`] records it here so that a handler needing a file beside the
+    /// kinds — the obligation vocabulary, the shell tool's command registry — reads the
+    /// distribution this process was run with instead of resolving one of its own. A
+    /// handler that resolved its own would answer from a different distribution than the
+    /// one whose kinds it was configured with, and, for an executable that lives outside
+    /// the repository, from none at all. `None` for an index built directly, which is what
+    /// makes the resolution fall back to the conventions.
+    pub share: Option<PathBuf>,
 }
 
 impl Index {
@@ -188,6 +200,7 @@ impl Index {
             scoped: Scoped { scope, tally },
             distribution: None,
             providers: Default::default(),
+            share: None,
         })
     }
 
