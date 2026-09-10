@@ -1,15 +1,19 @@
 // Discovery for the UI audit: which pages exist, and at which widths they must work.
 //
-// Neither is a list anybody maintains. The pages come from the built site — the filesystem
-// and the sitemap, unioned, so an orphan page that no sitemap names is still audited — and
-// the widths come from the media queries the CSS build actually emitted, so a breakpoint
-// added to the theme tomorrow is audited without this file changing.
+// Neither is a list anybody maintains. The pages of a built surface come from its
+// filesystem and its sitemap, unioned, so an orphan page that no sitemap names is still
+// audited; the pages of a surface the executable renders come from the surface's own
+// anchors, crawled in ui-routes.mjs; and the widths come from the media queries the CSS
+// build actually emitted, so a breakpoint added to the theme tomorrow is audited without
+// this file changing.
 //
 // Everything here is pure: it reads a built site and returns data. The browser audit and
 // the static checks both consume it, so they cannot disagree about what a page is.
 
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
+
+import { family } from './ui-routes.mjs';
 
 /** The narrowest viewport every page must remain usable at (WCAG 2.2 reflow, 320 CSS px). */
 export const REFLOW_FLOOR = 320;
@@ -132,13 +136,30 @@ export function breakpointsFromCss(cssPath) {
  * pixel below it — where a layout discontinuity hides — and one desktop width. Deduplicated
  * and sorted, so a theme with two names for one width costs one visit.
  */
-export function viewports(breakpoints) {
-  const widths = new Set([REFLOW_FLOOR, DESKTOP]);
+export function viewports(breakpoints, declared = []) {
+  const widths = new Set([REFLOW_FLOOR, DESKTOP, ...declared]);
   for (const breakpoint of breakpoints) {
     widths.add(breakpoint - 1);
     widths.add(breakpoint);
   }
   return [...widths].filter((w) => w >= REFLOW_FLOOR).sort((a, b) => a - b);
+}
+
+/**
+ * The widths the design declaration asks every page to be measured at, read from the
+ * dataset `majordomus generate design` writes beside the stylesheet's site. They join the
+ * breakpoint-derived set rather than replace it: the declaration says what a person
+ * decided, the media queries say what the build did, and a page must work at both.
+ * `[]` when the dataset is not there — the breakpoints still stand.
+ */
+export function declaredViewports(cssPath) {
+  try {
+    const site = dirname(dirname(cssPath));
+    const data = JSON.parse(readFileSync(join(site, 'data', 'registry', 'design.json'), 'utf8'));
+    return Array.isArray(data.viewports) ? data.viewports.filter((w) => Number.isInteger(w)) : [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -185,14 +206,15 @@ export function criticalWidths(viewportList) {
 /** The whole audit target set for one directory: pages × widths, with the provenance of both. */
 export function plan(publicDir, cssPath) {
   const breakpoints = breakpointsFromCss(cssPath);
-  const widths = viewports(breakpoints);
+  const declared = declaredViewports(cssPath);
+  const widths = viewports(breakpoints, declared);
   return {
     pages: tierPages(discoverPages(publicDir), widths),
     breakpoints,
-    viewports: viewports(breakpoints),
+    viewports: widths,
     source: {
       pages: 'the built site: its filesystem and its sitemap, unioned',
-      viewports: `the media queries of ${relative(process.cwd(), cssPath)}`,
+      viewports: `the media queries of ${relative(process.cwd(), cssPath)}${declared.length ? ', and the widths share/design/tokens.yaml declares' : ''}`,
     },
   };
 }
@@ -211,8 +233,8 @@ export function mounted(mount, route) {
 }
 
 /**
- * The audit target set over a *topology*: every static surface the running executable
- * serves, each visited under the mount the topology gives it.
+ * The audit target set over a *topology*: every surface the running executable serves,
+ * each visited under the mount the topology gives it.
  *
  * This exists because a built directory does not know where it is served from. The
  * documentation is generated once and mounted at `/docs` by the executable and at the root
@@ -220,21 +242,55 @@ export function mounted(mount, route) {
  * the mount is read from `majordomus web list`, which is the one place a mount is written,
  * and the audit follows the topology rather than a second opinion about it.
  *
- * `surfaces` is `[{ id, mount, dir }]`; `dir` is absolute.
+ * A surface arrives in one of two shapes, and the difference is where its pages are, not
+ * how they are held:
+ *
+ * - `{ id, mount, kind: 'static-directory', dir }` — a built directory, read from disk;
+ * - `{ id, mount, kind: 'native-route', pages, derived }` — a surface the executable
+ *   renders, whose routes ui-routes.mjs crawled out of the surface itself. `pages` is
+ *   already the sample; `derived` is the whole set behind it, so the plan can say what it
+ *   sampled from rather than pretend the sample is everything.
+ *
+ * `dir` is absolute; the routes of a native surface already carry their mount, because the
+ * server is where they came from.
  */
 export function planSurfaces(surfaces, cssPath) {
   const breakpoints = breakpointsFromCss(cssPath);
-  const widths = viewports(breakpoints);
+  const declared = declaredViewports(cssPath);
+  const widths = viewports(breakpoints, declared);
   const pages = [];
   for (const surface of surfaces) {
+    if (surface.kind === 'native-route') {
+      for (const route of surface.pages ?? []) {
+        const shape = family(route);
+        pages.push({
+          route,
+          surface: surface.id,
+          kind: 'native-route',
+          family: shape,
+          // a family is where a renderer changes, exactly as a directory is on a built
+          // surface: one member of each takes the boundary sweep
+          section: `${surface.id}:${shape}`,
+          found: 'the surface, crawled from its own anchors',
+        });
+      }
+      continue;
+    }
     for (const page of discoverPages(surface.dir)) {
       pages.push({
         ...page,
         surface: surface.id,
+        kind: 'static-directory',
         // the section is the page's own, inside its surface: the sweep is spent per section
         // of each surface rather than once on whichever surface sorted first
         section: `${surface.id}:${page.route.split('/').filter(Boolean)[0] ?? ''}`,
         route: mounted(surface.mount, page.route),
+        found:
+          page.rendered && page.published
+            ? 'the built directory and its sitemap'
+            : page.rendered
+              ? 'the built directory alone: an orphan'
+              : 'the sitemap alone: not rendered',
       });
     }
   }
@@ -243,10 +299,51 @@ export function planSurfaces(surfaces, cssPath) {
     pages: tierPages(pages, widths),
     breakpoints,
     viewports: widths,
-    surfaces: surfaces.map((s) => ({ id: s.id, mount: s.mount })),
+    surfaces: surfaces.map((s) => surfaceReport(s)),
     source: {
-      pages: `every static surface the executable serves (${surfaces.map((s) => `${s.id} at ${s.mount}`).join(', ') || 'none'}), each from its filesystem and its sitemap`,
-      viewports: `the media queries of ${relative(process.cwd(), cssPath)}`,
+      pages: describeSurfaces(surfaces),
+      viewports: `the media queries of ${relative(process.cwd(), cssPath)}${declared.length ? ', and the widths share/design/tokens.yaml declares' : ''}`,
     },
   };
+}
+
+/**
+ * What one surface contributed, as the report renders it.
+ *
+ * A native surface says how many routes it *has* beside how many the audit visits: a
+ * sample reported as a total is a report that overstates its own coverage, and the
+ * Cockpit's 2660 routes sampled to 108 is the whole reason the sampling is defensible.
+ */
+export function surfaceReport(surface) {
+  const report = { id: surface.id, mount: surface.mount, kind: surface.kind ?? 'static-directory' };
+  if (surface.kind !== 'native-route') return report;
+  const derived = surface.derived ?? {};
+  return {
+    ...report,
+    routes: derived.routes?.length ?? 0,
+    families: Object.keys(derived.families ?? {}).length,
+    sampled: surface.pages?.length ?? 0,
+    fetched: derived.fetched ?? 0,
+    truncated: Boolean(derived.truncated),
+  };
+}
+
+/** One line saying where every page of the plan came from, per kind of surface. */
+function describeSurfaces(surfaces) {
+  const built = surfaces.filter((s) => s.kind !== 'native-route');
+  const served = surfaces.filter((s) => s.kind === 'native-route' && (s.pages?.length ?? 0) > 0);
+  const parts = [];
+  if (built.length) {
+    parts.push(
+      `every built surface the executable serves (${built.map((s) => `${s.id} at ${s.mount}`).join(', ')}), each from its filesystem and its sitemap`,
+    );
+  }
+  if (served.length) {
+    parts.push(
+      `every surface the executable renders (${served
+        .map((s) => `${s.id} at ${s.mount}: ${s.pages.length} of ${s.derived?.routes?.length ?? s.pages.length} routes`)
+        .join(', ')}), crawled from the surface's own anchors and sampled per family`,
+    );
+  }
+  return parts.join('; ') || 'no surface';
 }

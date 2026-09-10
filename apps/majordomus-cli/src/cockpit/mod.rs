@@ -173,6 +173,7 @@ impl Cockpit {
             "/cockpit/health" => pages::health(&self.ctx),
             "/cockpit/quality" => pages::quality(&self.ctx),
             "/cockpit/artifacts" => pages::artifacts(&self.ctx),
+            "/cockpit/design" => pages::design(&self.ctx),
             "/cockpit/api" => pages::api(&self.ctx),
             "/cockpit/search" => pages::search(&self.ctx, query),
             "/cockpit/activity" => pages::activity(&self.ctx),
@@ -205,7 +206,7 @@ impl Cockpit {
 /// injection, which needs the escaping to have already failed and which cannot execute; the
 /// exposure `script-src 'unsafe-inline'` would carry is arbitrary code, and that stays shut.
 ///
-/// The digest is computed from `view::THEME_BOOTSTRAP` itself, so the policy cannot
+/// The digest is computed from `view::theme_bootstrap()` itself, so the policy cannot
 /// drift from the script it allows.
 ///
 /// ```
@@ -218,7 +219,7 @@ pub fn csp() -> &'static str {
     POLICY.get_or_init(|| {
         use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
-        hasher.update(view::THEME_BOOTSTRAP.as_bytes());
+        hasher.update(view::theme_bootstrap().as_bytes());
         let digest = base64(&hasher.finalize());
         format!(
             "default-src 'none'; script-src 'self' 'sha256-{digest}'; \
@@ -290,7 +291,7 @@ mod tests {
     fn the_policy_names_the_digest_of_the_script_it_allows() {
         use sha2::{Digest, Sha256};
         let mut h = Sha256::new();
-        h.update(view::THEME_BOOTSTRAP.as_bytes());
+        h.update(view::theme_bootstrap().as_bytes());
         let expected = base64(&h.finalize());
         assert!(
             csp().contains(&format!("'sha256-{expected}'")),

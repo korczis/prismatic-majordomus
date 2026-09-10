@@ -12,10 +12,10 @@ AWKF="$ROOT/lib/project.awk"
 
 # --- the declaration and the assignments agree, in both directions
 declared() { # kind: ISTATUS or MSTATUS
-  sed -n "s/^  $1 = \"\\(.*\\)\"\$/\\1/p" "$AWKF" | tr ' ' '\n' | sort -u
+  sed -n "s/^  $1 = \"\\(.*\\)\"\$/\\1/p" "$AWKF" | tr ' ' '\n' | LC_ALL=C sort -u
 }
 assigned() { # variable the derivation assigns: st or ms
-  grep -oE "(^|[^a-z_])$1 = \"[A-Z_]+\"" "$AWKF" | sed -E 's/.*"([A-Z_]+)".*/\1/' | sort -u
+  grep -oE "(^|[^a-z_])$1 = \"[A-Z_]+\"" "$AWKF" | sed -E 's/.*"([A-Z_]+)".*/\1/' | LC_ALL=C sort -u
 }
 for pair in "ISTATUS st" "MSTATUS ms"; do
   set -- $pair
@@ -44,9 +44,9 @@ for st in $vocab; do
   printf '%s' "$st_json" | grep -qF "\"$st\":" \
     || { echo "    the counts carry no entry for the declared status $st"; exit 1; }
 done
-printf '%s\n' "$vocab" | tr ' ' '\n' | sort > "$T/declared.txt"
+printf '%s\n' "$vocab" | tr ' ' '\n' | LC_ALL=C sort > "$T/declared.txt"
 printf '%s' "$st_json" | sed -n 's/.*"by_status":{\([^}]*\)}.*/\1/p' | tr ',' '\n' \
-  | sed 's/:.*//; s/"//g' | sort > "$T/counted.txt"
+  | sed 's/:.*//; s/"//g' | LC_ALL=C sort > "$T/counted.txt"
 diff "$T/declared.txt" "$T/counted.txt" >/dev/null \
   || { echo "    the counts and the declared vocabulary are different lists"; diff "$T/declared.txt" "$T/counted.txt"; exit 1; }
 

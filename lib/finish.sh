@@ -143,7 +143,7 @@ mj_validate_note() {
     *) need_sec="Reason|" ;;
   esac
   if [ -n "$MJ_FINISH_NOTE" ]; then nf="$MJ_FINISH_NOTE"
-  else nf="$(grep -l "^task_id: $id$" "$MJ_STATE_DIR"/handovers/*.md 2>/dev/null | sort | tail -n1)"; fi
+  else nf="$(grep -l "^task_id: $id$" "$MJ_STATE_DIR"/handovers/*.md 2>/dev/null | LC_ALL=C sort | tail -n1)"; fi
   if [ -z "$nf" ] || [ ! -f "$nf" ]; then
     mj_doctrine_fail note "$id" "no --note file and no handover for this task" "majordomus handover < note.md"; return 0; fi
   miss="$(mj_check_sections "$nf" "$need_sec")"

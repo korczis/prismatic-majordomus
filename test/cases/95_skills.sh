@@ -164,7 +164,7 @@ if [ -n "${RB:-}" ]; then
     req 4 tools/call '{"name":"majordomus_get","arguments":{"uri":"majordomus://skill/alpha"}}'
   } > "$S/session.in"
   "$RB" mcp --standalone < "$S/session.in" > "$S/session.out" 2>"$S/session.err" || { echo "    the MCP session failed"; cat "$S/session.err"; exit 1; }
-  sed -n 2p "$S/session.out" | jq -e '.result.structuredContent | .count == 3 and ([.objects[].identity] | sort) == ["alpha","review","zeta"]' >/dev/null \
+  sed -n 2p "$S/session.out" | jq -e '.result.structuredContent | .count == 3 and ([.objects[].identity] | sort_by(.)) == ["alpha","review","zeta"]' >/dev/null \
     || { echo "    majordomus_list kind=skill does not list the three skills"; sed -n 2p "$S/session.out"; exit 1; }
   sed -n 3p "$S/session.out" | jq -e '.result.contents[0].text | contains("# Procedure") and contains("id: review")' >/dev/null \
     || { echo "    resources/read of the skill does not return the file"; sed -n 3p "$S/session.out"; exit 1; }

@@ -1090,6 +1090,12 @@ pub enum GenerateTarget {
     Changelog,
     /// deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects
     Deployment,
+    /// docs/generated/graph.json and its schema: the composed graph as data
+    Graph,
+    /// The design system's projections, from share/design/tokens.yaml: the stylesheets
+    /// both Tailwind builds import, the tokens and the declaration compiled into the crate,
+    /// every copy of the brand, site/data/registry/design.json and docs/generated/design.*
+    Design,
 }
 
 #[derive(Debug, Args)]

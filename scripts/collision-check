@@ -55,7 +55,7 @@ here="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
 # long ago still lists here and that is correct: its files are on the base, so the loop
 # below finds no unique claim and says nothing.
 branches="$(git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin \
-  | grep -v -x -e "$here" -e "$base" -e 'origin/HEAD' | sort -u)"
+  | grep -v -x -e "$here" -e "$base" -e 'origin/HEAD' | LC_ALL=C sort -u)"
 
 found=0
 for path in "${paths[@]}"; do

@@ -8,7 +8,9 @@
 #
 # stdout belongs to the command: nothing here writes to it. Build output goes to stderr.
 #
-#   MAJORDOMUS_BIN            use this executable and never build
+#   MAJORDOMUS_BIN            use this executable and never build. It is trusted about
+#                             freshness, never about generation: `majordomus generate`
+#                             refuses a tree whose crate it was not built from (exit 15).
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
 #   MAJORDOMUS_NO_BUILD=1     refuse to build; exit 12 when the executable is missing
 #

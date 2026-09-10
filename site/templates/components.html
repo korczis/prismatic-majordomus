@@ -1,12 +1,8 @@
 {#- Reusable Flowbite v4 components (Tera 2 components; no import needed). Class strings follow flowbite.com/docs/components/*. -#}
 
 {% component badge(status) %}
-{%- if status == "guaranteed" -%}<span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
-{%- elif status == "advisory" -%}<span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span>
-{%- elif status == "planned" -%}<span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">planned</span>
-{%- elif status == "rejected" -%}<span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">rejected</span>
-{%- else -%}<span class="bg-neutral-primary-soft text-heading text-xs font-medium px-1.5 py-0.5 rounded font-mono">{{ status }}</span>
-{%- endif -%}
+{#- the shared status primitive: the word is filed under a status in share/design/tokens.yaml and the generated status sheet colours it; a word filed nowhere renders neutral, and scripts/site-check refuses a word the declaration does not know -#}
+<span class="mj-badge mj-badge--{{ status | lower }}">{{ status }}</span>
 {% endcomponent badge %}
 
 {#- A snippet with an Alpine copy button. Progressive: without JS the code is there and the button hidden (x-cloak). -#}
@@ -125,19 +121,13 @@
 {#- the observed maturity of a use case: computed by the generator from evidence and from the
     objects the use case names, never written into the file -#}
 {% component maturity(status) %}
-{%- if status == "guaranteed" -%}<span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">guaranteed</span>
-{%- elif status == "verified" -%}<span class="bg-brand-softer text-fg-brand-strong border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">verified</span>
-{%- elif status == "executable" -%}<span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">executable</span>
-{%- elif status == "described" -%}<span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">described</span>
-{%- elif status == "draft" -%}<span class="bg-neutral-primary-soft text-body-subtle border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">draft</span>
-{%- else -%}<span class="bg-neutral-primary-soft text-body-subtle border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">{{ status }}</span>
-{%- endif -%}
+{#- the shared status primitive: the word is filed under a status in share/design/tokens.yaml and the generated status sheet colours it; a word filed nowhere renders neutral, and scripts/site-check refuses a word the declaration does not know -#}
+<span class="mj-badge mj-badge--{{ status | lower }}">{{ status }}</span>
 {% endcomponent maturity %}
 
 {% component doctrine_class(class) %}
-{%- if class == "blocking" -%}<span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">blocking</span>
-{%- else -%}<span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">advisory</span>
-{%- endif -%}
+{#- the shared status primitive: the word is filed under a status in share/design/tokens.yaml and the generated status sheet colours it; a word filed nowhere renders neutral, and scripts/site-check refuses a word the declaration does not know -#}
+<span class="mj-badge mj-badge--{{ class | lower }}">{{ class }}</span>
 {% endcomponent doctrine_class %}
 
 {#- One link of the enforcement chain, with the file or command that closes it. -#}
@@ -152,22 +142,19 @@
 {#- Derived lifecycle state of an issue or a milestone. The colour carries no information the
     word does not; the word is what a screen reader and a monochrome print both get. -#}
 {% component plan_status(status) %}
-{%- if status == "DONE" -%}<span class="bg-success-soft text-fg-success-strong border border-success-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">DONE</span>
-{%- elif status == "ACTIVE" -%}<span class="bg-brand-softer text-fg-brand-strong border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">ACTIVE</span>
-{%- elif status == "VERIFY" -%}<span class="bg-warning-soft text-fg-warning border border-warning-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">VERIFY</span>
-{%- elif status == "READY" -%}<span class="bg-neutral-secondary-medium text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">READY</span>
-{%- elif status == "BLOCKED" -%}<span class="bg-danger-soft text-fg-danger-strong border border-danger-subtle text-xs font-medium px-1.5 py-0.5 rounded font-mono">BLOCKED</span>
-{%- elif status == "CANCELLED" -%}<span class="bg-neutral-primary-soft text-body-subtle border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">CANCELLED</span>
-{%- else -%}<span class="bg-neutral-primary-soft text-heading border border-default text-xs font-medium px-1.5 py-0.5 rounded font-mono">{{ status }}</span>
-{%- endif -%}
+{#- the shared status primitive: the word is filed under a status in share/design/tokens.yaml and the generated status sheet colours it; a word filed nowhere renders neutral, and scripts/site-check refuses a word the declaration does not know -#}
+<span class="mj-badge mj-badge--{{ status | lower }}">{{ status }}</span>
 {% endcomponent plan_status %}
 
 {#- A labelled list rendered from canonical data. Empty lists render nothing at all rather
-    than an empty heading, so a record that declares no non-scope simply has no such section. -#}
+    than an empty heading, so a record that declares no non-scope simply has no such section.
+    `break-words` on the list, not on the item: prose written by a person names files and
+    commands (`test/cases/08_no_forbidden_constructs.sh`) that are longer than a phone is
+    wide, and overflow-wrap inherits, so one declaration covers both kinds of item. -#}
 {% component plan_list(title, items, mono="") %}
 {%- if items | length > 0 %}
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ title }}</h2>
-<ul class="mt-3 list-disc space-y-1 ps-5 text-sm text-body">
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body">
   {%- for i in items %}<li{% if mono %} class="font-mono text-heading break-words"{% endif %}>{{ i }}</li>{% endfor -%}
 </ul>
 {%- endif -%}

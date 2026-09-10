@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/changelog.schema.json",
+  "title": "Changelog",
+  "description": "docs/generated/changelog.json: the release history as data — one section per release, in reverse chronological order, each carrying the decisions dated inside its window, the commits of its range grouped by conventional-commit kind, and the published artifacts of its tag. Written by `majordomus generate changelog`.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "current", "sections"],
+  "properties": {
+    "schema": { "const": "majordomus/changelog/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "minLength": 1 },
+    "current": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The version this checkout builds; the section it belongs to may still be unreleased."
+    },
+    "diagnostics": {
+      "type": "array",
+      "description": "What the derivation could not resolve, in the reader's words; empty when every section is complete.",
+      "items": { "type": "string" }
+    },
+    "produced_by": {
+      "type": "object",
+      "description": "The capability that answers this document and the surfaces it is projected onto."
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["version", "unreleased", "groups"],
+        "properties": {
+          "version": { "type": "string", "minLength": 1 },
+          "tag": { "type": "string" },
+          "date": {
+            "type": "string",
+            "description": "When the release was tagged, UTC ISO 8601 with seconds; absent while the section is unreleased."
+          },
+          "commit": { "type": "string" },
+          "unreleased": { "type": "boolean" },
+          "notes_url": { "type": "string" },
+          "compare_url": { "type": "string" },
+          "tree_url": { "type": "string" },
+          "decisions": {
+            "type": "array",
+            "description": "The ADRs dated inside this release's window, each linked where it is published.",
+            "items": {
+              "type": "object",
+              "required": ["id", "title"],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "title": { "type": "string", "minLength": 1 },
+                "status": { "type": "string" },
+                "date": { "type": "string" },
+                "url": { "type": "string" },
+                "added": { "type": "string" }
+              }
+            }
+          },
+          "groups": {
+            "type": "array",
+            "description": "The commits of this release's range, grouped by conventional-commit kind in a fixed order.",
+            "items": {
+              "type": "object",
+              "required": ["kind", "heading", "changes"],
+              "properties": {
+                "kind": { "type": "string", "minLength": 1 },
+                "heading": { "type": "string", "minLength": 1 },
+                "rank": { "type": "integer" },
+                "changes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["kind", "subject", "commit"],
+                    "properties": {
+                      "kind": { "type": "string", "minLength": 1 },
+                      "scope": { "type": "string" },
+                      "subject": { "type": "string", "minLength": 1 },
+                      "breaking": { "type": "boolean" },
+                      "commit": { "type": "string", "minLength": 1 },
+                      "url": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "artifacts": {
+            "type": "array",
+            "description": "What the release published, by target, with the hash a downloader checks.",
+            "items": {
+              "type": "object",
+              "required": ["target", "name"],
+              "properties": {
+                "target": { "type": "string", "minLength": 1 },
+                "name": { "type": "string", "minLength": 1 },
+                "sha256": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

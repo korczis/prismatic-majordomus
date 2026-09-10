@@ -83,6 +83,33 @@ through the same reading, and it carries the server's `version` beside the execu
 was started from. `.ai/local/state/mcp/server.json` is still where a person reads it with
 `cat`; the status is where a program does.
 
+### Four readings of "ready"
+
+This executable answers "ready" four times, and the audit that prompted ADR 0035 counted
+three of them as an accident (`docs/ENTRY_AUDIT.md`, root cause 5). They are not one
+question badly split: they are four questions about four subjects, and merging any two
+would lose the one thing that reader needs. Each is named here with its owner, so that the
+next reader does not have to rediscover which one they are looking at.
+
+| the question | the answer | who asks it |
+|---|---|---|
+| Is a **surface's** producer's output on disk? | `http::Served::ready(surface_id)` — the directory a producer writes into has files in it; a route this executable answers is always ready | the home page (`GET /`), which renders a surface with no output as `not built` rather than serving a 404 |
+| Can **this process** answer a request? | `health.ready` — `GET /api/v1/ready`: the registry and the index it built at start-up, and how the layer read. Local initialisation only | a hosting platform's readiness probe. It contacts nothing outside this process on purpose: a readiness check that probes a dependency fails a deployment for something that is not this process |
+| Does **anything** accept a connection at the address the lease published? | `environment::ServiceAvailability` — one TCP connect with a hard budget and no name resolution (`environment::probe::reachable`) | the environment snapshot, which runs on a shell prompt (`majordomus env`, `.envrc`) and may not spend an HTTP round trip or reach DNS to say what it knows |
+| Is what answers there **current**? | `ServerStanding` — `server.status`, from `lease::probe` (this checkout's identity, over HTTP) and the version and executable the lease carries | anyone who has to trust what the server says: `serve ensure`, `serve stop`, the `server` check of `health.report`, and the session briefing |
+
+Read down the column and the ladder is plain: the third asks whether a socket is open, the
+fourth whether the process behind it is this checkout's, from the file on disk, at this
+build. A stale server answers the third and fails the fourth, which is exactly the class
+that has cost this repository a day before now.
+
+`health.report` carries the fourth and only the fourth. The first is per surface and
+belongs on the page that renders surfaces; the second is a statement about the process
+answering the report, which cannot be false where the report is being produced; and the
+third cannot tell a live server from a socket somebody else holds. The check delegates to
+`capability::builtin::server::standing_at` — the same reading `server.status` answers from
+— so the health report and the status cannot say two different words about one lease.
+
 ### Ensuring a server, and stopping it
 
 ```text
@@ -364,7 +391,11 @@ empty or abandoned lease being taken over, two clients starting in the same inst
 unwritable lease directory degrading to a standalone session, `SIGTERM` removing the lease,
 malformed traffic on `/mcp`, and the bridge's transparency: a bridged session and a
 restarted server answer byte for byte what the first server did. The doctrine behind the
-failure table is the rule `project.shared-server-resilience`. `tests/hot_path.rs` sends
+failure table is the rule `project.shared-server-resilience`. `tests/server_status.rs` holds
+the two-worktree case and the stale-lease case; `tests/health_server.rs` holds the `server`
+check of `health.report` against a real server, a checkout nobody serves and a lease naming
+an address nobody answers at, and asserts that the check and the status say one word about
+one lease. `tests/hot_path.rs` sends
 hundreds of frames and requires the startup counters (`majordomus_perf`) unchanged;
 `majordomus bench` times every tool through a real child process
 ([`CAPABILITIES.md`](CAPABILITIES.md)). The claims are in [`CLAIMS.yaml`](CLAIMS.yaml)

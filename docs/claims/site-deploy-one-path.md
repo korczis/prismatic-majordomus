@@ -13,7 +13,7 @@ The script refuses (exit 10, nothing pushed) a working tree with uncommitted cha
 ```bash
 scripts/site-deploy --dry-run       # gate, build, check; "would push <sha> to origin/gh-pages: deploy: site from <source>"
 scripts/site-deploy                 # the same, then the push; GitHub serves it in about a minute
-curl -s https://korczis.github.io/prismatic-majordomus/ | grep -c "/commit/$(git rev-parse HEAD)"   # 1
+curl -s https://majordomus.dev/ | grep -c "/commit/$(git rev-parse HEAD)"   # 1
 git log -1 --format='%an %s' origin/gh-pages    # github-actions[bot] for a workflow deploy, a person for a hand one
 ```
 

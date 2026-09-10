@@ -33,14 +33,27 @@ expect_grep 'validate: 0 failure\(s\)'
 # --- coverage: complete, and its denominator is computed, not written
 expect_exit 0 "$RB" bench coverage --check
 expect_grep '^missing +0$'
-expect_grep '^waived +0$'
+# A waiver is a declaration, not an absence. This asserted `waived 0` until the execution
+# capabilities waived theirs deliberately — an execution's state is transient, so no case
+# can measure it reproducibly — and the contract is now that every waiver is named with its
+# reason, which 77_rust_evidence refuses to accept without. What may never happen is a
+# capability that is neither measured nor waived, and that is `missing 0` above.
+printf '%s\n' "$LAST_OUT" | grep '^WAIVED ' | grep -qvE '\([a-z_]+\)$' \
+  && { echo "    a waived capability names no reason"; exit 1; }
+lines="$(printf '%s\n' "$LAST_OUT" | grep -c '^WAIVED ' || true)"
+tally="$(printf '%s\n' "$LAST_OUT" | sed -n 's/^waived  *\([0-9][0-9]*\)$/\1/p')"
+[ -n "$tally" ] || { echo "    the coverage report carries no waived tally"; exit 1; }
+[ "$lines" = "$tally" ] || { echo "    the report tallies $tally waivers and names $lines"; exit 1; }
 "$RB" bench coverage --format json 2>/dev/null > "$S/coverage.json"
 "$RB" capabilities list --format json 2>/dev/null > "$S/caps.json"
 expected="$(jq '[.capabilities[] | select(.kind != "resource") | 1 + (if .exposure.mcp.tool then 1 else 0 end) + (if .exposure.http then 1 else 0 end)] | add' "$S/caps.json")"
 system="$(jq '[.lines[] | select(.module == "system")] | length' "$S/coverage.json")"
 required="$(jq '.tallies.total.required' "$S/coverage.json")"
 [ "$required" = "$((expected + system))" ] || { echo "    coverage denominator $required != executables×exposures $expected + system $system"; exit 1; }
-[ "$(jq '.tallies.total.covered' "$S/coverage.json")" = "$required" ] || { echo "    coverage is not complete"; cat "$S/coverage.json"; exit 1; }
+# complete means every required subject is accounted for: measured, or waived with a reason
+[ "$(jq '.tallies.total.covered + .tallies.total.waived' "$S/coverage.json")" = "$required" ] || { echo "    coverage is not complete: covered plus waived is not the denominator"; cat "$S/coverage.json"; exit 1; }
+[ "$(jq '.tallies.total.missing' "$S/coverage.json")" = 0 ] || { echo "    a capability is neither measured nor waived"; cat "$S/coverage.json"; exit 1; }
+[ "$(jq '[.lines[] | select(.state == "waived" and ((.reason // "") | length) == 0)] | length' "$S/coverage.json")" = 0 ] || { echo "    a waived line carries no reason"; exit 1; }
 
 # --- a benchmark run is a versioned document, written under the local half, never under the tree
 before="$(git status --porcelain; git ls-files -s | shasum -a 256)"

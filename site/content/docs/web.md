@@ -102,6 +102,17 @@ meet — and the validator checks mount ownership per world for exactly that rea
 surface, so the home page cannot link to one and the startup log cannot name one. The
 narrowing is a filter over the resolved value, never a second discovery.
 
+## What every surface is rendered with
+
+Whatever a surface is — the published site, the Cockpit, a report the executable renders,
+the Swagger shell — it is rendered with one design: the roles, status vocabulary, type
+scale, theme contract and brand declared once in `share/design/tokens.yaml` and projected
+by `majordomus generate design` into the sheets each surface loads. A served page carries
+the declaration's fingerprint (`--mj-design` in its stylesheet, `data-design` on the page)
+and the executable answers the same fingerprint from `GET /api/v1/design`, so a stale bundle
+is visible on the page. The pipeline, the extension flow and the gates are
+[`DESIGN_SYSTEM.md`](@/docs/design-system.md).
+
 ## Adding a surface
 
 **A generated report** — no code at all. Write your output into `target/web/<id>/` and a
@@ -138,7 +149,7 @@ The documentation under `/docs/` is the **same Zola source** GitHub Pages render
 no second copy and no second generator; the two builds differ in one argument.
 
 ```text
-site/  ──scripts/site-build───────────────────→ site/public/     base_url https://korczis.github.io/prismatic-majordomus
+site/  ──scripts/site-build───────────────────→ site/public/     base_url https://majordomus.dev
    └───scripts/site-build --serve ───────────→ target/web/docs/  base_url /docs
 ```
 

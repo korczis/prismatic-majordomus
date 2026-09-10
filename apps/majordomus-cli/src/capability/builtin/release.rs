@@ -37,26 +37,30 @@ pub struct ChangelogInput {
 }
 
 impl BenchmarkCases for ChangelogInput {
+    /// One real version from the layer's own records, so the narrow case is timed against
+    /// something that exists rather than against a filter that matches nothing. A
+    /// repository with no records has a narrow case all the same — the coverage gate counts
+    /// targets, not repositories, and the OpenAPI operation's example of `version` *is* this
+    /// case, which case 92 refuses to see missing — so it falls back to `unreleased`, the
+    /// one section a repository has whether it has released anything or not.
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        let mut cases = vec![NamedCase::new("all", ChangelogInput::default())];
-        // One real version from the layer's own records, so the narrow case is timed against
-        // something that exists rather than against a filter that matches nothing.
-        if let Some(v) = ctx
+        let version = ctx
             .index
             .objects
             .iter()
             .find(|o| o.kind == crate::release::changelog::RELEASE_KIND)
             .and_then(|o| o.metadata.get("version"))
             .and_then(|v| v.as_str())
-        {
-            cases.push(NamedCase::new(
+            .map_or_else(|| "unreleased".to_string(), str::to_string);
+        vec![
+            NamedCase::new("all", ChangelogInput::default()),
+            NamedCase::new(
                 "one-version",
                 ChangelogInput {
-                    version: Some(v.to_string()),
+                    version: Some(version),
                 },
-            ));
-        }
-        cases
+            ),
+        ]
     }
 }
 

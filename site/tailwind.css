@@ -1,21 +1,24 @@
 /* Tailwind v4 + Flowbite v4 entry point, compiled by scripts/site-build into static/app.css.
    Directives follow the Flowbite quickstart (flowbite.com/docs/getting-started/quickstart/)
    and dark-mode guide (flowbite.com/docs/customize/dark-mode/). No custom CSS lives here:
-   everything on the site is a Tailwind utility, a Flowbite class or a Flowbite Typography
-   class. Flowbite's theme names Inter first and this site never loaded it, so the stack
-   always fell to system-ui; share/design/theme.css names that stack outright, which makes
-   the deliberate part deliberate — no remote font, no blocking asset — and makes it the
-   same stack the Cockpit and the executable's own pages resolve, from one declaration. */
+   everything on the site is a Tailwind utility, a Flowbite class, a Flowbite Typography
+   class, or one of the shared `.mj-*` primitives the Cockpit renders with too.
+
+   The design is not decided here. share/design/tokens.yaml decides it, `majordomus
+   generate design` projects it, and this file imports the projections in the same order the
+   Cockpit's entry point does — after Flowbite's theme, because they override it: Flowbite's
+   semantic names (`text-heading`, `border-default`, `bg-brand`) are declared there as
+   synonyms of the roles, so the site's templates keep their vocabulary and resolve the same
+   value the Cockpit's `--mj-*` reads. */
 @import "tailwindcss";
 @import "flowbite/src/themes/default";
-/* after Flowbite's theme, because it overrides it: the repository's design tokens, generated
-   from share/design/tokens.yaml by scripts/design-tokens. Never edited here. */
+/* generated from share/design/tokens.yaml — never edited */
 @import "../share/design/theme.css";
-/* the semantic surface and the graph tokens, the same block the Cockpit imports. The site
-   styles itself with Flowbite utilities and needs few of these directly; what it does need
-   is for its graph and diagram views to read them from the page instead of falling through
-   to a colour table of their own, which is what they did while nothing declared them. */
 @import "../share/design/surface.css";
+@import "../share/design/status.css";
+/* hand-written and shared with the Cockpit: the accessible base and the primitives */
+@import "../share/design/base.css";
+@import "../share/design/primitives.css";
 @plugin "flowbite/plugin";
 @plugin "flowbite-typography";
 @source "../node_modules/flowbite";

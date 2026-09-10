@@ -167,11 +167,11 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "setup",
         "steps"
       ],
       "properties": {
         "setup": {
+          "description": "The prepared state a fixture scenario starts from: a shell script under the fixtures. Required when the mode is `fixture`, and refused when it is `live`, which prepares nothing because it runs in the repository the command was invoked in (ADR 38).",
           "type": "string",
           "pattern": "^[a-z][a-z0-9-]*$"
         },
@@ -195,16 +195,22 @@
           "items": {
             "type": "string"
           }
+        },
+        "mode": {
+          "description": "Where the scenario runs. Absent means `fixture`.",
+          "enum": [
+            "fixture",
+            "live"
+          ]
         }
       }
     },
     "Step": {
+      "description": "A step is one of two things and never both: an invocation with an expectation, or — in a live scenario only — an obligation asserted to have been discharged.",
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "id",
-        "run",
-        "expect"
+        "id"
       ],
       "properties": {
         "id": {
@@ -212,9 +218,8 @@
           "pattern": "^[a-z][a-z0-9-]*$"
         },
         "run": {
-          "description": "The invocation, one argument per item.",
+          "description": "The invocation, one argument per item. Required unless the step names an obligation.",
           "type": "array",
-          "minItems": 1,
           "items": {
             "type": "string"
           }
@@ -226,7 +231,13 @@
           "type": "string"
         },
         "expect": {
+          "description": "Required with `run`, and meaningless with `obligation`: what is asserted about an obligation is that it is discharged, which has no exit code.",
           "$ref": "#/$defs/Expect"
+        },
+        "obligation": {
+          "description": "A token of share/obligations.yaml, asserted to have been discharged by the active task — judged by lib/evidence.sh, the same judgement `check` reads, so a gate and a task's own contract cannot disagree about one tree. Live scenarios only: a disposable repository owes nothing. The step resolves to pass, unmet or stale.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
         }
       }
     },
@@ -358,5 +369,5 @@
     }
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the document schema `share/schemas/majordomus/use-case/use-case.v1.proto`; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.4.0"
+  "x-majordomus-generator": "majordomus-cli 0.5.0"
 }

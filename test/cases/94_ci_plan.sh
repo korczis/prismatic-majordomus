@@ -8,6 +8,13 @@ PLAN="$ROOT/scripts/ci-plan"; VERDICT="$ROOT/scripts/ci/verdict"; MODEL="$ROOT/.
 command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
 plan() { printf '%s\n' "$@" | "$PLAN" --files - ; }
 selected() { plan "$@" | jq -r '.selected | join(" ")'; }
+# the same plan, asked for the gates whose runner is not available on demand (the macOS ones):
+# what the nightly schedule, a dispatch and a ci:full pull request ask for
+plan_od() { printf '%s\n' "$@" | "$PLAN" --files - --on-demand ; }
+selected_od() { plan_od "$@" | jq -r '.selected | join(" ")'; }
+# read from the model, never listed here: a gate that gains or loses `on-demand` should not
+# have to be spelled in a case to be believed
+ondemand="$(awk '/^  - id: /{id=$3} /^    on-demand: true$/{print id}' "$MODEL" | tr '\n' ' ')"
 has() { case " $1 " in *" $2 "*) return 0 ;; *) return 1 ;; esac; }
 lacks() { ! has "$1" "$2"; }
 
@@ -43,30 +50,38 @@ n="$(printf '%s\n' "$always" | wc -w | tr -d ' ')"
 
 # --- a Rust change selects the Rust gates and the suite, never the site
 s="$(selected apps/majordomus-cli/src/lib.rs)"
-for g in rust-check rust-integration rust-coverage rust-bench shell-suite macos; do has "$s" "$g" || { echo "    a Rust change did not select $g: $s"; exit 1; }; done
+for g in rust-check rust-integration rust-coverage shell-suite; do has "$s" "$g" || { echo "    a Rust change did not select $g: $s"; exit 1; }; done
 for g in site-build site-probe; do lacks "$s" "$g" || { echo "    a Rust change selected $g, which reads nothing from the crate: $s"; exit 1; }; done
+# the class still names the macOS gates; what changed is when they are planned, so the class
+# map is asserted over the plan that asks for them
+s="$(selected_od apps/majordomus-cli/src/lib.rs)"
+for g in rust-bench macos; do has "$s" "$g" || { echo "    a Rust change did not select $g when the plan asked for the on-demand gates: $s"; exit 1; }; done
 
 # --- a site change selects the site gates and the suite (two cases build the site), never
 #     a Rust gate
 s="$(selected site/templates/base.html site/tailwind.css)"
 for g in site-build site-probe shell-suite; do has "$s" "$g" || { echo "    a site change did not select $g: $s"; exit 1; }; done
+# the on-demand plan, so that "a site change selects no Rust gate" stays a statement about
+# the class map rather than one about the cadence
+s="$(selected_od site/templates/base.html site/tailwind.css)"
 for g in rust-check rust-integration rust-coverage rust-bench macos; do lacks "$s" "$g" || { echo "    a site change selected $g: $s"; exit 1; }; done
 
 # --- a document is an input of the site and an object of the index: the site gates and the
 #     registry checks, not the crate's own gates nor coverage
 s="$(selected docs/DESIGN.md)"
 for g in site-build site-probe shell-suite rust-integration; do has "$s" "$g" || { echo "    a docs change did not select $g: $s"; exit 1; }; done
+s="$(selected_od docs/DESIGN.md)"
 for g in rust-check rust-coverage rust-bench macos; do lacks "$s" "$g" || { echo "    a docs change selected $g: $s"; exit 1; }; done
 
 # --- the distribution is read by both implementations and by the site: every gate but the
 #     always ones comes from the class, none from escalation
-p="$(plan share/schemas/majordomus/policy/policy.v1.schema.json)"
+p="$(plan_od share/schemas/majordomus/policy/policy.v1.schema.json)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = affected ] || { echo "    a share change escalated instead of selecting by class"; exit 1; }
 s="$(printf '%s' "$p" | jq -r '.selected | join(" ")')"
 for g in rust-check rust-coverage rust-bench shell-suite site-build site-probe macos; do has "$s" "$g" || { echo "    a share change did not select $g: $s"; exit 1; }; done
 
 # --- the pipeline itself, and a path no class knows, escalate to the full plan and say why
-p="$(plan .github/workflows/validate.yml)"
+p="$(plan_od .github/workflows/validate.yml)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = full ] || { echo "    a workflow change did not escalate"; exit 1; }
 printf '%s' "$p" | jq -r .reason | grep -q 'escalates: .github/workflows/validate.yml' || { echo "    the escalation does not name the path"; exit 1; }
 [ "$(printf '%s' "$p" | jq -r '[.gates[] | select(.selected)] | length')" = "$(printf '%s' "$p" | jq -r '.gates | length')" ] || { echo "    the full plan left a gate out"; exit 1; }
@@ -77,6 +92,53 @@ p="$(plan .gitignore)"
 # an inert path selects the always-gates and nothing beyond them; how many that is comes
 # from the model, for the same reason as above
 [ "$(printf '%s' "$p" | jq -r .mode)" = affected ] && [ "$(printf '%s' "$p" | jq -r '.selected | length')" = "$n" ] || { echo "    an inert path selected a gate beyond the $n always gate(s)"; exit 1; }
+
+# --- the gates whose runner is not available on demand. A gate the model marks `on-demand`
+#     is planned only when the plan is asked for it: the nightly schedule, a dispatch and a
+#     pull request labelled ci:full ask, a routine push does not. This is the rule that makes
+#     the `ci` verdict arrive at all — on 2026-09-10 four master runs had every Linux job
+#     finished, five of them red, and their verdict job had never started, because it needs
+#     three macOS jobs that had been queued for between three and seven hours.
+[ -n "$ondemand" ] || { echo "    the model marks no gate on-demand; the rule cannot be checked against it"; exit 1; }
+p="$(plan .github/workflows/validate.yml)"    # a full plan that did not ask for them
+for g in $ondemand; do
+  [ "$(printf '%s' "$p" | jq -r --arg g "$g" '.gates[] | select(.id == $g) | .selected')" = false ] \
+    || { echo "    the full plan of a routine push selected the on-demand gate $g"; exit 1; }
+  printf '%s' "$p" | jq -r --arg g "$g" '.gates[] | select(.id == $g) | .reason' | grep -q '^on demand only' \
+    || { echo "    the plan does not say why $g was not planned"; exit 1; }
+done
+printf '%s' "$p" | jq -r .reason | grep -q 'without the on-demand gates' \
+  || { echo "    a full plan that leaves the on-demand gates out does not say so in its reason"; exit 1; }
+p="$(plan_od .github/workflows/validate.yml)"
+for g in $ondemand; do
+  [ "$(printf '%s' "$p" | jq -r --arg g "$g" '.gates[] | select(.id == $g) | .selected')" = true ] \
+    || { echo "    --on-demand did not plan $g"; exit 1; }
+done
+# the two formats the callers read. The text one takes run/skip from the selection and not
+# from the presence of a reason: an on-demand gate carries a reason and did not run, and
+# printing it as `run` is how a reader is told a gate ran that never did.
+printf '.github/workflows/validate.yml\n' | "$PLAN" --files - --format text > od.txt
+printf '.github/workflows/validate.yml\n' | "$PLAN" --files - --format github > od-gh.txt
+for g in $ondemand; do
+  grep -qE "^  skip  $g +on demand only" od.txt || { cat od.txt; echo "    the text plan does not report $g as skipped"; exit 1; }
+  grep -qx "$(printf '%s' "$g" | tr '-' '_')=false" od-gh.txt || { cat od-gh.txt; echo "    the github plan does not report $g as false, so its job would run"; exit 1; }
+done
+# nothing implies its way past the cadence: a selected gate that names an on-demand one still
+# does not bring it into a plan that did not ask
+od1="${ondemand%% *}"
+awk -v g="$od1" '/^  - id: core-check$/{print; print "    implies: [" g "]"; next} {print}' "$MODEL" > implied.yaml
+grep -q "implies: \[$od1\]" implied.yaml || { echo "    the mutation did not take"; exit 1; }
+s="$(: | "$PLAN" --model implied.yaml --files - | jq -r '.selected | join(" ")')"
+lacks "$s" "$od1" || { echo "    $od1 was implied into a plan that did not ask for it: $s"; exit 1; }
+s="$(: | "$PLAN" --model implied.yaml --files - --on-demand | jq -r '.selected | join(" ")')"
+has "$s" "$od1" || { echo "    the mutation is vacuous: --on-demand did not bring $od1 in either: $s"; exit 1; }
+# the field is present and true, or absent; and a gate cannot be both always and on demand
+awk '/^  - id: core-check$/{print; print "    on-demand: false"; next} {print}' "$MODEL" > od-false.yaml
+expect_exit 10 "$PLAN" --model od-false.yaml --check
+expect_grep 'on-demand is true or absent'
+awk '/^  - id: core-check$/{print; print "    on-demand: true"; next} {print}' "$MODEL" > od-always.yaml
+expect_exit 10 "$PLAN" --model od-always.yaml --check
+expect_grep 'both always and on-demand'
 
 # --- the union: two classes select the union of their gates; implied and required gates
 #     come with their parent and say so
@@ -100,7 +162,7 @@ plan docs/DESIGN.md > plan.json
 # A needs context: the jobs the caller names, plus every other job the model declares, as
 # skipped. Naming them all here would go stale the day a job is added, and the verdict would
 # then report the new job as absent rather than the case reporting what it is testing.
-JOBS="$(awk '/^    job: /{print $2}' "$MODEL" | sort -u | tr '\n' ' ')"
+JOBS="$(awk '/^    job: /{print $2}' "$MODEL" | LC_ALL=C sort -u | tr '\n' ' ')"
 needs() {
   jq -n --arg s "$1" --arg jobs "plan $JOBS" '
     ($s | split(",") | map(split("=") | {key: .[0], value: {result: .[1]}}) | from_entries) as $named
@@ -186,7 +248,7 @@ W="$ROOT/.github/workflows/validate.yml"
 [ -f "$W" ] || { echo "    the workflow this check is about is not at $W"; exit 1; }
 grep -q 'needs\.plan\.outputs\.' "$W" || { echo "    no job reads a plan output; this check has stopped checking anything"; exit 1; }
 missing=""
-for ref in $(grep -oE 'needs\.plan\.outputs\.[a-z_]+' "$W" | sed 's/.*\.//' | sort -u); do
+for ref in $(grep -oE 'needs\.plan\.outputs\.[a-z_]+' "$W" | sed 's/.*\.//' | LC_ALL=C sort -u); do
   grep -qE "^      $ref: \\\$\{\{ steps\.plan\.outputs\.$ref \}\}" "$W" || missing="$missing $ref"
 done
 [ -z "$missing" ] || { echo "    job(s) gated on plan output(s) the plan job never exposes:$missing"; exit 1; }

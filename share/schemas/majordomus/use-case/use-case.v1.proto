@@ -120,7 +120,10 @@ message Related {
 message Scenario {
   option (majordomus.closed) = true;
 
-  string setup = 1 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
+  // The prepared state a fixture scenario starts from: a shell script under the fixtures.
+  // Required when the mode is `fixture`, and refused when it is `live`, which prepares
+  // nothing because it runs in the repository the command was invoked in (ADR 38).
+  string setup = 1 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
 
   // What the reader should take as already true before the first step.
   repeated string given = 2;
@@ -129,21 +132,46 @@ message Scenario {
 
   // What the reader should take from the run, once the steps have passed.
   repeated string then = 4;
+
+  // Where the scenario runs. Absent means `fixture`.
+  Mode mode = 5;
 }
 
+// fixture: a disposable repository prepared by `setup`, proving that the tool behaves. Its
+// evidence is derived, committed and reproduced by CI. live: the repository the command was
+// invoked in, asked a question about itself. A live scenario may run only commands
+// share/commands.yaml declares `class: read-only`, so it cannot change what it is asking
+// about, and its evidence is local and never committed — it describes one tree on one
+// machine at one minute (ADR 38).
+enum Mode {
+  MODE_UNSPECIFIED = 0;
+  MODE_FIXTURE = 1 [(majordomus.value) = "fixture"];
+  MODE_LIVE = 2 [(majordomus.value) = "live"];
+}
+
+// A step is one of two things and never both: an invocation with an expectation, or —
+// in a live scenario only — an obligation asserted to have been discharged.
 message Step {
   option (majordomus.closed) = true;
 
   string id = 1 [(majordomus.required) = true, (majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
 
-  // The invocation, one argument per item.
-  repeated string run = 2 [(majordomus.required) = true, (majordomus.min_items) = 1];
+  // The invocation, one argument per item. Required unless the step names an obligation.
+  repeated string run = 2;
 
   string stdin = 3;
 
   string note = 4;
 
-  Expect expect = 5 [(majordomus.required) = true];
+  // Required with `run`, and meaningless with `obligation`: what is asserted about an
+  // obligation is that it is discharged, which has no exit code.
+  Expect expect = 5;
+
+  // A token of share/obligations.yaml, asserted to have been discharged by the active
+  // task — judged by lib/evidence.sh, the same judgement `check` reads, so a gate and a
+  // task's own contract cannot disagree about one tree. Live scenarios only: a disposable
+  // repository owes nothing. The step resolves to pass, unmet or stale.
+  string obligation = 6 [(majordomus.pattern) = "^[a-z][a-z0-9-]*$"];
 }
 
 // What the step must produce. An expectation that names only an exit code still proves

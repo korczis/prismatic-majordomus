@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.4.0
+# Generator: majordomus-cli 0.5.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.4.0
+generator: majordomus-cli 0.5.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -35,6 +35,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
+  - id: design
+    title: Design system
+    description: "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 4
   - id: directories
     title: Directory contracts
     description: "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved."
@@ -67,7 +73,7 @@ modules:
     capabilities: 2
   - id: health
     title: Health
-    description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own."
+    description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
@@ -2811,6 +2817,9 @@ capabilities:
               provider:
                 type: string
                 description: "The provider whose event opened it, when one did."
+              provider_session:
+                type: string
+                description: "That provider's own session identity — the string the prompt archive stamps on the\nsame worker's records, and the name this episode is keyed by. Empty for an episode\nopened by hand, which is the one episode no provider session owns."
               branch:
                 type: string
                 description: The branch it opened on.
@@ -2824,7 +2833,7 @@ capabilities:
               - session_id
               - started_at
               - foreign
-            description: "The open episode of this worktree, when there is one."
+            description: "The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line."
           ActiveTask:
             type: object
             properties:
@@ -3905,6 +3914,801 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/deploy.rs
+  - id: design.contrast
+    module: design
+    kind: query
+    title: Whether the declared colours can be read
+    description: "Every foreground the design puts on a ground, in both themes, measured against WCAG 2.1 AA: the pair, the palette entries behind it, the ratio and the threshold. The pairs are not a list — they are derived from the declaration, which files each status's text with its own ground, and from the primitives that consume it, where a rule that sets a colour and a background states a pair and a rule that sets only a colour states a foreground that lands on every ground a container sets. A pair below the threshold is a finding that names the role, the ground, the theme, the measured ratio and the required one."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ContrastReport
+      schema:
+        type: object
+        properties:
+          fingerprint:
+            type: string
+            description: The fingerprint of the declaration measured.
+          standard:
+            type: string
+            description: The standard the thresholds come from.
+          minimum_text:
+            type: number
+            format: double
+            description: The ratio asked of text.
+          minimum_non_text:
+            type: number
+            format: double
+            description: The ratio asked of a non-text element that carries meaning.
+          sources:
+            type: array
+            items:
+              "$ref": "#/$defs/Source"
+            description: "The stylesheets read, and whether each was found."
+          measured:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many pairs were derived and measured.
+          pairs:
+            type: array
+            items:
+              "$ref": "#/$defs/Measured"
+            description: "Every pair, in a stable order: theme, then what it carries, then the two tokens."
+          composed:
+            type: integer
+            format: uint
+            minimum: 0
+            description: Declarations skipped because their value is composed at run time.
+          findings:
+            type: array
+            items:
+              type: string
+            description: "One line per enforced pair that falls short, naming role, ground, theme, measured\nratio and required ratio."
+          readable:
+            type: boolean
+            description: Whether every enforced pair reaches its threshold.
+        required:
+          - fingerprint
+          - standard
+          - minimum_text
+          - minimum_non_text
+          - sources
+          - measured
+          - pairs
+          - composed
+          - findings
+          - readable
+        description: "Every pair the declaration and its consumers state, measured."
+        title: ContrastReport
+        "$defs":
+          Source:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "Where it was read from, as the caller named it."
+              rules:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many rules of it state a colour.
+            required:
+              - path
+              - rules
+            description: One stylesheet the pair set was derived from.
+          Measured:
+            type: object
+            properties:
+              foreground:
+                type: string
+                description: "The foreground token, as the declaration names it (`muted`, `ok`)."
+              foreground_entry:
+                type: string
+                description: The palette entry it resolves to in this theme.
+              foreground_value:
+                type: string
+                description: The literal that entry holds.
+              ground:
+                type: string
+                description: The ground token.
+              ground_entry:
+                type: string
+                description: The palette entry the ground resolves to in this theme.
+              ground_value:
+                type: string
+                description: The literal that entry holds.
+              theme:
+                type: string
+                description: "`light` or `dark`."
+              carries:
+                "$ref": "#/$defs/Carries"
+                description: "Text, or a border."
+              ratio:
+                type: number
+                format: double
+                description: "The measured ratio, to two decimal places."
+              required:
+                type: number
+                format: double
+                description: What the standard asks of this pair.
+              passes:
+                type: boolean
+                description: Whether it reaches it.
+              enforced:
+                type: boolean
+                description: Whether falling short is a finding. False for a border; see the module documentation.
+              seen:
+                type: string
+                description: "Where the pair was read: the stylesheet and the selector that states it."
+            required:
+              - foreground
+              - foreground_entry
+              - foreground_value
+              - ground
+              - ground_entry
+              - ground_value
+              - theme
+              - carries
+              - ratio
+              - required
+              - passes
+              - enforced
+              - seen
+            description: "One measured pair: a foreground on a ground, in one theme."
+          Carries:
+            oneOf:
+              - type: string
+                const: text
+                description: "Text: held to [`MINIMUM_TEXT`]."
+              - type: string
+                const: non_text
+                description: "A border or an outline: measured against [`MINIMUM_NON_TEXT`], reported, not enforced."
+            description: What a colour is doing where it was found.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::design
+    exposure:
+      mcp:
+        tool: majordomus_design_contrast
+      http:
+        method: GET
+        path: /api/v1/design/contrast
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - design
+      - ui
+      - accessibility
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/design.rs
+  - id: design.explain
+    module: design
+    kind: query
+    title: What a design token means
+    description: "One token by name or by the custom property it becomes: what it is for, what it resolves to in each theme, which Flowbite names are synonyms of it, which state words it colours, and which generated files it reaches."
+    input:
+      name: ExplainTokenInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          token:
+            type: string
+            description: "A role (`fg`), a status (`ok`), a state word (`succeeded`), a type step (`meta`), a\npalette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`)."
+        required:
+          - token
+        description: "The input of `design.explain`: one token by name."
+        title: ExplainTokenInput
+    output:
+      name: Token
+      schema:
+        type: object
+        properties:
+          name:
+            type: string
+            description: The name as declared.
+          kind:
+            "$ref": "#/$defs/TokenKind"
+            description: What kind of token.
+          about:
+            type: string
+            description: "What it is for, from the declaration."
+          css:
+            type: array
+            items:
+              type: string
+            description: The custom properties and Tailwind utilities it becomes.
+          parts:
+            type: array
+            items:
+              "$ref": "#/$defs/ColourPart"
+            description: "For a colour token: its parts, each resolved per theme."
+          value:
+            type:
+              - string
+              - "null"
+            description: "For a scalar token: the value."
+          role:
+            type:
+              - string
+              - "null"
+            description: "For a state word: the status it is filed under."
+          states:
+            type: array
+            items:
+              type: string
+            description: "For a status: the state words filed under it."
+          aliases:
+            type: array
+            items:
+              type: string
+            description: The Flowbite names that are synonyms of it.
+          projections:
+            type: array
+            items:
+              type: string
+            description: The generated files the token reaches.
+        required:
+          - name
+          - kind
+          - about
+          - css
+          - projections
+        description: "One token, explained: where it came from, what it resolves to, what reads it."
+        title: Token
+        "$defs":
+          TokenKind:
+            oneOf:
+              - type: string
+                const: font
+                description: A type stack.
+              - type: string
+                const: palette
+                description: A raw palette entry.
+              - type: string
+                const: role
+                description: A semantic surface role.
+              - type: string
+                const: status
+                description: A status meaning.
+              - type: string
+                const: state
+                description: "A state word, filed under a status."
+              - type: string
+                const: type
+                description: A step of the type scale.
+              - type: string
+                const: tracking
+                description: A letter-spacing.
+              - type: string
+                const: layout
+                description: A shared layout value.
+              - type: string
+                const: radius
+                description: A corner radius.
+              - type: string
+                const: motion
+                description: A duration.
+              - type: string
+                const: theme
+                description: The theme contract.
+            description: What kind of thing a token is.
+          ColourPart:
+            type: object
+            properties:
+              part:
+                type: string
+                description: "`fg`, `bg` or `line`."
+              css:
+                type: string
+                description: The custom property a surface reads.
+              light:
+                "$ref": "#/$defs/Resolved"
+                description: In the light theme.
+              dark:
+                "$ref": "#/$defs/Resolved"
+                description: In the dark theme.
+            required:
+              - part
+              - css
+              - light
+              - dark
+            description: "One part of a colour token — a role has one, a status has its text, ground and border."
+          Resolved:
+            type: object
+            properties:
+              reference:
+                type: string
+                description: The palette entry or role the declaration named.
+              css:
+                type: string
+                description: "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+              literal:
+                type: string
+                description: The literal after every reference is followed.
+            required:
+              - reference
+              - css
+              - literal
+            description: What a colour reference resolved to.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::design
+    exposure:
+      mcp:
+        tool: majordomus_design_explain
+      http:
+        method: GET
+        path: /api/v1/design/explain
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - design
+      - ui
+      - provenance
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/design.rs
+  - id: design.system
+    module: design
+    kind: query
+    title: The design system
+    description: "What the design is: the fingerprint every stylesheet carries, the identity, the type stacks, the theme contract with the pre-paint statement every surface runs, the audit widths, how many tokens of each kind, and every generated file the declaration is projected into."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: DesignReport
+      schema:
+        type: object
+        properties:
+          fingerprint:
+            type: string
+            description: "SHA-256 of the declaration's canonical form."
+          design:
+            type: string
+            description: "The first twelve digits, as every stylesheet carries them in `--mj-design`."
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The format version of the declaration.
+          source:
+            type: string
+            description: "Where the declaration lives, repository-relative."
+          identity:
+            "$ref": "#/$defs/Identity"
+            description: Who this is.
+          font:
+            "$ref": "#/$defs/Fonts"
+            description: The two type stacks.
+          theme:
+            "$ref": "#/$defs/ThemeView"
+            description: The theme contract.
+          viewports:
+            type: array
+            items:
+              type: integer
+              format: uint32
+              minimum: 0
+            description: The widths a browser audit measures every page at.
+          tallies:
+            "$ref": "#/$defs/TokenTallies"
+            description: How many of each kind of token.
+          projections:
+            type: array
+            items:
+              "$ref": "#/$defs/ProjectionView"
+            description: Every generated file the declaration is projected into.
+        required:
+          - fingerprint
+          - design
+          - schema
+          - source
+          - identity
+          - font
+          - theme
+          - viewports
+          - tallies
+          - projections
+        description: "The design system: what it is and where it goes."
+        title: DesignReport
+        "$defs":
+          Identity:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                type: string
+                description: The product name every surface shows.
+              mark:
+                type: string
+                description: "The mark, relative to the design directory."
+              logo:
+                type: string
+                description: "The full logo, relative to the design directory."
+              social:
+                type: string
+                description: "The social preview image, relative to the design directory."
+            required:
+              - name
+              - mark
+              - logo
+              - social
+            description: Who this is.
+          Fonts:
+            type: object
+            additionalProperties: false
+            properties:
+              sans:
+                type: string
+                description: The system stack.
+              mono:
+                type: string
+                description: The monospace stack.
+            required:
+              - sans
+              - mono
+            description: The two type stacks.
+          ThemeView:
+            type: object
+            properties:
+              class:
+                type: string
+                description: The class on the root element that means dark.
+              storage_key:
+                type: string
+                description: "The `localStorage` key the person's choice is kept under."
+              bootstrap:
+                type: string
+                description: The one pre-paint statement every surface runs.
+            required:
+              - class
+              - storage_key
+              - bootstrap
+            description: The theme contract as a client reads it.
+          TokenTallies:
+            type: object
+            properties:
+              palette:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Raw palette entries.
+              roles:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Semantic roles.
+              statuses:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Status meanings.
+              states:
+                type: integer
+                format: uint
+                minimum: 0
+                description: State words filed under a status.
+              type_steps:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Steps of the type scale.
+              aliases:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Flowbite names declared as synonyms.
+            required:
+              - palette
+              - roles
+              - statuses
+              - states
+              - type_steps
+              - aliases
+            description: How many of each kind of token.
+          ProjectionView:
+            type: object
+            properties:
+              path:
+                type: string
+                description: Repository-relative path.
+              read_by:
+                type: string
+                description: What reads it.
+            required:
+              - path
+              - read_by
+            description: One generated projection of the design and what it is for.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::design
+    exposure:
+      mcp:
+        tool: majordomus_design
+        resource:
+          uri: majordomus://design
+          name: design
+      http:
+        method: GET
+        path: /api/v1/design
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - design
+      - ui
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/design.rs
+  - id: design.tokens
+    module: design
+    kind: query
+    title: The design tokens
+    description: "Every token of the design, explained: roles with their light and dark values, statuses with their text, ground and border and the state words filed under them, the type scale, the layout values, the theme contract, the palette. Narrow it to one kind."
+    input:
+      name: TokensInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          kind:
+            anyOf:
+              - "$ref": "#/$defs/TokenKind"
+              - type: "null"
+            description: Only tokens of this kind.
+        description: "The input of `design.tokens`: every token, or one kind of them."
+        title: TokensInput
+        "$defs":
+          TokenKind:
+            oneOf:
+              - type: string
+                const: font
+                description: A type stack.
+              - type: string
+                const: palette
+                description: A raw palette entry.
+              - type: string
+                const: role
+                description: A semantic surface role.
+              - type: string
+                const: status
+                description: A status meaning.
+              - type: string
+                const: state
+                description: "A state word, filed under a status."
+              - type: string
+                const: type
+                description: A step of the type scale.
+              - type: string
+                const: tracking
+                description: A letter-spacing.
+              - type: string
+                const: layout
+                description: A shared layout value.
+              - type: string
+                const: radius
+                description: A corner radius.
+              - type: string
+                const: motion
+                description: A duration.
+              - type: string
+                const: theme
+                description: The theme contract.
+            description: What kind of thing a token is.
+    output:
+      name: TokenList
+      schema:
+        type: object
+        properties:
+          fingerprint:
+            type: string
+            description: The fingerprint of the declaration they came from.
+          total:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many are listed.
+          tokens:
+            type: array
+            items:
+              "$ref": "#/$defs/Token"
+            description: "The tokens, in the inventory's order."
+        required:
+          - fingerprint
+          - total
+          - tokens
+        description: "The tokens, listed."
+        title: TokenList
+        "$defs":
+          Token:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The name as declared.
+              kind:
+                "$ref": "#/$defs/TokenKind"
+                description: What kind of token.
+              about:
+                type: string
+                description: "What it is for, from the declaration."
+              css:
+                type: array
+                items:
+                  type: string
+                description: The custom properties and Tailwind utilities it becomes.
+              parts:
+                type: array
+                items:
+                  "$ref": "#/$defs/ColourPart"
+                description: "For a colour token: its parts, each resolved per theme."
+              value:
+                type:
+                  - string
+                  - "null"
+                description: "For a scalar token: the value."
+              role:
+                type:
+                  - string
+                  - "null"
+                description: "For a state word: the status it is filed under."
+              states:
+                type: array
+                items:
+                  type: string
+                description: "For a status: the state words filed under it."
+              aliases:
+                type: array
+                items:
+                  type: string
+                description: The Flowbite names that are synonyms of it.
+              projections:
+                type: array
+                items:
+                  type: string
+                description: The generated files the token reaches.
+            required:
+              - name
+              - kind
+              - about
+              - css
+              - projections
+            description: "One token, explained: where it came from, what it resolves to, what reads it."
+          TokenKind:
+            oneOf:
+              - type: string
+                const: font
+                description: A type stack.
+              - type: string
+                const: palette
+                description: A raw palette entry.
+              - type: string
+                const: role
+                description: A semantic surface role.
+              - type: string
+                const: status
+                description: A status meaning.
+              - type: string
+                const: state
+                description: "A state word, filed under a status."
+              - type: string
+                const: type
+                description: A step of the type scale.
+              - type: string
+                const: tracking
+                description: A letter-spacing.
+              - type: string
+                const: layout
+                description: A shared layout value.
+              - type: string
+                const: radius
+                description: A corner radius.
+              - type: string
+                const: motion
+                description: A duration.
+              - type: string
+                const: theme
+                description: The theme contract.
+            description: What kind of thing a token is.
+          ColourPart:
+            type: object
+            properties:
+              part:
+                type: string
+                description: "`fg`, `bg` or `line`."
+              css:
+                type: string
+                description: The custom property a surface reads.
+              light:
+                "$ref": "#/$defs/Resolved"
+                description: In the light theme.
+              dark:
+                "$ref": "#/$defs/Resolved"
+                description: In the dark theme.
+            required:
+              - part
+              - css
+              - light
+              - dark
+            description: "One part of a colour token — a role has one, a status has its text, ground and border."
+          Resolved:
+            type: object
+            properties:
+              reference:
+                type: string
+                description: The palette entry or role the declaration named.
+              css:
+                type: string
+                description: "The CSS value a stylesheet gets: the literal of a palette entry, or `var(--mj-<role>)`."
+              literal:
+                type: string
+                description: The literal after every reference is followed.
+            required:
+              - reference
+              - css
+              - literal
+            description: What a colour reference resolved to.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::design
+    exposure:
+      mcp:
+        tool: majordomus_design_tokens
+      http:
+        method: GET
+        path: /api/v1/design/tokens
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - design
+      - ui
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/design.rs
   - id: directories.list
     module: directories
     kind: query
@@ -8248,7 +9052,7 @@ capabilities:
     module: health
     kind: query
     title: Health of this process
-    description: "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict."
+    description: "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict."
     input:
       name: Empty
       schema:

@@ -756,17 +756,40 @@ as handovers: same worktree and branch, else same branch, else nothing.
 
 ---
 
-## `.ai/local/state/session-current.yaml`
+## `.ai/local/state/sessions-open/<provider session>.yaml`
 
-The open session in this worktree. One at a time; `session start` refuses while one is
-open rather than replacing it. Removed by `session close`, which is the only writer that
-removes it.
+One open execution episode. **One per provider session, not one per worktree**: two windows
+of the same provider open on one checkout are two workers, and folding them into one record
+stamps one worker's ledger lines with the other's id and lets either window's end event
+close both. The file is keyed by the provider session that opened it; an episode nobody
+named is keyed `hand`, and there is at most one of those, because a provider that sends no
+session identity is indistinguishable from a person at a terminal.
+
+`session start` refuses while *your* episode is open rather than replacing it; a different
+provider session gets an episode of its own. `session close` is the only writer that removes
+one, and it removes its own.
+
+`.ai/local/state/session-current.yaml` is a relative symlink into that store: the pointer to
+the episode of this checkout, aimed at the episode opened here last, and re-aimed by a close
+at the one episode still open when exactly one is. It is what a process that cannot name a
+provider session resolves through — `continuity.state` reads that path, and every reader of
+it (a `sed`, the YAML flattener, a whole-document reader in Rust) follows the link without
+knowing it did. A symlink and not a copy: two accounts of one open episode is the drift this
+record exists to avoid.
+
+Which episode is a given process's is decided in `mj_session_here_file` (`lib/common.sh`):
+the provider session named on the command line, else the provider session this process is
+running inside when an episode with that key is open here (`MAJORDOMUS_PROVIDER_SESSION`, or
+the variable the lifecycle adapter in `lib/capture.sh` declares — `CLAUDE_CODE_SESSION_ID`
+for Claude Code), else the pointer.
 
 ```yaml
 session_id: s-20260904153733-fc51
 started_at: 2026-09-04T15:37:33Z
 owner: "alice"
 worker: "some-provider/some-model"      # optional; recorded only when supplied
+provider: "claude-code"                 # optional; only a provider hook can supply it
+provider_session: "cc-1"                # optional; the key this episode is filed under
 # computed from git; never authored
 repository_id: /abs/path/.git
 worktree: /abs/path
@@ -783,7 +806,7 @@ unrecorded rather than becoming a plausible guess.
 
 Unknown keys are an error, as in every other Majordomus YAML file.
 
-This file is **not tracked**. The other state files are, because something outside the
+These files are **not tracked**. The other state files are, because something outside the
 checkout reads them: a task record carries the scope claim other worktrees compare
 against, the question store is scoped to a branch by version control, and the append-only
 records have to travel. An open session carries none of that, so committing one would only
@@ -1367,6 +1390,7 @@ Events and their extra fields:
 |---|---|
 | `task.started` | `profile`, `scope[]`, `owner` |
 | `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved |
+| `task.evidence` | `task`, `covers` (the obligation token), `kind`, `inputs_hash` (over the obligation's declared inputs), and `command`, `artifact`, `result` when given |
 | `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |
 | `task.handed_over` | `handover_path`, `closed` (true with `--close`) |
 | `decision.recorded` | `decision` (the entry's title) |

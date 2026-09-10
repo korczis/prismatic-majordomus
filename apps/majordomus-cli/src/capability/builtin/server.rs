@@ -36,7 +36,7 @@
 //! assert!(reason.is_none());
 //! ```
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use schemars::JsonSchema;
@@ -332,6 +332,57 @@ pub fn standing_of(
     }
 }
 
+/// The repository-relative path of a checkout's local half — the directory its lease is
+/// written into — or the layer's default when no manifest can be read at that checkout.
+///
+/// A directory that is not a repository of the layer still gets an answer, because "does a
+/// server serve this checkout" is a question about a path and not about a manifest.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::local_half;
+/// assert_eq!(local_half(std::path::Path::new("/nonexistent/checkout")), ".ai/local");
+/// ```
+pub fn local_half(root: &Path) -> String {
+    Repository::open(root)
+        .map(|r| r.local_path())
+        .unwrap_or_else(|_| ".ai/local".to_string())
+}
+
+/// Where the server of one checkout stands, with the lease the verdict was read from.
+///
+/// [`standing_of`] is the decision; this is the one reading that feeds it — the lease file
+/// of `worktree` under `local_half`, how old that file is, one probe of the address it
+/// names, against this executable's version. Every surface that asks where a server stands
+/// asks through here, so that `server.status` and the `server` check of `health.report`
+/// cannot drift into two answers.
+///
+/// Costs one small file read, and one HTTP round trip bounded by
+/// [`crate::lease::PROBE_TIMEOUT`] when the lease names an address. Nothing is cached: the
+/// file is written by other processes.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{local_half, standing_at, ServerStanding};
+/// let nowhere = std::path::Path::new("/nonexistent/checkout");
+/// let (standing, reason, lease) = standing_at(nowhere, &local_half(nowhere));
+/// assert_eq!(standing, ServerStanding::Absent);
+/// assert!(reason.is_none(), "there is nothing to explain: no lease, no server");
+/// assert!(lease.document().is_none());
+/// ```
+pub fn standing_at(
+    worktree: &Path,
+    local_half: &str,
+) -> (ServerStanding, Option<String>, LeaseFile) {
+    let file = lease::lease_file(worktree, local_half);
+    let read = LeaseFile::read(&file);
+    let (standing, reason) = standing_of(
+        &read,
+        lease::file_age(&file),
+        |url| lease::probe(url, worktree),
+        crate::VERSION,
+    );
+    (standing, reason, read)
+}
+
 /// How many peers the server at `url` reports, through the route the registry declares
 /// for `peers.list`. `None` when it does not answer or the route is not declared.
 fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
@@ -355,9 +406,7 @@ fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
 fn server_status(ctx: &Context, _: Empty) -> Result<ServerStatus, CapabilityError> {
     let root = PathBuf::from(&ctx.index.repository.root);
     let root = root.canonicalize().unwrap_or(root);
-    let local_half = Repository::open(&root)
-        .map(|r| r.local_path())
-        .unwrap_or_else(|_| ".ai/local".to_string());
+    let local_half = local_half(&root);
     let git = repository::git_identity(&root);
     // every checkout git registers for the repository, the primary first; this one alone
     // where git cannot be asked
@@ -375,14 +424,7 @@ fn server_status(ctx: &Context, _: Empty) -> Result<ServerStatus, CapabilityErro
     let mut servers = Vec::with_capacity(checkouts.len());
     for (i, (path, branch)) in checkouts.into_iter().enumerate() {
         let worktree = path.canonicalize().unwrap_or(path);
-        let file = lease::lease_file(&worktree, &local_half);
-        let read = LeaseFile::read(&file);
-        let (standing, reason) = standing_of(
-            &read,
-            lease::file_age(&file),
-            |url| lease::probe(url, &worktree),
-            crate::VERSION,
-        );
+        let (standing, reason, read) = standing_at(&worktree, &local_half);
         let peers = match standing {
             ServerStanding::Ready | ServerStanding::Outdated => read
                 .document()

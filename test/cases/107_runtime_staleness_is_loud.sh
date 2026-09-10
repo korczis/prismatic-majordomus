@@ -15,6 +15,14 @@
 # place to start a compiler. The staleness question itself lives in lib/rust_bin.sh so that
 # this script and `bin/majordomus-cli` cannot disagree about the answer.
 . "$ROOT/test/lib.sh"
+# The subject is which executable the adapter finds beside the sources, so nothing ambient
+# may answer for it. `test/run.sh` and CI both export MAJORDOMUS_BIN so the Rust cases can
+# drive a prebuilt executable, and mj_rust_bin honours it before it looks at the crate at
+# all — with it set, every assertion below read a real, current executable in another tree
+# and the fixture proved nothing. CARGO_TARGET_DIR moves the directory the fixture writes
+# into for the same reason. Step 5 sets MAJORDOMUS_BIN itself, per invocation, which is the
+# only place it belongs here.
+unset MAJORDOMUS_BIN MAJORDOMUS_BUILD_PROFILE CARGO_TARGET_DIR CARGO_BUILD_TARGET_DIR
 fixture_repo "$T"
 
 crate="$T/apps/majordomus-cli"
