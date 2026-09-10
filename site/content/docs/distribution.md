@@ -126,6 +126,34 @@ Each arrow is checked by the step after it. The installer never reads GitHub's A
 it reads two JSON documents that this repository generates, so a change in GitHub's pages
 cannot break an installation.
 
+## What the archive carries, and what that costs
+
+`scripts/release-package` packs `share/` as it finds it on the release runner, and the
+release workflow runs no asset build. That one sentence decides which browser assets can
+reach an installed copy, and it is the reason two directories under `share/` are treated
+differently:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Under `share/` | Committed? | In an archive? | Why |
+|---|---|---|---|
+| `cockpit/cockpit.css`, `cockpit/*.js`, `cockpit/vendor/alpine.csp.min.js` | yes | yes | the Cockpit's pages depend on them |
+| `cockpit/vendor/cytoscape\|three\|p5` | no, built by `scripts/cockpit-assets` | **no** | two megabytes; every page that uses them renders without them |
+| `swagger/vendor/swagger-ui{.css,-bundle.js}` | yes, by `scripts/swagger-assets` | yes | the file *is* the API viewer; without it `/swagger` has nothing to draw (ADR 39) |
+
+</div>
+
+
+Vendoring the viewer costs 1,616,237 bytes in the repository and 431,623 bytes in each
+`tar.gz` — measured by packing one tree twice, with `share/swagger/` and without. Against
+`majordomus-v0.3.1-aarch64-apple-darwin.tar.gz` at 4,784,267 bytes that is +9.0%. What it buys is that an installed copy serves its whole HTTP projection with no network
+at all: on a plane, behind a proxy, in a container with no egress. Before it, `/swagger`
+loaded the viewer from a CDN and offline showed a blank page.
+
+An archive built without those files is still a working installation. `/swagger` then
+renders a server-side notice naming what is missing and what to run, rather than 200 and
+nothing.
+
 ## What is protected, and what is trusted
 
 Protected:

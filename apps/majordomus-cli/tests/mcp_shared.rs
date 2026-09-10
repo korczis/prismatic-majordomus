@@ -310,8 +310,8 @@ fn one_server_per_repository_and_peers_see_each_other() {
     let (status, _, html) = http(&url, "GET", "/swagger", &[], None);
     assert_eq!(status, 200);
     assert!(
-        html.contains("swagger-ui-dist@"),
-        "Swagger UI is served beside the stdio session"
+        html.contains("/swagger/assets/vendor/swagger-ui-bundle.js"),
+        "Swagger UI is served beside the stdio session, out of this distribution"
     );
     let (status, doc) = get_json(&url, "/openapi.json");
     assert_eq!(status, 200);

@@ -1,4 +1,4 @@
-//! The Cockpit's static files, served from the distribution's `share/cockpit/`.
+//! A distribution's static files, served from a directory of `share/` under a URL prefix.
 //!
 //! Read once and kept: an asset is loaded from disk the first time it is asked for and
 //! answered from memory afterwards, with the digest of its bytes as its cache key. The
@@ -8,6 +8,11 @@
 //! Nothing is compiled into the executable. `share/` is where this tool keeps its data —
 //! the kinds, the schemas, the allow-lists — and the Cockpit's stylesheet and scripts are
 //! more of the same, locatable per invocation and replaceable without a rebuild.
+//!
+//! Two surfaces read from here: the Cockpit's `share/cockpit/` at [`PREFIX`], and the API
+//! viewer's `share/swagger/` at [`crate::http::swagger::ASSET_PREFIX`]. Whose directory it
+//! is, is a constructor argument; the reading, the digest, the traversal refusal and the
+//! cache header are decided once, here, because two answers to one question drift.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -18,7 +23,7 @@ use crate::http::router::Response;
 /// The directory inside the share directory that holds the Cockpit's files.
 pub const DIR: &str = "cockpit";
 
-/// The URL prefix every asset is served under.
+/// The URL prefix the Cockpit's assets are served under.
 pub const PREFIX: &str = "/cockpit/assets/";
 
 /// Media types by file extension. An extension not named here is not served: the Cockpit
@@ -46,30 +51,43 @@ struct Loaded {
     digest: String,
 }
 
-/// The Cockpit's asset directory, with what has been read from it.
+/// One served asset directory, with what has been read from it.
 #[derive(Debug)]
 pub struct Assets {
     root: Option<PathBuf>,
+    prefix: &'static str,
     loaded: Mutex<BTreeMap<String, Option<Loaded>>>,
 }
 
 impl Assets {
-    /// The assets under `share_dir/cockpit`, when that directory exists. A distribution
-    /// without one serves no assets and every page still renders: the stylesheet link and
-    /// the module scripts simply resolve to 404, and the Cockpit degrades to unstyled
-    /// server-rendered HTML rather than failing.
+    /// The Cockpit's assets under `share_dir/cockpit`, when that directory exists. A
+    /// distribution without one serves no assets and every page still renders: the
+    /// stylesheet link and the module scripts simply resolve to 404, and the Cockpit
+    /// degrades to unstyled server-rendered HTML rather than failing.
     pub fn new(share_dir: &Path) -> Self {
-        let root = share_dir.join(DIR);
-        Assets {
-            root: root.is_dir().then_some(root),
-            loaded: Mutex::new(BTreeMap::new()),
-        }
+        Assets::at(Some(&share_dir.join(DIR)), PREFIX)
     }
 
     /// No asset directory at all: for a router built without a distribution.
     pub fn none() -> Self {
+        Assets::at(None, PREFIX)
+    }
+
+    /// Any directory of static files, served under `prefix`. `None`, or a path that is not
+    /// a directory, is an `Assets` that serves nothing and says so: absence is answered
+    /// with a 404 that names the file, never with a panic and never with a blank page.
+    ///
+    /// ```
+    /// use majordomus_cli::cockpit::assets::Assets;
+    /// let none = Assets::at(None, "/swagger/assets/");
+    /// assert!(!none.present());
+    /// assert_eq!(none.url("vendor/x.js"), "/swagger/assets/vendor/x.js");
+    /// assert_eq!(none.respond("vendor/x.js", None).status, 404);
+    /// ```
+    pub fn at(root: Option<&Path>, prefix: &'static str) -> Self {
         Assets {
-            root: None,
+            root: root.filter(|r| r.is_dir()).map(Path::to_path_buf),
+            prefix,
             loaded: Mutex::new(BTreeMap::new()),
         }
     }
@@ -89,8 +107,12 @@ impl Assets {
     /// path, so the 404 names the file a reader should look for.
     pub fn url(&self, name: &str) -> String {
         match self.load(name) {
-            Some(a) => format!("{PREFIX}{name}?v={}", &a.digest[..16.min(a.digest.len())]),
-            None => format!("{PREFIX}{name}"),
+            Some(a) => format!(
+                "{}{name}?v={}",
+                self.prefix,
+                &a.digest[..16.min(a.digest.len())]
+            ),
+            None => format!("{}{name}", self.prefix),
         }
     }
 
@@ -102,7 +124,8 @@ impl Assets {
                 404,
                 "not_found",
                 &format!(
-                    "no cockpit asset '{name}'; the distribution's share/{DIR}/ holds the ones there are"
+                    "no asset '{name}' under {}; the distribution's share/ directory holds the ones there are",
+                    self.prefix
                 ),
             );
         };
@@ -145,7 +168,8 @@ impl Assets {
         if !resolved.starts_with(&root) {
             tracing::warn!(
                 asset = name,
-                "a cockpit asset resolves outside share/{DIR}; refused"
+                prefix = self.prefix,
+                "an asset resolves outside the directory it is served from; refused"
             );
             return None;
         }

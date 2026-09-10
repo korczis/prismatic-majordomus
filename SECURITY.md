@@ -10,7 +10,11 @@ repository rather than in a public issue. Expect an acknowledgement within a wee
 These are design commitments for v0.1. A test in `test/cases/` will back each one before
 it is described as real.
 
-- **Local only.** No network calls of any kind. No telemetry. No update checks.
+- **Local only.** No network calls of any kind. No telemetry. No update checks. The
+  pages the loopback server hands a browser fetch nothing either: the Cockpit's assets
+  and the API viewer are read from the running distribution's `share/`, never from a
+  CDN (ADR 39). Until that landed, `/swagger` was the exception, and it showed a blank
+  page with no network.
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.

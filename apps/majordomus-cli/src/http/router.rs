@@ -22,6 +22,7 @@ use crate::web::home;
 use super::events;
 use super::mcp::McpEndpoint;
 use super::surfaces::{Bound, Native, Served};
+use super::swagger::Swagger;
 use super::{openapi, swagger};
 
 /// A request as the router sees it: method, path without query, decoded query pairs,
@@ -312,6 +313,10 @@ pub struct Router {
     mcp: Option<Arc<McpEndpoint>>,
     /// The Cockpit, when the process located a distribution to serve its assets from.
     cockpit: Option<Arc<Cockpit>>,
+    /// The API viewer, with the files it loads read from the same distribution. Unlike the
+    /// Cockpit it is never absent: without a distribution it renders a page that says the
+    /// viewer is not in this one, which is a great deal more use than a blank frame.
+    swagger: Arc<Swagger>,
     /// The resolved surfaces and their handlers, and the context narrowed to them. Built
     /// on first use, because the builder learns what this process offers after `new`.
     served: Arc<std::sync::OnceLock<Result<Resolution, String>>>,
@@ -334,17 +339,22 @@ impl Router {
             openapi: Arc::new(std::sync::OnceLock::new()),
             mcp: None,
             cockpit: None,
+            swagger: Arc::new(Swagger::new(None)),
             served: Arc::new(std::sync::OnceLock::new()),
         }
     }
 
-    /// The same router, serving the Cockpit's pages with its assets read from `share_dir`.
+    /// The same router, serving the Cockpit's pages — and the API viewer's own files —
+    /// from `share_dir`. One distribution, and the two surfaces that read static files out
+    /// of it: giving them one builder is what stops a process from having the Cockpit's
+    /// stylesheet and not the viewer's.
     pub fn with_cockpit(mut self, share_dir: Option<&std::path::Path>) -> Self {
         self.cockpit = Some(Arc::new(Cockpit::new(
             Arc::clone(&self.ctx),
             self.version,
             share_dir,
         )));
+        self.swagger = Arc::new(Swagger::new(share_dir));
         self
     }
 
@@ -464,14 +474,20 @@ impl Router {
         // prefix want and what a single route does not: `/swagger/anything` is not the
         // Swagger UI, and answering it as though it were would invent a route nothing
         // declared. The surfaces that answer one path say so here, once.
+        //
+        // The single exception is declared, not incidental: the API viewer's own files at
+        // `/swagger/assets/`, which are as much part of that page as the Cockpit's
+        // stylesheet is of its own. Everything else under `/swagger` is still a 404.
         let exact = req.path == surface.mount.as_str() || req.path == surface.mount.prefix();
+        let viewer_asset = matches!(bound, Bound::Route(Native::Swagger))
+            && req.path.starts_with(swagger::ASSET_PREFIX);
         // the home page is not among them: its mount is the root, which owns every path
         // nothing else claims, and it answers those with a 404 that names what is served
         let single_path = matches!(
             bound,
             Bound::Route(Native::OpenApi | Native::Swagger | Native::Mcp | Native::Events)
         );
-        if single_path && !exact {
+        if single_path && !exact && !viewer_asset {
             return error_response(
                 404,
                 "not_found",
@@ -499,7 +515,7 @@ impl Router {
             }
             Bound::Route(Native::Home) => self.home(req, resolution),
             Bound::Route(Native::OpenApi) => self.openapi(),
-            Bound::Route(Native::Swagger) => swagger_response(),
+            Bound::Route(Native::Swagger) => self.swagger.handle(req),
             Bound::Route(Native::Mcp) => match &self.mcp {
                 Some(endpoint) => endpoint.handle(req),
                 None => error_response(
@@ -818,12 +834,6 @@ fn repository_name(root: &str) -> &str {
         .unwrap_or("repository")
 }
 
-/// The Swagger UI shell. `/swagger` and `/swagger/` both answer it: the page loads its
-/// distribution and the document by absolute path, so neither form can resolve wrongly.
-fn swagger_response() -> Response {
-    Response::new(200, "text/html; charset=utf-8", swagger::page().to_string())
-}
-
 fn json_response(status: u16, v: &Value) -> Response {
     Response::new(
         status,
@@ -944,10 +954,13 @@ mod tests {
 
     #[test]
     fn the_swagger_shell_is_the_same_page_however_it_is_reached() {
-        let page = swagger_response();
-        assert_eq!(page.status, 200);
-        assert!(page.content_type.starts_with("text/html"));
-        assert!(page.body.text().contains("/openapi.json"));
+        let swagger = Swagger::new(None);
+        for path in [swagger::SWAGGER_PATH, "/swagger/"] {
+            let page = swagger.handle(&Request::parse_target("GET", path, vec![]));
+            assert_eq!(page.status, 200, "{path}");
+            assert!(page.content_type.starts_with("text/html"), "{path}");
+            assert!(page.body.text().contains("/openapi.json"), "{path}");
+        }
     }
 
     #[test]

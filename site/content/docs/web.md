@@ -43,6 +43,7 @@ Every path below is the mount its surface declares. Nothing in this table is typ
 | `/` | `home` | This process, and everything it serves | route |
 | `/docs/` | `docs` | This repository's documentation | directory |
 | `/swagger` | `swagger` | Swagger UI over the OpenAPI document | route |
+| `/swagger/assets/` | `swagger` | The viewer's own vendored files | prefix of the route above |
 | `/openapi.json` | `openapi` | The OpenAPI document, generated from the registry | route |
 | `/api/v1/` | `api` | The capability routes | route |
 | `/cockpit` | `cockpit` | The registry, rendered for a person | route |
@@ -69,6 +70,29 @@ this catches it when one of them is gone, which is the state the repository was 
 
 Reservations are about what a *process serves*. A publication's `/` belongs to the site as
 it is deployed, and always has.
+
+### Nothing is fetched from anywhere else
+
+Every byte of every page this executable serves comes from this process: the document from
+the registry in memory, the Cockpit's stylesheet and scripts from `share/cockpit/`, and the
+API viewer from `share/swagger/vendor/`, which is `swagger-ui-dist` at the version
+`SWAGGER_UI_VERSION` pins, committed to this repository and copied there by
+`scripts/swagger-assets` (ADR 39). Until that landed, `/swagger` loaded 1.5 MB from the
+unpkg CDN, which made the one surface that needs no network the only one that did not work
+without it — with no egress a reader got HTTP 200 and a blank white page, and no word about
+why.
+
+`/swagger/assets/` is the only prefix served under a single-page surface. It is a declared
+exception in the router, not an accident of prefix matching: `/swagger/anything` else is
+still a 404 that says the surface is one page.
+
+Both asset directories are served the same way and by the same code
+(`cockpit::assets::Assets`, which takes the directory and the URL prefix): read once from
+disk, the SHA-256 of the bytes in the URL and in the `ETag`, a year of `immutable` caching
+for a URL that carries the right digest, no traversal, and an extension allow-list. And
+both degrade to something a person can read rather than to a blank page — the Cockpit to
+unstyled markup, `/swagger` to a server-rendered notice that names what is missing and the
+command that fixes it.
 
 ## What a surface is
 
