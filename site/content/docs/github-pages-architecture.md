@@ -1,14 +1,14 @@
 +++
 title = "GitHub Pages architecture"
 description = "how the website is derived from the repository and checked for drift"
-weight = 43
+weight = 46
 [extra]
 source = "docs/GITHUB_PAGES_ARCHITECTURE.md"
 +++
 
 {% raw %}
 
-The website at `https://korczis.github.io/prismatic-majordomus/` is a projection of this
+The website at `https://majordomus.dev/` is a projection of this
 repository. It is built the way Majordomus asks projects to build their own instruction
 files: one canonical source, generated outputs, and a check that fails when the two drift.
 

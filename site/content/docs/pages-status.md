@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 47
+weight = 50
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](@/docs/github-pages-performance.md).
 
-Generated from canonical inputs `690dd772cb3d`.
+Generated from canonical inputs `971d3e8941c2`.
 
 ## Controlled budget
 
@@ -55,10 +55,14 @@ held to it.
 - `LICENSE`
 - `README.md`
 - `SECURITY.md`
+- `apps/majordomus-cli/src/capability/builtin/design.rs`
+- `apps/majordomus-cli/src/cockpit/logo-mark.svg`
+- `apps/majordomus-cli/src/design/**`
 - `apps/majordomus-cli/src/web/tokens.css`
 - `assets/**`
 - `bin/**`
 - `docs/**`
+- `docs/DESIGN_SYSTEM.md`
 - `docs/generated/**`
 - `examples/**`
 - `lib/**`
@@ -67,12 +71,12 @@ held to it.
 - `scripts/ci/design-check`
 - `scripts/cockpit-assets`
 - `scripts/cockpit-probe`
-- `scripts/design-tokens`
 - `scripts/generate-site-data`
 - `scripts/github-sync`
 - `scripts/lib/**`
 - `scripts/lib/cockpit-probe.mjs`
 - `scripts/lib/ui-*.mjs`
+- `scripts/lib/ui-routes.mjs`
 - `scripts/pages`
 - `scripts/rules-package`
 - `scripts/site-basepath-check`
@@ -88,6 +92,7 @@ held to it.
 - `share/design/**`
 - `site/**`
 - `site/data/registry/**`
+- `site/data/registry/design.json`
 - `test/**`
 
 ## Measured
