@@ -107,6 +107,16 @@ pub struct Surface {
 /// `data-mj-foreign`; the engine skips it, and the report says so. "Not measured" and
 /// "measured and clean" are different claims, and a report that conflated them would be
 /// worth nothing.
+///
+/// ```
+/// use majordomus_cli::web::report::ui::{parse, Foreign};
+/// let run = parse(r#"{"schema":"ui-audit/v1","pages":1,"visits":14,"findings":[],
+///     "foreign":[{"route":"/swagger","selector":"main#swagger-ui",
+///                 "declares":"swagger-ui-dist@5.17.14"}]}"#).unwrap();
+/// let skipped: &Foreign = &run.foreign[0];
+/// assert_eq!(skipped.declares, "swagger-ui-dist@5.17.14");
+/// assert!(run.green(), "a page around a skipped subtree can still be clean");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Foreign {
     /// A page it was seen on.
@@ -367,8 +377,14 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
                 };
                 vec![
                     format!("<span class=\"mono\">{}</span>", html::escape(&surface.id)),
-                    format!("<span class=\"mono\">{}</span>", html::escape(&surface.mount)),
-                    format!("<span class=\"mono\">{}</span>", html::escape(&surface.kind)),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&surface.mount)
+                    ),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&surface.kind)
+                    ),
                     if native {
                         format!("<span class=\"num\">{}</span>", surface.sampled)
                     } else {
@@ -394,9 +410,18 @@ pub fn render(root: &Path, run: &Run) -> Result<PathBuf> {
             .iter()
             .map(|subtree| {
                 vec![
-                    format!("<span class=\"mono\">{}</span>", html::escape(&subtree.declares)),
-                    format!("<span class=\"mono\">{}</span>", html::escape(&subtree.selector)),
-                    format!("<span class=\"mono\">{}</span>", html::escape(&subtree.route)),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&subtree.declares)
+                    ),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&subtree.selector)
+                    ),
+                    format!(
+                        "<span class=\"mono\">{}</span>",
+                        html::escape(&subtree.route)
+                    ),
                 ]
             })
             .collect();
