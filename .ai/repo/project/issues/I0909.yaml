@@ -7,7 +7,7 @@ profile: deep-work
 parallel_safe: true
 objective: "Generate a multi-stage container build and its ignore file from the deployment object's build specification: a pinned Alpine runtime holding the binary, the runtime assets and nothing else, executed by an unprivileged user."
 why: "A hand-written Dockerfile is a second description of the binary, the assets and the port. Generating it keeps one description; pinning the base by digest keeps the image reproducible; keeping the runtime stage minimal keeps the attack surface and the bill small."
-current_state: "No Dockerfile exists anywhere in the repository."
+current_state: "deploy/Dockerfile exists and is generated: apps/majordomus-cli/src/deploy/render.rs renders it, .dockerignore and fly.toml from the deployment object, and generate.rs owns them as targets. The statement this field used to carry -- that no Dockerfile exists anywhere -- was falsified before 2026-09-10 and never corrected. Measured on master 6042f4286, 2026-09-10."
 desired_state: "The generated Dockerfile is idiomatic and reviewable, carries a header naming its source and its regeneration command, and is refused by generate --check when edited by hand."
 scope:
   - deploy/fly
@@ -37,4 +37,4 @@ evidence_required:
   - musl_decision
 risk: "Generation can make the Dockerfile unreadable, which is worse than duplication. The source describes intent, the output describes mechanics, and the output has to survive review by someone who has never seen the generator."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-10

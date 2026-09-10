@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Make every surface a process serves name the repository it is serving — its root and its identity — so that a reader can tell at a glance whether the answers in front of them come from the tree they are working in."
 why: "This cost a real hour. A browser held a Swagger page from a server that had exited, its requests failed with a message blaming CORS, and the live server on another port turned out to be serving a scratchpad worktree of a different session entirely — so even the document being read was that other tree's, including a sentence about the routes that this tree had already corrected. Nothing on the page said which checkout answered it. Several sessions share one machine and each may bind its own server; a surface that does not name its tree invites exactly this conclusion, that the tool is broken, when the tool is fine and the address is wrong."
-current_state: "The home page lists the surfaces, the version and a repository identifier, and `/api/v1/repository` will name the root if asked. The Swagger shell and the served document name neither. A stale page fails with a transport error that names CORS before it names a closed socket."
+current_state: "Half of this landed on 2026-09-10 outside the plan. ADR 0035 added repository::git_identity, and the home page and the index route answer it beside the checkout's own repository_id and linked_worktree, so a reader can tell which repository and which checkout answered; the identity comes from the repository model and names no host path (PR #153, PR #164). Two criteria are still open: the interactive API shell (apps/majordomus-cli/src/http/swagger.rs) names neither root nor identity, and no test serves two roots and proves each surface names its own. Measured on master 6042f4286, 2026-09-10."
 desired_state: "Every served surface carries the repository root and identity it is answering for, close enough to the content that a reader sees it without asking for it."
 scope:
   - apps/majordomus-cli/src/http/router.rs
@@ -30,4 +30,4 @@ evidence_required:
   - published_carries_no_path
 risk: "The obvious fix — printing the root — is the one to refuse: it would leak the host's directory layout to whoever can reach the socket, and the incident is solved by saying which checkout answered, not where it lives."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-10

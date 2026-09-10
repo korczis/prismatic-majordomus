@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Extend the existing browser checking to cover navigation on desktop and mobile, search and filtering, the detail view, graph initialisation, conditional runtime exposure, link integrity and console errors."
 why: "Everything in this milestone is finally judged by whether a person can open it. Server-side tests cannot see an overflowing table, a menu that does not open or a script that throws on load."
-current_state: "A probe script drives the Cockpit's routes and interactions in a real browser."
+current_state: "scripts/ui audits every surface the executable serves, not only static directories: scripts/lib/ui-routes.mjs derives a served surface's routes from its own anchors, crawled from its mount, and both browser instruments import it, so the Cockpit, the home page and the Swagger shell are inside the ADR 0022 width, contrast and accessibility sweep (PR #178, 2026-09-10). scripts/cockpit-probe keeps the shell, the security headers, the design fingerprint, the interactions and the no-JavaScript claim. What this issue still owes is its own assertions -- search and filtering, the detail view, graph initialisation, conditional runtime exposure and link integrity, at named viewports -- and its dependencies I1014, I1015 and I1016 are not recorded as done. Measured on master 6042f4286, 2026-09-10."
 desired_state: "The probe covers the derived surfaces at representative viewports, uses stable selectors and runs in CI."
 scope:
   - scripts/cockpit-probe
@@ -31,4 +31,4 @@ evidence_required:
   - viewport_assertions
 risk: "Browser tests are the flakiest thing in any suite. Bounded waits on stable selectors, and no sleeps."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-09-10
