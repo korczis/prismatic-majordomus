@@ -1,7 +1,7 @@
 +++
 title = "majordomus web manifest"
 description = "Write the resolved topology to the generated manifest"
-weight = 20
+weight = 21
 [extra]
 route = "/docs/cli/web/manifest/"
 command = "majordomus web manifest"

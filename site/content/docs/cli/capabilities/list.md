@@ -1,7 +1,7 @@
 +++
 title = "majordomus capabilities list"
 description = "Every capability, one line each, with its projections"
-weight = 5
+weight = 6
 [extra]
 route = "/docs/cli/capabilities/list/"
 command = "majordomus capabilities list"

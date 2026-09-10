@@ -1,7 +1,7 @@
 +++
 title = "majordomus distribution build"
 description = "What this executable is: version, target triple, profile, commit"
-weight = 42
+weight = 43
 [extra]
 route = "/docs/cli/distribution/build/"
 command = "majordomus distribution build"

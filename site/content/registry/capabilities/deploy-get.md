@@ -1,7 +1,7 @@
 +++
 title = "deploy.get"
 description = "One deployment by its identity, typed, with the repository-relative file it was read from."
-weight = 10
+weight = 11
 slug = "deploy-get"
 [extra]
 id = "deploy.get"

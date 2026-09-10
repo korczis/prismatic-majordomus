@@ -9,12 +9,13 @@ Every provider the tool ships an adapter for, and what this repository does with
 |---|---|---|---|---|---|
 | `agents` | Any tool that reads AGENTS.md | `AGENTS.md` (always loaded) | — | — | — |
 | `bb` | bb | `.bb/AGENTS.md` | — | — | `${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees` |
+| `chatgpt` | ChatGPT app | — | — | — | — |
 | `claude-code` | Claude Code | `CLAUDE.md` | `.mcp.json` | `prompt-capture`, `session-lifecycle` | `<primary>/.claude/worktrees` |
 | `codex` | Codex | — | `.codex/config.toml` | — | — |
 | `gemini` | Gemini CLI | — | `.gemini/settings.json` | — | — |
 | `generic` | A worker with no convention of its own | — | — | — | — |
 
-6 provider(s).
+7 provider(s).
 
 ## The tool's own scratch roots
 

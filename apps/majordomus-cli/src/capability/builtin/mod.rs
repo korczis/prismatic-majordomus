@@ -33,6 +33,7 @@
 pub mod artifacts;
 pub(crate) mod capabilities;
 pub mod commands;
+pub mod connect;
 pub mod continuity;
 pub(crate) mod deploy;
 pub(crate) mod directories;
@@ -64,6 +65,10 @@ use super::module::ModuleDescriptor;
 
 pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
+pub use connect::{
+    fill, ClientConnection, ConfiguredIn, ConnectInput, ConnectReport, ServerView, StdioView,
+    CONNECT_URI,
+};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use deploy::{
     DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI,
@@ -120,6 +125,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         objects,
         capabilities,
         commands,
+        connect,
         graph,
         health,
         continuity,

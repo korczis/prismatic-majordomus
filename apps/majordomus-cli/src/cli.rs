@@ -33,6 +33,8 @@ pub enum Command {
     Mcp(McpArgs),
     /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
     Serve(ServeArgs),
+    /// Print what a client needs to reach this repository's shared MCP server
+    Connect(ConnectArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),
     /// Write the committed projections of the registry (docs/generated), or check that they are current
@@ -580,6 +582,36 @@ pub struct ScopeArgs {
     /// Exit 10 when any path given is out of the scope
     #[arg(long)]
     pub check: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus connect`: what a client needs in front of it to reach this repository's
+/// shared MCP server. A client is a provider of the distribution, named by its id, and the
+/// answer is the same one `majordomus_connect` and `GET /api/v1/connect` give.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ConnectArgs};
+/// let cli = Cli::try_parse_from(["majordomus", "connect", "chatgpt"]).unwrap();
+/// let Command::Connect(args) = cli.command else { panic!("not connect") };
+/// let args: ConnectArgs = args;
+/// assert_eq!(args.client.as_deref(), Some("chatgpt"));
+/// // and with no client named, every one of them
+/// let cli = Cli::try_parse_from(["majordomus", "connect"]).unwrap();
+/// let Command::Connect(args) = cli.command else { panic!("not connect") };
+/// assert!(args.client.is_none());
+/// ```
+pub struct ConnectArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    /// One client (`chatgpt`, `claude-code`, `codex`, `gemini`, ...); none prints them all
+    pub client: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -1332,6 +1364,27 @@ pub struct CommandExamples {
 /// disposable repository. Adding a command without adding its example does not pass
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
+    CommandExamples {
+        command: "connect",
+        examples: &[
+            ExampleDoc {
+                id: "connect-every-client",
+                title: "What every client needs to reach this repository",
+                description: "One line per client the distribution ships an adapter for, with where that client keeps the configuration that names this server — a file at the root, or its own settings — and, for the ones that keep it themselves, the procedure with this checkout's launcher and the running server's endpoint filled in. The clients are the providers; no list of vendors is written anywhere.",
+                argv: &["connect"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["CLIENT", "chatgpt", "launcher"]),
+            },
+            ExampleDoc {
+                id: "connect-chatgpt",
+                title: "One client, in full",
+                description: "The ChatGPT app keeps its MCP servers in Settings → MCP servers, so there is no file to write and nothing for `generate` to project: this prints the fields to fill, with the absolute launcher for the stdio transport and the running server's /mcp endpoint for Streamable HTTP.",
+                argv: &["connect", "chatgpt"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["chatgpt", "MCP servers", "stdio"]),
+            },
+        ],
+    },
     CommandExamples {
         command: "product",
         examples: &[ExampleDoc {

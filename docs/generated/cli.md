@@ -17,6 +17,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 |---|---|---|
 | [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio (read-only) |
 | [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only) |
+| [`majordomus connect`](#majordomus-connect) | `/docs/cli/connect/` | Print what a client needs to reach this repository's shared MCP server |
 | [`majordomus capabilities`](#majordomus-capabilities) | `/docs/cli/capabilities/` | Introspect the capability registry: what exists, where it came from, how it is exposed |
 | [`majordomus capabilities list`](#majordomus-capabilities-list) | `/docs/cli/capabilities/list/` | Every capability, one line each, with its projections |
 | [`majordomus capabilities describe`](#majordomus-capabilities-describe) | `/docs/cli/capabilities/describe/` | One capability by canonical id: schemas, provenance, every projection |
@@ -113,7 +114,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus connect`](#majordomus-connect), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions).
 
 ```text
 majordomus <COMMAND>
@@ -197,6 +198,42 @@ Examples:
   ```
 
   Verified: binds a port, answers GET /openapi.json, exits 0 when stopped.
+
+<a id="majordomus-connect"></a>
+## `majordomus connect`
+
+Print what a client needs to reach this repository's shared MCP server
+
+```text
+majordomus connect [OPTIONS] [CLIENT]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `<CLIENT>` | `<CLIENT>` | — | One client (`chatgpt`, `claude-code`, `codex`, `gemini`, ...); none prints them all |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What every client needs to reach this repository** — One line per client the distribution ships an adapter for, with where that client keeps the configuration that names this server — a file at the root, or its own settings — and, for the ones that keep it themselves, the procedure with this checkout's launcher and the running server's endpoint filled in. The clients are the providers; no list of vendors is written anywhere.
+
+  ```console
+  $ majordomus connect
+  ```
+
+  Verified: exits 0; prints CLIENT, chatgpt, launcher.
+
+- **One client, in full** — The ChatGPT app keeps its MCP servers in Settings → MCP servers, so there is no file to write and nothing for `generate` to project: this prints the fields to fill, with the absolute launcher for the stdio transport and the running server's /mcp endpoint for Streamable HTTP.
+
+  ```console
+  $ majordomus connect chatgpt
+  ```
+
+  Verified: exits 0; prints chatgpt, MCP servers, stdio.
 
 <a id="majordomus-capabilities"></a>
 ## `majordomus capabilities`

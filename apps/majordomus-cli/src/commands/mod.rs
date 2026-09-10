@@ -33,6 +33,7 @@ pub(crate) mod bench;
 pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod completion;
+pub(crate) mod connect;
 pub(crate) mod distribution;
 pub(crate) mod env;
 pub(crate) mod executions;
@@ -55,6 +56,7 @@ pub fn run(cli: Cli) -> Result<u8> {
     match cli.command {
         Command::Mcp(args) => mcp::run(args),
         Command::Serve(args) => serve::run(args),
+        Command::Connect(args) => connect::run(args),
         Command::Capabilities(args) => capabilities::run(args),
         Command::Generate(args) => generate::run(args),
         Command::Bench(args) => bench::run(args),
@@ -99,6 +101,9 @@ mod tests {
                 matches!(c, Command::Bench(_))
             }),
             (&["majordomus", "scope"], |c| matches!(c, Command::Scope(_))),
+            (&["majordomus", "connect"], |c| {
+                matches!(c, Command::Connect(_))
+            }),
             (&["majordomus", "web", "list"], |c| {
                 matches!(c, Command::Web(_))
             }),

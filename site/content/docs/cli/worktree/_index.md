@@ -4,7 +4,7 @@ description = "The branch-to-worktree topology: where every linked worktree belo
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 58
+weight = 59
 [extra]
 route = "/docs/cli/worktree/"
 command = "majordomus worktree"

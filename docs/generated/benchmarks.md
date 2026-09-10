@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 73 | 70 | 0 | 3 |
-| http | 73 | 70 | 0 | 3 |
-| mcp | 71 | 68 | 0 | 3 |
+| direct | 74 | 71 | 0 | 3 |
+| http | 74 | 71 | 0 | 3 |
+| mcp | 72 | 69 | 0 | 3 |
 | system | 13 | 13 | 0 | 0 |
-| total | 230 | 221 | 0 | 9 |
+| total | 233 | 224 | 0 | 9 |
 
 ## Capabilities
 
@@ -26,6 +26,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commands.get` | commands | query | — | covered | covered | covered | `worktree-status` |
 | `commands.graph` | commands | query | — | covered | covered | covered | `default` |
 | `commands.list` | commands | query | — | covered | covered | covered | `all`, `read-only`, `one-program` |
+| `connect.list` | connect | query | — | covered | covered | covered | `every-client`, `one-client` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |

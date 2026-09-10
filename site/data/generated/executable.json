@@ -120,6 +120,23 @@
       "tool": "majordomus_commands"
     },
     {
+      "api_anchor": "/docs/api/#op-connect-list",
+      "claims": [],
+      "cli": "majordomus connect",
+      "id": "connect.list",
+      "kind": "query",
+      "module": "connect",
+      "module_route": "/registry/modules/connect/",
+      "resource": "majordomus://connect",
+      "route": "/registry/capabilities/connect-list/",
+      "slug": "connect-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/connect.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/connect.rs",
+      "tests": [],
+      "title": "How a client attaches to this repository",
+      "tool": "majordomus_connect"
+    },
+    {
       "api_anchor": "/docs/api/#op-continuity-state",
       "claims": [],
       "cli": null,
@@ -1533,9 +1550,9 @@
     ]
   },
   "counts": {
-    "capabilities": 73,
+    "capabilities": 74,
     "claims": 35,
-    "modules": 24
+    "modules": 25
   },
   "generator": "majordomus-cli 0.4.0",
   "modules": [
@@ -1606,6 +1623,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/commands.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/commands.rs",
       "title": "Command graph"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "connect.list",
+          "route": "/registry/capabilities/connect-list/",
+          "slug": "connect-list"
+        }
+      ],
+      "claims": [],
+      "id": "connect",
+      "route": "/registry/modules/connect/",
+      "slug": "connect",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/connect.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/connect.rs",
+      "title": "Attaching a client"
     },
     {
       "capabilities": [

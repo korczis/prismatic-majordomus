@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 73,
-    "schemas": 328,
-    "tags": 24
+    "operations": 74,
+    "schemas": 333,
+    "tags": 25
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -2413,6 +2413,71 @@
       "variants": []
     },
     {
+      "description": "One client, and what it takes for it to reach this repository.\n\n```\nuse majordomus_cli::capability::builtin::{ClientConnection, ConfiguredIn};\n// a client that reads a file the checkout does not carry: named, and not pretended\nlet c: ClientConnection = serde_json::from_value(serde_json::json!({\n    \"id\": \"claude-code\",\n    \"title\": \"Claude Code\",\n    \"configured_in\": \"repository\",\n    \"config_path\": \".mcp.json\",\n    \"configured\": false,\n})).unwrap();\nassert!(matches!(c.configured_in, ConfiguredIn::Repository));\nassert_eq!(c.config_path.as_deref(), Some(\".mcp.json\"));\nassert!(!c.configured && c.setup.is_none());\n```",
+      "is_enum": false,
+      "name": "ClientConnection",
+      "properties": [
+        {
+          "description": "The provider id: the template's file stem, the key everywhere else.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a person knows it by.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where this client keeps the configuration.",
+          "name": "configured_in",
+          "refs": [
+            "ConfiguredIn"
+          ],
+          "required": true,
+          "type": "ConfiguredIn"
+        },
+        {
+          "description": "The file it reads, repository-relative, when it reads one.",
+          "name": "config_path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "That file is present in this checkout.",
+          "name": "configured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The configuration as this checkout holds it, for a client that reads a file; the\nvendor's procedure with this checkout's values filled in, for one that does not.",
+          "name": "setup",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why there is nothing to show, when there is nothing.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ConnectReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What a client said about itself in `initialize`.",
       "is_enum": false,
       "name": "ClientInfo",
@@ -3979,6 +4044,87 @@
           "value": "unknown"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Where a client keeps the configuration that names this server.\n\n```\nuse majordomus_cli::capability::builtin::ConfiguredIn;\n// a file in this tree is shared by everyone who clones it; the application's own\n// settings are added once per machine, and the wire word says which\nassert_eq!(\n    serde_json::to_value(ConfiguredIn::Repository).unwrap(),\n    serde_json::json!(\"repository\")\n);\nassert_eq!(ConfiguredIn::Application.as_str(), \"application\");\n```",
+      "is_enum": true,
+      "name": "ConfiguredIn",
+      "properties": [],
+      "type": "\"repository\" | \"application\" | \"nothing\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ClientConnection"
+      ],
+      "values": [
+        {
+          "description": "In this tree, at a path the vendor decided: the file is committed and shared.",
+          "value": "repository"
+        },
+        {
+          "description": "Inside the application: added once per machine, through its own settings.",
+          "value": "application"
+        },
+        {
+          "description": "The provider declares neither a file nor a procedure: it attaches through the agent\nit runs, or it is a name for a convention rather than a client.",
+          "value": "nothing"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "How every client reaches this repository, and what each one needs.\n\n```\nuse majordomus_cli::capability::builtin::ConnectReport;\nlet r: ConnectReport = serde_json::from_value(serde_json::json!({\n    \"repository\": \"/r\",\n    \"name\": \"majordomus\",\n    \"stdio\": { \"command\": \"/r/bin/majordomus-mcp\", \"relative\": \"bin/majordomus-mcp\", \"present\": true, \"cwd\": \"/r\" },\n    \"server\": { \"running\": false, \"lease\": \".ai/local/state/mcp/server.json\" },\n    \"clients\": [],\n})).unwrap();\n// one server per repository, under one name on every client's board\nassert_eq!(r.name, \"majordomus\");\nassert!(r.clients.is_empty());\n```",
+      "is_enum": false,
+      "name": "ConnectReport",
+      "properties": [
+        {
+          "description": "The repository root, absolute.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name every configuration gives the server.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stdio transport: one launcher, shared by every client that spawns a process.",
+          "name": "stdio",
+          "refs": [
+            "StdioView"
+          ],
+          "required": true,
+          "type": "StdioView"
+        },
+        {
+          "description": "The Streamable HTTP transport: the server that is running, if one is.",
+          "name": "server",
+          "refs": [
+            "ServerView"
+          ],
+          "required": true,
+          "type": "ServerView"
+        },
+        {
+          "description": "One entry per client, sorted by id.",
+          "name": "clients",
+          "refs": [
+            "ClientConnection"
+          ],
+          "required": true,
+          "type": "array of ClientConnection"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "connect.list"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -5766,6 +5912,7 @@
         "commands.get",
         "commands.list",
         "commands.graph",
+        "connect.list",
         "continuity.state",
         "deploy.get",
         "deploy.list",
@@ -15188,6 +15335,55 @@
       "variants": []
     },
     {
+      "description": "The shared server as a client would reach it, right now.\n\n```\nuse majordomus_cli::capability::builtin::ServerView;\n// nothing is running: the endpoint is absent and the reason is what a person needs\nlet v: ServerView = serde_json::from_value(serde_json::json!({\n    \"running\": false,\n    \"reason\": \"no server holds the lease\",\n    \"lease\": \".ai/local/state/mcp/server.json\",\n})).unwrap();\nassert!(!v.running && v.mcp_url.is_none());\nassert_eq!(v.reason.as_deref(), Some(\"no server holds the lease\"));\n```",
+      "is_enum": false,
+      "name": "ServerView",
+      "properties": [
+        {
+          "description": "A server holds the lease and answered a probe for this root.",
+          "name": "running",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Its base URL, when one is running.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its Streamable HTTP endpoint, when one is running: the URL a client that speaks the\ntransport itself is given.",
+          "name": "mcp_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why there is no endpoint, when there is none.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The lease file, repository-relative: what was read to answer this.",
+          "name": "lease",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ConnectReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions.",
       "is_enum": true,
       "name": "ServiceAvailability",
@@ -15514,6 +15710,48 @@
         "worktree.status"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The stdio transport, as a client configuration names it.\n\n```\nuse majordomus_cli::capability::builtin::StdioView;\n// both forms of the one launcher: the file at the root resolves the relative path,\n// an application's settings have nothing to resolve it against\nlet v: StdioView = serde_json::from_value(serde_json::json!({\n    \"command\": \"/r/bin/majordomus-mcp\",\n    \"relative\": \"bin/majordomus-mcp\",\n    \"present\": true,\n    \"cwd\": \"/r\",\n})).unwrap();\nassert!(v.command.ends_with(&v.relative));\n```",
+      "is_enum": false,
+      "name": "StdioView",
+      "properties": [
+        {
+          "description": "The launcher, absolute: what a client whose configuration lives outside the tree\nmust be given, because it has no repository-relative path to resolve against.",
+          "name": "command",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The same, repository-relative: what a file at the root names.",
+          "name": "relative",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "It is present and executable in this checkout.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The directory the client starts it in.",
+          "name": "cwd",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ConnectReport"
+      ],
       "values": [],
       "variants": []
     },
@@ -18346,6 +18584,80 @@
           "result_schema": "CommandGraphReport",
           "stability": "implemented",
           "summary": "The whole command graph"
+        }
+      ]
+    },
+    {
+      "description": "How each client reaches this repository's one shared MCP server: the launcher every configuration names, the Streamable HTTP endpoint of the server that is running, the configuration this checkout holds for a client that reads a file, and the vendor's own procedure — with this checkout's values filled in — for one that keeps it inside the application.",
+      "name": "connect",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "connect",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/connect?client=chatgpt\"",
+          "description": "One entry per client the distribution ships an adapter for, with where its configuration lives, whether this checkout carries it, and what to put in front of it. The clients are the providers; nothing here is a list of vendors.",
+          "id": "connect.list",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "connect",
+            "uri": "majordomus://connect"
+          },
+          "mcp_tool": "majordomus_connect",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "One provider id (`chatgpt`, `claude-code`, `codex`, ...). Absent means every client.",
+              "examples": [
+                {
+                  "case": "one-client",
+                  "value": "\"chatgpt\""
+                }
+              ],
+              "name": "client",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/connect",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::connect",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "How a client attaches to this repository: the result.",
+              "schema": "ConnectReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ConnectReport",
+          "stability": "behaviorally_verified",
+          "summary": "How a client attaches to this repository"
         }
       ]
     },

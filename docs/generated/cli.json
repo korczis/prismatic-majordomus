@@ -361,6 +361,139 @@
       {
         "path": [
           "majordomus",
+          "connect"
+        ],
+        "route": "/docs/cli/connect/",
+        "executable": true,
+        "usage": "majordomus connect [OPTIONS] [CLIENT]",
+        "about": "Print what a client needs to reach this repository's shared MCP server",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "client",
+            "positional": true,
+            "help": "One client (`chatgpt`, `claude-code`, `codex`, `gemini`, ...); none prints them all",
+            "value_name": "CLIENT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "connect-every-client",
+            "title": "What every client needs to reach this repository",
+            "description": "One line per client the distribution ships an adapter for, with where that client keeps the configuration that names this server — a file at the root, or its own settings — and, for the ones that keep it themselves, the procedure with this checkout's launcher and the running server's endpoint filled in. The clients are the providers; no list of vendors is written anywhere.",
+            "argv": [
+              "connect"
+            ],
+            "command": "majordomus connect",
+            "setup": [],
+            "expectation": "exits 0; prints CLIENT, chatgpt, launcher"
+          },
+          {
+            "id": "connect-chatgpt",
+            "title": "One client, in full",
+            "description": "The ChatGPT app keeps its MCP servers in Settings → MCP servers, so there is no file to write and nothing for `generate` to project: this prints the fields to fill, with the absolute launcher for the stdio transport and the running server's /mcp endpoint for Streamable HTTP.",
+            "argv": [
+              "connect",
+              "chatgpt"
+            ],
+            "command": "majordomus connect chatgpt",
+            "setup": [],
+            "expectation": "exits 0; prints chatgpt, MCP servers, stdio"
+          }
+        ],
+        "subcommands": []
+      },
+      {
+        "path": [
+          "majordomus",
           "capabilities"
         ],
         "route": "/docs/cli/capabilities/",

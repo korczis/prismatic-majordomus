@@ -1,7 +1,7 @@
 +++
 title = "majordomus release version"
 description = "The version the two writers state, whether they agree, and the bump the commits since the last release imply"
-weight = 83
+weight = 84
 [extra]
 route = "/docs/cli/release/version/"
 command = "majordomus release version"

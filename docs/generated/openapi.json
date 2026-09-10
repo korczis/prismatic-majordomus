@@ -39,6 +39,10 @@
       "description": "Every command this repository offers, from whichever program offers it: the Rust executable, the shell tool that carries the task lifecycle, and the workflows the repository declares for a person to run. Composed from the three declarations that already exist — the clap tree, the shipped command registry and the workflow runner's own dump — never from a list. Each command carries what running it changes, what it needs, where its argument values come from, and every surface that carries it, with the reason when one does not."
     },
     {
+      "name": "connect",
+      "description": "How each client reaches this repository's one shared MCP server: the launcher every configuration names, the Streamable HTTP endpoint of the server that is running, the configuration this checkout holds for a client that reads a file, and the vendor's own procedure — with this checkout's values filled in — for one that keeps it inside the application."
+    },
+    {
       "name": "continuity",
       "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
     },
@@ -939,6 +943,105 @@
         "x-majordomus-mcp": {
           "tool": "majordomus_command_graph"
         }
+      }
+    },
+    "/api/v1/connect": {
+      "get": {
+        "operationId": "connect.list",
+        "summary": "How a client attaches to this repository",
+        "description": "One entry per client the distribution ships an adapter for, with where its configuration lives, whether this checkout carries it, and what to put in front of it. The clients are the providers; nothing here is a list of vendors.",
+        "tags": [
+          "connect"
+        ],
+        "parameters": [
+          {
+            "name": "client",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "One provider id (`chatgpt`, `claude-code`, `codex`, ...). Absent means every client.",
+            "examples": {
+              "one-client": {
+                "value": "chatgpt"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "How a client attaches to this repository: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "connect.list",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::connect"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-mcp": {
+          "tool": "majordomus_connect",
+          "resource": {
+            "uri": "majordomus://connect",
+            "name": "connect"
+          }
+        },
+        "x-majordomus-cli": "connect"
       }
     },
     "/api/v1/continuity": {
@@ -8937,6 +9040,55 @@
         ],
         "description": "How a capability appears on the command line: the words after `majordomus`."
       },
+      "ClientConnection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The provider id: the template's file stem, the key everywhere else."
+          },
+          "title": {
+            "type": "string",
+            "description": "The name a person knows it by."
+          },
+          "configured_in": {
+            "$ref": "#/components/schemas/ConfiguredIn",
+            "description": "Where this client keeps the configuration."
+          },
+          "config_path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The file it reads, repository-relative, when it reads one."
+          },
+          "configured": {
+            "type": "boolean",
+            "description": "That file is present in this checkout."
+          },
+          "setup": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The configuration as this checkout holds it, for a client that reads a file; the\nvendor's procedure with this checkout's values filled in, for one that does not."
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there is nothing to show, when there is nothing."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "configured_in",
+          "configured"
+        ],
+        "description": "One client, and what it takes for it to reach this repository.\n\n```\nuse majordomus_cli::capability::builtin::{ClientConnection, ConfiguredIn};\n// a client that reads a file the checkout does not carry: named, and not pretended\nlet c: ClientConnection = serde_json::from_value(serde_json::json!({\n    \"id\": \"claude-code\",\n    \"title\": \"Claude Code\",\n    \"configured_in\": \"repository\",\n    \"config_path\": \".mcp.json\",\n    \"configured\": false,\n})).unwrap();\nassert!(matches!(c.configured_in, ConfiguredIn::Repository));\nassert_eq!(c.config_path.as_deref(), Some(\".mcp.json\"));\nassert!(!c.configured && c.setup.is_none());\n```"
+      },
       "ClientInfo": {
         "type": "object",
         "properties": {
@@ -10144,6 +10296,62 @@
           }
         ],
         "description": "How far a resolved value can be trusted."
+      },
+      "ConfiguredIn": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "repository",
+            "description": "In this tree, at a path the vendor decided: the file is committed and shared."
+          },
+          {
+            "type": "string",
+            "const": "application",
+            "description": "Inside the application: added once per machine, through its own settings."
+          },
+          {
+            "type": "string",
+            "const": "nothing",
+            "description": "The provider declares neither a file nor a procedure: it attaches through the agent\nit runs, or it is a name for a convention rather than a client."
+          }
+        ],
+        "description": "Where a client keeps the configuration that names this server.\n\n```\nuse majordomus_cli::capability::builtin::ConfiguredIn;\n// a file in this tree is shared by everyone who clones it; the application's own\n// settings are added once per machine, and the wire word says which\nassert_eq!(\n    serde_json::to_value(ConfiguredIn::Repository).unwrap(),\n    serde_json::json!(\"repository\")\n);\nassert_eq!(ConfiguredIn::Application.as_str(), \"application\");\n```"
+      },
+      "ConnectReport": {
+        "type": "object",
+        "properties": {
+          "repository": {
+            "type": "string",
+            "description": "The repository root, absolute."
+          },
+          "name": {
+            "type": "string",
+            "description": "The name every configuration gives the server."
+          },
+          "stdio": {
+            "$ref": "#/components/schemas/StdioView",
+            "description": "The stdio transport: one launcher, shared by every client that spawns a process."
+          },
+          "server": {
+            "$ref": "#/components/schemas/ServerView",
+            "description": "The Streamable HTTP transport: the server that is running, if one is."
+          },
+          "clients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientConnection"
+            },
+            "description": "One entry per client, sorted by id."
+          }
+        },
+        "required": [
+          "repository",
+          "name",
+          "stdio",
+          "server",
+          "clients"
+        ],
+        "description": "How every client reaches this repository, and what each one needs.\n\n```\nuse majordomus_cli::capability::builtin::ConnectReport;\nlet r: ConnectReport = serde_json::from_value(serde_json::json!({\n    \"repository\": \"/r\",\n    \"name\": \"majordomus\",\n    \"stdio\": { \"command\": \"/r/bin/majordomus-mcp\", \"relative\": \"bin/majordomus-mcp\", \"present\": true, \"cwd\": \"/r\" },\n    \"server\": { \"running\": false, \"lease\": \".ai/local/state/mcp/server.json\" },\n    \"clients\": [],\n})).unwrap();\n// one server per repository, under one name on every client's board\nassert_eq!(r.name, \"majordomus\");\nassert!(r.clients.is_empty());\n```"
       },
       "ContainerView": {
         "type": "object",
@@ -19011,6 +19219,45 @@
         ],
         "description": "The answer of `objects.search`."
       },
+      "ServerView": {
+        "type": "object",
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "description": "A server holds the lease and answered a probe for this root."
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its base URL, when one is running."
+          },
+          "mcp_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Its Streamable HTTP endpoint, when one is running: the URL a client that speaks the\ntransport itself is given."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there is no endpoint, when there is none."
+          },
+          "lease": {
+            "type": "string",
+            "description": "The lease file, repository-relative: what was read to answer this."
+          }
+        },
+        "required": [
+          "running",
+          "lease"
+        ],
+        "description": "The shared server as a client would reach it, right now.\n\n```\nuse majordomus_cli::capability::builtin::ServerView;\n// nothing is running: the endpoint is absent and the reason is what a person needs\nlet v: ServerView = serde_json::from_value(serde_json::json!({\n    \"running\": false,\n    \"reason\": \"no server holds the lease\",\n    \"lease\": \".ai/local/state/mcp/server.json\",\n})).unwrap();\nassert!(!v.running && v.mcp_url.is_none());\nassert_eq!(v.reason.as_deref(), Some(\"no server holds the lease\"));\n```"
+      },
       "ServiceAvailability": {
         "oneOf": [
           {
@@ -19246,6 +19493,34 @@
           "repository_errors"
         ],
         "description": "The answer to \"where am I, and is that where I belong\"."
+      },
+      "StdioView": {
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The launcher, absolute: what a client whose configuration lives outside the tree\nmust be given, because it has no repository-relative path to resolve against."
+          },
+          "relative": {
+            "type": "string",
+            "description": "The same, repository-relative: what a file at the root names."
+          },
+          "present": {
+            "type": "boolean",
+            "description": "It is present and executable in this checkout."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "The directory the client starts it in."
+          }
+        },
+        "required": [
+          "command",
+          "relative",
+          "present",
+          "cwd"
+        ],
+        "description": "The stdio transport, as a client configuration names it.\n\n```\nuse majordomus_cli::capability::builtin::StdioView;\n// both forms of the one launcher: the file at the root resolves the relative path,\n// an application's settings have nothing to resolve it against\nlet v: StdioView = serde_json::from_value(serde_json::json!({\n    \"command\": \"/r/bin/majordomus-mcp\",\n    \"relative\": \"bin/majordomus-mcp\",\n    \"present\": true,\n    \"cwd\": \"/r\",\n})).unwrap();\nassert!(v.command.ends_with(&v.relative));\n```"
       },
       "StepOutcome": {
         "oneOf": [

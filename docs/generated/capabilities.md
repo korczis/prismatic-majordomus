@@ -12,6 +12,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `artifacts` | Generated artifacts | behaviorally_verified | 1 | [`modules/artifacts.md`](modules/artifacts.md) |
 | `capabilities` | Capabilities | behaviorally_verified | 3 | [`modules/capabilities.md`](modules/capabilities.md) |
 | `commands` | Command graph | implemented | 3 | [`modules/commands.md`](modules/commands.md) |
+| `connect` | Attaching a client | behaviorally_verified | 1 | [`modules/connect.md`](modules/connect.md) |
 | `continuity` | Continuity | behaviorally_verified | 1 | [`modules/continuity.md`](modules/continuity.md) |
 | `deploy` | Deployment | behaviorally_verified | 3 | [`modules/deploy.md`](modules/deploy.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
@@ -45,6 +46,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `commands.get` | `commands` | query | implemented | `majordomus_command` | — | `GET /api/v1/command` | — | — | required |
 | `commands.graph` | `commands` | query | implemented | `majordomus_command_graph` | — | `GET /api/v1/commands/graph` | — | — | required |
 | `commands.list` | `commands` | query | implemented | `majordomus_commands` | `majordomus://commands` | `GET /api/v1/commands` | — | — | required |
+| `connect.list` | `connect` | query | behaviorally_verified | `majordomus_connect` | `majordomus://connect` | `GET /api/v1/connect` | `majordomus connect` | — | required |
 | `continuity.state` | `continuity` | query | behaviorally_verified | `majordomus_continuity` | `majordomus://continuity` | `GET /api/v1/continuity` | — | process, 2 entries, 2s | required |
 | `deploy.check` | `deploy` | query | behaviorally_verified | `majordomus_deploy_check` | — | `GET /api/v1/deployments/check` | — | process, 2 entries, 5s | required |
 | `deploy.get` | `deploy` | query | behaviorally_verified | `majordomus_deployment` | — | `GET /api/v1/deployment` | — | — | required |

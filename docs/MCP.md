@@ -66,7 +66,14 @@ others attach:
 | Claude Code | [`.mcp.json`](../.mcp.json) | a stdio server, `bin/majordomus-mcp`; Claude Code asks once whether to trust a project server |
 | Gemini CLI | [`.gemini/settings.json`](../.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
 | Codex | [`.codex/config.toml`](../.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
+| ChatGPT app | nothing in the tree | its own settings: Settings → MCP servers → Add server, with either transport — the stdio launcher below, or the running server's `/mcp`. `majordomus connect chatgpt` prints the fields with this checkout's values filled in ([the app's own documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=app)) |
 | bb | nothing of its own | an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with `settingSources: project`, which loads `.mcp.json`; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it `pending` at init and connected afterwards |
+
+`majordomus connect` answers this table for the checkout you are in: the absolute path of
+the launcher, the endpoint of the server that is running (and why there is none when there
+is none), and, per client, the configuration this checkout holds or the procedure its
+vendor documents with the values already filled in. It reads the lease and never takes it,
+so asking how to connect does not make the asking process the server.
 
 The rows are the providers whose declaration names a client configuration; the whole set,
 with what each reads and where it keeps its scratch checkouts, is

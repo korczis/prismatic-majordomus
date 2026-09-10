@@ -18,6 +18,12 @@
           "route": "/docs/cli/serve/"
         },
         {
+          "about": "Print what a client needs to reach this repository's shared MCP server",
+          "command": "majordomus connect",
+          "name": "connect",
+          "route": "/docs/cli/connect/"
+        },
+        {
           "about": "Introspect the capability registry: what exists, where it came from, how it is exposed",
           "command": "majordomus capabilities",
           "name": "capabilities",
@@ -491,6 +497,151 @@
       ],
       "route": "/docs/cli/serve/",
       "usage": "majordomus serve [OPTIONS]"
+    },
+    {
+      "about": "Print what a client needs to reach this repository's shared MCP server",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "One client (`chatgpt`, `claude-code`, `codex`, `gemini`, ...); none prints them all",
+          "name": "client",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CLIENT"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus connect",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "connect"
+          ],
+          "command": "majordomus connect",
+          "description": "One line per client the distribution ships an adapter for, with where that client keeps the configuration that names this server — a file at the root, or its own settings — and, for the ones that keep it themselves, the procedure with this checkout's launcher and the running server's endpoint filled in. The clients are the providers; no list of vendors is written anywhere.",
+          "expectation": "exits 0; prints CLIENT, chatgpt, launcher",
+          "id": "connect-every-client",
+          "setup": [],
+          "title": "What every client needs to reach this repository"
+        },
+        {
+          "argv": [
+            "connect",
+            "chatgpt"
+          ],
+          "command": "majordomus connect chatgpt",
+          "description": "The ChatGPT app keeps its MCP servers in Settings → MCP servers, so there is no file to write and nothing for `generate` to project: this prints the fields to fill, with the absolute launcher for the stdio transport and the running server's /mcp endpoint for Streamable HTTP.",
+          "expectation": "exits 0; prints chatgpt, MCP servers, stdio",
+          "id": "connect-chatgpt",
+          "setup": [],
+          "title": "One client, in full"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "connect",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "connect"
+      ],
+      "route": "/docs/cli/connect/",
+      "usage": "majordomus connect [OPTIONS] [CLIENT]"
     },
     {
       "about": "Introspect the capability registry: what exists, where it came from, how it is exposed",
@@ -15461,10 +15612,10 @@
     }
   ],
   "counts": {
-    "arguments": 682,
-    "commands": 93,
-    "examples": 101,
-    "runnable": 88
+    "arguments": 688,
+    "commands": 94,
+    "examples": 103,
+    "runnable": 89
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.4.0",

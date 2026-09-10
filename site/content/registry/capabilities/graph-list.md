@@ -1,7 +1,7 @@
 +++
 title = "graph.list"
 description = "Every graph this executable derives: its id, what it shows, and what it is derived from."
-weight = 28
+weight = 29
 slug = "graph-list"
 [extra]
 id = "graph.list"

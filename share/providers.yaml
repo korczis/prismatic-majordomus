@@ -14,6 +14,14 @@
 # reports the gap. An entry with no template is an error there, because a provider with no
 # bootstrap is a name and nothing else.
 #
+# client_setup — the vendor's own procedure for a provider that keeps its MCP client
+# configuration inside the application instead of in the tree, so that there is no file to
+# write and nothing for `generate` to project. Lines of prose with tokens, filled per
+# checkout by `majordomus connect`: {name} the server's name, {command} the absolute
+# launcher, {url} the running shared server's /mcp endpoint (or why there is none),
+# {repository} the checkout's root. A provider declares this or a client_config; a provider
+# that declares neither reaches the server through the client it runs.
+#
 # scratch_roots — directories under which this provider creates a checkout of its own that
 # the worktree topology must not claim: reported as a session's scratch checkout, never
 # migrated unasked, never cleaned up by the tool, refused by the commit guard with the
@@ -47,6 +55,23 @@ providers:
     # (ADR 0024). Its managed worktrees live under its data directory, by thread id.
     scratch_roots:
       - ${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees
+  chatgpt:
+    title: ChatGPT app
+    # The app keeps its MCP servers in its own settings, never in a tree: Settings → MCP
+    # servers → Add server (learn.chatgpt.com/docs/extend/mcp?surface=app). So it declares
+    # no client configuration file and a setup instead: `majordomus connect chatgpt` fills
+    # the tokens below with this checkout's values.
+    # Lines, because the declaration is read by a YAML subset that has no block scalar;
+    # `connect` joins them.
+    client_setup:
+      - "Settings -> MCP servers -> Add server, and give it one of the two transports:"
+      - "  stdio            command {command}, no arguments, started in {repository}"
+      - "  streamable http  URL {url}"
+      - "Name the server `{name}`. The stdio form builds the executable when it must and"
+      - "joins the repository's one shared server, exactly as every other client does; the"
+      - "HTTP form needs that server to be running already. Nothing is written into the"
+      - "repository: the configuration belongs to the app, so it is added once per machine,"
+      - "not per checkout."
   claude-code:
     title: Claude Code
     client_config: .mcp.json
