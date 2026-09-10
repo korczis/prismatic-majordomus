@@ -28,7 +28,7 @@ pub const LICENSE: &str = env!("CARGO_PKG_LICENSE");
 
 /// Where the HTTP projection is explained for a person: the derived API reference on the
 /// documentation site, rendered from the OpenAPI document itself.
-pub const REFERENCE_URL: &str = "https://korczis.github.io/prismatic-majordomus/docs/api/";
+pub const REFERENCE_URL: &str = "https://majordomus.dev/docs/api/";
 
 /// One sentence: what is being served.
 pub const SUMMARY: &str = "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.";

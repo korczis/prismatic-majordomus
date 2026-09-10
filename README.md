@@ -1,12 +1,12 @@
 <p align="center">
-  <a href="https://korczis.github.io/prismatic-majordomus"><img src="assets/logo.svg" alt="Prismatic Majordomus" width="420"></a>
+  <a href="https://majordomus.dev"><img src="assets/logo.svg" alt="Prismatic Majordomus" width="420"></a>
 </p>
 
 # Prismatic Majordomus
 
 **A lightweight supervisory control layer for AI-assisted work.**
 
-[Website](https://korczis.github.io/prismatic-majordomus) ·
+[Website](https://majordomus.dev) ·
 [CLI reference](docs/CLI.md) ·
 [File schemas](docs/SCHEMAS.md) ·
 [What is guaranteed, advisory, planned, or refused](docs/SITE_CLAIMS.md) ·
@@ -85,7 +85,7 @@ command a hook runs. The model is in [`docs/CONTEXT.md`](docs/CONTEXT.md).
 ## Quick start
 
 ```bash
-curl -fsSL https://korczis.github.io/prismatic-majordomus/install.sh | sh
+curl -fsSL https://majordomus.dev/install.sh | sh
 ```
 
 Then, in the repository you want supervised:
@@ -386,7 +386,7 @@ majordomus plan roadmap        # the sequence, with what is current and what is 
 majordomus plan rgraph         # the same graph, as a diagram
 ```
 
-Rendered at [the roadmap](https://korczis.github.io/prismatic-majordomus/roadmap/), with the
+Rendered at [the roadmap](https://majordomus.dev/roadmap/), with the
 current state as a document in [`docs/PLAN_STATUS.md`](docs/PLAN_STATUS.md).
 
 Each step is gated by the previous one being real, and that is an invariant rather than a
@@ -414,7 +414,7 @@ every stale one, whichever generator owns it. The owners of every truth and the 
 of generation are in
 [ADR 5](.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
 and the graph is drawn in [`docs/GITHUB_PAGES_ARCHITECTURE.md`](docs/GITHUB_PAGES_ARCHITECTURE.md);
-the site's [Executable section](https://korczis.github.io/prismatic-majordomus/registry/) —
+the site's [Executable section](https://majordomus.dev/registry/) —
 the registry, every module and capability, the command line, the MCP surface, the HTTP API
 and the benchmarks — is rendered from that dataset and from nothing typed by hand.
 
@@ -423,8 +423,8 @@ once, as one file per feature under `.ai/repo/features/`, holding the references
 what the feature is made of and the editorial decisions nothing can infer; the interfaces
 it is exposed through, the counts behind it, the operational moments it answers and its
 route are derived from those references and refused as keys in the file. The homepage, the
-[feature pages](https://korczis.github.io/prismatic-majordomus/features/) and the
-[capability matrix](https://korczis.github.io/prismatic-majordomus/features/matrix/) name
+[feature pages](https://majordomus.dev/features/) and the
+[capability matrix](https://majordomus.dev/features/matrix/) name
 no feature, module, command, provider or count of their own, and a stale product dataset
 fails the build before it can be deployed. The contract is
 [`docs/PRODUCT.md`](docs/PRODUCT.md) and the decision is

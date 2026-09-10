@@ -100,9 +100,9 @@ compare_repository() { # <repository> <label>
   # --- the waves: which issues the graph allows to run at the same time
   ( cd "$repo" && "$MJ" plan waves ) \
     | awk '/^serialised by scope overlap:/{ done=1 } done { next }
-           /^Wave /{ w=$2; next } /^  [A-Za-z0-9]/{ printf "%s %s\n", w, $1 }' | sort > "$S/sh.waves"
+           /^Wave /{ w=$2; next } /^  [A-Za-z0-9]/{ printf "%s %s\n", w, $1 }' | LC_ALL=C sort > "$S/sh.waves"
   plan_tool "$repo" majordomus_plan_waves '{}' \
-    | jq -r '.waves[] | .wave as $w | .issues[] | "\($w) \(.id)"' | sort > "$S/rs.waves" || return 1
+    | jq -r '.waves[] | .wave as $w | .issues[] | "\($w) \(.id)"' | LC_ALL=C sort > "$S/rs.waves" || return 1
   same "$label: the waves" "$S/sh.waves" "$S/rs.waves" || return 1
 
   # --- the ready set and the blocked set are the same filter, not a second derivation
@@ -179,7 +179,7 @@ expect_exit 0 "$MJ" plan validate
 compare_repository "$PWD" "a fixture with cancellation, a gate and an overlap" || exit 1
 
 # the fixture really does exercise what it claims: a warning of each kind the case names
-( "$MJ" plan validate --json 2>/dev/null ) | jq -r '.category // empty' | sort -u > "$S/codes"
+( "$MJ" plan validate --json 2>/dev/null ) | jq -r '.category // empty' | LC_ALL=C sort -u > "$S/codes"
 for code in evidence_missing scope_conflict; do
   grep -qx "$code" "$S/codes" || { echo "    the fixture no longer produces a $code finding"; exit 1; }
 done
