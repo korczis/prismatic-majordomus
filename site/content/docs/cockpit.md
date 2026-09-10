@@ -174,9 +174,21 @@ opinion:
 | version control | git, asked once at startup |
 | benchmark coverage | the benchmark projection's coverage — the same one `bench coverage --check` reads |
 | committed projections | the same rendering `majordomus generate` writes, compared with what is committed |
+| the shared server | the decision `server.status` makes, from this checkout's lease and one probe of the server it names |
+| attached clients | the in-memory peer board of this process |
 
 </div>
 
+
+The server check reports where this checkout's shared server stands — `absent`,
+`starting`, `ready`, `outdated` or `stale` — with its address, the version it serves and
+the reason when the answer is not `ready`. `absent` and `starting` are `ok`: a checkout
+nobody serves is not an unhealthy one, and a lease still binding resolves itself within the
+bind grace. `outdated` and `stale` are `warn` with the reason as a finding: a server
+answering from code this tree no longer has, and a lease naming an address nobody answers
+at, are both somebody's to clear and neither stops this process from serving. It is the
+fourth of this crate's four readings of "ready", and the only one that belongs in a health
+report; `docs/MCP.md` names all four and what each is for.
 
 It deliberately does **not** re-render every committed projection on each call: that would
 rebuild canonical state per request. It compares the one artifact derived from code alone

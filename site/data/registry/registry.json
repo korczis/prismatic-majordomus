@@ -6,7 +6,7 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "aa1807819f2a21ee103f002089c36e73ce52fc0cc7c8515f0e01c80224ada5de",
+    "fingerprint": "03a1c71caacb8918e3e5656bda6e69509124cc9cde80fb91a4ac7a1ef0f293a4",
     "summary": {
       "total": 1188,
       "builtin": 74,
@@ -11555,7 +11555,7 @@
         "module": "health",
         "kind": "query",
         "title": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -26497,7 +26497,7 @@
       {
         "id": "health",
         "title": "Health",
-        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage and the comparison `generate --check` makes. No check here has an opinion of its own.",
+        "description": "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own.",
         "stability": "behaviorally_verified",
         "source": "builtin",
         "capabilities": 3,
@@ -26844,7 +26844,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2251cba591f8edb0044fd1fb5b1b3f73c5c90962637b2efab991ca502b183c4b",
+    "fingerprint": "e1d9a2ef68a96825e9dfae361da8238f09bdf9bc08f3631b98fa76b6ad9306ff",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -30069,7 +30069,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 24618
+        "bytes": 25573
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -30168,7 +30168,7 @@
         "title": "Repository entry: what is automatic, what is decorative, and where it breaks",
         "path": "docs/ENTRY_AUDIT.md",
         "source_class": "document",
-        "bytes": 27043
+        "bytes": 28014
       },
       {
         "uri": "majordomus://document/docs/ENVIRONMENT.md",
@@ -30231,7 +30231,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 29614
+        "bytes": 32666
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -53462,7 +53462,7 @@
         "name": "majordomus_health",
         "id": "health.report",
         "title": "Health of this process",
-        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
+        "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict.",
         "kind": "query",
         "read_only": true,
         "input": "Empty",

@@ -145,7 +145,17 @@ run first died on a silent peer.
    (`src/lease.rs:257-268`), and none of them asks the version. There is no `status`,
    `ensure`, `stop` or `explain` for the server in the executable (`src/cli.rs:31-71`), and
    the shell tool's `doctor` does not know the lease exists (`grep -n mcp lib/doctor.sh`).
-   Reproduce: `bin/majordomus-cli --help | grep -c -E 'status|ensure|stop'`.
+   Since: the lease is one type read once and `server.status` serves it, with `serve
+   status`/`ensure`/`stop` on the executable (stage 02, 03); `health.report` carries a
+   `server` check decided by that same reading, so the report names the address, the
+   version and whether what answers is the code on disk, and a stale lease is a finding
+   rather than a silence (stage 09, `apps/majordomus-cli/tests/health_server.rs`). The
+   readiness answers are named rather than merged: four questions about four subjects, each
+   pointed at its owner in `docs/MCP.md` ("Four readings of \"ready\"") and in the module
+   doc where the four meet (`src/capability/builtin/health.rs`). The shell tool's `doctor`
+   still does not know the lease exists.
+   Reproduce: `bin/majordomus-cli --help | grep -c -E 'status|ensure|stop'`;
+   `curl -s "$MAJORDOMUS_URL/api/v1/health" | jq '.checks[] | select(.id=="server")'`.
 
 **P1 — the invariant holds only by luck or only for one session**
 
@@ -354,7 +364,7 @@ Preserve, and build on:
 | 06 | the Codex and Gemini lifecycle adapters (data in `share/providers.yaml`, not code) | `feature/lifecycle-adapters` | parallel |
 | 07 | rule `project.entry-converges` with a gate; `docs/ENTRY.md`; `HARDCODING_LEDGER.yaml` rows for item 15; the bootstrap template names the launcher | `feature/entry-convergence` | with 03 |
 | 08 | cold start through `.mcp.json` on the default port as an exclusive case; storm; crash at the shell level; two worktrees, one server; two providers; drift injection into the board | `feature/entry-gates` | after 05 |
-| 09 | delete the readers in `lib/context.sh` and `.just/serve.just`; the three readiness answers; the documents in item 14 | `feature/entry-convergence` | last |
+| 09 | delete the readers in `lib/context.sh` and `.just/serve.just`; ~~the three readiness answers~~ (named, not merged: `feature/health-names-the-server`, with the `server` check on `health.report`); the documents in item 14 | `feature/entry-convergence`, `feature/health-names-the-server` | last |
 
 </div>
 
