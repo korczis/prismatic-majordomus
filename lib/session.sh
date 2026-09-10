@@ -431,9 +431,33 @@ mj_session_close() {
   rm -f "$body"
 
   mj_session_store_ready
-  final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
-    || { rm -f "$rec" "$win"; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
-  rm -f "$rec" "$win"
+  # One episode, one record. `mj_publish_record` gives each file a unique name, which makes
+  # a second close of the same episode a second *file* rather than a collision — so nothing
+  # here ever refused it, and the identity contract this section declares was enforced only
+  # by the validator, which reads a tree somebody has already committed. Nobody commits a
+  # record that would turn the section red, so four records of one episode simply sat
+  # untracked: closed at 21:41 and then again at 10:39:02, 10:39:18 and 10:39:31, thirteen
+  # and fifteen seconds apart, because a provider's end event can fire more than once.
+  #
+  # The record is immutable by contract, so the first one written is the record and a later
+  # close of the same episode adds nothing a reader could use. It is not an error either —
+  # the second end event is the provider's normal behaviour, not a worker's mistake — so
+  # this keeps what exists, says so, and still tears down the open record below.
+  local existing
+  existing="$(grep -rl "^session_id: $sid\$" "$(mj_session_store)" 2>/dev/null | head -n 1 || true)"
+  if [ -n "$existing" ]; then
+    # The episode's record is the one that already exists, and every reader downstream —
+    # the ledger event, the context close, this command's own output — must name it, not
+    # the file that was not written.
+    final="$existing"
+    rm -f "$rec" "$win"
+    printf 'session: %s already has a record at %s; this close adds none\n' \
+      "$sid" "$(mj_rel "$existing")" >&2
+  else
+    final="$(mj_publish_record "$(mj_session_store)" "$sid" "$rec")" \
+      || { rm -f "$rec" "$win"; mj_die "$MJ_EX_INTERNAL" "could not create a unique session file"; }
+    rm -f "$rec" "$win"
+  fi
 
   # Appended before the open record is removed, so the closing event carries this
   # session's stamp like every other event of the episode.
@@ -848,6 +872,31 @@ mj_validate_session_records() {
     esac
     rm -f "$flat"
   done
+  # A record nobody committed reaches nobody. This section's own contract calls these
+  # records "shared with every surface", and every one of those surfaces — the site page,
+  # the Rust index, the registry, `session list` in another clone — reads the tracked tree.
+  # So an untracked record is written, validated by the loop above, counted in the `ok`
+  # line below, and invisible everywhere a reader would actually look for it.
+  #
+  # The lifecycle writes a record when an episode closes and nothing commits it, so the gap
+  # is the default rather than an accident: four of fifteen records here sat untracked,
+  # three of them written the same morning, while the section reported itself healthy.
+  #
+  # A warning and not a failure, for the reason `clone unpushed` is one: the moments between
+  # writing a record and staging it are legitimate, and a check that is red every time an
+  # episode ends is a check people learn to scroll past. What was missing was not severity —
+  # it was any mention at all.
+  local orphan="" orphans=0 name
+  while read -r name; do
+    [ -n "$name" ] || continue
+    orphans=$((orphans + 1))
+    [ "$orphans" -le 3 ] && orphan="$orphan $name"
+  done <<EOF
+$(cd "$dir" 2>/dev/null && git ls-files --others --exclude-standard -- '*.md' 2>/dev/null)
+EOF
+  [ "$orphans" -gt 0 ] && mj_warn session "$(mj_rel "$dir")/" \
+    "$orphans record(s) exist here and are committed nowhere, so they reach no surface:${orphan}$( [ "$orphans" -gt 3 ] && printf ' …' )" \
+    "git add $(mj_rel "$dir") && majordomus derive"
   [ "$n" -gt 0 ] && [ "$bad" = 0 ] \
     && mj_doctrine_ok session "$(mj_rel "$dir")/" "$n record(s) — every field the contract has, no conversation, no absolute path" "majordomus session list"
   return 0
