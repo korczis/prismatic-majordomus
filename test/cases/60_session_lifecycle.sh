@@ -22,6 +22,17 @@ expect_grep 'session s-[0-9]{14}-[0-9a-f]{4} opened'
 S=".ai/local/state/session-current.yaml"
 [ -f "$S" ] || { echo "    no open session record written"; exit 1; }
 
+# An episode belongs to the provider session that opened it and lives under its own name in
+# state/sessions-open/; session-current.yaml is the pointer to the episode of this checkout,
+# and every reader of that path follows it without knowing it did. An episode nobody named
+# is keyed `hand`, and this case opens only those. Case 110 covers the several-at-once half.
+[ -L "$S" ] || { echo "    session-current.yaml is not a pointer into the store"; exit 1; }
+[ -f .ai/local/state/sessions-open/hand.yaml ] \
+  || { echo "    the hand-opened episode is not in the store"; ls -1 .ai/local/state/sessions-open 2>/dev/null; exit 1; }
+# The record the pointer names is what carries the mode. A symlink's own bits are read by
+# nothing, and `file_mode` reports them because it lstats.
+episode_file() { if [ -L "$1" ]; then printf '%s/%s' "$(dirname "$1")" "$(readlink "$1")"; else printf '%s' "$1"; fi; }
+
 head_now="$(git rev-parse HEAD)"
 expect_grep "^start_head: $head_now$" "$S"
 expect_grep "^branch: $(git symbolic-ref --short HEAD)$" "$S"
@@ -30,7 +41,8 @@ expect_grep '^owner: "tester"$' "$S"
 expect_grep '^worker: "some-provider/some-model"$' "$S"
 
 # --- the open record is private to the worker who opened it
-[ "$(file_mode "$S")" = 600 ] || { echo "    open session record is $(file_mode "$S"), expected 600"; exit 1; }
+E="$(episode_file "$S")"
+[ "$(file_mode "$E")" = 600 ] || { echo "    open session record is $(file_mode "$E"), expected 600"; exit 1; }
 
 # --- an absent worker stays absent; nothing plausible is invented for it
 rm -f "$S"
