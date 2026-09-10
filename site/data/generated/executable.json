@@ -256,6 +256,40 @@
       "tool": "majordomus_design_tokens"
     },
     {
+      "api_anchor": "/docs/api/#op-devtask-issue",
+      "claims": [],
+      "cli": "majordomus devtask issue",
+      "id": "devtask.issue",
+      "kind": "query",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-issue/",
+      "slug": "devtask-issue",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "One issue as an executable development task",
+      "tool": "majordomus_devtask"
+    },
+    {
+      "api_anchor": "/docs/api/#op-devtask-milestone",
+      "claims": [],
+      "cli": "majordomus devtask milestone",
+      "id": "devtask.milestone",
+      "kind": "query",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-milestone/",
+      "slug": "devtask-milestone",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "One milestone as an executable dependency graph",
+      "tool": "majordomus_devtask_milestone"
+    },
+    {
       "api_anchor": "/docs/api/#op-directories-list",
       "claims": [],
       "cli": null,
@@ -1625,9 +1659,9 @@
     ]
   },
   "counts": {
-    "capabilities": 78,
+    "capabilities": 80,
     "claims": 36,
-    "modules": 26
+    "modules": 27
   },
   "generator": "majordomus-cli 0.5.0",
   "modules": [
@@ -1771,6 +1805,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/design.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/design.rs",
       "title": "Design system"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "devtask.issue",
+          "route": "/registry/capabilities/devtask-issue/",
+          "slug": "devtask-issue"
+        },
+        {
+          "id": "devtask.milestone",
+          "route": "/registry/capabilities/devtask-milestone/",
+          "slug": "devtask-milestone"
+        }
+      ],
+      "claims": [],
+      "id": "devtask",
+      "route": "/registry/modules/devtask/",
+      "slug": "devtask",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "title": "Executable development scopes"
     },
     {
       "capabilities": [
