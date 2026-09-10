@@ -1,0 +1,246 @@
+#!/usr/bin/env bash
+# unblock — take the conflict off a pull request that is only conflicted on GitHub.
+#
+# Every open pull request in this repository goes CONFLICTING within minutes of a merge to
+# master, and the conflict is not a disagreement about anybody's work. `.gitattributes`
+# marks every family of committed generated artifacts `merge=derived`, and
+# `scripts/merge-derived` resolves them; that driver has to be declared per clone as local
+# git config with an absolute path, which GitHub can never have. So the server runs the
+# default text driver over files whose content is a fingerprint of the merged tree — a value
+# that appears in neither side and is right in neither — and reports a conflict that exists
+# on nobody's machine. Measured across four pull requests on 2026-09-10: 49 conflicting
+# paths, 49 of them generated, not one authored source file.
+#
+# The remedy is already the rule. `project.land-and-publish` clause 2 says to merge master
+# in locally, where the driver exists, and push, before asking anyone to look; clause 3
+# forbids the union merge that once looked like a shortcut and disabled every CI gate for a
+# day; `project.derived-files-regenerated` is why the regenerated output is committed rather
+# than dropped. All of that was already settled. What was missing was the one command for a
+# gesture people were performing by hand in ten minutes, several times a day, and skipping
+# under time pressure — which is how a branch stays red long enough to be merged by somebody
+# who stops reading the conflict list.
+#
+#   scripts/unblock <branch>       merge master in, derive, commit, push that branch
+#   scripts/unblock <pr-number>    the same, with the branch read from the pull request
+#   scripts/unblock <branch> --dry-run
+#                                  everything up to and including the derive; commits nothing,
+#                                  pushes nothing, and says what it would have pushed
+#
+# It works in a detached scratch worktree at the branch's remote tip, under a temporary
+# directory it makes and removes on every exit path. Detached is deliberate twice over: the
+# branch's own worktree, where somebody may be working this minute, is never touched, and a
+# detached HEAD is outside the worktree-topology guard that would otherwise refuse the
+# commit from anywhere but the branch's canonical worktree.
+#
+# It refuses rather than guesses. A conflict on a path outside the `merge=derived` set is an
+# authored conflict: two people wrote two things and only they can say which is meant. This
+# aborts the merge, names the files and exits, because a tool that resolved that would be
+# the union merge clause 3 forbids, wearing a better name.
+#
+# Exit: 0 ok · 2 usage · 10 a refusal (an authored conflict, a merge or a derive that
+# failed, a branch that moved under it) · 12 something needed is missing (no such branch,
+# no gh for a pull-request number, no merge driver declarable).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$ROOT"
+
+# MAJORDOMUS_SHARE and MAJORDOMUS_ROOT, where they are set at all, name the checkout whose
+# shell somebody entered — which is never the scratch worktree this works in. `scripts/derive`
+# exports the first as the distribution it generates from and the pre-commit hook reads what
+# that produced, so an inherited value makes both read a tree this merge never touched and the
+# hook then refuses the commit over a staleness that is not there. Dropped once, here, rather
+# than worked around at every call site.
+unset MAJORDOMUS_SHARE MAJORDOMUS_ROOT
+
+REMOTE="${UNBLOCK_REMOTE:-origin}"
+TRUNK="${UNBLOCK_TRUNK:-master}"
+# The regeneration, named once. The behavioural case points this at a stub: a real derive is
+# three to six minutes and a suite case cannot spend that, while everything this script
+# decides — what conflicts, what is authored, what is pushed — happens on either side of it.
+DERIVE="${UNBLOCK_DERIVE:-scripts/derive}"
+# How long to wait for GitHub to compute the merge state after the push. It is computed
+# asynchronously, so the first answer is UNKNOWN whatever the truth is.
+MERGEABLE_WAIT="${UNBLOCK_MERGEABLE_WAIT:-60}"
+
+DRY=0
+TARGET=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --dry-run) DRY=1; shift ;;
+    -h|--help) sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) echo "unblock: unknown option $1" >&2; exit 2 ;;
+    *)
+      [ -z "$TARGET" ] || { echo "unblock: one branch at a time; got '$TARGET' and '$1'" >&2; exit 2; }
+      TARGET="$1"; shift ;;
+  esac
+done
+[ -n "$TARGET" ] || { echo "unblock: name the branch to unblock, or its pull request number" >&2; exit 2; }
+
+step()   { printf '==> %s\n' "$*"; }
+say()    { printf '%s\n' "$*"; }
+refuse() { printf 'REFUSE %s\n' "$*" >&2; exit 10; }
+absent() { printf 'unblock: %s\n' "$*" >&2; exit 12; }
+
+# ---------------------------------------------------------------- which branch
+# A pull request number is what a person has in front of them when they see the conflict, so
+# it is accepted as the name of the branch, resolved through gh rather than guessed at.
+BRANCH="$TARGET"
+case "$TARGET" in
+  ''|*[!0-9]*) ;;
+  *)
+    command -v gh >/dev/null 2>&1 \
+      || absent "$TARGET is a pull request number and gh is not installed; name the branch instead"
+    BRANCH="$(gh pr view "$TARGET" --json headRefName -q .headRefName 2>/dev/null || true)"
+    [ -n "$BRANCH" ] || absent "gh could not read pull request $TARGET; name the branch instead"
+    say "unblock: pull request $TARGET is $BRANCH"
+    ;;
+esac
+case "$BRANCH" in
+  "$TRUNK"|gh-pages) refuse "$BRANCH is not a branch to unblock; this merges the trunk into a feature branch" ;;
+esac
+
+# ---------------------------------------------------------------- what is being merged
+step "fetch $REMOTE $TRUNK $BRANCH"
+git fetch -q "$REMOTE" "$TRUNK" 2>/dev/null || absent "$REMOTE/$TRUNK could not be fetched"
+git fetch -q "$REMOTE" "$BRANCH" 2>/dev/null \
+  || absent "$REMOTE has no branch $BRANCH; push it first, or check the name"
+TIP="$(git rev-parse --verify -q "FETCH_HEAD^{commit}")" \
+  || absent "$REMOTE/$BRANCH names no commit"
+TRUNK_SHA="$(git rev-parse --verify "$REMOTE/$TRUNK^{commit}")"
+
+# Idempotence: run twice and the second run is a sentence, not a commit. A branch that
+# already contains the trunk has nothing to merge, and pushing an unchanged ref would only
+# make the timeline harder to read.
+if git merge-base --is-ancestor "$TRUNK_SHA" "$TIP"; then
+  say "unblock: $BRANCH already contains $REMOTE/$TRUNK (${TRUNK_SHA:0:7}); nothing to merge"
+  exit 0
+fi
+behind="$(git rev-list --count "$TIP..$TRUNK_SHA")"
+say "unblock: $BRANCH is at ${TIP:0:7}, $behind commit(s) behind $REMOTE/$TRUNK (${TRUNK_SHA:0:7})"
+
+# ---------------------------------------------------------------- the driver this clone needs
+# Declared once, by `just derive-merge-driver`, which writes the local config with this
+# clone's absolute path. The recipe is run rather than its two lines copied here: a second
+# copy of the driver command is a second declaration of one fact, and the day the two
+# disagree is the day a merge silently stops resolving.
+driver="$(git config --get merge.derived.driver || true)"
+if [ -n "$driver" ] && [ -x "${driver%% *}" ]; then
+  say "unblock: merge.derived is wired to ${driver%% *}"
+else
+  [ -z "$driver" ] || say "unblock: merge.derived names ${driver%% *}, which is not executable here; redeclaring"
+  command -v just >/dev/null 2>&1 \
+    || absent "merge.derived is not declared in this clone and just is not installed to declare it (the recipe is derive-merge-driver)"
+  step "just derive-merge-driver"
+  just derive-merge-driver
+  driver="$(git config --get merge.derived.driver || true)"
+  [ -n "$driver" ] || absent "the derive-merge-driver recipe left merge.derived.driver unset"
+fi
+
+# ---------------------------------------------------------------- the scratch worktree
+W="$(mktemp -d "${TMPDIR:-/tmp}/mj-unblock.XXXXXX")"
+cleanup() {
+  git worktree remove --force "$W" >/dev/null 2>&1 || rm -rf "$W"
+  git worktree prune >/dev/null 2>&1 || true
+}
+trap cleanup EXIT
+git worktree add -q --detach "$W" "$TIP"
+
+# ---------------------------------------------------------------- the merge
+step "merge $REMOTE/$TRUNK into $BRANCH"
+# rerere is off for this merge, deliberately. A resolution recorded during some other merge
+# is a memory of what one person decided about two other commits; replaying it here would
+# resolve paths this tool never looked at, invisibly, and a criss-cross replay has already
+# dropped commits from master in this repository once. What this merge does must be
+# decidable from what it says.
+merge_out=""
+if ! merge_out="$(git -C "$W" -c rerere.enabled=false merge --no-edit "$REMOTE/$TRUNK" 2>&1)"; then
+  # Which paths are unmerged, and which of them anybody wrote by hand. `git check-attr` is
+  # asked about each path rather than .gitattributes read here, because what decides is the
+  # attribute that applies to the path, however the pattern granting it happens to be spelt.
+  conflicted="$(git -C "$W" diff --name-only --diff-filter=U || true)"
+  authored=""
+  derived=""
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    if [ "$(git -C "$W" check-attr merge -- "$p" | sed 's/.*: //')" = derived ]; then
+      derived="$derived$p
+"
+    else
+      authored="$authored$p
+"
+    fi
+  done <<EOF
+$conflicted
+EOF
+  git -C "$W" merge --abort >/dev/null 2>&1 || true
+  if [ -n "$authored" ]; then
+    say "$merge_out"
+    printf 'REFUSE %s\n' "the merge conflicts on $(printf '%s' "$authored" | grep -c .) authored file(s), which are the owner's to settle:" >&2
+    printf '%s' "$authored" | sed 's/^/       /' >&2
+    printf '       %s\n' "merge $REMOTE/$TRUNK in the branch's own worktree, decide what those files mean, then run this again" >&2
+    exit 10
+  fi
+  say "$merge_out"
+  printf '%s' "$derived" | sed 's/^/       /' >&2
+  refuse "those are derived files and the driver was supposed to resolve them; re-run \`just derive-merge-driver\`, and if it still conflicts the fault is in ${driver%% *}"
+fi
+say "$merge_out"
+MERGE_SHA="$(git -C "$W" rev-parse HEAD)"
+
+# ---------------------------------------------------------------- the projections follow
+# Every derived file the driver touched was resolved to ours and is therefore stale: it
+# carries a fingerprint of a tree that no longer exists. The pre-commit hook refuses a
+# commit in that state and CI refuses it again, so this is not a courtesy — it is the other
+# half of the driver's contract.
+step "$DERIVE (three to six minutes)"
+if ! ( cd "$W" && eval "$DERIVE" ); then
+  refuse "$DERIVE failed on the merged tree; the merge was not pushed and nothing was left behind"
+fi
+
+changed="$(git -C "$W" status --porcelain --untracked-files=all | wc -l | tr -d ' ')"
+if [ "$changed" = 0 ]; then
+  say "unblock: the projections were already current after the merge; nothing to commit beyond the merge itself"
+else
+  say "unblock: the merge left $changed derived path(s) stale; the derive rewrote them"
+fi
+
+if [ "$DRY" = 1 ]; then
+  say "unblock: dry run: would commit $changed derived path(s) and push the merge ${MERGE_SHA:0:7} to $REMOTE/$BRANCH"
+  exit 0
+fi
+
+if [ "$changed" != 0 ]; then
+  step "commit"
+  git -C "$W" add -A
+  git -C "$W" commit -q -m "chore(derive): the projections follow the master merge"
+  MERGE_SHA="$(git -C "$W" rev-parse HEAD)"
+fi
+
+# ---------------------------------------------------------------- publish the branch
+step "push $REMOTE $BRANCH"
+if ! git -C "$W" push -q "$REMOTE" "HEAD:refs/heads/$BRANCH"; then
+  refuse "$REMOTE/$BRANCH moved while this ran, so the push was not a fast-forward; run it again"
+fi
+say "unblock: $BRANCH now carries $REMOTE/$TRUNK (${TRUNK_SHA:0:7}) and is at ${MERGE_SHA:0:7}"
+
+# ---------------------------------------------------------------- what GitHub now says
+# The whole point was the server's view, so the server is asked. GitHub computes the merge
+# state asynchronously and answers UNKNOWN until it has, which is why this polls rather than
+# reads once — and why it reports what it got rather than pretending an unfinished
+# computation is a verdict.
+command -v gh >/dev/null 2>&1 || exit 0
+pr="$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number' 2>/dev/null || true)"
+[ -n "$pr" ] || { say "unblock: no open pull request for $BRANCH; the branch is merged and pushed all the same"; exit 0; }
+t0=$(date +%s); state=""
+while :; do
+  state="$(gh pr view "$pr" --json mergeable -q .mergeable 2>/dev/null || true)"
+  case "$state" in MERGEABLE|CONFLICTING) break ;; esac
+  [ $(( $(date +%s) - t0 )) -lt "$MERGEABLE_WAIT" ] || break
+  sleep 5
+done
+case "$state" in
+  MERGEABLE)   say "unblock: pull request #$pr is MERGEABLE" ;;
+  CONFLICTING) say "unblock: pull request #$pr is still CONFLICTING — this time it is not the derived files; look at what it names" ;;
+  *)           say "unblock: pull request #$pr: GitHub has not finished computing the merge state after ${MERGEABLE_WAIT}s (${state:-no answer}); ask again with: gh pr view $pr --json mergeable" ;;
+esac
