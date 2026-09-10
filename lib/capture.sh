@@ -157,6 +157,10 @@ mj_lifecycle_field()     { mj_lifecycle_adapter "$1" 2>/dev/null | awk -v n="$2"
 mj_lifecycle_first()     { mj_lifecycle_field "$1" "$2" | cut -d, -f1; }
 # every event kind, in the order a configuration writes them
 mj_lifecycle_kinds()     { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk '{ print $1 }'; }
+# Which lifecycle events the model waits for. `start` injects the briefing it is about to
+# read; `compact` must checkpoint before the transcript is folded. Nothing reads what `end`
+# writes, and a session that is ending should not be held open to write it.
+mj_lifecycle_latency()   { printf 'inline\n'; }
 mj_lifecycle_column()    { printf '%s\n' "$MJ_LIFECYCLE_COLUMNS" | awk -v k="$1" -v n="$2" '$1 == k { print $n }'; }
 mj_lifecycle_shim_rel()  { mj_lifecycle_field "$1" "$(mj_lifecycle_column "$2" 3)"; }
 mj_lifecycle_shim()      { printf '%s/%s' "$MJ_ROOT" "$(mj_lifecycle_shim_rel "$1" "$2")"; }
@@ -1067,11 +1071,11 @@ mj_capture_install_one() {
   cfg="$MJ_ROOT/$(mj_capture_field "$p" 2)"
   mkdir -p "$(dirname "$cfg")"
 
-  mj_capture_install_shim "$p" "$(mj_capture_shim_rel "$p")" "$(mj_capture_field "$p" 3)" "capture prompt --provider $p"
+  mj_capture_install_shim "$p" "$(mj_capture_shim_rel "$p")" "$(mj_capture_field "$p" 3)" "capture prompt --provider $p" inline
   if mj_lifecycle_adapter "$p" >/dev/null 2>&1; then
     for one in $(mj_lifecycle_kinds); do
       mj_capture_install_shim "$p" "$(mj_lifecycle_shim_rel "$p" "$one")" "$(mj_lifecycle_event "$p" "$one")" \
-        "capture session --provider $p --event $one"
+        "capture session --provider $p --event $one" "$(mj_lifecycle_latency "$one")"
     done
   fi
 
@@ -1112,13 +1116,53 @@ mj_capture_events() {
 }
 
 # One shim: the provider runs it, it finds the repository from its own location, and it
-# never rejects what the person is doing. The command it ends in is the only thing that
-# differs between the events.
+# never rejects what the person is doing. Two things differ between the events: the command
+# it ends in, and whether the model waits for that command.
+#
+# An event is `inline` when the model needs the result before it goes on — SessionStart
+# injects the briefing, PreCompact must checkpoint before the transcript is folded. It is
+# `async` when nothing downstream reads the result: the payload is taken from stdin, the
+# work is left running, and the hook returns.
+#
+# Every event is `inline` today, and the asynchronous form is deliberately not selected
+# anywhere. It was measured on 2026-09-10: UserPromptSubmit costs about 4 s, all of it a
+# cold start of the tool, paid before the model is handed the prompt. Backgrounding the
+# work removes the wait and loses the record — the provider tears down the hook's process
+# group when it returns, and the child dies there, with `nohup` and without it alike. The
+# fix is not a background job: it is either a durable outbox the shim appends to and
+# something else drains, or a request to the shared server that is already running for this
+# repository. Until one of those exists, a prompt that is captured slowly beats a prompt
+# that is captured never. A synchronous shim costs a full cold start of
+# the tool on the person's critical path, which on UserPromptSubmit is paid before the model
+# is handed a single word of the prompt.
 mj_capture_install_shim() {
-  local p="$1" rel="$2" event="$3" args="$4" shim
+  local p="$1" rel="$2" event="$3" args="$4" latency="${5:-inline}" shim body
   shim="$MJ_ROOT/$rel"
-  if [ -f "$shim" ]; then mj_info capture "$rel" "already present; left as it is"; return 0; fi
+  body="$(mj_capture_shim_body "$event" "$args" "$latency")"
+  # A shim this tool did not write is not this tool's to rewrite. One it did write is
+  # regenerated when its shape has changed, so that a repository installed before this tool
+  # knew an event could be asynchronous is repaired by the same command that installed it.
+  if [ -f "$shim" ]; then
+    grep -qF 'Written by `majordomus capture install`' "$shim" || {
+      mj_info capture "$rel" "already present and not this tool's; left as it is"; return 0; }
+    if [ "$(cat "$shim")" = "$body" ]; then
+      mj_info capture "$rel" "already present; left as it is"; return 0
+    fi
+    printf '%s\n' "$body" > "$shim"
+    chmod +x "$shim"
+    mj_info capture "$rel" "rewritten ($latency)"
+    return 0
+  fi
   mkdir -p "$(dirname "$shim")"
+  printf '%s\n' "$body" > "$shim"
+  chmod +x "$shim"
+  mj_info capture "$rel" "written and made executable ($latency)"
+}
+
+# The text of one shim. Kept apart from writing it so that an installed shim can be compared
+# with what this tool would write today, which is what makes the rewrite above safe.
+mj_capture_shim_body() {
+  local event="$1" args="$2" latency="$3"
   { printf '#!/bin/sh\n'
     printf '# The %s hook: it runs where the provider fires that event, and hands the payload\n' "$event"
     printf '# to `majordomus %s`. Written by `majordomus capture install`.\n#\n' "$args"
@@ -1133,10 +1177,18 @@ mj_capture_install_shim() {
     printf '  mj=\n'
     printf 'done\n'
     printf '[ -n "$mj" ] || mj=$(command -v majordomus) || exit 0\n'
-    printf 'exec "$mj" --repo "$root" %s\n' "$args"
-  } > "$shim"
-  chmod +x "$shim"
-  mj_info capture "$rel" "written and made executable"
+    if [ "$latency" = async ]; then
+      printf '# Nothing downstream reads what this writes, so the person does not wait for it.\n'
+      printf '# The payload is taken here and the work is left running under nohup, detached\n'
+      printf '# from this shell: the provider tears down the hook\x27s process group as soon as it\n'
+      printf '# returns, and a plain background job dies there with the record unwritten.\n'
+      printf 'payload=$(cat)\n'
+      printf 'printf %%s "$payload" | nohup "$mj" --repo "$root" %s >/dev/null 2>&1 &\n' "$args"
+      printf 'exit 0\n'
+    else
+      printf 'exec "$mj" --repo "$root" %s\n' "$args"
+    fi
+  }
 }
 
 # The configuration this tool writes when there is none: every event it has a shim for, in
