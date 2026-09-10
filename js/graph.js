@@ -60,7 +60,10 @@
       { selector: 'node', style: {
         'background-color': p.surface,
         'border-width': 1.5,
-        'border-color': function (n) { return p[KIND_COLOUR[n.data('kind')] || 'muted']; },
+        // The role is the datum's when it carries one: a graph that invents a class of node
+        // should not also have to be taught its colour here. KIND_COLOUR remains for the
+        // graphs that predate the field.
+        'border-color': function (n) { return p[n.data('role') || KIND_COLOUR[n.data('kind')] || 'muted']; },
         'label': 'data(label)',
         'color': p.text,
         'font-size': 10,
