@@ -240,6 +240,40 @@ merges can carry the *same* `source_hash` — nothing regenerated between them. 
 coverage is inverse to its usage is worse than a missing one, because nobody notices it is
 absent.
 
+The refusal also arrives too late to repair by hand once merges are frequent. A derivation
+costs minutes — time it with `scripts/derive` rather than trusting a number here — and on
+2026-09-10 the trunk moved four times in twenty minutes, so a repair derived against any one
+commit was stale before it could be committed. The repair loses the race by construction
+rather than by bad luck, which forecloses the obvious response: somebody deriving and
+committing does not converge while merges continue.
+
+The frequency is not carelessness, and this is the part a reader will otherwise get wrong.
+`site/data/generated/source.json` carries the whole input list — count it yourself — and
+`test/cases/` is in it in full. So adding an assertion to a behavioural case moves the input
+hash and obliges a full derivation before the commit is allowed. Nearly every branch in this
+repository edits a case, so nearly every branch pays the tax, which is why the volume of
+derivations is high enough for the merge race above to be lost by construction rather than
+occasionally. Somebody will notice a commit touching no generated file refused as stale and
+conclude the check is over-broad: it is not. A case is genuinely an input, the derived
+documents genuinely describe the cases, and the fingerprint is right to move. The cost is
+real and the check is correct, which is an uncomfortable combination and the reason it needs
+saying rather than inferring.
+
+That is true of **the trunk**, and not of **the site**. Publication does not need the
+workflow to accept a run: `scripts/site-deploy` publishes from one tree that derives clean,
+and on 2026-09-10 that is how the site reached the current version while every workflow run
+was still refusing. Keep the two apart, or a reader concludes the site is hostage to a queue
+it is not hostage to.
+
+The remedies are therefore a freeze on merging or a check that refuses at the merge — and
+only the second one is real. **No session in this repository can enumerate the sessions able
+to merge it.** On 2026-09-10 three merges landed inside a window three sessions had agreed to
+hold, and the sessions holding it could not produce a list of who else was working; two
+separate boards disagreed about which peers existed. A convention binds only those who read
+it, so any remedy that depends on agreement has already failed for whoever arrives without
+having read it. The check has to be somewhere a merge cannot go past: not a hook, not a
+document, not an agreement.
+
 The condition above was observed on 2026-09-10 and then repaired, and the gap it illustrates
 is structural rather than a description of how the trunk stands today — so do not test this
 by looking at the trunk and concluding the finding expired. The commits carry their own
@@ -277,13 +311,41 @@ must be stated precisely or it is refutable in one command. The **input fingerpr
 deterministic** — `scripts/pages fingerprint` three times on one tree gives one value. What is
 machine-dependent is the **generated content**: `%h` abbreviates against the local object
 store, a depth-1 checkout writes a degraded changelog, a concurrent derive can read a sibling
-worktree root. A build that re-derived could therefore publish a third answer matching neither
+worktree root. Related, and a separate trap: when checking that a borrowed executable is the
+right one, compare its *generation* — `Cargo.toml`, `Cargo.lock`, `build.rs` and `src`, the
+set the digest covers — and not its version. Only the version is printed, and two builds can
+print the same one. A build that re-derived could therefore publish a third answer matching neither
 side. State it as content-dependence, never as fingerprint non-determinism.
 
 One thing the generation guard is not: the digest it compares is taken over `Cargo.toml`,
 `Cargo.lock`, `build.rs` and `src` only, with `benches/` and `tests/` deliberately outside
 it — which is why a branch that changes no Rust may legitimately use a binary built in
 another worktree.
+
+**A trigger can drift from the model it claims to be derived from.** `.github/workflows/pages.yml`
+carries a `paths:` filter whose comment says it is `scripts/pages paths`. Compare them:
+
+```
+scripts/pages paths        50 entries
+pages.yml paths:           45 entries
+```
+
+Six canonical paths are missing from the workflow and one workflow entry is not canonical.
+All six are design-system inputs, so a change to the design system changes the published site
+and starts no deploy at all — a failure with no error anywhere, because nothing ran. The
+comment naming the generator is not the generator; a derived list that is pasted stays
+correct only until the source moves.
+
+**A verdict without the size of what it examined cannot be trusted.** Four instances arrived
+in four hours on 2026-09-10: a probe reporting `OK — 129 measurements` over pages that never
+loaded; the prefix check above, vanishing from its own output; an internal-link crawl that had
+never matched a single link; and a liveness gate printing how far behind the published commit
+was *inside* an `ok`. Every one reported. Every one reported over an empty or truncated set.
+
+So: a check states how much it looked at, and **zero is a failure unless the check declares
+that zero is expected**. `ok prefix — every root-absolute path carries /x` says nothing;
+`ok prefix — 412 root-absolute paths, all carry /x` refutes itself when the number is zero.
+This costs one variable per check and it is the cheapest of everything on this page.
 
 **A note about the plan.** `majordomus plan validate` refuses an issue that names no
 milestone. So an area of standing work with no milestone is not merely unfiled — the work in
