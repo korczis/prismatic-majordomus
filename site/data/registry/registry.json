@@ -6,22 +6,22 @@
     "version": "0.4.0"
   },
   "registry": {
-    "fingerprint": "b431f9a1ad7b1c9b3389ff004d70b205a17d25b49b2db20683273f4e1cca4234",
+    "fingerprint": "ee302851d27e30a64e73c7a2a62d97552d48438d8165b9f99a9bf334e6c08fcc",
     "summary": {
-      "total": 1189,
+      "total": 1191,
       "builtin": 73,
-      "declarative": 1116,
+      "declarative": 1118,
       "by_kind": {
         "command": 3,
         "query": 70,
-        "resource": 1116
+        "resource": 1118
       },
       "by_stability": {
         "behaviorally_verified": 68,
-        "implemented": 1121
+        "implemented": 1123
       },
       "mcp_tools": 71,
-      "mcp_resources": 1142,
+      "mcp_resources": 1144,
       "http_routes": 73,
       "cli_commands": 31,
       "modules": 52,
@@ -26569,7 +26569,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 109,
+        "capabilities": 110,
         "capability_ids": []
       },
       {
@@ -26609,7 +26609,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 135,
+        "capabilities": 136,
         "capability_ids": []
       },
       {
@@ -26689,7 +26689,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2f9f969801d23cf9d48c7cb8b4deb36bb589b9ac0e18c150219d9a0e0463c2a9",
+    "fingerprint": "4b1ef30c1557c4001c4396aba526435e2830f6c7d1021fe65a511894baa7ec2e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -26732,12 +26732,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 109,
+      "rule": 110,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 135,
+      "test": 136,
       "use-case": 42,
       "workspace": 1
     },
@@ -30133,7 +30133,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 20149
+        "bytes": 22417
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -36944,6 +36944,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.the-version-is-measured@1",
+        "kind": "rule",
+        "identity": "project.the-version-is-measured@1",
+        "title": "The version is measured against the public surface, not claimed",
+        "description": "What a release's version number says about compatibility is decided by comparing the capability registry of the last release with this tree — an atom of the surface that is gone is a breaking change, one that is new is an addition — and a version smaller than what moved is refused. Below 1.0.0 the floor is a minor release and a removal is named rather than refused; at 1.0.0 the shift ends.",
+        "path": ".ai/repo/rules/project/the-version-is-measured.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5014,
+        "tags": [
+          "release",
+          "versioning",
+          "contract",
+          "evidence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.ui-conformance@1",
         "kind": "rule",
         "identity": "project.ui-conformance@1",
@@ -37546,6 +37563,14 @@
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
         "bytes": 6597
+      },
+      {
+        "uri": "majordomus://test/test/cases/112_version_matches_surface.sh",
+        "kind": "test",
+        "identity": "test/cases/112_version_matches_surface.sh",
+        "path": "test/cases/112_version_matches_surface.sh",
+        "source_class": "case",
+        "bytes": 5245
       },
       {
         "uri": "majordomus://test/test/cases/11_site_derivation.sh",
@@ -39126,7 +39151,7 @@
         "id",
         "version"
       ],
-      "objects": 109
+      "objects": 110
     },
     {
       "name": "scope",
@@ -39181,7 +39206,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 135
+      "objects": 136
     },
     {
       "name": "use-case",
