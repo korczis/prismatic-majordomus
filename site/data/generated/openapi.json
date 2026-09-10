@@ -2,7 +2,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 78,
-    "schemas": 350,
+    "schemas": 351,
     "tags": 26
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -281,6 +281,13 @@
           "refs": [],
           "required": false,
           "type": "array of string"
+        },
+        {
+          "description": "Which of this peer's claims this is, when the peer holds more than one.\n\nOne MCP session is not always one piece of work — a client that fans work out to\nsubagents shares its session with all of them — and without a name every\nannouncement replaces the last, so the board ends up describing whichever worker\nspoke most recently and the rest of the scope silently stops being claimed. Name a\nclaim and it stands beside the others; announce under that name again and it is\nupdated. Leave it out and this is the peer's one unnamed claim, which is what a\nsingle session announcing about itself wants.",
+          "name": "claim",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -345,7 +352,16 @@
           "type": "boolean"
         },
         {
-          "description": "Its announcement, when it made one.",
+          "description": "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.",
+          "name": "claims",
+          "refs": [
+            "Announcement"
+          ],
+          "required": false,
+          "type": "array of Announcement"
+        },
+        {
+          "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.",
           "name": "announcement",
           "refs": [
             "Announcement"
@@ -361,6 +377,13 @@
           ],
           "required": false,
           "type": "array of Overlap"
+        },
+        {
+          "description": "Paths the claim this one replaced had, and this one does not.\n\nAnnouncing under a name a peer already used replaces that claim, which is what an\nupdate is. When the replacement is narrower, the peer has just stopped claiming\nground it held a moment ago, and the other peers stop being warned off it. That is\noccasionally what was meant and is otherwise a mistake nobody would ever see, so it\nis said here, at the moment it happens, rather than left to be discovered in a\ncollision later. Empty is the ordinary case.",
+          "name": "released",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         }
       ],
       "type": "object",
@@ -372,10 +395,17 @@
       "variants": []
     },
     {
-      "description": "What a peer said it is working on.",
+      "description": "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had.",
       "is_enum": false,
       "name": "Announcement",
       "properties": [
+        {
+          "description": "What this claim is called, when the peer named it. Absent for a peer's unnamed claim.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
         {
           "description": "One line: the task or intent, in the peer's words.",
           "name": "intent",
@@ -2307,6 +2337,28 @@
         {
           "description": "The check could not be made here; it says nothing either way.",
           "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```",
+      "is_enum": true,
+      "name": "Checkouts",
+      "properties": [],
+      "type": "\"repository\" | \"this\"",
+      "used_by": [
+        "server.status"
+      ],
+      "used_by_schemas": [],
+      "values": [
+        {
+          "description": "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.",
+          "value": "repository"
+        },
+        {
+          "description": "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one.",
+          "value": "this"
         }
       ],
       "variants": []
@@ -11501,7 +11553,16 @@
           "type": "boolean"
         },
         {
-          "description": "Its announcement, when it made one.",
+          "description": "Every claim this peer holds, in name order, the unnamed one first. Empty for a peer\nthat has announced nothing.\n\nOne connection may be doing several things at once — a session that fans work out to\nsubagents shares its MCP session with all of them — and before this field the board\ncould hold only the last thing said, so each announcement silently erased the one\nbefore it and the other peers stopped seeing the rest of the scope.",
+          "name": "claims",
+          "refs": [
+            "Announcement"
+          ],
+          "required": false,
+          "type": "array of Announcement"
+        },
+        {
+          "description": "The most recently made of [`Peer::claims`], for a reader that wants one line rather\nthan all of them. Derived from `claims` and never a second account of it: a peer\nholding one claim reports the same thing in both, which is what every peer that does\nnot name its claims reports.",
           "name": "announcement",
           "refs": [
             "Announcement"
@@ -21812,7 +21873,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/peers/announce\" -H \"content-type: application/json\" -d '{\"intent\":\"benchmark: announcing\",\"scope\":[\"apps/majordomus-cli\"]}'",
-          "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
+          "description": "Tell the other peers of this shared server what the calling session is doing and which paths it expects to touch. A peer may hold several claims at once: name one with 'claim' and it stands beside the others, announce under that name again and it is updated, leave it out and this is the peer's one unnamed claim. Name your claims when one session is doing several things at once — subagents share their parent's session, so an unnamed announcement from each of them would replace the last rather than adding to it. Changes this process's memory only; the repository is never written. Needs an MCP session: over plain HTTP there is no caller.",
           "id": "peers.announce",
           "kind": "command",
           "mcp_resource": "",
@@ -23216,8 +23277,8 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "serve status",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server\"",
-          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server?checkouts=repository\"",
+          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
           "id": "server.status",
           "kind": "query",
           "mcp_resource": {
@@ -23226,7 +23287,24 @@
           },
           "mcp_tool": "majordomus_server",
           "method": "GET",
-          "parameters": [],
+          "parameters": [
+            {
+              "description": "Which checkouts the answer covers. Absent means `repository`.",
+              "examples": [
+                {
+                  "case": "repository",
+                  "value": "\"repository\""
+                },
+                {
+                  "case": "this-checkout",
+                  "value": "\"this\""
+                }
+              ],
+              "name": "checkouts",
+              "required": false,
+              "type": "Checkouts"
+            }
+          ],
           "path": "/api/v1/server",
           "provenance": {
             "module": "majordomus_cli::capability::builtin::server",

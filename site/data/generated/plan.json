@@ -6480,7 +6480,7 @@
       ],
       "objective": "Register `deployment` as a kind of the AI layer — allowed keys, schema, directory contract — and describe this repository's own deployment as one object under .ai/repo/deployments/, so that every later projection reads one file and no provider file is ever authoritative.",
       "why": "A Dockerfile and a fly.toml written by hand would restate the port, the routes, the resources and the build inputs that the repository already knows. The layer already has a mechanism for canonical facts: a kind, its allowed keys, its schema and its directory contract. Deployment is a kind, and everything downstream is a projection.",
-      "current_state": "No deployment kind, no .ai/repo/deployments directory, no allow file and no schema exist. share/kinds.yaml registers every other kind the layer holds.",
+      "current_state": "The kind exists on the trunk: share/kinds.yaml declares deployment against the schema majordomus.deployment/v1, share/allow/deployment.txt closes its keys and is generated from that schema, and .ai/repo/deployments/majordomus.yaml describes this repository's own deployment beside the directory's README. The work reached master with feature/deployment-core and nothing was ever recorded against this issue, so the milestone reads PLANNED 0/32 while its first artifacts are on the trunk. Measured on master 6042f4286, 2026-09-10; not marked complete here because this issue's own validation (bash test/run.sh, bin/majordomus doctor) has not been rerun against that tree.",
       "desired_state": "A deployment object is indexed, readable through the same object surface as every other kind, closed by an allow file, described by a schema, and living in a directory that carries its own context document.",
       "acceptance_criteria": [
         "The object states the generic deployment facts — application identity, package and binary, listen port, health and readiness routes, resources, machine count, region, autostart and autostop, build inputs, budgets — and keeps provider-specific facts in a named provider block rather than mixed through the generic ones",
@@ -6542,7 +6542,7 @@
       ],
       "objective": "Parse the canonical deployment object into strongly typed Rust — enums and newtypes rather than strings — and validate it so that a deployment that cannot work is refused before anything is built.",
       "why": "Generation from an unvalidated document produces a valid-looking Dockerfile pointing at a binary that does not exist. The validation is the point at which a deployment mistake costs a test failure instead of a failed production rollout.",
-      "current_state": "Nothing in apps/majordomus-cli reads a deployment object.",
+      "current_state": "apps/majordomus-cli/src/deploy/ exists and parses the deployment object into typed structures, and apps/majordomus-cli/src/capability/builtin/deploy.rs projects it through the registry. As with I0901 the work reached master without ever being recorded against the issue. Measured on master 6042f4286, 2026-09-10; not marked complete here because this issue's validation has not been rerun against that tree.",
       "desired_state": "A deploy module parses the object into typed structures, validates every invariant that can be decided locally, and reports a failure that names the file, the key, what was wrong and what to do.",
       "acceptance_criteria": [
         "Ports, memory, CPU class, machine counts and routes are typed rather than strings, and an invalid value cannot be constructed",
@@ -6599,7 +6599,7 @@
       ],
       "objective": "Declare the read-only deployment operations as canonical capabilities so that the CLI, the HTTP API, MCP, OpenAPI and the generated documentation all derive from one declaration.",
       "why": "The repository's rule is that an operation is declared once and projected; adding deployment to a transport registry, an OpenAPI file or a documentation table by hand is the defect ADR 0004 names.",
-      "current_state": "The capability registry holds modules for capabilities, graph, health, objects, peers, perf, repository, scope and views. No deployment module exists.",
+      "current_state": "The capability registry holds a deploy module (apps/majordomus-cli/src/capability/builtin/deploy.rs) beside the others. The statement this field used to carry -- that no deployment module exists -- was falsified before 2026-09-10 and never corrected. Measured on master 6042f4286, 2026-09-10.",
       "desired_state": "A deploy capability module declares the deployment reads, and every projection picks them up from generate with no second registration anywhere.",
       "acceptance_criteria": [
         "Each operation is one capability! declaration with its input, output, stability, exposure and tags",
@@ -6709,7 +6709,7 @@
       ],
       "objective": "Expose cheap liveness and readiness endpoints through the capability registry, so that the provider health check, the container test and the smoke suite all point at routes the registry knows about.",
       "why": "A health route added directly to the router would be invisible to OpenAPI, to the documentation and to the route-derived smoke suite — three projections silently missing the one endpoint the platform polls most.",
-      "current_state": "system.health exists as a capability and aggregates index diagnostics, benchmark coverage and projection staleness. It is not a liveness probe: it is expensive and it can legitimately report failure while the process is perfectly able to serve traffic.",
+      "current_state": "system.health still aggregates index diagnostics, benchmark coverage and projection staleness, and liveness and readiness are now separate registered capabilities in apps/majordomus-cli/src/capability/builtin/health.rs, each with its own handler and unit tests. 2026-09-10 changed the surrounding half as well: ADR 0035 made the server's own state a capability (server.status, GET /api/v1/server), the health report names the process behind the address, and readiness stopped meaning three unrelated things (PR #153, PR #164). What is not established here is the rest of the contract -- the measured cost inside the blocking-check budget, and a deployment object whose validation refuses a reference to a route that is not registered. Measured on master 6042f4286, 2026-09-10.",
       "desired_state": "Liveness answers whether this process is alive, cheaply and without touching the layer. Readiness answers whether it can serve traffic, checking only local initialisation. Both are registered, both are documented, and both have measured cost.",
       "acceptance_criteria": [
         "Liveness returns quickly with no filesystem traversal, no index build and no network access",
@@ -6929,7 +6929,7 @@
       ],
       "objective": "Generate a multi-stage container build and its ignore file from the deployment object's build specification: a pinned Alpine runtime holding the binary, the runtime assets and nothing else, executed by an unprivileged user.",
       "why": "A hand-written Dockerfile is a second description of the binary, the assets and the port. Generating it keeps one description; pinning the base by digest keeps the image reproducible; keeping the runtime stage minimal keeps the attack surface and the bill small.",
-      "current_state": "No Dockerfile exists anywhere in the repository.",
+      "current_state": "deploy/Dockerfile exists and is generated: apps/majordomus-cli/src/deploy/render.rs renders it, .dockerignore and fly.toml from the deployment object, and generate.rs owns them as targets. The statement this field used to carry -- that no Dockerfile exists anywhere -- was falsified before 2026-09-10 and never corrected. Measured on master 6042f4286, 2026-09-10.",
       "desired_state": "The generated Dockerfile is idiomatic and reviewable, carries a header naming its source and its regeneration command, and is refused by generate --check when edited by hand.",
       "acceptance_criteria": [
         "The base image is pinned to an explicit current stable Alpine version and, where obtainable, its digest; no floating tag appears in the production build",
@@ -7150,7 +7150,7 @@
       ],
       "objective": "Generate the Fly configuration from the canonical object — application, region, port, resources, autostart and autostop, health check, concurrency — and declare the cheap cost profile as data that a reader and a check can both see.",
       "why": "fly.toml at the repository root is excellent for a developer and unacceptable as a second source of truth. Generating it keeps the ergonomics and removes the drift; declaring the cost profile makes an expensive change deliberate and visible in review.",
-      "current_state": "No fly.toml exists. No region, resource envelope or cost profile is stated anywhere.",
+      "current_state": "fly.toml exists at the repository root, generated from .ai/repo/deployments/majordomus.yaml by majordomus generate deployment, and carries the header that says so. The statement this field used to carry -- that no fly.toml exists and no region or resource envelope is stated anywhere -- was falsified before 2026-09-10 and never corrected. Measured on master 6042f4286, 2026-09-10.",
       "desired_state": "fly.toml is generated, marked as generated with its source and regeneration command, validated by the provider's own validator, and every value in it traces to the canonical object.",
       "acceptance_criteria": [
         "Every value in the generated configuration traces to the canonical object, and changing the object changes the configuration on regeneration",
@@ -9106,7 +9106,7 @@
       ],
       "objective": "Make the exposure of backend-only surfaces — the API console, live status, runtime reads — follow from availability metadata, and prove both projections behave correctly.",
       "why": "The published site has no server. A link to a runtime console on it is a broken promise, and the usual fix is a check on the page's own address, which is a rule hidden where nobody will find it.",
-      "current_state": "The Swagger shell and the API are served by the running process. The published site has no way to know that.",
+      "current_state": "The availability metadata this issue asks for exists: web::Availability is ServedOnly, PublishedOnly or Both, ProjectionRoute::linkable() answers from it alone, and a doctest asserts the Swagger console is not linkable. The Cockpit renders an unavailable surface as unavailable (cockpit/pages.rs) and the running-server side is exercised by test/cases/89_web_surface.sh and apps/majordomus-cli/tests/projections.rs. What is still missing is the half this issue exists for: nothing asserts over the built static tree that it carries no active link to a runtime-only surface -- scripts/site-check does not ask the question, and the site source happens to contain no such link rather than being prevented from gaining one. This issue has been ACTIVE since 2026-09-06 and nothing advanced it on 2026-09-10. Measured on master 6042f4286, 2026-09-10.",
       "desired_state": "Exposure follows from availability metadata alone, and there is a test for each projection that keeps it that way.",
       "acceptance_criteria": [
         "A backend-only surface is offered as usable only where a backend is available, decided from metadata",
@@ -9424,7 +9424,7 @@
       ],
       "objective": "Extend the existing browser checking to cover navigation on desktop and mobile, search and filtering, the detail view, graph initialisation, conditional runtime exposure, link integrity and console errors.",
       "why": "Everything in this milestone is finally judged by whether a person can open it. Server-side tests cannot see an overflowing table, a menu that does not open or a script that throws on load.",
-      "current_state": "A probe script drives the Cockpit's routes and interactions in a real browser.",
+      "current_state": "scripts/ui audits every surface the executable serves, not only static directories: scripts/lib/ui-routes.mjs derives a served surface's routes from its own anchors, crawled from its mount, and both browser instruments import it, so the Cockpit, the home page and the Swagger shell are inside the ADR 0022 width, contrast and accessibility sweep (PR #178, 2026-09-10). scripts/cockpit-probe keeps the shell, the security headers, the design fingerprint, the interactions and the no-JavaScript claim. What this issue still owes is its own assertions -- search and filtering, the detail view, graph initialisation, conditional runtime exposure and link integrity, at named viewports -- and its dependencies I1014, I1015 and I1016 are not recorded as done. Measured on master 6042f4286, 2026-09-10.",
       "desired_state": "The probe covers the derived surfaces at representative viewports, uses stable selectors and runs in CI.",
       "acceptance_criteria": [
         "Desktop and mobile navigation, search and filtering, the detail view and graph initialisation are all exercised",
@@ -9955,7 +9955,7 @@
       ],
       "objective": "Make every surface a process serves name the repository it is serving — its root and its identity — so that a reader can tell at a glance whether the answers in front of them come from the tree they are working in.",
       "why": "This cost a real hour. A browser held a Swagger page from a server that had exited, its requests failed with a message blaming CORS, and the live server on another port turned out to be serving a scratchpad worktree of a different session entirely — so even the document being read was that other tree's, including a sentence about the routes that this tree had already corrected. Nothing on the page said which checkout answered it. Several sessions share one machine and each may bind its own server; a surface that does not name its tree invites exactly this conclusion, that the tool is broken, when the tool is fine and the address is wrong.",
-      "current_state": "The home page lists the surfaces, the version and a repository identifier, and `/api/v1/repository` will name the root if asked. The Swagger shell and the served document name neither. A stale page fails with a transport error that names CORS before it names a closed socket.",
+      "current_state": "Half of this landed on 2026-09-10 outside the plan. ADR 0035 added repository::git_identity, and the home page and the index route answer it beside the checkout's own repository_id and linked_worktree, so a reader can tell which repository and which checkout answered; the identity comes from the repository model and names no host path (PR #153, PR #164). Two criteria are still open: the interactive API shell (apps/majordomus-cli/src/http/swagger.rs) names neither root nor identity, and no test serves two roots and proves each surface names its own. Measured on master 6042f4286, 2026-09-10.",
       "desired_state": "Every served surface carries the repository root and identity it is answering for, close enough to the content that a reader sees it without asking for it.",
       "acceptance_criteria": [
         "The home page names the repository root and identity the process is serving, not only the surfaces it exposes",
