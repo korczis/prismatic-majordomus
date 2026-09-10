@@ -2890,6 +2890,35 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0039",
+        "kind": "adr",
+        "label": "adr-0039",
+        "summary": "Liveness is four rules, advisory until a scan can decide them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0039",
+        "source": ".ai/repo/adrs/0039-liveness-is-four-rules-advisory-until-a-scan-can-decide-them.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "rule:project.execution-state-is-authoritative",
+            "rule:project.every-wait-is-bounded",
+            "rule:project.commands-run-non-interactively",
+            "rule:project.recovery-is-idempotent",
+            "rule:project.a-worker-that-stops-leaves-its-work-behind",
+            "rule:project.never-reported-is-not-green",
+            "rule:project.diagnostics-decide-the-exit",
+            "rule:project.no-new-nouns",
+            "rule:project.rule-is-a-doctrine",
+            "file:.ai/repo/rules/README.md"
+          ],
+          "tags": [
+            "agents",
+            "governance",
+            "process"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -25147,6 +25176,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.commands-run-non-interactively@1",
+        "kind": "rule",
+        "label": "project.commands-run-non-interactively@1",
+        "summary": "A command runs with nobody at the keyboard",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.commands-run-non-interactively%401",
+        "source": ".ai/repo/rules/project/commands-run-non-interactively.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.portable-shell@1",
+            "project.execution-state-is-authoritative@1"
+          ],
+          "statement": "Where a non-interactive form exists it is the one used; a command that can block for input is not run unless the operator asked for an interactive session.",
+          "tags": [
+            "shell",
+            "process",
+            "agents"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.context-locality@1",
         "kind": "rule",
         "label": "project.context-locality@1",
@@ -25361,6 +25412,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "rule",
+        "label": "project.every-wait-is-bounded@1",
+        "summary": "Every wait is bounded",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.every-wait-is-bounded%401",
+        "source": ".ai/repo/rules/project/every-wait-is-bounded.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.execution-state-is-authoritative@1",
+            "project.never-reported-is-not-green@1"
+          ],
+          "statement": "A wait without a timeout, a completion predicate and a recovery path is not a wait but a hang; silence is inspected, never counted as progress.",
+          "tags": [
+            "process",
+            "shell",
+            "orchestration"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.execution-events-are-typed@1",
         "kind": "rule",
         "label": "project.execution-events-are-typed@1",
@@ -25380,6 +25453,26 @@
             "rust",
             "http",
             "capabilities"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "rule",
+        "label": "project.execution-state-is-authoritative@1",
+        "summary": "Execution state is authoritative and the terminal is not",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.execution-state-is-authoritative%401",
+        "source": ".ai/repo/rules/project/execution-state-is-authoritative.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.diagnostics-decide-the-exit@1"
+          ],
+          "tags": [
+            "process",
+            "agents",
+            "orchestration"
           ]
         }
       },
@@ -25841,6 +25934,28 @@
           "tags": [
             "process",
             "worktrees"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.recovery-is-idempotent@1",
+        "kind": "rule",
+        "label": "project.recovery-is-idempotent@1",
+        "summary": "Recovery looks before it repeats",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.recovery-is-idempotent%401",
+        "source": ".ai/repo/rules/project/recovery-is-idempotent.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.a-worker-that-stops-leaves-its-work-behind@1",
+            "project.destructive-sweeps-fail-closed@1"
+          ],
+          "statement": "Recovery resumes from the last deterministic state a worker can establish, never from the assumption that nothing happened; work is not retried until it has been shown not to have succeeded.",
+          "tags": [
+            "process",
+            "integration",
+            "agents"
           ]
         }
       },
@@ -27570,13 +27685,6 @@
         "source": "test/cases/110_lease_reader.sh"
       },
       {
-        "id": "majordomus://test/test/cases/111_design_contrast.sh",
-        "kind": "test",
-        "label": "test/cases/111_design_contrast.sh",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F111_design_contrast.sh",
-        "source": "test/cases/111_design_contrast.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/111_session_per_provider.sh",
         "kind": "test",
         "label": "test/cases/111_session_per_provider.sh",
@@ -27603,6 +27711,20 @@
         "label": "test/cases/11_site_derivation.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F11_site_derivation.sh",
         "source": "test/cases/11_site_derivation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/120_design_contrast.sh",
+        "kind": "test",
+        "label": "test/cases/120_design_contrast.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F120_design_contrast.sh",
+        "source": "test/cases/120_design_contrast.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/121_liveness_doctrine.sh",
+        "kind": "test",
+        "label": "test/cases/121_liveness_doctrine.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F121_liveness_doctrine.sh",
+        "source": "test/cases/121_liveness_doctrine.sh"
       },
       {
         "id": "majordomus://test/test/cases/12_site_build.sh",
@@ -32675,6 +32797,61 @@
       {
         "source": "majordomus://adr/adr-0038",
         "target": "majordomus://rule/project.optional-complexity@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://context/ai.repo.rules",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.commands-run-non-interactively@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.diagnostics-decide-the-exit@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.recovery-is-idempotent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.rule-is-a-doctrine@1",
         "kind": "put_in_force"
       },
       {
@@ -41988,6 +42165,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "target": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "target": "majordomus://rule/project.portable-shell@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.context-locality@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42103,6 +42295,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.execution-events-are-typed@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42120,6 +42327,16 @@
       {
         "source": "majordomus://rule/project.execution-events-are-typed@1",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "target": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "kind": "depends_on"
       },
       {
@@ -42365,6 +42582,21 @@
       {
         "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
         "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.recovery-is-idempotent@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.recovery-is-idempotent@1",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.recovery-is-idempotent@1",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
         "kind": "depends_on"
       },
       {
@@ -42868,11 +43100,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/111_design_contrast.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/111_session_per_provider.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -42889,6 +43116,16 @@
       },
       {
         "source": "majordomus://test/test/cases/11_site_derivation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/120_design_contrast.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/121_liveness_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -46444,8 +46681,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1420,
-      "edges": 3208,
+      "nodes": 1426,
+      "edges": 3231,
       "acyclic": true,
       "truncated": false
     }

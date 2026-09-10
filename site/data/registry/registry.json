@@ -6,22 +6,22 @@
     "version": "0.5.0"
   },
   "registry": {
-    "fingerprint": "8e9195dd4a20e29f86bbbc2faf335ae4e05f5709016048ca74bff68edf47d9a0",
+    "fingerprint": "aeca512cb3779ffb8cffde2d961fcbb3a81a5068a74c3e79b8dc256c6a5903b9",
     "summary": {
-      "total": 1216,
+      "total": 1222,
       "builtin": 78,
-      "declarative": 1138,
+      "declarative": 1144,
       "by_kind": {
         "command": 3,
         "query": 75,
-        "resource": 1138
+        "resource": 1144
       },
       "by_stability": {
         "behaviorally_verified": 73,
-        "implemented": 1143
+        "implemented": 1149
       },
       "mcp_tools": 76,
-      "mcp_resources": 1166,
+      "mcp_resources": 1172,
       "http_routes": 78,
       "cli_commands": 32,
       "modules": 54,
@@ -27580,7 +27580,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 37,
+        "capabilities": 38,
         "capability_ids": []
       },
       {
@@ -28034,7 +28034,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 115,
+        "capabilities": 119,
         "capability_ids": []
       },
       {
@@ -28086,7 +28086,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 143,
+        "capabilities": 144,
         "capability_ids": []
       },
       {
@@ -28166,7 +28166,7 @@
     ]
   },
   "index": {
-    "fingerprint": "adc323709edb4104768bd1e754b2bb9c918fc39c1cda2857bd8b3c53c593785e",
+    "fingerprint": "20bbc3ebab98f7913edda66bbd345e886da2431ba495caa3c5cb55164046db94",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -28189,7 +28189,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 37,
+      "adr": 38,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -28209,12 +28209,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 1,
-      "rule": 115,
+      "rule": 119,
       "scope": 1,
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 143,
+      "test": 144,
       "use-case": 43,
       "workspace": 1
     },
@@ -28815,6 +28815,22 @@
           "architecture",
           "agents",
           "governance"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0039",
+        "kind": "adr",
+        "identity": "adr-0039",
+        "title": "Liveness is four rules, advisory until a scan can decide them",
+        "description": "Liveness is four rules, advisory until a scan can decide them",
+        "path": ".ai/repo/adrs/0039-liveness-is-four-rules-advisory-until-a-scan-can-decide-them.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5938,
+        "tags": [
+          "agents",
+          "governance",
+          "process"
         ]
       },
       {
@@ -37857,6 +37873,22 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.commands-run-non-interactively@1",
+        "kind": "rule",
+        "identity": "project.commands-run-non-interactively@1",
+        "title": "A command runs with nobody at the keyboard",
+        "description": "Where a non-interactive form of a command exists it is the one used — pagers disabled, confirmations passed as flags, stdin supplied explicitly — so that no step of any automated run can block waiting for a person who is not there.",
+        "path": ".ai/repo/rules/project/commands-run-non-interactively.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3819,
+        "tags": [
+          "shell",
+          "process",
+          "agents"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.context-locality@1",
         "kind": "rule",
         "identity": "project.context-locality@1",
@@ -38026,6 +38058,22 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "rule",
+        "identity": "project.every-wait-is-bounded@1",
+        "title": "Every wait is bounded",
+        "description": "Every wait carries a timeout, a completion predicate and a recovery path; nothing is spawned without a condition that decides when it is done, and an absence of output is inspected rather than read as progress.",
+        "path": ".ai/repo/rules/project/every-wait-is-bounded.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4176,
+        "tags": [
+          "process",
+          "shell",
+          "orchestration"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.execution-events-are-typed@1",
         "kind": "rule",
         "identity": "project.execution-events-are-typed@1",
@@ -38040,6 +38088,22 @@
           "rust",
           "http",
           "capabilities"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "rule",
+        "identity": "project.execution-state-is-authoritative@1",
+        "title": "Execution state is authoritative and the terminal is not",
+        "description": "A worker decides whether to continue from execution state — exit status, structured output, state artifacts, messages, logs — and never from terminal focus, keystrokes or renderer activity; a finished delegate's result is consumed when it is ready, not when somebody looks at the pane.",
+        "path": ".ai/repo/rules/project/execution-state-is-authoritative.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4548,
+        "tags": [
+          "process",
+          "agents",
+          "orchestration"
         ]
       },
       {
@@ -38400,6 +38464,22 @@
         "tags": [
           "process",
           "worktrees"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.recovery-is-idempotent@1",
+        "kind": "rule",
+        "identity": "project.recovery-is-idempotent@1",
+        "title": "Recovery looks before it repeats",
+        "description": "Before retrying interrupted work a worker establishes what already happened — artifacts on disk, git state, test and build output, task records — and resumes from there; recovery never duplicates a commit, a file, a migration or any other side effect.",
+        "path": ".ai/repo/rules/project/recovery-is-idempotent.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3874,
+        "tags": [
+          "process",
+          "integration",
+          "agents"
         ]
       },
       {
@@ -39238,14 +39318,6 @@
         "bytes": 6873
       },
       {
-        "uri": "majordomus://test/test/cases/111_design_contrast.sh",
-        "kind": "test",
-        "identity": "test/cases/111_design_contrast.sh",
-        "path": "test/cases/111_design_contrast.sh",
-        "source_class": "case",
-        "bytes": 6069
-      },
-      {
         "uri": "majordomus://test/test/cases/111_session_per_provider.sh",
         "kind": "test",
         "identity": "test/cases/111_session_per_provider.sh",
@@ -39276,6 +39348,22 @@
         "path": "test/cases/11_site_derivation.sh",
         "source_class": "case",
         "bytes": 4344
+      },
+      {
+        "uri": "majordomus://test/test/cases/120_design_contrast.sh",
+        "kind": "test",
+        "identity": "test/cases/120_design_contrast.sh",
+        "path": "test/cases/120_design_contrast.sh",
+        "source_class": "case",
+        "bytes": 6069
+      },
+      {
+        "uri": "majordomus://test/test/cases/121_liveness_doctrine.sh",
+        "kind": "test",
+        "identity": "test/cases/121_liveness_doctrine.sh",
+        "path": "test/cases/121_liveness_doctrine.sh",
+        "source_class": "case",
+        "bytes": 4215
       },
       {
         "uri": "majordomus://test/test/cases/12_site_build.sh",
@@ -40667,7 +40755,7 @@
       "identity": [
         "id"
       ],
-      "objects": 37
+      "objects": 38
     },
     {
       "name": "application",
@@ -40867,7 +40955,7 @@
         "id",
         "version"
       ],
-      "objects": 115
+      "objects": 119
     },
     {
       "name": "scope",
@@ -40922,7 +41010,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 143
+      "objects": 144
     },
     {
       "name": "use-case",

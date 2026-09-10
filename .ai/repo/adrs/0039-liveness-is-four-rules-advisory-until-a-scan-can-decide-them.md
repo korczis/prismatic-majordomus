@@ -1,0 +1,109 @@
+---
+schema: adr/v1
+id: adr-0039
+kind: adr
+title: Liveness is four rules, advisory until a scan can decide them
+status: proposed
+date: 2026-09-10
+tags:
+  - agents
+  - governance
+  - process
+related:
+  - rule:project.execution-state-is-authoritative
+  - rule:project.every-wait-is-bounded
+  - rule:project.commands-run-non-interactively
+  - rule:project.recovery-is-idempotent
+  - rule:project.a-worker-that-stops-leaves-its-work-behind
+  - rule:project.never-reported-is-not-green
+  - rule:project.diagnostics-decide-the-exit
+  - rule:project.no-new-nouns
+  - rule:project.rule-is-a-doctrine
+  - file:.ai/repo/rules/README.md
+provenance:
+  origin: authored
+---
+
+# 39. Liveness is four rules, advisory until a scan can decide them
+
+## Context
+
+On 2026-09-10 the operator handed the repository a document titled *Agent Liveness and
+Anti-Stall Doctrine*: ten hard rules plus sections on non-interactive execution, long-running
+commands, delegate supervision, stall recovery and idempotency. It arrived out of a concrete
+irritation. Sessions in this repository stop making progress when their terminal tab is not
+focused and resume the moment a key is pressed.
+
+That half was checked before anything was written down. Claude Code 2.1.267 was the latest
+published version that day and the version in use. `anthropics/claude-code` issues 36418,
+38932 and 46691 describe the behaviour, agree that the poller consuming a finished delegate's
+message is tied to the terminal UI's render loop, and are all closed without a fix — 36418 as
+a duplicate of 25068, the other two by the staleness bot. The most recent live reproduction in
+those threads is on Linux under tmux, so it is not an iTerm2 or a macOS artifact. Upgrading
+does not fix it because there is nothing newer to upgrade to.
+
+The upstream defect is not ours to fix and this repository is not the place to track it. What
+is ours is the generalisation, which is worth writing down independently of the vendor that
+prompted it: **a presentation layer had been made load-bearing for execution semantics**, and
+a worker here can build that same shape any day of the week.
+
+## Decision
+
+The doctrine lands as **four rule objects, all `advisory`**, plus this record.
+
+**Four and not one.** The document is one argument, but it is not one rule. A rule object here
+carries a single normative `statement` that a reviewer can hold a change against, and the
+document contains four separable ones that fail independently and are enforced by different
+means:
+
+| Rule | What it governs | Doctrine sections |
+|---|---|---|
+| `project.execution-state-is-authoritative` | what a worker may treat as the state of the world | hard rules 1, 6, 7, 8, 10; Execution Principle |
+| `project.every-wait-is-bounded` | what must be arranged before waiting | hard rules 3, 4, 5, 9; Long-running commands |
+| `project.commands-run-non-interactively` | how a command is invoked | hard rule 2; Non-interactive execution |
+| `project.recovery-is-idempotent` | what happens after an interruption | Stall recovery; Idempotency |
+
+Collapsing them into one rule would produce a statement too broad to decide any particular
+change against, which is the failure mode `project.optional-complexity` warns about from the
+other direction. The first is the reason for the other three and they depend on it explicitly,
+so the argument survives the split as a dependency graph rather than as prose.
+
+**"Liveness" is not a new noun in the sense `project.no-new-nouns` forbids.** That rule refuses
+new *things* — agents, personas, roles, tiers, registries. Liveness names no object here: no
+rule id contains it, nothing in `docs/CONCEPTS.md` gains an entry, no command or kind is added.
+It appears only in this record's title, as the name of the theme these four share. Each rule id
+is a sentence about behaviour, in the style the repository already uses.
+
+**Advisory now, blocking later.** `project.rule-is-a-doctrine` requires that an *enforced* rule
+carry an `x-majordomus` block and an `mj_validate_<name>` function. None of the four does yet,
+so none may claim `blocking` — a rule whose class asserts an enforcement that does not exist is
+the shape `project.never-reported-is-not-green` refuses in the CI direction, and it would be
+dishonest here for the same reason.
+
+Two of the four have an obvious mechanical form and should become blocking once it exists:
+
+- `project.commands-run-non-interactively` — a scan of `scripts/`, `test/`, `lib/` and
+  `.github/workflows/` for pagers left enabled, editors, full-screen monitors, REPLs and
+  prompts without an answering flag. `test/cases/08_no_forbidden_constructs.sh` already scans
+  for forbidden constructs and is where this belongs.
+- `project.every-wait-is-bounded` — a scan for a blocking command with no timeout and for a
+  spawn with no completion condition.
+
+The other two are not mechanically decidable. `execution-state-is-authoritative` is about what
+a worker reasons from, and nothing in this tool can observe another program's render loop.
+`recovery-is-idempotent` can only be checked after the damage. Both stay advisory and are
+decided by review, which the repository already accepts for rules of that kind — `no-new-nouns`
+and `portable-shell` are both partly held by review today.
+
+## Consequences
+
+The effective rule set gains four active project rules. Nothing is enforced that was not
+enforced before, so no existing branch can be broken by this change and no ratchet moves.
+
+The follow-up work is the two scans named above. Until they exist the two rules that want them
+say so in their own `Failure behaviour` sections rather than pretending, and this record is
+what a later worker reads to know the gap was chosen rather than overlooked.
+
+The upstream stall is not tracked here. If it is to be reported again it belongs in a fresh
+issue against `anthropics/claude-code` with a repro on 2.1.267, since the three existing ones
+are closed and locked.
