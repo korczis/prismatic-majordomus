@@ -37,7 +37,9 @@ use super::topology::WorktreeRecord;
 pub enum Detail {
     /// The registrations, the branches and the filesystem: no per-worktree subprocess.
     Fast,
-    /// Also the uncommitted work of every existing work tree, one `git status` each.
+    /// Also the uncommitted work of every existing work tree, one `git status` each — the
+    /// only part of a topology that grows with the number of work trees, and the reason
+    /// [`state::dirty_states`] runs them concurrently rather than in a loop.
     Full,
 }
 
@@ -257,7 +259,7 @@ impl WorktreeService {
     pub fn judge(
         &self,
         record: &WorktreeRecord,
-        detail: Detail,
+        dirty: Option<DirtyState>,
         branches: &BTreeMap<String, BranchRef>,
     ) -> WorktreeState {
         self.judge_with(record, detail, branches, detail == Detail::Full)
@@ -616,17 +618,75 @@ impl WorktreeService {
         })
     }
 
+    // ------------------------------------------------------------ uncommitted work
+
+    /// The uncommitted work of one registered work tree, or `None` when there is no work
+    /// tree on disk to ask about. A bare record and a stale registration are not clean work
+    /// trees; they are work trees nothing can be asked about.
+    pub(crate) fn dirty_of(record: &WorktreeRecord) -> Option<DirtyState> {
+        if record.bare || !record.path.is_dir() {
+            return None;
+        }
+        state::dirty_state(&record.path).ok()
+    }
+
+    /// The same for every record, asked concurrently and answered in the order given.
+    pub(crate) fn dirty_of_each(records: &[WorktreeRecord]) -> Vec<Option<DirtyState>> {
+        let askable: Vec<bool> = records.iter().map(|r| !r.bare && r.path.is_dir()).collect();
+        let paths: Vec<PathBuf> = records
+            .iter()
+            .zip(&askable)
+            .filter(|(_, ask)| **ask)
+            .map(|(r, _)| r.path.clone())
+            .collect();
+        let mut answered = state::dirty_states(&paths).into_iter();
+        askable
+            .iter()
+            .map(|ask| {
+                if *ask {
+                    answered.next().flatten()
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
     // ------------------------------------------------------------ the topology
+
+    /// Every registered work tree, judged, and the branch listing the judging needed.
+    ///
+    /// The half of the topology that does not depend on what is merged into the trunk. The
+    /// migration plans from this alone, and `git branch --merged` is a walk of the whole
+    /// history that a plan has no use for; the whole topology adds it because the page that
+    /// shows branches without a worktree does.
+    pub(crate) fn judged_worktrees(
+        &self,
+        detail: Detail,
+    ) -> Result<(Vec<WorktreeState>, Vec<BranchRef>)> {
+        let branch_refs = state::branches(&self.identity.primary_worktree().path)?;
+        let branches: BTreeMap<String, BranchRef> = branch_refs
+            .iter()
+            .map(|b| (b.name.clone(), b.clone()))
+            .collect();
+        let records = self.identity.registered_worktrees();
+        let dirty = match detail {
+            Detail::Fast => vec![None; records.len()],
+            Detail::Full => Self::dirty_of_each(records),
+        };
+        let worktrees = records
+            .iter()
+            .zip(dirty)
+            .map(|(r, d)| self.judge(r, d, &branches))
+            .collect();
+        Ok((worktrees, branch_refs))
+    }
 
     /// The whole topology.
     pub fn topology(&self, detail: Detail) -> Result<RepositoryTopology> {
         let primary = &self.identity.primary_worktree().path;
         let trunk = self.identity.trunk();
-        let branch_refs = state::branches(primary)?;
-        let branches: BTreeMap<String, BranchRef> = branch_refs
-            .iter()
-            .map(|b| (b.name.clone(), b.clone()))
-            .collect();
+        let (mut worktrees, branch_refs) = self.judged_worktrees(detail)?;
         let merged: Option<BTreeSet<String>> = match trunk.branch.as_deref() {
             Some(t) => Some(state::merged_into(primary, t)?),
             None => None,
@@ -872,7 +932,7 @@ impl WorktreeService {
         let worktree = self
             .identity
             .record_of_branch(branch)
-            .map(|r| self.judge(r, Detail::Full, &branches));
+            .map(|r| self.judge(r, Self::dirty_of(r), &branches));
         let canonical = worktree
             .as_ref()
             .is_some_and(|w| w.standing == Standing::Canonical);

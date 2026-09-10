@@ -2921,7 +2921,7 @@ pub fn worktrees(ctx: &Context) -> Page {
         .attr("data-mj-worktrees", "/api/v1/worktrees")
         .child(el("h2").class("mj-card-title").text("Live"))
         .child(el("p").class("mj-note").attr("data-mj-worktrees-note", "").text(
-            "While this page is visible it asks /api/v1/worktrees every few seconds and reloads when a worktree is created, moved or removed, so what you see is what git holds now.",
+            "While this page is visible it asks /api/v1/worktrees again a few seconds after each answer — one question at a time, never a new one while the last is still being answered — and reloads when a worktree is created, moved or removed, so what you see is what git holds now.",
         ));
 
     Page::new(

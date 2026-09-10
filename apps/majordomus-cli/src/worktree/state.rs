@@ -4,6 +4,7 @@
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use super::error::Result;
 use super::git;
@@ -18,6 +19,74 @@ pub fn dirty_state(worktree: &Path) -> Result<DirtyState> {
     let mut state = parse_status_z(&bytes);
     state.in_progress = operation_in_progress(worktree);
     Ok(state)
+}
+
+/// The uncommitted work of many work trees, answered concurrently and in the order asked.
+///
+/// This is the expensive half of the topology and the only part of it that grows with the
+/// number of work trees: one `git status` per work tree, each refreshing that work tree's
+/// own index, each costing what a `git status` costs in a repository of this size. They are
+/// independent — different indexes, different directories, no shared lock, and
+/// `GIT_OPTIONAL_LOCKS=0` means none of them writes anything — so running them one after
+/// another makes a repository with a hundred work trees take a hundred times as long for no
+/// reason but the loop. `None` in a slot is a work tree git would not answer about; it is
+/// never a clean work tree.
+///
+/// The width is the machine's parallelism, not the number of work trees: this process shares
+/// the machine with whoever else is working in it, and a fan-out of a hundred subprocesses
+/// would be a denial of service dressed as an optimisation.
+///
+/// ```
+/// use majordomus_cli::worktree::state::dirty_states;
+/// use std::path::PathBuf;
+/// assert!(dirty_states(&[]).is_empty());
+/// // One slot per path, in the order asked; a path git will not answer about is `None`,
+/// // which is not the same answer as a clean work tree.
+/// let answers = dirty_states(&[
+///     PathBuf::from("/no-such-work-tree-a"),
+///     PathBuf::from("/no-such-work-tree-b"),
+/// ]);
+/// assert_eq!(answers, vec![None, None]);
+/// ```
+pub fn dirty_states(worktrees: &[PathBuf]) -> Vec<Option<DirtyState>> {
+    let n = worktrees.len();
+    let mut out: Vec<Option<DirtyState>> = (0..n).map(|_| None).collect();
+    if n == 0 {
+        return out;
+    }
+    if n == 1 {
+        out[0] = dirty_state(&worktrees[0]).ok();
+        return out;
+    }
+    let workers = std::thread::available_parallelism()
+        .map(|p| p.get())
+        .unwrap_or(4)
+        .clamp(2, 16)
+        .min(n);
+    let next = AtomicUsize::new(0);
+    let (tx, rx) = std::sync::mpsc::channel::<(usize, Option<DirtyState>)>();
+    std::thread::scope(|scope| {
+        for _ in 0..workers {
+            let tx = tx.clone();
+            let next = &next;
+            scope.spawn(move || loop {
+                let i = next.fetch_add(1, Ordering::Relaxed);
+                if i >= n {
+                    return;
+                }
+                // A send failure means the receiver is gone, which cannot happen while this
+                // scope is alive; there is nothing to report it to either way.
+                let _ = tx.send((i, dirty_state(&worktrees[i]).ok()));
+            });
+        }
+        // The last sender: without this the loop below would wait for a thread that no
+        // longer exists.
+        drop(tx);
+        for (i, state) in rx {
+            out[i] = state;
+        }
+    });
+    out
 }
 
 /// Parse the NUL-separated porcelain v1 status. Renames are disabled by the caller
@@ -55,15 +124,58 @@ pub fn parse_status_z(bytes: &[u8]) -> DirtyState {
     state
 }
 
+/// The per-worktree git directory, read from the `.git` entry the way git itself reads it:
+/// a directory in the primary checkout, and in a linked work tree a file holding
+/// `gitdir: <path>`. A filesystem read rather than `git rev-parse --absolute-git-dir`,
+/// because this is asked once per work tree and a subprocess per work tree is what makes
+/// the topology slow. `None` when the entry is missing or says something else, and the
+/// caller falls back to asking git.
+///
+/// ```
+/// use majordomus_cli::worktree::state::parse_gitdir_pointer;
+/// use std::path::{Path, PathBuf};
+/// let wt = Path::new("/a/foo-wt/x");
+/// assert_eq!(parse_gitdir_pointer("gitdir: /a/foo/.git/worktrees/x\n", wt),
+///            Some(PathBuf::from("/a/foo/.git/worktrees/x")));
+/// assert_eq!(parse_gitdir_pointer("gitdir: ../../foo/.git/worktrees/x", wt),
+///            Some(PathBuf::from("/a/foo-wt/x/../../foo/.git/worktrees/x")));
+/// assert_eq!(parse_gitdir_pointer("something else", wt), None);
+/// ```
+pub fn parse_gitdir_pointer(text: &str, worktree: &Path) -> Option<PathBuf> {
+    let rest = text.lines().find_map(|l| l.strip_prefix("gitdir:"))?.trim();
+    if rest.is_empty() {
+        return None;
+    }
+    let path = Path::new(rest);
+    Some(if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        worktree.join(path)
+    })
+}
+
+fn git_dir_of(worktree: &Path) -> Option<PathBuf> {
+    let dot = worktree.join(".git");
+    if dot.is_dir() {
+        return Some(dot);
+    }
+    parse_gitdir_pointer(&std::fs::read_to_string(&dot).ok()?, worktree)
+}
+
 /// The operation git is in the middle of in this work tree, if any: what `git status`
 /// would report as "rebase in progress" and so on, read from the per-worktree git
 /// directory the way git itself does.
 pub fn operation_in_progress(worktree: &Path) -> Option<String> {
-    let out = git::try_run(worktree, &["rev-parse", "--absolute-git-dir"]).ok()?;
-    if out.status != Some(0) {
-        return None;
-    }
-    let dir = PathBuf::from(out.text().ok()?);
+    let dir = match git_dir_of(worktree) {
+        Some(d) => d,
+        None => {
+            let out = git::try_run(worktree, &["rev-parse", "--absolute-git-dir"]).ok()?;
+            if out.status != Some(0) {
+                return None;
+            }
+            PathBuf::from(out.text().ok()?)
+        }
+    };
     let probes: &[(&str, &str)] = &[
         ("rebase-merge", "rebase"),
         ("rebase-apply", "rebase"),
