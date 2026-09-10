@@ -64,6 +64,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **ci**: master is green again on the three causes nobody owned (`6c979b376`)
 - **site**: two checks meet new content and stop reading it as an inventory (`709407a1d`)
 - **ci**: the gate model parses again, and the gate a merge dropped is declared again (`d7f492294`)
 - **site-check**: a route is named on the API page whatever it is styled with (`9fcd06f8f`)
