@@ -54,7 +54,11 @@ grep -qE '/Users/|/home/|_TOKEN|_SECRET|FlyV1|fo1_' "$ROOT/deploy/Dockerfile" "$
 # ---------------------------------------------------------------- the context is bounded
 # Everything is excluded and the declared inputs are let back in, so a file that appears in
 # the repository tomorrow does not appear in the image tomorrow.
-head -6 "$ROOT/.dockerignore" | grep -qx '\*' || { echo "    the ignore file does not exclude everything first"; exit 1; }
+# The first line that is not the generated banner must be `*`. Counting header lines was
+# the same second statement of one fact this whole case exists to remove: the banner grew a
+# line, `*` moved to the seventh, and a `head -6` window said the context was unbounded.
+first="$(grep -vE '^[[:space:]]*(#|$)' "$ROOT/.dockerignore" | head -1)"
+[ "$first" = '*' ] || { echo "    the ignore file does not exclude everything first (first rule: '$first')"; exit 1; }
 grep -qx '\*\*/.git' "$ROOT/.dockerignore" || { echo "    the image would carry repository history"; exit 1; }
 grep -qx '.ai/local' "$ROOT/.dockerignore" || { echo "    the image would carry the checkout-local half of the layer"; exit 1; }
 for input in $(sed -n 's/^    - //p' "$ROOT/.ai/repo/deployments/majordomus.yaml"); do
