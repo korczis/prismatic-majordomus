@@ -23,7 +23,7 @@ NAP=$(( 4000 + ($$ % 900) ))
 cat > "$ROOT/test/cases/zz_${MARK}_hang.sh" <<INNER
 # majordomus-timeout: 3
 echo "hanging on purpose"
-sleep $NAP &
+sleep $NAP &  # liveness-check: intentional - the child whose reaping this case proves
 sleep $NAP
 INNER
 cleanup() {

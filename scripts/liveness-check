@@ -17,6 +17,11 @@
 # It does not require them to be present: this gate ships alongside the rules and must not
 # fail a checkout that has one and not the other.
 #
+# A line that carries `# liveness-check: intentional <reason>` is not reported: a fixture
+# that exists to be a violation -- the hanging case in test/cases/123 -- is declared where
+# it is written, with its reason, rather than hidden in the baseline. The baseline is for
+# debt nobody has decided about; a waiver is a decision.
+#
 # Existing debt is recorded in .ai/repo/liveness-baseline.txt as "path:class" lines. A
 # finding in the baseline is reported as known and does not fail; a finding that is not is
 # a regression and does fail; a baseline line that no longer matches anything is also
@@ -57,6 +62,8 @@ files() {
 
 scan() {
   local f="$1"
+  # a declared exception, with its reason, on the offending line
+  local waived; waived='# liveness-check: intentional'
   # a network call with no bound on how long it may block. curl waits forever by default,
   # so a bounded retry loop whose body calls it is not bounded at all.
   # command position only: `curl` inside a message, a usage line or a printf template is
@@ -89,12 +96,13 @@ scan() {
   # a few lines down -- after a case/esac, or after the counter that bounds the pool -- so
   # the window is six lines, not one. A spawn is supervised if something in that window
   # captures $! or waits; anything else is work started and never reaped.
-  awk -v f="$f" -v W=6 '
+  awk -v f="$f" -v W=6 -v waived="$waived" '
     { line[NR] = $0 }
     END {
       for (i = 1; i <= NR; i++) {
         L = line[i]
         if (L ~ /^[[:space:]]*#/) continue
+        if (index(L, waived) > 0) continue
         if (L !~ /[^&|>][[:space:]]*&[[:space:]]*$/) continue
         supervised = 0
         for (j = i; j <= i + W && j <= NR; j++)
