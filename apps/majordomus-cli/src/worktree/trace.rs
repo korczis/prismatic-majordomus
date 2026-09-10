@@ -84,7 +84,7 @@ pub struct CommitRef {
 /// Parse one commit line of [`FORMAT`]. A line with fewer fields is not a commit.
 ///
 /// ```
-/// use majordomus_cli::worktree::trace::parse_commit;
+/// use majordomus_cli::worktree::parse_commit;
 /// let c = parse_commit("abc123\0abc\0A Person\02026-09-09T10:00:00+02:00\0feat: a thing").unwrap();
 /// assert_eq!(c.short, "abc");
 /// assert_eq!(c.subject, "feat: a thing");
@@ -564,7 +564,7 @@ impl Tracer {
 /// ref dropped when a local branch already stands for the same name.
 ///
 /// ```
-/// use majordomus_cli::worktree::trace::parse_issue_refs;
+/// use majordomus_cli::worktree::parse_issue_refs;
 /// let ids = vec!["I1305".to_string()];
 /// let text = "feature/I1305-x\0aaa\0refs/heads/feature/I1305-x\n\
 ///             origin/feature/I1305-x\0aaa\0refs/remotes/origin/feature/I1305-x\n\
@@ -632,7 +632,7 @@ fn parse_refs(text: &str, ids: &[String]) -> Vec<IssueRef> {
 /// trunk without a merge of its own.
 ///
 /// ```
-/// use majordomus_cli::worktree::trace::first_merge;
+/// use majordomus_cli::worktree::first_merge;
 /// assert_eq!(first_merge("m p1 p2\nx m\n"), Some(("m".into(), "p1".into())));
 /// assert!(first_merge("ff p\n").is_none());
 /// assert!(first_merge("").is_none());
