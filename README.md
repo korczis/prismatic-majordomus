@@ -358,6 +358,8 @@ branch committed from anywhere but its canonical worktree. Details:
 - **Budget for the always-loaded file:** `context.always_loaded_budget_lines`.
 - **What must be wired:** the `enforcement` list; `doctor` reconciles it.
 - **A new task class:** a new file in `.ai/repo/profiles/`.
+- **Where linked worktrees go:** `worktree.root.suffix` in the policy; every derived path,
+  check and generated instruction follows it.
 
 Unknown keys anywhere are errors, so a typo fails loudly.
 

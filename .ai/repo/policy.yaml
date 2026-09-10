@@ -143,6 +143,34 @@ enforcement:
     args: [worktree, guard]
     wired_by: git-hook:pre-commit
 
+# Where linked git worktrees of this repository belong. This is the single source of truth
+# for the `-wt` convention: `majordomus worktree` derives every path from it, `majordomus
+# doctor` judges the topology against it, and the provider instruction files (AGENTS.md,
+# CLAUDE.md, ...) are generated from it. Nothing else in this repository writes "-wt".
+#
+# The container is a sibling of the primary checkout, so it is outside the source tree, it
+# is never committed, deleting it is a bounded operation, and one directory holds every
+# worktree of one repository. See ADR 0017 and .ai/repo/rules/project/worktree-layout.v1.md.
+worktree:
+  root:
+    # <parent>/<repo> -> <parent>/<repo><suffix>
+    strategy: sibling
+    # Change this and every derived path moves at once. No trailing comment on this line:
+    # the layer's YAML subset does not strip quotes from a quoted scalar that is followed
+    # by one, in either reader, and a suffix that kept its quotes would derive a container
+    # whose name carries them. `check_suffix` refuses that rather than creating it.
+    suffix: "-wt"
+  naming:
+    # one filesystem component, deterministic, lossy by design
+    strategy: slug
+  enforcement:
+    # a linked worktree outside the container fails doctor
+    outside_root: error
+  cleanup:
+    # never move or delete uncommitted work without --force
+    dirty: refuse
+    locked: refuse
+
 projections:
   - provider: agents
     target: AGENTS.md
