@@ -30,7 +30,7 @@ acceptance_criteria:
   - One typed repository model is discovered once per process and every consumer — CLI, environment, API, MCP, Cockpit, documentation, providers, completion — reads that model rather than the filesystem
   - The desired integration is a value, the plan is a diff against what is there, and the apply is the smallest mutation that closes it
   - A second `init` on a conforming repository produces no change, proved by a test rather than by observation
-  - `uninstall` reverses every recorded mutation, refuses to touch a bridge a person has edited, and leaves `.ai/` authored content in place by default
+  - "`uninstall` reverses every recorded mutation, refuses to touch a bridge a person has edited, and leaves `.ai/` authored content in place by default"
   - Every generated artifact declares its provenance, its generator and the inputs it derives from, and no generated artifact is read back as canonical input
   - No hand-maintained list enumerates artifacts that discovery finds, and adding a valid artifact registers it in every consumer with no second edit
   - Environment entry stays local and bounded, with no network and no build, and its cost is measured against a declared budget
