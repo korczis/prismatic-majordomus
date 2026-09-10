@@ -423,7 +423,8 @@ impl Plan {
     /// work. `mj_pj_next_ready` in `lib/project.sh` does exactly this.
     pub fn next_ready(&self, milestone: Option<&str>) -> Option<&PlanIssue> {
         let scope = milestone.unwrap_or(self.project.active_milestone.as_str());
-        self.ready_ranked(Some(scope)).or_else(|| self.ready_ranked(None))
+        self.ready_ranked(Some(scope))
+            .or_else(|| self.ready_ranked(None))
     }
 
     fn ready_ranked(&self, milestone: Option<&str>) -> Option<&PlanIssue> {
@@ -517,11 +518,7 @@ pub fn overlap(a: &str, b: &str) -> bool {
 }
 
 #[allow(clippy::too_many_lines)] // one derivation, in the order lib/project.awk derives it
-fn derive(
-    mut header: PlanProject,
-    mraw: Vec<PlanMilestoneRaw>,
-    iraw: Vec<PlanIssueRaw>,
-) -> Plan {
+fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIssueRaw>) -> Plan {
     let mut v = PlanFindings(Vec::new());
     let iids: Vec<String> = iraw.iter().map(|i| i.id.clone()).collect();
     let mids: Vec<String> = mraw.iter().map(|m| m.id.clone()).collect();
@@ -582,10 +579,7 @@ fn derive(
             v.fail(
                 "unknown_milestone",
                 &r.id,
-                format!(
-                    "names milestone {}, which does not exist",
-                    r.milestone
-                ),
+                format!("names milestone {}, which does not exist", r.milestone),
             );
         }
         if r.acceptance_criteria == 0 && !r.cancelled {
@@ -666,7 +660,10 @@ fn derive(
             nleft -= 1;
             line.push(iids[n].clone());
         }
-        wavelines.push(PlanWave { wave: layer, issues: line });
+        wavelines.push(PlanWave {
+            wave: layer,
+            issues: line,
+        });
         layer += 1;
     }
 
@@ -680,9 +677,7 @@ fn derive(
             .depends_on
             .iter()
             .filter(|d| {
-                *d != &r.id
-                    && iseen.contains(d.as_str())
-                    && ix(d).is_some_and(|dn| !done[dn])
+                *d != &r.id && iseen.contains(d.as_str()) && ix(d).is_some_and(|dn| !done[dn])
             })
             .cloned()
             .collect();
@@ -990,9 +985,7 @@ fn derive(
                 continue;
             }
             let o = i64::from(rank[n]) * 1_000_000 + order_of(&mraw[n].order);
-            if best.is_none_or(|b| {
-                o < i64::from(rank[b]) * 1_000_000 + order_of(&mraw[b].order)
-            }) {
+            if best.is_none_or(|b| o < i64::from(rank[b]) * 1_000_000 + order_of(&mraw[b].order)) {
                 best = Some(n);
             }
         }
@@ -1096,7 +1089,10 @@ fn derive(
         project: header,
         statuses: PlanVocabulary {
             issue: ISSUE_STATUSES.iter().map(|s| (*s).to_string()).collect(),
-            milestone: MILESTONE_STATUSES.iter().map(|s| (*s).to_string()).collect(),
+            milestone: MILESTONE_STATUSES
+                .iter()
+                .map(|s| (*s).to_string())
+                .collect(),
         },
         milestones,
         issues,
@@ -1268,10 +1264,23 @@ mod tests {
         assert_eq!(p.issue("I0002").unwrap().blocked_by, vec!["milestone:M001"]);
         // and the blocked milestone's counts follow the statuses the gate assigned
         assert_eq!(
-            *p.milestone("M001").unwrap().counts.by_status.get("BLOCKED").unwrap(),
+            *p.milestone("M001")
+                .unwrap()
+                .counts
+                .by_status
+                .get("BLOCKED")
+                .unwrap(),
             1
         );
-        assert_eq!(*p.milestone("M001").unwrap().counts.by_status.get("READY").unwrap(), 0);
+        assert_eq!(
+            *p.milestone("M001")
+                .unwrap()
+                .counts
+                .by_status
+                .get("READY")
+                .unwrap(),
+            0
+        );
         // the roadmap ranks the gated milestone after the one it waits on
         assert_eq!(p.milestone("M000").unwrap().rank, 0);
         assert_eq!(p.milestone("M001").unwrap().rank, 1);
@@ -1287,7 +1296,11 @@ mod tests {
         a.scope = vec!["apps/cli".into()];
         b.scope = vec!["apps/cli/src/main.rs".into()];
         let p = derive(header(), vec![milestone("M000", &[])], vec![a, b]);
-        let f = p.findings.iter().find(|f| f.code == "scope_conflict").unwrap();
+        let f = p
+            .findings
+            .iter()
+            .find(|f| f.code == "scope_conflict")
+            .unwrap();
         assert_eq!(f.level, "WARN");
         assert_eq!(f.subject, "I0001");
         assert!(f.message.contains("I0002"));

@@ -146,10 +146,11 @@ import json,sys
 for r in json.load(sys.stdin)["x-majordomus"]["infrastructure"]:
     if r["availability"] == "served-only": print(r["path"])'); do
   code="$(curl -s -o /dev/null -w '%{http_code}' "$BASE$route")"
-  # a surface answers with its own status: MCP refuses GET with 405 by design, and that is
-  # still a surface answering. Only a 404 says nobody serves it.
+  # a surface answers with its own status: MCP refuses GET with 405 by design, and the
+  # WebSocket route refuses a plain GET with 426 Upgrade Required by the protocol's own
+  # rule — both are a surface answering. Only a 404 says nobody serves it.
   case "$code" in
-    2??|3??|405) ;;
+    2??|3??|405|426) ;;
     *) bad surface "$route is declared served-only and this server answered $code"; surfbad=$((surfbad+1)) ;;
   esac
 done
