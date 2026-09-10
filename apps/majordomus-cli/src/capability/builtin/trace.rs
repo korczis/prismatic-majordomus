@@ -72,7 +72,7 @@ impl BenchmarkCases for TraceIssueInput {
         // second declaration of this repository's own plan. A repository with no issues at
         // all still gets a case — an empty list would read to the coverage gate as a
         // capability nobody benchmarks, and timing the refusal is a real measurement.
-        let issue = first_issue(&ctx.index).unwrap_or_else(|| "I0001".to_string());
+        let issue = first_issue(ctx.index).unwrap_or_else(|| "I0001".to_string());
         vec![NamedCase::new("first-issue", TraceIssueInput { issue })]
     }
 }

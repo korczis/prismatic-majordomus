@@ -287,11 +287,17 @@ mj_git_label() {
   printf 'diverged'
 }
 
-# files touched since a base commit: uncommitted + committed
+# files touched since a base commit: uncommitted, plus what this line's own commits
+# changed. A merge from the trunk is not the task's work — its second parent carries
+# everybody else's files — so the walk follows the first parent and leaves the merge
+# commits out. Diffing base..HEAD instead told a task that had merged master that it
+# touched every file master did, and the scope doctrine refused the push for exactly the
+# merge the trunk asks for. The cost is that a conflict resolved inside a merge commit is
+# not counted; the working tree and the commits around it are.
 mj_git_touched() {
   local base="$1"
   { mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //'
-    [ -n "$base" ] && [ "$base" != "NONE" ] && mj_git diff --name-only "$base" HEAD 2>/dev/null
+    [ -n "$base" ] && [ "$base" != "NONE" ] && mj_git log --first-parent --no-merges --name-only --format= "$base..HEAD" 2>/dev/null
   } | sort -u | sed '/^$/d'
 }
 
