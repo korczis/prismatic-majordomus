@@ -1466,6 +1466,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/tests/lease_lost.rs",
+        "kind": "file",
+        "label": "lease_lost.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/lease_lost.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/tests/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -4548,6 +4556,21 @@
           "responsibility": "none",
           "source": "docs/MCP.md",
           "test": "test/cases/72_rust_mcp.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/mcp-lease-lost",
+        "kind": "claim",
+        "label": "mcp-lease-lost",
+        "summary": "A server whose lease was taken over says so on the endpoint every reader probes, refuses to take on a new client, and reports that what its health describes is another process; the sessions it already had continue and it ends with them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmcp-lease-lost",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/lease.rs",
+          "responsibility": "none",
+          "source": "docs/MCP.md",
+          "test": "apps/majordomus-cli/tests/lease_lost.rs"
         }
       },
       {
@@ -8611,6 +8634,14 @@
         "summary": "A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmcp-degraded-not-silent.md",
         "source": "docs/claims/mcp-degraded-not-silent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mcp-lease-lost.md",
+        "kind": "document",
+        "label": "docs/claims/mcp-lease-lost.md",
+        "summary": "A server whose lease was taken over says so on the endpoint every reader probes, refuses to take on a new client, and reports that what its health describes is another process; the sessions it already had continue and it ends with them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmcp-lease-lost.md",
+        "source": "docs/claims/mcp-lease-lost.md"
       },
       {
         "id": "majordomus://document/docs/claims/mcp-lease-resilience.md",
@@ -27570,13 +27601,6 @@
         "source": "test/cases/110_lease_reader.sh"
       },
       {
-        "id": "majordomus://test/test/cases/111_design_contrast.sh",
-        "kind": "test",
-        "label": "test/cases/111_design_contrast.sh",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F111_design_contrast.sh",
-        "source": "test/cases/111_design_contrast.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/111_session_per_provider.sh",
         "kind": "test",
         "label": "test/cases/111_session_per_provider.sh",
@@ -27603,6 +27627,13 @@
         "label": "test/cases/11_site_derivation.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F11_site_derivation.sh",
         "source": "test/cases/11_site_derivation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/120_design_contrast.sh",
+        "kind": "test",
+        "label": "test/cases/120_design_contrast.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F120_design_contrast.sh",
+        "source": "test/cases/120_design_contrast.sh"
       },
       {
         "id": "majordomus://test/test/cases/12_site_build.sh",
@@ -34213,6 +34244,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/mcp-lease-lost",
+        "target": "file:apps/majordomus-cli/src/lease.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-lease-lost",
+        "target": "file:apps/majordomus-cli/tests/lease_lost.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-lease-lost",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mcp-lease-lost",
+        "target": "majordomus://document/docs/MCP.md",
+        "kind": "defined_in"
+      },
+      {
         "source": "majordomus://claim/mcp-lease-resilience",
         "target": "file:apps/majordomus-cli/src/lease.rs",
         "kind": "implemented_by"
@@ -36899,6 +36950,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/mcp-degraded-not-silent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mcp-lease-lost.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -42868,11 +42924,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/111_design_contrast.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/111_session_per_provider.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -42889,6 +42940,11 @@
       },
       {
         "source": "majordomus://test/test/cases/11_site_derivation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/120_design_contrast.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -46444,8 +46500,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1420,
-      "edges": 3208,
+      "nodes": 1423,
+      "edges": 3213,
       "acyclic": true,
       "truncated": false
     }

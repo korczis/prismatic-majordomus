@@ -1609,6 +1609,13 @@
         "test": "test/cases/90_mcp_shared_server.sh"
       },
       {
+        "id": "mcp-lease-lost",
+        "implementation": "apps/majordomus-cli/src/lease.rs",
+        "route": "/guarantees/mcp-lease-lost/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/lease_lost.rs"
+      },
+      {
         "id": "mcp-peers",
         "implementation": "apps/majordomus-cli/src/peers.rs",
         "route": "/guarantees/mcp-peers/",
@@ -1619,7 +1626,7 @@
   },
   "counts": {
     "capabilities": 78,
-    "claims": 35,
+    "claims": 36,
     "modules": 26
   },
   "generator": "majordomus-cli 0.5.0",

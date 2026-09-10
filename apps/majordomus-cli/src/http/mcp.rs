@@ -111,6 +111,22 @@ impl McpEndpoint {
                     )
                 }
             },
+            // A server whose lease was taken over serves the peers it already has and ends
+            // with them. Opening a *new* session would be the opposite of that: the client
+            // would get a peer board, a generation of the layer and an execution history
+            // that no other client of this checkout can see, and nothing in its answers
+            // would say so. It is told instead, and its launcher's election finds the
+            // process that does hold the lease.
+            None if is_initialize(&message) && crate::lease::was_lost() => {
+                return Response::error(
+                    409,
+                    "lease_lost",
+                    "this server no longer holds this checkout's lease: another process took it \
+                     over and is the one to attach to. This one serves the sessions it already \
+                     had and ends with them; start again through the launcher, whose election \
+                     finds the current server.",
+                )
+            }
             None if is_initialize(&message) => self.open(),
             None => {
                 return Response::error(
