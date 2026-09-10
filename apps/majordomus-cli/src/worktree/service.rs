@@ -12,19 +12,21 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::direnv::{self, EnvrcApproval};
+use super::direnv::{self, DirenvContext, EnvrcApproval};
 use super::error::{Result, WorktreeError};
 use super::git;
 use super::identity::{RepositoryIdentity, ResolvedPath, TrunkSource};
 use super::lock::WorktreeLock;
 use super::model::{
-    BranchState, ContainerView, DiagnosticCode, GuardVerdict, InspectReport, RepairReport,
-    RepositoryTopology, RepositoryView, Severity, Standing, StatusReport, TopologyDiagnostic,
-    TopologyTallies, TrunkView, WorktreeKind, WorktreeState, SCHEMA,
+    BranchState, ContainerView, DiagnosticCode, EnvrcStanding, EnvrcState, GuardVerdict,
+    InspectReport, RepairReport, RepositoryTopology, RepositoryView, Severity, Standing,
+    StatusReport, TopologyDiagnostic, TopologyTallies, TrunkView, WorktreeKind, WorktreeState,
+    SCHEMA,
 };
 use super::path::{self, BranchName, CONTAINER_SUFFIX};
 use super::state::{self, BranchRef};
@@ -93,6 +95,9 @@ pub struct WorktreeService {
     container: ResolvedPath,
     issue_ids: Vec<String>,
     scratch_roots: Vec<ScratchRoot>,
+    /// direnv's view of the primary checkout, read the first time a work tree's `.envrc`
+    /// is judged and never before: a topology check and the guard do not ask.
+    direnv: OnceLock<DirenvContext>,
 }
 
 /// A directory a checkout of somebody else's lives under: the tool's own temporary roots
@@ -135,12 +140,66 @@ impl WorktreeService {
             container,
             issue_ids,
             scratch_roots,
+            direnv: OnceLock::new(),
         })
     }
 
     /// The scratch roots in force, expanded.
     pub fn scratch_roots(&self) -> &[ScratchRoot] {
         &self.scratch_roots
+    }
+
+    /// direnv's view of the primary checkout: the direnv on the PATH, the primary's
+    /// `.envrc`, and whether that one is approved. Read once per service.
+    fn direnv(&self) -> &DirenvContext {
+        self.direnv
+            .get_or_init(|| DirenvContext::read(&self.identity.primary_worktree().path))
+    }
+
+    /// Write a work tree's `.envrc` standing into its state, with the one diagnostic a
+    /// blocked one earns: a warning, never an error, because a shell that will not load
+    /// the environment is not a topology defect — and a remedy that depends on whose file
+    /// it is. The primary checkout's approval carries to an identical file, so that is the
+    /// tool's to fix; a different file is the person's to read first.
+    fn attach_envrc(&self, w: &mut WorktreeState, envrc: EnvrcState) {
+        if envrc.standing == EnvrcStanding::Blocked {
+            let primary = w.kind == WorktreeKind::Primary;
+            let remedy = if primary {
+                "direnv allow  (in the primary checkout; every worktree's approval is carried from it)".to_string()
+            } else if !envrc.same_as_primary {
+                format!(
+                    "read {}/.envrc, then `direnv allow` there; it is not the primary checkout's, so no approval carries to it",
+                    w.path
+                )
+            } else if self.direnv().primary_approved() == Some(false) {
+                format!(
+                    "direnv allow in the primary checkout first, then majordomus worktree ensure {}",
+                    w.label
+                )
+            } else if w.standing == Standing::Misplaced {
+                "majordomus worktree migrate  (the move carries the approval)".to_string()
+            } else if w.branch.is_some() {
+                format!("majordomus worktree ensure {}", w.label)
+            } else {
+                "direnv allow  (there; a detached worktree has no branch for `ensure` to name)".to_string()
+            };
+            w.diagnostics.push(TopologyDiagnostic {
+                code: DiagnosticCode::EnvrcBlocked,
+                severity: Severity::Warning,
+                path: Some(w.path.clone()),
+                branch: w.branch.clone(),
+                expected: None,
+                message: if primary {
+                    "direnv refuses the primary checkout's .envrc, so entering it loads nothing and no worktree's approval can be carried".into()
+                } else if envrc.same_as_primary {
+                    "direnv refuses its .envrc at this path (the primary checkout's file, unapproved here), so entering it loads nothing".into()
+                } else {
+                    "direnv refuses its .envrc (not the primary checkout's file), so entering it loads nothing".into()
+                },
+                remedy,
+            });
+        }
+        w.envrc = Some(envrc);
     }
 
     /// The repository this service speaks for.
@@ -192,12 +251,25 @@ impl WorktreeService {
     // ------------------------------------------------------------ judging one work tree
 
     /// Everything the topology says about one registered work tree. The one place a
-    /// standing is decided.
+    /// standing is decided. At [`Detail::Full`] the `.envrc` is judged here too, one
+    /// `direnv status`; a topology over many work trees judges them together afterwards
+    /// instead ([`Self::topology`]), so it calls [`Self::judge_with`] and says so.
     pub fn judge(
         &self,
         record: &WorktreeRecord,
         detail: Detail,
         branches: &BTreeMap<String, BranchRef>,
+    ) -> WorktreeState {
+        self.judge_with(record, detail, branches, detail == Detail::Full)
+    }
+
+    /// [`Self::judge`], with the `.envrc` probe decided by the caller rather than the detail.
+    fn judge_with(
+        &self,
+        record: &WorktreeRecord,
+        detail: Detail,
+        branches: &BTreeMap<String, BranchRef>,
+        probe_envrc: bool,
     ) -> WorktreeState {
         let resolved = ResolvedPath::of(&record.path);
         let is_primary = self.identity.is_primary(record);
@@ -415,7 +487,7 @@ impl WorktreeService {
             None
         };
 
-        WorktreeState {
+        let mut w = WorktreeState {
             path: path_text,
             kind: if is_primary {
                 WorktreeKind::Primary
@@ -446,8 +518,14 @@ impl WorktreeService {
                 .branch
                 .as_deref()
                 .and_then(|b| state::issue_of(b, &self.issue_ids)),
+            envrc: None,
             diagnostics,
+        };
+        if probe_envrc && exists && !record.bare {
+            let envrc = self.direnv().judge(&record.path);
+            self.attach_envrc(&mut w, envrc);
         }
+        w
     }
 
     /// The scratch root a path lies under, when it does. The roots are the declarations'
@@ -554,12 +632,44 @@ impl WorktreeService {
             None => None,
         };
 
-        let mut worktrees: Vec<WorktreeState> = self
-            .identity
-            .registered_worktrees()
+        let records = self.identity.registered_worktrees();
+        let mut worktrees: Vec<WorktreeState> = records
             .iter()
-            .map(|r| self.judge(r, detail, &branches))
+            .map(|r| self.judge_with(r, detail, &branches, false))
             .collect();
+
+        // The `.envrc` standings, at full detail only: one `direnv status` per work tree
+        // that has one, run a few at a time rather than one after another, because on a
+        // machine with sixty worktrees the sum of sixty short subprocesses is a second a
+        // person waits for. Nothing is probed when direnv is not here at all.
+        if detail == Detail::Full && self.direnv().available() {
+            let probes: Vec<usize> = worktrees
+                .iter()
+                .zip(records.iter())
+                .enumerate()
+                .filter(|(_, (w, r))| w.exists && !r.bare)
+                .map(|(i, _)| i)
+                .collect();
+            let ctx = self.direnv();
+            for chunk in probes.chunks(8) {
+                let judged: Vec<(usize, EnvrcState)> = std::thread::scope(|s| {
+                    let handles: Vec<_> = chunk
+                        .iter()
+                        .map(|&i| {
+                            let path = records[i].path.clone();
+                            s.spawn(move || (i, ctx.judge(&path)))
+                        })
+                        .collect();
+                    handles
+                        .into_iter()
+                        .filter_map(|h| h.join().ok())
+                        .collect()
+                });
+                for (i, envrc) in judged {
+                    self.attach_envrc(&mut worktrees[i], envrc);
+                }
+            }
+        }
 
         // repository-wide facts
         let mut repository_diagnostics = Vec::new();
@@ -660,6 +770,11 @@ impl WorktreeService {
             if w.dirty.as_ref().is_some_and(|d| !d.clean) {
                 tallies.dirty += 1;
             }
+            if w.envrc
+                .is_some_and(|e| e.standing == EnvrcStanding::Blocked)
+            {
+                tallies.envrc_blocked += 1;
+            }
         }
         let mut diagnostics: Vec<TopologyDiagnostic> = worktrees
             .iter_mut()
@@ -689,8 +804,15 @@ impl WorktreeService {
         })
     }
 
-    /// Where this call is, and whether that is where it belongs.
+    /// Where this call is, and whether that is where it belongs. The work tree's `.envrc`
+    /// is judged too: this is what a person reads on arriving somewhere.
     pub fn status(&self) -> Result<StatusReport> {
+        self.status_with(true)
+    }
+
+    /// [`Self::status`], with the `.envrc` probe decided by the caller: the guard runs on
+    /// every commit and has no use for it.
+    fn status_with(&self, probe_envrc: bool) -> Result<StatusReport> {
         let topology = self.topology(Detail::Fast)?;
         let record = self.identity.current_record().cloned().ok_or_else(|| {
             WorktreeError::NotThisRepository {
@@ -703,7 +825,7 @@ impl WorktreeService {
                 .into_iter()
                 .map(|b| (b.name.clone(), b))
                 .collect();
-        let worktree = self.judge(&record, Detail::Full, &branches);
+        let worktree = self.judge_with(&record, Detail::Full, &branches, probe_envrc);
         let canonical = is_in_place(&worktree, self.identity.trunk().source);
         Ok(StatusReport {
             schema: SCHEMA.to_string(),

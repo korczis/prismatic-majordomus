@@ -27,6 +27,8 @@ use std::process::Command;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::model::{EnvrcStanding, EnvrcState};
+
 /// What became of the `.envrc` of a worktree that was just created, found, or moved.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case", tag = "outcome")]
@@ -132,9 +134,76 @@ pub fn approve_with(direnv: &Path, primary: &Path, worktree: &Path) -> EnvrcAppr
     }
 }
 
+/// What the topology needs to say, of every work tree, whether direnv loads its `.envrc`:
+/// the direnv on the PATH, the primary checkout's `.envrc` and whether that one is
+/// approved — read once per topology, not once per work tree, because the primary
+/// checkout's answer is the same for all of them and is what decides each one's remedy.
+#[derive(Debug, Clone)]
+pub(crate) struct DirenvContext {
+    direnv: Option<PathBuf>,
+    primary_envrc: Option<Vec<u8>>,
+    /// `None` when direnv is absent, the primary has no `.envrc`, or its status is unreadable.
+    primary_approved: Option<bool>,
+}
+
+impl DirenvContext {
+    /// Read from the machine: the direnv on the PATH, if any.
+    pub(crate) fn read(primary: &Path) -> Self {
+        Self::read_with(direnv_on_path(), primary)
+    }
+
+    /// The same, with the direnv given (or none): what the tests drive.
+    pub(crate) fn read_with(direnv: Option<PathBuf>, primary: &Path) -> Self {
+        let primary_envrc = std::fs::read(primary.join(".envrc")).ok();
+        let primary_approved = match (&direnv, &primary_envrc) {
+            (Some(d), Some(_)) => allowed_in(d, primary),
+            _ => None,
+        };
+        DirenvContext {
+            direnv,
+            primary_envrc,
+            primary_approved,
+        }
+    }
+
+    /// direnv is on the PATH, so a standing can be read at all.
+    pub(crate) fn available(&self) -> bool {
+        self.direnv.is_some()
+    }
+
+    /// Whether the primary checkout's own `.envrc` is approved; `None` when nothing can say.
+    pub(crate) fn primary_approved(&self) -> Option<bool> {
+        self.primary_approved
+    }
+
+    /// The standing of one work tree's `.envrc`: one `direnv status` there when it has one
+    /// and direnv is here; nothing otherwise.
+    pub(crate) fn judge(&self, worktree: &Path) -> EnvrcState {
+        let Ok(here) = std::fs::read(worktree.join(".envrc")) else {
+            return EnvrcState {
+                standing: EnvrcStanding::None,
+                same_as_primary: false,
+            };
+        };
+        let same_as_primary = self.primary_envrc.as_deref() == Some(here.as_slice());
+        let standing = match &self.direnv {
+            None => EnvrcStanding::Unknown,
+            Some(d) => match allowed_in(d, worktree) {
+                Some(true) => EnvrcStanding::Approved,
+                Some(false) => EnvrcStanding::Blocked,
+                None => EnvrcStanding::Unknown,
+            },
+        };
+        EnvrcState {
+            standing,
+            same_as_primary,
+        }
+    }
+}
+
 /// Whether direnv has the `.envrc` of `dir` approved, read from `direnv status` run there.
 /// `None` when the answer is not in the output: an unknown is never taken for a yes.
-fn allowed_in(direnv: &Path, dir: &Path) -> Option<bool> {
+pub(crate) fn allowed_in(direnv: &Path, dir: &Path) -> Option<bool> {
     let output = Command::new(direnv)
         .arg("status")
         .current_dir(dir)
@@ -263,6 +332,76 @@ mod tests {
             approve_with(&script, &primary, &worktree),
             EnvrcApproval::Failed { .. }
         ));
+    }
+
+    /// A direnv whose `status` answer depends on where it is asked: approved for the paths
+    /// listed in a file, blocked everywhere else. The standing is per path, as direnv's is.
+    fn fake_direnv_by_path(dir: &Path, approved: &[&Path]) -> PathBuf {
+        let list = dir.join("approved.list");
+        std::fs::write(
+            &list,
+            approved
+                .iter()
+                .map(|p| format!("{}\n", p.join(".envrc").display()))
+                .collect::<String>(),
+        )
+        .unwrap();
+        let script = dir.join("direnv-by-path");
+        std::fs::write(
+            &script,
+            format!(
+                "#!/bin/sh\ncase \"$1\" in\n  status) if grep -qxF \"$PWD/.envrc\" '{}'; then a=0; else a=1; fi; printf 'Found RC allowed %s\\n' \"$a\" ;;\n  *) exit 2 ;;\nesac\n",
+                list.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        script
+    }
+
+    #[test]
+    fn the_context_reads_the_primary_once_and_judges_each_worktree_by_its_own_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let primary = checkout(tmp.path(), "repo", Some("PATH_add bin\n"));
+        let approved = checkout(tmp.path(), "repo-wt/a", Some("PATH_add bin\n"));
+        let blocked = checkout(tmp.path(), "repo-wt/b", Some("PATH_add bin\n"));
+        let foreign = checkout(tmp.path(), "repo-wt/c", Some("eval \"$(x)\"\n"));
+        let bare = checkout(tmp.path(), "repo-wt/d", None);
+        let direnv = fake_direnv_by_path(tmp.path(), &[&primary, &approved]);
+        let ctx = DirenvContext::read_with(Some(direnv), &primary);
+        assert!(ctx.available());
+        assert_eq!(ctx.primary_approved(), Some(true));
+        let s = ctx.judge(&approved);
+        assert_eq!((s.standing, s.same_as_primary), (EnvrcStanding::Approved, true));
+        let s = ctx.judge(&blocked);
+        assert_eq!((s.standing, s.same_as_primary), (EnvrcStanding::Blocked, true));
+        let s = ctx.judge(&foreign);
+        assert_eq!((s.standing, s.same_as_primary), (EnvrcStanding::Blocked, false));
+        let s = ctx.judge(&bare);
+        assert_eq!((s.standing, s.same_as_primary), (EnvrcStanding::None, false));
+    }
+
+    #[test]
+    fn without_direnv_every_standing_is_unknown_and_the_primary_answer_is_none() {
+        let tmp = tempfile::tempdir().unwrap();
+        let primary = checkout(tmp.path(), "repo", Some("PATH_add bin\n"));
+        let worktree = checkout(tmp.path(), "repo-wt/a", Some("PATH_add bin\n"));
+        let ctx = DirenvContext::read_with(None, &primary);
+        assert!(!ctx.available());
+        assert_eq!(ctx.primary_approved(), None);
+        let s = ctx.judge(&worktree);
+        assert_eq!((s.standing, s.same_as_primary), (EnvrcStanding::Unknown, true));
+    }
+
+    #[test]
+    fn a_primary_that_is_not_approved_is_said_so_once_for_the_whole_topology() {
+        let tmp = tempfile::tempdir().unwrap();
+        let primary = checkout(tmp.path(), "repo", Some("PATH_add bin\n"));
+        let worktree = checkout(tmp.path(), "repo-wt/a", Some("PATH_add bin\n"));
+        let direnv = fake_direnv_by_path(tmp.path(), &[]);
+        let ctx = DirenvContext::read_with(Some(direnv), &primary);
+        assert_eq!(ctx.primary_approved(), Some(false));
+        assert_eq!(ctx.judge(&worktree).standing, EnvrcStanding::Blocked);
     }
 
     #[test]
