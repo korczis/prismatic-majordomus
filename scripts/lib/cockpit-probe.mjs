@@ -26,7 +26,11 @@ import { chromium } from 'playwright';
 
 const BASE = process.argv[2];
 const MODE = process.argv[3] || 'full'; // full | quick
-const WIDTHS = [390, 1024, 1600];
+// The widths come from the design declaration through `/api/v1/design`, read once the
+// server answers; nothing here holds a width. Until then the sweep has none.
+let WIDTHS = [];
+/** The design as the executable carries it: the fingerprint every stylesheet must match. */
+let DESIGN = null;
 const findings = [];
 const notes = [];
 
@@ -182,6 +186,36 @@ async function shell(page, route, response) {
   return true;
 }
 
+/**
+ * The contract between the page and the declaration: the stylesheet the page loaded
+ * carries the fingerprint the executable was built with (`--mj-design` against
+ * `data-design`), the body renders in the declared type stack, and every badge word on the
+ * page is collected for the vocabulary check. What makes this a cross-surface test is that
+ * the site probe asks the same question of the same fingerprint.
+ */
+async function designContract(page, route, badgeWords) {
+  const seen = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement);
+    const body = getComputedStyle(document.body);
+    return {
+      served: root.getPropertyValue('--mj-design').trim().replace(/^"|"$/g, ''),
+      built: document.body.dataset.design || '',
+      font: body.fontFamily.split(',')[0].trim(),
+      words: [...document.querySelectorAll('[class*="mj-badge--"],[class*="mj-status--"]')].flatMap((e) =>
+        [...e.classList].filter((c) => /^mj-(badge|status)--/.test(c)).map((c) => c.replace(/^mj-(badge|status)--/, '')),
+      ),
+    };
+  });
+  for (const w of seen.words) badgeWords.add(w);
+  if (!seen.served) fail('design', `${route}: the stylesheet carries no --mj-design`);
+  else if (seen.served !== DESIGN.design)
+    fail('design', `${route}: the stylesheet carries design ${seen.served}; the executable answers ${DESIGN.design}`);
+  if (seen.built !== DESIGN.design)
+    fail('design', `${route}: the page carries data-design "${seen.built}"; the executable answers ${DESIGN.design}`);
+  if (!/^(ui-sans-serif|system-ui|-apple-system|")/.test(seen.font))
+    fail('design', `${route}: body renders in '${seen.font}', not the declared stack`);
+}
+
 /** The interactions the shell declares, once, on the landing page. */
 async function interactions(context) {
   const page = await context.newPage();
@@ -256,14 +290,14 @@ async function interactions(context) {
 
   // --- the theme toggle flips the root class and survives a reload
   await page.goto(BASE + '/cockpit', { waitUntil: 'networkidle' });
-  const before = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+  const before = await page.evaluate(() => document.documentElement.classList.contains(document.body.dataset.themeClass));
   await page.click('.mj-theme-toggle');
-  const after = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+  const after = await page.evaluate(() => document.documentElement.classList.contains(document.body.dataset.themeClass));
   if (before === after) {
     fail('theme', 'the toggle did not change the theme');
   } else {
     await page.reload({ waitUntil: 'domcontentloaded' });
-    const kept = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+    const kept = await page.evaluate(() => document.documentElement.classList.contains(document.body.dataset.themeClass));
     if (kept !== after) fail('theme', 'the theme did not survive a reload');
     else ok('theme', `the toggle flips to ${after ? 'dark' : 'light'} and the choice survives a reload`);
   }
@@ -437,6 +471,16 @@ const browser = await chromium.launch({ channel: 'chrome' });
 try {
   const groups = await routes();
   const total = Object.values(groups).reduce((n, g) => n + g.length, 0);
+  // the design contract: the widths, the fingerprint the stylesheet must carry, and the
+  // vocabulary every badge word must be filed under
+  DESIGN = await api('/api/v1/design');
+  WIDTHS = DESIGN.viewports;
+  const vocabulary = new Set(
+    (await api('/api/v1/design/tokens')).tokens
+      .filter((t) => t.kind === 'status' || t.kind === 'state')
+      .map((t) => t.name),
+  );
+  const badgeWords = new Set();
   const visiting = sample(groups);
   ok(
     'routes',
@@ -450,16 +494,30 @@ try {
     let first = true;
     for (const width of WIDTHS) {
       await page.setViewportSize({ width, height: 1000 });
-      const response = await page.goto(BASE + route, { waitUntil: 'networkidle' });
+      // a route that never goes quiet — a page that polls a slow API on a machine with
+      // many worktrees — is a finding about that route, not the end of the sweep
+      let response;
+      try {
+        response = await page.goto(BASE + route, { waitUntil: 'networkidle' });
+      } catch (e) {
+        fail('load', `${route} @${width}px: ${String(e.message || e).split('\n')[0].slice(0, 120)}`);
+        break;
+      }
       if (first) {
         if (!(await shell(page, route, response))) break;
         first = false;
+        await designContract(page, route, badgeWords);
       }
       await overflow(page, route, width);
     }
     await page.close();
   }
-  if (!findings.length) ok('pages', `every visited route carried the shell, the policy and no overflow`);
+  for (const word of [...badgeWords].sort()) {
+    if (!vocabulary.has(word)) {
+      fail('design', `badge word '${word}' is filed under no status in share/design/tokens.yaml`);
+    }
+  }
+  if (!findings.length) ok('pages', `every visited route carried the shell, the policy, the design ${DESIGN.design} and no overflow`);
 
   // each block is its own finding when it throws: one broken interaction must not hide the
   // others, and a stack trace is not a finding

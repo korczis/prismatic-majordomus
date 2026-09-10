@@ -4,7 +4,7 @@
 # rendering. Needs a Chrome/Chromium binary; without one it reports SKIP and exits 0, because a
 # missing browser is not a broken site. Exit 0 clean, 10 findings, 12 site/public missing.
 #
-#   scripts/site-probe            probe every route at 320, 390 and 1280 px
+#   scripts/site-probe            probe every route at the widths share/design/tokens.yaml declares
 #   scripts/site-probe --quick    homepage and one page per section only
 #   scripts/site-probe --self-check   measure fixtures whose answer is known, and say whether
 #                                 this probe still names what overflows. Needs no built site.
@@ -59,6 +59,22 @@ case "$JOBS" in ''|*[!0-9]*|0) echo "site-probe: SITE_PROBE_JOBS must be a posit
 # the self-check measures its own fixtures and never opens the site, so it answers in a
 # checkout that has never been built — which is where a person doubting the probe asks
 [ "$SELF" = 1 ] || [ -d "$PUB" ] || { echo "site-probe: site/public missing; run scripts/site-build" >&2; exit 12; }
+# The widths and the design fingerprint come from the dataset the declaration generated;
+# this file holds neither. The fingerprint is compared with the one every page's
+# stylesheet carries, which is the contract test between the site and the declaration.
+# The self-check needs neither: it measures fixtures, not the site.
+DESIGN="$SITE/data/registry/design.json"
+if [ "$SELF" = 1 ]; then
+  WIDTHS="${SITE_PROBE_WIDTHS:-320 390 1280}"; DESIGN_FP=""
+else
+  [ -f "$DESIGN" ] || { echo "site-probe: $DESIGN missing; run majordomus generate design" >&2; exit 12; }
+  # SITE_PROBE_WIDTHS narrows or moves the set while a layout fix is iterated on — a
+  # Linux runner leaves 305 content pixels inside a 320 viewport, which a mac does not, so a
+  # finding from CI is reproduced by naming its width. CI never sets it.
+  WIDTHS="${SITE_PROBE_WIDTHS:-$(jq -r '.viewports | join(" ")' "$DESIGN")}"
+  DESIGN_FP="$(jq -r '.design' "$DESIGN")"
+fi
+export SITE_PROBE_WIDTHS="$WIDTHS" SITE_PROBE_DESIGN="$DESIGN_FP"
 CHROME=""
 for c in "${CHROME_BIN:-}" google-chrome google-chrome-stable chromium chromium-browser "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"; do
   [ -n "$c" ] && { command -v "$c" >/dev/null 2>&1 || [ -x "$c" ]; } && { CHROME="$c"; break; }
@@ -109,7 +125,12 @@ function measure(f){
     rg.selectNodeContents(nd);
     if(rg.getBoundingClientRect().right>vw+1)tx.push('text \''+nd.nodeValue.trim().slice(0,22)+'\' in '+nm(nd.parentElement));
   }
-  return 'vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none');
+  // the design contract: the fingerprint the stylesheet this page loaded was projected from,
+  // and the family the body actually renders in. Both are compared against the dataset by the
+  // caller, which is what makes this a contract test between the site and the declaration.
+  const fp=getComputedStyle(d.documentElement).getPropertyValue('--mj-design').trim().replace(/^"|"$/g,'');
+  const font=getComputedStyle(d.body).fontFamily.split(',')[0].trim();
+  return 'vw='+vw+' sw='+sw+' mermaid='+svg+'/'+pres+' design='+(fp||'none')+' font='+font+' wide='+(x.concat(tx.slice(0,2)).join('|')||'none');
 }
 JS
 )"
@@ -127,21 +148,30 @@ if [ "${1:-}" = --route ]; then
   # overflow on pages which cannot be panned sideways at all (`window.scrollX` stays 0), and
   # named no offender, because the attribution below already discounts clipped elements.
   page="$WORK/srv/p$n.html"; out="$WORK/res/$n"; : > "$out"
+  frames=""; wlist=""
+  for w in $SITE_PROBE_WIDTHS; do frames="$frames<iframe id=f$w src=\"$PREFIX$r\" style=\"width:${w}px\"></iframe>"; wlist="$wlist${wlist:+,}$w"; done
   cat > "$page" <<HTML
 <!doctype html><title>probe</title><style>body{margin:0}#row{display:flex;align-items:flex-start}iframe{height:900px;border:0;flex:none}</style>
-<div id=row><iframe id=f320 src="$PREFIX$r" style="width:320px"></iframe><iframe id=f390 src="$PREFIX$r" style="width:390px"></iframe><iframe id=f1280 src="$PREFIX$r" style="width:1280px"></iframe></div>
-<script>const W=[320,390,1280];let loaded=0;
+<div id=row>$frames</div>
+<script>const W=[$wlist];let loaded=0;
 $MEASURE_JS
 W.forEach(w=>document.getElementById('f'+w).addEventListener('load',()=>{loaded++;if(loaded===W.length)setTimeout(()=>{document.title=W.map(w=>'w'+w+' '+measure(document.getElementById('f'+w))).join(' ;; ')},2500)}));</script>
 HTML
   t="$(dump_title "http://127.0.0.1:$PORT/p$n.html" 2100)"
   [ "$t" = "$TIMED_OUT" ] && { printf 'FAIL %-10s %s\n' probe "$r: the browser did not answer within ${SITE_PROBE_TIMEOUT}s" >> "$out"; rm -f "$page"; exit 0; }
-  for w in 320 390 1280; do
+  for w in $SITE_PROBE_WIDTHS; do
     m="$(printf '%s' "$t" | tr ';' '\n' | sed -n "s/^ *w$w //p" | head -1)"
     vw="$(printf '%s' "$m" | sed -n 's/.*vw=\([0-9]*\).*/\1/p')"; sw="$(printf '%s' "$m" | sed -n 's/.*sw=\([0-9]*\).*/\1/p')"
     [ -n "$vw" ] || { printf 'FAIL %-10s %s\n' probe "$r @$w: no measurement (page did not load)" >> "$out"; continue; }
     [ "$sw" -le "$vw" ] || printf 'FAIL %-10s %s\n' overflow "$r @${w}px: scrollWidth $sw > viewport $vw ($(printf '%s' "$m" | sed -n 's/.*wide=//p'))" >> "$out"
     md="$(printf '%s' "$m" | sed -n 's/.*mermaid=\([0-9]*\/[0-9]*\).*/\1/p')"; [ "${md%/*}" = "${md#*/}" ] || printf 'FAIL %-10s %s\n' mermaid "$r @${w}px: rendered ${md%/*} of ${md#*/} diagrams" >> "$out"
+    # the contract with the declaration: the stylesheet the page loaded carries the design
+    # the dataset says, and the type stack is the declared one — measured once per route
+    if [ "$w" = "${SITE_PROBE_WIDTHS%% *}" ]; then
+      fp="$(printf '%s' "$m" | sed -n 's/.*design=\([^ ]*\).*/\1/p')"; font="$(printf '%s' "$m" | sed -n 's/.*font=\([^ ]*\).*/\1/p')"
+      [ "$fp" = "$SITE_PROBE_DESIGN" ] || printf 'FAIL %-10s %s\n' design "$r: the stylesheet carries design '$fp', the dataset says '$SITE_PROBE_DESIGN'" >> "$out"
+      case "$font" in ui-sans-serif|system-ui|-apple-system|\"*) ;; *) printf 'FAIL %-10s %s\n' design "$r: body renders in '$font', not the declared stack" >> "$out" ;; esac
+    fi
   done
   rm -f "$page"
   exit 0

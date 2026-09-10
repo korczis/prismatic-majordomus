@@ -46,15 +46,15 @@ static PAGE: LazyLock<String> = LazyLock::new(|| {
 <style>
 {tokens}
 /* The frame: the page around the widget, in this repository's type and colour. */
-body {{ margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-sans); }}
+body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: var(--font-sans); }}
 .swagger-ui, .swagger-ui .info .title, .swagger-ui .opblock-tag {{ font-family: var(--font-sans); }}
 .swagger-ui .microlight, .swagger-ui code, .swagger-ui pre {{ font-family: var(--font-mono); }}
 /* Swagger UI's topbar is its own branding and a form for choosing a specification. This
    page serves one specification and the process advertises its surfaces on its home page,
    so the bar is a logo and a field that must not be used. */
 .swagger-ui .topbar {{ display: none; }}
-.swagger-ui .info .title small.version-stamp {{ background: var(--accent); }}
-.swagger-ui a {{ color: var(--accent); }}
+.swagger-ui .info .title small.version-stamp {{ background: var(--mj-accent-fill); }}
+.swagger-ui a {{ color: var(--mj-accent); }}
 </style>
 </head>
 <body>

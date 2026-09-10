@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/site-design.schema.json",
+  "title": "Site design dataset",
+  "description": "site/data/registry/design.json: what the site's templates and the browser probes read of the design system — the state vocabulary as a flat word-to-status map, the theme contract with the pre-paint statement, the roles and statuses with their resolved values, and the widths every page is audited at. Written by `majordomus generate design`; index-independent, so both passes of the derivation graph agree byte for byte.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "fingerprint", "design", "source", "identity", "theme", "font", "roles", "statuses", "states", "viewports"],
+  "properties": {
+    "schema": { "const": "majordomus-site-design/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "minLength": 1 },
+    "fingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "design": { "type": "string", "pattern": "^[0-9a-f]{12}$" },
+    "source": { "type": "string", "minLength": 1 },
+    "identity": {
+      "type": "object",
+      "required": ["name", "mark", "logo", "social"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "mark": { "type": "string", "minLength": 1 },
+        "logo": { "type": "string", "minLength": 1 },
+        "social": { "type": "string", "minLength": 1 }
+      }
+    },
+    "theme": {
+      "type": "object",
+      "required": ["class", "storage_key", "bootstrap"],
+      "properties": {
+        "class": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "storage_key": { "type": "string", "minLength": 1 },
+        "bootstrap": { "type": "string", "minLength": 1, "description": "The one statement every surface runs before first paint." }
+      }
+    },
+    "font": {
+      "type": "object",
+      "required": ["sans", "mono"],
+      "properties": {
+        "sans": { "type": "string", "minLength": 1 },
+        "mono": { "type": "string", "minLength": 1 }
+      }
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "css", "about", "light", "dark"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "css": { "type": "string", "pattern": "^--mj-" },
+          "about": { "type": "string" },
+          "light": { "type": "string", "minLength": 1 },
+          "dark": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "statuses": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "about", "fg", "bg", "line", "light", "dark"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "fg": { "type": "string", "pattern": "^--mj-" },
+          "bg": { "type": "string", "pattern": "^--mj-" },
+          "line": { "type": "string", "pattern": "^--mj-" }
+        }
+      }
+    },
+    "states": {
+      "type": "object",
+      "description": "Every state word any surface renders, to the status it is filed under.",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+      "additionalProperties": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    },
+    "viewports": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "integer", "minimum": 200 }
+    }
+  }
+}

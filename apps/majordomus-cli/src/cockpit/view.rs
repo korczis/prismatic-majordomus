@@ -15,7 +15,10 @@
 //! `unsafe-eval` nor `unsafe-inline`. A handler that would take an argument gets its own
 //! method in `cockpit.js` instead.
 
+use std::sync::LazyLock;
+
 use crate::capability::CapabilityKind;
+use crate::design::DesignSystem;
 
 use super::html::{el, empty, El, Node};
 use super::nav::{Area, Navigation};
@@ -58,7 +61,7 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
         // the theme is applied before first paint, so a dark-mode reader never sees a
         // white flash; this is the one inline script the Cockpit ships, and the
         // content-security policy names its digest rather than allowing inline scripts
-        el("script").raw(THEME_BOOTSTRAP),
+        el("script").raw(theme_bootstrap()),
     ]
     .into_iter()
     .chain(shell.scripts.iter().map(|src| {
@@ -69,9 +72,19 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
     }))
     .collect();
 
+    // the theme contract and the design fingerprint, from the declaration compiled into
+    // this executable: the script reads the key and the class here rather than naming
+    // them, and compares the fingerprint with the one the stylesheet carries
+    let design = DesignSystem::compiled().ok();
     let body = el("body")
         .class("mj-body")
         .attr("x-data", "cockpit")
+        .attr_if(
+            "data-theme-key",
+            design.map(|d| d.theme.storage_key.clone()),
+        )
+        .attr_if("data-theme-class", design.map(|d| d.theme.class.clone()))
+        .attr_if("data-design", design.map(|d| d.short_fingerprint()))
         .child(skip_link())
         .child(header(shell))
         .child(
@@ -99,9 +112,24 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
     super::html::document(&format!("{} · Majordomus Cockpit", shell.title), head, body)
 }
 
-/// Read the stored theme before the page paints. Kept to one statement so that its digest
-/// is stable and the content-security policy can name it.
-pub const THEME_BOOTSTRAP: &str = "try{var t=localStorage.getItem('mj-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}";
+/// Read the stored theme before the page paints: the one statement the design declaration
+/// generates for every surface, so the site and the Cockpit honour one storage key and one
+/// class. One statement, so that its digest is stable and the content-security policy can
+/// name it. An executable whose compiled declaration is invalid ships no statement and
+/// follows the system through the stylesheet alone; the design capability says why.
+pub fn theme_bootstrap() -> &'static str {
+    static BOOTSTRAP: LazyLock<String> = LazyLock::new(|| {
+        DesignSystem::compiled()
+            .map(|d| d.theme_bootstrap())
+            .unwrap_or_default()
+    });
+    BOOTSTRAP.as_str()
+}
+
+/// The canonical mark, compiled in from its generated copy of `share/design/brand/`, so
+/// the brand in the top bar is the same file the favicon, the site and the social card
+/// are cut from. It draws in `currentColor`.
+const MARK: &str = include_str!("logo-mark.svg");
 
 fn skip_link() -> El {
     el("a")
@@ -117,7 +145,12 @@ fn header(shell: &Shell<'_>) -> El {
             el("a")
                 .class("mj-brand")
                 .attr("href", "/cockpit")
-                .child(el("span").class("mj-brand-mark").text("M"))
+                .child(
+                    el("span")
+                        .class("mj-brand-mark")
+                        .attr("aria-hidden", "true")
+                        .raw(MARK),
+                )
                 .child(el("span").class("mj-brand-name").text("Majordomus"))
                 .child(el("span").class("mj-brand-suffix").text("Cockpit")),
         )
@@ -382,6 +415,23 @@ pub fn badge(status: &str, label: impl Into<String>) -> El {
         .class(format!("mj-badge mj-badge--{}", css_word(status)))
         .child(el("span").class("mj-badge-dot").attr("aria-hidden", "true"))
         .text(label)
+}
+
+/// A badge for a status word that arrived as *data* — an object's own `status` field, a
+/// graph node's — rather than one this code chose. Filed under a status by the design
+/// declaration, it is a badge and carries that status's colour; filed under nothing, it is
+/// a plain tag, so that an arbitrary word never wears a meaning nobody gave it and the
+/// browser probe's vocabulary check stays exact. The words this code chooses itself go
+/// through [`badge`], where an unfiled word is a defect the probe reports.
+pub fn word_badge(word: &str) -> El {
+    let filed = DesignSystem::compiled()
+        .ok()
+        .is_some_and(|d| d.role_of_state(&css_word(word)).is_some());
+    if filed {
+        badge(word, word)
+    } else {
+        tag(word)
+    }
 }
 
 /// A neutral badge.

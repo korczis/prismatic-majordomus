@@ -149,10 +149,27 @@ for l in $(grep -rhoE 'href="'"$PREFIX"'/[^"#?]*' $pages | sed -E "s#^href=\"$PR
   t="$PUB$l"; [ -f "$t" ] || [ -f "$t/index.html" ] || [ -f "${t%/}/index.html" ] || { bad link "$l does not resolve"; missing=1; }
 done; [ "$missing" = 0 ] && ok link "every internal link resolves"
 # 7. assets present
-for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/social-card.png giallo-light.css giallo-dark.css; do
+for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
 done; ok asset "css, flowbite, alpine, mermaid, cytoscape, theme, diagrams, graph, images, highlighting present"
 grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"
+# 7b. the status vocabulary: every state word a rendered badge carries is one the design
+# declaration files under a status. A word it does not know renders neutral and says nothing,
+# which is the failure the vocabulary exists to prevent; the declaration is the expectation,
+# and nothing here keeps a list of states.
+design="$SITE/data/registry/design.json"
+if [ -f "$design" ]; then
+  known="$(jq -r '.states | keys[]' "$design" | LC_ALL=C sort -u)"
+  unknown="$(grep -rhoE 'mj-(badge|status)--[a-z0-9-]+' $pages | sed -E 's/^mj-(badge|status)--//' | LC_ALL=C sort -u | grep -vxF -f <(printf '%s\n' "$known") || true)"
+  if [ -n "$unknown" ]; then for w in $unknown; do bad states "badge word '$w' is filed under no status in share/design/tokens.yaml"; done
+  else ok states "every badge word on the site is filed under a status ($(printf '%s\n' "$known" | wc -l | tr -d ' ') words declared)"; fi
+  # and the page carries the design it was built with: the same fingerprint the stylesheet does
+  fp="$(jq -r '.design' "$design")"
+  grep -q "data-design=\"$fp\"" "$PUB/index.html" && ok design "the pages carry design $fp, the stylesheet's own fingerprint" || bad design "index.html does not carry data-design=\"$fp\""
+  grep -q -- "--mj-design:\"$fp\"" "$SITE/static/app.css" && ok design "app.css carries --mj-design $fp" || bad design "app.css does not carry --mj-design \"$fp\"; rebuild the CSS"
+else
+  bad design "site/data/registry/design.json missing; run majordomus generate design"
+fi
 # 8. no external runtime dependency: every script/stylesheet is served from this site's own origin
 BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')"
 remote="$(grep -rhoE '<(script|link)[^>]+(src|href)="https?://[^"]+"' $pages | grep -v 'rel="canonical"' | grep -vF "\"$BASE_URL/" | head -1 || true)"
@@ -402,7 +419,7 @@ for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
 done
 ok tiles "every profile, claim, status, responsibility, command, doctrine, use case, application and why-moment has its own page"
 # 13d. every navigation target resolves
-for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
+for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
 ok nav "every navigation link on the homepage resolves"
 # 13e. and the other direction: every section the site publishes is reachable from the menu.
 #

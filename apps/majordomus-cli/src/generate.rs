@@ -118,6 +118,11 @@ pub enum Target {
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
     Graph,
+    /// Every projection of the design system (see [`crate::design::render`]): the
+    /// stylesheets both Tailwind builds import, the tokens and the declaration compiled
+    /// into the crate, the mark the Cockpit's shell inlines, the copies of the brand every
+    /// surface serves, the site's dataset, and `docs/generated/design.{json,yaml,md}`.
+    Design,
 }
 
 impl Target {
@@ -133,6 +138,7 @@ impl Target {
         Target::Providers,
         Target::Site,
         Target::Web,
+        Target::Design,
         Target::Changelog,
         Target::Distribution,
         Target::Graph,
@@ -171,6 +177,7 @@ impl Target {
             Target::Manifest => "manifest",
             Target::Deployment => "deployment",
             Target::Graph => "graph",
+            Target::Design => "design",
         }
     }
 }
@@ -244,6 +251,23 @@ pub fn comment_banner(source: &str, version: &str) -> String {
         .iter()
         .map(|l| format!("# {l}\n"))
         .collect()
+}
+
+/// The comment form a line-oriented text artifact opens its banner with, by suffix. A
+/// stylesheet or a script cannot start with `#`; an SVG is XML.
+///
+/// ```
+/// use majordomus_cli::generate::text_comment_opening;
+/// assert_eq!(text_comment_opening("share/design/theme.css"), "/*");
+/// assert_eq!(text_comment_opening("share/cockpit/favicon.svg"), "<!--");
+/// assert_eq!(text_comment_opening("share/allow/policy.txt"), "#");
+/// ```
+pub fn text_comment_opening(path: &str) -> &'static str {
+    match Path::new(path).extension().and_then(|e| e.to_str()) {
+        Some("css") | Some("js") | Some("mjs") => "/*",
+        Some("svg") | Some("html") | Some("xml") => "<!--",
+        _ => "#",
+    }
 }
 
 /// The one line a JSON artifact carries under `generated`.
@@ -355,6 +379,47 @@ impl Artifact {
             schema: None,
             source,
             content: openapi::render(&stamped),
+        }
+    }
+
+    /// A line-oriented text artifact whose banner takes the comment form its suffix
+    /// allows: `/* */` for a stylesheet or a script, `<!-- -->` for an SVG, `#` otherwise.
+    /// A stylesheet cannot open with `#` and an image cannot open with a shell comment;
+    /// [`violations`] asks for the same form by the same suffix.
+    ///
+    /// ```
+    /// use majordomus_cli::generate::Artifact;
+    ///
+    /// let css = Artifact::comment_text("a/b.css", "doc", "the source", "0.1.0", "body { }\n");
+    /// assert!(css.content.starts_with("/* GENERATED FILE"), "{}", css.content);
+    /// assert!(css.content.ends_with("body { }\n"));
+    ///
+    /// // the same body under a different suffix opens the way that suffix allows
+    /// let svg = Artifact::comment_text("a/b.svg", "doc", "the source", "0.1.0", "<svg/>\n");
+    /// assert!(svg.content.starts_with("<!-- GENERATED FILE"), "{}", svg.content);
+    /// ```
+    pub fn comment_text(
+        path: impl Into<String>,
+        document: impl Into<String>,
+        source: impl Into<String>,
+        version: &str,
+        body: &str,
+    ) -> Artifact {
+        let path = path.into();
+        let source = source.into();
+        let [a, b, c] = banner_lines(&source, version);
+        let banner = match text_comment_opening(&path) {
+            "/*" => format!("/* {a}\n   {b}\n   {c} */\n"),
+            "<!--" => format!("<!-- {a}\n     {b}\n     {c} -->\n"),
+            _ => comment_banner(&source, version),
+        };
+        Artifact {
+            path,
+            document: document.into(),
+            format: ArtifactFormat::Text,
+            schema: None,
+            content: banner + body,
+            source,
         }
     }
 
@@ -562,6 +627,7 @@ pub fn artifacts(
             | Target::Distribution
             | Target::Deployment
             | Target::Graph
+            | Target::Design
             | Target::Manifest => {}
         }
     }
@@ -704,6 +770,17 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
     if targets.contains(&Target::Distribution) {
         out.extend(distribution_artifacts(app)?);
     }
+    // The design is the tool's own and is projected into the tool's own tree — the share
+    // directory, the crate, the site. Where the share is not inside this repository, or the
+    // crate is not here, there is nothing of this repository's to project.
+    let crate_is_here = app
+        .repository
+        .root()
+        .join("apps/majordomus-cli/Cargo.toml")
+        .is_file();
+    if share_is_here && crate_is_here && targets.contains(&Target::Design) {
+        out.extend(design_artifacts(app)?);
+    }
     if targets.contains(&Target::Deployment) {
         for object in app
             .context
@@ -832,6 +909,125 @@ pub fn distribution_artifacts(app: &App) -> Result<Vec<Artifact>> {
 }
 
 /// A file of the tool's data directory, read as text.
+/// Every projection of the design system. The declaration is read from the tool's data
+/// directory, validated, and rendered by [`crate::design::render`]; a stylesheet that would
+/// be malformed is refused here rather than written, because the CSS parser would drop the
+/// defect in silence and every check downstream would stay green.
+pub(crate) fn design_artifacts(app: &App) -> Result<Vec<Artifact>> {
+    use crate::design::{render, DesignSystem, DOCUMENT_SCHEMA, SHARE_PATH, SITE_SCHEMA, SOURCE};
+
+    let path = app.share.dir().join(SHARE_PATH);
+    let text = std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))?;
+    let design = DesignSystem::parse(&text).map_err(|reason| Error::InvalidDesign {
+        path: SOURCE.to_string(),
+        reason,
+    })?;
+    let version = crate::VERSION;
+    let source = render::SOURCE_LINE;
+    let mut out = Vec::new();
+
+    for (path, document, body) in [
+        (
+            render::THEME_CSS,
+            "design-theme",
+            render::theme_css(&design),
+        ),
+        (
+            render::SURFACE_CSS,
+            "design-surface",
+            render::surface_css(&design),
+        ),
+        (
+            render::STATUS_CSS,
+            "design-status",
+            render::status_css(&design),
+        ),
+        (
+            render::TOKENS_CSS,
+            "design-tokens",
+            render::tokens_css(&design),
+        ),
+    ] {
+        render::well_formed(&body).map_err(|reason| Error::InvalidDesign {
+            path: path.to_string(),
+            reason,
+        })?;
+        out.push(Artifact::comment_text(
+            path, document, source, version, &body,
+        ));
+    }
+
+    // the declaration itself, compiled into the crate so the executable answers from the
+    // design its stylesheets were projected from
+    out.push(Artifact::verbatim(
+        render::COMPILED_YAML,
+        "design-declaration",
+        ArtifactFormat::Yaml,
+        None,
+        source,
+        comment_banner(source, version) + &text,
+    ));
+
+    // the brand: one canonical file per mark under share/design/brand, and every copy a
+    // surface serves written from it, so no copy is edited on its own
+    let brand = |relative: &str| -> Result<String> {
+        let p = app.share.dir().join("design").join(relative);
+        std::fs::read_to_string(&p).map_err(|e| Error::io(&p, e))
+    };
+    let mark = brand(&design.identity.mark)?;
+    let logo = brand(&design.identity.logo)?;
+    let mark_source = format!("share/design/{}, the canonical mark", design.identity.mark);
+    let logo_source = format!("share/design/{}, the canonical logo", design.identity.logo);
+    for path in [
+        render::COMPILED_MARK,
+        "share/cockpit/favicon.svg",
+        "site/static/favicon.svg",
+        "site/static/images/logo-mark.svg",
+    ] {
+        out.push(Artifact::comment_text(
+            path,
+            "design-mark",
+            mark_source.clone(),
+            version,
+            &mark,
+        ));
+    }
+    out.push(Artifact::comment_text(
+        "site/static/images/logo.svg",
+        "design-logo",
+        logo_source,
+        version,
+        &logo,
+    ));
+
+    // the site's dataset and the reference documents
+    out.push(Artifact::verbatim(
+        render::SITE_JSON,
+        "site-design",
+        ArtifactFormat::Json,
+        Some(SITE_SCHEMA.to_string()),
+        source,
+        openapi::render(&render::site_document(&design, version)),
+    ));
+    out.extend(
+        Document::new(
+            render::DOCUMENT,
+            DOCUMENT_SCHEMA,
+            source,
+            render::document(&design),
+        )
+        .artifacts(version),
+    );
+    out.push(Artifact::markdown(
+        format!("{OUT_DIR}/{}.md", render::DOCUMENT),
+        render::DOCUMENT,
+        source,
+        version,
+        &render::reference_markdown(&design),
+    ));
+    Ok(out)
+}
+
 fn read_share(share: &Share, relative: &str) -> Result<String> {
     let path = share.dir().join(relative);
     std::fs::read_to_string(&path).map_err(|e| Error::io(&path, e))
@@ -1893,7 +2089,8 @@ pub fn violations(artifacts: &[Artifact], schemas: &GeneratedSchemas) -> Vec<Vio
         // carries it as members and is checked below
         let opening = match a.format {
             ArtifactFormat::Markdown if !stamped_elsewhere => Some(format!("<!-- {HEADER}")),
-            ArtifactFormat::Yaml | ArtifactFormat::Text => Some(format!("# {HEADER}")),
+            ArtifactFormat::Yaml => Some(format!("# {HEADER}")),
+            ArtifactFormat::Text => Some(format!("{} {HEADER}", text_comment_opening(&a.path))),
             _ => None,
         };
         if opening.is_some_and(|o| !opens_with_banner(&a.content, &o)) {

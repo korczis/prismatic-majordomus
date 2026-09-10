@@ -1,0 +1,3937 @@
+{
+  "schema": "majordomus/design-system/v1",
+  "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`",
+  "generator": "majordomus-cli 0.4.0",
+  "fingerprint": "1c73468b1437a8c9066eef0eb69fd19f2392c8cbb080db92d7c630195bdce2be",
+  "design": "1c73468b1437",
+  "source": "share/design/tokens.yaml",
+  "projections": [
+    "share/design/theme.css",
+    "share/design/surface.css",
+    "share/design/status.css",
+    "apps/majordomus-cli/src/web/tokens.css",
+    "apps/majordomus-cli/src/design/tokens.yaml",
+    "apps/majordomus-cli/src/cockpit/logo-mark.svg",
+    "site/data/registry/design.json",
+    "docs/generated/design.json",
+    "docs/generated/design.yaml",
+    "docs/generated/design.md"
+  ],
+  "counts": {
+    "font": 2,
+    "role": 14,
+    "status": 5,
+    "state": 99,
+    "type": 4,
+    "tracking": 1,
+    "layout": 3,
+    "radius": 3,
+    "motion": 1,
+    "theme": 1,
+    "palette": 33
+  },
+  "tokens": [
+    {
+      "name": "sans",
+      "kind": "font",
+      "about": "the system stack every surface reads in",
+      "css": [
+        "--font-sans",
+        "font-sans"
+      ],
+      "value": "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "mono",
+      "kind": "font",
+      "about": "the monospace stack for code, identifiers and logs",
+      "css": [
+        "--font-mono",
+        "font-mono"
+      ],
+      "value": "ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, \"Liberation Mono\", monospace",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "bg",
+      "kind": "role",
+      "about": "the page",
+      "css": [
+        "--mj-bg"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-bg",
+          "light": {
+            "reference": "white",
+            "css": "#fff",
+            "literal": "#fff"
+          },
+          "dark": {
+            "reference": "gray-950",
+            "css": "oklch(13% 0.028 261.692)",
+            "literal": "oklch(13% 0.028 261.692)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-neutral-primary"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "raised",
+      "kind": "role",
+      "about": "a card, a panel, a header bar that sits on the page",
+      "css": [
+        "--mj-raised"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-raised",
+          "light": {
+            "reference": "white",
+            "css": "#fff",
+            "literal": "#fff"
+          },
+          "dark": {
+            "reference": "gray-900",
+            "css": "oklch(21% 0.034 264.665)",
+            "literal": "oklch(21% 0.034 264.665)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-neutral-primary-soft",
+        "--color-neutral-primary-medium",
+        "--color-neutral-primary-strong"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "sunken",
+      "kind": "role",
+      "about": "a well, a table stripe, a code block, a header cell",
+      "css": [
+        "--mj-sunken"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-sunken",
+          "light": {
+            "reference": "gray-50",
+            "css": "oklch(98.5% 0.002 247.839)",
+            "literal": "oklch(98.5% 0.002 247.839)"
+          },
+          "dark": {
+            "reference": "gray-800",
+            "css": "oklch(27.8% 0.033 256.848)",
+            "literal": "oklch(27.8% 0.033 256.848)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-neutral-secondary",
+        "--color-neutral-secondary-soft",
+        "--color-neutral-secondary-medium",
+        "--color-neutral-secondary-strong"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "line",
+      "kind": "role",
+      "about": "every border and rule",
+      "css": [
+        "--mj-line"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-line",
+          "light": {
+            "reference": "gray-200",
+            "css": "oklch(92.8% 0.006 264.531)",
+            "literal": "oklch(92.8% 0.006 264.531)"
+          },
+          "dark": {
+            "reference": "gray-800",
+            "css": "oklch(27.8% 0.033 256.848)",
+            "literal": "oklch(27.8% 0.033 256.848)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-default",
+        "--color-default-subtle",
+        "--color-default-medium",
+        "--color-default-strong"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "fg",
+      "kind": "role",
+      "about": "headings, identifiers, values; the text that carries the page",
+      "css": [
+        "--mj-fg"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-fg",
+          "light": {
+            "reference": "gray-900",
+            "css": "oklch(21% 0.034 264.665)",
+            "literal": "oklch(21% 0.034 264.665)"
+          },
+          "dark": {
+            "reference": "white",
+            "css": "#fff",
+            "literal": "#fff"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-heading"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "body",
+      "kind": "role",
+      "about": "reading text",
+      "css": [
+        "--mj-body"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-body",
+          "light": {
+            "reference": "gray-600",
+            "css": "oklch(44.6% 0.03 256.802)",
+            "literal": "oklch(44.6% 0.03 256.802)"
+          },
+          "dark": {
+            "reference": "gray-400",
+            "css": "oklch(70.7% 0.022 261.325)",
+            "literal": "oklch(70.7% 0.022 261.325)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-body"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "muted",
+      "kind": "role",
+      "about": "secondary text; labels, captions, provenance",
+      "css": [
+        "--mj-muted"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-muted",
+          "light": {
+            "reference": "gray-500",
+            "css": "oklch(55.1% 0.027 264.364)",
+            "literal": "oklch(55.1% 0.027 264.364)"
+          },
+          "dark": {
+            "reference": "gray-400",
+            "css": "oklch(70.7% 0.022 261.325)",
+            "literal": "oklch(70.7% 0.022 261.325)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-body-subtle"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "faint",
+      "kind": "role",
+      "about": "the quietest text; placeholders, disabled text, a navigation group's heading. Measured, not chosen - gray-400 read 2.60:1 on the page and gray-500 4.16:1 on the dark page, so it carries muted's values until the palette holds a Tailwind step between them.",
+      "css": [
+        "--mj-faint"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-faint",
+          "light": {
+            "reference": "gray-500",
+            "css": "oklch(55.1% 0.027 264.364)",
+            "literal": "oklch(55.1% 0.027 264.364)"
+          },
+          "dark": {
+            "reference": "gray-400",
+            "css": "oklch(70.7% 0.022 261.325)",
+            "literal": "oklch(70.7% 0.022 261.325)"
+          }
+        }
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "accent",
+      "kind": "role",
+      "about": "links, the focus ring, the one colour that means interactive",
+      "css": [
+        "--mj-accent"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-accent",
+          "light": {
+            "reference": "blue-700",
+            "css": "oklch(48.8% 0.243 264.376)",
+            "literal": "oklch(48.8% 0.243 264.376)"
+          },
+          "dark": {
+            "reference": "blue-400",
+            "css": "oklch(70.7% 0.165 254.624)",
+            "literal": "oklch(70.7% 0.165 254.624)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-fg-brand"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "accent-strong",
+      "kind": "role",
+      "about": "the accent where it must read as text on the accent's soft ground",
+      "css": [
+        "--mj-accent-strong"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-accent-strong",
+          "light": {
+            "reference": "blue-900",
+            "css": "oklch(37.9% 0.146 265.522)",
+            "literal": "oklch(37.9% 0.146 265.522)"
+          },
+          "dark": {
+            "reference": "blue-400",
+            "css": "oklch(70.7% 0.165 254.624)",
+            "literal": "oklch(70.7% 0.165 254.624)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-fg-brand-strong"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "accent-soft",
+      "kind": "role",
+      "about": "the accent as a ground; a selected row, the current navigation entry",
+      "css": [
+        "--mj-accent-soft"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-accent-soft",
+          "light": {
+            "reference": "blue-50",
+            "css": "oklch(97% 0.014 254.604)",
+            "literal": "oklch(97% 0.014 254.604)"
+          },
+          "dark": {
+            "reference": "blue-950",
+            "css": "oklch(28.2% 0.091 267.935)",
+            "literal": "oklch(28.2% 0.091 267.935)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-brand-softer"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "accent-line",
+      "kind": "role",
+      "about": "the accent as a border around its soft ground",
+      "css": [
+        "--mj-accent-line"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-accent-line",
+          "light": {
+            "reference": "blue-200",
+            "css": "oklch(88.2% 0.059 254.128)",
+            "literal": "oklch(88.2% 0.059 254.128)"
+          },
+          "dark": {
+            "reference": "blue-900",
+            "css": "oklch(37.9% 0.146 265.522)",
+            "literal": "oklch(37.9% 0.146 265.522)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-brand-subtle"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "accent-fill",
+      "kind": "role",
+      "about": "a primary action's background; always carries on-accent text",
+      "css": [
+        "--mj-accent-fill"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-accent-fill",
+          "light": {
+            "reference": "blue-700",
+            "css": "oklch(48.8% 0.243 264.376)",
+            "literal": "oklch(48.8% 0.243 264.376)"
+          },
+          "dark": {
+            "reference": "blue-600",
+            "css": "oklch(54.6% 0.245 262.881)",
+            "literal": "oklch(54.6% 0.245 262.881)"
+          }
+        }
+      ],
+      "aliases": [
+        "--color-brand"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "on-accent",
+      "kind": "role",
+      "about": "text on a primary action",
+      "css": [
+        "--mj-on-accent"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-on-accent",
+          "light": {
+            "reference": "white",
+            "css": "#fff",
+            "literal": "#fff"
+          },
+          "dark": {
+            "reference": "white",
+            "css": "#fff",
+            "literal": "#fff"
+          }
+        }
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "ok",
+      "kind": "status",
+      "about": "healthy, done, passing, present, in agreement",
+      "css": [
+        "--mj-ok",
+        "--mj-ok-bg",
+        "--mj-ok-line",
+        ".mj-badge--ok",
+        ".mj-status--ok"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-ok",
+          "light": {
+            "reference": "emerald-900",
+            "css": "oklch(37.8% 0.077 168.94)",
+            "literal": "oklch(37.8% 0.077 168.94)"
+          },
+          "dark": {
+            "reference": "emerald-300",
+            "css": "oklch(84.5% 0.143 164.978)",
+            "literal": "oklch(84.5% 0.143 164.978)"
+          }
+        },
+        {
+          "part": "bg",
+          "css": "--mj-ok-bg",
+          "light": {
+            "reference": "emerald-50",
+            "css": "oklch(97.9% 0.021 166.113)",
+            "literal": "oklch(97.9% 0.021 166.113)"
+          },
+          "dark": {
+            "reference": "emerald-950",
+            "css": "oklch(26.2% 0.051 172.552)",
+            "literal": "oklch(26.2% 0.051 172.552)"
+          }
+        },
+        {
+          "part": "line",
+          "css": "--mj-ok-line",
+          "light": {
+            "reference": "emerald-200",
+            "css": "oklch(90.5% 0.093 164.15)",
+            "literal": "oklch(90.5% 0.093 164.15)"
+          },
+          "dark": {
+            "reference": "emerald-900",
+            "css": "oklch(37.8% 0.077 168.94)",
+            "literal": "oklch(37.8% 0.077 168.94)"
+          }
+        }
+      ],
+      "states": [
+        "ok",
+        "pass",
+        "passed",
+        "succeeded",
+        "completed",
+        "done",
+        "current",
+        "declared",
+        "covered",
+        "guaranteed",
+        "healthy",
+        "live",
+        "present",
+        "synced",
+        "stable",
+        "read-only",
+        "connected",
+        "accepted",
+        "enforced",
+        "wired",
+        "behaviorally-verified",
+        "valid",
+        "clean",
+        "merged",
+        "documented"
+      ],
+      "aliases": [
+        "--color-fg-success-strong",
+        "--color-success-soft",
+        "--color-success-subtle"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "warn",
+      "kind": "status",
+      "about": "attention without failure; stale, partial, advisory, cancelled",
+      "css": [
+        "--mj-warn",
+        "--mj-warn-bg",
+        "--mj-warn-line",
+        ".mj-badge--warn",
+        ".mj-status--warn"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-warn",
+          "light": {
+            "reference": "orange-900",
+            "css": "oklch(40.8% 0.123 38.172)",
+            "literal": "oklch(40.8% 0.123 38.172)"
+          },
+          "dark": {
+            "reference": "orange-300",
+            "css": "oklch(83.7% 0.128 66.29)",
+            "literal": "oklch(83.7% 0.128 66.29)"
+          }
+        },
+        {
+          "part": "bg",
+          "css": "--mj-warn-bg",
+          "light": {
+            "reference": "orange-50",
+            "css": "oklch(98% 0.016 73.684)",
+            "literal": "oklch(98% 0.016 73.684)"
+          },
+          "dark": {
+            "reference": "orange-950",
+            "css": "oklch(26.6% 0.079 36.259)",
+            "literal": "oklch(26.6% 0.079 36.259)"
+          }
+        },
+        {
+          "part": "line",
+          "css": "--mj-warn-line",
+          "light": {
+            "reference": "orange-200",
+            "css": "oklch(90.1% 0.076 70.697)",
+            "literal": "oklch(90.1% 0.076 70.697)"
+          },
+          "dark": {
+            "reference": "orange-900",
+            "css": "oklch(40.8% 0.123 38.172)",
+            "literal": "oklch(40.8% 0.123 38.172)"
+          }
+        }
+      ],
+      "states": [
+        "warn",
+        "warning",
+        "stale",
+        "partial",
+        "advisory",
+        "cancelled",
+        "cancelling",
+        "not-generated",
+        "reconnecting",
+        "verify",
+        "executable",
+        "ahead",
+        "behind",
+        "dirty",
+        "proposed",
+        "deprecated",
+        "degraded",
+        "experimental",
+        "ephemeral"
+      ],
+      "aliases": [
+        "--color-fg-warning",
+        "--color-warning-soft",
+        "--color-warning-subtle"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "bad",
+      "kind": "status",
+      "about": "failed, missing, blocked, refused",
+      "css": [
+        "--mj-bad",
+        "--mj-bad-bg",
+        "--mj-bad-line",
+        ".mj-badge--bad",
+        ".mj-status--bad"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-bad",
+          "light": {
+            "reference": "rose-900",
+            "css": "oklch(41% 0.159 10.272)",
+            "literal": "oklch(41% 0.159 10.272)"
+          },
+          "dark": {
+            "reference": "rose-300",
+            "css": "oklch(81% 0.117 11.638)",
+            "literal": "oklch(81% 0.117 11.638)"
+          }
+        },
+        {
+          "part": "bg",
+          "css": "--mj-bad-bg",
+          "light": {
+            "reference": "rose-50",
+            "css": "oklch(96.9% 0.015 12.422)",
+            "literal": "oklch(96.9% 0.015 12.422)"
+          },
+          "dark": {
+            "reference": "rose-950",
+            "css": "oklch(27.1% 0.105 12.094)",
+            "literal": "oklch(27.1% 0.105 12.094)"
+          }
+        },
+        {
+          "part": "line",
+          "css": "--mj-bad-line",
+          "light": {
+            "reference": "rose-200",
+            "css": "oklch(89.2% 0.058 10.001)",
+            "literal": "oklch(89.2% 0.058 10.001)"
+          },
+          "dark": {
+            "reference": "rose-900",
+            "css": "oklch(41% 0.159 10.272)",
+            "literal": "oklch(41% 0.159 10.272)"
+          }
+        }
+      ],
+      "states": [
+        "bad",
+        "fail",
+        "failed",
+        "error",
+        "missing",
+        "blocked",
+        "rejected",
+        "blocking",
+        "refused",
+        "disconnected",
+        "offline",
+        "lost",
+        "stderr",
+        "superseded",
+        "unwired",
+        "unsupported",
+        "owed",
+        "foreign",
+        "misplaced"
+      ],
+      "aliases": [
+        "--color-fg-danger-strong",
+        "--color-danger-soft",
+        "--color-danger-subtle"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "info",
+      "kind": "status",
+      "about": "in progress, active, informational; the accent as a status",
+      "css": [
+        "--mj-info",
+        "--mj-info-bg",
+        "--mj-info-line",
+        ".mj-badge--info",
+        ".mj-status--info"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-info",
+          "light": {
+            "reference": "blue-900",
+            "css": "oklch(37.9% 0.146 265.522)",
+            "literal": "oklch(37.9% 0.146 265.522)"
+          },
+          "dark": {
+            "reference": "blue-400",
+            "css": "oklch(70.7% 0.165 254.624)",
+            "literal": "oklch(70.7% 0.165 254.624)"
+          }
+        },
+        {
+          "part": "bg",
+          "css": "--mj-info-bg",
+          "light": {
+            "reference": "blue-50",
+            "css": "oklch(97% 0.014 254.604)",
+            "literal": "oklch(97% 0.014 254.604)"
+          },
+          "dark": {
+            "reference": "blue-950",
+            "css": "oklch(28.2% 0.091 267.935)",
+            "literal": "oklch(28.2% 0.091 267.935)"
+          }
+        },
+        {
+          "part": "line",
+          "css": "--mj-info-line",
+          "light": {
+            "reference": "blue-200",
+            "css": "oklch(88.2% 0.059 254.128)",
+            "literal": "oklch(88.2% 0.059 254.128)"
+          },
+          "dark": {
+            "reference": "blue-900",
+            "css": "oklch(37.9% 0.146 265.522)",
+            "literal": "oklch(37.9% 0.146 265.522)"
+          }
+        }
+      ],
+      "states": [
+        "info",
+        "running",
+        "queued",
+        "active",
+        "verified",
+        "generated",
+        "cached",
+        "runtime",
+        "resource",
+        "pending",
+        "loading",
+        "streaming",
+        "implemented",
+        "featured",
+        "exempt",
+        "inherited",
+        "unmerged",
+        "detached"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "neutral",
+      "kind": "status",
+      "about": "no meaning carried by colour; unknown, planned, external, draft",
+      "css": [
+        "--mj-neutral",
+        "--mj-neutral-bg",
+        "--mj-neutral-line",
+        ".mj-badge--neutral",
+        ".mj-status--neutral"
+      ],
+      "parts": [
+        {
+          "part": "fg",
+          "css": "--mj-neutral",
+          "light": {
+            "reference": "fg",
+            "css": "var(--mj-fg)",
+            "literal": "oklch(21% 0.034 264.665)"
+          },
+          "dark": {
+            "reference": "fg",
+            "css": "var(--mj-fg)",
+            "literal": "#fff"
+          }
+        },
+        {
+          "part": "bg",
+          "css": "--mj-neutral-bg",
+          "light": {
+            "reference": "sunken",
+            "css": "var(--mj-sunken)",
+            "literal": "oklch(98.5% 0.002 247.839)"
+          },
+          "dark": {
+            "reference": "sunken",
+            "css": "var(--mj-sunken)",
+            "literal": "oklch(27.8% 0.033 256.848)"
+          }
+        },
+        {
+          "part": "line",
+          "css": "--mj-neutral-line",
+          "light": {
+            "reference": "line",
+            "css": "var(--mj-line)",
+            "literal": "oklch(92.8% 0.006 264.531)"
+          },
+          "dark": {
+            "reference": "line",
+            "css": "var(--mj-line)",
+            "literal": "oklch(27.8% 0.033 256.848)"
+          }
+        }
+      ],
+      "states": [
+        "neutral",
+        "unknown",
+        "external",
+        "planned",
+        "described",
+        "draft",
+        "ready",
+        "inactive",
+        "stopped",
+        "idle",
+        "query",
+        "command",
+        "builtin",
+        "declarative",
+        "vendored",
+        "high",
+        "medium",
+        "low",
+        "setup",
+        "begin",
+        "work",
+        "inspect",
+        "conclude"
+      ],
+      "projections": [
+        "share/design/theme.css",
+        "share/design/surface.css",
+        "share/design/status.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "pass",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--pass",
+        ".mj-status--pass"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "passed",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--passed",
+        ".mj-status--passed"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "succeeded",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--succeeded",
+        ".mj-status--succeeded"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "completed",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--completed",
+        ".mj-status--completed"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "done",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--done",
+        ".mj-status--done"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "current",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--current",
+        ".mj-status--current"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "declared",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--declared",
+        ".mj-status--declared"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "covered",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--covered",
+        ".mj-status--covered"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "guaranteed",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--guaranteed",
+        ".mj-status--guaranteed"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "healthy",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--healthy",
+        ".mj-status--healthy"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "live",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--live",
+        ".mj-status--live"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "present",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--present",
+        ".mj-status--present"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "synced",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--synced",
+        ".mj-status--synced"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "stable",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--stable",
+        ".mj-status--stable"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "read-only",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--read-only",
+        ".mj-status--read-only"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "connected",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--connected",
+        ".mj-status--connected"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "accepted",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--accepted",
+        ".mj-status--accepted"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "enforced",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--enforced",
+        ".mj-status--enforced"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "wired",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--wired",
+        ".mj-status--wired"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "behaviorally-verified",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--behaviorally-verified",
+        ".mj-status--behaviorally-verified"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "valid",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--valid",
+        ".mj-status--valid"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "clean",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--clean",
+        ".mj-status--clean"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "merged",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--merged",
+        ".mj-status--merged"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "documented",
+      "kind": "state",
+      "about": "a state word filed under `ok`",
+      "css": [
+        ".mj-badge--documented",
+        ".mj-status--documented"
+      ],
+      "role": "ok",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "warning",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--warning",
+        ".mj-status--warning"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "stale",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--stale",
+        ".mj-status--stale"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "partial",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--partial",
+        ".mj-status--partial"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "advisory",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--advisory",
+        ".mj-status--advisory"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "cancelled",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--cancelled",
+        ".mj-status--cancelled"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "cancelling",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--cancelling",
+        ".mj-status--cancelling"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "not-generated",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--not-generated",
+        ".mj-status--not-generated"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "reconnecting",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--reconnecting",
+        ".mj-status--reconnecting"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "verify",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--verify",
+        ".mj-status--verify"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "executable",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--executable",
+        ".mj-status--executable"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "ahead",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--ahead",
+        ".mj-status--ahead"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "behind",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--behind",
+        ".mj-status--behind"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "dirty",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--dirty",
+        ".mj-status--dirty"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "proposed",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--proposed",
+        ".mj-status--proposed"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "deprecated",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--deprecated",
+        ".mj-status--deprecated"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "degraded",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--degraded",
+        ".mj-status--degraded"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "experimental",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--experimental",
+        ".mj-status--experimental"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "ephemeral",
+      "kind": "state",
+      "about": "a state word filed under `warn`",
+      "css": [
+        ".mj-badge--ephemeral",
+        ".mj-status--ephemeral"
+      ],
+      "role": "warn",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "fail",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--fail",
+        ".mj-status--fail"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "failed",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--failed",
+        ".mj-status--failed"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "error",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--error",
+        ".mj-status--error"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "missing",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--missing",
+        ".mj-status--missing"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blocked",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--blocked",
+        ".mj-status--blocked"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "rejected",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--rejected",
+        ".mj-status--rejected"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blocking",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--blocking",
+        ".mj-status--blocking"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "refused",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--refused",
+        ".mj-status--refused"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "disconnected",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--disconnected",
+        ".mj-status--disconnected"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "offline",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--offline",
+        ".mj-status--offline"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "lost",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--lost",
+        ".mj-status--lost"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "stderr",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--stderr",
+        ".mj-status--stderr"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "superseded",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--superseded",
+        ".mj-status--superseded"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "unwired",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--unwired",
+        ".mj-status--unwired"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "unsupported",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--unsupported",
+        ".mj-status--unsupported"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "owed",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--owed",
+        ".mj-status--owed"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "foreign",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--foreign",
+        ".mj-status--foreign"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "misplaced",
+      "kind": "state",
+      "about": "a state word filed under `bad`",
+      "css": [
+        ".mj-badge--misplaced",
+        ".mj-status--misplaced"
+      ],
+      "role": "bad",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "running",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--running",
+        ".mj-status--running"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "queued",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--queued",
+        ".mj-status--queued"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "active",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--active",
+        ".mj-status--active"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "verified",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--verified",
+        ".mj-status--verified"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "generated",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--generated",
+        ".mj-status--generated"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "cached",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--cached",
+        ".mj-status--cached"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "runtime",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--runtime",
+        ".mj-status--runtime"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "resource",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--resource",
+        ".mj-status--resource"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "pending",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--pending",
+        ".mj-status--pending"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "loading",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--loading",
+        ".mj-status--loading"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "streaming",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--streaming",
+        ".mj-status--streaming"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "implemented",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--implemented",
+        ".mj-status--implemented"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "featured",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--featured",
+        ".mj-status--featured"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "exempt",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--exempt",
+        ".mj-status--exempt"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "inherited",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--inherited",
+        ".mj-status--inherited"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "unmerged",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--unmerged",
+        ".mj-status--unmerged"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "detached",
+      "kind": "state",
+      "about": "a state word filed under `info`",
+      "css": [
+        ".mj-badge--detached",
+        ".mj-status--detached"
+      ],
+      "role": "info",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "unknown",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--unknown",
+        ".mj-status--unknown"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "external",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--external",
+        ".mj-status--external"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "planned",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--planned",
+        ".mj-status--planned"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "described",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--described",
+        ".mj-status--described"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "draft",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--draft",
+        ".mj-status--draft"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "ready",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--ready",
+        ".mj-status--ready"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "inactive",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--inactive",
+        ".mj-status--inactive"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "stopped",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--stopped",
+        ".mj-status--stopped"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "idle",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--idle",
+        ".mj-status--idle"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "query",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--query",
+        ".mj-status--query"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "command",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--command",
+        ".mj-status--command"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "builtin",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--builtin",
+        ".mj-status--builtin"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "declarative",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--declarative",
+        ".mj-status--declarative"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "vendored",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--vendored",
+        ".mj-status--vendored"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "high",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--high",
+        ".mj-status--high"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "medium",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--medium",
+        ".mj-status--medium"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "low",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--low",
+        ".mj-status--low"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "setup",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--setup",
+        ".mj-status--setup"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "begin",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--begin",
+        ".mj-status--begin"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "work",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--work",
+        ".mj-status--work"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "inspect",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--inspect",
+        ".mj-status--inspect"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "conclude",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--conclude",
+        ".mj-status--conclude"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "meta",
+      "kind": "type",
+      "about": "the smallest legible step; counts, provenance, table headers",
+      "css": [
+        "--text-meta",
+        "--text-meta--line-height",
+        "text-meta"
+      ],
+      "value": "10px/1.4",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "label",
+      "kind": "type",
+      "about": "labels, badges, breadcrumbs, keys of a fact list",
+      "css": [
+        "--text-label",
+        "--text-label--line-height",
+        "text-label"
+      ],
+      "value": "11px/1.4",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "small",
+      "kind": "type",
+      "about": "secondary text at density; notes, log lines, monospace inline",
+      "css": [
+        "--text-small",
+        "--text-small--line-height",
+        "text-small"
+      ],
+      "value": "12px/1.5",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "dense",
+      "kind": "type",
+      "about": "the body text of a control plane",
+      "css": [
+        "--text-dense",
+        "--text-dense--line-height",
+        "text-dense"
+      ],
+      "value": "13.5px/1.6",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "caps",
+      "kind": "tracking",
+      "about": "the letter-spacing of an uppercase label",
+      "css": [
+        "--tracking-caps",
+        "tracking-caps"
+      ],
+      "value": "0.12em",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "measure",
+      "kind": "layout",
+      "about": "the widest a reading column gets",
+      "css": [
+        "--mj-measure"
+      ],
+      "value": "62rem",
+      "projections": [
+        "share/design/surface.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "cockpit",
+      "kind": "layout",
+      "about": "the widest the Cockpit's layout gets before it centres",
+      "css": [
+        "--mj-cockpit"
+      ],
+      "value": "1600px",
+      "projections": [
+        "share/design/surface.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "topbar",
+      "kind": "layout",
+      "about": "the Cockpit's top bar; the sidebar and a sticky header sit under it",
+      "css": [
+        "--mj-topbar"
+      ],
+      "value": "2.75rem",
+      "projections": [
+        "share/design/surface.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "sm",
+      "kind": "radius",
+      "about": "a badge, a chip, an input",
+      "css": [
+        "--radius-sm",
+        "rounded-sm"
+      ],
+      "value": "0.25rem",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "md",
+      "kind": "radius",
+      "about": "a button, a code block",
+      "css": [
+        "--radius-md",
+        "rounded-md"
+      ],
+      "value": "0.375rem",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "lg",
+      "kind": "radius",
+      "about": "a card, a panel",
+      "css": [
+        "--radius-lg",
+        "rounded-lg"
+      ],
+      "value": "0.5rem",
+      "projections": [
+        "share/design/theme.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "fast",
+      "kind": "motion",
+      "about": "a progress bar, a hover; anything a state change animates",
+      "css": [
+        "--mj-motion-fast"
+      ],
+      "value": "150ms",
+      "projections": [
+        "share/design/surface.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "theme",
+      "kind": "theme",
+      "about": "the class `dark` on the root element means dark; the choice is kept under `color-theme`",
+      "css": [
+        ".dark"
+      ],
+      "value": "color-theme",
+      "projections": [
+        "share/design/surface.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "white",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "#fff",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-50",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(98.5% 0.002 247.839)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-100",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(96.7% 0.003 264.542)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-200",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(92.8% 0.006 264.531)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-400",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(70.7% 0.022 261.325)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-500",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(55.1% 0.027 264.364)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-600",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(44.6% 0.03 256.802)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-800",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(27.8% 0.033 256.848)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-900",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(21% 0.034 264.665)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "gray-950",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(13% 0.028 261.692)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blue-50",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(97% 0.014 254.604)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blue-200",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(88.2% 0.059 254.128)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blue-400",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(70.7% 0.165 254.624)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blue-500",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(62.3% 0.214 259.815)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blue-600",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(54.6% 0.245 262.881)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blue-700",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(48.8% 0.243 264.376)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blue-900",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(37.9% 0.146 265.522)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "blue-950",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(28.2% 0.091 267.935)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "emerald-50",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(97.9% 0.021 166.113)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "emerald-200",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(90.5% 0.093 164.15)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "emerald-300",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(84.5% 0.143 164.978)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "emerald-900",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(37.8% 0.077 168.94)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "emerald-950",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(26.2% 0.051 172.552)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "orange-50",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(98% 0.016 73.684)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "orange-200",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(90.1% 0.076 70.697)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "orange-300",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(83.7% 0.128 66.29)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "orange-900",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(40.8% 0.123 38.172)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "orange-950",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(26.6% 0.079 36.259)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "rose-50",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(96.9% 0.015 12.422)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "rose-200",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(89.2% 0.058 10.001)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "rose-300",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(81% 0.117 11.638)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "rose-900",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(41% 0.159 10.272)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "rose-950",
+      "kind": "palette",
+      "about": "a raw palette entry; roles and statuses name it, consumers never do",
+      "css": [],
+      "value": "oklch(27.1% 0.105 12.094)",
+      "projections": [
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    }
+  ],
+  "declaration": {
+    "schema": 2,
+    "identity": {
+      "name": "Majordomus",
+      "mark": "brand/logo-mark.svg",
+      "logo": "brand/logo.svg",
+      "social": "brand/social-card.png"
+    },
+    "font": {
+      "sans": "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+      "mono": "ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, \"Liberation Mono\", monospace"
+    },
+    "palette": {
+      "white": "#fff",
+      "gray-50": "oklch(98.5% 0.002 247.839)",
+      "gray-100": "oklch(96.7% 0.003 264.542)",
+      "gray-200": "oklch(92.8% 0.006 264.531)",
+      "gray-400": "oklch(70.7% 0.022 261.325)",
+      "gray-500": "oklch(55.1% 0.027 264.364)",
+      "gray-600": "oklch(44.6% 0.03 256.802)",
+      "gray-800": "oklch(27.8% 0.033 256.848)",
+      "gray-900": "oklch(21% 0.034 264.665)",
+      "gray-950": "oklch(13% 0.028 261.692)",
+      "blue-50": "oklch(97% 0.014 254.604)",
+      "blue-200": "oklch(88.2% 0.059 254.128)",
+      "blue-400": "oklch(70.7% 0.165 254.624)",
+      "blue-500": "oklch(62.3% 0.214 259.815)",
+      "blue-600": "oklch(54.6% 0.245 262.881)",
+      "blue-700": "oklch(48.8% 0.243 264.376)",
+      "blue-900": "oklch(37.9% 0.146 265.522)",
+      "blue-950": "oklch(28.2% 0.091 267.935)",
+      "emerald-50": "oklch(97.9% 0.021 166.113)",
+      "emerald-200": "oklch(90.5% 0.093 164.15)",
+      "emerald-300": "oklch(84.5% 0.143 164.978)",
+      "emerald-900": "oklch(37.8% 0.077 168.94)",
+      "emerald-950": "oklch(26.2% 0.051 172.552)",
+      "orange-50": "oklch(98% 0.016 73.684)",
+      "orange-200": "oklch(90.1% 0.076 70.697)",
+      "orange-300": "oklch(83.7% 0.128 66.29)",
+      "orange-900": "oklch(40.8% 0.123 38.172)",
+      "orange-950": "oklch(26.6% 0.079 36.259)",
+      "rose-50": "oklch(96.9% 0.015 12.422)",
+      "rose-200": "oklch(89.2% 0.058 10.001)",
+      "rose-300": "oklch(81% 0.117 11.638)",
+      "rose-900": "oklch(41% 0.159 10.272)",
+      "rose-950": "oklch(27.1% 0.105 12.094)"
+    },
+    "roles": {
+      "bg": {
+        "about": "the page",
+        "light": "white",
+        "dark": "gray-950"
+      },
+      "raised": {
+        "about": "a card, a panel, a header bar that sits on the page",
+        "light": "white",
+        "dark": "gray-900"
+      },
+      "sunken": {
+        "about": "a well, a table stripe, a code block, a header cell",
+        "light": "gray-50",
+        "dark": "gray-800"
+      },
+      "line": {
+        "about": "every border and rule",
+        "light": "gray-200",
+        "dark": "gray-800"
+      },
+      "fg": {
+        "about": "headings, identifiers, values; the text that carries the page",
+        "light": "gray-900",
+        "dark": "white"
+      },
+      "body": {
+        "about": "reading text",
+        "light": "gray-600",
+        "dark": "gray-400"
+      },
+      "muted": {
+        "about": "secondary text; labels, captions, provenance",
+        "light": "gray-500",
+        "dark": "gray-400"
+      },
+      "faint": {
+        "about": "the quietest text; placeholders, disabled text, a navigation group's heading. Measured, not chosen - gray-400 read 2.60:1 on the page and gray-500 4.16:1 on the dark page, so it carries muted's values until the palette holds a Tailwind step between them.",
+        "light": "gray-500",
+        "dark": "gray-400"
+      },
+      "accent": {
+        "about": "links, the focus ring, the one colour that means interactive",
+        "light": "blue-700",
+        "dark": "blue-400"
+      },
+      "accent-strong": {
+        "about": "the accent where it must read as text on the accent's soft ground",
+        "light": "blue-900",
+        "dark": "blue-400"
+      },
+      "accent-soft": {
+        "about": "the accent as a ground; a selected row, the current navigation entry",
+        "light": "blue-50",
+        "dark": "blue-950"
+      },
+      "accent-line": {
+        "about": "the accent as a border around its soft ground",
+        "light": "blue-200",
+        "dark": "blue-900"
+      },
+      "accent-fill": {
+        "about": "a primary action's background; always carries on-accent text",
+        "light": "blue-700",
+        "dark": "blue-600"
+      },
+      "on-accent": {
+        "about": "text on a primary action",
+        "light": "white",
+        "dark": "white"
+      }
+    },
+    "status": {
+      "roles": {
+        "ok": {
+          "about": "healthy, done, passing, present, in agreement",
+          "fg": {
+            "light": "emerald-900",
+            "dark": "emerald-300"
+          },
+          "bg": {
+            "light": "emerald-50",
+            "dark": "emerald-950"
+          },
+          "line": {
+            "light": "emerald-200",
+            "dark": "emerald-900"
+          }
+        },
+        "warn": {
+          "about": "attention without failure; stale, partial, advisory, cancelled",
+          "fg": {
+            "light": "orange-900",
+            "dark": "orange-300"
+          },
+          "bg": {
+            "light": "orange-50",
+            "dark": "orange-950"
+          },
+          "line": {
+            "light": "orange-200",
+            "dark": "orange-900"
+          }
+        },
+        "bad": {
+          "about": "failed, missing, blocked, refused",
+          "fg": {
+            "light": "rose-900",
+            "dark": "rose-300"
+          },
+          "bg": {
+            "light": "rose-50",
+            "dark": "rose-950"
+          },
+          "line": {
+            "light": "rose-200",
+            "dark": "rose-900"
+          }
+        },
+        "info": {
+          "about": "in progress, active, informational; the accent as a status",
+          "fg": {
+            "light": "blue-900",
+            "dark": "blue-400"
+          },
+          "bg": {
+            "light": "blue-50",
+            "dark": "blue-950"
+          },
+          "line": {
+            "light": "blue-200",
+            "dark": "blue-900"
+          }
+        },
+        "neutral": {
+          "about": "no meaning carried by colour; unknown, planned, external, draft",
+          "fg": {
+            "light": "fg",
+            "dark": "fg"
+          },
+          "bg": {
+            "light": "sunken",
+            "dark": "sunken"
+          },
+          "line": {
+            "light": "line",
+            "dark": "line"
+          }
+        }
+      },
+      "states": {
+        "ok": [
+          "ok",
+          "pass",
+          "passed",
+          "succeeded",
+          "completed",
+          "done",
+          "current",
+          "declared",
+          "covered",
+          "guaranteed",
+          "healthy",
+          "live",
+          "present",
+          "synced",
+          "stable",
+          "read-only",
+          "connected",
+          "accepted",
+          "enforced",
+          "wired",
+          "behaviorally-verified",
+          "valid",
+          "clean",
+          "merged",
+          "documented"
+        ],
+        "warn": [
+          "warn",
+          "warning",
+          "stale",
+          "partial",
+          "advisory",
+          "cancelled",
+          "cancelling",
+          "not-generated",
+          "reconnecting",
+          "verify",
+          "executable",
+          "ahead",
+          "behind",
+          "dirty",
+          "proposed",
+          "deprecated",
+          "degraded",
+          "experimental",
+          "ephemeral"
+        ],
+        "bad": [
+          "bad",
+          "fail",
+          "failed",
+          "error",
+          "missing",
+          "blocked",
+          "rejected",
+          "blocking",
+          "refused",
+          "disconnected",
+          "offline",
+          "lost",
+          "stderr",
+          "superseded",
+          "unwired",
+          "unsupported",
+          "owed",
+          "foreign",
+          "misplaced"
+        ],
+        "info": [
+          "info",
+          "running",
+          "queued",
+          "active",
+          "verified",
+          "generated",
+          "cached",
+          "runtime",
+          "resource",
+          "pending",
+          "loading",
+          "streaming",
+          "implemented",
+          "featured",
+          "exempt",
+          "inherited",
+          "unmerged",
+          "detached"
+        ],
+        "neutral": [
+          "neutral",
+          "unknown",
+          "external",
+          "planned",
+          "described",
+          "draft",
+          "ready",
+          "inactive",
+          "stopped",
+          "idle",
+          "query",
+          "command",
+          "builtin",
+          "declarative",
+          "vendored",
+          "high",
+          "medium",
+          "low",
+          "setup",
+          "begin",
+          "work",
+          "inspect",
+          "conclude"
+        ]
+      }
+    },
+    "type": {
+      "scale": {
+        "meta": {
+          "about": "the smallest legible step; counts, provenance, table headers",
+          "size": "10px",
+          "leading": 1.4
+        },
+        "label": {
+          "about": "labels, badges, breadcrumbs, keys of a fact list",
+          "size": "11px",
+          "leading": 1.4
+        },
+        "small": {
+          "about": "secondary text at density; notes, log lines, monospace inline",
+          "size": "12px",
+          "leading": 1.5
+        },
+        "dense": {
+          "about": "the body text of a control plane",
+          "size": "13.5px",
+          "leading": 1.6
+        }
+      },
+      "tracking": {
+        "caps": {
+          "about": "the letter-spacing of an uppercase label",
+          "value": "0.12em"
+        }
+      }
+    },
+    "layout": {
+      "measure": {
+        "about": "the widest a reading column gets",
+        "value": "62rem"
+      },
+      "cockpit": {
+        "about": "the widest the Cockpit's layout gets before it centres",
+        "value": "1600px"
+      },
+      "topbar": {
+        "about": "the Cockpit's top bar; the sidebar and a sticky header sit under it",
+        "value": "2.75rem"
+      }
+    },
+    "radius": {
+      "sm": {
+        "about": "a badge, a chip, an input",
+        "value": "0.25rem"
+      },
+      "md": {
+        "about": "a button, a code block",
+        "value": "0.375rem"
+      },
+      "lg": {
+        "about": "a card, a panel",
+        "value": "0.5rem"
+      }
+    },
+    "motion": {
+      "fast": {
+        "about": "a progress bar, a hover; anything a state change animates",
+        "value": "150ms"
+      }
+    },
+    "theme": {
+      "class": "dark",
+      "storage-key": "color-theme"
+    },
+    "viewports": [
+      320,
+      390,
+      1024,
+      1280,
+      1600
+    ],
+    "alias": {
+      "flowbite": {
+        "heading": "fg",
+        "body": "body",
+        "body-subtle": "muted",
+        "default": "line",
+        "default-subtle": "line",
+        "default-medium": "line",
+        "default-strong": "line",
+        "neutral-primary": "bg",
+        "neutral-primary-soft": "raised",
+        "neutral-primary-medium": "raised",
+        "neutral-primary-strong": "raised",
+        "neutral-secondary": "sunken",
+        "neutral-secondary-soft": "sunken",
+        "neutral-secondary-medium": "sunken",
+        "neutral-secondary-strong": "sunken",
+        "brand": "accent-fill",
+        "brand-softer": "accent-soft",
+        "brand-subtle": "accent-line",
+        "fg-brand": "accent",
+        "fg-brand-strong": "accent-strong",
+        "success-soft": "ok-bg",
+        "success-subtle": "ok-line",
+        "fg-success-strong": "ok",
+        "danger-soft": "bad-bg",
+        "danger-subtle": "bad-line",
+        "fg-danger-strong": "bad",
+        "warning-soft": "warn-bg",
+        "warning-subtle": "warn-line",
+        "fg-warning": "warn"
+      }
+    }
+  }
+}

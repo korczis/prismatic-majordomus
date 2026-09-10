@@ -18,6 +18,13 @@ idiom, one route mounted over a section of the site. Not one of them is a page's
 So the standard is executable, it runs over every page rather than a sample, and a finding
 is treated as a shared source until proven otherwise.
 
+The widths every page is audited at are the media queries the theme compiled *and* the
+widths `share/design/tokens.yaml` declares (`viewports`), unioned; the two browser probes
+(`scripts/site-probe`, `scripts/cockpit-probe`) measure at the declared widths alone and
+also assert the design contract — that the stylesheet a page loaded, the page itself and
+the executable carry one fingerprint. How the design itself is declared and projected is
+[`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md).
+
 ## The commands
 
 | Command | What it answers |
