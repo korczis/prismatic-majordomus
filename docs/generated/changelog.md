@@ -60,6 +60,7 @@ Current version: **0.4.0**
 
 ### Fixed
 
+- **scope**: a task that merged the trunk has not touched what the trunk touched (`83775c7ab`)
 - **ci**: the gate model parses again, and the gate a merge dropped is declared again (`d7f492294`)
 - **site-check**: a route is named on the API page whatever it is styled with (`9fcd06f8f`)
 - **runtime**: a stale runtime says so, on the lease and on the way in (`53b21b4bb`)
