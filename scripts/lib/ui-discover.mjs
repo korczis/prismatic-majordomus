@@ -71,11 +71,11 @@ export function routesFromSitemap(publicDir) {
       /* a sitemap entry that is not a location is not a route */
     }
   }
-  // A project site is published under a base path (`/prismatic-majordomus/`), and the
-  // sitemap's URLs carry it while the filesystem's routes do not. The prefix is the longest
-  // one every entry shares, inferred rather than configured: the audit serves the built
-  // directory at its own root, and comparing the two sets without stripping it would call
-  // every page missing and every page an orphan.
+  // A site can be published under a base path — the executable serves this same output at
+  // `/docs/` — and the sitemap's URLs carry it while the filesystem's routes do not. The
+  // prefix is the longest one every entry shares, inferred rather than configured: the audit
+  // serves the built directory at its own root, and comparing the two sets without stripping
+  // it would call every page missing and every page an orphan.
   const prefix = commonPrefix(paths);
   for (const path of paths) {
     const stripped = prefix && path.startsWith(prefix) ? path.slice(prefix.length - 1) : path;
