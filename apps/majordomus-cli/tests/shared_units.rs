@@ -72,7 +72,13 @@ fn the_peer_board_identifies_touches_announces_and_summarises() {
     assert_eq!(board.len(), 2);
     board.detach(&a);
     board.detach(&b);
-    assert_eq!(board.summary(), "none");
+    // a peer that said nothing leaves the board with its connection; one that announced
+    // stays readable and is no longer counted, so the next worker can still avoid its claim
+    assert_eq!(board.len(), 0);
+    let kept = board.list();
+    assert_eq!(kept.len(), 1, "{kept:?}");
+    assert!(!kept[0].attached);
+    assert!(board.summary().contains("p2"), "{}", board.summary());
     assert_eq!(
         ClientInfo::from_initialize(&json!({ "clientInfo": { "name": "  " } })),
         ClientInfo::unknown()
