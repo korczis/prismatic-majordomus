@@ -41,6 +41,7 @@ pub(crate) mod directories;
 pub(crate) mod distribution;
 pub mod environment;
 pub(crate) mod executions;
+pub mod gates;
 pub(crate) mod graph;
 pub mod health;
 pub mod objects;
@@ -92,6 +93,9 @@ pub use executions::{
     CancelReport, EventHistory, ExecutionLinks, ExecutionList, ExecutionView, ProtocolReport,
     EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
 };
+pub use gates::{
+    CompletionInput, GateModelEntry, GateModelReport, COMPLETION_URI, GATES_URI,
+};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
 pub use objects::{
@@ -135,6 +139,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         health,
         continuity,
         obligations,
+        gates,
         deploy,
         executions,
         peers,
