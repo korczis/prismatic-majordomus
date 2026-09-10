@@ -425,6 +425,32 @@ pub fn executable_identity() -> Option<ExecutableIdentity> {
     })
 }
 
+/// The executable this process runs, as recorded at start, for a server to compare against
+/// the file later: same path, same file — or a rebuild happened underneath it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExecutableIdentity(Option<Value>);
+
+impl ExecutableIdentity {
+    /// What the file at this process's own path is right now.
+    pub fn now() -> Self {
+        ExecutableIdentity(executable_identity())
+    }
+
+    /// Has the file this process was started from been replaced since `self` was taken?
+    ///
+    /// `false` when either side is unknown: a process that cannot stat itself makes no
+    /// claim, rather than a false one.
+    pub fn replaced_on_disk(&self) -> bool {
+        match (&self.0, executable_identity()) {
+            (Some(then), Some(now)) => {
+                then["path"] == now["path"]
+                    && (then["mtime"] != now["mtime"] || then["size"] != now["size"])
+            }
+            _ => false,
+        }
+    }
+}
+
 /// Has the executable behind a lease been replaced since that server started?
 ///
 /// Only a lease naming *this process's own* executable path can answer: same path, a file
@@ -543,16 +569,38 @@ pub fn lost() {
 }
 
 /// Does a Majordomus server answer at `url` for the repository at `root`?
+///
+/// Version included: a server of another version is [`Probed::OtherVersion`], never
+/// `Ours`. It is the second half of the executable check in [`superseded`] — that one sees
+/// a binary replaced under a server started from this process's own path, this one sees a
+/// server started from any path at all, hours ago, by a release install or another
+/// checkout's build. Both are the same failure: a process that answers, from code that is
+/// not the code on disk.
 pub fn probe(url: &str, root: &Path) -> bool {
+    probe_detail(url, root) == Probed::Ours
+}
+
+/// [`probe`], with the reason.
+pub fn probe_detail(url: &str, root: &Path) -> Probed {
     match bridge::request(url, "GET", "/", &[], None, PROBE_TIMEOUT) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
             // without telling every caller where the checkout sits
-            v["name"] == "majordomus"
-                && v["repository_id"].as_str() == Some(crate::repository::identity(root).as_str())
+            let ours = v["name"] == "majordomus"
+                && v["repository_id"].as_str() == Some(crate::repository::identity(root).as_str());
+            if !ours {
+                return Probed::Absent;
+            }
+            match v["version"].as_str() {
+                Some(version) if version == crate::VERSION => Probed::Ours,
+                Some(version) => Probed::OtherVersion(version.to_string()),
+                // a server too old to say: everything before the version was published
+                // on the index, and so older than any executable that asks
+                None => Probed::OtherVersion("unknown".into()),
+            }
         }
-        _ => false,
+        _ => Probed::Absent,
     }
 }
 

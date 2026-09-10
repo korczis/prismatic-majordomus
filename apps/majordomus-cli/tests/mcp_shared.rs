@@ -693,6 +693,132 @@ fn a_bridged_peer_takes_over_when_its_server_dies() {
     assert!(!lease_path(&f).exists());
 }
 
+/// A server built from another version of the code, answering for this repository, is not
+/// attached to: its lease is `outdated`, named with both versions, and taken over. This is
+/// the ghost of 2026-09-09 — a process started at 17:23 from that morning's build, holding
+/// the lease through 58 commits and answering eight sessions from code the tree no longer
+/// had. The pid was alive and the server answered, which was everything the lease knew.
+#[test]
+fn a_server_of_another_version_is_not_attached_to() {
+    let f = Fixture::new();
+    // a fake index: the shape a real server's `/` has, with a version this executable is not
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let repository_id = {
+        let (_, index) = {
+            // learn this repository's identity from a real server, then stop it
+            let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+            let url = Mcp::url_in(&a.wait_log("listening on http://"));
+            let r = get_json(&url, "/");
+            assert_eq!(a.close(), 0);
+            r
+        };
+        index["repository_id"].as_str().unwrap().to_string()
+    };
+    let body =
+        json!({ "name": "majordomus", "version": "0.0.1-ghost", "repository_id": repository_id })
+            .to_string();
+    let ghost = std::thread::spawn(move || {
+        for stream in listener.incoming().take(3) {
+            let mut stream = stream.unwrap();
+            let mut buf = [0u8; 2048];
+            let _ = stream.read(&mut buf);
+            let reply = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                body.len()
+            );
+            let _ = stream.write_all(reply.as_bytes());
+        }
+    });
+    let lease = json!({ "schema": "majordomus-mcp-lease/v1", "pid": 1, "token": "ghost", "root": f.root(), "url": format!("http://127.0.0.1:{port}"), "started_at": "2026-09-09T17:23:16Z" });
+    f.write(".ai/local/state/mcp/server.json", &lease.to_string());
+
+    let mut b = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+    let line = b.wait_log("outdated lease");
+    assert!(
+        line.contains("0.0.1-ghost"),
+        "names the ghost's version: {line}"
+    );
+    assert!(
+        line.contains(env!("CARGO_PKG_VERSION")),
+        "names this executable's version: {line}"
+    );
+    let url_b = Mcp::url_in(&b.wait_log("listening on http://"));
+    assert_ne!(
+        url_b,
+        format!("http://127.0.0.1:{port}"),
+        "did not attach to the ghost"
+    );
+    let now: Value =
+        serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
+    assert_eq!(now["url"], url_b, "the lease names the current server");
+    assert!(
+        now["executable"]["path"].is_string(),
+        "and records the executable it was started from: {now}"
+    );
+    assert_eq!(b.close(), 0);
+    drop(ghost);
+}
+
+/// A server whose executable is rebuilt underneath it stops on its own, releasing the
+/// lease, so that the next client elects one built from the current code. Nothing outside
+/// the process can do this for it: a client that killed servers would kill the sessions
+/// of everyone attached to them.
+#[test]
+fn a_server_stops_when_its_executable_is_replaced_on_disk() {
+    let f = Fixture::new();
+    // a private copy of the executable, so that touching it touches nobody else's build
+    let bin = f.path("majordomus-copy");
+    std::fs::copy(BIN, &bin).unwrap();
+    let mut child = Command::new(&bin)
+        .args(["serve", "--port", "0"])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_LOG", "info")
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn majordomus serve");
+    let stderr = child.stderr.take().unwrap();
+    let (tx, rx) = mpsc::channel();
+    std::thread::spawn(move || {
+        for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+            if tx.send(line).is_err() {
+                break;
+            }
+        }
+    });
+    let wait_for = |rx: &Receiver<String>, needle: &str| -> String {
+        let deadline = Instant::now() + WAIT;
+        loop {
+            let left = deadline.saturating_duration_since(Instant::now());
+            match rx.recv_timeout(left) {
+                Ok(line) if line.contains(needle) => return line,
+                Ok(_) => {}
+                Err(_) => panic!("no stderr line containing {needle:?} within {WAIT:?}"),
+            }
+        }
+    };
+    wait_for(&rx, "listening on http://");
+    assert!(lease_path(&f).exists(), "the server holds the lease");
+
+    // the rebuild: the file at the server's own path becomes a different file
+    std::thread::sleep(Duration::from_millis(1100)); // an mtime tick, on every filesystem
+    let mut bytes = std::fs::read(&bin).unwrap();
+    bytes.push(0);
+    std::fs::write(&bin, bytes).unwrap();
+
+    wait_for(&rx, "has been replaced on disk");
+    wait_for(&rx, "shared server stopped");
+    let status = child.wait().unwrap();
+    assert_eq!(status.code(), Some(0), "the server ended cleanly");
+    assert!(
+        !lease_path(&f).exists(),
+        "the lease went with it, so the next client elects a fresh server"
+    );
+}
+
 #[test]
 fn a_bridged_peer_re_attaches_when_another_process_took_the_lease_first() {
     let f = Fixture::new();

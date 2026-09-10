@@ -129,11 +129,10 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             }
         }
     } else {
-        tracing::info!("stdin is not a pipe; the server runs until the process is stopped");
-        loop {
-            std::thread::sleep(Duration::from_secs(1));
-            shared.endpoint().reap();
-        }
+        tracing::info!(
+            "stdin is not a pipe; the server runs until the process is stopped, or until its executable is rebuilt underneath it"
+        );
+        while shared.tick() {}
     }
     shared.wait_until_peers_leave();
     shared.stop();

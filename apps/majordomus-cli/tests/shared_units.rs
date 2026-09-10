@@ -25,11 +25,19 @@ fn init() -> Value {
 }
 
 /// A shared server's router and endpoint over a fixture, bound on a free loopback port.
+///
+/// It publishes the crate's own version, as a real server does: the probe now compares
+/// versions, and a server that says `test` is, correctly, not one this executable joins.
 fn bound(f: &Fixture) -> (server::Running, Arc<McpEndpoint>) {
     let app = common::load_app(f);
     let b = server::bind("127.0.0.1", 0).unwrap();
-    let endpoint = Arc::new(McpEndpoint::new(app.context.clone(), "test", b.url()));
-    let router = Router::new(app.context.clone(), "test").with_mcp(endpoint.clone());
+    let endpoint = Arc::new(McpEndpoint::new(
+        app.context.clone(),
+        majordomus_cli::VERSION,
+        b.url(),
+    ));
+    let router =
+        Router::new(app.context.clone(), majordomus_cli::VERSION).with_mcp(endpoint.clone());
     (b.start(router), endpoint)
 }
 
