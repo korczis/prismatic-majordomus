@@ -109,7 +109,7 @@ the seam, and the case asserts the seam announces itself rather than skipping si
 
 `test/cases/97_pages_fast_path.sh` holds the publication path itself. The
 derived-merge-driver behaviour is `test/cases/57_derived_merge_driver.sh`, and
-`test/cases/110_unblock.sh` holds `scripts/unblock` to clause 2: a conflict on an authored
+`test/cases/111_unblock.sh` holds `scripts/unblock` to clause 2: a conflict on an authored
 file is refused with the files named and the branch left where it was, the scratch worktree
 is gone on every path including the refusals, a dry run pushes nothing, and the branch is
 never checked out. It was proved non-vacuous by making the script classify every conflicted

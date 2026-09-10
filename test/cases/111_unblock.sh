@@ -17,7 +17,7 @@
 # everything this script decides happens on either side of it.
 . "$ROOT/test/lib.sh"
 
-S="$(mktemp -d "${TMPDIR:-/tmp}/mj110.XXXXXX")"; trap 'rm -rf "$S"' EXIT
+S="$(mktemp -d "${TMPDIR:-/tmp}/mj111.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 
 # ---------------------------------------------------------------- the declaration
 # The driver command is declared once, by the `derive-merge-driver` recipe. A copy inside
