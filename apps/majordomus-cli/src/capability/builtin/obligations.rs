@@ -915,10 +915,13 @@ mod tests {
     /// The vocabulary is read from the file rather than held here, which is the whole
     /// point: a token added to `share/obligations.yaml` is answered by this module without
     /// a line changing in it.
+    ///
+    /// Reading is separated from locating, so the test hands the reader a directory and
+    /// needs neither a `kinds.yaml` to be found by nor a process-global environment
+    /// variable to be found through.
     #[test]
     fn the_vocabulary_is_read_from_the_file_and_not_held_here() {
         let dir = tempfile::tempdir().unwrap();
-        std::fs::write(dir.path().join("kinds.yaml"), "version: 1\nkinds: []\n").unwrap();
         std::fs::write(
             dir.path().join(VOCABULARY_FILE),
             "# a comment the reader skips\nversion: 1\nobligations:\n  - id: tests\n    title: The cases were run\n    summary: They passed.\n    discharged_by: usecase impact\n    inputs: [\"lib/**\", \"share/**\"]\n    remote: false\n  - id: push\n    title: The commit reached the remote\n    summary: The branch head exists on the remote.\n    discharged_by: git\n    remote: true\n",

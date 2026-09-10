@@ -75,6 +75,18 @@ pub struct Index {
     pub fingerprint: String,
     /// The scope the index was built under, with every tracked file tallied against it.
     pub scoped: Scoped,
+    /// The distribution's share directory, as *this process* located it: what `--share`,
+    /// `MAJORDOMUS_SHARE`, the repository's own `share/` or the one beside the executable
+    /// resolved to, in that order, once.
+    ///
+    /// A handler that needs the distribution's own data — the obligation vocabulary, the
+    /// shell tool's command registry — reads it from here rather than locating a second
+    /// one. Locating it twice is not a duplicated line, it is a second answer: the second
+    /// locator never sees `--share`, so a process pointed at one distribution served
+    /// another, and in a repository that carries no `share/` it failed outright while the
+    /// process that started it had found one. `None` for an index built without a
+    /// distribution, which is a distribution that ships no such data rather than an error.
+    pub share_dir: Option<std::path::PathBuf>,
     /// The distribution model the tool was run with, when it carries one: how this project
     /// is packaged, published and installed. Read from the tool's data directory beside the
     /// kinds and the schemas, not discovered in the repository, so that an installed copy
