@@ -618,6 +618,16 @@ before the outcome `completed` is available. The tokens are declared in
 target, pages, deploy, verify — each naming the command that discharges it and, where the
 fact is local, the pathspecs its evidence is taken over.
 
+Four of them are never recorded here. `commit`, `push`, `target` and `pages` name facts the
+tool can establish — a clean tree, a remote-tracking ref that reaches the head, a trunk that
+reaches it, a published site that serves it — and `check` and `finish` settle those live at
+HEAD instead of asking a worker to transcribe them. Recording one has no effect: an
+established obligation discharges by being true and refuses by being false. Where the
+checkout cannot settle it (no remote, no default branch recorded, a site that never
+answered) the token falls back to the recorded line, and the finding says which it was.
+`deploy` and `verify` stay hand-recorded, and `share/obligations.yaml` says in one line why:
+a deployment is a fact about a machine this repository never contacts.
+
 `--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary
 does not declare exits `2`; a token the active task never promised exits `15`, because
 recording evidence for something nobody asked for is how a checklist grows entries nobody
