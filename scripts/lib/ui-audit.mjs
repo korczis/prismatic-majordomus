@@ -12,7 +12,7 @@
 
 import { readFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
-import { chromium } from 'playwright';
+import { launchEphemeral } from './browser.mjs';
 
 const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
 
@@ -294,9 +294,9 @@ export function jobs() {
  * make every diff of a run unreadable.
  */
 export async function audit(origin, pages, { onVisit, concurrency = jobs() } = {}) {
-  // the browser the repository already drives for the cockpit probe: the system Chrome,
-  // so a CI runner and a laptop use one browser and neither downloads another
-  const browser = await chromium.launch({ channel: 'chrome' });
+  // the system Chrome, shared with the Cockpit probe and named once in scripts/lib/browser.mjs:
+  // a CI runner and a laptop use one browser and neither downloads another
+  const browser = await launchEphemeral();
   const context = await browser.newContext();
 
   // the whole target set, flattened, so the workers share one queue rather than a page each:

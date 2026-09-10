@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# workspace — read an external workspace this repository is authorised to read.
+#
+#   scripts/workspace list             every declared workspace, and whether it can be reached
+#   scripts/workspace status <id>      what one declaration says and what the profile is
+#   scripts/workspace login <id>       open that workspace's own browser profile to sign in
+#   scripts/workspace observe <id>     read it once through the signed-in session
+#
+# A workspace is a body of content held by another vendor — a ChatGPT Project is one — over
+# which the operator is already authenticated (ADR 0025). Its declaration is tracked, under
+# .ai/repo/workspaces/; its content is not, and lands under .ai/local/workspaces/, which is
+# this checkout's state and never a source (ADR 0005).
+#
+# There is no API to connect to. OpenAI's Conversations API holds conversations the API
+# itself created, not a person's ChatGPT history, and ChatGPT's own MCP support points the
+# other way: ChatGPT calls MCP servers, and exposes nothing. So the transport is the
+# authenticated browser, which is what the repository already drives for the UI audit and
+# the Cockpit probe (scripts/lib/browser.mjs).
+#
+# The profile is named, never guessed. A declaration says `access.browser_profile: default`,
+# a label; the operator's own configuration outside this tree turns it into a directory:
+#
+#   ~/.config/majordomus/browser-profiles.json
+#   { "chatgpt:default": "/Users/you/.local/share/majordomus/chrome/chatgpt" }
+#
+# It must not be Chrome's own profile directory, and this tool refuses one that is: Chrome
+# 136 stopped honouring remote debugging there, and driving the everyday profile would put
+# every site the operator is signed into inside the reach of a transport authorised to read
+# one workspace.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+case "${1:-}" in
+  -h | --help | '')
+    sed -n '2,31p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    exit 0
+    ;;
+esac
+
+[ -d "$ROOT/node_modules/playwright" ] || {
+  echo "workspace: playwright is not installed; run: npm ci" >&2
+  exit 1
+}
+
+exec node "$ROOT/scripts/lib/workspace-cli.mjs" "$@"

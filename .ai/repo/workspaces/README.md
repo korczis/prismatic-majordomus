@@ -63,6 +63,31 @@ It is read before anything is fetched, and it bounds what may be:
   diagnostic; an adapter that cannot provide one reports it unavailable rather than
   returning an empty success.
 
+## Reaching one
+
+`scripts/workspace` is the transport. There is no API to connect to: OpenAI's Conversations
+API holds conversations the API itself created rather than a person's ChatGPT history, and
+ChatGPT's own MCP support points the other way — it calls MCP servers and exposes nothing.
+So the transport is the authenticated browser this repository already drives
+(`scripts/lib/browser.mjs`, shared with the UI audit and the Cockpit probe).
+
+    scripts/workspace list             every declaration, and whether it can be reached
+    scripts/workspace status <id>      what one says, and what its profile is
+    scripts/workspace login <id>       open that workspace's own profile so a person can sign in
+    scripts/workspace observe <id>     read it once through that session
+
+`access.browser_profile` names a label. The operator's own configuration, outside this tree,
+turns it into a directory:
+
+    ~/.config/majordomus/browser-profiles.json
+    { "chatgpt:default": "/Users/you/.local/share/majordomus/chrome/chatgpt" }
+
+It must be a directory of its own, and the tool refuses one inside Chrome's — Chrome 136
+stopped honouring remote debugging on the everyday profile, and driving it would put every
+site the operator is signed into within reach of a transport authorised to read one
+workspace. Signing in is a person's act: nothing here types a credential, and there is
+nowhere in this repository to keep one.
+
 ## Regenerate
 
     majordomus generate
