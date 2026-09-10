@@ -58,6 +58,10 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// Every command this repository can be asked to run, what running each one changes, and the surfaces it appears on
+    Commands(CommandsArgs),
+    /// Answer a shell's completion request, and print the generic adapter that asks
+    Completion(CompletionArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
     Product(ProductArgs),
     /// What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both
@@ -68,6 +72,120 @@ pub enum Command {
     Run(RunArgs),
     /// The executions of the server serving this repository: what has run, what is running, and what each one said
     Executions(ExecutionsArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus commands`. The canonical graph, read.
+pub struct CommandsArgs {
+    #[command(subcommand)]
+    /// `list`, `explain`, `graph` or `projection`; none lists.
+    pub command: Option<CommandsCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    #[arg(long, global = true)]
+    /// Also discover the workflows `just` holds outside the executable
+    pub workflows: bool,
+}
+
+#[derive(Debug, Subcommand)]
+/// The readings of the canonical command graph.
+pub enum CommandsCommand {
+    /// Every command with its effect and the surfaces it appears on
+    List,
+    /// One command: where it is declared, what running it changes, and every spelling of it
+    Explain {
+        /// The canonical id, `worktree.create`
+        #[arg(value_name = "COMMAND")]
+        id: String,
+    },
+    /// The whole graph as one document
+    Graph,
+    /// The graph as one surface spells it
+    Projection {
+        /// Which surface
+        #[arg(value_enum)]
+        surface: ProjectionSurface,
+    },
+    /// Write the `just` bridge under the ignored runtime directory, when its bytes would differ
+    Materialise,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// A surface the graph can be rendered for.
+pub enum ProjectionSurface {
+    /// The `just` bridge: one recipe per canonical command, forwarding its arguments
+    Just,
+    /// The command line
+    Cli,
+    /// MCP tool names
+    Mcp,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus completion`.
+pub struct CompletionArgs {
+    #[command(subcommand)]
+    /// `query` or `script`.
+    pub command: CompletionCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// What a shell adapter asks for.
+pub enum CompletionCommand {
+    /// Answer one completion request: the words typed so far, and which one the cursor is in
+    Query {
+        /// Which command line is being completed
+        #[arg(long, value_enum, default_value_t = CompletionSurface::Cli)]
+        surface: CompletionSurface,
+
+        /// The index, in the words after `--`, of the word being completed
+        #[arg(long, default_value_t = 0)]
+        cursor: usize,
+
+        /// Output shape
+        #[arg(long, value_enum, default_value_t = CompletionFormat::Shell)]
+        format: CompletionFormat,
+
+        /// The words typed so far, without the program's own name
+        #[arg(last = true, value_name = "WORD", allow_hyphen_values = true)]
+        words: Vec<String>,
+    },
+    /// Print the generic adapter for one shell: it carries no command, and never needs regenerating
+    Script {
+        /// Which shell
+        #[arg(value_enum)]
+        shell: CompletionShell,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// The command line a completion request is about.
+pub enum CompletionSurface {
+    /// The executable's own command line
+    Cli,
+    /// The `just` bridge, whose recipes resolve to the same canonical commands
+    Just,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// How candidates are printed.
+pub enum CompletionFormat {
+    /// One candidate per line, value and description separated by a tab
+    Shell,
+    /// The typed answer, with the graph fingerprint it was computed from
+    Json,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+/// A shell an adapter exists for.
+pub enum CompletionShell {
+    /// zsh
+    Zsh,
+    /// bash
+    Bash,
 }
 
 #[derive(Debug, Args)]
@@ -1339,6 +1457,8 @@ pub use docs::{
 };
 pub use validate::{parse, validate, Violation};
 
+use crate::control::effect::{EffectClass, Semantics};
+
 /// What an example's run must show for the example to be true. Small on purpose: enough to
 /// prove that the command line printed in the documentation does what the documentation
 /// says, and no more. A new variant is a new kind of evidence, not a new test framework.
@@ -1411,6 +1531,22 @@ pub struct ExampleDoc {
 pub struct CommandExamples {
     /// `bench baseline update`; the empty string is the root.
     pub command: &'static str,
+    /// Names this command has answered to before, kept working wherever a surface has a
+    /// naming rule of its own to honour them in.
+    ///
+    /// Declared here so that a compatibility name is part of the command rather than a
+    /// line in a generated file someone maintains: the `just` bridge renders them, and
+    /// removing one is removing it from here.
+    pub aliases: &'static [&'static str],
+    /// What running this command changes, and how it occupies the caller.
+    ///
+    /// The one thing about a command that cannot be read off its declaration: clap sees
+    /// `worktree list` and `worktree remove` as the same shape. It is declared here, once,
+    /// beside the command's own examples, and every surface derives its consequences from
+    /// it — whether the command is bridged into `just`, whether a machine may invoke it at
+    /// all, whether a caller must confirm it, and what the documentation warns about.
+    /// Being a field rather than a table, it cannot be forgotten for a new command.
+    pub semantics: Semantics,
     /// Its examples, in the order the reference prints them.
     pub examples: &'static [ExampleDoc],
 }
@@ -1424,7 +1560,113 @@ pub struct CommandExamples {
 /// `cli::validate`, and therefore does not pass the crate's tests or CI.
 pub const EXAMPLES: &[CommandExamples] = &[
     CommandExamples {
+        command: "commands",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-default-list",
+            title: "Everything this repository can be asked to run",
+            description: "`commands` with nothing after it lists every canonical command: its identity, what running it changes, the surfaces it appears on, and its own one-line description. The list is the graph, so a command added to the declaration is in it without anything here being edited.",
+            argv: &["commands"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["capabilities.list", "read-only", "just"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands list",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-list-json",
+            title: "The commands as one document",
+            description: "The same list as JSON: every node with its arguments, where its values come from, what running it changes and every spelling of it. This is what the Cockpit's palette and a shell adapter read.",
+            argv: &["commands", "list", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/0/id", "/0/projections/docs"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands explain",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-explain-destructive",
+            title: "Why a command is not offered to a machine",
+            description: "One command, with where it is declared, what running it changes, and every surface it appears on — including the ones it does not, with the reason. A destructive command is on the command line and in the bridge, and is not an MCP tool, because its classification says so.",
+            argv: &["commands", "explain", "worktree.remove"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["destructive", "just worktree-remove", "none —"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands graph",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-graph-json",
+            title: "The whole graph, with its fingerprint",
+            description: "The graph as one document: its schema, the version of the executable that produced it, the fingerprint of its own content, every command and every diagnostic. The fingerprint is a function of the graph and not of the clock, so a cache keyed on it is safe.",
+            argv: &["commands", "graph"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/fingerprint", "/commands/0/id"]),
+        }],
+    },
+    CommandExamples {
+        command: "commands projection",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "commands-projection-just",
+            title: "The `just` bridge, generated",
+            description: "The bridge as it is materialised: one recipe per canonical command, its description the command's own, its group its namespace, its arguments forwarded, and a confirmation on anything that changes the repository. Nothing in it is written by hand, and nothing in it calls `just`.",
+            argv: &["commands", "projection", "just"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["GENERATED FILE", "capabilities-list *args:", "[confirm("]),
+        }],
+    },
+    CommandExamples {
+        command: "commands materialise",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::LocalMutation),
+        examples: &[ExampleDoc {
+            id: "commands-materialise-bridge",
+            title: "The bridge on disk, written only when it changed",
+            description: "Renders the `just` bridge and writes it under `.majordomus/runtime/`, which is ignored: entering a repository or listing its recipes never dirties the tree. The bytes are compared first, so an unchanged graph costs a read and no write, and the write itself is atomic — a second shell entering the repository at the same moment cannot see half a file.",
+            argv: &["commands", "materialise"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["bridge.just"]),
+        }],
+    },
+    CommandExamples {
+        command: "completion query",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "completion-query-subcommands",
+            title: "What may be typed next",
+            description: "The words typed so far and the index of the one being completed; the answer is what may follow, from the canonical graph. The same request against the `just` surface resolves the recipe to the same command and answers identically, which is why the two can never drift.",
+            argv: &["completion", "query", "--surface", "cli", "--cursor", "1", "--", "worktree", ""],
+            setup: &[],
+            expect: Expect::StdoutContains(&["create", "list"]),
+        }],
+    },
+    CommandExamples {
+        command: "completion script",
+        aliases: &[],
+        semantics: Semantics::read_only(),
+        examples: &[ExampleDoc {
+            id: "completion-script-zsh",
+            title: "The adapter a shell installs once",
+            description: "The generic adapter: it reports what has been typed and renders what comes back, and carries no command, no flag and no value of any repository. It is installed once and never regenerated, whatever is added to the executable afterwards.",
+            argv: &["completion", "script", "zsh"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["#compdef", "completion query"]),
+        }],
+    },
+    CommandExamples {
         command: "product",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "product-default-list",
             title: "What the product does, as the layer declares it",
@@ -1436,6 +1678,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "product list",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "product-list",
@@ -1457,6 +1701,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "product show",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "product-show",
             title: "One feature, with everything derived from what it names",
@@ -1468,6 +1714,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "product matrix",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "product-matrix",
             title: "Every feature against every interface, and what no feature names",
@@ -1479,6 +1727,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "product providers",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "product-providers",
             title: "Every provider the tool has an adapter for",
@@ -1490,6 +1740,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "product validate",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "product-validate",
             title: "Check the model before anything projects it",
@@ -1688,6 +1940,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree",
+        aliases: &["wt"],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-default-status",
             title: "Where am I, and is that where I belong?",
@@ -1699,6 +1953,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree status",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-status-json",
             title: "The current worktree as one document",
@@ -1710,6 +1966,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree list",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-list-text",
             title: "Every worktree, the misplaced ones obvious",
@@ -1721,6 +1979,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree topology",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-topology-json",
             title: "The whole topology as one document",
@@ -1732,6 +1992,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree root",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-root-path",
             title: "The container, for the shell",
@@ -1743,6 +2005,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree path",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-path-branch",
             title: "The canonical path of a branch, for the shell",
@@ -1754,6 +2018,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree inspect",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-inspect-branch",
             title: "One branch, before creating its worktree",
@@ -1765,6 +2031,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree create",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-create-branch",
             title: "Start work on a branch without deciding where it goes",
@@ -1776,6 +2044,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree ensure",
+        aliases: &["wt-create"],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-ensure-existing",
             title: "The canonical worktree, whether or not it exists yet",
@@ -1787,6 +2057,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree migrate",
+        aliases: &["wt-migrate"],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-migrate-plan",
             title: "What it would take to bring every worktree home",
@@ -1798,6 +2070,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree validate",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-validate-clean",
             title: "Is the topology valid?",
@@ -1809,6 +2083,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree doctor",
+        aliases: &["wt-doctor"],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-doctor-clean",
             title: "Every diagnostic, with its code and its remedy",
@@ -1820,6 +2096,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree guard",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-guard-ok",
             title: "May a commit proceed from here?",
@@ -1831,6 +2109,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree repair",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "worktree-repair-dry-run",
             title: "What git would forget",
@@ -1842,6 +2122,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree remove",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::Destructive),
         examples: &[ExampleDoc {
             id: "worktree-remove-clean",
             title: "Remove a worktree, and keep its branch",
@@ -1853,6 +2135,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree cleanup",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::Destructive),
         examples: &[ExampleDoc {
             id: "worktree-cleanup-nothing",
             title: "What could go, and what it would take",
@@ -1864,6 +2148,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "worktree branches",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "worktree-branches-list",
             title: "The live branch set, for completion",
@@ -1875,6 +2161,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-show-default",
             title: "How this project is installed",
@@ -1886,6 +2174,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution show",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-show-json",
             title: "The distribution model as one JSON document",
@@ -1897,6 +2187,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution targets",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-targets",
             title: "Every platform, and whether a release builds it",
@@ -1908,6 +2200,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution validate",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-validate",
             title: "Every invariant of the model and of the release records",
@@ -1919,6 +2213,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution matrix",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-matrix",
             title: "The release build matrix the workflow runs",
@@ -1930,6 +2226,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution artifact",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-artifact",
             title: "What one target and one tag are called",
@@ -1952,6 +2250,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution releases",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-releases",
             title: "What has been published, and what an unpinned install resolves to",
@@ -1963,6 +2263,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution metadata",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "distribution-metadata",
             title: "What one release record publishes",
@@ -1974,6 +2276,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "distribution build",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::LocalMutation),
         examples: &[ExampleDoc {
             id: "distribution-build",
             title: "What this executable is",
@@ -1985,6 +2289,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "mcp",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::LocalMutation).long_running(),
         examples: &[
             ExampleDoc {
                 id: "mcp-inspect",
@@ -2014,6 +2320,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web list",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-list",
             title: "Every web surface this repository exposes",
@@ -2025,6 +2333,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-topology",
             title: "The topology, from the command with no subcommand",
@@ -2036,6 +2346,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web explain",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-explain",
             title: "Why a surface exists and where each of its values came from",
@@ -2047,6 +2359,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web validate",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "web-validate",
             title: "Check the topology before anything serves or publishes it",
@@ -2058,6 +2372,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web manifest",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-manifest",
             title: "Write the resolved topology down for another tool to read",
@@ -2069,6 +2385,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report tests",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-tests",
             title: "Render the suite's own results into the /tests surface",
@@ -2080,6 +2398,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report benchmarks",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-benchmarks",
             title: "Render a benchmark run into the /benchmarks surface",
@@ -2094,6 +2414,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web report ui",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "web-report-ui",
             title: "Render the UI conformance audit into /tests/ui",
@@ -2105,6 +2427,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "web compose",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::LocalMutation),
         examples: &[ExampleDoc {
             id: "web-compose",
             title: "Compose every published surface into one publishable tree",
@@ -2116,6 +2440,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-catalogue",
             title: "The operational moments this repository holds",
@@ -2127,6 +2453,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why list",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "why-list",
@@ -2156,6 +2484,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why show",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-show",
             title: "One moment, with every relation derived from its metadata",
@@ -2167,6 +2497,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why audiences",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-audiences",
             title: "Who recognises what, with the counts derived",
@@ -2178,6 +2510,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why areas",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-areas",
             title: "The operational areas, with the counts derived",
@@ -2189,6 +2523,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why diagnose",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "why-diagnose-questions",
@@ -2210,6 +2546,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "why validate",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "why-validate",
             title: "Check the catalogue before anything projects it",
@@ -2254,6 +2592,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "serve",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::LocalMutation).long_running(),
         examples: &[ExampleDoc {
             id: "serve-ephemeral-port",
             title: "Serve the same capabilities over HTTP on a free port",
@@ -2265,6 +2605,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities list",
+        aliases: &["capabilities"],
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "capabilities-list-cli",
@@ -2286,6 +2628,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities describe",
+        aliases: &["describe"],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-describe-objects-get",
             title: "One capability in full, by its canonical id",
@@ -2297,6 +2641,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities schema",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-schema-output",
             title: "The canonical output schema of a capability",
@@ -2329,6 +2675,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "capabilities validate",
+        aliases: &["validate"],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "capabilities-validate",
             title: "Prove the registry and every projection of it",
@@ -2340,6 +2688,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "generate",
+        aliases: &[],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[
             ExampleDoc {
                 id: "generate-all",
@@ -2369,6 +2719,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench",
+        aliases: &["bench-run"],
+        semantics: Semantics::read_only(),
         examples: &[ExampleDoc {
             id: "bench-direct-quick",
             title: "Time the capabilities in process",
@@ -2389,6 +2741,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench coverage",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "bench-coverage-json",
@@ -2410,6 +2764,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "bench baseline update",
+        aliases: &["bench-baseline"],
+        semantics: Semantics::of(EffectClass::RepositoryMutation),
         examples: &[ExampleDoc {
             id: "bench-baseline-update-quick",
             title: "Record this platform's accepted baseline",
@@ -2428,6 +2784,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "scope",
+        aliases: &[],
+        semantics: Semantics::read_only(),
         examples: &[
             ExampleDoc {
                 id: "scope-declaration",

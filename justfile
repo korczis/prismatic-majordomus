@@ -1,11 +1,18 @@
 # Majordomus — the recipes a person runs here. `just` lists them; `just <recipe>` runs one.
 #
-# Two executables share the name `majordomus`: the shell tool `bin/majordomus` (the task
-# lifecycle: init, start, check, finish, doctor, update, ...) and the Rust executable under
-# apps/majordomus-cli (the read-only interfaces: MCP, HTTP, OpenAPI, Swagger UI, the Cockpit,
-# introspection, generation). Everything the Rust executable can do is routed to it here;
-# the shell tool keeps what only it does. Every recipe is a thin call: the source of truth
-# for what a step does is the script or the command it names, never this file.
+# What is *not* in this file: a recipe for anything the Rust executable already declares.
+# Those are a projection of the canonical command graph, generated into an ignored runtime
+# file and imported below, with their descriptions, their groups, their compatibility
+# aliases and their confirmations all derived from the command's own declaration. Adding a
+# command to apps/majordomus-cli therefore adds a recipe here, and editing this file to add
+# one by hand would be declaring it twice. `just bridge` materialises the projection;
+# `majordomus commands explain <id>` says where any of it came from.
+#
+# What is in this file: bootstrap that cannot be derived (building the executable), the
+# other executable — the shell tool `bin/majordomus`, whose task lifecycle is its own
+# program — and the workflows that are genuinely scripts. Every recipe is a thin call: the
+# source of truth for what a step does is the script or the command it names, never this
+# file.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -30,6 +37,11 @@ rust_bin  := target_dir / profile / "majordomus"
 shell_bin := root / "bin/majordomus"
 
 export MAJORDOMUS_SHARE := root / "share"
+
+# The generated bridge: one recipe per canonical command of the Rust executable. Optional,
+# because a fresh clone has not materialised it yet and `just --list` must still work;
+# `just bridge` writes it, and anything that needs it depends on that recipe.
+import? ".majordomus/runtime/just/bridge.just"
 
 # List every recipe, by group.
 [private]

@@ -66,6 +66,8 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Commands(args) => command_graph::run(args),
         Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
+        Command::Commands(args) => control::run(args),
+        Command::Completion(args) => control::completion(args),
         Command::Product(args) => product::run(args),
         Command::Release(args) => release::run(args),
         Command::Quality(args) => quality::run(args),

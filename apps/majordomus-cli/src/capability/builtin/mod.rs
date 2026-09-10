@@ -66,6 +66,7 @@ use super::module::ModuleDescriptor;
 
 pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
+pub use commands::{CommandIndex, CommandInput, CommandQuery, CommandSummary};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use deploy::{
     DeploymentCheck, DeploymentList, DeploymentView, GetDeploymentInput, DEPLOYMENTS_URI,

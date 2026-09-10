@@ -19,6 +19,7 @@ pub mod cli;
 pub mod cockpit;
 pub mod command_graph;
 pub mod commands;
+pub mod control;
 pub mod deploy;
 pub(crate) mod design;
 pub mod discovery;
