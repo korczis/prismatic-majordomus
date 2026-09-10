@@ -305,15 +305,15 @@ commands:
     category: task
     stage: work
     visibility: public
-    class: local-mutation
+    class: state-mutating
     requires_repository: true
     requires_installed: true
-    requires_task: active
+    requires_task: required
     json: true
     syntax: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
     reads: [share/obligations.yaml, .ai/local/state/current.yaml]
     writes: [.ai/local/state/ledger.jsonl]
-    exit_codes: [0, 2, 12, 15]
+    exit_codes: [0, 2, 12, 13, 15]
     demo: obligation-evidence
 
   - id: skills
