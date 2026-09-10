@@ -27,6 +27,7 @@ pub mod environment;
 pub(crate) mod error;
 pub mod execution;
 pub mod generate;
+pub mod gates;
 pub mod generation;
 pub mod git;
 pub mod graph;

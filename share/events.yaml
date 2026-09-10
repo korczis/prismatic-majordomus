@@ -164,6 +164,14 @@ events:
     public: true
     note: The envelope's head and the recorded inputs_hash are what make this go stale. A later reader recomputes the hash over the obligation's declared inputs and labels the head against the current one; evidence that no longer describes the tree is a failure, not merely an old line.
 
+  - id: task.gate
+    title: A validation gate reported against the task
+    summary: One gate of the repository's CI model ran and reported an exit status, over the files whose hash is recorded.
+    emitted_by: evidence
+    requires: [task, gate, exit, inputs_hash]
+    public: true
+    note: The gate's inputs are derived from the CI model — the union of the paths of the classes that select it — so a change to any of them makes the run stale rather than merely old. A gate that has never emitted this event is reported as queued and never as passing.
+
   - id: adr.proposed
     title: Architecture decision proposed
     summary: A decision record was written with status proposed; accepting it is a person's act on the file.

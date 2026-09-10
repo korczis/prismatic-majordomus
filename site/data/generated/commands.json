@@ -873,6 +873,7 @@
         "behaviour": [
           "04_start_check",
           "108_scope_after_trunk_merge",
+          "131_completion_gates",
           "15_command_surface",
           "17_doctrine_enforcement",
           "19_end_to_end",
@@ -980,6 +981,7 @@
       "tests": {
         "behaviour": [
           "06_finish",
+          "131_completion_gates",
           "15_command_surface",
           "16_profiles",
           "17_doctrine_enforcement",
@@ -991,6 +993,7 @@
         "negative": [
           "06_finish",
           "103_obligations",
+          "131_completion_gates",
           "16_profiles",
           "17_doctrine_enforcement",
           "19_end_to_end",
@@ -1546,7 +1549,7 @@
     },
     {
       "name": "evidence",
-      "summary": "Record that one obligation the active task declared has been discharged, as a ledger line carrying the hash of the files that obligation names.",
+      "summary": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
       "category": "task",
       "stage": "work",
       "class": "state-mutating",
@@ -1555,11 +1558,12 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]",
+      "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
       "demo": "obligation-evidence",
       "note": null,
       "reads": [
         "share/obligations.yaml",
+        ".ai/repo/ci/gates.yaml",
         ".ai/local/state/current.yaml"
       ],
       "writes": [
@@ -1574,10 +1578,12 @@
       ],
       "tests": {
         "behaviour": [
-          "103_obligations"
+          "103_obligations",
+          "131_completion_gates"
         ],
         "negative": [
-          "103_obligations"
+          "103_obligations",
+          "131_completion_gates"
         ]
       },
       "demo_data": {

@@ -1,9 +1,9 @@
 {
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 78,
-    "schemas": 350,
-    "tags": 26
+    "operations": 80,
+    "schemas": 363,
+    "tags": 27
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -156,6 +156,7 @@
       "used_by": [],
       "used_by_schemas": [
         "Closure",
+        "Completion",
         "Continuity"
       ],
       "values": [],
@@ -2312,6 +2313,28 @@
       "variants": []
     },
     {
+      "description": "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```",
+      "is_enum": true,
+      "name": "Checkouts",
+      "properties": [],
+      "type": "\"repository\" | \"this\"",
+      "used_by": [
+        "server.status"
+      ],
+      "used_by_schemas": [],
+      "values": [
+        {
+          "description": "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.",
+          "value": "repository"
+        },
+        {
+          "description": "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one.",
+          "value": "this"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One claim the feature names, with the status the matrix gives it.",
       "is_enum": false,
       "name": "ClaimRef",
@@ -3989,6 +4012,105 @@
           "value": "size"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Whether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.",
+      "is_enum": false,
+      "name": "Completion",
+      "properties": [
+        {
+          "description": "True when a task record was found in this checkout.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The task, as its record declares it.",
+          "name": "task",
+          "refs": [
+            "ActiveTask"
+          ],
+          "required": false,
+          "type": "ActiveTask | null"
+        },
+        {
+          "description": "The CI model this was judged against.",
+          "name": "model",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Affected or full, and why.",
+          "name": "plan",
+          "refs": [
+            "GatePlan"
+          ],
+          "required": true,
+          "type": "GatePlan"
+        },
+        {
+          "description": "False when a required gate is known to be failing, stale, or blocked by one that is.\nAbsence of a verdict does not make this false — it makes `unverified` non-empty.",
+          "name": "finishable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The required gates whose status refuses completion.",
+          "name": "blocking",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The required gates that have never reported, or cannot be judged here. A task\nfinished over these is finished unverified, and the record says so.",
+          "name": "unverified",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "How many gates stand in each status, by word.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every gate of the model, what refuses first.",
+          "name": "gates",
+          "refs": [
+            "Gate"
+          ],
+          "required": true,
+          "type": "array of Gate"
+        },
+        {
+          "description": "Which obligations the change set implies, and whether the task promised them. The\njudgement of a declared one is `obligations.closure`'s, not this module's.",
+          "name": "obligations",
+          "refs": [
+            "ImpliedObligation"
+          ],
+          "required": true,
+          "type": "array of ImpliedObligation"
+        },
+        {
+          "description": "What could not be established, each as one line. Never empty when something was\nskipped: a gap is reported rather than left to be inferred.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "gates.completion"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -6083,6 +6205,8 @@
         "executions.get",
         "executions.protocol",
         "executions.start",
+        "gates.model",
+        "gates.completion",
         "graph.get",
         "graph.list",
         "health.report",
@@ -7971,6 +8095,517 @@
       "variants": []
     },
     {
+      "description": "One completion gate: what it is, whether it applies, what it said, and what to do.",
+      "is_enum": false,
+      "name": "Gate",
+      "properties": [
+        {
+          "description": "The gate's identity in the model.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line naming it, from the model's own summary.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it is a gate over: the CI job that runs it.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the plan selects it and its verdict therefore decides completion. False\nfor a gate the plan left out, and for one whose runner is only had on demand.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What is known about it.",
+          "name": "status",
+          "refs": [
+            "GateStatus"
+          ],
+          "required": true,
+          "type": "GateStatus"
+        },
+        {
+          "description": "Why it is in this status, in words a worker can act on.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What would settle it, as a command.",
+          "name": "remediation",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the gate is declared: the model, and the command it runs.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The run that last reported, when one has.",
+          "name": "evidence",
+          "refs": [
+            "GateRun"
+          ],
+          "required": false,
+          "type": "GateRun | null"
+        },
+        {
+          "description": "The pathspecs its evidence is taken over, derived from the model.",
+          "name": "inputs",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The hash of those files as they stand now, when it could be taken.",
+          "name": "inputs_hash",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "When this judgement was made, RFC 3339 UTC. A judgement is about a moment.",
+          "name": "evaluated_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Completion"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One path class: the paths it covers and the gates a change to them selects.",
+      "is_enum": false,
+      "name": "GateClass",
+      "properties": [
+        {
+          "description": "The class's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pathspecs it covers, in the subset the model's header defines.",
+          "name": "paths",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "`full`, or the gates it names.",
+          "name": "gates",
+          "refs": [
+            "GateClassSelects"
+          ],
+          "required": false,
+          "type": "GateClassSelects | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "GateModelReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One class a change fell in, and the paths that put it there.",
+      "is_enum": false,
+      "name": "GateClassMatch",
+      "properties": [
+        {
+          "description": "The class's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The changed paths this class covers.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "GatePlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a class selects: the word `full`, or the gates it names.",
+      "is_enum": false,
+      "name": "GateClassSelects",
+      "properties": [],
+      "type": "string | array of string",
+      "used_by": [],
+      "used_by_schemas": [
+        "GateClass"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One gate of the model, with what the model implies about it.",
+      "is_enum": false,
+      "name": "GateModelEntry",
+      "properties": [
+        {
+          "description": "The gate's identity, unique in the model.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The CI job that runs it.",
+          "name": "job",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command it runs.",
+          "name": "runs",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line saying what it proves.",
+          "name": "summary",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "True when every plan selects it, whatever changed.",
+          "name": "always",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "True when only a plan that asks for it selects it: its runner cannot be had on\ndemand, so planning it on every push is planning a verdict that never arrives.",
+          "name": "on-demand",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        },
+        {
+          "description": "Gates that are selected whenever this one is.",
+          "name": "implies",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Gates this one cannot run without.",
+          "name": "requires",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The pathspecs a run of this gate is evidence over, derived from the classes that\nselect it. A change to any of them makes a recorded run stale.",
+          "name": "inputs",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "GateModelReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The CI model this repository declares: what may refuse a change, and what selects each.",
+      "is_enum": false,
+      "name": "GateModelReport",
+      "properties": [
+        {
+          "description": "The schema version the file states.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Where it was read from, repository-relative.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many gates it declares; measured, not written down.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The gates whose runner cannot be had on demand, so no routine plan selects them.\nA gate that never runs protects nothing, and this is where that is said out loud.",
+          "name": "on_demand",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Every gate, in declaration order, with the pathspecs its evidence is taken over.",
+          "name": "gates",
+          "refs": [
+            "GateModelEntry"
+          ],
+          "required": true,
+          "type": "array of GateModelEntry"
+        },
+        {
+          "description": "Every path class, in declaration order.",
+          "name": "classes",
+          "refs": [
+            "GateClass"
+          ],
+          "required": true,
+          "type": "array of GateClass"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "gates.model"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which gates a change must pass, and why each one is in or out.",
+      "is_enum": false,
+      "name": "GatePlan",
+      "properties": [
+        {
+          "description": "Affected, or full.",
+          "name": "mode",
+          "refs": [
+            "GatePlanMode"
+          ],
+          "required": true,
+          "type": "GatePlanMode"
+        },
+        {
+          "description": "Why, in words.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The changed paths the plan was computed over, sorted.",
+          "name": "changed",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The classes they fall in.",
+          "name": "classes",
+          "refs": [
+            "GateClassMatch"
+          ],
+          "required": true,
+          "type": "array of GateClassMatch"
+        },
+        {
+          "description": "Changed paths no class of the model covers; each one escalates the plan.",
+          "name": "unclassified",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Gate id to the reason it was selected, for the gates in the plan.",
+          "name": "selected",
+          "refs": [],
+          "required": true,
+          "type": "map of string"
+        },
+        {
+          "description": "Gate id to the reason it was left out, for the gates that are not.",
+          "name": "excluded",
+          "refs": [],
+          "required": true,
+          "type": "map of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Completion"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why the plan selects what it selects.",
+      "is_enum": true,
+      "name": "GatePlanMode",
+      "properties": [],
+      "type": "\"affected\" | \"full\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "GatePlan"
+      ],
+      "values": [
+        {
+          "description": "The gates of the classes the changed paths fall in.",
+          "value": "affected"
+        },
+        {
+          "description": "Every gate but the on-demand ones: asked for, or escalated to.",
+          "value": "full"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The `task.gate` ledger line that last reported a gate, as the ledger holds it.",
+      "is_enum": false,
+      "name": "GateRun",
+      "properties": [
+        {
+          "description": "When it was recorded, RFC 3339 UTC.",
+          "name": "recorded_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the ledger's envelope stamped on it.",
+          "name": "head",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch it was recorded on.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The exit status the gate reported. `0` is a pass.",
+          "name": "exit",
+          "refs": [],
+          "required": true,
+          "type": "integer (int64)"
+        },
+        {
+          "description": "The command that produced it — narrative is not evidence.",
+          "name": "command",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The hash of the files that select the gate, as they stood when it ran.",
+          "name": "inputs_hash",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The session that recorded it.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Gate"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What is known about one gate. Every word is one this repository's design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it.",
+      "is_enum": true,
+      "name": "GateStatus",
+      "properties": [],
+      "type": "\"pass\" | \"fail\" | \"stale\" | \"blocked\" | \"queued\" | \"exempt\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Gate"
+      ],
+      "values": [
+        {
+          "description": "It ran over these inputs and succeeded. The only word that discharges anything.",
+          "value": "pass"
+        },
+        {
+          "description": "It ran over these inputs and failed. Completion is refused.",
+          "value": "fail"
+        },
+        {
+          "description": "It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present.",
+          "value": "stale"
+        },
+        {
+          "description": "Something it cannot run without has not passed, so its own silence means nothing.",
+          "value": "blocked"
+        },
+        {
+          "description": "The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible.",
+          "value": "queued"
+        },
+        {
+          "description": "The plan does not select it: nothing the task changed can make it true or false.",
+          "value": "exempt"
+        },
+        {
+          "description": "It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The git repository a checkout belongs to, as distinct from the checkout itself.\n\n[`identity`] names a checkout: one server, one lease, one index per checkout root. Every\nlinked worktree of one git repository is a checkout of its own by that measure, and\nnothing in it said that they belong together. This does: the git directory every work\ntree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest\nis one value for every checkout of that repository, and `linked` says whether this\ncheckout is the primary one or a work tree hanging off it. `None` where git cannot be\nasked: a repository of the layer does not have to be version controlled.\n\n```\nuse majordomus_cli::repository::{git_identity, identity, GitIdentity};\nuse std::process::Command;\nlet dir = tempfile::tempdir().unwrap();\nlet root = dir.path().join(\"repo\");\nstd::fs::create_dir_all(&root).unwrap();\nlet git = |args: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root).args(args).status().unwrap().success());\ngit(&[\"init\", \"-q\", \".\"]);\ngit(&[\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\", \"commit\", \"-q\", \"--allow-empty\", \"-m\", \"init\"]);\nlet wt = dir.path().join(\"repo-wt\");\ngit(&[\"worktree\", \"add\", \"-q\", \"-b\", \"feature/x\", wt.to_str().unwrap()]);\n\nlet primary: GitIdentity = git_identity(&root).expect(\"a work tree\");\nlet linked: GitIdentity = git_identity(&wt).expect(\"a linked work tree\");\nassert_eq!(primary.id, linked.id, \"one repository\");\nassert_ne!(identity(&root), identity(&wt), \"two checkouts\");\nassert!(!primary.linked && linked.linked);\nassert!(!primary.id.contains('/'), \"a digest, never a path\");\n```",
       "is_enum": false,
       "name": "GitIdentity",
@@ -8672,6 +9307,69 @@
       "used_by": [],
       "used_by_schemas": [
         "DesignReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One obligation the change set implies, and whether the task promised it.\n\nApplicability is derived and nothing else: a token's own `inputs` in\n`share/obligations.yaml` name the files it is about, so a change to one of them is what\nmakes the token owed. A token with no `inputs` names a fact outside the tree — a push, a\npublication, a deployment — which no change to a tree can imply, so those are owed when\nthe task declares them and reported as not applicable when it does not.",
+      "is_enum": false,
+      "name": "ImpliedObligation",
+      "properties": [
+        {
+          "description": "The token.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The obligation as a heading, from the vocabulary.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "True when the change set, or the task's own declaration, makes it owed.",
+          "name": "applicable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "True when the task's `requires` names it, so `finish` already holds the task to it.",
+          "name": "declared",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it applies, or why it does not.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The changed paths that implied it, when paths did.",
+          "name": "because",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "What would discharge it.",
+          "name": "remediation",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Completion"
       ],
       "values": [],
       "variants": []
@@ -21001,6 +21699,162 @@
       ]
     },
     {
+      "description": "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.",
+      "name": "gates",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/gates\"",
+          "description": "Every validation gate this repository declares — the job that runs it, the command it runs, what it proves, whether every plan selects it and whether its runner can be had on demand at all — with the path classes that decide which change selects which gate, and, derived from those classes, the pathspecs each gate's evidence is taken over.",
+          "id": "gates.model",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "gates",
+            "uri": "majordomus://gates"
+          },
+          "mcp_tool": "majordomus_gates",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/gates",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::gates",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The CI model: the result.",
+              "schema": "GateModelReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "GateModelReport",
+          "stability": "behaviorally_verified",
+          "summary": "The CI model"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/gates/completion?changed=%5B%22docs%2FCLI.md%22%5D&on_demand=true\"",
+          "description": "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted.",
+          "id": "gates.completion",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "completion",
+            "uri": "majordomus://gates/completion"
+          },
+          "mcp_tool": "majordomus_completion",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The changed paths, repository-relative. Absent means the task's own change set:\neverything between the commit the task started at and the working tree.",
+              "examples": [
+                {
+                  "case": "a-document",
+                  "value": "[\"docs/CLI.md\"]"
+                },
+                {
+                  "case": "everything-on-demand",
+                  "value": "[\".ai/repo/ci/gates.yaml\"]"
+                },
+                {
+                  "case": "one-source-file",
+                  "value": "[\"apps/majordomus-cli/src/lib.rs\"]"
+                }
+              ],
+              "name": "changed",
+              "required": false,
+              "type": "array of string"
+            },
+            {
+              "description": "The commit to compare with, when the task's own starting commit is not wanted.",
+              "examples": [],
+              "name": "base",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives.",
+              "examples": [
+                {
+                  "case": "everything-on-demand",
+                  "value": "true"
+                }
+              ],
+              "name": "on_demand",
+              "required": false,
+              "type": "boolean"
+            }
+          ],
+          "path": "/api/v1/gates/completion",
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::gates",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Whether this task may be called finished: the result.",
+              "schema": "Completion",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Completion",
+          "stability": "behaviorally_verified",
+          "summary": "Whether this task may be called finished"
+        }
+      ]
+    },
+    {
       "description": "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape.",
       "name": "graph",
       "operations": [
@@ -23216,8 +24070,8 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "serve status",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server\"",
-          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server?checkouts=repository\"",
+          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
           "id": "server.status",
           "kind": "query",
           "mcp_resource": {
@@ -23226,7 +24080,24 @@
           },
           "mcp_tool": "majordomus_server",
           "method": "GET",
-          "parameters": [],
+          "parameters": [
+            {
+              "description": "Which checkouts the answer covers. Absent means `repository`.",
+              "examples": [
+                {
+                  "case": "repository",
+                  "value": "\"repository\""
+                },
+                {
+                  "case": "this-checkout",
+                  "value": "\"this\""
+                }
+              ],
+              "name": "checkouts",
+              "required": false,
+              "type": "Checkouts"
+            }
+          ],
           "path": "/api/v1/server",
           "provenance": {
             "module": "majordomus_cli::capability::builtin::server",
