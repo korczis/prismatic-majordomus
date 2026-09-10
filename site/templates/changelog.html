@@ -148,41 +148,51 @@
         rank that decides where it sorts, already in order. This template neither groups nor
         sorts: doing either would be a second declaration of an order the crate already
         states, which is what made this page disagree with the Markdown renderer before. -#}
+    {#- The link to this group sits *beside* the disclosure and not inside it. A `<summary>`
+        is the one control that opens a `<details>`, and a link inside it is a second control
+        the keyboard reaches through the first: one stop in the tab order announcing itself as
+        two things, which no `@click.stop` repairs (WCAG 4.1.2, axe `nested-interactive`). So
+        the anchor is a sibling of the disclosure, laid over the padding the summary leaves
+        for it — each of the two is exactly one control, and the panel keeps the full width
+        its border spans. -#}
     {%- for g in s.groups %}
-    <details id="{{ s.version | slugify }}-{{ g.kind }}" x-show="!hidden.includes('{{ g.kind }}')" :open="open"
-             class="mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft"{% if s.unreleased %} open{% endif %}>
-      <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">
-        <a href="#{{ s.version | slugify }}-{{ g.kind }}" class="mr-1 font-mono text-xs text-body-subtle hover:text-fg-brand" title="a link to this group" @click.stop>#</a>
-        <span class="font-medium">{{ g.heading }}</span>
-        <span class="ml-2 font-mono text-xs text-body-subtle">{{ g.kind }}</span>
-        <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">{{ g.changes | length }}</span>
-      </summary>
-      <ul class="border-t border-default px-4 py-3 text-sm" role="list">
-        {%- for c in g.changes %}
-        <li class="border-b border-default py-2 last:border-0">
-          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            {%- if c.breaking %}<span class="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs font-semibold uppercase text-fg-danger">breaking</span>{% endif %}
-            {%- if c.scope %}<span class="font-mono text-xs font-medium text-fg-brand">{{ c.scope }}</span>{% endif %}
-            <span class="min-w-0 break-words text-body">{{ c.subject }}</span>
-            {%- if c.url %}<a href="{{ c.url }}" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">{{ c.commit | truncate(length=9, end="") }}</a>
-            {%- else %}<code class="break-all font-mono text-xs text-body-subtle">{{ c.commit | truncate(length=9, end="") }}</code>{% endif %}
-          </div>
-          {%- if c.references is defined and c.references | length > 0 %}
-          {#- The issues and milestones this commit named in its own text, resolved against
-              what the layer holds — an id that names nothing is never carried here. -#}
-          <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
-            {%- for r in c.references %}
-            <a href="{{ get_url(path=r.route, trailing_slash=true) }}" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
-              <span class="font-mono">{{ r.id }}</span>
-              <span class="max-w-md truncate">{{ r.title }}</span>
-            </a>
-            {%- endfor %}
-          </div>
-          {%- endif %}
-        </li>
-        {%- endfor %}
-      </ul>
-    </details>
+    {%- set group_anchor = (s.version | slugify) ~ "-" ~ g.kind -%}
+    <div id="{{ group_anchor }}" x-show="!hidden.includes('{{ g.kind }}')"
+         class="relative mt-4 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft">
+      <a href="#{{ group_anchor }}" class="absolute left-4 top-3 font-mono text-xs leading-5 text-body-subtle hover:text-fg-brand" title="a link to this group">#</a>
+      <details :open="open"{% if s.unreleased %} open{% endif %}>
+        <summary class="cursor-pointer py-3 pl-9 pr-4 text-sm font-medium text-heading">
+          <span class="font-medium">{{ g.heading }}</span>
+          <span class="ml-2 font-mono text-xs text-body-subtle">{{ g.kind }}</span>
+          <span class="ml-2 rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-body">{{ g.changes | length }}</span>
+        </summary>
+        <ul class="border-t border-default px-4 py-3 text-sm" role="list">
+          {%- for c in g.changes %}
+          <li class="border-b border-default py-2 last:border-0">
+            <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+              {%- if c.breaking %}<span class="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs font-semibold uppercase text-fg-danger">breaking</span>{% endif %}
+              {%- if c.scope %}<span class="font-mono text-xs font-medium text-fg-brand">{{ c.scope }}</span>{% endif %}
+              <span class="min-w-0 break-words text-body">{{ c.subject }}</span>
+              {%- if c.url %}<a href="{{ c.url }}" class="break-all font-mono text-xs text-fg-brand hover:underline" title="the commit on GitHub">{{ c.commit | truncate(length=9, end="") }}</a>
+              {%- else %}<code class="break-all font-mono text-xs text-body-subtle">{{ c.commit | truncate(length=9, end="") }}</code>{% endif %}
+            </div>
+            {%- if c.references is defined and c.references | length > 0 %}
+            {#- The issues and milestones this commit named in its own text, resolved against
+                what the layer holds — an id that names nothing is never carried here. -#}
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 pl-1 text-xs">
+              {%- for r in c.references %}
+              <a href="{{ get_url(path=r.route, trailing_slash=true) }}" class="inline-flex items-baseline gap-1 text-body-subtle hover:text-fg-brand hover:underline">
+                <span class="font-mono">{{ r.id }}</span>
+                <span class="max-w-md truncate">{{ r.title }}</span>
+              </a>
+              {%- endfor %}
+            </div>
+            {%- endif %}
+          </li>
+          {%- endfor %}
+        </ul>
+      </details>
+    </div>
     {%- endfor %}
     </div>
     {%- endif %}
