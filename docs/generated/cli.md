@@ -17,6 +17,9 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 |---|---|---|
 | [`majordomus mcp`](#majordomus-mcp) | `/docs/cli/mcp/` | Serve the repository's AI layer to an MCP client over stdio (read-only) |
 | [`majordomus serve`](#majordomus-serve) | `/docs/cli/serve/` | Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only) |
+| [`majordomus serve status`](#majordomus-serve-status) | `/docs/cli/serve/status/` | Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository |
+| [`majordomus serve ensure`](#majordomus-serve-ensure) | `/docs/cli/serve/ensure/` | Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands |
+| [`majordomus serve stop`](#majordomus-serve-stop) | `/docs/cli/serve/stop/` | Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go |
 | [`majordomus capabilities`](#majordomus-capabilities) | `/docs/cli/capabilities/` | Introspect the capability registry: what exists, where it came from, how it is exposed |
 | [`majordomus capabilities list`](#majordomus-capabilities-list) | `/docs/cli/capabilities/list/` | Every capability, one line each, with its projections |
 | [`majordomus capabilities describe`](#majordomus-capabilities-describe) | `/docs/cli/capabilities/describe/` | One capability by canonical id: schemas, provenance, every projection |
@@ -174,8 +177,10 @@ Examples:
 
 Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/ (read-only)
 
+Subcommands: [`majordomus serve status`](#majordomus-serve-status), [`majordomus serve ensure`](#majordomus-serve-ensure), [`majordomus serve stop`](#majordomus-serve-stop).
+
 ```text
-majordomus serve [OPTIONS]
+majordomus serve [OPTIONS] [COMMAND]
 ```
 
 | argument | value | default | description |
@@ -186,6 +191,8 @@ majordomus serve [OPTIONS]
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
 | `--host` | `<HOST>` | `127.0.0.1` | Interface to bind; loopback unless you say otherwise |
 | `--port` | `<PORT>` | `8741` | Port to bind; 0 picks a free one and the address is logged on stderr |
+| `--fallback` | flag | — | When the port is taken, bind a free one instead and log both; without this a taken port is an error |
+| `--idle` | `<SECONDS>` | `0` | Stop when no peer has been attached for this many seconds; 0 runs until stopped. What a server no client owns is started with |
 | `--deployment` | `<ID>` | — | Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`) instead of the local default. What a hosted process is started with; the address is the object's, not this command line's |
 
 Examples:
@@ -197,6 +204,90 @@ Examples:
   ```
 
   Verified: binds a port, answers GET /openapi.json, exits 0 when stopped.
+
+<a id="majordomus-serve-status"></a>
+## `majordomus serve status`
+
+Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository
+
+```text
+majordomus serve status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **Where this checkout's server stands, and every server of the repository** — The standing of this checkout's server measured against what this executable would serve, the lease it holds, and every checkout git registers for the repository with its own server. Asked of the running server when there is one, so that the answer includes the lease that process holds; answered locally otherwise.
+
+  ```console
+  $ majordomus serve status
+  ```
+
+  Verified: exits 0; prints standing.
+
+<a id="majordomus-serve-ensure"></a>
+## `majordomus serve ensure`
+
+Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands
+
+```text
+majordomus serve ensure [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--port` | `<PORT>` | `8741` | The port the started server asks for first; a taken one is replaced by a free one |
+| `--idle` | `<SECONDS>` | `900` | The started server stops when no peer has been attached for this many seconds |
+| `--wait` | `<SECONDS>` | `20` | How long to wait for a server to become ready before reporting what stands |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **Make sure a server serves this checkout, and let it end when idle** — Starts a server as a process of its own when none answers, waits until it is ready, and prints one line: the standing, the address, the pid. Run again, it finds the server ready and starts nothing. `--idle` is how long the started server outlives its last peer; one second here, so that the example leaves nothing behind.
+
+  ```console
+  $ majordomus serve ensure --idle 1 --wait 30
+  ```
+
+  Verified: exits 0; prints ready.
+
+<a id="majordomus-serve-stop"></a>
+## `majordomus serve stop`
+
+Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go
+
+```text
+majordomus serve stop [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--wait` | `<SECONDS>` | `10` | How long to wait for the server to end |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+
+Examples:
+
+- **Stop this checkout's server, when there is one** — Signals the server this checkout's lease names, when it answers for this checkout, and waits for the lease to go. A checkout with no lease has nothing to stop, and says so.
+
+  ```console
+  $ majordomus serve stop
+  ```
+
+  Verified: exits 0; prints nothing to stop.
 
 <a id="majordomus-capabilities"></a>
 ## `majordomus capabilities`

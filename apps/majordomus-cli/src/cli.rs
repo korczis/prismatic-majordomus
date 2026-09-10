@@ -904,6 +904,10 @@ pub struct ServeArgs {
     /// Where and how the repository is read.
     pub repo: RepoArgs,
 
+    #[command(subcommand)]
+    /// `status`, `ensure` or `stop`; none serves.
+    pub command: Option<ServeCommand>,
+
     /// Interface to bind; loopback unless you say otherwise
     #[arg(long, default_value = "127.0.0.1")]
     pub host: String,
@@ -912,11 +916,76 @@ pub struct ServeArgs {
     #[arg(long, default_value_t = DEFAULT_PORT)]
     pub port: u16,
 
+    /// When the port is taken, bind a free one instead and log both; without this a taken port is an error
+    #[arg(long)]
+    pub fallback: bool,
+
+    /// Stop when no peer has been attached for this many seconds; 0 runs until stopped. What a server no client owns is started with
+    #[arg(long, value_name = "SECONDS", default_value_t = 0)]
+    pub idle: u64,
+
     /// Bind the address this deployment object declares (`.ai/repo/deployments/<ID>.yaml`)
     /// instead of the local default. What a hosted process is started with; the address is
     /// the object's, not this command line's
     #[arg(long, value_name = "ID", conflicts_with_all = ["host", "port"])]
     pub deployment: Option<String>,
+}
+
+/// How long a server started by `serve ensure` outlives its last peer, in seconds: long
+/// enough that an agent's next attach finds it, short enough that a checkout nobody works
+/// in does not keep a process.
+pub const DEFAULT_IDLE_SECONDS: u64 = 900;
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus serve`: the server's lifecycle as something a person or a
+/// hook converges on rather than remembers. `status` is the projection of `server.status`;
+/// `ensure` and `stop` are process lifecycle, which no capability served by the process
+/// could be.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ServeCommand, DEFAULT_IDLE_SECONDS};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "serve", "ensure", "--idle", "5"]).unwrap();
+/// let Command::Serve(args) = cli.command else { panic!("serve") };
+/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle: 5, .. })));
+///
+/// // without a subcommand, `serve` serves; the defaults are the documented ones
+/// let cli = Cli::try_parse_from(["majordomus", "serve", "ensure"]).unwrap();
+/// let Command::Serve(args) = cli.command else { panic!("serve") };
+/// assert!(matches!(args.command, Some(ServeCommand::Ensure { idle, .. }) if idle == DEFAULT_IDLE_SECONDS));
+/// let cli = Cli::try_parse_from(["majordomus", "serve"]).unwrap();
+/// let Command::Serve(args) = cli.command else { panic!("serve") };
+/// assert!(args.command.is_none() && args.idle == 0 && !args.fallback);
+/// ```
+pub enum ServeCommand {
+    /// Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository
+    Status {
+        /// Output shape
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        format: OutputFormat,
+    },
+    /// Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands
+    Ensure {
+        /// The port the started server asks for first; a taken one is replaced by a free one
+        #[arg(long, default_value_t = DEFAULT_PORT)]
+        port: u16,
+        /// The started server stops when no peer has been attached for this many seconds
+        #[arg(long, value_name = "SECONDS", default_value_t = DEFAULT_IDLE_SECONDS)]
+        idle: u64,
+        /// How long to wait for a server to become ready before reporting what stands
+        #[arg(long, value_name = "SECONDS", default_value_t = 20)]
+        wait: u64,
+        /// Output shape
+        #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+        format: OutputFormat,
+    },
+    /// Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go
+    Stop {
+        /// How long to wait for the server to end
+        #[arg(long, value_name = "SECONDS", default_value_t = 10)]
+        wait: u64,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -2126,6 +2195,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["why", "validate"],
             setup: &[],
             expect: Expect::StdoutContains(&["moment(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "serve status",
+        examples: &[ExampleDoc {
+            id: "serve-status",
+            title: "Where this checkout's server stands, and every server of the repository",
+            description: "The standing of this checkout's server measured against what this executable would serve, the lease it holds, and every checkout git registers for the repository with its own server. Asked of the running server when there is one, so that the answer includes the lease that process holds; answered locally otherwise.",
+            argv: &["serve", "status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["standing"]),
+        }],
+    },
+    CommandExamples {
+        command: "serve ensure",
+        examples: &[ExampleDoc {
+            id: "serve-ensure-idle",
+            title: "Make sure a server serves this checkout, and let it end when idle",
+            description: "Starts a server as a process of its own when none answers, waits until it is ready, and prints one line: the standing, the address, the pid. Run again, it finds the server ready and starts nothing. `--idle` is how long the started server outlives its last peer; one second here, so that the example leaves nothing behind.",
+            argv: &["serve", "ensure", "--idle", "1", "--wait", "30"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["ready"]),
+        }],
+    },
+    CommandExamples {
+        command: "serve stop",
+        examples: &[ExampleDoc {
+            id: "serve-stop-nothing",
+            title: "Stop this checkout's server, when there is one",
+            description: "Signals the server this checkout's lease names, when it answers for this checkout, and waits for the lease to go. A checkout with no lease has nothing to stop, and says so.",
+            argv: &["serve", "stop"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["nothing to stop"]),
         }],
     },
     CommandExamples {

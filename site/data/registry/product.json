@@ -5,15 +5,15 @@
     "id": "majordomus-cli",
     "version": "0.4.0"
   },
-  "fingerprint": "b14a36ccd31fb9aaeea3f8d2f7143376edb95af72765cf9b920b6385140e4045",
+  "fingerprint": "e763ec5e3b33dfd59b0835dc7707771e8e5a6a822bf1789d66d5f492a6fef691",
   "route": "/features/",
   "counts": {
     "features": 19,
     "features_all": 20,
     "featured": 9,
     "providers": 6,
-    "modules": 24,
-    "modules_covered": 16,
+    "modules": 25,
+    "modules_covered": 17,
     "commands": 28,
     "commands_covered": 27,
     "kinds": 25,
@@ -1158,6 +1158,7 @@
       ],
       "modules": [
         "peers",
+        "server",
         "worktree"
       ],
       "commands": [
@@ -1240,6 +1241,25 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_peers",
               "route": "GET /api/v1/peers"
+            }
+          ]
+        },
+        {
+          "id": "server",
+          "title": "Server",
+          "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/server.rs",
+          "capabilities": [
+            {
+              "id": "server.status",
+              "title": "The shared server, and every server of the repository",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_server",
+              "resource": "majordomus://server",
+              "route": "GET /api/v1/server",
+              "cli": "majordomus serve status"
             }
           ]
         },
@@ -1528,11 +1548,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 6,
-        "mcp_tools": 6,
-        "mcp_resources": 1,
-        "http_routes": 6,
-        "cli_paths": 4,
+        "capabilities": 7,
+        "mcp_tools": 7,
+        "mcp_resources": 2,
+        "http_routes": 7,
+        "cli_paths": 5,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -1548,7 +1568,7 @@
           "guaranteed": 5
         },
         "modules": {
-          "behaviorally_verified": 2
+          "behaviorally_verified": 3
         }
       }
     },
@@ -2439,7 +2459,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 33
+          "objects": 34
         },
         {
           "name": "knowledge",
@@ -2447,7 +2467,7 @@
         },
         {
           "name": "document",
-          "objects": 210
+          "objects": 212
         }
       ],
       "rule_refs": [
@@ -2696,11 +2716,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 245,
+        "mcp_resources": 248,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 244,
+        "objects": 247,
         "rules": 4,
         "enforced_rules": 2,
         "docs": 2,
@@ -7469,6 +7489,13 @@
         ]
       },
       {
+        "id": "server",
+        "title": "Server",
+        "features": [
+          "coordination"
+        ]
+      },
+      {
         "id": "trace",
         "title": "Traceability",
         "features": [
@@ -7713,7 +7740,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (33)",
+        "title": "adr (34)",
         "features": [
           "knowledge"
         ]
@@ -8607,19 +8634,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1189,
-    "builtin": 73,
-    "declarative": 1116,
-    "modules": 24,
-    "mcp_tools": 71,
-    "mcp_resources": 1142,
-    "http_routes": 73,
-    "cli_commands": 88,
+    "capabilities": 1194,
+    "builtin": 74,
+    "declarative": 1120,
+    "modules": 25,
+    "mcp_tools": 72,
+    "mcp_resources": 1147,
+    "http_routes": 74,
+    "cli_commands": 91,
     "shell_commands": 28,
     "kinds": 28,
-    "objects": 1116,
+    "objects": 1120,
     "by_kind": {
-      "adr": 33,
+      "adr": 34,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -8628,7 +8655,7 @@
       "context": 27,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 210,
+      "document": 212,
       "feature": 20,
       "implementation": 45,
       "issue": 202,
@@ -8644,7 +8671,7 @@
       "session": 11,
       "skill": 3,
       "taxonomy": 10,
-      "test": 135,
+      "test": 136,
       "use-case": 42,
       "workspace": 1
     },

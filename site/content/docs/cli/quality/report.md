@@ -1,7 +1,7 @@
 +++
 title = "majordomus quality report"
 description = "Measure the crate and report every finding, with the rule it breaks and what to do about it"
-weight = 86
+weight = 89
 [extra]
 route = "/docs/cli/quality/report/"
 command = "majordomus quality report"

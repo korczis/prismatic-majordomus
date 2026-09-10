@@ -1,0 +1,9 @@
++++
+title = "server.status"
+description = "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; the lease this process holds when it is the server; and every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
+weight = 60
+slug = "server-status"
+[extra]
+id = "server.status"
+source = "apps/majordomus-cli/src/capability/builtin/server.rs"
++++

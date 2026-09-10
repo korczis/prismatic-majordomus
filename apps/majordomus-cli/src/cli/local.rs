@@ -146,6 +146,16 @@ pub const LOCAL: &[LocalCommand] = &[
         reason: LocalReason::ProcessLifecycle,
         note: "becomes the HTTP server that serves every capability over the API this command exists to start.",
     },
+    LocalCommand {
+        command: "serve ensure",
+        reason: LocalReason::ProcessLifecycle,
+        note: "starts the HTTP server for this checkout as a process of its own when none answers, and waits until it is ready.",
+    },
+    LocalCommand {
+        command: "serve stop",
+        reason: LocalReason::ProcessLifecycle,
+        note: "ends the server this checkout's lease names by signalling the process, which nothing served by that process could do to itself.",
+    },
     // ---------------------------------------------------------------- writers
     LocalCommand {
         command: "generate",
