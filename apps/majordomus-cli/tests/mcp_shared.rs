@@ -1513,7 +1513,11 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
     );
     let callers: std::collections::BTreeSet<&str> =
         boards.iter().map(|(c, _)| c.as_str()).collect();
-    assert_eq!(callers.len(), STORM, "each client answers as itself: {callers:?}");
+    assert_eq!(
+        callers.len(),
+        STORM,
+        "each client answers as itself: {callers:?}"
+    );
     assert_eq!(
         callers,
         ids.iter().map(String::as_str).collect(),
@@ -1531,7 +1535,11 @@ fn a_storm_of_clients_converges_on_one_server_and_one_board() {
             assert_eq!(m.close(), 0, "client {i} did not end cleanly");
         }
     }
-    assert_eq!(clients[owner].1.close(), 0, "the server did not end cleanly");
+    assert_eq!(
+        clients[owner].1.close(),
+        0,
+        "the server did not end cleanly"
+    );
     assert!(
         !lease_path(&f).exists(),
         "the lease outlived the last client of the storm"
