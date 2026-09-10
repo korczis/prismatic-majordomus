@@ -59,7 +59,7 @@ GitHub serves the new branch head in about a minute. The deploy is real when the
 names the commit you published:
 
 ```bash
-curl -s https://korczis.github.io/prismatic-majordomus/ | grep -c "/commit/$(git rev-parse HEAD)"   # 1
+curl -s https://majordomus.dev/ | grep -c "/commit/$(git rev-parse HEAD)"   # 1
 ```
 
 Then open the page you changed.
