@@ -204,6 +204,11 @@ gates:
   # tree-level gate stayed green throughout, because the tree was fine — what was wrong was
   # which tree had been published. A person noticed by eye. No class selects it, for the same
   # reason installer-live has none: no change to a tree can make it true or false.
+  - id: version-surface
+    job: structure
+    runs: scripts/ci/version-matches-surface
+    summary: the declared version is at least the bump the public surface has changed by since the last release, and a removal is named
+
   - id: pages-live
     job: pages
     runs: scripts/ci/pages-check
