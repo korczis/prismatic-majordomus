@@ -2,10 +2,45 @@
   "mcpServers": {
     "majordomus": {
       "command": "./bin/majordomus-mcp",
-      "args": [],
+      "args": ["--provider", "gemini"],
       "cwd": ".",
       "timeout": 120000,
       "trust": false
     }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$GEMINI_PROJECT_DIR/.gemini/hooks/majordomus-session-start"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$GEMINI_PROJECT_DIR/.gemini/hooks/majordomus-session-end"
+          }
+        ]
+      }
+    ],
+    "PreCompress": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$GEMINI_PROJECT_DIR/.gemini/hooks/majordomus-session-compact"
+          }
+        ]
+      }
+    ]
   }
 }

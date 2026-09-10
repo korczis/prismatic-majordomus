@@ -1466,6 +1466,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/tests/lease_lost.rs",
+        "kind": "file",
+        "label": "lease_lost.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/lease_lost.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/tests/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -2890,6 +2898,35 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0039",
+        "kind": "adr",
+        "label": "adr-0039",
+        "summary": "Liveness is four rules, advisory until a scan can decide them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0039",
+        "source": ".ai/repo/adrs/0039-liveness-is-four-rules-advisory-until-a-scan-can-decide-them.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-10",
+          "related": [
+            "rule:project.execution-state-is-authoritative",
+            "rule:project.every-wait-is-bounded",
+            "rule:project.commands-run-non-interactively",
+            "rule:project.recovery-is-idempotent",
+            "rule:project.a-worker-that-stops-leaves-its-work-behind",
+            "rule:project.never-reported-is-not-green",
+            "rule:project.diagnostics-decide-the-exit",
+            "rule:project.no-new-nouns",
+            "rule:project.rule-is-a-doctrine",
+            "file:.ai/repo/rules/README.md"
+          ],
+          "tags": [
+            "agents",
+            "governance",
+            "process"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -3495,12 +3532,12 @@
         "id": "majordomus://claim/advertised-install-command-works",
         "kind": "claim",
         "label": "advertised-install-command-works",
-        "summary": "The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool",
+        "summary": "The install command this project advertises is fetched and run from the published site every night and on request, and the run that asked for it is red while it does not install a working tool",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fadvertised-install-command-works",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "The install command this project advertises is fetched and run from the published site on every push to the default branch, and the branch is red while it does not install a working tool",
+          "claim": "The install command this project advertises is fetched and run from the published site every night and on request, and the run that asked for it is red while it does not install a working tool",
           "implementation": "scripts/ci/install-check",
           "responsibility": "projection",
           "source": "docs/DISTRIBUTION.md",
@@ -4548,6 +4585,21 @@
           "responsibility": "none",
           "source": "docs/MCP.md",
           "test": "test/cases/72_rust_mcp.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/mcp-lease-lost",
+        "kind": "claim",
+        "label": "mcp-lease-lost",
+        "summary": "A server whose lease was taken over says so on the endpoint every reader probes, refuses to take on a new client, and reports that what its health describes is another process; the sessions it already had continue and it ends with them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fmcp-lease-lost",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/lease.rs",
+          "responsibility": "none",
+          "source": "docs/MCP.md",
+          "test": "apps/majordomus-cli/tests/lease_lost.rs"
         }
       },
       {
@@ -5928,6 +5980,8 @@
           "json": true,
           "reads": [
             ".claude/settings.json",
+            ".codex/hooks.json",
+            ".gemini/settings.json",
             ".ai/repo/policy.yaml"
           ],
           "requires_installed": true,
@@ -5940,7 +5994,10 @@
             ".ai/local/prompts/",
             ".ai/local/session-contexts/",
             ".claude/hooks/majordomus-capture",
-            ".claude/settings.json"
+            ".claude/settings.json",
+            ".codex/hooks/",
+            ".codex/hooks.json",
+            ".gemini/hooks/"
           ]
         }
       },
@@ -6726,11 +6783,11 @@
             "15"
           ],
           "json": false,
-          "note": "One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused.",
           "reads": [
             ".ai/repo/policy.yaml",
             ".ai/repo/profiles/",
             ".ai/local/state/current.yaml",
+            "share/obligations.yaml",
             "git worktree list"
           ],
           "requires_installed": true,
@@ -6738,7 +6795,7 @@
           "requires_task": "none",
           "stage": "begin",
           "summary": "Begin one scoped task under a profile, and refuse while another is active.",
-          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--profile <name>] [--owner <who>]",
+          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
@@ -8611,6 +8668,14 @@
         "summary": "A file of the layer the MCP server cannot read is excluded with a diagnostic naming its path and the index says it is degraded, never silently smaller",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmcp-degraded-not-silent.md",
         "source": "docs/claims/mcp-degraded-not-silent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mcp-lease-lost.md",
+        "kind": "document",
+        "label": "docs/claims/mcp-lease-lost.md",
+        "summary": "A server whose lease was taken over says so on the endpoint every reader probes, refuses to take on a new client, and reports that what its health describes is another process; the sessions it already had continue and it ends with them",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fmcp-lease-lost.md",
+        "source": "docs/claims/mcp-lease-lost.md"
       },
       {
         "id": "majordomus://document/docs/claims/mcp-lease-resilience.md",
@@ -14912,7 +14977,6 @@
         "source": ".ai/repo/project/issues/I0901.yaml",
         "facts": {
           "created_at": "2026-09-06",
-          "current_state": "No deployment kind, no .ai/repo/deployments directory, no allow file and no schema exist. share/kinds.yaml registers every other kind the layer holds.",
           "depends_on": [],
           "evidence_required": [
             "kind_registered",
@@ -14936,7 +15000,7 @@
             "share/schemas"
           ],
           "slug": "deployment-kind",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
@@ -14952,7 +15016,6 @@
         "source": ".ai/repo/project/issues/I0902.yaml",
         "facts": {
           "created_at": "2026-09-06",
-          "current_state": "Nothing in apps/majordomus-cli reads a deployment object.",
           "depends_on": [
             "I0901"
           ],
@@ -14976,7 +15039,7 @@
             "apps/majordomus-cli/src/deploy"
           ],
           "slug": "typed-deployment-model",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "cargo test --workspace --all-features",
             "cargo clippy --workspace --all-targets --all-features -- -D warnings"
@@ -14999,7 +15062,6 @@
             "The benchmark coverage projection accounts for the new capabilities, as the coverage rule requires"
           ],
           "created_at": "2026-09-06",
-          "current_state": "The capability registry holds modules for capabilities, graph, health, objects, peers, perf, repository, scope and views. No deployment module exists.",
           "depends_on": [
             "I0902"
           ],
@@ -15024,7 +15086,7 @@
             "apps/majordomus-cli/src/capability/builtin/mod.rs"
           ],
           "slug": "deployment-capabilities",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
@@ -15116,7 +15178,7 @@
             "apps/majordomus-cli/src/capability/builtin/health.rs"
           ],
           "slug": "health-and-readiness-routes",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
@@ -15278,7 +15340,6 @@
             "The generated file states its source and its regeneration command without breaking the format, and generate --check fails on a manual edit"
           ],
           "created_at": "2026-09-06",
-          "current_state": "No Dockerfile exists anywhere in the repository.",
           "depends_on": [
             "I0902",
             "I0904",
@@ -15305,7 +15366,7 @@
             "apps/majordomus-cli/src/deploy/container.rs"
           ],
           "slug": "container-projection",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "majordomus generate --check",
             "cargo test --workspace --all-features"
@@ -15473,7 +15534,6 @@
             "The provider's own configuration validator accepts the generated file"
           ],
           "created_at": "2026-09-06",
-          "current_state": "No fly.toml exists. No region, resource envelope or cost profile is stated anywhere.",
           "depends_on": [
             "I0902",
             "I0903"
@@ -15500,7 +15560,7 @@
             "apps/majordomus-cli/src/deploy/fly.rs"
           ],
           "slug": "fly-configuration-projection",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "majordomus generate --check",
             "fly config validate"
@@ -17049,7 +17109,6 @@
             "Both cases are tested — the static build and a running server with the API present"
           ],
           "created_at": "2026-09-06",
-          "current_state": "The Swagger shell and the API are served by the running process. The published site has no way to know that.",
           "depends_on": [
             "I1004"
           ],
@@ -17073,7 +17132,7 @@
           ],
           "slug": "conditional-runtime-surfaces",
           "started_at": "2026-09-06T17:35:07Z",
-          "updated_at": "2026-09-06T17:35:07Z",
+          "updated_at": "2026-09-10",
           "validation": [
             "bash test/run.sh",
             "scripts/cockpit-probe"
@@ -17326,7 +17385,6 @@
             "Selectors are stable identifiers rather than presentational classes"
           ],
           "created_at": "2026-09-06",
-          "current_state": "A probe script drives the Cockpit's routes and interactions in a real browser.",
           "depends_on": [
             "I1014",
             "I1015",
@@ -17350,7 +17408,7 @@
             "scripts/cockpit-probe"
           ],
           "slug": "browser-tests",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "scripts/cockpit-probe"
           ],
@@ -17807,7 +17865,7 @@
             "apps/majordomus-cli/src/http/router.rs"
           ],
           "slug": "served-identity-visible",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-09-10",
           "validation": [
             "cargo test --workspace --all-features",
             "bash test/run.sh"
@@ -20126,6 +20184,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I1409",
+        "kind": "issue",
+        "label": "I1409",
+        "summary": "Derived data stops hashing inputs it cannot control",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1409",
+        "source": ".ai/repo/project/issues/I1409.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A derived artifact committed at one commit is still current at that commit after an unrelated change lands on the trunk",
+            "test/cases/56_derived_current_gate.sh passes in a fixture whose object database does not contain the commit under test",
+            "The staleness check runs on the path a server-side merge takes, or the record says which decision was taken instead and why",
+            "No document claims a guard that a merge created by GitHub cannot reach"
+          ],
+          "created_at": "2026-09-10",
+          "evidence_required": [
+            "derivation_survives_an_unrelated_merge",
+            "fixture_without_history_evaluates"
+          ],
+          "milestone": "derived-data-integrity",
+          "objective": "Make a committed derivation describe something it can be a projection of, and put the staleness refusal where merges actually happen.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts",
+            "apps/majordomus-cli/src/release",
+            ".ai/repo/ci",
+            "test/cases"
+          ],
+          "slug": "derived-data-owns-its-inputs",
+          "updated_at": "2026-09-10",
+          "validation": [
+            "scripts/derive-check",
+            "scripts/pages current",
+            "test/run.sh 56_derived_current_gate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -20545,6 +20642,43 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/derived-data-integrity",
+        "kind": "milestone",
+        "label": "derived-data-integrity",
+        "summary": "A committed derivation describes something it can be a projection of",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fmilestone%2Fderived-data-integrity",
+        "source": ".ai/repo/project/milestones/derived-data-integrity.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A derived artifact committed at one commit is still current at that commit after an unrelated change lands on the trunk",
+            "A fixture whose object database does not contain the commit under test can evaluate every derived artifact",
+            "The staleness refusal runs on the path a server-side merge takes, or the record names the decision taken instead",
+            "No document claims a guard that a merge created by GitHub cannot reach"
+          ],
+          "created_at": "2026-09-10",
+          "evidence_required": [
+            "derivation_survives_an_unrelated_merge",
+            "fixture_without_history_evaluates"
+          ],
+          "order": 95,
+          "priority": "p1",
+          "scope": [
+            "scripts",
+            "apps/majordomus-cli/src/release",
+            ".ai/repo/ci",
+            "test/cases",
+            "docs/CI.md"
+          ],
+          "slug": "derived-data-integrity",
+          "updated_at": "2026-09-10",
+          "validation": [
+            "scripts/derive-check",
+            "scripts/pages current",
+            "test/run.sh 56_derived_current_gate"
           ]
         }
       },
@@ -25147,6 +25281,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.commands-run-non-interactively@1",
+        "kind": "rule",
+        "label": "project.commands-run-non-interactively@1",
+        "summary": "A command runs with nobody at the keyboard",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.commands-run-non-interactively%401",
+        "source": ".ai/repo/rules/project/commands-run-non-interactively.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.portable-shell@1",
+            "project.execution-state-is-authoritative@1"
+          ],
+          "statement": "Where a non-interactive form exists it is the one used; a command that can block for input is not run unless the operator asked for an interactive session.",
+          "tags": [
+            "shell",
+            "process",
+            "agents"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.context-locality@1",
         "kind": "rule",
         "label": "project.context-locality@1",
@@ -25339,6 +25495,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.entry-converges@1",
+        "kind": "rule",
+        "label": "project.entry-converges@1",
+        "summary": "Entering as an agent converges on a server; entering as a shell reports",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.entry-converges%401",
+        "source": ".ai/repo/rules/project/entry-converges.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.envrc-is-an-adapter@1",
+            "project.shared-server-resilience@1",
+            "project.interfaces-are-projections@1",
+            "project.the-lease-is-read-once@1"
+          ],
+          "tags": [
+            "entry",
+            "mcp",
+            "environment",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.envrc-is-an-adapter@1",
         "kind": "rule",
         "label": "project.envrc-is-an-adapter@1",
@@ -25357,6 +25537,28 @@
             "environment",
             "shell",
             "performance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "rule",
+        "label": "project.every-wait-is-bounded@1",
+        "summary": "Every wait is bounded",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.every-wait-is-bounded%401",
+        "source": ".ai/repo/rules/project/every-wait-is-bounded.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.execution-state-is-authoritative@1",
+            "project.never-reported-is-not-green@1"
+          ],
+          "statement": "A wait without a timeout, a completion predicate and a recovery path is not a wait but a hang; silence is inspected, never counted as progress.",
+          "tags": [
+            "process",
+            "shell",
+            "orchestration"
           ]
         }
       },
@@ -25380,6 +25582,26 @@
             "rust",
             "http",
             "capabilities"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "rule",
+        "label": "project.execution-state-is-authoritative@1",
+        "summary": "Execution state is authoritative and the terminal is not",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.execution-state-is-authoritative%401",
+        "source": ".ai/repo/rules/project/execution-state-is-authoritative.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.diagnostics-decide-the-exit@1"
+          ],
+          "tags": [
+            "process",
+            "agents",
+            "orchestration"
           ]
         }
       },
@@ -25841,6 +26063,28 @@
           "tags": [
             "process",
             "worktrees"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.recovery-is-idempotent@1",
+        "kind": "rule",
+        "label": "project.recovery-is-idempotent@1",
+        "summary": "Recovery looks before it repeats",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.recovery-is-idempotent%401",
+        "source": ".ai/repo/rules/project/recovery-is-idempotent.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "advisory",
+          "depends_on": [
+            "project.a-worker-that-stops-leaves-its-work-behind@1",
+            "project.destructive-sweeps-fail-closed@1"
+          ],
+          "statement": "Recovery resumes from the last deterministic state a worker can establish, never from the assumption that nothing happened; work is not retried until it has been shown not to have succeeded.",
+          "tags": [
+            "process",
+            "integration",
+            "agents"
           ]
         }
       },
@@ -27724,6 +27968,41 @@
         "source": "test/cases/112_version_matches_surface.sh"
       },
       {
+        "id": "majordomus://test/test/cases/113_clean_owns_its_target.sh",
+        "kind": "test",
+        "label": "test/cases/113_clean_owns_its_target.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F113_clean_owns_its_target.sh",
+        "source": "test/cases/113_clean_owns_its_target.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/113_shared_server_survives_a_crash.sh",
+        "kind": "test",
+        "label": "test/cases/113_shared_server_survives_a_crash.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F113_shared_server_survives_a_crash.sh",
+        "source": "test/cases/113_shared_server_survives_a_crash.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/114_two_worktrees_one_repository.sh",
+        "kind": "test",
+        "label": "test/cases/114_two_worktrees_one_repository.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F114_two_worktrees_one_repository.sh",
+        "source": "test/cases/114_two_worktrees_one_repository.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/115_server_state_drift.sh",
+        "kind": "test",
+        "label": "test/cases/115_server_state_drift.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F115_server_state_drift.sh",
+        "source": "test/cases/115_server_state_drift.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/118_entry_converges_by_rule.sh",
+        "kind": "test",
+        "label": "test/cases/118_entry_converges_by_rule.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F118_entry_converges_by_rule.sh",
+        "source": "test/cases/118_entry_converges_by_rule.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/11_site_derivation.sh",
         "kind": "test",
         "label": "test/cases/11_site_derivation.sh",
@@ -27736,6 +28015,34 @@
         "label": "test/cases/120_design_contrast.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F120_design_contrast.sh",
         "source": "test/cases/120_design_contrast.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/121_liveness_doctrine.sh",
+        "kind": "test",
+        "label": "test/cases/121_liveness_doctrine.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F121_liveness_doctrine.sh",
+        "source": "test/cases/121_liveness_doctrine.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/122_liveness_gate.sh",
+        "kind": "test",
+        "label": "test/cases/122_liveness_gate.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F122_liveness_gate.sh",
+        "source": "test/cases/122_liveness_gate.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/123_case_bound.sh",
+        "kind": "test",
+        "label": "test/cases/123_case_bound.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F123_case_bound.sh",
+        "source": "test/cases/123_case_bound.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/126_every_provider_enters.sh",
+        "kind": "test",
+        "label": "test/cases/126_every_provider_enters.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F126_every_provider_enters.sh",
+        "source": "test/cases/126_every_provider_enters.sh"
       },
       {
         "id": "majordomus://test/test/cases/12_site_build.sh",
@@ -28471,6 +28778,13 @@
         "label": "test/cases/97_site_probe_attribution.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F97_site_probe_attribution.sh",
         "source": "test/cases/97_site_probe_attribution.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/97_vendor_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/97_vendor_evidence.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F97_vendor_evidence.sh",
+        "source": "test/cases/97_vendor_evidence.sh"
       },
       {
         "id": "majordomus://test/test/cases/98_cli_reference.sh",
@@ -32811,6 +33125,61 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0039",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://context/ai.repo.rules",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.commands-run-non-interactively@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.diagnostics-decide-the-exit@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.recovery-is-idempotent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0039",
+        "target": "majordomus://rule/project.rule-is-a-doctrine@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -34344,6 +34713,26 @@
         "source": "majordomus://claim/mcp-degraded-not-silent",
         "target": "majordomus://test/test/cases/72_rust_mcp.sh",
         "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-lease-lost",
+        "target": "file:apps/majordomus-cli/src/lease.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-lease-lost",
+        "target": "file:apps/majordomus-cli/tests/lease_lost.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-lease-lost",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mcp-lease-lost",
+        "target": "majordomus://document/docs/MCP.md",
+        "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/mcp-lease-resilience",
@@ -37032,6 +37421,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/mcp-degraded-not-silent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mcp-lease-lost.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -41166,6 +41560,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1409",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1409",
+        "target": "majordomus://milestone/derived-data-integrity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -41214,6 +41618,11 @@
         "source": "majordomus://milestone/cost-per-accepted-outcome",
         "target": "majordomus://milestone/execution-telemetry",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/derived-data-integrity",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/execution-telemetry",
@@ -42121,6 +42530,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "target": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "target": "majordomus://rule/project.portable-shell@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.context-locality@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42216,6 +42640,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "majordomus://rule/project.envrc-is-an-adapter@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "majordomus://rule/project.shared-server-resilience@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.entry-converges@1",
+        "target": "majordomus://rule/project.the-lease-is-read-once@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.envrc-is-an-adapter@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42236,6 +42685,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.execution-events-are-typed@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -42253,6 +42717,16 @@
       {
         "source": "majordomus://rule/project.execution-events-are-typed@1",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.execution-state-is-authoritative@1",
+        "target": "majordomus://rule/project.diagnostics-decide-the-exit@1",
         "kind": "depends_on"
       },
       {
@@ -42498,6 +42972,21 @@
       {
         "source": "majordomus://rule/project.reclaim-only-what-you-own@1",
         "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.recovery-is-idempotent@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.recovery-is-idempotent@1",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.recovery-is-idempotent@1",
+        "target": "majordomus://rule/project.destructive-sweeps-fail-closed@1",
         "kind": "depends_on"
       },
       {
@@ -43021,12 +43510,57 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/113_clean_owns_its_target.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/113_shared_server_survives_a_crash.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/114_two_worktrees_one_repository.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/115_server_state_drift.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/118_entry_converges_by_rule.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/11_site_derivation.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/120_design_contrast.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/121_liveness_doctrine.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/122_liveness_gate.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/123_case_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/126_every_provider_enters.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -43552,6 +44086,11 @@
       },
       {
         "source": "majordomus://test/test/cases/97_site_probe_attribution.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/97_vendor_evidence.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -46582,8 +47121,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1421,
-      "edges": 3209,
+      "nodes": 1442,
+      "edges": 3254,
       "acyclic": true,
       "truncated": false
     }

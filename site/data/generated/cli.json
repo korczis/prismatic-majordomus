@@ -556,6 +556,29 @@
       "args": [
         {
           "defaults": [
+            "repository"
+          ],
+          "global": false,
+          "help": "Which checkouts to answer for: every checkout of the repository, or this one alone — which reads no other checkout's lease and probes no other server",
+          "long": "checkouts",
+          "name": "checkouts",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Every checkout git registers for the repository, the primary first — a lease read and a probe each. The default, because it is the answer this capability gave before there was anything to ask",
+              "name": "repository"
+            },
+            {
+              "help": "This checkout alone. No other checkout is enumerated, no other lease is read and no other server is probed; `servers` holds the one entry, and it is this one",
+              "name": "this"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CHECKOUTS"
+        },
+        {
+          "defaults": [
             "text"
           ],
           "global": false,
@@ -15940,7 +15963,7 @@
     }
   ],
   "counts": {
-    "arguments": 702,
+    "arguments": 703,
     "commands": 96,
     "examples": 104,
     "runnable": 91

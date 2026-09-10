@@ -11,6 +11,22 @@
 # --http-port, --inspect, --repo, ...). stdout belongs to the protocol: nothing here writes
 # to it.
 #
+# It is also an entry. Claude Code fires a start event and a hook opens the episode there;
+# a client that fires nothing at all still starts this file, and for those clients this is
+# the only moment at which anything runs on their behalf. When the first argument names the
+# provider — `--provider <id>`, which a client configuration carries and which is consumed
+# here and never passed on — the launcher calls `majordomus capture session --event start
+# --launcher` before it hands stdin and stdout to the protocol: the same code the provider
+# hook reaches, from a second caller. That ensures the repository's shared server, opens the
+# episode or keeps the one already open, and writes the briefing to stderr, where a client's
+# MCP log carries it. Nothing about it may fail the launch, so every path through it ends in
+# the exec below.
+#
+# The provider is named by the configuration rather than guessed from the environment: what
+# a client is called is a provider fact (share/providers.yaml), an argv is the one channel
+# every client configuration format has in common, and a launcher that inferred a provider
+# from an environment variable would be wrong the first time two clients set the same one.
+#
 #   MAJORDOMUS_BIN            use this executable and never build
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
 #   MAJORDOMUS_NO_BUILD=1     refuse to build; exit 12 when the executable is missing
@@ -18,4 +34,21 @@
 # Exit codes are the executable's; 12 when it is missing and cannot be built.
 set -eu
 here="$(cd "$(dirname "$0")" && pwd)"
+root="$(cd "$here/.." && pwd)"
+
+# Only the first argument, and only this one option: everything else belongs to the server.
+provider=""
+case "${1:-}" in
+  --provider) provider="${2:-}"; shift 2 ;;
+  --provider=*) provider="${1#--provider=}"; shift ;;
+esac
+
+if [ -n "$provider" ] && [ -x "$root/bin/majordomus" ]; then
+  # stdin belongs to the protocol and so does stdout: the entry reads neither. The briefing
+  # it writes goes to stderr with the diagnostics, and a failure of any kind is left in the
+  # log beside the working contexts rather than costing the client its server.
+  "$root/bin/majordomus" --repo "$root" capture session \
+    --provider "$provider" --event start --launcher </dev/null >&2 || true
+fi
+
 exec "$here/majordomus-cli" mcp "$@"

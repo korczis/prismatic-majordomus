@@ -31,6 +31,10 @@ an agent starts          the provider's start event opens the episode, makes sur
 an MCP client attaches   the client configuration at the root starts the launcher, which
                          builds the executable when it must and elects: the first process
                          serves, every later one bridges to it. This has always converged.
+                         When that configuration names the provider, the launcher is also an
+                         entry: it runs the same start the hook runs, before it hands stdin
+                         and stdout to the protocol, and the briefing goes to stderr where
+                         the client's MCP log keeps it.
 
 the worker announces     `majordomus_announce` puts one line of intent and the paths it
                          expects to touch on the board every other client can read.
@@ -40,11 +44,64 @@ Everything above happens without a command being typed, except the last, which i
 request the bootstrap makes of the worker and the one a bridge repeats on its behalf when
 its server changes underneath it.
 
+## Which clients enter, and how it was measured
+
+Entry was Claude Code's alone until 2026-09-10, and the gap was in the adapters rather than
+in the design: the lifecycle table in `lib/capture.sh` had one row, so every other client
+was reported `unsupported` and no start event of theirs reached anything. What the reports
+of that state assumed — that the other clients simply have no session events — turned out to
+be false, and the measurement is worth writing down because the conclusion drawn from it
+changed what was built.
+
+**Codex has documented lifecycle hooks.** `SessionStart`, `SessionEnd`, `PreCompact` and the
+rest, loaded from `~/.codex/hooks.json`, `~/.codex/config.toml`, `<repo>/.codex/hooks.json`
+or `<repo>/.codex/config.toml`, enabled by default. Its payloads are not inferred from
+anything: they are published as generated JSON schemas in its own repository
+(`codex-rs/hooks/schema/generated/session-start.command.input.schema.json` and its
+siblings), one object on standard input, `session_id`/`cwd`/`hook_event_name`/`source` for a
+start and `reason` for an end. What is documented and not implemented is the older `notify`
+key: it carries exactly one event, turn completion, on the last argv argument, and is no use
+for a session boundary.
+
+**Gemini CLI has documented lifecycle hooks.** `SessionStart`, `SessionEnd`, `PreCompress`
+and the rest, declared in the `hooks` object of `.gemini/settings.json`, enabled by default,
+one JSON object on standard input carrying `session_id`, `cwd`, `hook_event_name` and
+`source`. The compaction event is called `PreCompress` rather than `PreCompact`, which is
+the whole reason the event name is a column of the adapter table and not a constant in the
+writer.
+
+So the fix was a row each, and the rows are data: `lib/capture.sh`'s lifecycle table now
+carries the events, the payload keys, the shims, and one column that did not exist before —
+how each vendor names the repository inside a command string in its own configuration, since
+one of them substitutes a variable, one substitutes another, and one documents neither.
+`majordomus capture install` writes each provider's hooks into the file that provider reads,
+and this repository ships them. `capture status` reports the result rather than asserting
+it; the prompt half of both providers stays `unsupported`, because neither publishes an
+event that hands a command the person's prompt before the model runs, and a row invented to
+make the table look complete would be worth less than the gap.
+
+**The launcher is entry too, for the clients that have neither.** A hook is a promise a
+vendor keeps or does not, and two of the ways it can quietly not be kept are already
+visible: Codex skips a project hook until somebody has trusted it, which a repository cannot
+do on their behalf, and both vendors carry open reports of lifecycle hooks not firing on
+some surfaces. What every MCP client of this repository does do, without exception, is start
+`bin/majordomus-mcp` from its client configuration. So the launcher runs the entry itself
+when that configuration names the provider — `--provider <id>`, consumed by the launcher and
+never passed on — and that is one line of data per client rather than a bootstrap each
+client has to implement. It reaches the same code the hook reaches: a start with no payload,
+which resolves to the episode already open in this checkout and keeps it, so a client whose
+hook did fire is not given a second one.
+
+`test/cases/126_every_provider_enters.sh` is where all of that is decided, by driving the
+shims and the launcher with the payloads the vendors publish.
+
 ## The three commands
 
 ```text
-majordomus serve status [--format json]     where this checkout's server stands, and every
-                                            server of this repository
+majordomus serve status [--checkouts this|repository] [--format json]
+                                            where this checkout's server stands, and — unless
+                                            `--checkouts this` narrows it — every server of
+                                            this repository
 majordomus serve ensure [--idle S] [--wait S] [--port P]
                                             a ready server for this checkout, started if
                                             there must be one
@@ -127,6 +184,8 @@ them.
 
 ```text
 majordomus serve status --format json    the server, its lease and every checkout's
+majordomus serve status --checkouts this this checkout's server alone, without reading or
+                                         probing any other checkout
 majordomus env status                    the checkout: project, version control, toolchains,
                                          the layer, the workflows, the local services
 majordomus context                       what the next worker needs to know now
